@@ -1,0 +1,2 @@
+org.geotools.data.xugu.XuGuDataStoreFactory
+org.geotools.data.xugu.XuGuJNDIDataStoreFactory
