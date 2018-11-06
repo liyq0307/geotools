@@ -80,7 +80,7 @@ public class XuGuFilterToSQL extends FilterToSQL {
                 boxSQL = " AND SmX > " + minx
                         + " AND SmX < " + maxx
                         + " AND SmY > " + miny
-                        + " AND SmX < " + maxy
+                        + " AND SmY < " + maxy
                         + " parallel " + parallel;
             } else {
                 boxSQL = " AND SmSdriW > " + minx

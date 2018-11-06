@@ -53,7 +53,7 @@ public class XuGuDataStoreTest {
             /*字段查询*/
             //String sql = "OSM_ID > 36677744 AND OSM_ID < 36775183";
             /*BBOX查询*/
-            //String sql= "BBOX(SMGEOMETRY,104.1599943,123.15694,13.9487362,34.3134506)"
+            //String sql= "BBOX(SMGEOMETRY,104.1599943,13.9487362,123.15694,34.3134506)"
 
             Filter filter = ECQL.toFilter(sql);
             Query query = new Query("CHINALATESTRGRID", filter);
