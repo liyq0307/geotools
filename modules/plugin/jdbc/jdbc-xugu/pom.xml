@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>gt-jdbc</artifactId>
+        <groupId>org.geotools.jdbc</groupId>
+        <version>18-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- =========================================================== -->
+    <!--     Module Description                                      -->
+    <!-- =========================================================== -->
+    <artifactId>gt-jdbc-xugu</artifactId>
+    <packaging>jar</packaging>
+    <name>XuGu DataStore</name>
+
+    <description>
+        DataStore for XuGu Database.
+    </description>
+
+    <repositories>
+        <repository>
+            <id>nexus</id>
+            <name>maven-public</name>
+            <url>http://192.168.12.102:7001/repository/maven-public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.xugu.jdbc</groupId>
+            <artifactId>cloudjdbc</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-cql</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>
