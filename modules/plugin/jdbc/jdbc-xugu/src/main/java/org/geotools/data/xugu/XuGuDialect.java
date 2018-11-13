@@ -5,6 +5,7 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKBReader;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.factory.Hints;
+import org.geotools.feature.NameImpl;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.jdbc.BasicSQLDialect;
 import org.geotools.jdbc.JDBCDataStore;
@@ -132,60 +133,62 @@ public class XuGuDialect extends BasicSQLDialect {
             String schema, SimpleFeatureType featureType, Connection cx)
             throws SQLException, IOException {
         String tableName = featureType.getTypeName();
+        boolean bHasIndex = true;
+        if (!dataStore.getNames().contains(new NameImpl(tableName + "_INDEX"))) {
+            bHasIndex = false;
+        }
+
         if (dataStore.getVirtualTables().get(tableName) != null) {
             return null;
         }
+
+        GeometryDescriptor att = featureType.getGeometryDescriptor();
+        if (null == att) {
+            return null;
+        }
+        Class<?> cls = att.getType().getBinding();
 
         Statement st = null;
         ResultSet rs = null;
         Savepoint savePoint = null;
         List<ReferencedEnvelope> result = new ArrayList<>();
-
         try {
             st = cx.createStatement();
             if (!cx.getAutoCommit()) {
                 savePoint = cx.setSavepoint();
             }
 
-            GeometryDescriptor att = featureType.getGeometryDescriptor();
-            Class<?> cls = att.getType().getBinding();
-            if (cls == Point.class) {
-                String sql = "SELECT SmX as X, SmY as Y FROM" + tableName + " parallel " + parallel;
-                rs = st.executeQuery(sql);
-                while (rs.next()) {
-                    double x = rs.getDouble("X");
-                    double y = rs.getDouble("Y");
-                    Envelope env = new Envelope(x, x, y, y);
+            String sql;
 
-                    if (!env.isNull()) {
-                        CoordinateReferenceSystem crs = att.getCoordinateReferenceSystem();
-                        result.add(new ReferencedEnvelope(env, crs));
-                    }
-                }
-            } else {
-                String sql =
-                        "SELECT SmSdriW as xMin, SmSdriE as xMax,"
-                                + " SmSdriS as yMin, SmSdriN as yMax "
-                                + " FROM " + tableName + " parallel " + parallel;
-                LOGGER.fine(sql);
-                rs = st.executeQuery(sql);
-
-                while (rs.next()) {
-                    double xMin = rs.getDouble("xMin");
-                    double xMax = rs.getDouble("xMax");
-                    double yMin = rs.getDouble("yMin");
-                    double yMax = rs.getDouble("yMax");
-                    Envelope env = new Envelope(xMin, xMax, yMin, yMax);
-
-                    if (!env.isNull()) {
-                        CoordinateReferenceSystem crs = att.getCoordinateReferenceSystem();
-                        result.add(new ReferencedEnvelope(env, crs));
-                    }
-                }
-
-                rs.close();
+            if (bHasIndex) {
+                tableName += "_INDEX";
             }
 
+            if (cls == Point.class) {
+                sql = "SELECT min(SmX) as xmin, max(SmX) as xMax, "
+                        + "min(SmY) as yMin, max(SmY) as yMax, "
+                        + "FROM" + tableName + " parallel " + parallel;
+            } else {
+                sql = "SELECT min(SmSdriW) as xMin, max(SmSdriE) as xMax,"
+                        + " min(SmSdriS) as yMin, max(SmSdriN) as yMax "
+                        + " FROM " + tableName + " parallel " + parallel;
+            }
+
+            LOGGER.fine(sql);
+            rs = st.executeQuery(sql);
+
+            while (rs.next()) {
+                double xMin = rs.getDouble("xMin");
+                double xMax = rs.getDouble("xMax");
+                double yMin = rs.getDouble("yMin");
+                double yMax = rs.getDouble("yMax");
+                Envelope env = new Envelope(xMin, xMax, yMin, yMax);
+
+                if (!env.isNull()) {
+                    CoordinateReferenceSystem crs = att.getCoordinateReferenceSystem();
+                    result.add(new ReferencedEnvelope(env, crs));
+                }
+            }
         } catch (SQLException e) {
             if (savePoint != null) {
                 cx.rollback(savePoint);
