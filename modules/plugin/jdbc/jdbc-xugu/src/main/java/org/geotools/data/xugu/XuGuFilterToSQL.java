@@ -83,10 +83,10 @@ public class XuGuFilterToSQL extends FilterToSQL {
                         + " AND SmY < " + maxy
                         + " parallel " + parallel;
             } else {
-                boxSQL = " AND SmSdriW > " + minx
-                        + " AND SmSdriE < " + maxx
-                        + " AND SmSdriS > " + miny
-                        + " AND SmSdriN < " + maxy
+                boxSQL = " AND SmSdriE > " + minx
+                        + " AND SmSdriW < " + maxx
+                        + " AND SmSdriN > " + miny
+                        + " AND SmSdriS < " + maxy
                         + " parallel " + parallel;
             }
         } else if (filter instanceof Intersects) {
