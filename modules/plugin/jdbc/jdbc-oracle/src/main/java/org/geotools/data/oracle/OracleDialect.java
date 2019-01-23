@@ -28,14 +28,7 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Savepoint;
-import java.sql.Statement;
-import java.sql.Types;
-import java.sql.Wrapper;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -288,6 +281,41 @@ public class OracleDialect extends PreparedStatementSQLDialect {
             }
 
             return geometryClass;
+        } else if (typeName.equals("NUMBER")) {
+            String tableName = columnMetaData.getString(TABLE_NAME);
+            String columnName = columnMetaData.getString(COLUMN_NAME);
+            String sql = String.format("SELECT %s FROM %s WHERE 1=0", columnName, tableName);
+
+            PreparedStatement statement = null;
+            ResultSet resultSet = null;
+
+            try {
+                statement = cx.prepareStatement(sql);
+                resultSet = statement.executeQuery();
+                ResultSetMetaData metaData = resultSet.getMetaData();
+                int precision = metaData.getPrecision(1);
+                int scale = metaData.getScale(1);
+                if (scale > 0 && precision > 0) {
+                    return Double.class;
+                } else if (scale == 0 && (precision > 10 && precision <= 38)) {
+                    return Long.class;
+                } else if (scale == 0 && precision <= 10) {
+                    return Integer.class;
+                } else if (precision == 0 && scale <= 0) {
+                    return Long.class;
+                } else {
+                    return null;
+                }
+            } finally {
+                if (null != resultSet) {
+                    resultSet.close();
+                }
+
+                if (null != statement) {
+                    statement.close();
+                }
+            }
+
         } else {
             // if we know, return non null value, otherwise returning
             // null will force the datatore to figure it out using
