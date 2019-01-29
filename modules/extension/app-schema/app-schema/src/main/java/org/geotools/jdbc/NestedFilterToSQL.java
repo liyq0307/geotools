@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
+import org.geotools.data.complex.AttributeMapping;
 import org.geotools.data.complex.FeatureTypeMapping;
 import org.geotools.data.complex.NestedAttributeMapping;
+import org.geotools.data.complex.config.JdbcMultipleValue;
 import org.geotools.data.complex.filter.FeatureChainedAttributeVisitor;
 import org.geotools.data.complex.filter.FeatureChainedAttributeVisitor.FeatureChainLink;
 import org.geotools.data.complex.filter.FeatureChainedAttributeVisitor.FeatureChainedAttributeDescriptor;
@@ -38,6 +40,7 @@ import org.geotools.filter.NestedAttributeExpression;
 import org.geotools.jdbc.JoiningJDBCFeatureSource.JoiningFieldEncoder;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
+import org.opengis.filter.BinaryLogicOperator;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory;
 import org.opengis.filter.PropertyIsBetween;
@@ -107,6 +110,14 @@ public class NestedFilterToSQL extends FilterToSQL {
 
     FilterToSQL original;
     FilterFactory ff;
+    // A deep tracking variable over binary operators, should maintain on true only for the first
+    // level
+    private boolean rootBinaryOperator = true;
+    // Parent select clause for this nested subquery build, used when the OR->UNION replacement is
+    // enabled
+    private String selectClause;
+    // OR->UNION replacement performance improvement flag.  Enabled if true
+    private boolean replaceOrWithUnion = false;
 
     /**
      * Constructor.
@@ -124,6 +135,8 @@ public class NestedFilterToSQL extends FilterToSQL {
     public void encode(Filter filter) throws FilterToSQLException {
         if (out == null) throw new FilterToSQLException("Can't encode to a null writer.");
         original.setWriter(out);
+        JdbcMultipleValueEncoder encoder = new JdbcMultipleValueEncoder(rootMapping, out);
+        filter = (Filter) filter.accept(encoder, null);
         if (original.getCapabilities().fullySupports(filter)) {
 
             try {
@@ -140,6 +153,37 @@ public class NestedFilterToSQL extends FilterToSQL {
         } else {
             throw new FilterToSQLException("Filter type not supported");
         }
+    }
+
+    private void encodeMultipleValueJoin(
+            FeatureChainedAttributeDescriptor nestedAttribute,
+            JDBCDataStore store,
+            StringBuffer sql) {
+        FeatureTypeMapping featureMapping = nestedAttribute.getFeatureTypeOwningAttribute();
+        AttributeMapping mapping =
+                featureMapping.getAttributeMapping(nestedAttribute.getAttributePath());
+        if (mapping == null
+                || !mapping.isMultiValued()
+                || !(mapping.getMultipleValue() instanceof JdbcMultipleValue)) {
+            return;
+        }
+        JdbcMultipleValue multipleValue = (JdbcMultipleValue) mapping.getMultipleValue();
+        sql.append(" LEFT JOIN ");
+        String alias = String.valueOf(multipleValue.getId());
+        try {
+            store.encodeAliasedTableName(multipleValue.getTargetTable(), sql, null, alias);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        sql.append(" ON ");
+        store.dialect.encodeColumnName(nestedAttribute.getLastLink().getAlias(), sql);
+        sql.append(".");
+        store.dialect.encodeColumnName(multipleValue.getSourceColumn(), sql);
+        sql.append(" = ");
+        store.dialect.encodeTableName(alias, sql);
+        sql.append(".");
+        store.dialect.encodeColumnName(multipleValue.getTargetColumn(), sql);
+        sql.append(" ");
     }
 
     protected Object visitNestedFilter(Filter filter, Object extraData, String xpath) {
@@ -160,13 +204,19 @@ public class NestedFilterToSQL extends FilterToSQL {
 
                     FeatureChainLink lastMappingStep = nestedAttrDescr.getLastLink();
                     StringBuffer sql = encodeSelectKeyFrom(lastMappingStep);
+                    JDBCDataStore store =
+                            (JDBCDataStore)
+                                    lastMappingStep
+                                            .getFeatureTypeMapping()
+                                            .getSource()
+                                            .getDataStore();
+                    encodeMultipleValueJoin(nestedAttrDescr, store, sql);
 
                     for (int i = numMappings - 2; i > 0; i--) {
                         FeatureChainLink mappingStep = nestedAttrDescr.getLink(i);
                         if (mappingStep.hasNestedFeature()) {
                             FeatureTypeMapping parentFeature = mappingStep.getFeatureTypeMapping();
-                            JDBCDataStore store =
-                                    (JDBCDataStore) parentFeature.getSource().getDataStore();
+                            store = (JDBCDataStore) parentFeature.getSource().getDataStore();
                             String parentTableName =
                                     parentFeature.getSource().getSchema().getName().getLocalPart();
 
@@ -219,7 +269,7 @@ public class NestedFilterToSQL extends FilterToSQL {
         SimpleFeatureType parentSource = (SimpleFeatureType) parentFeature.getSource().getSchema();
         String parentTableName = parentFeature.getSource().getSchema().getName().getLocalPart();
         String parentTableAlias = parentStep.getAlias();
-        FilterToSQL parentToSQL = createFilterToSQL(store, parentSource);
+        WrappedFilterToSql parentToSQL = createFilterToSQL(parentFeature);
         // don't escape, as it will be done by the encodeColumn methods
         parentToSQL.setSqlNameEscape("");
         Expression parentExpression = nestedFeatureAttr.getSourceExpression();
@@ -227,7 +277,7 @@ public class NestedFilterToSQL extends FilterToSQL {
 
         SimpleFeatureType nestedSource = (SimpleFeatureType) parentFeature.getSource().getSchema();
         String nestedTableAlias = nestedStep.getAlias();
-        FilterToSQL nestedFilterToSQL = createFilterToSQL(store, nestedSource);
+        WrappedFilterToSql nestedFilterToSQL = createFilterToSQL(parentFeature);
         // don't escape, as it will be done by the encodeColumn methods
         nestedFilterToSQL.setSqlNameEscape("");
         Expression nestedExpr = nestedFeatureAttr.getMapping(nestedFeature).getSourceExpression();
@@ -296,13 +346,15 @@ public class NestedFilterToSQL extends FilterToSQL {
         Filter unrolled = unrollFilter(duplicated, featureMappingForUnrolling);
 
         JoiningFieldEncoder fieldEncoder = new JoiningFieldEncoder(lastLink.getAlias(), store);
-        FilterToSQL filterToSQL = createFilterToSQL(store, sourceType);
+        WrappedFilterToSql filterToSQL = createFilterToSQL(featureMapping);
         filterToSQL.setFieldEncoder(fieldEncoder);
         String encodedFilter = filterToSQL.encodeToString(unrolled);
         sql.append(" ").append(encodedFilter);
     }
 
-    private FilterToSQL createFilterToSQL(JDBCDataStore store, SimpleFeatureType sourceType) {
+    private WrappedFilterToSql createFilterToSQL(FeatureTypeMapping featureMapping) {
+        JDBCDataStore store = (JDBCDataStore) featureMapping.getSource().getDataStore();
+        SimpleFeatureType sourceType = (SimpleFeatureType) featureMapping.getSource().getSchema();
         FilterToSQL filterToSQL = null;
         if (store.getSQLDialect() instanceof PreparedStatementSQLDialect) {
             PreparedFilterToSQL preparedFilterToSQL = store.createPreparedFilterToSQL(sourceType);
@@ -312,7 +364,7 @@ public class NestedFilterToSQL extends FilterToSQL {
         } else {
             filterToSQL = store.createFilterToSQL(sourceType);
         }
-        return filterToSQL;
+        return new WrappedFilterToSql(featureMapping, filterToSQL);
     }
 
     private void encodeColumnName(
@@ -419,6 +471,42 @@ public class NestedFilterToSQL extends FilterToSQL {
             return original.visit(filter, extraData);
         }
         return visitNestedFilter(filter, extraData, nestedAttr.getPropertyName());
+    }
+
+    /**
+     * If replaceOrWithUnion flag is enabled this method will build main OR condition in the form of
+     * UNION queries like: SELECT id, name FROM table WHERE name = "Alf" OR name = "Rick" -> SELECT
+     * id, name FROM table WHERE name = "Alf" UNION SELECT id, name FROM table WHERE name = "Rick"
+     */
+    @Override
+    protected Object visit(BinaryLogicOperator filter, Object extraData) {
+        String operator = (String) extraData;
+        if (!replaceOrWithUnion
+                || "AND".equalsIgnoreCase(operator)
+                || selectClause == null
+                || !rootBinaryOperator) {
+            rootBinaryOperator = false;
+            return super.visit(filter, extraData);
+        }
+        if ("OR".equalsIgnoreCase(operator)) {
+            rootBinaryOperator = false;
+            // build UNION query instead main OR
+            try {
+                java.util.Iterator list = filter.getChildren().iterator();
+
+                while (list.hasNext()) {
+                    ((Filter) list.next()).accept(this, extraData);
+                    if (list.hasNext()) {
+                        // selectClause will carry the parent SELECT FROM clauses, so we use it to
+                        // build UNION
+                        out.write(" UNION " + selectClause + " ");
+                    }
+                }
+            } catch (java.io.IOException ioe) {
+                throw new RuntimeException(IO_ERROR, ioe);
+            }
+        }
+        return extraData;
     }
 
     @Override
@@ -548,6 +636,10 @@ public class NestedFilterToSQL extends FilterToSQL {
         return null;
     }
 
+    public void setSelectClause(String selectClause) {
+        this.selectClause = selectClause;
+    }
+
     private Filter unrollFilter(Filter complexFilter, FeatureTypeMapping mappings) {
         UnmappingFilterVisitorExcludingNestedMappings visitor =
                 new UnmappingFilterVisitorExcludingNestedMappings(mappings);
@@ -579,5 +671,13 @@ public class NestedFilterToSQL extends FilterToSQL {
 
             return matchingMappings;
         }
+    }
+
+    public boolean isReplaceOrWithUnion() {
+        return replaceOrWithUnion;
+    }
+
+    public void setReplaceOrWithUnion(boolean replaceOrWithUnion) {
+        this.replaceOrWithUnion = replaceOrWithUnion;
     }
 }

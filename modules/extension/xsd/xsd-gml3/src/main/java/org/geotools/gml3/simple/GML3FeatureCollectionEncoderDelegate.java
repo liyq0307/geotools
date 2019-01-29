@@ -16,6 +16,7 @@
  */
 package org.geotools.gml3.simple;
 
+import java.net.URI;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,10 @@ public class GML3FeatureCollectionEncoderDelegate
         /** Controls if coordinates measures should be encoded in GML * */
         private boolean encodeMeasures;
 
+        private boolean decimalEncoding;
+
+        private boolean padWithZeros;
+
         public GML3Delegate(Encoder encoder) {
             this.gmlPrefix = findGMLPrefix(encoder);
 
@@ -97,6 +102,8 @@ public class GML3FeatureCollectionEncoderDelegate
             this.srsSyntax =
                     (SrsSyntax) encoder.getContext().getComponentInstanceOfType(SrsSyntax.class);
             this.numDecimals = getNumDecimals(encoder.getConfiguration());
+            this.padWithZeros = getPadWithZeros(encoder.getConfiguration());
+            this.decimalEncoding = getForceDecimalEncoding(encoder.getConfiguration());
             this.encodeMeasures = getEncodecoordinatesMeasures(encoder.getConfiguration());
             this.encodeSeparateMember =
                     encoder.getConfiguration().hasProperty(GMLConfiguration.ENCODE_FEATURE_MEMBER);
@@ -132,6 +139,36 @@ public class GML3FeatureCollectionEncoderDelegate
             }
         }
 
+        private boolean getPadWithZeros(Configuration configuration) {
+            GMLConfiguration config;
+            if (configuration instanceof GMLConfiguration) {
+                config = (GMLConfiguration) configuration;
+            } else {
+                config = configuration.getDependency(GMLConfiguration.class);
+            }
+
+            if (config == null) {
+                return false;
+            } else {
+                return config.getPadWithZeros();
+            }
+        }
+
+        private boolean getForceDecimalEncoding(Configuration configuration) {
+            GMLConfiguration config;
+            if (configuration instanceof GMLConfiguration) {
+                config = (GMLConfiguration) configuration;
+            } else {
+                config = configuration.getDependency(GMLConfiguration.class);
+            }
+
+            if (config == null) {
+                return true;
+            } else {
+                return config.getForceDecimalEncoding();
+            }
+        }
+
         private boolean getEncodecoordinatesMeasures(Configuration configuration) {
             GMLConfiguration config;
             if (configuration instanceof GMLConfiguration) {
@@ -159,12 +196,9 @@ public class GML3FeatureCollectionEncoderDelegate
 
         public void setSrsNameAttribute(AttributesImpl atts, CoordinateReferenceSystem crs) {
 
-            atts.addAttribute(
-                    null,
-                    "srsName",
-                    "srsName",
-                    null,
-                    GML3EncodingUtils.toURI(crs, srsSyntax).toString());
+            URI srsName = GML3EncodingUtils.toURI(crs, srsSyntax);
+            String crsName = srsName != null ? srsName.toString() : crs.getName().getCode();
+            atts.addAttribute(null, "srsName", "srsName", null, crsName);
         }
 
         @Override
@@ -257,12 +291,17 @@ public class GML3FeatureCollectionEncoderDelegate
 
         @Override
         public boolean forceDecimalEncoding() {
-            return false;
+            return decimalEncoding;
         }
 
         @Override
         public boolean getEncodeMeasures() {
             return encodeMeasures;
+        }
+
+        @Override
+        public boolean padWithZeros() {
+            return padWithZeros;
         }
     }
 }

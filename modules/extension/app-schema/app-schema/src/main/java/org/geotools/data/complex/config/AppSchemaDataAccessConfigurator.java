@@ -34,12 +34,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.geotools.data.DataAccess;
 import org.geotools.data.DataAccessFinder;
 import org.geotools.data.DataSourceException;
@@ -113,6 +115,8 @@ public class AppSchemaDataAccessConfigurator {
 
     public static String PROPERTY_ENCODE_NESTED_FILTERS = "app-schema.encodeNestedFilters";
 
+    public static final String PROPERTY_REPLACE_OR_UNION = "app-schema.orUnionReplace";
+
     /** DOCUMENT ME! */
     private AppSchemaDataAccessDTO config;
 
@@ -145,6 +149,13 @@ public class AppSchemaDataAccessConfigurator {
         String s =
                 AppSchemaDataAccessRegistry.getAppSchemaProperties().getProperty(PROPERTY_JOINING);
         return s != null;
+    }
+
+    public static boolean isOrUnionReplacementEnabled() {
+        final String orUnionReplacement =
+                AppSchemaDataAccessRegistry.getAppSchemaProperties()
+                        .getProperty(PROPERTY_REPLACE_OR_UNION);
+        return "true".equalsIgnoreCase(orUnionReplacement);
     }
 
     /**
@@ -265,7 +276,10 @@ public class AppSchemaDataAccessConfigurator {
             for (DataAccess<FeatureType, Feature> dataAccess : sourceDataStores.values()) {
                 boolean usedDataAccess = false;
                 for (FeatureTypeMapping mapping : featureTypeMappings) {
-                    if (mapping.getSource().getDataStore() == dataAccess) {
+                    if (mapping.getSource().getDataStore() == dataAccess
+                            || (mapping.getIndexSource() != null
+                                    && Objects.equals(
+                                            mapping.getIndexSource().getDataStore(), dataAccess))) {
                         usedDataAccess = true;
                         break;
                     }
@@ -312,11 +326,15 @@ public class AppSchemaDataAccessConfigurator {
                                 crs,
                                 isDatabaseBackend);
 
+                // if an external index (e.g. Solr) is used in the mappings, get its data store
+                FeatureSource indexFeatureSource = getIndexFeatureSource(dto, sourceDataStores);
+
                 FeatureTypeMapping mapping;
 
                 mapping =
                         FeatureTypeMappingFactory.getInstance(
                                 featureSource,
+                                indexFeatureSource,
                                 target,
                                 dto.getDefaultGeometryXPath(),
                                 attMappings,
@@ -596,7 +614,8 @@ public class AppSchemaDataAccessConfigurator {
                                 targetXPathSteps,
                                 expectedInstanceOf,
                                 isMultiValued,
-                                clientProperties);
+                                clientProperties,
+                                attDto.getMultipleValue());
             }
 
             if (attDto.isList()) {
@@ -617,6 +636,10 @@ public class AppSchemaDataAccessConfigurator {
             if (attDto.getInstancePath() != null) {
                 attMapping.setInstanceXpath(attDto.getInstancePath());
             }
+
+            // sets the external index (e.g. Solr) field for the current attribute mapping
+            // the value will be NULL if no external index is being used
+            attMapping.setIndexField(attDto.getIndexField());
 
             attMappings.add(attMapping);
         }
@@ -1058,5 +1081,36 @@ public class AppSchemaDataAccessConfigurator {
             resolvedParams.put(key, value);
         }
         return resolvedParams;
+    }
+
+    /**
+     * If an external index (e.g. Solr) is used by the provided feature type mapping, this method
+     * will retrieve the corresponding data store definition, otherwise NULL will be returned. If
+     * the data source cannot be found an exception will be throw.
+     */
+    private FeatureSource<FeatureType, Feature> getIndexFeatureSource(
+            TypeMapping dto, Map<String, DataAccess<FeatureType, Feature>> sourceDataStores)
+            throws IOException {
+        String dsId = dto.getIndexDataStore();
+        String typeName = dto.getIndexTypeName();
+
+        // let's check if an external index (e.g. Solr) was configured
+        if (StringUtils.isEmpty(dsId) || StringUtils.isEmpty(typeName)) return null;
+
+        DataAccess<FeatureType, Feature> sourceDataStore = sourceDataStores.get(dsId);
+        if (sourceDataStore == null) {
+            throw new DataSourceException(
+                    "datastore " + dsId + " not found for type mapping " + dto);
+        }
+
+        Name name = Types.degloseName(typeName, namespaces);
+        FeatureSource fSource = sourceDataStore.getFeatureSource(name);
+        if (fSource == null) {
+            throw new RuntimeException("Feature source not found '" + typeName + "'.");
+        }
+        if (fSource instanceof XmlFeatureSource) {
+            ((XmlFeatureSource) fSource).setNamespaces(namespaces);
+        }
+        return fSource;
     }
 }
