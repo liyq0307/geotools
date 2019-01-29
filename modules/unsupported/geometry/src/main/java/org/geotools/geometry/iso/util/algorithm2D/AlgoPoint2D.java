@@ -147,8 +147,6 @@ public class AlgoPoint2D {
         double ya = y0; // swap coordinates
         double xb = x1; // swap coordinates
         double yb = y1; // swap coordinates
-        double max_x = Math.max(x0, x1); // maximum x coordinate
-        double min_x = Math.min(x0, x1); // minimum x coordinate
         double max_y = Math.max(y0, y1); // maximum y coordinate
         double min_y = Math.min(y0, y1); // minimum y coordinate
 
@@ -203,7 +201,7 @@ public class AlgoPoint2D {
 
     public static Point2D[] split(Point2D p0, Point2D p1, double maxLength) {
         // The first and last node are not inserted
-        if (maxLength <= 0.0 || maxLength == Double.NaN) return null;
+        if (maxLength <= 0.0 || Double.isNaN(maxLength)) return null;
         int n = (int) Math.ceil(p0.distance(p1) / maxLength);
         if (n == 0) return null;
         double x1 = p0.getX();
@@ -262,14 +260,12 @@ public class AlgoPoint2D {
 
         Point2D p10 = AlgoPoint2D.subtract(p1, p0);
 
-        double sum = 0.0;
-
         while (it.hasNext()) {
             Point2D p = (Point2D) it.next();
             result += AlgoPoint2D.cross(p10, (AlgoPoint2D.subtract(p, p0)));
         }
 
-        return new Boolean(result > 0.0);
+        return Boolean.valueOf(result > 0.0);
     }
 
     /**

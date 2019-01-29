@@ -183,7 +183,8 @@ abstract class JDBCAccessBase implements JDBCAccess {
                 // check cardinalities
                 if (config.getVerifyCardinality().booleanValue()) {
                     imageLevelInfo.setCountFeature(
-                            new Integer(getRowCount(imageLevelInfo.getSpatialTableName(), con)));
+                            Integer.valueOf(
+                                    getRowCount(imageLevelInfo.getSpatialTableName(), con)));
 
                     if (imageLevelInfo
                             .getSpatialTableName()
@@ -191,7 +192,8 @@ abstract class JDBCAccessBase implements JDBCAccess {
                         imageLevelInfo.setCountTiles(imageLevelInfo.getCountFeature());
                     } else {
                         imageLevelInfo.setCountTiles(
-                                new Integer(getRowCount(imageLevelInfo.getTileTableName(), con)));
+                                Integer.valueOf(
+                                        getRowCount(imageLevelInfo.getTileTableName(), con)));
                     }
 
                     if (imageLevelInfo.getCountFeature().intValue() == 0) {
@@ -564,7 +566,6 @@ abstract class JDBCAccessBase implements JDBCAccess {
                 pool.execute(thread);
             }
 
-            ;
             r.close();
             s.close();
 
@@ -657,7 +658,9 @@ abstract class JDBCAccessBase implements JDBCAccess {
     private int getRowCount(String tableName, Connection con) throws SQLException {
         PreparedStatement s = con.prepareStatement("select count(*) from " + tableName);
         ResultSet res = s.executeQuery();
-        res.next();
+        if (!res.next()) {
+            throw new SQLException("Cannot get a count");
+        }
 
         int count = res.getInt(1);
         res.close();

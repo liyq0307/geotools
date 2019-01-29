@@ -440,20 +440,8 @@ public final class SDO {
         }
     }
 
-    /**
-     * Adds contents of array to the list as Interger objects
-     *
-     * @param list List to append the contents of array to
-     * @param array Array of ints to append
-     */
-    private static void addInts(List list, int[] array) {
-        for (int i = 0; i < array.length; i++) {
-            list.add(new Integer(array[i]));
-        }
-    }
-
     private static void addInt(List list, int i) {
-        list.add(new Integer(i));
+        list.add(Integer.valueOf(i));
     }
 
     /**
@@ -854,27 +842,6 @@ public final class SDO {
     }
 
     private static double[] ordinateArray(CoordinateAccess access, int index) {
-        final int D = access.getDimension();
-        final int L = access.getNumAttributes();
-        final int LEN = D + L;
-        double[] ords = new double[LEN];
-
-        for (int i = 0; i < LEN; i++) {
-            ords[i] = access.getOrdinate(index, i);
-        }
-
-        return ords;
-    }
-
-    /**
-     * ordinateArray purpose.
-     *
-     * <p>Description ...
-     *
-     * @param access
-     * @param index
-     */
-    private static double[] doubleOrdinateArray(CoordinateAccess access, int index) {
         final int D = access.getDimension();
         final int L = access.getNumAttributes();
         final int LEN = D + L;
@@ -1402,22 +1369,6 @@ public final class SDO {
         return Coordinates.reverse(factory, ring);
     }
 
-    /**
-     * Reverse the Orientationwise orientation of the ring of Coordinates.
-     *
-     * @param ring Ring of Coordinates
-     * @return coords Copy of <code>ring</code> in reversed order
-     */
-    private static Coordinate[] reverse(Coordinate[] ring) {
-        int length = ring.length;
-        Coordinate[] reverse = new Coordinate[length];
-
-        for (int i = 0; i < length; i++) {
-            reverse[i] = ring[length - i - 1];
-        }
-        return reverse;
-    }
-
     // Utility Functions
     //
     //
@@ -1729,7 +1680,9 @@ public final class SDO {
             String msg =
                     MessageFormat.format(
                             condition,
-                            new Object[] {new Integer(min), new Integer(actual), new Integer(max)});
+                            new Object[] {
+                                Integer.valueOf(min), Integer.valueOf(actual), Integer.valueOf(max)
+                            });
             throw new IllegalArgumentException(msg);
         }
     }
@@ -1762,7 +1715,7 @@ public final class SDO {
                 array.append(",");
             }
         }
-        String msg = MessageFormat.format(condition, new Object[] {new Integer(actual), array});
+        String msg = MessageFormat.format(condition, new Object[] {Integer.valueOf(actual), array});
         throw new IllegalArgumentException(msg);
     }
     /**
@@ -1919,8 +1872,6 @@ public final class SDO {
         if (D == 2 && L == 0 && f instanceof LiteCoordinateSequenceFactory) {
             return ((LiteCoordinateSequenceFactory) f).create(ordinates);
         }
-
-        final int LENGTH = ordinates.length / LEN;
 
         OrdinateList x = new OrdinateList(ordinates, 0, LEN);
         OrdinateList y = new OrdinateList(ordinates, 1, LEN);

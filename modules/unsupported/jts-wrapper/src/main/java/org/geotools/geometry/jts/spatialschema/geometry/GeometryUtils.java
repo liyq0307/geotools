@@ -411,8 +411,6 @@ public final class GeometryUtils {
      */
     public static DirectPosition ensureWGS84(DirectPosition dp) {
         CoordinateReferenceSystem crs = dp.getCoordinateReferenceSystem();
-        int dim = crs.getCoordinateSystem().getDimension();
-        boolean isProjectedCRS = crs instanceof ProjectedCRS;
         CoordinateReferenceSystem bcrs =
                 crs instanceof ProjectedCRS ? ((ProjectedCRS) crs).getBaseCRS() : crs;
 
@@ -882,7 +880,7 @@ public final class GeometryUtils {
             if (actual != expected) {
                 throw new IllegalArgumentException(/*Resources.format(
                  ResourceKeys.ERROR_MISMATCHED_DIMENSION_$3,
-                 name, new Integer(actual), new Integer(expected))*/ "");
+                 name, Integer.valueOf(actual), Integer.valueOf(expected))*/ "");
             }
         }
     }

@@ -546,7 +546,7 @@ public class DB2SQLDialect extends SQLDialect {
                             gDescr.getCoordinateReferenceSystem().getIdentifiers()) {
                         PreparedStatement ps1 = cx.prepareStatement(SELECT_SRS_NAME_FROM_ORG);
                         ps1.setString(1, ident.getCodeSpace());
-                        ps1.setInt(2, new Integer(ident.getCode()));
+                        ps1.setInt(2, Integer.valueOf(ident.getCode()));
                         ResultSet rs = ps1.executeQuery();
                         if (rs.next()) {
                             srsName = rs.getString(1);
@@ -613,7 +613,9 @@ public class DB2SQLDialect extends SQLDialect {
         try {
             ResultSet rs = st.executeQuery(sql.toString());
             try {
-                rs.next();
+                if (!rs.next()) {
+                    throw new SQLException("Could not get next value for sequence");
+                }
                 return rs.getInt(1);
             } finally {
                 dataStore.closeSafe(rs);
@@ -748,17 +750,14 @@ public class DB2SQLDialect extends SQLDialect {
                 if (rs != null) rs.close();
             } catch (SQLException ex1) {
             }
-            ;
             try {
                 if (ps != null) ps.close();
             } catch (SQLException ex1) {
             }
-            ;
             try {
                 if (con != null) con.close();
             } catch (SQLException ex1) {
             }
-            ;
         }
     }
 
@@ -780,17 +779,14 @@ public class DB2SQLDialect extends SQLDialect {
                 if (rs != null) rs.close();
             } catch (SQLException ex1) {
             }
-            ;
             try {
                 if (ps != null) ps.close();
             } catch (SQLException ex1) {
             }
-            ;
             try {
                 if (con != null) con.close();
             } catch (SQLException ex1) {
             }
-            ;
         }
     }
 

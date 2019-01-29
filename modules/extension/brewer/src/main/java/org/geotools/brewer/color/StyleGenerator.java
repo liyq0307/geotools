@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.filter.Filters;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.function.Classifier;
 import org.geotools.filter.function.ExplicitClassifier;
@@ -139,11 +138,6 @@ public class StyleGenerator {
         FeatureTypeStyle fts = sf.createFeatureTypeStyle();
 
         // update the number of classes
-        int numClasses = classifier.getSize();
-
-        //        if (elseMode == ELSEMODE_IGNORE) {
-        //            numClasses++;
-        //        }
 
         // numeric
         if (classifier instanceof RangedClassifier) {
@@ -278,7 +272,7 @@ public class StyleGenerator {
      */
     private static Object chopInteger(Object value) {
         if ((value instanceof Number) && (value.toString().endsWith(".0"))) {
-            return new Integer(((Number) value).intValue());
+            return Integer.valueOf(((Number) value).intValue());
         } else {
             return value;
         }
@@ -290,7 +284,7 @@ public class StyleGenerator {
      * @param count
      */
     private static String getRuleName(int count) {
-        String strVal = new Integer(count).toString();
+        String strVal = Integer.valueOf(count).toString();
 
         if (strVal.length() == 1) {
             return "rule0" + strVal;
@@ -513,8 +507,6 @@ public class StyleGenerator {
     }
 
     public static String toStyleExpression(Filter filter) {
-        short filterType = Filters.getFilterType(filter);
-
         if (filter instanceof And) { // looks like a ranged filter
             return toRangedStyleExpression((And) filter);
         } else { // it's probably a filter with explicitly defined values
@@ -715,8 +707,6 @@ public class StyleGenerator {
                 throw new IllegalArgumentException(
                         "Couldn't find the expected arrangement of Expressions");
             }
-        } else if (filter instanceof BinaryComparisonOperator) {
-            // what the heck??
         }
 
         throw new UnsupportedOperationException("Don't know how to handle this filter");

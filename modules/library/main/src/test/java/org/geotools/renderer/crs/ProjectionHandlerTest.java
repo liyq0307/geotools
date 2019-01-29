@@ -38,6 +38,7 @@ import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.operation.projection.PolarStereographic;
 import org.geotools.referencing.operation.transform.IdentityTransform;
+import org.hamcrest.CoreMatchers;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -612,7 +613,7 @@ public class ProjectionHandlerTest {
         // post process, this should wrap the geometry, make sure it's valid, and avoid large jumps
         // in its border
         Geometry postProcessed = handler.postProcess(prepared, reprojected);
-        assertTrue(postProcessed instanceof MultiPolygon);
+        assertThat(postProcessed, CoreMatchers.instanceOf(MultiPolygon.class));
         assertEquals(2, postProcessed.getNumGeometries());
     }
 
@@ -737,12 +738,13 @@ public class ProjectionHandlerTest {
         assertEquals(ProjectionHandlerFinder.WRAP_LIMIT * 2 + 1, mls.getNumGeometries());
     }
 
+    @Test
     public void testCutGeometryUTM() throws Exception {
         ReferencedEnvelope wgs84Envelope = new ReferencedEnvelope(8, 10, 40, 45, WGS84);
         ReferencedEnvelope utmEnvelope = wgs84Envelope.transform(UTM32N, true);
 
         // a geometry that will definitely go outside of the UTM32N valid area
-        Geometry g = new WKTReader().read("LINESTRING(-170 -40, 170, 40)");
+        Geometry g = new WKTReader().read("LINESTRING(-170 -40, 170 40)");
 
         ProjectionHandler handler = ProjectionHandlerFinder.getHandler(utmEnvelope, WGS84, true);
         assertTrue(handler.requiresProcessing(g));

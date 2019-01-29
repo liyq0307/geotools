@@ -206,7 +206,7 @@ public class ImageWorker {
 
     /** Registration of the JAI-EXT operations */
     static {
-        JAIEXT_ENABLED = Boolean.getBoolean(JAIEXT_ENABLED_KEY);
+        JAIEXT_ENABLED = Boolean.valueOf(System.getProperty(JAIEXT_ENABLED_KEY, "true"));
         JAIExt.initJAIEXT(JAIEXT_ENABLED);
         USE_JAI_SCALE2 = Boolean.getBoolean(USE_JAI_SCALE2_KEY) && JAIEXT_ENABLED;
         SCALE_OP_NAME = USE_JAI_SCALE2 ? SCALE2_NAME : SCALE_NAME;
@@ -377,7 +377,7 @@ public class ImageWorker {
     static {
         ALPHA_LUT = new byte[256];
         for (int i = 1; i < 256; i++) {
-            ALPHA_LUT[i] = (byte) (255 & 0xFF);
+            ALPHA_LUT[i] = (byte) 255;
         }
     }
 
@@ -1139,7 +1139,6 @@ public class ImageWorker {
     public Histogram getHistogram(int[] numBins, double[] lowValues, double[] highValues) {
         Object histogram = getComputedProperty(HISTOGRAM);
         if (!(histogram instanceof Histogram)) {
-            final Integer ONE = 1;
             // Create the parameterBlock
             ParameterBlock pb = new ParameterBlock();
             pb.setSource(image, 0);
@@ -1218,7 +1217,6 @@ public class ImageWorker {
     public double[] getMean() {
         Object mean = getComputedProperty(MEAN);
         if (!(mean instanceof double[])) {
-            final Integer ONE = 1;
             // Create the parameterBlock
             ParameterBlock pb = new ParameterBlock();
             pb.setSource(image, 0);
@@ -2173,7 +2171,6 @@ public class ImageWorker {
                     isJaiExtEnabled()
                             ? IHSColorSpaceJAIExt.getInstance()
                             : IHSColorSpace.getInstance();
-            ;
             final int numBits = image.getColorModel().getComponentSize(0);
             final ColorModel ihsColorModel =
                     new ComponentColorModel(
@@ -3531,7 +3528,7 @@ public class ImageWorker {
                         ConstantDescriptor.create(
                                 (float) image.getWidth(),
                                 (float) image.getHeight(),
-                                new Byte[] {new Byte(alpha)},
+                                new Byte[] {Byte.valueOf(alpha)},
                                 new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
 
                 ParameterBlock pb = new ParameterBlock();
@@ -5137,13 +5134,6 @@ public class ImageWorker {
         pb.set(roi, 3);
         pb.set(nodata, 4);
         pb.set(background, 2);
-        if (isNoDataNeeded()) {
-            if (background != null && background.length > 0) {
-                //                // We must set the new NoData value
-                //                setNoData(RangeFactory.create(background[0], background[0]));
-                //                invalidateStatistics();
-            }
-        }
         image = JAI.create("Warp", pb, getRenderingHints());
         updateROI(true, null);
         return this;

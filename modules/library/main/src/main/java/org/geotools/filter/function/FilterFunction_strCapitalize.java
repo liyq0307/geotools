@@ -48,7 +48,7 @@ public class FilterFunction_strCapitalize extends FunctionExpressionImpl {
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(
-                    "Filter Function problem for function strLength argument #0 - expected type String");
+                    "Filter Function problem for function strCapitalize argument #0 - expected type String");
         }
 
         return StaticGeometry.strCapitalize(arg0);

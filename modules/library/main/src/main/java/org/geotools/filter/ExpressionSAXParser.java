@@ -48,6 +48,7 @@ public class ExpressionSAXParser {
             org.geotools.util.logging.Logging.getLogger(ExpressionSAXParser.class);
 
     /** Factory to construct filters. */
+    @SuppressWarnings("PMD.UnusedPrivateField")
     private FilterFactory2 ff;
 
     private FunctionFinder functionFinder = new FunctionFinder(null);
@@ -311,7 +312,7 @@ public class ExpressionSAXParser {
                 // expensive and bad code practice.
                 if (convertToNumber) {
                     try {
-                        Object temp = new Integer(message);
+                        Object temp = Integer.valueOf(message);
                         ((LiteralExpressionImpl) curExprssn).setValue(temp);
                         currentState = "complete";
                     } catch (NumberFormatException nfe1) {

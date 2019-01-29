@@ -74,6 +74,7 @@ import javax.media.jai.TileScheduler;
 import javax.media.jai.remote.SerializableRenderedImage;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;
@@ -116,7 +117,6 @@ import org.geotools.util.factory.Hints.Key;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.TopologyException;
 import org.locationtech.jts.operation.overlay.snap.GeometrySnapper;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -138,8 +138,6 @@ import org.opengis.referencing.operation.TransformException;
 public class Utils {
 
     public static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
-
-    private static GeometryFactory GEOM_FACTORY = new GeometryFactory();
 
     private static final String DATABASE_KEY = "database";
 
@@ -1536,10 +1534,6 @@ public class Utils {
                                     ? URLs.fileToUrl(dataStoreProperties)
                                     : URLs.fileToUrl(shapeFile);
             }
-        } else {
-            // SK: We don't set SourceURL to null now, just because it doesn't
-            // point to a file
-            // sourceURL=null;
         }
         return sourceURL;
     }
@@ -2078,6 +2072,19 @@ public class Utils {
             indexer = (Indexer) unmarshaller.unmarshal(indexerFile);
         }
         return indexer;
+    }
+
+    /**
+     * Marshals the Indexer object to the specified file
+     *
+     * @param indexerFile
+     * @return
+     * @throws JAXBException
+     */
+    public static void marshal(Indexer indexer, File indexerFile) throws JAXBException {
+        Marshaller marshaller = CONTEXT.createMarshaller();
+        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+        marshaller.marshal(indexer, indexerFile);
     }
 
     /**

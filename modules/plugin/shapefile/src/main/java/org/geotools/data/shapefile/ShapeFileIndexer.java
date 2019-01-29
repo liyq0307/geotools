@@ -52,6 +52,7 @@ import org.opengis.util.ProgressListener;
  *
  * @author Tommaso Nolli
  */
+@SuppressWarnings("PMD.SystemPrintln")
 class ShapeFileIndexer implements FileWriter {
     private static final Logger LOGGER = Logging.getLogger(ShapeFileIndexer.class);
 
@@ -59,7 +60,6 @@ class ShapeFileIndexer implements FileWriter {
     private int leafSize = 16;
 
     private String byteOrder;
-    private boolean interactive = false;
     private ShpFiles shpFiles;
 
     public static void main(String[] args) throws IOException {
@@ -70,7 +70,6 @@ class ShapeFileIndexer implements FileWriter {
         long start = System.currentTimeMillis();
 
         ShapeFileIndexer idx = new ShapeFileIndexer();
-        idx.interactive = true;
 
         for (int i = 0; i < args.length; i++) {
             if (args[i].equals("-t")) {

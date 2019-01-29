@@ -41,6 +41,7 @@ import org.geotools.jdbc.*;
 import org.geotools.util.factory.Hints;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
+import org.opengis.filter.BinaryLogicOperator;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory;
 import org.opengis.filter.PropertyIsBetween;
@@ -110,6 +111,14 @@ public class NestedFilterToSQL extends FilterToSQL {
 
     FilterToSQL original;
     FilterFactory ff;
+    // A deep tracking variable over binary operators, should maintain on true only for the first
+    // level
+    private boolean rootBinaryOperator = true;
+    // Parent select clause for this nested subquery build, used when the OR->UNION replacement is
+    // enabled
+    private String selectClause;
+    // OR->UNION replacement performance improvement flag.  Enabled if true
+    private boolean replaceOrWithUnion = false;
 
     /**
      * Constructor.
@@ -258,7 +267,6 @@ public class NestedFilterToSQL extends FilterToSQL {
         NestedAttributeMapping nestedFeatureAttr = parentStep.getNestedFeatureAttribute();
         FeatureTypeMapping nestedFeature = nestedFeatureAttr.getFeatureTypeMapping(null);
 
-        SimpleFeatureType parentSource = (SimpleFeatureType) parentFeature.getSource().getSchema();
         String parentTableName = parentFeature.getSource().getSchema().getName().getLocalPart();
         String parentTableAlias = parentStep.getAlias();
         WrappedFilterToSql parentToSQL = createFilterToSQL(parentFeature);
@@ -267,7 +275,6 @@ public class NestedFilterToSQL extends FilterToSQL {
         Expression parentExpression = nestedFeatureAttr.getSourceExpression();
         String parentTableColumn = parentToSQL.encodeToString(parentExpression);
 
-        SimpleFeatureType nestedSource = (SimpleFeatureType) parentFeature.getSource().getSchema();
         String nestedTableAlias = nestedStep.getAlias();
         WrappedFilterToSql nestedFilterToSQL = createFilterToSQL(parentFeature);
         // don't escape, as it will be done by the encodeColumn methods
@@ -330,7 +337,6 @@ public class NestedFilterToSQL extends FilterToSQL {
         JDBCDataStore store = (JDBCDataStore) featureMapping.getSource().getDataStore();
         FeatureTypeMapping featureMappingForUnrolling =
                 nestedAttrDescr.getFeatureTypeOwningAttribute();
-        SimpleFeatureType sourceType = (SimpleFeatureType) featureMapping.getSource().getSchema();
 
         NamespaceAwareAttributeRenameVisitor duplicate =
                 new NamespaceAwareAttributeRenameVisitor(nestedProperty, simpleProperty);
@@ -465,6 +471,43 @@ public class NestedFilterToSQL extends FilterToSQL {
         return visitNestedFilter(filter, extraData, nestedAttr.getPropertyName());
     }
 
+    /**
+     * If replaceOrWithUnion flag is enabled this method will build main OR condition in the form of
+     * UNION queries like: SELECT id, name FROM table WHERE name = "Alf" OR name = "Rick" -> SELECT
+     * id, name FROM table WHERE name = "Alf" UNION SELECT id, name FROM table WHERE name = "Rick"
+     */
+    @Override
+    protected Object visit(BinaryLogicOperator filter, Object extraData) {
+        String operator = (String) extraData;
+        if (!replaceOrWithUnion
+                || "AND".equalsIgnoreCase(operator)
+                || selectClause == null
+                || !rootBinaryOperator) {
+            rootBinaryOperator = false;
+            return super.visit(filter, extraData);
+        }
+        if ("OR".equalsIgnoreCase(operator)) {
+            rootBinaryOperator = false;
+            // build UNION query instead main OR
+            try {
+                java.util.Iterator list = filter.getChildren().iterator();
+
+                while (list.hasNext()) {
+                    ((Filter) list.next()).accept(this, extraData);
+                    if (list.hasNext()) {
+                        // selectClause will carry the parent SELECT FROM clauses, so we use it to
+                        // build UNION
+                        out.write(" UNION " + selectClause + " ");
+                    }
+                }
+
+            } catch (java.io.IOException ioe) {
+                throw new RuntimeException(IO_ERROR, ioe);
+            }
+        }
+        return extraData;
+    }
+
     @Override
     public Object visit(DWithin filter, Object extraData) {
         NestedAttributeExpression nestedAttr = getNestedAttributeExpression(filter);
@@ -592,6 +635,10 @@ public class NestedFilterToSQL extends FilterToSQL {
         return null;
     }
 
+    public void setSelectClause(String selectClause) {
+        this.selectClause = selectClause;
+    }
+
     private Filter unrollFilter(Filter complexFilter, FeatureTypeMapping mappings) {
         UnmappingFilterVisitorExcludingNestedMappings visitor =
                 new UnmappingFilterVisitorExcludingNestedMappings(mappings);
@@ -623,5 +670,13 @@ public class NestedFilterToSQL extends FilterToSQL {
 
             return matchingMappings;
         }
+    }
+
+    public boolean isReplaceOrWithUnion() {
+        return replaceOrWithUnion;
+    }
+
+    public void setReplaceOrWithUnion(boolean replaceOrWithUnion) {
+        this.replaceOrWithUnion = replaceOrWithUnion;
     }
 }
