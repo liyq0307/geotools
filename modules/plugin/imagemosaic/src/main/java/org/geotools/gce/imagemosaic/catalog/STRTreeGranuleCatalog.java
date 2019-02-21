@@ -85,7 +85,6 @@ class STRTreeGranuleCatalog extends GranuleCatalog {
 
         private int granuleIndex = 0;
 
-        /** @param indexLocation */
         public JTSIndexVisitorAdapter(final GranuleCatalogVisitor adaptee) {
             this(adaptee, (Query) null);
         }
@@ -93,10 +92,9 @@ class STRTreeGranuleCatalog extends GranuleCatalog {
         public JTSIndexVisitorAdapter(final GranuleCatalogVisitor adaptee, Query q) {
             this.adaptee = adaptee;
             this.filter = q == null ? Query.ALL.getFilter() : q.getFilter();
-            this.maxGranules = q.getMaxFeatures();
+            this.maxGranules = q == null ? -1 : q.getMaxFeatures();
         }
 
-        /** @param indexLocation */
         public JTSIndexVisitorAdapter(final GranuleCatalogVisitor adaptee, Filter filter) {
             this.adaptee = adaptee;
             this.filter = filter == null ? Query.ALL.getFilter() : filter;

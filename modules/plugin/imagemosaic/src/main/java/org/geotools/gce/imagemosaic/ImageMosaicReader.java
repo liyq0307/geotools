@@ -2,7 +2,7 @@
  *    GeoTools - The Open Source Java GIS Toolkit
  *    http://geotools.org
  *
- *    (C) 2006 - 2016, Open Source Geospatial Foundation (OSGeo)5
+ *    (C) 2006 - 2016, Open Source Geospatial Foundation (OSGeo)
  *
  *    This library is free software; you can redistribute it and/or
  *    modify it under the terms of the GNU Lesser General Public
@@ -665,11 +665,6 @@ public class ImageMosaicReader extends AbstractGridCoverage2DReader
                     granuleCatalog.dispose();
                 }
                 granuleCatalog = catalog;
-
-                if (granuleCatalog == null) {
-                    throw new DataSourceException(
-                            "Unable to create index for this URL " + sourceURL);
-                }
 
                 // Creating a RasterManager for each mosaic configuration found on disk
                 for (MosaicConfigurationBean bean : beans) {

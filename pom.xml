@@ -96,7 +96,7 @@
     <test.args></test.args>
     <src.output>${basedir}/target</src.output>
     <imageio.ext.version>1.2.1</imageio.ext.version>
-    <jts.version>1.16.0</jts.version>
+    <jts.version>1.16.1</jts.version>
     <jaiext.version>1.1.7</jaiext.version>
     <netcdf.version>4.6.11</netcdf.version>
     <jt.version>1.5.0</jt.version>
@@ -125,6 +125,11 @@
     <errorProne.version>2.3.2</errorProne.version>
     <javac.version>9+181-r4173-1</javac.version>
     <pmd.skip>false</pmd.skip>
+    <spotbugs.skip>false</spotbugs.skip>
+    <pmd.version>6.11.0</pmd.version>
+    <checkstyle.skip>false</checkstyle.skip>
+    <qa>false</qa>
+    <jackson2.version>2.9.7</jackson2.version>
   </properties>
 
   <!-- Profiles set on the command-line overwrite default properties. -->
@@ -223,7 +228,7 @@
             <version>3.2.1</version>
             <configuration>
               <failBuildOnCVSS>8</failBuildOnCVSS>
-              <suppressionFile>${geotoolsBaseDir}/dependency-check-suppression.xml</suppressionFile>
+              <suppressionFile>${geotoolsBaseDir}/build/qa/dependency-check-suppression.xml</suppressionFile>
             </configuration>
             <executions>
               <execution>
@@ -239,16 +244,43 @@
     
     <profile>
       <id>pmd</id>
+      <activation>
+        <property>
+          <name>qa</name>
+        </property>
+      </activation>
       <build>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-pmd-plugin</artifactId>
             <version>3.11.0</version>
+            <dependencies>
+              <dependency>
+                <groupId>net.sourceforge.pmd</groupId>
+                <artifactId>pmd-core</artifactId>
+                <version>${pmd.version}</version>
+              </dependency>
+              <dependency>
+                <groupId>net.sourceforge.pmd</groupId>
+                <artifactId>pmd-java</artifactId>
+                <version>${pmd.version}</version>
+              </dependency>
+              <dependency>
+                <groupId>net.sourceforge.pmd</groupId>
+                <artifactId>pmd-javascript</artifactId>
+                <version>${pmd.version}</version>
+              </dependency>
+              <dependency>
+                <groupId>net.sourceforge.pmd</groupId>
+                <artifactId>pmd-jsp</artifactId>
+                <version>${pmd.version}</version>
+              </dependency>
+            </dependencies>
             <configuration>
               <skip>${pmd.skip}</skip>
               <rulesets>
-                <ruleset>${geotoolsBaseDir}/pmd-ruleset.xml</ruleset>
+                <ruleset>${geotoolsBaseDir}/build/qa/pmd-ruleset.xml</ruleset>
               </rulesets>
               <failurePriority>3</failurePriority>
               <minimumPriority>3</minimumPriority>
@@ -257,7 +289,6 @@
               <excludeRoots>
                 <excludeRoot>target/generated-sources</excludeRoot>
               </excludeRoots>
-
             </configuration>
             <executions>
               <execution>
@@ -274,6 +305,12 @@
     <!-- for those using JDK 11 -->
     <profile>
       <id>errorprone</id>
+      <activation>
+        <property>
+          <name>qa</name>
+        </property>
+        <jdk>(1.8,)</jdk>
+      </activation>
       <build>
         <plugins>
           <plugin>
@@ -301,6 +338,12 @@
     <!-- using github.com/google/error-prone-javac is required when running on JDK 8 -->
     <profile>
       <id>errorprone8</id>
+      <activation>
+        <property>
+          <name>qa</name>
+        </property>
+        <jdk>1.8</jdk>
+      </activation>
       <build>
         <plugins>
           <plugin>
@@ -327,6 +370,71 @@
       </build>
     </profile>
 
+    <profile>
+      <id>spotbugs</id>
+      <activation>
+        <property>
+          <name>qa</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>3.1.10</version>
+            <configuration>
+              <effort>More</effort>
+              <threshold>High</threshold>
+              <xmlOutput>true</xmlOutput>
+              <maxRank>10</maxRank>
+              <skip>${spotbugs.skip}</skip>
+              <excludeFilterFile>${geotoolsBaseDir}/build/qa/spotbugs-exclude.xml</excludeFilterFile>
+              <jvmArgs>-XX:+TieredCompilation -XX:TieredStopAtLevel=1</jvmArgs>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    
+    <profile>
+      <id>checkstyle</id>
+      <activation>
+        <property>
+          <name>qa</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+           <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-checkstyle-plugin</artifactId>
+              <version>3.0.0</version>
+              <configuration>
+                    <logViolationsToConsole>true</logViolationsToConsole>
+                    <!-- ignore generated classes, e.g., javacc ones -->
+                    <excludes>**/generated/**/*</excludes>
+                    <skip>${checkstyle.skip}</skip>
+                    <configLocation>${geotoolsBaseDir}/build/qa/checkstyle.xml</configLocation>
+                  </configuration>
+              <executions>
+                <execution>
+                  <goals>
+                    <goal>check</goal>
+                  </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>  
+    </profile>
 </profiles>
 
 
@@ -1462,6 +1570,11 @@
           </exclusion>
         </exclusions>
       </dependency>
+      <dependency>
+       <groupId>com.fasterxml.jackson.core</groupId>
+       <artifactId>jackson-core</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
     </dependencies>
 
   </dependencyManagement>
@@ -1477,7 +1590,7 @@
       <!-- The version number is specified above. -->
       <scope>test</scope>
     </dependency>
-  </dependencies>
+   </dependencies>
 
 
   <!-- =========================================================== -->
@@ -1958,7 +2071,7 @@
                     </goals>
                 </execution>
             </executions>
-        </plugin>
+      </plugin>
     </plugins>
   </build>
 

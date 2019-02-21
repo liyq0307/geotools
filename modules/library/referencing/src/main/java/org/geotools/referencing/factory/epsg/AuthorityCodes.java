@@ -103,7 +103,6 @@ public final class AuthorityCodes extends AbstractSet<String> implements Seriali
     /**
      * Creates a new set of authority codes for the specified type.
      *
-     * @param connection The provider of connection to the EPSG database.
      * @param table The table to query.
      * @param type The type to query.
      * @param factory The factory originator.
@@ -147,6 +146,7 @@ public final class AuthorityCodes extends AbstractSet<String> implements Seriali
         sqlSingle = factory.adaptSQL(buffer.toString());
     }
 
+    @SuppressWarnings("PMD.CloseResource")
     protected PreparedStatement validateStatement(PreparedStatement stmt, String sql)
             throws SQLException {
         Connection conn = null;
@@ -235,15 +235,13 @@ public final class AuthorityCodes extends AbstractSet<String> implements Seriali
             return size == 0;
         }
         boolean empty = true;
-        try {
-            final ResultSet results = getAll();
+        try (ResultSet results = getAll()) {
             while (results.next()) {
                 if (isAcceptable(results)) {
                     empty = false;
                     break;
                 }
             }
-            results.close();
         } catch (SQLException exception) {
             unexpectedException("isEmpty", exception);
         }
@@ -258,13 +256,13 @@ public final class AuthorityCodes extends AbstractSet<String> implements Seriali
         }
         int count = 0;
         try {
-            final ResultSet results = getAll();
-            while (results.next()) {
-                if (isAcceptable(results)) {
-                    count++;
+            try (ResultSet results = getAll()) {
+                while (results.next()) {
+                    if (isAcceptable(results)) {
+                        count++;
+                    }
                 }
             }
-            results.close();
         } catch (SQLException exception) {
             unexpectedException("size", exception);
         }
@@ -278,14 +276,14 @@ public final class AuthorityCodes extends AbstractSet<String> implements Seriali
         boolean exists = false;
         if (code != null)
             try {
-                final ResultSet results = getSingle(code);
-                while (results.next()) {
-                    if (isAcceptable(results)) {
-                        exists = true;
-                        break;
+                try (ResultSet results = getSingle(code)) {
+                    while (results.next()) {
+                        if (isAcceptable(results)) {
+                            exists = true;
+                            break;
+                        }
                     }
                 }
-                results.close();
             } catch (SQLException exception) {
                 unexpectedException("contains", exception);
             }
@@ -476,14 +474,14 @@ public final class AuthorityCodes extends AbstractSet<String> implements Seriali
             if (code != null)
                 try {
                     synchronized (AuthorityCodes.this) {
-                        final ResultSet results = getSingle(code);
-                        while (results.next()) {
-                            if (isAcceptable(results)) {
-                                value = results.getString(2);
-                                break;
+                        try (ResultSet results = getSingle(code)) {
+                            while (results.next()) {
+                                if (isAcceptable(results)) {
+                                    value = results.getString(2);
+                                    break;
+                                }
                             }
                         }
-                        results.close();
                     }
                 } catch (SQLException exception) {
                     unexpectedException("get", exception);

@@ -46,16 +46,20 @@ public class WKBAttributeIO {
 
     public WKBAttributeIO(GeometryFactory gf) {
         wkbr = new WKBReader(gf);
+        this.gf = gf;
     }
 
     public void setGeometryFactory(GeometryFactory gf) {
-        wkbr = new WKBReader(gf);
+        if (gf != this.gf) {
+            this.gf = gf;
+            wkbr = new WKBReader(gf);
+        }
     }
 
     /**
      * This method will convert a Well Known Binary representation to a JTS Geometry object.
      *
-     * @param wkb te wkb encoded byte array
+     * @param wkbBytes the wkb encoded byte array
      * @return a JTS Geometry object that is equivalent to the WTB representation passed in by param
      *     wkb
      * @throws IOException if more than one geometry object was found in the WTB representation, or

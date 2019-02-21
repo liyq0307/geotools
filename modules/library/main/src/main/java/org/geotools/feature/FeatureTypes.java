@@ -76,7 +76,7 @@ public class FeatureTypes {
         try {
             uri = new URI("http://www.opengis.net/gml");
         } catch (URISyntaxException e) {
-            uri = null; // will never happen
+            throw new RuntimeException("Unexpected URI syntax exception", e);
         }
         DEFAULT_NAMESPACE = uri;
     }
@@ -121,7 +121,7 @@ public class FeatureTypes {
      * <p>This code is copied from the ShapefileDataStore where it was written (probably by
      * dzwiers). Cholmes is providing documentation.
      *
-     * @param type the AttributeType
+     * @param descriptor the descriptor whose lenght is to be investigated
      * @return an int indicating the max length of field in characters, or ANY_LENGTH
      */
     public static int getFieldLength(PropertyDescriptor descriptor) {
