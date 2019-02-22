@@ -67,6 +67,7 @@
     <module>coverage-multidim</module>
     <module>geopkg</module>
     <module>mongodb</module>
+    <module>bdtindexfile</module>
   </modules>
 
   <!-- temporarily kicking OGR out of the build -->
