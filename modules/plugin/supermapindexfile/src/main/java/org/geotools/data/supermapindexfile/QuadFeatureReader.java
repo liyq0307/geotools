@@ -20,7 +20,6 @@ import com.alibaba.fastjson.JSONReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
-
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Coordinate;
@@ -45,12 +44,13 @@ public abstract class QuadFeatureReader extends SuperMapIndexFileFeatureReader {
             String str1 = jsonReader.readString();
             if (str1.compareToIgnoreCase("grid") == 0) {
                 jsonReader.startObject();
-                Map<String, Object> paris = SuperMapIndexFileUtils.parseReader(
-                        jsonReader, SuperMapIndexFileUtils.getCRS(schema));
+                Map<String, Object> paris =
+                        SuperMapIndexFileUtils.parseReader(
+                                jsonReader, SuperMapIndexFileUtils.getCRS(schema));
                 gridBounds = (ReferencedEnvelope) paris.get("bounds");
                 gridCols = (Integer) paris.get("cols");
-                gridRows = (Integer)paris.get("rows");
-                gridTolerance = (double)paris.get("tolerance");
+                gridRows = (Integer) paris.get("rows");
+                gridTolerance = (double) paris.get("tolerance");
                 jsonReader.endObject();
             } else if (str1.compareToIgnoreCase("indexesMap") == 0) {
                 indexMap = jsonReader.readObject(Integer[].class);

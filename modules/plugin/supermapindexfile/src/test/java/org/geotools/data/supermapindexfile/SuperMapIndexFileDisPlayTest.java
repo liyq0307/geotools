@@ -1,5 +1,10 @@
 package org.geotools.data.supermapindexfile;
 
+import java.awt.*;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.Query;
@@ -15,26 +20,30 @@ import org.geotools.swing.JMapFrame;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory2;
 
-import java.awt.*;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * Created by liyq on 2019/3/5.
- */
+/** Created by liyq on 2019/3/5. */
 public class SuperMapIndexFileDisPlayTest {
     public static void main(String[] args) throws IOException {
         Map<String, Serializable> params = new HashMap<>();
-        String path = "file://" + SuperMapIndexFileDisPlayTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        String path =
+                "file://"
+                        + SuperMapIndexFileDisPlayTest.class
+                                .getProtectionDomain()
+                                .getCodeSource()
+                                .getLocation()
+                                .getPath();
         params.put(SuperMapIndexFileDataStoreFactory.InputFile.key, path + "/data/world");
 
         String typeName = "world";
         DataStore dataStore = DataStoreFinder.getDataStore(params);
         SimpleFeatureSource fs = dataStore.getFeatureSource(typeName);
 
-        ReferencedEnvelope bbox = new ReferencedEnvelope(-29.7200209437253, 84.9462682397991, -26.2363814116757, 66.7224810889989, null);
+        ReferencedEnvelope bbox =
+                new ReferencedEnvelope(
+                        -29.7200209437253,
+                        84.9462682397991,
+                        -26.2363814116757,
+                        66.7224810889989,
+                        null);
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
         Filter filter = ff.bbox(ff.property("geom"), bbox);
         Query query = new Query(typeName, filter);

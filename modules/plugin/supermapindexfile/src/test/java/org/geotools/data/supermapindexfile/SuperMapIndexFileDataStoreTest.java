@@ -17,9 +17,15 @@ import org.opengis.filter.FilterFactory2;
 public class SuperMapIndexFileDataStoreTest {
     public static void main(String[] args) throws IOException {
         Map<String, Serializable> params = new HashMap<>();
-        //params.put("BDTIndexFilePath", "/F:/indexOSMPTest");
-        //params.put("BDTIndexFilePath", "hdfs://localhost:9000/indexOSMPTest1");
-        String path = "file://" + SuperMapIndexFileDisPlayTest.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        // params.put("BDTIndexFilePath", "/F:/indexOSMPTest");
+        // params.put("BDTIndexFilePath", "hdfs://localhost:9000/indexOSMPTest1");
+        String path =
+                "file://"
+                        + SuperMapIndexFileDisPlayTest.class
+                                .getProtectionDomain()
+                                .getCodeSource()
+                                .getLocation()
+                                .getPath();
         params.put(SuperMapIndexFileDataStoreFactory.InputFile.key, path + "/data/world");
 
         long lCount = 0;
@@ -39,7 +45,13 @@ public class SuperMapIndexFileDataStoreTest {
         System.out.println("全部读取对象个数：" + lCount);
 
         lCount = 0;
-        ReferencedEnvelope bbox = new ReferencedEnvelope(-29.7200209437253, 84.9462682397991, -26.2363814116757, 66.7224810889989, null);
+        ReferencedEnvelope bbox =
+                new ReferencedEnvelope(
+                        -29.7200209437253,
+                        84.9462682397991,
+                        -26.2363814116757,
+                        66.7224810889989,
+                        null);
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
         Filter filter = ff.bbox(ff.property("geom"), bbox);
         startTime = System.currentTimeMillis(); // 开始时间

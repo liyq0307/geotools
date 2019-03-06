@@ -1,6 +1,10 @@
 package org.geotools.data.supermapindexfile;
 
 import com.alibaba.fastjson.JSONReader;
+import java.io.IOException;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -9,15 +13,7 @@ import org.geotools.referencing.CRS;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-
-
-/**
- * Created by liyq on 2019/3/5.
- */
+/** Created by liyq on 2019/3/5. */
 class SuperMapIndexFileUtils {
     static String getIndexFile(Configuration conf, String filePath) throws IOException {
         if (filePath == null || filePath.isEmpty()) {
@@ -47,7 +43,8 @@ class SuperMapIndexFileUtils {
         return fs.exists(new Path(path));
     }
 
-    static Map<String, Object> parseReader(JSONReader jsonReader, CoordinateReferenceSystem crs) throws IOException {
+    static Map<String, Object> parseReader(JSONReader jsonReader, CoordinateReferenceSystem crs)
+            throws IOException {
         if (null == jsonReader) {
             return null;
         }
@@ -74,7 +71,7 @@ class SuperMapIndexFileUtils {
             }
         }
 
-        return  pairs;
+        return pairs;
     }
 
     static CoordinateReferenceSystem getCRS(SimpleFeatureType featureType) {
@@ -84,14 +81,14 @@ class SuperMapIndexFileUtils {
 
         CoordinateReferenceSystem referenceSystem = null;
         String crs = featureType.getUserData().get("geomesa.srid").toString();
-        crs = crs.replace("'","");
+        crs = crs.replace("'", "");
         try {
             int epsg = Integer.parseInt(crs);
-            referenceSystem =  CRS.decode("EPSG:" + epsg, true);
+            referenceSystem = CRS.decode("EPSG:" + epsg, true);
         } catch (Exception e) {
             // 可能是wkt，尝试通过wkt解析
             try {
-                referenceSystem =  CRS.parseWKT(crs);
+                referenceSystem = CRS.parseWKT(crs);
             } catch (Exception e1) {
                 // the wkt might reference an unsupported projection
             }

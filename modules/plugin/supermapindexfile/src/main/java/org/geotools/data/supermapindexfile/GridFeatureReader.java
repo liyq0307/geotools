@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Map;
-
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Coordinate;
@@ -42,12 +41,13 @@ public abstract class GridFeatureReader extends SuperMapIndexFileFeatureReader {
             String str1 = jsonReader.readString();
             if (str1.compareToIgnoreCase("grid") == 0) {
                 jsonReader.startObject();
-                Map<String, Object> paris = SuperMapIndexFileUtils.parseReader(
-                        jsonReader, SuperMapIndexFileUtils.getCRS(schema));
+                Map<String, Object> paris =
+                        SuperMapIndexFileUtils.parseReader(
+                                jsonReader, SuperMapIndexFileUtils.getCRS(schema));
                 gridBounds = (ReferencedEnvelope) paris.get("bounds");
-                gridRows = (Integer)paris.get("rows");
+                gridRows = (Integer) paris.get("rows");
                 gridCols = (Integer) paris.get("cols");
-                gridTolerance = (double)paris.get("tolerance");
+                gridTolerance = (double) paris.get("tolerance");
                 jsonReader.endObject();
             } else {
                 throw new IOException("invalid key: " + str1);

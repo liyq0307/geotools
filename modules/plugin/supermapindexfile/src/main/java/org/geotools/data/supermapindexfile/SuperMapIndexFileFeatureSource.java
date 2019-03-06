@@ -1,6 +1,13 @@
 package org.geotools.data.supermapindexfile;
 
+import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
+
 import com.alibaba.fastjson.JSONReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.ByteBuffer;
+import java.util.Date;
+import java.util.Map;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.Query;
 import org.geotools.data.store.ContentEntry;
@@ -15,17 +22,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.ByteBuffer;
-import java.util.Date;
-import java.util.Map;
-
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
-
-/**
- * Created by liyq on 2019/3/4.
- */
+/** Created by liyq on 2019/3/4. */
 public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
     private SuperMapIndexFileDataStore dataStore;
 
@@ -40,12 +37,14 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
      * @param entry
      * @param query
      */
-    public SuperMapIndexFileFeatureSource(ContentEntry entry, Query query, SuperMapIndexFileDataStore dataStore) {
+    public SuperMapIndexFileFeatureSource(
+            ContentEntry entry, Query query, SuperMapIndexFileDataStore dataStore) {
         super(entry, query);
         this.dataStore = dataStore;
     }
 
-    private ReferencedEnvelope parserFromJson(String json, CoordinateReferenceSystem crs) throws IOException {
+    private ReferencedEnvelope parserFromJson(String json, CoordinateReferenceSystem crs)
+            throws IOException {
         StringReader reader = new StringReader(json);
         JSONReader jsonReader = new JSONReader(reader);
         jsonReader.startObject();
@@ -55,7 +54,7 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
             if (jsonReader.readString().compareToIgnoreCase("grid") == 0) {
                 jsonReader.startObject();
                 Map<String, Object> paris = SuperMapIndexFileUtils.parseReader(jsonReader, crs);
-                envelope = (ReferencedEnvelope)paris.get("bounds");
+                envelope = (ReferencedEnvelope) paris.get("bounds");
                 jsonReader.endObject();
             }
         }
@@ -84,7 +83,10 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
 
             ReferencedEnvelope envelope = null;
             if (key.compareToIgnoreCase("context") == 0) {
-                envelope = parserFromJson(jsonReader.readString(), SuperMapIndexFileUtils.getCRS(dataStore.getSchema()));
+                envelope =
+                        parserFromJson(
+                                jsonReader.readString(),
+                                SuperMapIndexFileUtils.getCRS(dataStore.getSchema()));
             }
 
             jsonReader.endObject();
@@ -103,7 +105,8 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
     }
 
     @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query)
+            throws IOException {
         if (null == dataStore) {
             return null;
         }
@@ -212,10 +215,13 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
                     builder.add(fieldInfos[0].substring(1, fieldInfos[0].length()), Point.class);
                     break;
                 case "MultiLineString":
-                    builder.add(fieldInfos[0].substring(1, fieldInfos[0].length()), MultiLineString.class);
+                    builder.add(
+                            fieldInfos[0].substring(1, fieldInfos[0].length()),
+                            MultiLineString.class);
                     break;
                 case "MultiPolygon":
-                    builder.add(fieldInfos[0].substring(1, fieldInfos[0].length()), MultiPolygon.class);
+                    builder.add(
+                            fieldInfos[0].substring(1, fieldInfos[0].length()), MultiPolygon.class);
                     break;
                 default:
                     throw new IOException("Unknown field type");
@@ -227,7 +233,7 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
         SimpleFeatureType sft = builder.buildFeatureType();
         if (featureSpec.length > 1) {
             String[] userDataSpecs = featureSpec[1].split(",");
-            for (String userDatSpec: userDataSpecs) {
+            for (String userDatSpec : userDataSpecs) {
                 String[] userData = userDatSpec.split("=");
                 if (userData.length == 2) {
                     sft.getUserData().put(userData[0], userData[1]);

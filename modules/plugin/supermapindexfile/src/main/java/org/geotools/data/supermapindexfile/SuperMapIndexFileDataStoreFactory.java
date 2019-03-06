@@ -16,6 +16,8 @@
  */
 package org.geotools.data.supermapindexfile;
 
+import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
+
 import com.alibaba.fastjson.JSONReader;
 import java.awt.*;
 import java.io.IOException;
@@ -30,8 +32,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFactorySpi;
-
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
 
 public class SuperMapIndexFileDataStoreFactory implements DataStoreFactorySpi {
 

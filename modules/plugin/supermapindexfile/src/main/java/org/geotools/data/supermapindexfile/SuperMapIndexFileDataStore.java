@@ -1,5 +1,8 @@
 package org.geotools.data.supermapindexfile;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.geotools.data.*;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.ContentDataStore;
@@ -11,13 +14,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.Name;
 import org.opengis.filter.Filter;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Created by liyq on 2019/3/4.
- */
+/** Created by liyq on 2019/3/4. */
 public class SuperMapIndexFileDataStore extends ContentDataStore implements FileDataStore {
     String fileDirectory;
 
@@ -82,22 +79,23 @@ public class SuperMapIndexFileDataStore extends ContentDataStore implements File
     }
 
     @Override
-    public void updateSchema(SimpleFeatureType featureType) throws IOException {
-
-    }
+    public void updateSchema(SimpleFeatureType featureType) throws IOException {}
 
     @Override
-    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(Filter filter, Transaction transaction) throws IOException {
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(
+            Filter filter, Transaction transaction) throws IOException {
         return null;
     }
 
     @Override
-    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(Transaction transaction) throws IOException {
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(Transaction transaction)
+            throws IOException {
         return null;
     }
 
     @Override
-    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(Transaction transaction) throws IOException {
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(
+            Transaction transaction) throws IOException {
         return null;
     }
 }

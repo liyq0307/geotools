@@ -16,6 +16,8 @@
  */
 package org.geotools.data.supermapindexfile;
 
+import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.NumberFormat;
@@ -40,9 +42,8 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
 
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
-
-public abstract class SuperMapIndexFileFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
+public abstract class SuperMapIndexFileFeatureReader
+        implements FeatureReader<SimpleFeatureType, SimpleFeature> {
 
     SimpleFeatureType schema = null;
 
@@ -137,7 +138,8 @@ public abstract class SuperMapIndexFileFeatureReader implements FeatureReader<Si
                         for (String tile : tiles) {
                             setTiles.add(Integer.parseInt(tile));
                         }
-                        Integer[] geometryPartNumbers = setTiles.toArray(new Integer[setTiles.size()]);
+                        Integer[] geometryPartNumbers =
+                                setTiles.toArray(new Integer[setTiles.size()]);
 
                         int nIndex = -1;
                         for (int i = 0; i < geometryPartNumbers.length; i++) {
@@ -169,10 +171,13 @@ public abstract class SuperMapIndexFileFeatureReader implements FeatureReader<Si
                     if (geoType == Point.class) {
                         Double dX = Double.parseDouble(record.get(X).toString());
                         Double dY = Double.parseDouble(record.get(Y).toString());
-                        reGeometry = JTSFactoryFinder.getGeometryFactory().createPoint(new Coordinate(dX, dY));
+                        reGeometry =
+                                JTSFactoryFinder.getGeometryFactory()
+                                        .createPoint(new Coordinate(dX, dY));
                     } else if (geoType == MultiLineString.class || geoType == MultiPolygon.class) {
                         try {
-                            reGeometry = wkbReader.read(((ByteBuffer) record.get(GEOMETRY)).array());
+                            reGeometry =
+                                    wkbReader.read(((ByteBuffer) record.get(GEOMETRY)).array());
                         } catch (ParseException e) {
                             throw new IOException("Unknown WKB");
                         }
@@ -180,7 +185,8 @@ public abstract class SuperMapIndexFileFeatureReader implements FeatureReader<Si
                         continue;
                     }
 
-                    if (!partGeoIsAllBbox.get(currentFileIndex) && !queryGeometry.intersects(reGeometry)) {
+                    if (!partGeoIsAllBbox.get(currentFileIndex)
+                            && !queryGeometry.intersects(reGeometry)) {
                         continue;
                     }
 
@@ -210,7 +216,11 @@ public abstract class SuperMapIndexFileFeatureReader implements FeatureReader<Si
             NumberFormat numfmt = NumberFormat.getInstance(Locale.US);
             numfmt.setMinimumIntegerDigits(6);
             numfmt.setGroupingUsed(false);
-            String partFile = fileDirectory + "/part-" + numfmt.format(partNumbers.get(currentFileIndex)) + ".avro";
+            String partFile =
+                    fileDirectory
+                            + "/part-"
+                            + numfmt.format(partNumbers.get(currentFileIndex))
+                            + ".avro";
 
             Path fPath = new Path(partFile);
             Configuration conf = new Configuration();
