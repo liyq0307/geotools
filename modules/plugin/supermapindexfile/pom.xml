@@ -26,7 +26,7 @@
     <groupId>org.geotools</groupId>
     <artifactId>gt-supermapindexfile</artifactId>
     <packaging>jar</packaging>
-    <name>BDTIndexFile module</name>
+    <name>SuperMapIndexFile module</name>
 
 
     <description>
