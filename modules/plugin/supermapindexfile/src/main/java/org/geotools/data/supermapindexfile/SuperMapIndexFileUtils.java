@@ -7,7 +7,6 @@ import org.apache.hadoop.fs.Path;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import java.io.IOException;
@@ -90,7 +89,7 @@ class SuperMapIndexFileUtils {
             int epsg = Integer.parseInt(crs);
             referenceSystem =  CRS.decode("EPSG:" + epsg, true);
         } catch (Exception e) {
-            // 可能事wkt，尝试通过wkt解析
+            // 可能是wkt，尝试通过wkt解析
             try {
                 referenceSystem =  CRS.parseWKT(crs);
             } catch (Exception e1) {
