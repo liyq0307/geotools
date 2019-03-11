@@ -44,8 +44,9 @@ public class SuperMapIndexFileDataStoreFactory implements DataStoreFactorySpi {
         Configuration conf = new Configuration();
         String filePath = getIndexFile(conf, fileDirectory);
 
-        FileSystem fs = FileSystem.get(URI.create(filePath), conf);
-        FSDataInputStream fileRead = fs.open(new Path(filePath));
+        Path path = new Path(filePath);
+        FileSystem fs = path.getFileSystem(conf);
+        FSDataInputStream fileRead = fs.open(path);
         InputStreamReader inputStream = new InputStreamReader(fileRead, "UTF-8");
 
         String sft_name = "";
@@ -111,8 +112,8 @@ public class SuperMapIndexFileDataStoreFactory implements DataStoreFactorySpi {
             }
 
             Configuration conf = new Configuration();
-            FileSystem fs = FileSystem.get(URI.create(filePath), conf);
             Path path = new Path(filePath);
+            FileSystem fs = FileSystem.get(conf);
             if (!fs.exists(path)) {
                 return false;
             }

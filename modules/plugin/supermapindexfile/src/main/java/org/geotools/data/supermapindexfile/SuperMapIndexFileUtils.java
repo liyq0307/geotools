@@ -23,8 +23,9 @@ class SuperMapIndexFileUtils {
         if (filePath.endsWith("INDEXFILE.index")) {
             return filePath;
         } else {
-            FileSystem fs = FileSystem.get(URI.create(filePath), conf);
             Path path = new Path(filePath);
+            FileSystem fs = path.getFileSystem(conf);
+
             if (!fs.exists(path)) {
                 throw new IllegalArgumentException("filePath " + filePath + " is not existed");
             }
@@ -38,7 +39,7 @@ class SuperMapIndexFileUtils {
 
     static Boolean haveIndex(Configuration conf, String filePath) throws IOException {
         String path = getIndexFile(conf, filePath);
-        FileSystem fs = FileSystem.get(URI.create(path), conf);
+        FileSystem fs = new Path(path).getFileSystem(conf);
 
         return fs.exists(new Path(path));
     }
