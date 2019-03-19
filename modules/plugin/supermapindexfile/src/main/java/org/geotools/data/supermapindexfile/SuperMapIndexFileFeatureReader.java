@@ -16,17 +16,18 @@
  */
 package org.geotools.data.supermapindexfile;
 
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
+import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.ID;
+import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.PARTITIONGRID;
+import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.PARTITIONQUADTREE;
+
+import com.alibaba.fastjson.JSONReader;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.io.StringReader;
 import java.text.NumberFormat;
 import java.util.*;
-import org.apache.avro.file.DataFileReader;
-import org.apache.avro.file.FileReader;
-import org.apache.avro.generic.GenericDatumReader;
+
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.mapred.FsInput;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -35,210 +36,359 @@ import org.geotools.data.FeatureReader;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.locationtech.jts.geom.*;
-import org.locationtech.jts.io.ParseException;
-import org.locationtech.jts.io.WKBReader;
+import org.geotools.util.Converters;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.filter.Filter;
+import org.opengis.filter.expression.PropertyName;
+import org.opengis.filter.spatial.BBOX;
+import org.opengis.geometry.BoundingBox;
 
 public abstract class SuperMapIndexFileFeatureReader
         implements FeatureReader<SimpleFeatureType, SimpleFeature> {
-
-    SimpleFeatureType schema = null;
+    String className;
 
     String fileDirectory = null;
 
-    ReferencedEnvelope gridBounds = null;
+    SimpleFeatureType schema = null;
 
-    Integer gridRows = 0;
+    int currentIndex = 0;
 
-    Integer gridCols = 0;
+    private List<Integer> partNumbers = null;
 
-    Double gridTolerance = 0.0;
+    private List<Boolean> partGeoIsAllBBox = null;
 
-    List<Integer> partNumbers = null;
+    private Geometry queryGeometry = null;
 
-    List<Boolean> partGeoIsAllBbox = null;
+    private ReferencedEnvelope gridBounds = null;
 
-    Geometry queryGeometry = null;
+    private Integer gridRows = 0;
 
-    SimpleFeatureBuilder featureBuilder = null;
+    private Integer gridCols = 0;
 
-    WKBReader wkbReader = null;
+    private Double tolerance = 0.0;
 
-    private int currentFileIndex = 0;
+    private Integer[] indexMap = null;
 
-    // Avro使用
-    private FileReader<GenericRecord> avroReader = null;
+    private ArrayList<ReferencedEnvelope> indexRect = null;
 
-    private boolean bIsUseRecord = true;
-    private GenericRecord record = null;
-    private Geometry reGeometry = null;
+    void fromJson(String jsonContext) throws IOException {
+        StringReader inputStream = new StringReader(jsonContext);
+        JSONReader jsonReader = new JSONReader(inputStream);
 
-    public abstract void fromJson(String jsonContext) throws IOException;
+        jsonReader.startObject();
+        while (jsonReader.hasNext()) {
+            String str1 = jsonReader.readString();
+            if (str1.compareToIgnoreCase("grid") == 0) {
+                jsonReader.startObject();
+                Map<String, Object> paris =
+                        SuperMapIndexFileUtils.parseReader(
+                                jsonReader, SuperMapIndexFileUtils.getCRS(schema));
+                gridBounds = (ReferencedEnvelope) paris.get("bounds");
+                gridCols = (Integer) paris.get("cols");
+                gridRows = (Integer) paris.get("rows");
+                tolerance = (double) paris.get("tolerance");
+                jsonReader.endObject();
+            } else if (str1.compareToIgnoreCase("indexesMap") == 0) {
+                indexMap = jsonReader.readObject(Integer[].class);
+            } else if (str1.compareToIgnoreCase("indexesRect") == 0) {
+                indexRect = new ArrayList<>();
+                jsonReader.startArray();
+                while (jsonReader.hasNext()) {
+                    jsonReader.startArray();
+                    double minx = jsonReader.readObject(Double.class);
+                    double maxy = jsonReader.readObject(Double.class);
+                    double maxx = jsonReader.readObject(Double.class);
+                    double miny = jsonReader.readObject(Double.class);
+                    jsonReader.endArray();
+                    indexRect.add(new ReferencedEnvelope(minx, maxx, miny, maxy, null));
+                }
+                jsonReader.endArray();
+            } else {
+                throw new IOException("invalid key: " + str1);
+            }
+        }
 
-    public abstract boolean initPartFile(Filter filter) throws IOException;
-
-    @Override
-    public SimpleFeatureType getFeatureType() {
-        return schema;
+        jsonReader.endObject();
+        jsonReader.close();
+        inputStream.close();
     }
 
-    public SimpleFeature avroNext()
+    private Geometry getQueryGeometry(BoundingBox bounds) {
+        if (null == bounds) {
+            return null;
+        }
+
+        bounds.setBounds(
+                new ReferencedEnvelope(
+                        bounds.getMinX() - tolerance,
+                        bounds.getMaxX() + tolerance,
+                        bounds.getMinY() - tolerance,
+                        bounds.getMaxY() + tolerance,
+                        null));
+
+        Coordinate[] coords =
+                new Coordinate[]{
+                        new Coordinate(bounds.getMinX(), bounds.getMinY()),
+                        new Coordinate(bounds.getMinX(), bounds.getMaxY()),
+                        new Coordinate(bounds.getMaxX(), bounds.getMaxY()),
+                        new Coordinate(bounds.getMaxX(), bounds.getMinY()),
+                        new Coordinate(bounds.getMinX(), bounds.getMinY())
+                };
+
+        return JTSFactoryFinder.getGeometryFactory().createPolygon(coords);
+    }
+
+    private boolean initGridPartFile(Filter filter) {
+        // 初始化文件编号
+        int nCount = gridRows * gridCols;
+        partNumbers = new ArrayList<>();
+        for (int i = 0; i < nCount; i++) {
+            partNumbers.add(i);
+        }
+
+        // 根据条件剔除文件编号
+        if (filter == Filter.INCLUDE) {
+            partGeoIsAllBBox = new ArrayList<>();
+            for (int i = 0; i < partNumbers.size(); i++) {
+                partGeoIsAllBBox.add(true);
+            }
+            return true;
+        } else if (filter instanceof BBOX) {
+            BBOX bbox = (BBOX) filter;
+            if (bbox.getExpression1() instanceof PropertyName) {
+                if (!((PropertyName) bbox.getExpression1())
+                        .getPropertyName()
+                        .equals(schema.getGeometryDescriptor().getLocalName())) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            BoundingBox bounds = bbox.getBounds();
+            queryGeometry = getQueryGeometry(bounds);
+
+            partGeoIsAllBBox = new ArrayList<>();
+            double dUnitX = gridBounds.getWidth() / gridCols;
+            double dUnitY = gridBounds.getHeight() / gridRows;
+
+            int nIndex = 0;
+            while (nIndex < partNumbers.size()) {
+                ReferencedEnvelope indexRect =
+                        new ReferencedEnvelope(
+                                gridBounds.getMinX()
+                                        + (partNumbers.get(nIndex) % gridCols) * dUnitX,
+                                gridBounds.getMinX()
+                                        + (partNumbers.get(nIndex) % gridCols + 1) * dUnitX,
+                                gridBounds.getMaxY()
+                                        - (partNumbers.get(nIndex) / gridCols % gridRows + 1)
+                                        * dUnitY,
+                                gridBounds.getMaxY()
+                                        - (partNumbers.get(nIndex) / gridCols % gridRows) * dUnitY,
+                                null);
+
+                if (bounds.intersects(indexRect)) {
+                    if (bounds.contains(indexRect)) {
+                        partGeoIsAllBBox.add(true);
+                    } else {
+                        partGeoIsAllBBox.add(false);
+                    }
+
+                    nIndex++;
+                } else {
+                    partNumbers.remove(nIndex);
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean initQuadPartFile(Filter filter) throws IOException {
+        // 初始化文件编号
+        Set<Integer> setFileNumber = new TreeSet<>();
+        Collections.addAll(setFileNumber, indexMap);
+        partNumbers = new ArrayList<>(setFileNumber);
+        if (partNumbers.size() < 1 || partNumbers.get(partNumbers.size() - 1) >= indexRect.size()) {
+            return false;
+        }
+
+        // 根据条件剔除文件编号
+        if (filter == Filter.INCLUDE) {
+            partGeoIsAllBBox = new ArrayList<>();
+            for (int i = 0; i < partNumbers.size(); i++) {
+                partGeoIsAllBBox.add(true);
+            }
+
+            return true;
+        } else if (filter instanceof BBOX) {
+            BBOX bbox = (BBOX) filter;
+            if (bbox.getExpression1() instanceof PropertyName) {
+                if (!((PropertyName) bbox.getExpression1())
+                        .getPropertyName()
+                        .equals(schema.getGeometryDescriptor().getLocalName())) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            BoundingBox bounds = bbox.getBounds();
+            queryGeometry = getQueryGeometry(bounds);
+
+            partGeoIsAllBBox = new ArrayList<>();
+            int nIndex = 0;
+            while (nIndex < partNumbers.size()) {
+                if (bounds.intersects(indexRect.get(partNumbers.get(nIndex)))) {
+                    if (bounds.contains(indexRect.get(partNumbers.get(nIndex)))) {
+                        partGeoIsAllBBox.add(true);
+                    } else {
+                        partGeoIsAllBBox.add(false);
+                    }
+
+                    nIndex++;
+                } else {
+                    partNumbers.remove(nIndex);
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    boolean initPartFile(Filter filter) throws IOException {
+        if (className.compareToIgnoreCase(PARTITIONGRID) == 0) {
+            return initGridPartFile(filter);
+        } else if (className.compareToIgnoreCase(PARTITIONQUADTREE) == 0) {
+            return initQuadPartFile(filter);
+        } else {
+            throw new IOException("invalid classname: " + className);
+        }
+    }
+
+    private boolean isGeometryClass(Class<?> clazz) {
+        return clazz == org.locationtech.jts.geom.Point.class
+                || clazz == org.locationtech.jts.geom.MultiLineString.class
+                || clazz == org.locationtech.jts.geom.MultiPolygon.class;
+    }
+
+    SimpleFeature buildFeature(GenericRecord record, Geometry geometry)
             throws IOException, IllegalArgumentException, NoSuchElementException {
-        featureBuilder.reset();
+        if (null == schema) {
+            return null;
+        }
+
+        if (null == record) {
+            return null;
+        }
+
+        SimpleFeatureBuilder builder = new SimpleFeatureBuilder(schema);
         int attributeCount = schema.getAttributeCount();
         for (int i = 0; i < attributeCount; i++) {
-            String fieldName = schema.getDescriptor(i).getLocalName();
-            Class fieldType = schema.getDescriptor(i).getType().getBinding();
-
-            if (fieldType == Integer.class
-                    || fieldType == Long.class
-                    || fieldType == Double.class
-                    || fieldType == Float.class
-                    || fieldType == String.class
-                    || fieldType == Boolean.class
-                    || fieldType == ByteBuffer.class) {
-                featureBuilder.set(fieldName, record.get(fieldName));
-            } else if (fieldType == Date.class) {
-                Object olDate = record.get(fieldName);
-                if (olDate != null) {
-                    Date dateValue = new Date((Long) olDate);
-                    featureBuilder.set(fieldName, dateValue);
-                } else {
-                    featureBuilder.set(fieldName, olDate);
-                }
-            } else if (fieldType == Point.class
-                    || fieldType == MultiLineString.class
-                    || fieldType == MultiPolygon.class) {
-                featureBuilder.set(fieldName, reGeometry);
+            AttributeDescriptor descriptor = schema.getDescriptor(i);
+            Class<?> clazz = descriptor.getType().getBinding();
+            if (isGeometryClass(clazz)) {
+                builder.set(descriptor.getLocalName(), geometry);
+            } else {
+                Object value = record.get(descriptor.getLocalName());
+                builder.add(Converters.convert(value, clazz));
             }
         }
 
         String fid = record.get(ID).toString();
         if (fid == null || fid.isEmpty()) {
-            fid = java.util.UUID.randomUUID().toString();
+            fid = UUID.randomUUID().toString();
         }
 
-        bIsUseRecord = true;
-        return featureBuilder.buildFeature(fid);
+        return builder.buildFeature(fid);
     }
 
-    public boolean avroHasNext() throws IOException {
-        while (bIsUseRecord) {
-            // 使用了需要重新获取
-            if (avroReader != null) {
-                if (avroReader.hasNext()) {
-                    // 存在
-                    record = avroReader.next(record);
-                    String[] tiles = record.get(TILES).toString().split(",");
-                    if (tiles != null && tiles.length > 1) {
-                        Set<Integer> setTiles = new TreeSet<>();
-                        for (String tile : tiles) {
-                            setTiles.add(Integer.parseInt(tile));
-                        }
-                        Integer[] geometryPartNumbers =
-                                setTiles.toArray(new Integer[setTiles.size()]);
-
-                        int nIndex = -1;
-                        for (int i = 0; i < geometryPartNumbers.length; i++) {
-                            if (geometryPartNumbers[i].equals(partNumbers.get(currentFileIndex))) {
-                                nIndex = i;
-                                break;
-                            }
-                        }
-
-                        boolean bIsRead = false;
-                        for (int i = 0; i < nIndex; i++) {
-                            for (int j = 0; j < currentFileIndex; j++) {
-                                if (geometryPartNumbers[i].equals(partNumbers.get(j))) {
-                                    bIsRead = true;
-                                    break;
-                                }
-                            }
-                            if (bIsRead) {
-                                break;
-                            }
-                        }
-                        if (bIsRead) {
-                            continue;
-                        }
-                    }
-
-                    // 取几何对象
-                    Class geoType = schema.getGeometryDescriptor().getType().getBinding();
-                    if (geoType == Point.class) {
-                        Double dX = Double.parseDouble(record.get(X).toString());
-                        Double dY = Double.parseDouble(record.get(Y).toString());
-                        reGeometry =
-                                JTSFactoryFinder.getGeometryFactory()
-                                        .createPoint(new Coordinate(dX, dY));
-                    } else if (geoType == MultiLineString.class || geoType == MultiPolygon.class) {
-                        try {
-                            reGeometry =
-                                    wkbReader.read(((ByteBuffer) record.get(GEOMETRY)).array());
-                        } catch (ParseException e) {
-                            throw new IOException("Unknown WKB");
-                        }
-                    } else {
-                        continue;
-                    }
-
-                    if (!partGeoIsAllBbox.get(currentFileIndex)
-                            && !queryGeometry.intersects(reGeometry)) {
-                        continue;
-                    }
-
-                    bIsUseRecord = false;
-                    continue;
-                } else {
-                    avroReader.close();
-                    currentFileIndex++;
-                }
-            }
-
-            String partFile = getAvroPartFile();
-            if (partFile.isEmpty()) {
-                avroReader = null;
-                return false;
-            }
-
-            Configuration conf = new Configuration();
-            FsInput fsInput = new FsInput(new Path(partFile), conf);
-            avroReader = DataFileReader.openReader(fsInput, new GenericDatumReader<>());
+    String getPartFile(String ext) throws IOException {
+        if (fileDirectory.isEmpty()) {
+            return "";
         }
-        return true;
-    }
 
-    private String getAvroPartFile() throws IOException {
-        while (currentFileIndex < partNumbers.size()) {
+        while (currentIndex < partNumbers.size()) {
             NumberFormat numfmt = NumberFormat.getInstance(Locale.US);
             numfmt.setMinimumIntegerDigits(6);
             numfmt.setGroupingUsed(false);
             String partFile =
                     fileDirectory
                             + "/part-"
-                            + numfmt.format(partNumbers.get(currentFileIndex))
-                            + ".avro";
+                            + numfmt.format(partNumbers.get(currentIndex))
+                            + ext;
 
             Path fPath = new Path(partFile);
             Configuration conf = new Configuration();
             FileSystem hdfs = fPath.getFileSystem(conf);
 
             if (!hdfs.exists(fPath)) {
-                currentFileIndex++;
+                currentIndex++;
                 continue;
             }
 
             FileStatus fileStatus = hdfs.getFileStatus(fPath);
             if (fileStatus.getLen() <= 4) {
-                currentFileIndex++;
+                currentIndex++;
                 continue;
             }
 
             return partFile;
         }
+
         return "";
+    }
+
+    List<Boolean> getPartGeoIsAllBBox() {
+        return partGeoIsAllBBox;
+    }
+
+    Geometry getQueryGeometry() {
+        return queryGeometry;
+    }
+
+    int getIndex(Integer[] newPartNumbers) {
+        int index = -1;
+        for (int i = 0; i < newPartNumbers.length; i++) {
+            if (newPartNumbers[i].equals(partNumbers.get(currentIndex))) {
+                index = i;
+                break;
+            }
+        }
+
+        return index;
+    }
+
+    boolean isRead(int index, Integer[] newPartNumbers) {
+        if (currentIndex > partNumbers.size()) {
+            return false;
+        }
+
+        if (newPartNumbers == null) {
+            return false;
+        }
+
+        if (index > 0) {
+            for (int i = 0; i < currentIndex; i++) {
+                if (newPartNumbers[index - 1].equals(partNumbers.get(i))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public SimpleFeatureType getFeatureType() {
+        return schema;
     }
 }

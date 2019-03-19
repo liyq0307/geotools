@@ -34,10 +34,11 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
      * query specified in the constructor. The <tt>query</tt> parameter may be <code>null</code> to
      * specify that the feature source represents the entire set of features.
      *
-     * @param entry
-     * @param query
+     * @param entry ContentEntry
+     * @param query Query
+     * @param dataStore SuperMapIndexFileDataStore
      */
-    public SuperMapIndexFileFeatureSource(
+    SuperMapIndexFileFeatureSource(
             ContentEntry entry, Query query, SuperMapIndexFileDataStore dataStore) {
         super(entry, query);
         this.dataStore = dataStore;
@@ -51,14 +52,31 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
 
         ReferencedEnvelope envelope = null;
         while (jsonReader.hasNext()) {
-            if (jsonReader.readString().compareToIgnoreCase("grid") == 0) {
+            String str = jsonReader.readString();
+            if (str.compareToIgnoreCase("grid") == 0) {
                 jsonReader.startObject();
                 Map<String, Object> paris = SuperMapIndexFileUtils.parseReader(jsonReader, crs);
                 envelope = (ReferencedEnvelope) paris.get("bounds");
                 jsonReader.endObject();
+            } else if (str.compareToIgnoreCase("indexesMap") == 0) {
+                jsonReader.readObject(Integer[].class);
+            } else if (str.compareToIgnoreCase("indexesRect") == 0) {
+                jsonReader.startArray();
+                while (jsonReader.hasNext()) {
+                    jsonReader.startArray();
+                    for (int i = 0; i < 4; i++) {
+                        jsonReader.readObject(Double.class);
+                    }
+                    jsonReader.endArray();
+                }
+                jsonReader.endArray();
+            } else {
+                throw new IOException("invalid key: " + str);
             }
         }
 
+        jsonReader.endObject();
+        jsonReader.close();
         reader.close();
 
         return envelope;
@@ -120,25 +138,13 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
         jsonReader.startObject();
         String key = jsonReader.readString();
         if (key.compareToIgnoreCase("classname") == 0) {
-            String name = jsonReader.readString();
-            if (name.compareToIgnoreCase(PARTITIONQUADTREE) == 0) {
-                if (dataStore.storageFormat.compareToIgnoreCase(AVRO) == 0) {
-                    indexReader = new QuadAvroFeatureReader(sft, dataStore.fileDirectory);
-                } else if (dataStore.storageFormat.compareToIgnoreCase(PARQUETSPATIAL) == 0) {
-                    indexReader = new QuadParquetFeatureReader(sft, dataStore.fileDirectory);
-                } else {
-                    throw new IOException("invalid StorageFormat: " + dataStore.storageFormat);
-                }
-            } else if (name.compareToIgnoreCase(PARTITIONGRID) == 0) {
-                if (dataStore.storageFormat.compareToIgnoreCase(AVRO) == 0) {
-                    indexReader = new GridAvroFeatureReader(sft, dataStore.fileDirectory);
-                } else if (dataStore.storageFormat.compareToIgnoreCase(PARQUETSPATIAL) == 0) {
-                    indexReader = new GridParquetFeatureReader(sft, dataStore.fileDirectory);
-                } else {
-                    throw new IOException("invalid StorageFormat: " + dataStore.storageFormat);
-                }
+            String className = jsonReader.readString();
+            if (dataStore.storageFormat.compareToIgnoreCase(AVRO) == 0) {
+                indexReader = new AvroFeatureReader(className, dataStore.fileDirectory, sft);
+            } else if (dataStore.storageFormat.compareToIgnoreCase(PARQUETSPATIAL) == 0) {
+                indexReader = new ParquetFeatureReader(className, dataStore.fileDirectory, sft);
             } else {
-                throw new IOException("invalid classname: " + name);
+                throw new IOException("invalid StorageFormat: " + dataStore.storageFormat);
             }
         } else {
             throw new IOException("invalid json tag: " + key);

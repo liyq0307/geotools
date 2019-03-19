@@ -2,7 +2,6 @@ package org.geotools.data.supermapindexfile;
 
 import com.alibaba.fastjson.JSONReader;
 import java.io.IOException;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;

@@ -23,7 +23,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Serializable;
-import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
@@ -42,6 +41,9 @@ public class SuperMapIndexFileDataStoreFactory implements DataStoreFactorySpi {
     public DataStore createDataStore(Map<String, Serializable> params) throws IOException {
         String fileDirectory = (String) InputFile.lookUp(params);
         Configuration conf = new Configuration();
+        if (fileDirectory.toLowerCase().startsWith("oss://")) {
+            conf.set("fs.oss.impl", "org.apache.hadoop.fs.aliyun.oss.AliyunOSSFileSystem");
+        }
         String filePath = getIndexFile(conf, fileDirectory);
 
         Path path = new Path(filePath);
@@ -113,7 +115,7 @@ public class SuperMapIndexFileDataStoreFactory implements DataStoreFactorySpi {
 
             Configuration conf = new Configuration();
             Path path = new Path(filePath);
-            FileSystem fs = FileSystem.get(conf);
+            FileSystem fs = path.getFileSystem(conf);
             if (!fs.exists(path)) {
                 return false;
             }
