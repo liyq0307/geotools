@@ -4,7 +4,6 @@ import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
-
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -15,9 +14,7 @@ import org.locationtech.jts.geom.*;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
-/**
- * Created by liyq on 2019/3/16.
- */
+/** Created by liyq on 2019/3/16. */
 public class ParquetFeatureReader extends SuperMapIndexFileFeatureReader {
     private ParquetReader reader = null;
 

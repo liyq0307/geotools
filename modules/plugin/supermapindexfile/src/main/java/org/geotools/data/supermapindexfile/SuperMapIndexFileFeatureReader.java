@@ -21,12 +21,10 @@ import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.PARTITI
 import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.PARTITIONQUADTREE;
 
 import com.alibaba.fastjson.JSONReader;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.text.NumberFormat;
 import java.util.*;
-
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -131,12 +129,12 @@ public abstract class SuperMapIndexFileFeatureReader
                         null));
 
         Coordinate[] coords =
-                new Coordinate[]{
-                        new Coordinate(bounds.getMinX(), bounds.getMinY()),
-                        new Coordinate(bounds.getMinX(), bounds.getMaxY()),
-                        new Coordinate(bounds.getMaxX(), bounds.getMaxY()),
-                        new Coordinate(bounds.getMaxX(), bounds.getMinY()),
-                        new Coordinate(bounds.getMinX(), bounds.getMinY())
+                new Coordinate[] {
+                    new Coordinate(bounds.getMinX(), bounds.getMinY()),
+                    new Coordinate(bounds.getMinX(), bounds.getMaxY()),
+                    new Coordinate(bounds.getMaxX(), bounds.getMaxY()),
+                    new Coordinate(bounds.getMaxX(), bounds.getMinY()),
+                    new Coordinate(bounds.getMinX(), bounds.getMinY())
                 };
 
         return JTSFactoryFinder.getGeometryFactory().createPolygon(coords);
@@ -186,7 +184,7 @@ public abstract class SuperMapIndexFileFeatureReader
                                         + (partNumbers.get(nIndex) % gridCols + 1) * dUnitX,
                                 gridBounds.getMaxY()
                                         - (partNumbers.get(nIndex) / gridCols % gridRows + 1)
-                                        * dUnitY,
+                                                * dUnitY,
                                 gridBounds.getMaxY()
                                         - (partNumbers.get(nIndex) / gridCols % gridRows) * dUnitY,
                                 null);
@@ -321,10 +319,7 @@ public abstract class SuperMapIndexFileFeatureReader
             numfmt.setMinimumIntegerDigits(6);
             numfmt.setGroupingUsed(false);
             String partFile =
-                    fileDirectory
-                            + "/part-"
-                            + numfmt.format(partNumbers.get(currentIndex))
-                            + ext;
+                    fileDirectory + "/part-" + numfmt.format(partNumbers.get(currentIndex)) + ext;
 
             Path fPath = new Path(partFile);
             Configuration conf = new Configuration();

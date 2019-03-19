@@ -5,7 +5,6 @@ import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.NoSuchElementException;
-
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.FileReader;
 import org.apache.avro.generic.GenericDatumReader;
@@ -20,9 +19,7 @@ import org.locationtech.jts.io.WKBReader;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
-/**
- * Created by liyq on 2019/3/16.
- */
+/** Created by liyq on 2019/3/16. */
 public class AvroFeatureReader extends SuperMapIndexFileFeatureReader {
 
     private GenericRecord record = null;
