@@ -80,9 +80,10 @@ class SuperMapIndexFileUtils {
         }
 
         CoordinateReferenceSystem referenceSystem = null;
-        String crs = featureType.getUserData().get("geomesa.srid").toString();
-        crs = crs.replace("'", "");
+        String crs = null;
         try {
+            crs = featureType.getUserData().get("geomesa.srid").toString();
+            crs = crs.replace("'", "");
             int epsg = Integer.parseInt(crs);
             referenceSystem = CRS.decode("EPSG:" + epsg, true);
         } catch (Exception e) {
