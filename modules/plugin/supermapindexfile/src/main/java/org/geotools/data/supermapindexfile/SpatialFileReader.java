@@ -50,7 +50,7 @@ public class SpatialFileReader implements Closeable {
         if (inStream != null && pos >= 0) {
             inStream.seek(pos);
             lengthBytesBuffer.clear();
-            inStream.read(lengthBytesBuffer.array(), 0, 4);
+            inStream.readFully(lengthBytesBuffer.array(), 0, 4);
 
             int bytesLength = lengthBytesBuffer.getInt();
             if (bytesLength <= byteBuffer.capacity()) {
@@ -58,7 +58,7 @@ public class SpatialFileReader implements Closeable {
             } else {
                 byteBuffer = ByteBuffer.allocate(bytesLength);
             }
-            inStream.read(byteBuffer.array(), 0, bytesLength);
+            inStream.readFully(byteBuffer.array(), 0, bytesLength);
             byteBuffer.limit(bytesLength);
 
             if (geometryType.getBinding() == Point.class) {
