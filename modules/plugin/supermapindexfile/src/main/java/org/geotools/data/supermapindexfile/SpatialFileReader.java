@@ -29,7 +29,7 @@ public class SpatialFileReader implements Closeable {
         String spatialFile;
         if (lowStr.endsWith(".parquet")) {
             int pos = lowStr.lastIndexOf(".parquet");
-            spatialFile = lowStr.substring(0, pos) + ".spatial";
+            spatialFile = path.substring(0, pos) + ".spatial";
         } else if (lowStr.endsWith(".spatial")) {
             spatialFile = path;
         } else {
