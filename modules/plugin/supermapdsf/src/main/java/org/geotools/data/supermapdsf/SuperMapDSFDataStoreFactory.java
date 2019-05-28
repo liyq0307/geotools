@@ -14,9 +14,9 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.supermapindexfile;
+package org.geotools.data.supermapdsf;
 
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
+import static org.geotools.data.supermapdsf.SuperMapDSFFileUtils.*;
 
 import com.alibaba.fastjson.JSONReader;
 import java.awt.*;
@@ -32,7 +32,7 @@ import org.apache.hadoop.fs.Path;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFactorySpi;
 
-public class SuperMapIndexFileDataStoreFactory implements DataStoreFactorySpi {
+public class SuperMapDSFDataStoreFactory implements DataStoreFactorySpi {
 
     public static final Param InputFile =
             new Param("path", String.class, "Directory containing index files", true);
@@ -82,7 +82,7 @@ public class SuperMapIndexFileDataStoreFactory implements DataStoreFactorySpi {
         inputStream.close();
         fileRead.close();
 
-        SuperMapIndexFileDataStore store = new SuperMapIndexFileDataStore(fileDirectory);
+        SuperMapDSFDataStore store = new SuperMapDSFDataStore(fileDirectory);
         store.setSftName(sft_name);
         store.setSftSpec(sft_spec);
         store.setIndexJson(indexJson);

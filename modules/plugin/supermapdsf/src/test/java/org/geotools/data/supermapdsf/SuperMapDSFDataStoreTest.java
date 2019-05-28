@@ -1,4 +1,4 @@
-package org.geotools.data.supermapindexfile;
+package org.geotools.data.supermapdsf;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -14,20 +14,19 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory2;
 
-public class SuperMapIndexFileDataStoreTest {
+public class SuperMapDSFDataStoreTest {
     public static void main(String[] args) throws IOException {
         Map<String, Serializable> params = new HashMap<>();
-        // params.put("BDTIndexFilePath", "/F:/indexOSMPTest");
-        // params.put("BDTIndexFilePath", "hdfs://localhost:9000/indexOSMPTest1");
         String path =
                 "file://"
-                        + SuperMapIndexFileDisPlayTest.class
+                        + SuperMapDSFDisPlayTest.class
                                 .getProtectionDomain()
                                 .getCodeSource()
                                 .getLocation()
                                 .getPath();
-        params.put(SuperMapIndexFileDataStoreFactory.InputFile.key, path + "/data/world");
-
+        params.put(SuperMapDSFDataStoreFactory.InputFile.key, path + "/data/world");
+        // String path = "hdfs://localhost:9000/hdfsTest";
+        // params.put(SuperMapDSFDataStoreFactory.InputFile.key, path);
         long lCount = 0;
         long startTime = System.currentTimeMillis(); // 开始时间
         DataStore dataStore = DataStoreFinder.getDataStore(params);

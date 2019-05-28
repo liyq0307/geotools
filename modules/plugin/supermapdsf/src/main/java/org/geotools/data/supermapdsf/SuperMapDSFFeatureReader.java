@@ -14,11 +14,11 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.supermapindexfile;
+package org.geotools.data.supermapdsf;
 
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.ID;
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.PARTITIONGRID;
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.PARTITIONQUADTREE;
+import static org.geotools.data.supermapdsf.SuperMapDSFFileUtils.ID;
+import static org.geotools.data.supermapdsf.SuperMapDSFFileUtils.PARTITIONGRID;
+import static org.geotools.data.supermapdsf.SuperMapDSFFileUtils.PARTITIONQUADTREE;
 
 import com.alibaba.fastjson.JSONReader;
 import java.io.IOException;
@@ -45,7 +45,7 @@ import org.opengis.filter.expression.PropertyName;
 import org.opengis.filter.spatial.BBOX;
 import org.opengis.geometry.BoundingBox;
 
-public abstract class SuperMapIndexFileFeatureReader
+public abstract class SuperMapDSFFeatureReader
         implements FeatureReader<SimpleFeatureType, SimpleFeature> {
     String className;
 
@@ -83,8 +83,8 @@ public abstract class SuperMapIndexFileFeatureReader
             if (str1.compareToIgnoreCase("grid") == 0) {
                 jsonReader.startObject();
                 Map<String, Object> paris =
-                        SuperMapIndexFileUtils.parseReader(
-                                jsonReader, SuperMapIndexFileUtils.getCRS(schema));
+                        SuperMapDSFFileUtils.parseReader(
+                                jsonReader, SuperMapDSFFileUtils.getCRS(schema));
                 gridBounds = (ReferencedEnvelope) paris.get("bounds");
                 gridCols = (Integer) paris.get("cols");
                 gridRows = (Integer) paris.get("rows");

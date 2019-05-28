@@ -1,4 +1,4 @@
-package org.geotools.data.supermapindexfile;
+package org.geotools.data.supermapdsf;
 
 import java.awt.*;
 import java.io.IOException;
@@ -21,18 +21,20 @@ import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory2;
 
 /** Created by liyq on 2019/3/5. */
-public class SuperMapIndexFileDisPlayTest {
+public class SuperMapDSFDisPlayTest {
     public static void main(String[] args) throws IOException {
         Map<String, Serializable> params = new HashMap<>();
         String path =
                 "file://"
-                        + SuperMapIndexFileDisPlayTest.class
+                        + SuperMapDSFDisPlayTest.class
                                 .getProtectionDomain()
                                 .getCodeSource()
                                 .getLocation()
                                 .getPath();
-        params.put(SuperMapIndexFileDataStoreFactory.InputFile.key, path + "/data/world");
+        params.put(SuperMapDSFDataStoreFactory.InputFile.key, path + "/data/world");
 
+        //        String path = "hdfs://localhost:9000/test/liyq/v2/clip/clip_GIndex2x2";
+        //        params.put(SuperMapDSFDataStoreFactory.InputFile.key, path);
         String typeName = "world";
         DataStore dataStore = DataStoreFinder.getDataStore(params);
         SimpleFeatureSource fs = dataStore.getFeatureSource(typeName);
@@ -47,10 +49,11 @@ public class SuperMapIndexFileDisPlayTest {
         FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
         Filter filter = ff.bbox(ff.property("geom"), bbox);
         Query query = new Query(typeName, filter);
+        // Query query = new Query(typeName);
         SimpleFeatureCollection collection = fs.getFeatures(query);
 
         MapContent map = new MapContent();
-        map.setTitle("SuperMapIndexFileDisPlayTest");
+        map.setTitle("SuperMapDSFDisPlayTest");
 
         Style style = SLD.createSimpleStyle(fs.getSchema(), Color.red);
         FeatureLayer layer = new FeatureLayer(collection, style);

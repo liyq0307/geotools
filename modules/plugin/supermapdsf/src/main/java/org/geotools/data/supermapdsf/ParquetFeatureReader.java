@@ -1,6 +1,6 @@
-package org.geotools.data.supermapindexfile;
+package org.geotools.data.supermapdsf;
 
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
+import static org.geotools.data.supermapdsf.SuperMapDSFFileUtils.*;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
@@ -15,7 +15,7 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
 /** Created by liyq on 2019/3/16. */
-public class ParquetFeatureReader extends SuperMapIndexFileFeatureReader {
+public class ParquetFeatureReader extends SuperMapDSFFeatureReader {
     private ParquetReader reader = null;
 
     private SpatialFileReader spatialReader = null;

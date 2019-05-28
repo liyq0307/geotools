@@ -1,4 +1,4 @@
-package org.geotools.data.supermapindexfile;
+package org.geotools.data.supermapdsf;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ import org.opengis.feature.type.Name;
 import org.opengis.filter.Filter;
 
 /** Created by liyq on 2019/3/4. */
-public class SuperMapIndexFileDataStore extends ContentDataStore implements FileDataStore {
+public class SuperMapDSFDataStore extends ContentDataStore implements FileDataStore {
     String fileDirectory;
 
     String sftName;
@@ -42,7 +42,7 @@ public class SuperMapIndexFileDataStore extends ContentDataStore implements File
         this.storageFormat = storageFormat;
     }
 
-    SuperMapIndexFileDataStore(String filePath) {
+    SuperMapDSFDataStore(String filePath) {
         this.fileDirectory = filePath;
     }
 
@@ -75,7 +75,7 @@ public class SuperMapIndexFileDataStore extends ContentDataStore implements File
 
     @Override
     protected ContentFeatureSource createFeatureSource(ContentEntry entry) throws IOException {
-        return new SuperMapIndexFileFeatureSource(entry, Query.ALL, this);
+        return new SuperMapDSFFeatureSource(entry, Query.ALL, this);
     }
 
     @Override

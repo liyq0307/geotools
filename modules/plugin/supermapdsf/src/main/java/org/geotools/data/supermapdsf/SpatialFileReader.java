@@ -1,4 +1,4 @@
-package org.geotools.data.supermapindexfile;
+package org.geotools.data.supermapdsf;
 
 import java.io.Closeable;
 import java.io.IOException;

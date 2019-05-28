@@ -24,9 +24,9 @@
     <!--     Module Description                                      -->
     <!-- =========================================================== -->
     <groupId>org.geotools</groupId>
-    <artifactId>gt-supermapindexfile</artifactId>
+    <artifactId>gt-supermapdsf</artifactId>
     <packaging>jar</packaging>
-    <name>SuperMapIndexFile module</name>
+    <name>SuperMapDSF module</name>
 
 
     <description>

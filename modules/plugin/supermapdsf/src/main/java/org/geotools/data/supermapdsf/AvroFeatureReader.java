@@ -1,6 +1,6 @@
-package org.geotools.data.supermapindexfile;
+package org.geotools.data.supermapdsf;
 
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
+import static org.geotools.data.supermapdsf.SuperMapDSFFileUtils.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -20,7 +20,7 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
 /** Created by liyq on 2019/3/16. */
-public class AvroFeatureReader extends SuperMapIndexFileFeatureReader {
+public class AvroFeatureReader extends SuperMapDSFFeatureReader {
 
     private GenericRecord record = null;
 

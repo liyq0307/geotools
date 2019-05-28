@@ -1,6 +1,6 @@
-package org.geotools.data.supermapindexfile;
+package org.geotools.data.supermapdsf;
 
-import static org.geotools.data.supermapindexfile.SuperMapIndexFileUtils.*;
+import static org.geotools.data.supermapdsf.SuperMapDSFFileUtils.*;
 
 import com.alibaba.fastjson.JSONReader;
 import java.io.IOException;
@@ -23,8 +23,8 @@ import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** Created by liyq on 2019/3/4. */
-public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
-    private SuperMapIndexFileDataStore dataStore;
+public class SuperMapDSFFeatureSource extends ContentFeatureSource {
+    private SuperMapDSFDataStore dataStore;
 
     /**
      * Creates the new feature source from a query.
@@ -36,10 +36,9 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
      *
      * @param entry ContentEntry
      * @param query Query
-     * @param dataStore SuperMapIndexFileDataStore
+     * @param dataStore SuperMapDSFDataStore
      */
-    SuperMapIndexFileFeatureSource(
-            ContentEntry entry, Query query, SuperMapIndexFileDataStore dataStore) {
+    SuperMapDSFFeatureSource(ContentEntry entry, Query query, SuperMapDSFDataStore dataStore) {
         super(entry, query);
         this.dataStore = dataStore;
     }
@@ -55,7 +54,7 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
             String str = jsonReader.readString();
             if (str.compareToIgnoreCase("grid") == 0) {
                 jsonReader.startObject();
-                Map<String, Object> paris = SuperMapIndexFileUtils.parseReader(jsonReader, crs);
+                Map<String, Object> paris = SuperMapDSFFileUtils.parseReader(jsonReader, crs);
                 envelope = (ReferencedEnvelope) paris.get("bounds");
                 jsonReader.endObject();
             } else if (str.compareToIgnoreCase("indexesMap") == 0) {
@@ -104,7 +103,7 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
                 envelope =
                         parserFromJson(
                                 jsonReader.readString(),
-                                SuperMapIndexFileUtils.getCRS(dataStore.getSchema()));
+                                SuperMapDSFFileUtils.getCRS(dataStore.getSchema()));
             }
 
             jsonReader.endObject();
@@ -132,7 +131,7 @@ public class SuperMapIndexFileFeatureSource extends ContentFeatureSource {
         StringReader inputStream = new StringReader(dataStore.indexJson);
         JSONReader jsonReader = new JSONReader(inputStream);
 
-        SuperMapIndexFileFeatureReader indexReader;
+        SuperMapDSFFeatureReader indexReader;
         SimpleFeatureType sft = getSchema();
 
         jsonReader.startObject();

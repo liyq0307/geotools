@@ -1,4 +1,4 @@
-package org.geotools.data.supermapindexfile;
+package org.geotools.data.supermapdsf;
 
 import com.alibaba.fastjson.JSONReader;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** Created by liyq on 2019/3/5. */
-class SuperMapIndexFileUtils {
+class SuperMapDSFFileUtils {
     static String getIndexFile(Configuration conf, String filePath) throws IOException {
         if (filePath == null || filePath.isEmpty()) {
             throw new IllegalArgumentException("filePath is empty");
