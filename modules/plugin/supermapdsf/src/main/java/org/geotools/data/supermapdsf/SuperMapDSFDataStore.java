@@ -13,33 +13,90 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.Name;
 import org.opengis.filter.Filter;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** Created by liyq on 2019/3/4. */
 public class SuperMapDSFDataStore extends ContentDataStore implements FileDataStore {
-    String fileDirectory;
+    /** 文件路径 */
+    private String fileDirectory;
 
-    String sftName;
+    /** SimpleFeatureType Name */
+    private String sftName;
 
-    String sftSpec;
+    /** 字段字符串 */
+    private String sftSpec;
 
-    String indexJson;
+    private String indexJson;
 
-    String storageFormat;
+    private String storageFormat;
+
+    /** 投影 */
+    private CoordinateReferenceSystem crs = null;
+
+    /** 压缩方式 */
+    private String compress = "UnCompressed";
+
+    /** 版本 */
+    private String version;
+
+    String getSftName() {
+        return sftName;
+    }
 
     void setSftName(String sftName) {
         this.sftName = sftName;
+    }
+
+    String getSftSpec() {
+        return sftSpec;
     }
 
     void setSftSpec(String sftSpec) {
         this.sftSpec = sftSpec;
     }
 
+    String getIndexJson() {
+        return indexJson;
+    }
+
     void setIndexJson(String indexJson) {
         this.indexJson = indexJson;
     }
 
+    String getStorageFormat() {
+        return storageFormat;
+    }
+
     void setStorageFormat(String storageFormat) {
         this.storageFormat = storageFormat;
+    }
+
+    CoordinateReferenceSystem getCrs() {
+        return crs;
+    }
+
+    void setCRS(CoordinateReferenceSystem crs) {
+        this.crs = crs;
+    }
+
+    String getCompress() {
+        return compress;
+    }
+
+    void setCompress(String compress) {
+        this.compress = compress;
+    }
+
+    String getVersion() {
+        return version;
+    }
+
+    void setVersion(String version) {
+        this.version = version;
+    }
+
+    String getFileDirectory() {
+        return fileDirectory;
     }
 
     SuperMapDSFDataStore(String filePath) {

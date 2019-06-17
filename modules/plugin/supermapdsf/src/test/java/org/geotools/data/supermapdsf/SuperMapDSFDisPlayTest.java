@@ -10,46 +10,42 @@ import org.geotools.data.DataStoreFinder;
 import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.styling.SLD;
 import org.geotools.styling.Style;
 import org.geotools.swing.JMapFrame;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
 
 /** Created by liyq on 2019/3/5. */
 public class SuperMapDSFDisPlayTest {
     public static void main(String[] args) throws IOException {
         Map<String, Serializable> params = new HashMap<>();
-        String path =
-                "file://"
-                        + SuperMapDSFDisPlayTest.class
-                                .getProtectionDomain()
-                                .getCodeSource()
-                                .getLocation()
-                                .getPath();
-        params.put(SuperMapDSFDataStoreFactory.InputFile.key, path + "/data/world");
+        //        String path =
+        //                "file://"
+        //                        + SuperMapDSFDisPlayTest.class
+        //                                .getProtectionDomain()
+        //                                .getCodeSource()
+        //                                .getLocation()
+        //                                .getPath();
+        //        params.put(SuperMapDSFDataStoreFactory.InputFile.key, path + "/data/world");
 
-        //        String path = "hdfs://localhost:9000/test/liyq/v2/clip/clip_GIndex2x2";
-        //        params.put(SuperMapDSFDataStoreFactory.InputFile.key, path);
-        String typeName = "world";
+        String path = "F:\\Data\\DSF\\dltb_dsf";
+        params.put(SuperMapDSFDataStoreFactory.InputFile.key, path);
         DataStore dataStore = DataStoreFinder.getDataStore(params);
+        String typeName = dataStore.getTypeNames()[0];
         SimpleFeatureSource fs = dataStore.getFeatureSource(typeName);
 
-        ReferencedEnvelope bbox =
-                new ReferencedEnvelope(
-                        -29.7200209437253,
-                        84.9462682397991,
-                        -26.2363814116757,
-                        66.7224810889989,
-                        null);
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
-        Filter filter = ff.bbox(ff.property("geom"), bbox);
-        Query query = new Query(typeName, filter);
-        // Query query = new Query(typeName);
+        //        ReferencedEnvelope bbox =
+        //                new ReferencedEnvelope(
+        //                        -29.7200209437253,
+        //                        84.9462682397991,
+        //                        -26.2363814116757,
+        //                        66.7224810889989,
+        //                        null);
+        //        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        //        Filter filter = ff.bbox(ff.property("geom"), bbox);
+        //        Query query = new Query(typeName, filter);
+        Query query = new Query(typeName);
         SimpleFeatureCollection collection = fs.getFeatures(query);
 
         MapContent map = new MapContent();

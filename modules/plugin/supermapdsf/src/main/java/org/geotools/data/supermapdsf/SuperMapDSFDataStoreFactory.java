@@ -16,7 +16,7 @@
  */
 package org.geotools.data.supermapdsf;
 
-import static org.geotools.data.supermapdsf.SuperMapDSFFileUtils.*;
+import static org.geotools.data.supermapdsf.SuperMapDSFUtils.*;
 
 import com.alibaba.fastjson.JSONReader;
 import java.awt.*;
@@ -31,11 +31,11 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFactorySpi;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class SuperMapDSFDataStoreFactory implements DataStoreFactorySpi {
 
-    public static final Param InputFile =
-            new Param("path", String.class, "Directory containing index files", true);
+    static final Param InputFile = new Param("path", String.class, "Directory of DSF", true);
 
     @Override
     public DataStore createDataStore(Map<String, Serializable> params) throws IOException {
@@ -55,6 +55,9 @@ public class SuperMapDSFDataStoreFactory implements DataStoreFactorySpi {
         String sft_spec = "";
         String indexJson = "";
         String storageFormat = "";
+        CoordinateReferenceSystem crs = null;
+        String compressName = "UnCompressed";
+        String version = "";
         JSONReader jsonReader = new JSONReader(inputStream);
         jsonReader.startObject();
         while (jsonReader.hasNext()) {
@@ -72,7 +75,17 @@ public class SuperMapDSFDataStoreFactory implements DataStoreFactorySpi {
                 case FORMAT:
                     storageFormat = jsonReader.readString();
                     break;
+                case SRS:
+                    crs = SuperMapDSFUtils.getCRS(jsonReader.readString());
+                    break;
+                case COMPRESSION:
+                    compressName = jsonReader.readString();
+                    break;
+                case VERSION:
+                    version = jsonReader.readString();
+                    break;
                 default:
+                    jsonReader.readObject();
                     break;
             }
         }
@@ -87,17 +100,21 @@ public class SuperMapDSFDataStoreFactory implements DataStoreFactorySpi {
         store.setSftSpec(sft_spec);
         store.setIndexJson(indexJson);
         store.setStorageFormat(storageFormat);
+        store.setCRS(crs);
+        store.setCompress(compressName);
+        store.setVersion(version);
+
         return store;
     }
 
     @Override
     public String getDisplayName() {
-        return "Directory of index files (BDTIndexFiles)";
+        return "分布式空间文件引擎(DSF)";
     }
 
     @Override
     public String getDescription() {
-        return "Takes a directory of BDTIndexFiles and exposes it as a data store";
+        return "Takes a directory of DSF and exposes it as a data store";
     }
 
     @Override

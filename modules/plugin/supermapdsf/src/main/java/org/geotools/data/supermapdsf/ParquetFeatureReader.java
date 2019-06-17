@@ -1,24 +1,30 @@
 package org.geotools.data.supermapdsf;
 
-import static org.geotools.data.supermapdsf.SuperMapDSFFileUtils.*;
+import static org.geotools.data.supermapdsf.SuperMapDSFUtils.*;
 
 import java.io.IOException;
-import java.util.NoSuchElementException;
+import java.nio.ByteBuffer;
+import java.util.*;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetReader;
+import org.apache.parquet.filter2.compat.FilterCompat;
+import org.apache.parquet.filter2.predicate.FilterPredicate;
 import org.apache.parquet.hadoop.ParquetReader;
+import org.apache.parquet.hadoop.util.HadoopInputFile;
+import org.geotools.data.Query;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.locationtech.jts.geom.*;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.filter.Filter;
 
 /** Created by liyq on 2019/3/16. */
 public class ParquetFeatureReader extends SuperMapDSFFeatureReader {
     private ParquetReader reader = null;
-
-    private SpatialFileReader spatialReader = null;
 
     private GenericRecord record = null;
 
@@ -26,11 +32,13 @@ public class ParquetFeatureReader extends SuperMapDSFFeatureReader {
 
     private boolean done = false;
 
-    ParquetFeatureReader(String className, String fileDirectory, SimpleFeatureType sft)
-            throws IOException {
-        this.className = className;
+    private Query query;
+
+    private Iterator<FileStatus> statuses = null;
+
+    ParquetFeatureReader(SimpleFeatureType sft, Query query) {
         this.schema = sft;
-        this.fileDirectory = fileDirectory;
+        this.query = query;
     }
 
     @Override
@@ -45,6 +53,40 @@ public class ParquetFeatureReader extends SuperMapDSFFeatureReader {
         return null;
     }
 
+    /**
+     * 是否跳过该对象
+     *
+     * @return true or false
+     */
+    private boolean isRead() {
+        assert (record != null);
+
+        if (query.getFilter() == Filter.INCLUDE) {
+            int[] tiles =
+                    Arrays.stream(record.get(TILES).toString().split(","))
+                            .mapToInt(Integer::valueOf)
+                            .toArray();
+
+            if (tiles.length > 0) {
+                return Arrays.stream(tiles).min().getAsInt() != currentIndex;
+            } else {
+                return false;
+            }
+        } else {
+            Integer[] tiles =
+                    Arrays.stream(record.get(TILES).toString().split(","))
+                            .mapToInt(Integer::valueOf)
+                            .boxed()
+                            .toArray(Integer[]::new);
+
+            if (tiles.length > 0) {
+                return isRead(getIndex(tiles), tiles);
+            } else {
+                return false;
+            }
+        }
+    }
+
     @Override
     public boolean hasNext() throws IOException {
         if (null == schema) {
@@ -52,24 +94,15 @@ public class ParquetFeatureReader extends SuperMapDSFFeatureReader {
         }
 
         while (!done) {
-            if (null != reader) {
-                record = (GenericRecord) reader.read();
-                if (null == record) {
-                    close();
-                    currentIndex++;
+            if (null != reader && (record = (GenericRecord) reader.read()) != null) {
+                if (!isLastedVersion(
+                        record.get(ID).toString(),
+                        Long.parseLong(record.get(TIMESTAMP).toString()))) {
                     continue;
                 }
 
-                String[] tiles = record.get(TILES).toString().split(",");
-                if (tiles.length > 0) {
-                    Integer[] newPartNumbers = new Integer[tiles.length];
-                    for (int i = 0; i < tiles.length; i++) {
-                        newPartNumbers[i] = Integer.parseInt(tiles[i]);
-                    }
-
-                    if (isRead(getIndex(newPartNumbers), newPartNumbers)) {
-                        continue;
-                    }
+                if (isRead()) {
+                    continue;
                 }
 
                 Class<?> geoType = schema.getGeometryDescriptor().getType().getBinding();
@@ -79,15 +112,16 @@ public class ParquetFeatureReader extends SuperMapDSFFeatureReader {
                     geometry =
                             JTSFactoryFinder.getGeometryFactory()
                                     .createPoint(new Coordinate(dX, dY));
-                } else if (geoType == MultiLineString.class || geoType == MultiPolygon.class) {
-                    Long nPos = Long.valueOf(String.valueOf(record.get(GEOMETRYPOSITION)));
-                    geometry = spatialReader.read(nPos);
+                } else if (geoType == LineString.class
+                        || geoType == MultiLineString.class
+                        || geoType == Polygon.class
+                        || geoType == MultiPolygon.class) {
+                    geometry =
+                            DSFGeometryBuilder.readGeometry(
+                                    schema.getGeometryDescriptor().getType(),
+                                    getCompress(),
+                                    ((ByteBuffer) record.get(GEOMETRY)).array());
                 } else {
-                    continue;
-                }
-
-                if (!getPartGeoIsAllBBox().get(currentIndex)
-                        && !getQueryGeometry().intersects(geometry)) {
                     continue;
                 }
 
@@ -95,15 +129,45 @@ public class ParquetFeatureReader extends SuperMapDSFFeatureReader {
                 continue;
             }
 
-            String partFile = getPartFile(".parquet");
-            if (partFile.isEmpty()) {
-                return false;
-            }
-
             Configuration conf = new Configuration();
-            reader = AvroParquetReader.builder(new Path(partFile)).withConf(conf).build();
-            spatialReader =
-                    new SpatialFileReader(partFile, conf, schema.getGeometryDescriptor().getType());
+            if (null != statuses && statuses.hasNext()) {
+                close();
+
+                FilterToDSF filterToDSF = new FilterToDSF(schema, getTolerance());
+                FilterCompat.Filter filter =
+                        getFilter((FilterPredicate) query.getFilter().accept(filterToDSF, null));
+                reader =
+                        AvroParquetReader.builder(
+                                        HadoopInputFile.fromPath(statuses.next().getPath(), conf))
+                                .useRecordFilter(true)
+                                .useSignedStringMinMax(false)
+                                .useStatsFilter(true)
+                                .withConf(conf)
+                                .withFilter(filter)
+                                .build();
+
+                readDeleteFeatures();
+            } else {
+                close();
+                if (null != statuses) {
+                    statuses = null;
+                }
+
+                currentIndex++;
+                String rootPath = getPartitionRoot(conf);
+                if (null != rootPath && !rootPath.isEmpty()) {
+                    Path fPath = new Path(rootPath);
+                    FileSystem fs = fPath.getFileSystem(conf);
+                    statuses =
+                            Arrays.asList(
+                                            fs.listStatus(
+                                                    fPath,
+                                                    path -> path.getName().endsWith(".parquet")))
+                                    .iterator();
+                } else {
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -114,11 +178,6 @@ public class ParquetFeatureReader extends SuperMapDSFFeatureReader {
         if (null != reader) {
             reader.close();
             reader = null;
-        }
-
-        if (null != spatialReader) {
-            spatialReader.close();
-            spatialReader = null;
         }
     }
 }

@@ -1,25 +1,30 @@
 package org.geotools.data.supermapdsf;
 
-import static org.geotools.data.supermapdsf.SuperMapDSFFileUtils.*;
+import static org.geotools.data.supermapdsf.SuperMapDSFUtils.PARQUET;
 
 import com.alibaba.fastjson.JSONReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.Query;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.locationtech.jts.geom.MultiLineString;
-import org.locationtech.jts.geom.MultiPolygon;
-import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.*;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
+import org.opengis.geometry.BoundingBox;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** Created by liyq on 2019/3/4. */
@@ -54,7 +59,7 @@ public class SuperMapDSFFeatureSource extends ContentFeatureSource {
             String str = jsonReader.readString();
             if (str.compareToIgnoreCase("grid") == 0) {
                 jsonReader.startObject();
-                Map<String, Object> paris = SuperMapDSFFileUtils.parseReader(jsonReader, crs);
+                Map<String, Object> paris = SuperMapDSFUtils.parseReader(jsonReader, crs);
                 envelope = (ReferencedEnvelope) paris.get("bounds");
                 jsonReader.endObject();
             } else if (str.compareToIgnoreCase("indexesMap") == 0) {
@@ -87,9 +92,10 @@ public class SuperMapDSFFeatureSource extends ContentFeatureSource {
             return null;
         }
 
+        ReferencedEnvelope envelope = null;
         Filter filter = query.getFilter();
         if (null == filter || filter == Filter.INCLUDE) {
-            StringReader inputStream = new StringReader(dataStore.indexJson);
+            StringReader inputStream = new StringReader(dataStore.getIndexJson());
             JSONReader jsonReader = new JSONReader(inputStream);
 
             jsonReader.startObject();
@@ -98,27 +104,75 @@ public class SuperMapDSFFeatureSource extends ContentFeatureSource {
                 key = jsonReader.readString();
             }
 
-            ReferencedEnvelope envelope = null;
             if (key.compareToIgnoreCase("context") == 0) {
                 envelope =
                         parserFromJson(
                                 jsonReader.readString(),
-                                SuperMapDSFFileUtils.getCRS(dataStore.getSchema()));
+                                SuperMapDSFUtils.getCRS(dataStore.getSchema()));
             }
 
             jsonReader.endObject();
             jsonReader.close();
             inputStream.close();
-
-            return envelope;
+        } else {
+            FeatureReader<SimpleFeatureType, SimpleFeature> reader = getReaderInternal(query);
+            while (reader.hasNext()) {
+                SimpleFeature feature = reader.next();
+                if (null != feature) {
+                    BoundingBox bounds = feature.getDefaultGeometryProperty().getBounds();
+                    if (null == envelope) {
+                        envelope = new ReferencedEnvelope(bounds);
+                    } else {
+                        envelope.expandToInclude(new ReferencedEnvelope(bounds));
+                    }
+                }
+            }
         }
 
-        return null;
+        return envelope;
     }
 
     @Override
     protected int getCountInternal(Query query) throws IOException {
-        return 0;
+        if (null == dataStore) {
+            return 0;
+        }
+
+        int count = 0;
+
+        if (null != query.getFilter() && query.getFilter() == Filter.INCLUDE) {
+            String metaFile = dataStore.getFileDirectory() + "/.__meta";
+            Path fPath = new Path(metaFile);
+            FileSystem fs = fPath.getFileSystem(new Configuration());
+            if (!fs.exists(fPath)) {
+                return 0;
+            }
+
+            FSDataInputStream inputStream = fs.open(fPath);
+            InputStreamReader streamReader = new InputStreamReader(inputStream, "UTF-8");
+            JSONReader jsonReader = new JSONReader(streamReader);
+            Map<String, String> values = new HashMap<>();
+            jsonReader.startObject();
+            while (jsonReader.hasNext()) {
+                String key = jsonReader.readString();
+                String value = jsonReader.readString();
+                values.put(key, value);
+            }
+            jsonReader.endObject();
+
+            jsonReader.close();
+            streamReader.close();
+            inputStream.close();
+
+            count = Integer.parseInt(values.getOrDefault("RecordCount", "0"));
+        } else {
+            FeatureReader<SimpleFeatureType, SimpleFeature> reader = getReaderInternal(query);
+            while (reader.hasNext() && reader.next() != null) {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     @Override
@@ -128,7 +182,7 @@ public class SuperMapDSFFeatureSource extends ContentFeatureSource {
             return null;
         }
 
-        StringReader inputStream = new StringReader(dataStore.indexJson);
+        StringReader inputStream = new StringReader(dataStore.getIndexJson());
         JSONReader jsonReader = new JSONReader(inputStream);
 
         SuperMapDSFFeatureReader indexReader;
@@ -138,12 +192,13 @@ public class SuperMapDSFFeatureSource extends ContentFeatureSource {
         String key = jsonReader.readString();
         if (key.compareToIgnoreCase("classname") == 0) {
             String className = jsonReader.readString();
-            if (dataStore.storageFormat.compareToIgnoreCase(AVRO) == 0) {
-                indexReader = new AvroFeatureReader(className, dataStore.fileDirectory, sft);
-            } else if (dataStore.storageFormat.compareToIgnoreCase(PARQUETSPATIAL) == 0) {
-                indexReader = new ParquetFeatureReader(className, dataStore.fileDirectory, sft);
+            if (dataStore.getStorageFormat().compareToIgnoreCase(PARQUET) == 0) {
+                indexReader = new ParquetFeatureReader(sft, query);
+                indexReader.setClassName(className);
+                indexReader.setCompress(dataStore.getCompress());
+                indexReader.setFileDirectory(dataStore.getFileDirectory());
             } else {
-                throw new IOException("invalid StorageFormat: " + dataStore.storageFormat);
+                throw new IOException("invalid StorageFormat: " + dataStore.getStorageFormat());
             }
         } else {
             throw new IOException("invalid json tag: " + key);
@@ -160,7 +215,7 @@ public class SuperMapDSFFeatureSource extends ContentFeatureSource {
         jsonReader.close();
         inputStream.close();
 
-        if (indexReader.initPartFile(query.getFilter())) {
+        if (indexReader.initPartFile()) {
             return indexReader;
         }
 
@@ -174,12 +229,12 @@ public class SuperMapDSFFeatureSource extends ContentFeatureSource {
         }
 
         String typeName = getEntry().getTypeName();
-        if (!typeName.equals(dataStore.sftName)) {
+        if (!typeName.equals(dataStore.getSftName())) {
             return null;
         }
 
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
-        String[] featureSpec = dataStore.sftSpec.split(";");
+        String[] featureSpec = dataStore.getSftSpec().split(";");
         if (featureSpec.length < 1) {
             throw new IOException("error sftSpec");
         }
@@ -217,16 +272,34 @@ public class SuperMapDSFFeatureSource extends ContentFeatureSource {
                     builder.add(fieldInfos[0], ByteBuffer.class);
                     break;
                 case "Point":
-                    builder.add(fieldInfos[0].substring(1, fieldInfos[0].length()), Point.class);
+                    builder.add(
+                            fieldInfos[0].substring(1, fieldInfos[0].length()),
+                            Point.class,
+                            dataStore.getCrs());
+                    break;
+                case "LineString":
+                    builder.add(
+                            fieldInfos[0].substring(1, fieldInfos[0].length()),
+                            LineString.class,
+                            dataStore.getCrs());
                     break;
                 case "MultiLineString":
                     builder.add(
                             fieldInfos[0].substring(1, fieldInfos[0].length()),
-                            MultiLineString.class);
+                            MultiLineString.class,
+                            dataStore.getCrs());
+                    break;
+                case "Polygon":
+                    builder.add(
+                            fieldInfos[0].substring(1, fieldInfos[0].length()),
+                            Polygon.class,
+                            dataStore.getCrs());
                     break;
                 case "MultiPolygon":
                     builder.add(
-                            fieldInfos[0].substring(1, fieldInfos[0].length()), MultiPolygon.class);
+                            fieldInfos[0].substring(1, fieldInfos[0].length()),
+                            MultiPolygon.class,
+                            dataStore.getCrs());
                     break;
                 default:
                     throw new IOException("Unknown field type");
@@ -234,6 +307,7 @@ public class SuperMapDSFFeatureSource extends ContentFeatureSource {
         }
 
         builder.setName(typeName);
+        builder.setCRS(dataStore.getCrs());
 
         SimpleFeatureType sft = builder.buildFeatureType();
         if (featureSpec.length > 1) {
