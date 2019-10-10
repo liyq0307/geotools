@@ -1,9 +1,15 @@
 Automatic Quality Assurance checks
 ----------------------------------
 
-The GeoTools builds on Travis and `https://build.geoserver.org/ <https://build.geoserver.org/>`_ apply
-`PMD <https://pmd.github.io/>`_, `Error Prone <https://errorprone.info/>`_, `Spotbugs <https://spotbugs.github.io/>`_
-and `CheckStyle <http://checkstyle.sourceforge.net/>`_ on build servers and will fail the build in case of rule violation.
+The GeoTools builds on Travis and `https://build.geoserver.org/ <https://build.geoserver.org/>`_ apply a handful of tools
+to statically check code quality and fail the build in case of rule violation:
+
+* `PMD <https://pmd.github.io/>`_, 
+* `Error Prone <https://errorprone.info/>`_, 
+* `Spotbugs <https://spotbugs.github.io/>`_
+* `CheckStyle <http://checkstyle.sourceforge.net/>`_ on build servers .
+* ``javac`` own linting abilities, in particular, checking calls to deprecated APIs
+
 Each tool is setup to run on high priority checks in order to limit the number of false positives,
 but some might still happen, the rest of this document shows how errors are reported and what
 can be done to selectively turn off the checks.
@@ -71,7 +77,7 @@ prefix, that will be used to perform the close, for example::
     </rule>
 
 For closing delegates that use an instance object instead of a class static method, the variable
-name is included in the prefix, so some uninformity in variable names is required.
+name is included in the prefix, so some uniformity in variable names is required.
 
 
 Error Prone
@@ -79,7 +85,7 @@ Error Prone
 
 The `Error Prone <https://errorprone.info/>`_ checker runs a compiler plugin.
 
-In order to activate the Error Prone checks, use the "-Perrorprone" for JDK 11 builds, or "Perrorprone8" for JDK 8 builds.
+In order to activate the Error Prone checks, use the "-Perrorprone" for JDK 11 builds, or "-Perrorprone8" for JDK 8 builds.
 
 Any failure to comply with the "Error Prone" rules will show up as a compile error in the build output, e.g.::
 
@@ -128,3 +134,21 @@ Any failure to comply with the rules will show up as a compiler error in the bui
         15563 [INFO] There is 1 error reported by Checkstyle 6.18 with /home/aaime/devel/git-gt/build/qa/checkstyle.xml ruleset.
         15572 [ERROR] src/main/java/org/geotools/jdbc/JDBCDataStore.java:[325,8] (javadoc) JavadocMethod: Unused @param tag for 'foobar'.
 
+javac
+^^^^^
+
+The Java compiler has a set of options to "lint" the source code. The build server in particular
+enable checks for deprecated APIs, making javac return a compile error any time a deprecated method
+or object is used. 
+
+In most cases, one should check the javadoc of the API in question, learn about replacements, and
+stop using the deprecated API. This is not always possible, for example, when creating an object
+wrapper it might happen that a deprecated API needs to be implemented and delegated.
+In those cases, it's possible to solve the compile error by suppressing the deprecation via annotations, e.g.
+``@SuppressWarnings("deprecation")``.
+
+Care should be taken when deprecating an existing API, as all call points to it will immediately trigger
+the compiler error. It's often possible to simply "refactor away" the call points by inlining or
+other automated operations. If that is not feasible, manually resolving deprecated call will provide
+a good perspective on what the library users will have to face, and help improve suggestions for
+replacement in the deprecated API javadocs.

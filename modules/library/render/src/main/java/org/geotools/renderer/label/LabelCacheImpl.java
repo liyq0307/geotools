@@ -769,7 +769,7 @@ public class LabelCacheImpl implements LabelCache {
                     if (labelItem.followLineEnabled) {
                         // curved label, but we might end up drawing a straight
                         // one as an optimization
-                        maxAngleChange = cursor.getMaxAngleChange(startOrdinate, endOrdinate, step);
+                        maxAngleChange = cursor.getMaxAngleChange(startOrdinate, endOrdinate);
                         setupLineTransform(painter, cursor, centroid, tx, true);
                         curved = maxAngleChange >= MIN_CURVED_DELTA;
                     } else {
@@ -998,7 +998,7 @@ public class LabelCacheImpl implements LabelCache {
                     if (labelItem.followLineEnabled) {
                         // curved label, but we might end up drawing a straight
                         // one as an optimization
-                        maxAngleChange = cursor.getMaxAngleChange(startOrdinate, endOrdinate, step);
+                        maxAngleChange = cursor.getMaxAngleChange(startOrdinate, endOrdinate);
                         if (maxAngleChange < MIN_CURVED_DELTA) {
                             // if label will be painted as straight, use the
                             // straight bounds
@@ -1211,7 +1211,9 @@ public class LabelCacheImpl implements LabelCache {
                 (textStyle.getAnchorY() * (textBounds.getHeight()))
                         - textStyle.getDisplacementY()
                         - textBounds.getHeight()
-                        + painter.getLineHeight();
+                        + ((painter.lines.size() == 1)
+                                ? painter.getLineHeight()
+                                : painter.getLineHeightForAnchorY(textStyle.getAnchorY()));
         tempTransform.translate(displacementX, displacementY);
     }
 

@@ -122,7 +122,7 @@ public class FilterToMongo implements FilterVisitor, ExpressionVisitor {
     }
 
     protected BasicDBObject asDBObject(Object extraData) {
-        if ((extraData != null) || (extraData instanceof BasicDBObject)) {
+        if (extraData instanceof BasicDBObject) {
             return (BasicDBObject) extraData;
         }
         return new BasicDBObject();
@@ -372,14 +372,12 @@ public class FilterToMongo implements FilterVisitor, ExpressionVisitor {
         return output;
     }
 
-    // There is no "NULL" in MongoDB, but I assume that TODO add null support
-    // the non-existence of a column is the same...
     @Override
     public Object visit(PropertyIsNull filter, Object extraData) {
         BasicDBObject output = asDBObject(extraData);
-
-        String prop = convert(filter.accept(this, null), String.class);
-        output.put(prop, new BasicDBObject("$exists", false));
+        String prop = convert(filter.getExpression().evaluate(null), String.class);
+        // mongodb filter { item: null } supports both: null value and nonexistent attribute
+        output.put(prop, null);
         return output;
     }
 

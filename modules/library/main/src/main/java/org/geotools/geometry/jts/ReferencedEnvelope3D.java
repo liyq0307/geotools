@@ -132,7 +132,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * @param p2 the second Coordinate
      */
     public void init(Coordinate p1, Coordinate p2) {
-        init(p1.x, p2.x, p1.y, p2.y, p1.z, p2.z);
+        init(p1.x, p2.x, p1.y, p2.y, p1.getZ(), p2.getZ());
     }
 
     /**
@@ -141,7 +141,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * @param p the coordinate
      */
     public void init(Coordinate p) {
-        init(p.x, p.x, p.y, p.y, p.z, p.z);
+        init(p.x, p.x, p.y, p.y, p.getZ(), p.getZ());
     }
 
     @Override
@@ -242,7 +242,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * @param p the Coordinate to expand to include
      */
     public void expandToInclude(Coordinate p) {
-        expandToInclude(p.x, p.y, p.z);
+        expandToInclude(p.x, p.y, p.getZ());
     }
 
     /**
@@ -353,14 +353,6 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /**
-     * @deprecated Use #intersects instead. In the future, #overlaps may be changed to be a true
-     *     overlap check; that is, whether the intersection is two-dimensional.
-     */
-    public boolean overlaps(ReferencedEnvelope3D other) {
-        return intersects(other);
-    }
-
-    /**
      * Check if the point <code>p</code> overlaps (lies inside) the region of this <code>Envelope
      * </code>.
      *
@@ -368,10 +360,11 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * @return <code>true</code> if the point overlaps this <code>Envelope</code>
      */
     public boolean intersects(Coordinate p) {
-        return intersects(p.x, p.y, p.z);
+        return intersects(p.x, p.y, p.getZ());
     }
 
     /** @deprecated Use #intersects instead. */
+    @SuppressWarnings("deprecation")
     public boolean overlaps(Coordinate p) {
         return intersects(p);
     }
@@ -388,11 +381,6 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     public boolean intersects(double x, double y, double z) {
         if (isNull()) return false;
         return intersects(x, y) && !(z > maxz || z < minz);
-    }
-
-    /** @deprecated Use #intersects instead. */
-    public boolean overlaps(double x, double y, double z) {
-        return intersects(x, y, z);
     }
 
     /**
@@ -451,7 +439,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      *     Envelope</code>.
      */
     public boolean covers(Coordinate p) {
-        return covers(p.x, p.y, p.z);
+        return covers(p.x, p.y, p.getZ());
     }
 
     /**
@@ -822,7 +810,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * points within the {@code Envelope}.
      */
     public DirectPosition getUpperCorner() {
-        return new DirectPosition3D(crs, getMaxX(), getMaxY(), getMinZ());
+        return new DirectPosition3D(crs, getMaxX(), getMaxY(), getMaxZ());
     }
 
     /** Returns {@code true} if lengths along all dimension are zero. */
@@ -1062,7 +1050,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
         }
         if (super.equals(other)
                 && minz == otherEnvelope.getMinZ()
-                && minz == otherEnvelope.getMinZ()) {
+                && maxz == otherEnvelope.getMaxZ()) {
             final CoordinateReferenceSystem otherCRS =
                     (other instanceof ReferencedEnvelope3D)
                             ? ((ReferencedEnvelope3D) other).crs
@@ -1092,7 +1080,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     public boolean boundsEquals3D(final org.opengis.geometry.Envelope other, double eps) {
         eps *= 0.5 * (getWidth() + getHeight());
 
-        double[] delta = new double[4];
+        double[] delta = new double[6];
         delta[0] = getMinimum(0) - other.getMinimum(0);
         delta[1] = getMaximum(0) - other.getMaximum(0);
         delta[2] = getMinimum(1) - other.getMinimum(1);

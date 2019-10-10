@@ -190,7 +190,7 @@ public class ShpFiles {
                                 return file.getName().equalsIgnoreCase(name);
                             }
                         });
-        if (files.length > 0) {
+        if (files != null && files.length > 0) {
             try {
                 return files[0].toURI().toURL();
             } catch (MalformedURLException e) {
@@ -202,6 +202,7 @@ public class ShpFiles {
 
     /** This verifies that this class has been closed correctly (nothing locking) */
     @Override
+    @SuppressWarnings("deprecation") // finalize is deprecated in Java 9
     protected void finalize() throws Throwable {
         super.finalize();
         dispose();

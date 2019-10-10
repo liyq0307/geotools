@@ -33,7 +33,8 @@ import org.opengis.style.StyleVisitor;
  * @author iant
  * @author Johann Sorel (Geomatys)
  */
-public class RasterSymbolizerImpl extends AbstractSymbolizer implements RasterSymbolizer {
+public class RasterSymbolizerImpl extends AbstractSymbolizer
+        implements RasterSymbolizer, Cloneable {
 
     private OverlapBehavior behavior;
 
@@ -213,7 +214,6 @@ public class RasterSymbolizerImpl extends AbstractSymbolizer implements RasterSy
      *
      * @return The expression which evaluates to LATEST_ON_TOP, EARLIEST_ON_TOP, AVERAGE or RANDOM
      */
-    @Deprecated
     public Expression getOverlap() {
         OverlapBehavior overlap = getOverlapBehavior();
         if (overlap == null) {
@@ -369,7 +369,6 @@ public class RasterSymbolizerImpl extends AbstractSymbolizer implements RasterSy
      * @param overlap the expression which evaluates to LATEST_ON_TOP, EARLIEST_ON_TOP, AVERAGE or
      *     RANDOM
      */
-    @Deprecated
     public void setOverlap(Expression overlap) {
         if (overlap == null) {
             return;

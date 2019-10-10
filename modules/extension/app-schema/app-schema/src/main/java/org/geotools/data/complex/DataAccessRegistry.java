@@ -54,7 +54,7 @@ public class DataAccessRegistry implements Repository {
     private static final Logger LOGGER = Logging.getLogger(DataAccessRegistry.class);
 
     /** Singleton instance */
-    protected static DataAccessRegistry theRegistry = null;
+    protected static volatile DataAccessRegistry theRegistry = null;
 
     /** Properties for interpolation / configuration settings */
     protected InterpolationProperties properties = null;
@@ -427,16 +427,6 @@ public class DataAccessRegistry implements Repository {
      * other tests.
      */
     public static void unregisterAndDisposeAll() {
-        getInstance().disposeAndUnregisterAll();
-    }
-
-    /**
-     * Unregister * and dispose * all data accesses in the registry. This is may be needed to
-     * prevent unit tests from conflicting with data accesses with the same type name registered for
-     * other tests. @Deprecated use unregisterAndDisposeAll
-     */
-    @Deprecated
-    public static void unregisterAll() {
         getInstance().disposeAndUnregisterAll();
     }
 

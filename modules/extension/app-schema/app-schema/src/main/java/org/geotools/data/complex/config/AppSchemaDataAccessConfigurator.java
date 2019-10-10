@@ -331,7 +331,8 @@ public class AppSchemaDataAccessConfigurator {
                                 namespaces,
                                 dto.getItemXpath(),
                                 dto.isXmlDataStore(),
-                                dto.isDenormalised());
+                                dto.isDenormalised(),
+                                dto.getSourceDataStore());
 
                 String mappingName = dto.getMappingName();
                 if (mappingName != null) {
@@ -706,21 +707,35 @@ public class AppSchemaDataAccessConfigurator {
      */
     private Map getClientProperties(org.geotools.data.complex.config.AttributeMapping dto)
             throws DataSourceException {
+        final Map clientProperties = new HashMap();
 
-        if (dto.getClientProperties().size() == 0) {
-            return Collections.EMPTY_MAP;
+        if (dto.getClientProperties().size() > 0) {
+            for (Iterator it = dto.getClientProperties().entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry entry = (Map.Entry) it.next();
+                String name = (String) entry.getKey();
+                Name qName = Types.degloseName(name, namespaces);
+                String cqlExpression = (String) entry.getValue();
+                final Expression expression = parseOgcCqlExpression(cqlExpression);
+                clientProperties.put(qName, expression);
+            }
         }
 
-        Map clientProperties = new HashMap();
-        for (Iterator it = dto.getClientProperties().entrySet().iterator(); it.hasNext(); ) {
-            Map.Entry entry = (Map.Entry) it.next();
-            String name = (String) entry.getKey();
-            Name qName = Types.degloseName(name, namespaces);
-            String cqlExpression = (String) entry.getValue();
-            final Expression expression = parseOgcCqlExpression(cqlExpression);
-            clientProperties.put(qName, expression);
-        }
+        // add anonymous attributes
+        addAnonymousAttributes(dto, clientProperties);
+
         return clientProperties;
+    }
+
+    private void addAnonymousAttributes(
+            org.geotools.data.complex.config.AttributeMapping dto, final Map clientProperties)
+            throws DataSourceException {
+        for (Map.Entry<String, String> entry : dto.getAnonymousAttributes().entrySet()) {
+            Name qname = Types.degloseName(entry.getKey(), namespaces);
+            ComplexNameImpl complexName =
+                    new ComplexNameImpl(qname.getNamespaceURI(), qname.getLocalPart(), true);
+            Expression expression = parseOgcCqlExpression(entry.getValue());
+            clientProperties.put(complexName, expression);
+        }
     }
 
     private FeatureSource<FeatureType, Feature> getFeatureSource(
@@ -886,20 +901,23 @@ public class AppSchemaDataAccessConfigurator {
             AppSchemaDataAccessConfigurator.LOGGER.fine("looking for datastore " + id);
 
             DataAccess<FeatureType, Feature> dataStore = null;
-            if (dataStoreMap != null && dataStoreMap.containsKey(datastoreParams)) {
-                dataStore = dataStoreMap.get(datastoreParams);
-            } else {
-                // let's check if any data store provided a custom syntax for its configuration
-                List<CustomSourceDataStore> extensions = CustomSourceDataStore.loadExtensions();
-                dataStore = buildDataStore(extensions, dsconfig, config);
-                // if no custom data store handled this configuration let's fallback on the default
-                // constructor
-                dataStore =
-                        dataStore == null
-                                ? DataAccessFinder.getDataStore(datastoreParams)
-                                : dataStore;
-                // store the store in the data stores map
-                dataStoreMap.put(datastoreParams, dataStore);
+            if (dataStoreMap != null) {
+                if (dataStoreMap.containsKey(datastoreParams)) {
+                    dataStore = dataStoreMap.get(datastoreParams);
+                } else {
+                    // let's check if any data store provided a custom syntax for its configuration
+                    List<CustomSourceDataStore> extensions = CustomSourceDataStore.loadExtensions();
+                    dataStore = buildDataStore(extensions, dsconfig, config);
+                    // if no custom data store handled this configuration let's fallback on the
+                    // default
+                    // constructor
+                    dataStore =
+                            dataStore == null
+                                    ? DataAccessFinder.getDataStore(datastoreParams)
+                                    : dataStore;
+                    // store the store in the data stores map
+                    dataStoreMap.put(datastoreParams, dataStore);
+                }
             }
 
             if (dataStore == null) {
@@ -1099,5 +1117,34 @@ public class AppSchemaDataAccessConfigurator {
             ((XmlFeatureSource) fSource).setNamespaces(namespaces);
         }
         return fSource;
+    }
+
+    /**
+     * Name implementation capable of store more information about the attribute/element
+     * represented.
+     */
+    public static class ComplexNameImpl extends NameImpl {
+
+        private boolean isNestedElement;
+
+        public ComplexNameImpl(String namespace, String local, boolean isNestedElement) {
+            super(namespace, local);
+            this.isNestedElement = isNestedElement;
+        }
+
+        @Override
+        public String getLocalPart() {
+            return super.getLocalPart();
+        }
+
+        @Override
+        public String getNamespaceURI() {
+            return super.getNamespaceURI();
+        }
+
+        /** Returns true if represented Name is a nested element instead an attribute. */
+        public boolean isNestedElement() {
+            return isNestedElement;
+        }
     }
 }

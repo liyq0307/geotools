@@ -1105,7 +1105,8 @@ public class RasterManager implements Cloneable {
                 update = true;
             }
             if (update
-                    && !configuration.getCatalogConfigurationBean().isAbsolutePath()
+                    && (configuration.getCatalogConfigurationBean().getPathType()
+                            != PathType.ABSOLUTE)
                     && !hints.containsKey(Utils.PARENT_DIR)) {
                 String parentDir = null;
                 if (parentReader.parentDirectory != null) {
@@ -1560,7 +1561,7 @@ public class RasterManager implements Cloneable {
         synchronized (this) {
             if (readOnly) {
                 if (granuleSource == null) {
-                    granuleSource = new GranuleCatalogSource(granuleCatalog, typeName, hints);
+                    granuleSource = new GranuleCatalogSource(this, granuleCatalog, typeName, hints);
                     if (!typeName.equalsIgnoreCase(name)) {
                         // need to rename
                         granuleSource = new RenamingGranuleSource(name, granuleSource);
@@ -1911,5 +1912,23 @@ public class RasterManager implements Cloneable {
         }
 
         return crsAttribute;
+    }
+
+    /**
+     * The parent directory that can be used with the {@link PathType} enumeration
+     *
+     * @return
+     */
+    public String getParentLocation() {
+        return URLs.fileToUrl(getParentReader().parentDirectory).toString();
+    }
+
+    /**
+     * The attribute containing the location information for the single granules
+     *
+     * @return
+     */
+    public String getLocationAttribute() {
+        return getParentReader().locationAttributeName;
     }
 }

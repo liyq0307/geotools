@@ -89,7 +89,7 @@ public class FeatureTypeRegistry {
 
     private boolean includeAttributes;
 
-    private static AttributeType XMLATTRIBUTE_TYPE;
+    private static volatile AttributeType XMLATTRIBUTE_TYPE;
 
     /**
      * stack of currently being built type names, used by {@link #createType(Name,
@@ -572,12 +572,12 @@ public class FeatureTypeRegistry {
 
             if (includeAttributes) {
                 for (XSDAttributeUse attgcontent : complexTypeDef.getAttributeUses()) {
-                    XSDAttributeDeclaration att = attgcontent.getContent();
+                    XSDAttributeDeclaration att = attgcontent.getAttributeDeclaration();
                     descriptor =
                             createAttributeDescriptor(
                                     getXmlAttributeType(),
                                     null,
-                                    new NameImpl(null, "@" + att.getName()),
+                                    new NameImpl(att.getTargetNamespace(), "@" + att.getName()),
                                     0,
                                     1,
                                     false,
