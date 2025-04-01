@@ -65,9 +65,10 @@ public class AcceptVersionsTypeImpl extends EObjectImpl implements AcceptVersion
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<String> getVersion() {
     if (version == null) {
-      version = new EDataTypeEList<String>(String.class, this, Ows20Package.ACCEPT_VERSIONS_TYPE__VERSION);
+      version = new EDataTypeEList<>(String.class, this, Ows20Package.ACCEPT_VERSIONS_TYPE__VERSION);
     }
     return version;
   }

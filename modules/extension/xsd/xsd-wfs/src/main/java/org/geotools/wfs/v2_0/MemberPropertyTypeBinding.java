@@ -24,14 +24,14 @@ import org.eclipse.xsd.XSDElementDeclaration;
 import org.eclipse.xsd.XSDFactory;
 import org.eclipse.xsd.XSDParticle;
 import org.eclipse.xsd.XSDTypeDefinition;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.type.AttributeType;
 import org.geotools.gml2.bindings.GMLEncodingUtils;
 import org.geotools.gml3.XSDIdRegistry;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.geotools.xsd.SchemaIndex;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.type.AttributeType;
 
 /**
  * Binding object for the type http://www.opengis.net/wfs/2.0:MemberPropertyType.
@@ -55,8 +55,7 @@ import org.opengis.feature.type.AttributeType;
  *
  * @generated
  */
-public class MemberPropertyTypeBinding
-        extends org.geotools.gml3.bindings.FeaturePropertyTypeBinding {
+public class MemberPropertyTypeBinding extends org.geotools.gml3.bindings.FeaturePropertyTypeBinding {
 
     SchemaIndex schemaIndex;
 
@@ -66,6 +65,7 @@ public class MemberPropertyTypeBinding
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WFS.MemberPropertyType;
     }
@@ -77,6 +77,7 @@ public class MemberPropertyTypeBinding
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         // TODO: implement and remove call to super
@@ -84,8 +85,8 @@ public class MemberPropertyTypeBinding
     }
 
     @Override
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
-        ArrayList list = new ArrayList();
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
+        List<Object[]> list = new ArrayList<>();
         Object member = super.getProperty(object, org.geotools.gml3.GML._Feature);
         if (member != null) {
             // check for joined feature
@@ -109,11 +110,8 @@ public class MemberPropertyTypeBinding
         XSDFactory factory = XSDFactory.eINSTANCE;
 
         AttributeType attType = att.getType();
-        XSDTypeDefinition xsdType =
-                schemaIndex.getTypeDefinition(
-                        new QName(
-                                attType.getName().getNamespaceURI(),
-                                attType.getName().getLocalPart()));
+        XSDTypeDefinition xsdType = schemaIndex.getTypeDefinition(
+                new QName(attType.getName().getNamespaceURI(), attType.getName().getLocalPart()));
 
         XSDElementDeclaration element = factory.createXSDElementDeclaration();
         element.setName(att.getName().getLocalPart());

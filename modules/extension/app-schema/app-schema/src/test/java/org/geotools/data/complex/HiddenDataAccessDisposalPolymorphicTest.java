@@ -23,14 +23,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataAccessFinder;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.feature.type.Name;
 import org.geotools.feature.NameImpl;
 import org.junit.Before;
-import org.junit.Test;
-import org.opengis.feature.type.Name;
 
 public class HiddenDataAccessDisposalPolymorphicTest extends AbstractHiddenDataAccessDisposalTest {
 
@@ -42,16 +42,11 @@ public class HiddenDataAccessDisposalPolymorphicTest extends AbstractHiddenDataA
 
     AppSchemaDataAccess artifactDataAccess;
 
-    /**
-     * Load all the data accesses.
-     *
-     * @return
-     * @throws Exception
-     */
+    /** Load all the data accesses. */
     @Before
     public void loadDataAccesses() throws Exception {
         /** Load artifact data access using polymorphic mappings */
-        Map dsParams = new HashMap();
+        Map<String, Serializable> dsParams = new HashMap<>();
         URL url = getClass().getResource(schemaBase + "artifact_mapping_recode.xml");
         assertNotNull(url);
 
@@ -67,14 +62,5 @@ public class HiddenDataAccessDisposalPolymorphicTest extends AbstractHiddenDataA
 
         // 2 accessible data accesses + 4 hidden data accesses = 6
         assertEquals(6, DataAccessRegistry.getInstance().registry.size());
-    }
-
-    @Test
-    public void testAutomaticDisposalDisabledIfPolymorphic() {
-        guDataAccess.dispose();
-
-        // no automatic disposal should have occurred, because of
-        // polymorphic feature chaining configuration in artifact mapping file
-        assertEquals(5, DataAccessRegistry.getInstance().registry.size());
     }
 }

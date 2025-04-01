@@ -29,11 +29,11 @@ public class Node {
     private boolean childrenVisited = false;
     private Envelope bounds;
     protected int[] shapesId;
-    protected List subNodes;
+    protected List<Node> subNodes;
 
     public Node(Envelope bounds) {
         this.bounds = new Envelope(bounds);
-        this.subNodes = new ArrayList(4);
+        this.subNodes = new ArrayList<>(4);
         this.shapesId = null;
     }
 
@@ -88,14 +88,10 @@ public class Node {
      * @return A Node
      */
     public Node getSubNode(int pos) throws StoreException {
-        return (Node) this.subNodes.get(pos);
+        return this.subNodes.get(pos);
     }
 
-    /**
-     * Add a shape id
-     *
-     * @param id
-     */
+    /** Add a shape id */
     public void addShapeId(int id) {
         if (this.shapesId == null) {
             this.shapesId = new int[4];
@@ -120,18 +116,13 @@ public class Node {
      */
     public int getShapeId(int pos) {
         if (pos >= this.numShapesId) {
-            throw new ArrayIndexOutOfBoundsException(
-                    "Requsted " + pos + " but size = " + this.numShapesId);
+            throw new ArrayIndexOutOfBoundsException("Requsted " + pos + " but size = " + this.numShapesId);
         }
 
         return this.shapesId[pos];
     }
 
-    /**
-     * Sets the shape ids
-     *
-     * @param ids
-     */
+    /** Sets the shape ids */
     public void setShapesId(int[] ids) {
         if (ids == null) {
             this.numShapesId = 0;
@@ -139,8 +130,8 @@ public class Node {
             this.shapesId = ids;
             this.numShapesId = 0;
 
-            for (int i = 0; i < ids.length; i++) {
-                if (ids[i] == -1) {
+            for (int id : ids) {
+                if (id == -1) {
                     break;
                 }
 

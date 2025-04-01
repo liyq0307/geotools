@@ -49,7 +49,6 @@ public class NameBinding extends AbstractComplexBinding {
         return Binding.OVERRIDE;
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public Class getType() {
         return String.class;
@@ -70,6 +69,7 @@ public class NameBinding extends AbstractComplexBinding {
         return super.parse(instance, node, value);
     }
 
+    @Override
     public Element encode(Object object, Document document, Element value) throws Exception {
         value.setTextContent(object.toString());
         return value;

@@ -28,8 +28,8 @@ public class SolrUtils {
 
     /** Maps SOLR types to JAVA types */
     public static Class<?> decodeSolrFieldType(String className) {
-        if (className.equals("org.apache.solr.schema.TextField")
-                || className.equals("org.apache.solr.schema.StrField")) return String.class;
+        if (className.equals("org.apache.solr.schema.TextField") || className.equals("org.apache.solr.schema.StrField"))
+            return String.class;
         if (className.equals("org.apache.solr.schema.TrieLongField")
                 || className.equals("org.apache.solr.schema.LongField")) return Long.class;
         if (className.equals("org.apache.solr.schema.BoolField")) return Boolean.class;
@@ -37,8 +37,7 @@ public class SolrUtils {
                 || className.equals("org.apache.solr.schema.LatLonType")
                 || className.equals("org.apache.solr.schema.BBoxField")
                 || className.equals("org.apache.solr.spatial.pending.BBoxFieldType")
-                || className.equals("org.apache.solr.schema.RptWithGeometrySpatialField"))
-            return Geometry.class;
+                || className.equals("org.apache.solr.schema.RptWithGeometrySpatialField")) return Geometry.class;
         if (className.equals("org.apache.solr.schema.DateField")
                 || className.equals("org.apache.solr.schema.TrieDateField")) return Date.class;
         if (className.equals("org.apache.solr.schema.IntField")
@@ -51,10 +50,7 @@ public class SolrUtils {
         return null;
     }
 
-    /**
-     * Add methods to extract unique and multivalued informations from SOLR schema obtained by
-     * {@link LukeResponse}
-     */
+    /** Add methods to extract unique and multivalued informations from SOLR schema obtained by {@link LukeResponse} */
     public static class ExtendedFieldSchemaInfo {
 
         private Boolean uniqueKey = false;
@@ -68,10 +64,10 @@ public class SolrUtils {
          * @param processField LukeResponse with dynamic and static fields details
          * @param fieldName name of SOLR field to examine
          */
-        public ExtendedFieldSchemaInfo(
-                LukeResponse processSchema, LukeResponse processField, String fieldName) {
-            NamedList schema = (NamedList) processSchema.getResponse().get("schema");
-            NamedList<NamedList> flds = (NamedList<NamedList>) schema.get("fields");
+        public ExtendedFieldSchemaInfo(LukeResponse processSchema, LukeResponse processField, String fieldName) {
+            NamedList schema = getField(processSchema.getResponse(), "schema");
+            @SuppressWarnings("unchecked")
+            NamedList<NamedList> flds = getField(schema, "fields");
             for (Entry<String, NamedList> entry : flds) {
                 String fn = entry.getKey();
                 if (fn.equals(fieldName)) {
@@ -85,7 +81,7 @@ public class SolrUtils {
                 }
             }
 
-            flds = (NamedList<NamedList>) processField.getResponse().get("fields");
+            flds = getField(processField.getResponse(), "fields");
             for (Entry<String, NamedList> entry : flds) {
                 String fn = entry.getKey();
                 if (fn.equals(fieldName)) {
@@ -98,6 +94,11 @@ public class SolrUtils {
                     break;
                 }
             }
+        }
+
+        @SuppressWarnings("unchecked")
+        private NamedList<NamedList> getField(NamedList<Object> response, String fields) {
+            return (NamedList<NamedList>) response.get(fields);
         }
 
         public Boolean getUniqueKey() {

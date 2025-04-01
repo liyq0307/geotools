@@ -9,7 +9,7 @@ Our policy is waiting for the majority of our users before migrating to a new ve
 language. In general we are held up by the slow migration of Java Enterprise Edition environments
 such as websphere.
 
-GeoTools 15.x uses Java 8.
+GeoTools 29.x uses Java 11.
 
 How do I build from source code?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -101,7 +101,7 @@ GeoTools modules and their dependencies.
 .. sourcecode:: xml
 
   <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.geotools.demo</groupId>
     <artifactId>quickstart</artifactId>
@@ -120,14 +120,14 @@ GeoTools modules and their dependencies.
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <encoding>UTF-8</encoding>
-                    <target>1.8</target>
-                    <source>1.8</source>
+                    <target>11</target>
+                    <source>11</source>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>1.3.1</version>
+                <version>3.5.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -135,15 +135,24 @@ GeoTools modules and their dependencies.
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <filters>
+	                  	<!-- filter signed jars in the dependencies -->
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>                    
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>shaded</shadedClassifierName>
                             <transformers>
-                                <!-- This bit sets the main class for the executable jar as you otherwise -->
-                                <!-- would with the assembly plugin                                       -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <manifestEntries>
-                                        <Main-Class>org.geotools.demo.Quickstart</Main-Class>
-                                    </manifestEntries>
+                                    <mainClass>org.geotools.demo.Quickstart</mainClass>
                                 </transformer>
-                                <!-- This bit merges the various GeoTools META-INF/services files         -->
+	 			<!-- This bit merges the various GeoTools META-INF/services files  (e.g. referencing plugins) -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                         </configuration>

@@ -23,14 +23,15 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
 /**
- * A subclass of {@link MultiPolygon} that can host also {@link CurvePolygon} and will linearize if
- * needed
+ * A subclass of {@link MultiPolygon} that can host also {@link CurvePolygon} and will linearize if needed
  *
  * @author Andrea Aime - GeoSolutions
  */
 public class MultiSurface extends MultiPolygon implements MultiCurvedGeometry<MultiPolygon> {
 
     private static final long serialVersionUID = -5796254063449438787L;
+
+    private static final String TYPENAME_MULTISURFACE = "MultiSurface";
 
     double tolerance;
 
@@ -44,10 +45,12 @@ public class MultiSurface extends MultiPolygon implements MultiCurvedGeometry<Mu
         this.tolerance = tolerance;
     }
 
+    @Override
     public MultiPolygon linearize() {
         return linearize(tolerance);
     }
 
+    @Override
     public MultiPolygon linearize(double tolerance) {
         int numGeometries = getNumGeometries();
         Polygon[] linearized = new Polygon[numGeometries];
@@ -64,6 +67,7 @@ public class MultiSurface extends MultiPolygon implements MultiCurvedGeometry<Mu
         return getFactory().createMultiPolygon(linearized);
     }
 
+    @Override
     public String toCurvedText() {
         StringBuilder sb = new StringBuilder("MULTISURFACE ");
         int numGeometries = getNumGeometries();
@@ -79,8 +83,7 @@ public class MultiSurface extends MultiPolygon implements MultiCurvedGeometry<Mu
                 } else {
                     // straight lines polygon
                     sb.append("(");
-                    writeCoordinateSequence(
-                            sb, component.getExteriorRing().getCoordinateSequence());
+                    writeCoordinateSequence(sb, component.getExteriorRing().getCoordinateSequence());
                     int numHoles = component.getNumInteriorRing();
                     for (int i = 0; i < numHoles; i++) {
                         sb.append(", ");
@@ -127,5 +130,10 @@ public class MultiSurface extends MultiPolygon implements MultiCurvedGeometry<Mu
         }
 
         return new MultiSurface(polys, factory, tolerance);
+    }
+
+    @Override
+    public String getGeometryType() {
+        return TYPENAME_MULTISURFACE;
     }
 }

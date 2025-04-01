@@ -17,16 +17,15 @@
 package org.geotools.feature;
 
 import java.util.Collection;
-import java.util.Iterator;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.Feature;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.geometry.BoundingBox;
 
 /**
  * Temptative implementation of Feature.
@@ -63,28 +62,28 @@ public class FeatureImpl extends ComplexAttributeImpl implements Feature {
         super(properties, type, id);
     }
 
+    @Override
     public FeatureType getType() {
         return (FeatureType) super.getType();
     }
 
+    @Override
     public FeatureId getIdentifier() {
         return (FeatureId) this.id;
     }
     /**
-     * Get the total bounds of this feature which is calculated by doing a union of the bounds of
-     * each geometry this feature is associated with.
+     * Get the total bounds of this feature which is calculated by doing a union of the bounds of each geometry this
+     * feature is associated with.
      *
      * @return An Envelope containing the total bounds of this Feature.
-     * @task REVISIT: what to return if there are no geometries in the feature? For now we'll return
-     *     a null envelope, make this part of interface? (IanS - by OGC standards, all Feature must
-     *     have geom)
+     * @task REVISIT: what to return if there are no geometries in the feature? For now we'll return a null envelope,
+     *     make this part of interface? (IanS - by OGC standards, all Feature must have geom)
      */
+    @Override
     public BoundingBox getBounds() {
 
-        ReferencedEnvelope bounds =
-                new ReferencedEnvelope(getType().getCoordinateReferenceSystem());
-        for (Iterator itr = getValue().iterator(); itr.hasNext(); ) {
-            Property property = (Property) itr.next();
+        ReferencedEnvelope bounds = new ReferencedEnvelope(getType().getCoordinateReferenceSystem());
+        for (Property property : getValue()) {
             if (property instanceof GeometryAttribute) {
                 bounds.include(((GeometryAttribute) property).getBounds());
             }
@@ -93,6 +92,7 @@ public class FeatureImpl extends ComplexAttributeImpl implements Feature {
         return bounds;
     }
 
+    @Override
     public GeometryAttribute getDefaultGeometryProperty() {
         if (defaultGeometry != null) {
             return defaultGeometry;
@@ -101,16 +101,14 @@ public class FeatureImpl extends ComplexAttributeImpl implements Feature {
         synchronized (this) {
             if (defaultGeometry == null) {
                 // look it up from the type
-                if (((FeatureType) getType()).getGeometryDescriptor() == null) {
+                if (getType().getGeometryDescriptor() == null) {
                     return null;
                 }
 
-                GeometryType geometryType =
-                        (GeometryType) getType().getGeometryDescriptor().getType();
+                GeometryType geometryType = getType().getGeometryDescriptor().getType();
 
                 if (geometryType != null) {
-                    for (Iterator itr = getValue().iterator(); itr.hasNext(); ) {
-                        Property property = (Property) itr.next();
+                    for (Property property : getValue()) {
                         if (property instanceof GeometryAttribute) {
                             if (property.getType().equals(geometryType)) {
                                 defaultGeometry = (GeometryAttribute) property;
@@ -130,6 +128,7 @@ public class FeatureImpl extends ComplexAttributeImpl implements Feature {
     // 1- getValue() shouldn't contain the passed in attribute, but the schema should contain its
     // descriptor
     // 2- this.defaultGeometry = defaultGeometry means getValue() will  not contain the argument
+    @Override
     public void setDefaultGeometryProperty(GeometryAttribute defaultGeometry) {
         if (!getValue().contains(defaultGeometry)) {
             throw new IllegalArgumentException("specified attribute is not one of: " + getValue());

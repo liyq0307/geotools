@@ -17,9 +17,9 @@
 package org.geotools.data.store;
 
 import java.util.Iterator;
+import org.geotools.api.feature.Feature;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.collection.DelegateFeatureIterator;
-import org.opengis.feature.Feature;
 
 /**
  * Iterator wrapper which caps the number of returned features.
@@ -35,11 +35,11 @@ public class MaxFeaturesIterator<F extends Feature> implements FeatureIterator<F
     long counter;
 
     public MaxFeaturesIterator(Iterator<F> iterator, long max) {
-        this(new DelegateFeatureIterator<F>(iterator), 0, max);
+        this(new DelegateFeatureIterator<>(iterator), 0, max);
     }
 
     public MaxFeaturesIterator(Iterator<F> iterator, long start, long max) {
-        this(new DelegateFeatureIterator<F>(iterator), start, max);
+        this(new DelegateFeatureIterator<>(iterator), start, max);
     }
 
     public MaxFeaturesIterator(FeatureIterator<F> delegate, long max) {
@@ -57,6 +57,7 @@ public class MaxFeaturesIterator<F extends Feature> implements FeatureIterator<F
         return delegate;
     }
 
+    @Override
     public boolean hasNext() {
         if (counter < start) {
             // skip to just before start if needed
@@ -65,6 +66,7 @@ public class MaxFeaturesIterator<F extends Feature> implements FeatureIterator<F
         return delegate.hasNext() && counter < end;
     }
 
+    @Override
     public F next() {
         if (counter < start) {
             // skip to just before start if needed

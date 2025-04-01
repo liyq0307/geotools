@@ -23,8 +23,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import junit.framework.TestCase;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import junit.framework.TestCase; // NOPMD
 import junit.framework.TestResult;
+import org.junit.Assume;
 
 /**
  * Test support for test cases that require an "online" resource, such as an
@@ -72,13 +75,18 @@ import junit.framework.TestResult;
  * @author Justin Deoliveira, The Open Planning Project
  * @author Ben Caradoc-Davies, CSIRO Earth Science and Resource Engineering
  */
+@SuppressWarnings({
+    "PMD.JUnit4TestShouldUseBeforeAnnotation",
+    "PMD.JUnit4TestShouldUseAfterAnnotation",
+    "PMD.DisallowJUnit3"
+})
 public abstract class OnlineTestCase extends TestCase {
     /** System property set to totally disable any online tests */
     public static final String ONLINE_TEST_PROFILE = "onlineTestProfile";
 
     /**
-     * The key in the test fixture property file used to set the behaviour of the online test if
-     * {@link #connect()} fails.
+     * The key in the test fixture property file used to set the behaviour of the online test if {@link #connect()}
+     * fails.
      */
     public static final String SKIP_ON_FAILURE_KEY = "skip.on.failure";
 
@@ -86,22 +94,22 @@ public abstract class OnlineTestCase extends TestCase {
     public static final String SKIP_ON_FAILURE_DEFAULT = "true";
 
     /**
-     * A static map which tracks which fixtures are offline. This prevents continually trying to run
-     * a test when an external resource is offline.
+     * A static map which tracks which fixtures are offline. This prevents continually trying to run a test when an
+     * external resource is offline.
      */
-    protected static Map<String, Boolean> online = new HashMap<String, Boolean>();
+    protected static Map<String, Boolean> online = new HashMap<>();
 
     /**
-     * A static map which tracks which fixture files can not be found. This prevents continually
-     * looking up the file and reporting it not found to the user.
+     * A static map which tracks which fixture files can not be found. This prevents continually looking up the file and
+     * reporting it not found to the user.
      */
-    protected static Map<String, Boolean> found = new HashMap<String, Boolean>();
+    protected static Map<String, Boolean> found = new HashMap<>();
     /** The test fixture, {@code null} if the fixture is not available. */
     protected Properties fixture;
     /**
-     * Flag that determines effect of exceptions in connect/disconnect. If true (the default),
-     * exceptions in connect cause the the test to be disabled, and exceptions in disconnect to be
-     * ignored. If false, exceptions will be rethrown, and cause the test to fail.
+     * Flag that determines effect of exceptions in connect/disconnect. If true (the default), exceptions in connect
+     * cause the the test to be disabled, and exceptions in disconnect to be ignored. If false, exceptions will be
+     * rethrown, and cause the test to fail.
      */
     protected boolean skipOnFailure = true;
 
@@ -114,8 +122,8 @@ public abstract class OnlineTestCase extends TestCase {
     }
 
     /**
-     * Check whether the fixture is available. This method also loads the configuration if present,
-     * and tests the connection using {@link #isOnline()}.
+     * Check whether the fixture is available. This method also loads the configuration if present, and tests the
+     * connection using {@link #isOnline()}.
      *
      * @return true if fixture is available for use
      */
@@ -133,12 +141,8 @@ public abstract class OnlineTestCase extends TestCase {
                 try {
                     available = isOnline();
                 } catch (Throwable t) {
-                    System.out.println(
-                            "Skipping "
-                                    + fixtureId
-                                    + " tests, resources not available: "
-                                    + t.getMessage());
-                    java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", t);
+                    System.out.println("Skipping " + fixtureId + " tests, resources not available: " + t.getMessage());
+                    Logger.getGlobal().log(Level.INFO, "", t);
                     available = Boolean.FALSE;
                 }
                 online.put(fixtureId, available);
@@ -174,8 +178,7 @@ public abstract class OnlineTestCase extends TestCase {
                         if (profile == null) {
                             Properties exampleFixture = createExampleFixture();
                             if (exampleFixture != null) {
-                                File exFixtureFile =
-                                        new File(fixtureFile.getAbsolutePath() + ".example");
+                                File exFixtureFile = new File(fixtureFile.getAbsolutePath() + ".example");
                                 if (!exFixtureFile.exists()) {
                                     createExampleFixture(exFixtureFile, exampleFixture);
                                 }
@@ -193,7 +196,7 @@ public abstract class OnlineTestCase extends TestCase {
                     FixtureUtilities.printSkipNotice(fixtureId, fixtureFile);
                 }
             } catch (Exception e) {
-                java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
+                Logger.getGlobal().log(Level.INFO, "", e);
             }
         }
     }
@@ -203,18 +206,18 @@ public abstract class OnlineTestCase extends TestCase {
             exFixtureFile.getParentFile().mkdirs();
             exFixtureFile.createNewFile();
 
-            FileOutputStream fout = new FileOutputStream(exFixtureFile);
+            try (FileOutputStream fout = new FileOutputStream(exFixtureFile)) {
 
-            exampleFixture.store(
-                    fout,
-                    "This is an example fixture. Update the "
-                            + "values and remove the .example suffix to enable the test");
-            fout.flush();
-            fout.close();
+                exampleFixture.store(
+                        fout,
+                        "This is an example fixture. Update the "
+                                + "values and remove the .example suffix to enable the test");
+                fout.flush();
+            }
             // System.out.println("Wrote example fixture file to " + exFixtureFile);
         } catch (IOException ioe) {
             // System.out.println("Unable to write out example fixture " + exFixtureFile);
-            java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", ioe);
+            Logger.getGlobal().log(Level.INFO, "", ioe);
         }
     }
     /**
@@ -227,9 +230,7 @@ public abstract class OnlineTestCase extends TestCase {
         super.setUp();
         setUpInternal();
 
-        skipOnFailure =
-                Boolean.parseBoolean(
-                        fixture.getProperty(SKIP_ON_FAILURE_KEY, SKIP_ON_FAILURE_DEFAULT));
+        skipOnFailure = Boolean.parseBoolean(fixture.getProperty(SKIP_ON_FAILURE_KEY, SKIP_ON_FAILURE_DEFAULT));
         // call the setUp template method
         try {
             connect();
@@ -238,7 +239,9 @@ public abstract class OnlineTestCase extends TestCase {
                 // disable the test
                 fixture = null;
                 // leave some trace of the swallowed exception
-                java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
+                Logger.getGlobal().log(Level.INFO, "SetUp of test failed. Test ignored.", e);
+
+                Assume.assumeTrue("Ignored because of exception: " + e.getMessage(), false);
             } else {
                 // do not swallow the exception
                 throw e;
@@ -271,8 +274,7 @@ public abstract class OnlineTestCase extends TestCase {
     /**
      * Tests if external resources needed to run the tests are online.
      *
-     * <p>This method can return false to indicate the online resources are not up, or can simply
-     * throw an exception.
+     * <p>This method can return false to indicate the online resources are not up, or can simply throw an exception.
      *
      * @return True if external resources are online, otherwise false.
      * @throws Exception Any errors that occur determining if online resources are available.
@@ -284,8 +286,8 @@ public abstract class OnlineTestCase extends TestCase {
     /**
      * Connection method, called from {@link #setUp()}.
      *
-     * <p>Subclasses should do all initialization / connection here. In the event of a connection
-     * not being available, this method should throw an exception to abort the test case.
+     * <p>Subclasses should do all initialization / connection here. In the event of a connection not being available,
+     * this method should throw an exception to abort the test case.
      *
      * @throws Exception if the connection failed.
      */
@@ -301,12 +303,12 @@ public abstract class OnlineTestCase extends TestCase {
     protected void disconnect() throws Exception {}
 
     /**
-     * Allows tests to create an offline fixture in cases where the user has not specified an
-     * explicit fixture for the test.
+     * Allows tests to create an offline fixture in cases where the user has not specified an explicit fixture for the
+     * test.
      *
-     * <p>Note, that this should method should on be implemented if the test case is created of
-     * creating a fixture which relies soley on embedded or offline resources. It should not
-     * reference any external or online resources as it prevents the user from running offline.
+     * <p>Note, that this should method should on be implemented if the test case is created of creating a fixture which
+     * relies soley on embedded or offline resources. It should not reference any external or online resources as it
+     * prevents the user from running offline.
      */
     protected Properties createOfflineFixture() {
         return null;
@@ -315,8 +317,8 @@ public abstract class OnlineTestCase extends TestCase {
     /**
      * Allows test to create a sample fixture for users.
      *
-     * <p>If this method returns a value the first time a fixture is looked up and not found this
-     * method will be called to create a fixture file with teh same id, but suffixed with .template.
+     * <p>If this method returns a value the first time a fixture is looked up and not found this method will be called
+     * to create a fixture file with the same id, but suffixed with .template.
      */
     protected Properties createExampleFixture() {
         return null;
@@ -325,8 +327,7 @@ public abstract class OnlineTestCase extends TestCase {
     /**
      * The fixture id for the test case.
      *
-     * <p>This name is hierarchical, similar to a java package name. Example: {@code
-     * "postgis.demo_bc"}.
+     * <p>This name is hierarchical, similar to a java package name. Example: {@code "postgis.demo_bc"}.
      *
      * @return The fixture id.
      */

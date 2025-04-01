@@ -1,26 +1,21 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2008, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.tutorial.process;
 
 import java.util.Map;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.process.feature.FeatureToFeatureProcessFactory;
 import org.geotools.text.Text;
-import org.opengis.util.InternationalString;
 
 /**
  * Factory for process which buffers an entire feature collection.
@@ -31,12 +26,8 @@ import org.opengis.util.InternationalString;
 public class BufferFeatureCollectionFactory extends FeatureToFeatureProcessFactory {
 
     /** Buffer amount */
-    public static final Parameter<Double> BUFFER =
-            new Parameter<>(
-                    "buffer",
-                    Double.class,
-                    Text.text("Buffer Amount"),
-                    Text.text("Amount to buffer each feature by"));
+    public static final Parameter<Double> BUFFER = new Parameter<>(
+            "buffer", Double.class, Text.text("Buffer Amount"), Text.text("Amount to buffer each feature by"));
 
     public InternationalString getTitle() {
         return Text.text("Buffer Features");

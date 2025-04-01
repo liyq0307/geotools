@@ -18,18 +18,18 @@ package org.geotools.filter.v1_0;
 
 import java.util.Collections;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Not;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.spatial.BinarySpatialOperator;
 
 /**
  * Binding object for the element http://www.opengis.net/ogc:Not.
@@ -53,6 +53,7 @@ public class OGCNotBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.Not;
     }
@@ -64,6 +65,7 @@ public class OGCNotBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Not.class;
     }
@@ -75,11 +77,12 @@ public class OGCNotBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        Filter filter = (Filter) node.getChildValue(Filter.class);
+        Filter filter = node.getChildValue(Filter.class);
         if (filter == null) {
             // look for an Identifier, not in the spec but something we handle
-            Identifier id = (Identifier) node.getChildValue(Identifier.class);
+            Identifier id = node.getChildValue(Identifier.class);
             if (id != null) {
                 filter = filterfactory.id(Collections.singleton(id));
             }

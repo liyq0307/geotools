@@ -16,7 +16,7 @@
  */
 package org.geotools.filter.capability;
 
-import org.opengis.filter.capability.IdCapabilities;
+import org.geotools.api.filter.capability.IdCapabilities;
 
 /**
  * Implementation of the IdCapabilities interface.
@@ -41,6 +41,7 @@ public class IdCapabilitiesImpl implements IdCapabilities {
         this(copy.hasEID(), copy.hasFID());
     }
 
+    @Override
     public boolean hasEID() {
         return eid;
     }
@@ -49,6 +50,7 @@ public class IdCapabilitiesImpl implements IdCapabilities {
         this.eid = eid;
     }
 
+    @Override
     public boolean hasFID() {
         return fid;
     }

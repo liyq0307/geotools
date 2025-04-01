@@ -17,12 +17,12 @@
 package org.geotools.data.vpf.util;
 
 import java.util.HashMap;
+import org.geotools.api.geometry.Position;
 import org.geotools.data.vpf.VPFLogger;
 import org.geotools.data.vpf.io.RowField;
 import org.geotools.data.vpf.io.TripletId;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.geometry.DirectPosition;
 
 /*
  * EdgeData.java
@@ -33,7 +33,8 @@ import org.opengis.geometry.DirectPosition;
  * @source $URL$
  */
 /** @source $URL$ */
-public class EdgeData extends HashMap {
+public class EdgeData extends HashMap<Object, Object> {
+    @Override
     public Object put(Object key, Object value) {
         if (key instanceof String) {
             GeometryFactory geofactory = new GeometryFactory();
@@ -43,8 +44,8 @@ public class EdgeData extends HashMap {
                 Coordinate[] c = null;
                 if (value instanceof RowField) {
                     value = ((RowField) value).getValue();
-                    if (value instanceof DirectPosition[]) {
-                        DirectPosition[] coords = (DirectPosition[]) value;
+                    if (value instanceof Position[]) {
+                        Position[] coords = (Position[]) value;
                         c = new Coordinate[coords.length];
                         double[] c_pair = null;
                         for (int i = 0; i < coords.length; i++) {
@@ -67,9 +68,9 @@ public class EdgeData extends HashMap {
                     Object tmp = ((RowField) value).getValue();
 
                     if (tmp instanceof TripletId) {
-                        return super.put(key_s, (TripletId) tmp);
+                        return super.put(key_s, tmp);
                     } else if (tmp instanceof Integer) {
-                        return super.put(key_s, ((Integer) tmp));
+                        return super.put(key_s, tmp);
                     } else {
                         VPFLogger.log("DYNGE I TRIPLETGENERERING!!!");
                     }

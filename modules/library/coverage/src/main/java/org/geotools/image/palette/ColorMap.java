@@ -16,7 +16,7 @@
  */
 package org.geotools.image.palette;
 
-import static org.geotools.image.palette.ColorUtils.*;
+import static org.geotools.image.palette.ColorUtils.color;
 
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -27,11 +27,11 @@ import org.geotools.image.palette.ColorMap.ColorEntry;
 import org.geotools.util.logging.Logging;
 
 /**
- * A {@link HashMap} replacement especially designed to map an (eventually packed) color to a non
- * negative integer value, which can be in our use cases a count or a palette index.
+ * A {@link HashMap} replacement especially designed to map an (eventually packed) color to a non negative integer
+ * value, which can be in our use cases a count or a palette index.
  *
- * <p>It uses significant less resources than a normal {@link HashMap} as it avoids the usage of
- * object wrappers and other redundant information that we don't need in this particular application
+ * <p>It uses significant less resources than a normal {@link HashMap} as it avoids the usage of object wrappers and
+ * other redundant information that we don't need in this particular application
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -78,8 +78,8 @@ final class ColorMap implements Iterable<ColorEntry> {
     }
 
     /**
-     * Increments the counter associated to the specified color by one, or sets the count of such
-     * color to one if missing
+     * Increments the counter associated to the specified color by one, or sets the count of such color to one if
+     * missing
      */
     public void increment(int red, int green, int blue, int alpha) {
         increment(red, green, blue, alpha, 1);
@@ -117,15 +117,7 @@ final class ColorMap implements Iterable<ColorEntry> {
         }
     }
 
-    /**
-     * Returns the value for the specified color, or -1 if the color is not found
-     *
-     * @param r
-     * @param g
-     * @param b
-     * @param a
-     * @return
-     */
+    /** Returns the value for the specified color, or -1 if the color is not found */
     public int get(int r, int g, int b, int a) {
         int color = color(r, g, b, a);
         int index = indexFor(hash(color), table.length);
@@ -145,10 +137,6 @@ final class ColorMap implements Iterable<ColorEntry> {
     /**
      * Associates the specified value with a color
      *
-     * @param r
-     * @param g
-     * @param b
-     * @param a
      * @return The old value associated with the color, or -1 if no old value was found
      */
     public int put(int r, int g, int b, int a, int value) {
@@ -175,15 +163,7 @@ final class ColorMap implements Iterable<ColorEntry> {
         return -1;
     }
 
-    /**
-     * Removes the specified color from the map
-     *
-     * @param r
-     * @param g
-     * @param b
-     * @param a
-     * @return
-     */
+    /** Removes the specified color from the map */
     public boolean remove(int r, int g, int b, int a) {
         int color = color(r, g, b, a);
         int index = indexFor(hash(color), table.length);
@@ -207,11 +187,7 @@ final class ColorMap implements Iterable<ColorEntry> {
         return false;
     }
 
-    /**
-     * Builds a new bucket array and redistributes the color entries among it
-     *
-     * @param newLength
-     */
+    /** Builds a new bucket array and redistributes the color entries among it */
     private void rehash(int newLength) {
         ColorEntry[] oldTable = table;
         this.table = new ColorEntry[newLength];
@@ -250,8 +226,8 @@ final class ColorMap implements Iterable<ColorEntry> {
     }
 
     /**
-     * Reset its own status to the one of the other color map. The {@link ColorEntry} are shared, so
-     * the other color map should not be used anymore after this call
+     * Reset its own status to the one of the other color map. The {@link ColorEntry} are shared, so the other color map
+     * should not be used anymore after this call
      */
     public void reset(ColorMap other) {
         this.modificationCount = other.modificationCount;
@@ -261,19 +237,18 @@ final class ColorMap implements Iterable<ColorEntry> {
     }
 
     /**
-     * Prints out statistics about the color map, number of buckes, empty buckets count, number of
-     * entries per bucket, number of access operations and number of average color entries accessed
-     * each time
+     * Prints out statistics about the color map, number of buckes, empty buckets count, number of entries per bucket,
+     * number of access operations and number of average color entries accessed each time
      */
     public void printStats() {
         int empty = 0;
         int largest = 0;
         int sum = 0;
-        for (int i = 0; i < table.length; i++) {
-            if (table[i] == null) {
+        for (ColorEntry colorEntry : table) {
+            if (colorEntry == null) {
                 empty++;
             } else {
-                ColorEntry ce = table[i];
+                ColorEntry ce = colorEntry;
                 int count = 0;
                 while (ce != null) {
                     count++;
@@ -285,22 +260,20 @@ final class ColorMap implements Iterable<ColorEntry> {
                 sum += count;
             }
         }
-        LOGGER.info(
-                "Bins "
-                        + table.length
-                        + ", empty: "
-                        + empty
-                        + " largest: "
-                        + largest
-                        + " avg: "
-                        + sum * 1.0 / (table.length - empty));
-        LOGGER.info(
-                "Accesses: "
-                        + accessCount
-                        + ", scans: "
-                        + scanCount
-                        + ", scan per access: "
-                        + (scanCount * 1.0 / accessCount));
+        LOGGER.info("Bins "
+                + table.length
+                + ", empty: "
+                + empty
+                + " largest: "
+                + largest
+                + " avg: "
+                + sum * 1.0 / (table.length - empty));
+        LOGGER.info("Accesses: "
+                + accessCount
+                + ", scans: "
+                + scanCount
+                + ", scan per access: "
+                + (scanCount * 1.0 / accessCount));
         accessCount = 0;
         scanCount = 0;
     }
@@ -339,8 +312,7 @@ final class ColorMap implements Iterable<ColorEntry> {
         @Override
         public boolean hasNext() {
             if (reference != modificationCount) {
-                throw new ConcurrentModificationException(
-                        "The map entry count has been modified during the iteration");
+                throw new ConcurrentModificationException("The map entry count has been modified during the iteration");
             }
 
             if (current == null) {

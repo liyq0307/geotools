@@ -16,15 +16,17 @@
  */
 package org.geotools.feature.visitor;
 
+import java.util.List;
+import java.util.Optional;
+
 public class CalcUtil {
 
     /**
      * Sums an array of numbers together while using the correct class type.
      *
-     * @param numbers
      * @return the sum contained in the most appropriate number class
      */
-    static Number sum(Number[] numbers) {
+    static Number sum(Number... numbers) {
         Number newSum = (Number) getObject(numbers);
 
         if (newSum == null) {
@@ -36,8 +38,8 @@ public class CalcUtil {
             int sum = 0;
             int nextValue;
 
-            for (int i = 0; i < numbers.length; i++) {
-                nextValue = numbers[i].intValue();
+            for (Number number : numbers) {
+                nextValue = number.intValue();
                 sum += nextValue;
             }
 
@@ -46,8 +48,8 @@ public class CalcUtil {
             long sum = 0;
             long nextValue;
 
-            for (int i = 0; i < numbers.length; i++) {
-                nextValue = numbers[i].longValue();
+            for (Number number : numbers) {
+                nextValue = number.longValue();
                 sum += nextValue;
             }
 
@@ -56,8 +58,8 @@ public class CalcUtil {
             float sum = 0;
             float nextValue;
 
-            for (int i = 0; i < numbers.length; i++) {
-                nextValue = numbers[i].floatValue();
+            for (Number number : numbers) {
+                nextValue = number.floatValue();
                 sum += nextValue;
             }
 
@@ -66,8 +68,8 @@ public class CalcUtil {
             double sum = 0;
             double nextValue;
 
-            for (int i = 0; i < numbers.length; i++) {
-                nextValue = numbers[i].doubleValue();
+            for (Number number : numbers) {
+                nextValue = number.doubleValue();
                 sum += nextValue;
             }
 
@@ -112,12 +114,8 @@ public class CalcUtil {
         }
     }
 
-    /**
-     * Calculates the average, and returns it in the correct class.
-     *
-     * @param numbers
-     */
-    static Number average(Number[] numbers) {
+    /** Calculates the average, and returns it in the correct class. */
+    static Number average(Number... numbers) {
         Number sum = sum(numbers);
 
         return divide(sum, Integer.valueOf(numbers.length));
@@ -126,26 +124,25 @@ public class CalcUtil {
     /**
      * Determines the most appropriate class to use for a multiclass calculation.
      *
-     * @param objects
      * @return the most
      */
-    static Class bestClass(Object[] objects) {
+    static Class bestClass(Object... objects) {
         boolean hasInt = false;
         boolean hasFloat = false;
         boolean hasLong = false;
         boolean hasDouble = false;
         boolean hasString = false;
 
-        for (int i = 0; i < objects.length; i++) {
-            if (objects[i] instanceof Double) {
+        for (Object object : objects) {
+            if (object instanceof Double) {
                 hasDouble = true;
-            } else if (objects[i] instanceof Float) {
+            } else if (object instanceof Float) {
                 hasFloat = true;
-            } else if (objects[i] instanceof Long) {
+            } else if (object instanceof Long) {
                 hasLong = true;
-            } else if (objects[i] instanceof Integer) {
+            } else if (object instanceof Integer) {
                 hasInt = true;
-            } else if (objects[i] instanceof String) {
+            } else if (object instanceof String) {
                 hasString = true;
             }
         }
@@ -166,12 +163,7 @@ public class CalcUtil {
         }
     }
 
-    /**
-     * Casts an object to the specified type
-     *
-     * @param var
-     * @param type
-     */
+    /** Casts an object to the specified type */
     static Object convert(Object var, Class type) {
         if (var instanceof Number) { // use number conversion
 
@@ -232,12 +224,10 @@ public class CalcUtil {
     }
 
     /**
-     * Given an array of objects, traverses the array and determines the most suitable data type to
-     * perform the calculation in. An empty object of the correct class is returned;
-     *
-     * @param objects
+     * Given an array of objects, traverses the array and determines the most suitable data type to perform the
+     * calculation in. An empty object of the correct class is returned;
      */
-    static Object getObject(Object[] objects) {
+    static Object getObject(Object... objects) {
         Class bestClass = bestClass(objects);
 
         if (bestClass == String.class) {
@@ -255,12 +245,8 @@ public class CalcUtil {
         }
     }
 
-    /**
-     * Similar to java.lang.Comparable.compareTo, but can handle 2 different data types.
-     *
-     * @param val1
-     * @param val2
-     */
+    /** Similar to java.lang.Comparable.compareTo, but can handle 2 different data types. */
+    @SuppressWarnings("unchecked")
     static int compare(Comparable val1, Comparable val2) {
         if (val1.getClass() == val2.getClass()) {
             // both the same type, no conversion is necessary.
@@ -268,7 +254,7 @@ public class CalcUtil {
         }
 
         // find most appropriate class
-        Object[] objects = new Object[] {val1, val2};
+        Object[] objects = {val1, val2};
         Class bestClass = bestClass(objects);
 
         if (bestClass != val1.getClass()) {
@@ -281,5 +267,21 @@ public class CalcUtil {
 
         // now do the comparison
         return val1.compareTo(val2);
+    }
+
+    /**
+     * Utility method for {@link FeatureAttributeVisitor} implementations that are simply returnin the same type as the
+     * inputs
+     *
+     * @param inputTypes
+     * @return
+     */
+    public static Optional<List<Class>> reflectInputTypes(int expectedInputCount, List<Class> inputTypes) {
+        if (inputTypes == null || inputTypes.size() != expectedInputCount)
+            throw new IllegalArgumentException(
+                    "Expecting " + expectedInputCount + " types in input, but got " + inputTypes);
+
+        // same as the input
+        return Optional.of(inputTypes);
     }
 }

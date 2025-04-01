@@ -34,12 +34,11 @@ public class GranuleHandlerSPITest {
     @Test
     public void basicTest() {
         // get the SPIs
-        Map<String, GranuleHandlerFactorySPI> spiMap =
-                GranuleHandlerFactoryFinder.getGranuleHandlersSPI();
+        Map<String, GranuleHandlerFactorySPI> spiMap = GranuleHandlerFactoryFinder.getGranuleHandlersSPI();
 
         // make sure it is not empty
         assertNotNull(spiMap);
-        Assert.assertTrue(!spiMap.isEmpty());
+        Assert.assertFalse(spiMap.isEmpty());
 
         // check the default one is there
         Assert.assertTrue(spiMap.containsKey(DefaultGranuleHandlerFactory.class.getName()));
@@ -51,6 +50,6 @@ public class GranuleHandlerSPITest {
         GranuleHandlerFactorySPI spi = spiMap.get(DefaultGranuleHandlerFactory.class.getName());
         GranuleHandler handler = spi.create();
         assertNotNull(handler);
-        Assert.assertTrue(handler.getClass().equals(DefaultGranuleHandler.class));
+        Assert.assertEquals(handler.getClass(), DefaultGranuleHandler.class);
     }
 }

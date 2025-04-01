@@ -24,15 +24,14 @@ import static org.geotools.data.vpf.ifc.VPFCoverageIfc.FIELD_LEVEL;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.vpf.file.VPFFile;
 import org.geotools.data.vpf.file.VPFFileFactory;
 import org.geotools.data.vpf.ifc.VPFCoverageIfc;
 import org.geotools.feature.SchemaException;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * A VPF coverage. This class constructs and contains both feature classes and feature types.
@@ -45,10 +44,10 @@ public class VPFCoverage {
     private final String description;
 
     /** List of feature classes part of this coverage */
-    private final List featureClasses = new Vector();
+    private final List<VPFFeatureClass> featureClasses = new ArrayList<>();
 
     /** List of feature types part of this coverage */
-    private final List featureTypes = new Vector(25);
+    private final List<VPFFeatureType> featureTypes = new ArrayList<>(25);
 
     /** The owning library */
     private final VPFLibrary library;
@@ -63,8 +62,6 @@ public class VPFCoverage {
     /**
      * Constructor
      *
-     * @param cLibrary
-     * @param feature
      * @param cDirectoryName path to directory containing coverage
      * @throws IOException if the directory does not contain a valid FCS file
      * @throws SchemaException For problems making one of the feature classes as a FeatureType.
@@ -77,33 +74,24 @@ public class VPFCoverage {
     /**
      * Constructor with namespace
      *
-     * @param cLibrary
-     * @param feature
      * @param cDirectoryName path to directory containing coverage
-     * @param namespace
      * @throws IOException if the directory does not contain a valid FCS file
      * @throws SchemaException For problems making one of the feature classes as a FeatureType.
      */
-    public VPFCoverage(
-            VPFLibrary cLibrary, SimpleFeature feature, String cDirectoryName, URI namespace)
+    public VPFCoverage(VPFLibrary cLibrary, SimpleFeature feature, String cDirectoryName, URI namespace)
             throws IOException, SchemaException {
         topologyLevel = Short.parseShort(feature.getAttribute(FIELD_LEVEL).toString());
         library = cLibrary;
         description = feature.getAttribute(VPFCoverageIfc.FIELD_DESCRIPTION).toString();
         this.namespace = namespace;
-        pathName =
-                cDirectoryName
-                        .concat(File.separator)
-                        .concat(feature.getAttribute(FIELD_COVERAGE_NAME).toString().toUpperCase());
+        pathName = cDirectoryName
+                .concat(File.separator)
+                .concat(feature.getAttribute(FIELD_COVERAGE_NAME).toString().toUpperCase());
         discoverFeatureClasses();
         discoverFeatureTypes();
     }
 
-    /**
-     * Builds feature classes for the coverage
-     *
-     * @throws SQLException
-     */
+    /** Builds feature classes for the coverage */
     private void discoverFeatureClasses() throws IOException, SchemaException {
         VPFFeatureClass featureClass = null;
         // boolean hasFeatureClass;
@@ -127,14 +115,13 @@ public class VPFCoverage {
     }
 
     /**
-     * The point of this block of code is to scan the CHAR.VDT file for FACC codes. There is a one
-     * to one relationship between FACC codes and feature types, but there is a one to many
-     * relationship between feature classes and feature types/FACC codes. Since objects are stored
-     * in the file system by feature class, this mechanism allows us to separate features of
-     * different feature types in the same feature class.
+     * The point of this block of code is to scan the CHAR.VDT file for FACC codes. There is a one to one relationship
+     * between FACC codes and feature types, but there is a one to many relationship between feature classes and feature
+     * types/FACC codes. Since objects are stored in the file system by feature class, this mechanism allows us to
+     * separate features of different feature types in the same feature class.
      *
-     * <p>Some coverages do not have a CHAR.VDT file. In these cases, there is a 1:1:1 relationship
-     * between the coverage, feature class, and feature type.
+     * <p>Some coverages do not have a CHAR.VDT file. In these cases, there is a 1:1:1 relationship between the
+     * coverage, feature class, and feature type.
      */
     private void discoverFeatureTypes() {
         try {
@@ -147,7 +134,8 @@ public class VPFCoverage {
 
                 // if (!ALLOWED_FCODE_ATTRIBUTES_LIST.contains(attr)) continue;
 
-                String tableFileName = row.getAttribute("table").toString().trim().toUpperCase();
+                String tableFileName =
+                        row.getAttribute("table").toString().trim().toUpperCase();
 
                 // We need to go through all of this
                 // so that entries match what is in FCS
@@ -170,7 +158,7 @@ public class VPFCoverage {
             // If there is no char.vdt,
             // we can assume there is only one feature type
             // and only one feature class
-            VPFFeatureClass coverageClass = (VPFFeatureClass) featureClasses.get(0);
+            VPFFeatureClass coverageClass = featureClasses.get(0);
             VPFFeatureType featureType = new VPFFeatureType(coverageClass);
             featureTypes.add(featureType);
         }
@@ -183,9 +171,8 @@ public class VPFCoverage {
      * @throws IOException on any IO problems, particularly not being able to find the char.vdt file
      */
     private VPFFile getCharVDT() throws IOException {
-        VPFFile charvdtInputStream = null;
         String charvdtFileName = pathName + File.separator + CHARACTER_VALUE_DESCRIPTION_TABLE;
-        charvdtInputStream = VPFFileFactory.getInstance().getFile(charvdtFileName);
+        VPFFile charvdtInputStream = VPFFileFactory.getInstance().getFile(charvdtFileName);
 
         return charvdtInputStream;
     }
@@ -195,7 +182,7 @@ public class VPFCoverage {
      *
      * @return the feature classes in the coverage
      */
-    public List getFeatureClasses() {
+    public List<VPFFeatureClass> getFeatureClasses() {
         return featureClasses;
     }
 
@@ -204,7 +191,7 @@ public class VPFCoverage {
      *
      * @return a <code>List</code> of the feature types
      */
-    public List getFeatureTypes() {
+    public List<VPFFeatureType> getFeatureTypes() {
         return featureTypes;
     }
 
@@ -248,13 +235,8 @@ public class VPFCoverage {
      *  (non-Javadoc)
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
-        return "VPF Coverage "
-                + getName()
-                + ". "
-                + description
-                + "\n"
-                + "Topology level "
-                + topologyLevel;
+        return "VPF Coverage " + getName() + ". " + description + "\n" + "Topology level " + topologyLevel;
     }
 }

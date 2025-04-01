@@ -101,6 +101,7 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public FeatureMap getMixed() {
         if (mixed == null) {
             mixed = new BasicFeatureMap(this, Smil20Package.DOCUMENT_ROOT__MIXED);
@@ -113,9 +114,10 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EMap<String, String> getXMLNSPrefixMap() {
         if (xMLNSPrefixMap == null) {
-            xMLNSPrefixMap = new EcoreEMap<String,String>(EcorePackage.Literals.ESTRING_TO_STRING_MAP_ENTRY, EStringToStringMapEntryImpl.class, this, Smil20Package.DOCUMENT_ROOT__XMLNS_PREFIX_MAP);
+            xMLNSPrefixMap = new EcoreEMap<>(EcorePackage.Literals.ESTRING_TO_STRING_MAP_ENTRY, EStringToStringMapEntryImpl.class, this, Smil20Package.DOCUMENT_ROOT__XMLNS_PREFIX_MAP);
         }
         return xMLNSPrefixMap;
     }
@@ -125,9 +127,10 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EMap<String, String> getXSISchemaLocation() {
         if (xSISchemaLocation == null) {
-            xSISchemaLocation = new EcoreEMap<String,String>(EcorePackage.Literals.ESTRING_TO_STRING_MAP_ENTRY, EStringToStringMapEntryImpl.class, this, Smil20Package.DOCUMENT_ROOT__XSI_SCHEMA_LOCATION);
+            xSISchemaLocation = new EcoreEMap<>(EcorePackage.Literals.ESTRING_TO_STRING_MAP_ENTRY, EStringToStringMapEntryImpl.class, this, Smil20Package.DOCUMENT_ROOT__XSI_SCHEMA_LOCATION);
         }
         return xSISchemaLocation;
     }
@@ -137,6 +140,7 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public AnimateType getAnimate() {
         return (AnimateType)getMixed().get(Smil20Package.Literals.DOCUMENT_ROOT__ANIMATE, true);
     }
@@ -155,6 +159,7 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setAnimate(AnimateType newAnimate) {
         ((FeatureMap.Internal)getMixed()).set(Smil20Package.Literals.DOCUMENT_ROOT__ANIMATE, newAnimate);
     }
@@ -164,6 +169,7 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public AnimateColorType getAnimateColor() {
         return (AnimateColorType)getMixed().get(Smil20Package.Literals.DOCUMENT_ROOT__ANIMATE_COLOR, true);
     }
@@ -182,6 +188,7 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setAnimateColor(AnimateColorType newAnimateColor) {
         ((FeatureMap.Internal)getMixed()).set(Smil20Package.Literals.DOCUMENT_ROOT__ANIMATE_COLOR, newAnimateColor);
     }
@@ -191,6 +198,7 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public AnimateMotionType getAnimateMotion() {
         return (AnimateMotionType)getMixed().get(Smil20Package.Literals.DOCUMENT_ROOT__ANIMATE_MOTION, true);
     }
@@ -209,6 +217,7 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setAnimateMotion(AnimateMotionType newAnimateMotion) {
         ((FeatureMap.Internal)getMixed()).set(Smil20Package.Literals.DOCUMENT_ROOT__ANIMATE_MOTION, newAnimateMotion);
     }
@@ -218,6 +227,7 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public SetType getSet() {
         return (SetType)getMixed().get(Smil20Package.Literals.DOCUMENT_ROOT__SET, true);
     }
@@ -236,6 +246,7 @@ public class DocumentRootImpl extends MinimalEObjectImpl.Container implements Do
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setSet(SetType newSet) {
         ((FeatureMap.Internal)getMixed()).set(Smil20Package.Literals.DOCUMENT_ROOT__SET, newSet);
     }

@@ -143,9 +143,10 @@ public class ParameterExpressionTypeImpl extends EObjectImpl implements Paramete
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<TitleType> getTitle() {
     if (title == null) {
-      title = new EObjectContainmentEList<TitleType>(TitleType.class, this, Wfs20Package.PARAMETER_EXPRESSION_TYPE__TITLE);
+      title = new EObjectContainmentEList<>(TitleType.class, this, Wfs20Package.PARAMETER_EXPRESSION_TYPE__TITLE);
     }
     return title;
   }
@@ -155,9 +156,10 @@ public class ParameterExpressionTypeImpl extends EObjectImpl implements Paramete
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<AbstractType> getAbstract() {
     if (abstract_ == null) {
-      abstract_ = new EObjectContainmentEList<AbstractType>(AbstractType.class, this, Wfs20Package.PARAMETER_EXPRESSION_TYPE__ABSTRACT);
+      abstract_ = new EObjectContainmentEList<>(AbstractType.class, this, Wfs20Package.PARAMETER_EXPRESSION_TYPE__ABSTRACT);
     }
     return abstract_;
   }
@@ -167,9 +169,10 @@ public class ParameterExpressionTypeImpl extends EObjectImpl implements Paramete
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<MetadataType> getMetadata() {
     if (metadata == null) {
-      metadata = new EObjectContainmentEList<MetadataType>(MetadataType.class, this, Wfs20Package.PARAMETER_EXPRESSION_TYPE__METADATA);
+      metadata = new EObjectContainmentEList<>(MetadataType.class, this, Wfs20Package.PARAMETER_EXPRESSION_TYPE__METADATA);
     }
     return metadata;
   }
@@ -179,6 +182,7 @@ public class ParameterExpressionTypeImpl extends EObjectImpl implements Paramete
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public String getName() {
     return name;
   }
@@ -188,6 +192,7 @@ public class ParameterExpressionTypeImpl extends EObjectImpl implements Paramete
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setName(String newName) {
     String oldName = name;
     name = newName;
@@ -200,6 +205,7 @@ public class ParameterExpressionTypeImpl extends EObjectImpl implements Paramete
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public QName getType() {
     return type;
   }
@@ -209,6 +215,7 @@ public class ParameterExpressionTypeImpl extends EObjectImpl implements Paramete
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setType(QName newType) {
     QName oldType = type;
     type = newType;

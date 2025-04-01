@@ -17,13 +17,13 @@
 package org.geotools.xml.gml;
 
 import java.util.List;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.type.AttributeTypeImpl;
 import org.geotools.util.SimpleInternationalString;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
 
 /**
  * Created for GML generated FeatureTypes. Represents a Choice type.
@@ -58,41 +58,49 @@ class ChoiceAttributeTypeImpl extends AttributeTypeImpl implements ChoiceAttribu
         this.maxOccurs = max;
     }
 
+    @Override
     public Class[] getChoices() {
         return EMPTY;
     }
 
+    @Override
     public Object convert(Object obj) {
         return obj;
     }
 
+    @Override
     public Object getDefaultValue() {
         return defaultValue;
     }
 
+    @Override
     public String getLocalName() {
         return getName().getLocalPart();
     }
 
+    @Override
     public AttributeType getType() {
         return this;
     }
 
+    @Override
     public int getMaxOccurs() {
         return maxOccurs;
     }
 
+    @Override
     public int getMinOccurs() {
         return minOccurs;
     }
 
+    @Override
     public boolean isNillable() {
         return isNillable;
     }
 
     static InternationalString toDescription(Class[] bindings) {
         StringBuffer buf = new StringBuffer();
-        buf.append("Choice betwee ");
+        buf.append("Choice between ");
         for (Class bind : bindings) {
             buf.append(bind.getName());
             buf.append(",");

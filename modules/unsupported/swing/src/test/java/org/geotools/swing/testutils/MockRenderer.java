@@ -29,11 +29,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.MapContent;
 import org.geotools.renderer.GTRenderer;
 import org.geotools.renderer.RenderListener;
 import org.geotools.util.factory.Hints;
+import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Envelope;
 
 /**
@@ -44,7 +46,10 @@ import org.locationtech.jts.geom.Envelope;
  * @version $Id$
  */
 public class MockRenderer implements GTRenderer {
-    protected List<RenderListener> listeners = new ArrayList<RenderListener>();
+
+    static final Logger LOGGER = Logging.getLogger(MockRenderer.class);
+
+    protected List<RenderListener> listeners = new ArrayList<>();
 
     private MapContent mapContent;
     private long paintTime;
@@ -104,7 +109,7 @@ public class MockRenderer implements GTRenderer {
     }
 
     @Override
-    public void setRendererHints(Map<Object, Object> hints) {}
+    public void setRendererHints(Map<?, ?> hints) {}
 
     @Override
     public Map<Object, Object> getRendererHints() {
@@ -137,20 +142,13 @@ public class MockRenderer implements GTRenderer {
     }
 
     @Override
-    public void paint(
-            Graphics2D graphics,
-            Rectangle paintArea,
-            Envelope mapArea,
-            AffineTransform worldToScreen) {
+    public void paint(Graphics2D graphics, Rectangle paintArea, Envelope mapArea, AffineTransform worldToScreen) {
         pretendToPaint();
     }
 
     @Override
     public void paint(
-            Graphics2D graphics,
-            Rectangle paintArea,
-            ReferencedEnvelope mapArea,
-            AffineTransform worldToScreen) {
+            Graphics2D graphics, Rectangle paintArea, ReferencedEnvelope mapArea, AffineTransform worldToScreen) {
         pretendToPaint();
     }
 
@@ -178,9 +176,9 @@ public class MockRenderer implements GTRenderer {
 
         if (verbose) {
             if (wasCancelled) {
-                // System.out.println("mock paint cancelled");
+                LOGGER.info("mock paint cancelled");
             } else {
-                // System.out.println("mock paint finished");
+                LOGGER.info("mock paint finished");
             }
             System.out.flush();
         }

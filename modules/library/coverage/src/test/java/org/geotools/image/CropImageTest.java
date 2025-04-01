@@ -41,8 +41,7 @@ public class CropImageTest {
 
         ParameterBlock pb = buildParameterBlock(source);
 
-        RenderedOp gtCropped =
-                new ImageWorker(source).crop(10f, 50f, 20f, 20f).getRenderedOperation();
+        RenderedOp gtCropped = new ImageWorker(source).crop(10f, 50f, 20f, 20f).getRenderedOperation();
         RenderedOp cropped = JAI.create("crop", pb);
         assertImageEquals(cropped, gtCropped);
     }
@@ -54,11 +53,10 @@ public class CropImageTest {
 
         BufferedImage source = buildSource();
 
-        RenderedOp gtCropped =
-                new ImageWorker(source)
-                        .setRenderingHints(hints)
-                        .crop(10f, 50f, 20f, 20f)
-                        .getRenderedOperation();
+        RenderedOp gtCropped = new ImageWorker(source)
+                .setRenderingHints(hints)
+                .crop(10f, 50f, 20f, 20f)
+                .getRenderedOperation();
         gtCropped.getColorModel(); // force to compute the image
         assertSame(tc, gtCropped.getRenderingHint(JAI.KEY_TILE_CACHE));
     }
@@ -69,11 +67,10 @@ public class CropImageTest {
 
         BufferedImage source = buildSource();
 
-        RenderedOp gtCropped =
-                new ImageWorker(source)
-                        .setRenderingHints(hints)
-                        .crop(10f, 50f, 20f, 20f)
-                        .getRenderedOperation();
+        RenderedOp gtCropped = new ImageWorker(source)
+                .setRenderingHints(hints)
+                .crop(10f, 50f, 20f, 20f)
+                .getRenderedOperation();
         gtCropped.getColorModel(); // force to compute the image
         assertNull(gtCropped.getRenderingHint(JAI.KEY_TILE_CACHE));
     }
@@ -94,8 +91,7 @@ public class CropImageTest {
     private BufferedImage buildSource() {
         BufferedImage source = new BufferedImage(100, 100, BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D g = (Graphics2D) source.getGraphics();
-        g.setPaint(
-                new GradientPaint(new Point(0, 0), Color.WHITE, new Point(100, 100), Color.BLACK));
+        g.setPaint(new GradientPaint(new Point(0, 0), Color.WHITE, new Point(100, 100), Color.BLACK));
         g.dispose();
         return source;
     }
@@ -103,8 +99,8 @@ public class CropImageTest {
     private void assertImageEquals(RenderedOp first, RenderedOp second) {
         ImageWorker w = new ImageWorker(first);
         w.subtract(second).setNoData(null);
-        double[] minimum = (double[]) w.getMinimums();
-        double[] maximum = (double[]) w.getMaximums();
+        double[] minimum = w.getMinimums();
+        double[] maximum = w.getMaximums();
         assertEquals(minimum[0], maximum[0], 0.0);
         assertEquals(minimum[1], maximum[1], 0.0);
         assertEquals(minimum[2], maximum[2], 0.0);

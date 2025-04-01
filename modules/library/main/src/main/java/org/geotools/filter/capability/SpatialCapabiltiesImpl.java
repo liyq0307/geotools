@@ -20,15 +20,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import org.opengis.filter.capability.GeometryOperand;
-import org.opengis.filter.capability.SpatialCapabilities;
-import org.opengis.filter.capability.SpatialOperators;
+import org.geotools.api.filter.capability.GeometryOperand;
+import org.geotools.api.filter.capability.SpatialCapabilities;
+import org.geotools.api.filter.capability.SpatialOperators;
 
 /**
  * Implementation of the SpatialCapabilities interface.
  *
- * <p>This class is "null safe" in that component classes will be created as needed if if they were
- * not provided during construction.
+ * <p>This class is "null safe" in that component classes will be created as needed if if they were not provided during
+ * construction.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -38,22 +38,20 @@ public class SpatialCapabiltiesImpl implements SpatialCapabilities {
     SpatialOperatorsImpl spatialOperators;
 
     public SpatialCapabiltiesImpl() {
-        this.geometryOperands = new HashSet<GeometryOperand>();
+        this.geometryOperands = new HashSet<>();
         this.spatialOperators = new SpatialOperatorsImpl();
     }
 
-    public SpatialCapabiltiesImpl(
-            Collection<GeometryOperand> geometryOperands, SpatialOperators spatialOperators) {
-        this.geometryOperands = new HashSet<GeometryOperand>();
+    public SpatialCapabiltiesImpl(Collection<GeometryOperand> geometryOperands, SpatialOperators spatialOperators) {
+        this.geometryOperands = new HashSet<>();
         if (geometryOperands != null) {
             this.geometryOperands.addAll(geometryOperands);
         }
         this.spatialOperators = toSpatialOperatorsImpl(spatialOperators);
     }
 
-    public SpatialCapabiltiesImpl(
-            GeometryOperand[] geometryOperands, SpatialOperators spatialOperators) {
-        this.geometryOperands = new HashSet<GeometryOperand>();
+    public SpatialCapabiltiesImpl(GeometryOperand[] geometryOperands, SpatialOperators spatialOperators) {
+        this.geometryOperands = new HashSet<>();
         if (geometryOperands != null) {
             this.geometryOperands.addAll(Arrays.asList(geometryOperands));
         }
@@ -62,7 +60,7 @@ public class SpatialCapabiltiesImpl implements SpatialCapabilities {
 
     public SpatialCapabiltiesImpl(SpatialCapabilities copy) {
         this.spatialOperators = new SpatialOperatorsImpl();
-        this.geometryOperands = new HashSet<GeometryOperand>();
+        this.geometryOperands = new HashSet<>();
         if (copy.getGeometryOperands() != null) {
             geometryOperands.addAll(copy.getGeometryOperands());
         }
@@ -78,9 +76,10 @@ public class SpatialCapabiltiesImpl implements SpatialCapabilities {
     }
 
     public void setGeometryOperands(Collection<GeometryOperand> geometryOperands) {
-        this.geometryOperands = new HashSet<GeometryOperand>(geometryOperands);
+        this.geometryOperands = new HashSet<>(geometryOperands);
     }
 
+    @Override
     public Collection<GeometryOperand> getGeometryOperands() {
         return geometryOperands;
     }
@@ -89,6 +88,7 @@ public class SpatialCapabiltiesImpl implements SpatialCapabilities {
         this.spatialOperators = spatialOperators;
     }
 
+    @Override
     public SpatialOperatorsImpl getSpatialOperators() {
         if (spatialOperators == null) {
             spatialOperators = new SpatialOperatorsImpl();

@@ -36,6 +36,16 @@ Using the "OGC URN" syntax::
 Using the WMS AUTO2 syntax (which requires you pass in your current "position"::
   
   CoordinateReferenceSystem sourceCRS = CRS.decode("AUTO2:42001,"+lat+","+lon);
+  
+Supported AUTO codes are:
+
+* 42001, Universal Transverse Mercator
+* 42002, Transverse Mercator
+* 42003, Orthographic
+* 42004, Equidistant Cylindrical
+* 97001, Gnonomic (GeoTools extension)
+* 97002, Stereographic (GeoTools extension)
+* 97003, Azimuthal Equidistant (GeoTools extension)
 
 Well Known Text
 '''''''''''''''
@@ -220,7 +230,7 @@ Transforming a Geometry
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 A ``MathTransform``, as generated above, can be used by bashing away at the interface and feeding
-it ``DirectPosition`` objects one at a time.
+it ``Position`` objects one at a time.
 
 Or you could break out the JTS utility class where this work has been done for you::
   
@@ -234,6 +244,69 @@ Transforming an ISO Geometry is more straight forward::
   
   CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:23032");
   Geometry target = geometry.transform( targetCRS );
+
+It is possible that the EPSG database specifies a number of different datum transforms that provide different levels of accuracy in different areas of the projections use. GeoTools provides a method ``CRS.getTransforms`` that takes two CRS and returns a ``Map`` of possible transforms for that pair of CRS. The user can then inspect the transform to see it's potential accuracy and area of validity.::
+
+  CoordinateReferenceSystem sourceCRS =
+                crsAuthFactory.createCoordinateReferenceSystem("EPSG:21036");
+  CoordinateReferenceSystem targetCRS =
+                crsAuthFactory.createCoordinateReferenceSystem("EPSG:32736");
+  Map<String, DefaultConcatenatedOperation> transforms = CRS.getTransforms(sourceCRS, targetCRS);
+  double best = Double.POSITIVE_INFINITY;
+  MathTransform transform = null;
+  for(Entry<String, DefaultConcatenatedOperation> entry:transforms.entrySet()) {
+      double accuracy = entry.getValue().getAccuracy();
+      System.out.println(entry.getKey()+"\t"+accuracy);
+      if(best>accuracy) {
+          best=accuracy;
+          transform = entry.getValue().getMathTransform();
+      }
+  }
+  System.out.println("Best transform is "+transform);
+
+which gives::
+
+  EPSG:3998	35.0
+  EPSG:1285	15.0
+  EPSG:1284	6.0
+  EPSG:1122	35.0
+  Best transform is CONCAT_MT[INVERSE_MT[PARAM_MT["Transverse_Mercator",
+        PARAMETER["semi_major", 6378249.145],
+        PARAMETER["semi_minor", 6356514.8695497755],
+        PARAMETER["central_meridian", 33.0],
+        PARAMETER["latitude_of_origin", 0.0],
+        PARAMETER["scale_factor", 0.9996],
+        PARAMETER["false_easting", 500000.0],
+        PARAMETER["false_northing", 10000000.0]]],
+    PARAM_MT["Ellipsoid_To_Geocentric",
+      PARAMETER["dim", 2],
+      PARAMETER["semi_major", 6378249.145],
+      PARAMETER["semi_minor", 6356514.8695497755]],
+    PARAM_MT["Geocentric translations (geog2D domain)",
+      PARAMETER["dx", -157.0],
+      PARAMETER["dy", -2.0],
+      PARAMETER["dz", -299.0]],
+    PARAM_MT["Geocentric_To_Ellipsoid",
+      PARAMETER["dim", 2],
+      PARAMETER["semi_major", 6378137.0],
+      PARAMETER["semi_minor", 6356752.314245179]],
+    PARAM_MT["Transverse_Mercator",
+      PARAMETER["semi_major", 6378137.0],
+      PARAMETER["semi_minor", 6356752.314245179],
+      PARAMETER["central_meridian", 33.0],
+      PARAMETER["latitude_of_origin", 0.0],
+      PARAMETER["scale_factor", 0.9996],
+      PARAMETER["false_easting", 500000.0],
+      PARAMETER["false_northing", 10000000.0]]]
+
+If you already know the code of the transform that you require you can fetch it directly by using::
+
+
+  CoordinateReferenceSystem sourceCRS =
+                crsAuthFactory.createCoordinateReferenceSystem("EPSG:21036");
+  CoordinateReferenceSystem targetCRS =
+                crsAuthFactory.createCoordinateReferenceSystem("EPSG:32736");
+  MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS, "EPSG:1285");
 
 Axis Order
 ^^^^^^^^^^

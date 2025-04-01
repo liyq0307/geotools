@@ -20,8 +20,7 @@ import java.util.Set;
 import javax.xml.namespace.QName;
 
 /**
- * XSD for wfs 1.0. capabilities document; for non capabilities use {@link WFS}, as it's based on a
- * different schema.
+ * XSD for wfs 1.0. capabilities document; for non capabilities use {@link WFS}, as it's based on a different schema.
  *
  * @see WFSCapabilitiesConfiguration
  */
@@ -35,13 +34,14 @@ public final class WFSCapabilities extends org.geotools.wfs.WFS {
         return instance;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings("unchecked")
     @Override
     protected void addDependencies(Set dependencies) {
         dependencies.add(org.geotools.filter.v1_0.capabilities.OGC.getInstance());
     }
 
     /** Returns the location of 'WFS-transaction.xsd.'. */
+    @Override
     public String getSchemaLocation() {
         return getClass().getResource("WFS-capabilities.xsd").toString();
     }
@@ -54,8 +54,7 @@ public final class WFSCapabilities extends org.geotools.wfs.WFS {
 
     public static final QName Service = new QName("http://www.opengis.net/wfs", "Service");
 
-    public static final QName LatLongBoundingBox =
-            new QName("http://www.opengis.net/wfs", "LatLongBoundingBox");
+    public static final QName LatLongBoundingBox = new QName("http://www.opengis.net/wfs", "LatLongBoundingBox");
 
     public static final QName DCPType = new QName("http://www.opengis.net/wfs", "DCPType");
 

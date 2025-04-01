@@ -19,7 +19,17 @@ package org.geotools.data.complex;
 
 import java.util.LinkedList;
 import java.util.List;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.complex.feature.type.Types;
 import org.geotools.data.complex.feature.type.UniqueNameFeatureTypeFactoryImpl;
 import org.geotools.data.complex.filter.XPath;
@@ -31,16 +41,6 @@ import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
@@ -69,14 +69,10 @@ public class TestData {
      *       </ul>
      *   <li>location
      * </ul>
-     *
-     * @return
      */
     public static FeatureType createComplexWaterQualityType() {
         FeatureTypeFactory tfac = new UniqueNameFeatureTypeFactoryImpl();
         TypeBuilder builder = new TypeBuilder(tfac);
-
-        FeatureType wq_plusType;
 
         AttributeType detdesc =
                 builder.name("determinand_description").bind(String.class).attribute();
@@ -110,7 +106,7 @@ public class TestData {
         builder.cardinality(1, 1);
         builder.addAttribute("location", location);
 
-        wq_plusType = builder.feature();
+        FeatureType wq_plusType = builder.feature();
 
         return wq_plusType;
     }
@@ -118,8 +114,6 @@ public class TestData {
     public static FeatureType createComplexWaterSampleType() {
         FeatureTypeFactory tfac = new UniqueNameFeatureTypeFactoryImpl();
         TypeBuilder builder = new TypeBuilder(tfac);
-
-        FeatureType sampleType;
 
         AttributeType parameter = builder.name("parameter").bind(String.class).attribute();
         AttributeType value = builder.name("value").bind(Double.class).attribute();
@@ -133,7 +127,7 @@ public class TestData {
         builder.cardinality(0, Integer.MAX_VALUE);
         builder.addAttribute("measurement", MEASUREMENT);
 
-        sampleType = builder.feature();
+        FeatureType sampleType = builder.feature();
 
         return sampleType;
     }
@@ -143,57 +137,45 @@ public class TestData {
      *
      * <pre>
      * </pre>
-     *
-     * @param targetFeature
-     * @return
-     * @throws Exception
      */
-    public static List /* <AttributeMapping> */ createMappingsColumnsAndValues(
-            AttributeDescriptor targetFeature) throws Exception {
+    public static List<AttributeMapping> createMappingsColumnsAndValues(AttributeDescriptor targetFeature)
+            throws Exception {
 
-        List mappings = new LinkedList();
-        AttributeMapping attMapping;
-        Expression source;
-        String target;
+        List<AttributeMapping> mappings = new LinkedList<>();
 
         FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
-        source = ff.literal("ph");
-        target = "sample/measurement[1]/parameter";
+        Expression source = ff.literal("ph");
+        String target = "sample/measurement[1]/parameter";
         // empty nssupport as the test properties have no namespace
         NamespaceSupport namespaces = new NamespaceSupport();
-        attMapping =
+        AttributeMapping attMapping =
                 new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
         mappings.add(attMapping);
 
         source = ff.property("ph");
         target = "sample/measurement[1]/value";
-        attMapping =
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
+        attMapping = new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
         mappings.add(attMapping);
 
         source = ff.literal("temp");
         target = "sample/measurement[2]/parameter";
-        attMapping =
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
+        attMapping = new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
         mappings.add(attMapping);
 
         source = ff.property("temp");
         target = "sample/measurement[2]/value";
-        attMapping =
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
+        attMapping = new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
         mappings.add(attMapping);
 
         source = ff.literal("turbidity");
         target = "sample/measurement[3]/parameter";
-        attMapping =
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
+        attMapping = new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
         mappings.add(attMapping);
 
         source = ff.property("turbidity");
         target = "sample/measurement[3]/value";
-        attMapping =
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
+        attMapping = new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces));
         mappings.add(attMapping);
 
         return mappings;
@@ -244,91 +226,66 @@ public class TestData {
      *        results_value		--&gt;measurement/result
      *        location		--&gt;location
      * </pre>
-     *
-     * @param simpleStore
-     * @return
-     * @throws Exception
      */
-    public static FeatureTypeMapping createMappingsGroupByStation(MemoryDataStore simpleStore)
-            throws Exception {
+    public static FeatureTypeMapping createMappingsGroupByStation(MemoryDataStore simpleStore) throws Exception {
         Name sourceTypeName = WATERSAMPLE_TYPENAME;
-        final FeatureSource<SimpleFeatureType, SimpleFeature> wsSource =
-                simpleStore.getFeatureSource(sourceTypeName);
+        final FeatureSource<SimpleFeatureType, SimpleFeature> wsSource = simpleStore.getFeatureSource(sourceTypeName);
 
         FeatureType targetType = createComplexWaterQualityType();
         FeatureTypeFactory tf = new UniqueNameFeatureTypeFactoryImpl();
         AttributeDescriptor targetFeature =
-                tf.createAttributeDescriptor(
-                        targetType, targetType.getName(), 0, Integer.MAX_VALUE, true, null);
+                tf.createAttributeDescriptor(targetType, targetType.getName(), 0, Integer.MAX_VALUE, true, null);
 
-        List mappings = new LinkedList();
-        Expression id;
-        Expression source;
-        String target;
+        List<AttributeMapping> mappings = new LinkedList<>();
 
         FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
-        id = ff.property("station_no");
-        source = Expression.NIL;
-        target = "wq_plus";
+        Expression id = ff.property("station_no");
+        Expression source = Expression.NIL;
+        String target = "wq_plus";
         NamespaceSupport namespaces = new NamespaceSupport();
-        mappings.add(
-                new AttributeMapping(id, source, XPath.steps(targetFeature, target, namespaces)));
+        mappings.add(new AttributeMapping(id, source, XPath.steps(targetFeature, target, namespaces)));
 
         source = ff.property("sitename");
         target = "wq_plus/sitename";
-        mappings.add(
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
+        mappings.add(new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
 
         source = ff.property("anzlic_no");
         target = "wq_plus/anzlic_no";
-        mappings.add(
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
+        mappings.add(new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
 
         source = ff.property("project_no");
         target = "wq_plus/project_no";
-        mappings.add(
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
+        mappings.add(new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
 
         id = ff.property("id[1]");
         source = null;
         target = "wq_plus/measurement";
-        mappings.add(
-                new AttributeMapping(
-                        id,
-                        source,
-                        null,
-                        XPath.steps(targetFeature, target, namespaces),
-                        null,
-                        true,
-                        null));
+        mappings.add(new AttributeMapping(
+                id, source, null, XPath.steps(targetFeature, target, namespaces), null, true, null));
 
         source = ff.property("determinand_description");
         target = "wq_plus/measurement/determinand_description";
-        mappings.add(
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
+        mappings.add(new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
 
         source = ff.property("results_value");
         target = "wq_plus/measurement/result";
-        mappings.add(
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
+        mappings.add(new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
 
         source = ff.property("location");
         target = "wq_plus/location";
-        mappings.add(
-                new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
+        mappings.add(new AttributeMapping(null, source, XPath.steps(targetFeature, target, namespaces)));
 
         return new FeatureTypeMapping(wsSource, targetFeature, mappings, namespaces);
     }
 
     /**
-     * Creates a flat FeatureType <code>wq_ir_results</code> with a structure like the following,
-     * from which a complex one should be constructed grouping by station_no attribute.
+     * Creates a flat FeatureType <code>wq_ir_results</code> with a structure like the following, from which a complex
+     * one should be constructed grouping by station_no attribute.
      *
-     * <p>Following this sample schema, a total of 10 unique station_no identifiers will be created,
-     * and for each one, a total of N desagregate rows with the same station_no, where N goes from 1
-     * to 10. So for the first station_no there will be just one occurrence and the last one will
-     * have 10.
+     * <p>Following this sample schema, a total of 10 unique station_no identifiers will be created, and for each one, a
+     * total of N desagregate rows with the same station_no, where N goes from 1 to 10. So for the first station_no
+     * there will be just one occurrence and the last one will have 10.
      *
      * <p>
      *
@@ -403,9 +360,6 @@ public class TestData {
      * <td> POINT(10, 10) </td>
      * </tr>
      * </table>
-     *
-     * @return
-     * @throws Exception
      */
     public static MemoryDataStore createDenormalizedWaterQualityResults() throws Exception {
         MemoryDataStore dataStore = new MemoryDataStore();

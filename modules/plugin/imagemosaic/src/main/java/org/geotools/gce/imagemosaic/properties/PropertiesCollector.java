@@ -17,13 +17,15 @@
 package org.geotools.gce.imagemosaic.properties;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.imageio.ImageReader;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
-import org.opengis.feature.simple.SimpleFeature;
 
 public abstract class PropertiesCollector {
 
@@ -31,11 +33,11 @@ public abstract class PropertiesCollector {
 
     private PropertiesCollectorSPI spi;
 
-    private List<String> matches = new ArrayList<String>();
+    private List<String> matches = new ArrayList<>();
 
     public PropertiesCollector(final PropertiesCollectorSPI spi, final List<String> propertyNames) {
         this.spi = spi;
-        this.propertyNames = new ArrayList<String>(propertyNames);
+        this.propertyNames = new ArrayList<>(propertyNames);
     }
 
     public PropertiesCollectorSPI getSpi() {
@@ -43,6 +45,14 @@ public abstract class PropertiesCollector {
     }
 
     public PropertiesCollector collect(final File file) {
+        return this;
+    }
+
+    public PropertiesCollector collect(final URL url) {
+        return this;
+    }
+
+    public PropertiesCollector collect(final URI uri) {
         return this;
     }
 
@@ -59,7 +69,7 @@ public abstract class PropertiesCollector {
     public abstract void setProperties(final Map<String, Object> map);
 
     public void reset() {
-        matches = new ArrayList<String>();
+        matches = new ArrayList<>();
     }
 
     public List<String> getPropertyNames() {

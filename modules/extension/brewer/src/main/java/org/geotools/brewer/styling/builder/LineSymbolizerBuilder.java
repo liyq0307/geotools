@@ -18,9 +18,10 @@ package org.geotools.brewer.styling.builder;
 
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Stroke;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Stroke;
+import org.geotools.styling.StrokeImpl;
 
 public class LineSymbolizerBuilder extends SymbolizerBuilder<LineSymbolizer> {
     StrokeBuilder strokeBuilder = new StrokeBuilder(this);
@@ -60,13 +61,14 @@ public class LineSymbolizerBuilder extends SymbolizerBuilder<LineSymbolizer> {
         return this;
     }
 
+    @Override
     public LineSymbolizer build() {
         if (unset) {
             return null; // builder was constructed but never used
         }
         Stroke stroke = strokeBuilder.build();
         if (stroke == null) {
-            stroke = Stroke.DEFAULT;
+            stroke = StrokeImpl.DEFAULT;
         }
         LineSymbolizer ls = sf.createLineSymbolizer(stroke, null);
         if (geometry != null) {
@@ -85,6 +87,7 @@ public class LineSymbolizerBuilder extends SymbolizerBuilder<LineSymbolizer> {
         return ls;
     }
 
+    @Override
     public LineSymbolizerBuilder reset() {
         strokeBuilder.reset();
         geometry = null;
@@ -94,21 +97,9 @@ public class LineSymbolizerBuilder extends SymbolizerBuilder<LineSymbolizer> {
         return this;
     }
 
-    public LineSymbolizerBuilder reset(LineSymbolizer original) {
-        if (original == null) {
-            return unset();
-        }
-        geometry = original.getGeometry();
-        strokeBuilder.reset(original.getStroke());
-        uom = original.getUnitOfMeasure();
-        perpendicularOffset = original.getPerpendicularOffset();
-        return this;
-    }
+    @Override
+    public LineSymbolizerBuilder reset(org.geotools.api.style.LineSymbolizer original) {
 
-    public LineSymbolizerBuilder reset(org.opengis.style.LineSymbolizer original) {
-        if (original instanceof LineSymbolizer) {
-            return reset((LineSymbolizer) original);
-        }
         if (original == null) {
             return unset();
         }
@@ -119,10 +110,12 @@ public class LineSymbolizerBuilder extends SymbolizerBuilder<LineSymbolizer> {
         return this;
     }
 
+    @Override
     public LineSymbolizerBuilder unset() {
         return (LineSymbolizerBuilder) super.unset();
     }
 
+    @Override
     protected void buildStyleInternal(StyleBuilder sb) {
         sb.featureTypeStyle().rule().line().init(this);
     }

@@ -21,6 +21,12 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.factory.AbstractAuthorityFactory;
@@ -29,11 +35,7 @@ import org.geotools.referencing.factory.ThreadedAuthorityFactory;
 import org.geotools.util.UnmodifiableArrayList;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.util.logging.Logging;
 
 /**
  * The default authority factory to be used by {@link CRS#decode}.
@@ -50,17 +52,11 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * @author Martin Desruisseaux
  * @author Andrea Aime
  */
-final class DefaultAuthorityFactory extends ThreadedAuthorityFactory
-        implements CRSAuthorityFactory {
-    /**
-     * List of codes without authority space. We can not defines them in an ordinary authority
-     * factory.
-     */
-    private static List<String> AUTHORITY_LESS =
-            UnmodifiableArrayList.wrap(
-                    new String[] {
-                        "WGS84(DD)" // (longitude,latitude) with decimal degrees.
-                    });
+final class DefaultAuthorityFactory extends ThreadedAuthorityFactory implements CRSAuthorityFactory {
+    /** List of codes without authority space. We can not defines them in an ordinary authority factory. */
+    private static List<String> AUTHORITY_LESS = UnmodifiableArrayList.wrap("WGS84(DD)");
+
+    private static Logger LOGGER = Logging.getLogger(DefaultAuthorityFactory.class);
 
     /** Creates a new authority factory. */
     DefaultAuthorityFactory(final boolean longitudeFirst) {
@@ -68,8 +64,8 @@ final class DefaultAuthorityFactory extends ThreadedAuthorityFactory
     }
 
     /**
-     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of
-     * this()/super() call in constructors").
+     * Work around for RFE #4093999 in Sun's bug database ("Relax constraint on placement of this()/super() call in
+     * constructors").
      */
     private static AbstractAuthorityFactory getBackingFactory(final boolean longitudeFirst) {
         final Hints hints = GeoTools.getDefaultHints();
@@ -84,44 +80,40 @@ final class DefaultAuthorityFactory extends ThreadedAuthorityFactory
         }
 
         Collection<CRSAuthorityFactory> factories =
-                ReferencingFactoryFinder.getCRSAuthorityFactories(hints);
+                new ArrayList<>(ReferencingFactoryFinder.getCRSAuthorityFactories(hints));
         if (Boolean.TRUE.equals(hints.put(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.FALSE))) {
             /*
              * If hints contain a requirement for "longitude first", then we may loose some
              * authorities like "URN:OGC:...". Search again without such requirement and add
              * any new authorities found.
              */
-            factories = new ArrayList<CRSAuthorityFactory>(factories);
-            final Set<Citation> authorities = new LinkedHashSet<Citation>();
-            for (final CRSAuthorityFactory factory : factories) {
-                authorities.add(factory.getAuthority());
+
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine("Factories with FORCE_LONGITUDE_FIRST_AXIS_ORDER=true :\n" + logClassNames(factories));
             }
-            searchNews:
-            for (final CRSAuthorityFactory factory :
-                    ReferencingFactoryFinder.getCRSAuthorityFactories(hints)) {
-                final Citation authority = factory.getAuthority();
-                if (authorities.contains(authority)) {
-                    continue;
-                }
-                for (final Citation check : authorities) {
-                    if (Citations.identifierMatches(authority, check)) {
-                        continue searchNews;
-                    }
-                }
-                factories.add(factory);
-            }
+            factories.addAll(ReferencingFactoryFinder.getCRSAuthorityFactories(hints));
+        }
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine("Factories used as backingFactory :\n" + logClassNames(factories));
         }
         return new ManyAuthoritiesFactory(factories);
     }
 
+    private static String logClassNames(final Collection<CRSAuthorityFactory> factories) {
+        return String.join(
+                "\n",
+                factories.stream()
+                        .map(factory -> "  " + factory.getClass().getName())
+                        .toArray(String[]::new));
+    }
+
     /**
-     * Implementation of {@link CRS#getSupportedCodes}. Provided here in order to reduce the amount
-     * of class loading when using {@link CRS} for other purpose than CRS decoding.
+     * Implementation of {@link CRS#getSupportedCodes}. Provided here in order to reduce the amount of class loading
+     * when using {@link CRS} for other purpose than CRS decoding.
      */
     static Set<String> getSupportedCodes(final String authority) {
-        final Set<String> result = new LinkedHashSet<String>(AUTHORITY_LESS);
-        for (final CRSAuthorityFactory factory :
-                ReferencingFactoryFinder.getCRSAuthorityFactories(null)) {
+        final Set<String> result = new LinkedHashSet<>(AUTHORITY_LESS);
+        for (final CRSAuthorityFactory factory : ReferencingFactoryFinder.getCRSAuthorityFactories(null)) {
             if (Citations.identifierMatches(factory.getAuthority(), authority)) {
                 final Set<String> codes;
                 try {
@@ -145,13 +137,12 @@ final class DefaultAuthorityFactory extends ThreadedAuthorityFactory
     }
 
     /**
-     * Implementation of {@link CRS#getSupportedAuthorities}. Provided here in order to reduce the
-     * amount of class loading when using {@link CRS} for other purpose than CRS decoding.
+     * Implementation of {@link CRS#getSupportedAuthorities}. Provided here in order to reduce the amount of class
+     * loading when using {@link CRS} for other purpose than CRS decoding.
      */
     static Set<String> getSupportedAuthorities(final boolean returnAliases) {
-        final Set<String> result = new LinkedHashSet<String>();
-        for (final CRSAuthorityFactory factory :
-                ReferencingFactoryFinder.getCRSAuthorityFactories(null)) {
+        final Set<String> result = new LinkedHashSet<>();
+        for (final CRSAuthorityFactory factory : ReferencingFactoryFinder.getCRSAuthorityFactories(null)) {
             for (final Identifier id : factory.getAuthority().getIdentifiers()) {
                 result.add(id.getCode());
                 if (!returnAliases) {
@@ -164,10 +155,12 @@ final class DefaultAuthorityFactory extends ThreadedAuthorityFactory
 
     /** Returns the coordinate reference system for the given code. */
     @Override
-    public CoordinateReferenceSystem createCoordinateReferenceSystem(String code)
-            throws FactoryException {
+    public CoordinateReferenceSystem createCoordinateReferenceSystem(String code) throws FactoryException {
         if (code != null) {
             code = code.trim();
+            if (LOGGER.isLoggable(Level.FINE)) {
+                LOGGER.fine("Create CRS with code:" + code);
+            }
             if (code.equalsIgnoreCase("WGS84(DD)")) {
                 return DefaultGeographicCRS.WGS84;
             }

@@ -18,12 +18,12 @@ package org.geotools.coverageio.gdal.rpftoc;
 
 import it.geosolutions.imageio.plugins.rpftoc.RPFTOCImageReaderSpi;
 import java.io.File;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.coverage.grid.GridCoverageReader;
+import org.geotools.api.data.DataSourceException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverageio.gdal.BaseGDALGridCoverage2DReader;
-import org.geotools.data.DataSourceException;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.coverage.grid.GridCoverageReader;
 
 /**
  * This class can read a RPFTOC data source and create a {@link GridCoverage2D} from the data.
@@ -39,7 +39,6 @@ public final class RPFTOCReader extends BaseGDALGridCoverage2DReader implements 
      * Creates a new instance of a {@link RPFTOCReader}. I assume nothing about file extension.
      *
      * @param input Source object for which we want to build an {@link RPFTOCReader}.
-     * @throws DataSourceException
      */
     public RPFTOCReader(Object input) throws DataSourceException {
         this(input, null);
@@ -50,23 +49,24 @@ public final class RPFTOCReader extends BaseGDALGridCoverage2DReader implements 
      *
      * @param input Source object for which we want to build an {@link RPFTOCReader}.
      * @param hints Hints to be used by this reader throughout his life.
-     * @throws DataSourceException
      */
     public RPFTOCReader(Object input, Hints hints) throws DataSourceException {
         super(input, hints, worldFileExt, new RPFTOCImageReaderSpi());
     }
 
-    /** @see org.opengis.coverage.grid.GridCoverageReader#getFormat() */
+    /** @see org.geotools.api.coverage.grid.GridCoverageReader#getFormat() */
+    @Override
     public Format getFormat() {
         return new RPFTOCFormat();
     }
 
     /**
-     * Override coverage name because of the default structure of the folders. Very often
-     * XXX/RPF/A.TOC The parent directory is a better alternative
+     * Override coverage name because of the default structure of the folders. Very often XXX/RPF/A.TOC The parent
+     * directory is a better alternative
      *
      * @return the coverage name
      */
+    @Override
     public String getCoverageName() {
         /*
          * Override coverage name because of the default structure of the folders. Very often XXX/RPF/A.TOC

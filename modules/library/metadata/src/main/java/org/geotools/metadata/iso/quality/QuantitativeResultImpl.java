@@ -22,10 +22,12 @@ package org.geotools.metadata.iso.quality;
 import java.util.Arrays;
 import java.util.List;
 import javax.measure.Unit;
-import org.opengis.metadata.quality.QuantitativeResult;
-import org.opengis.util.InternationalString;
-import org.opengis.util.Record;
-import org.opengis.util.RecordType;
+import org.geotools.api.metadata.quality.QuantitativeResult;
+import org.geotools.api.metadata.quality.Result;
+import org.geotools.api.util.InternationalString;
+import org.geotools.api.util.Record;
+import org.geotools.api.util.RecordType;
+import org.geotools.metadata.iso.MetadataEntity;
 
 /**
  * Information about the value (or set of values) obtained from applying a data quality measure.
@@ -35,7 +37,7 @@ import org.opengis.util.RecordType;
  * @author Touraïvane
  * @since 2.1
  */
-public class QuantitativeResultImpl extends ResultImpl implements QuantitativeResult {
+public class QuantitativeResultImpl extends MetadataEntity implements QuantitativeResult, Result {
     /** Serial number for compatibility with different versions. */
     private static final long serialVersionUID = 1230713599561236060L;
 
@@ -69,6 +71,7 @@ public class QuantitativeResultImpl extends ResultImpl implements QuantitativeRe
     }
 
     /** Quantitative value or values, content determined by the evaluation procedure used. */
+    @Override
     public List<Record> getValues() {
         return values = nonNullList(values, Record.class);
     }
@@ -82,9 +85,7 @@ public class QuantitativeResultImpl extends ResultImpl implements QuantitativeRe
         values = copyList(newValues, values, Record.class);
     }
 
-    /**
-     * Set the quantitative value or values, content determined by the evaluation procedure used.
-     */
+    /** Set the quantitative value or values, content determined by the evaluation procedure used. */
     public void setValues(final double[] newValues) {
         final List<Record> records;
         if (newValues == null) {
@@ -101,27 +102,29 @@ public class QuantitativeResultImpl extends ResultImpl implements QuantitativeRe
 
     /** Temporary record implementation will we wait for a real one. */
     private static final class SimpleRecord implements Record, java.io.Serializable {
-        private final java.util.Map<org.opengis.util.MemberName, Object> map;
+        private final java.util.Map<org.geotools.api.util.MemberName, Object> map;
 
         public SimpleRecord(final double value) {
-            map =
-                    java.util.Collections.singletonMap(
-                            (org.opengis.util.MemberName) null, (Object) value);
+            map = java.util.Collections.singletonMap(null, value);
         }
 
+        @Override
         public RecordType getRecordType() {
             throw new UnsupportedOperationException();
         }
 
-        public java.util.Map<org.opengis.util.MemberName, Object> getAttributes() {
+        @Override
+        public java.util.Map<org.geotools.api.util.MemberName, Object> getAttributes() {
             return map;
         }
 
-        public Object locate(org.opengis.util.MemberName name) {
+        @Override
+        public Object locate(org.geotools.api.util.MemberName name) {
             throw new UnsupportedOperationException();
         }
 
-        public void set(org.opengis.util.MemberName name, Object value) {
+        @Override
+        public void set(org.geotools.api.util.MemberName name, Object value) {
             throw new UnsupportedOperationException();
         }
 
@@ -140,6 +143,7 @@ public class QuantitativeResultImpl extends ResultImpl implements QuantitativeRe
     }
 
     /** Value type for reporting a data quality result, or {@code null} if none. */
+    @Override
     public RecordType getValueType() {
         return valueType;
     }
@@ -151,6 +155,7 @@ public class QuantitativeResultImpl extends ResultImpl implements QuantitativeRe
     }
 
     /** Value unit for reporting a data quality result, or {@code null} if none. */
+    @Override
     public Unit getValueUnit() {
         return valueUnit;
     }
@@ -162,6 +167,7 @@ public class QuantitativeResultImpl extends ResultImpl implements QuantitativeRe
     }
 
     /** Statistical method used to determine the value, or {@code null} if none. */
+    @Override
     public InternationalString getErrorStatistic() {
         return errorStatistic;
     }

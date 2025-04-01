@@ -57,16 +57,14 @@ public class AttributeList extends AbstractList {
         SIZE = Math.abs(START - END) / LEN;
         STEP = START < END ? LEN : -LEN;
 
-        if (!ARRAY.getClass().isArray())
-            throw new IllegalArgumentException("Provided argument was not an array");
+        if (!ARRAY.getClass().isArray()) throw new IllegalArgumentException("Provided argument was not an array");
 
         if (Array.getLength(ARRAY) % LEN != 0) {
-            throw new IllegalArgumentException(
-                    "You have requested Coordinates of "
-                            + LEN
-                            + " ordinates. "
-                            + "This is inconsistent with an array of length "
-                            + Array.getLength(ARRAY));
+            throw new IllegalArgumentException("You have requested Coordinates of "
+                    + LEN
+                    + " ordinates. "
+                    + "This is inconsistent with an array of length "
+                    + Array.getLength(ARRAY));
         }
     }
     /**
@@ -74,9 +72,9 @@ public class AttributeList extends AbstractList {
      *
      * <p>Description of get.
      *
-     * @param index
      * @see java.util.List#get(int)
      */
+    @Override
     public Object get(int index) {
         rangeCheck(index);
         return Array.get(ARRAY, START + STEP * index + OFFSET);
@@ -84,8 +82,7 @@ public class AttributeList extends AbstractList {
     /** Quick double access */
     public double getDouble(int index) {
         rangeCheck(index);
-        return Array.getDouble(
-                ARRAY, START + STEP * index + OFFSET); // ARRAY[ START+STEP*index + OFFSET ];
+        return Array.getDouble(ARRAY, START + STEP * index + OFFSET); // ARRAY[ START+STEP*index + OFFSET ];
     }
 
     public String getString(int index) {
@@ -94,7 +91,7 @@ public class AttributeList extends AbstractList {
     }
 
     public double[] toDoubleArray() {
-        double array[] = new double[size()];
+        double[] array = new double[size()];
         for (int i = 0; i < size(); i++) {
             array[i] = getDouble(i);
         }
@@ -102,20 +99,19 @@ public class AttributeList extends AbstractList {
     }
 
     public Object[] toObjectArray() {
-        Object array[] = new Object[size()];
+        Object[] array = new Object[size()];
         for (int i = 0; i < size(); i++) {
             array[i] = get(i);
         }
         return array;
     }
     /**
-     * Check if the given index is in range. If not, throw an appropriate runtime exception. This
-     * method does *not* check if the index is negative: It is always used immediately prior to an
-     * array access, which throws an ArrayIndexOutOfBoundsException if index is negative.
+     * Check if the given index is in range. If not, throw an appropriate runtime exception. This method does *not*
+     * check if the index is negative: It is always used immediately prior to an array access, which throws an
+     * ArrayIndexOutOfBoundsException if index is negative.
      */
     private void rangeCheck(int index) {
-        if (index >= SIZE)
-            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + SIZE);
+        if (index >= SIZE) throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + SIZE);
     }
     /**
      * Used to
@@ -124,6 +120,7 @@ public class AttributeList extends AbstractList {
      *
      * @see java.util.Collection#size()
      */
+    @Override
     public int size() {
         return SIZE;
     }

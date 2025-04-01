@@ -17,7 +17,8 @@
 
 package org.geotools.swing.tool;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.awt.Cursor;
 import org.geotools.swing.testutils.GraphicsTestBase;
@@ -25,8 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Test for the {@linkplain CursorTool} base class. These tests can be run in a headless
- * environment.
+ * Test for the {@linkplain CursorTool} base class. These tests can be run in a headless environment.
  *
  * @author Michael Bedward
  * @since 8.0
@@ -53,6 +53,6 @@ public class CursorToolTest extends GraphicsTestBase {
 
     @Test
     public void returnsDefaultCursor() throws Exception {
-        Cursor.getDefaultCursor().equals(tool.getCursor());
+        assertEquals(Cursor.getDefaultCursor(), tool.getCursor());
     }
 }

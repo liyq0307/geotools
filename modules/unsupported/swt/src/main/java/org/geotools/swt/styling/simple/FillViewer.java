@@ -25,7 +25,7 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.geotools.styling.Fill;
+import org.geotools.api.style.Fill;
 import org.geotools.styling.SLD;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.swt.utils.Messages;
@@ -114,29 +114,17 @@ public class FillViewer {
     Listener sync = new Listener();
     private SelectionListener listener;
 
-    /**
-     * Accepts a listener that will be notified when content changes.
-     *
-     * @param listener1
-     */
+    /** Accepts a listener that will be notified when content changes. */
     public void addListener(SelectionListener listener1) {
         this.listener = listener1;
     }
 
-    /**
-     * Remove listener.
-     *
-     * @param listener1
-     */
+    /** Remove listener. */
     public void removeListener(SelectionListener listener1) {
         if (this.listener == listener1) this.listener = null;
     }
 
-    /**
-     * TODO summary sentence for fire ...
-     *
-     * @param event
-     */
+    /** TODO summary sentence for fire ... */
     protected void fire(SelectionEvent event) {
         if (this.listener == null) return;
         this.listener.widgetSelected(event);
@@ -144,8 +132,6 @@ public class FillViewer {
     /**
      * TODO summary sentence for createControl ...
      *
-     * @param parent
-     * @param kListener
      * @return Generated composite
      */
     public Composite createControl(Composite parent, KeyListener kListener) {
@@ -172,7 +158,6 @@ public class FillViewer {
     /**
      * TODO summary sentence for getFill ...
      *
-     * @param build
      * @return Fill defined by this model
      */
     public Fill getFill(StyleBuilder build) {
@@ -197,13 +182,7 @@ public class FillViewer {
         }
     }
 
-    /**
-     * TODO summary sentence for setFill ...
-     *
-     * @param fill
-     * @param mode
-     * @param enabled
-     */
+    /** TODO summary sentence for setFill ... */
     public void setFill(Fill fill2, Mode mode, Color defaultColor) {
         listen(false);
         try {

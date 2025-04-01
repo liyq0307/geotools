@@ -20,15 +20,17 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.logging.Level;
-import junit.framework.TestCase;
 import org.geotools.TestData;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.xml.gml.FCBuffer;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /** @author dzwiers www.refractions.net */
-public class GMLStreamingParserStressTest extends TestCase {
+public class GMLStreamingParserStressTest {
 
     //    public void testOSDNFFeatures() throws SAXException, IOException {
     //         FeatureReader<SimpleFeatureType, SimpleFeature> fr = null;
@@ -63,24 +65,24 @@ public class GMLStreamingParserStressTest extends TestCase {
     //        }
     //    }
 
-    public void skippedtestGTRoadsFeatures() throws IOException {
+    @Test
+    @Ignore
+    public void testGTRoadsFeatures() throws IOException {
         if (!TestData.isExtensiveTest()) return;
-        FeatureReader<SimpleFeatureType, SimpleFeature> fr = null;
-        try {
 
-            String path = "xml/geoserver/roads.xml";
-            File f = TestData.copy(this, path);
-            TestData.copy(this, "xml/wfs/WFS-basic.xsd");
-            TestData.copy(this, "xml/geoserver/roadSchema.xsd");
-            URI u = f.toURI();
+        String path = "xml/geoserver/roads.xml";
+        File f = TestData.copy(this, path);
+        TestData.copy(this, "xml/wfs/WFS-basic.xsd");
+        TestData.copy(this, "xml/geoserver/roadSchema.xsd");
+        URI u = f.toURI();
 
-            XMLSAXHandler.setLogLevel(Level.FINEST);
-            XSISAXHandler.setLogLevel(Level.FINEST);
-            XMLElementHandler.setLogLevel(Level.FINEST);
-            XSIElementHandler.setLogLevel(Level.FINEST);
-            fr = FCBuffer.getFeatureReader(u, 10, 10000);
+        XMLSAXHandler.setLogLevel(Level.FINEST);
+        XSISAXHandler.setLogLevel(Level.FINEST);
+        XMLElementHandler.setLogLevel(Level.FINEST);
+        XSIElementHandler.setLogLevel(Level.FINEST);
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> fr = FCBuffer.getFeatureReader(u, 10, 10000)) {
 
-            assertNotNull("FeatureReader missing", fr);
+            Assert.assertNotNull("FeatureReader missing", fr);
 
             int i = 0;
             for (; fr.hasNext(); i++) {
@@ -88,30 +90,24 @@ public class GMLStreamingParserStressTest extends TestCase {
                 fr.next();
             }
 
-            assertTrue("# features = " + i, i == 70);
-
+            Assert.assertEquals("# features = " + i, 70, i);
         } catch (Throwable e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
-            fail(e.toString());
-        } finally {
-            if (fr != null) {
-                ((FCBuffer) fr).close();
-            }
+            Assert.fail(e.toString());
         }
     }
 
+    @Test
     public void testFMERoadsFeatures() throws IOException {
         if (!TestData.isExtensiveTest()) return;
-        FeatureReader<SimpleFeatureType, SimpleFeature> fr = null;
-        try {
-            String path = "xml/fme/roads/roads.xml";
-            File f = TestData.copy(this, path);
-            TestData.copy(this, "xml/fme/roads/roads.xsd");
-            URI u = f.toURI();
+        String path = "xml/fme/roads/roads.xml";
+        File f = TestData.copy(this, path);
+        TestData.copy(this, "xml/fme/roads/roads.xsd");
+        URI u = f.toURI();
 
-            fr = FCBuffer.getFeatureReader(u, 10, 10000);
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> fr = FCBuffer.getFeatureReader(u, 10, 10000)) {
 
-            assertNotNull("FeatureReader missing", fr);
+            Assert.assertNotNull("FeatureReader missing", fr);
 
             int i = 0;
             for (; fr.hasNext(); i++) {
@@ -119,31 +115,26 @@ public class GMLStreamingParserStressTest extends TestCase {
                 fr.next();
             }
 
-            assertTrue("# features " + i, i > 20);
+            Assert.assertTrue("# features " + i, i > 20);
             // System.out.println("\n # Features = " + i);
 
         } catch (Throwable e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
-            fail(e.toString());
-        } finally {
-            if (fr != null) {
-                ((FCBuffer) fr).close();
-            }
+            Assert.fail(e.toString());
         }
     }
 
+    @Test
     public void testFMELakesFeatures() throws IOException {
         if (!TestData.isExtensiveTest()) return;
-        FeatureReader<SimpleFeatureType, SimpleFeature> fr = null;
-        try {
-            String path = "xml/fme/lakes/lakes.xml";
-            File f = TestData.copy(this, path);
-            TestData.copy(this, "xml/fme/lakes/lakes.xsd");
-            URI u = f.toURI();
+        String path = "xml/fme/lakes/lakes.xml";
+        File f = TestData.copy(this, path);
+        TestData.copy(this, "xml/fme/lakes/lakes.xsd");
+        URI u = f.toURI();
 
-            fr = FCBuffer.getFeatureReader(u, 10, 10000);
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> fr = FCBuffer.getFeatureReader(u, 10, 10000)) {
 
-            assertNotNull("FeatureReader missing", fr);
+            Assert.assertNotNull("FeatureReader missing", fr);
 
             int i = 0;
             for (; fr.hasNext(); i++) {
@@ -151,39 +142,33 @@ public class GMLStreamingParserStressTest extends TestCase {
                 fr.next();
             }
 
-            assertTrue("# features" + i, i > 20);
+            Assert.assertTrue("# features" + i, i > 20);
             // System.out.println("\n # Features = " + i);
 
         } catch (Throwable e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
-            fail(e.toString());
-        } finally {
-            if (fr != null) {
-                ((FCBuffer) fr).close();
-            }
+            Assert.fail(e.toString());
         }
     }
 
+    @Test
     public void testFME2StreamsFeatures() throws IOException {
         if (!TestData.isExtensiveTest()) return;
-        FeatureReader<SimpleFeatureType, SimpleFeature> fr1 = null;
-        FeatureReader<SimpleFeatureType, SimpleFeature> fr2 = null;
-        try {
-            String path = "xml/fme/lakes/lakes.xml";
-            File f = TestData.copy(this, path);
-            TestData.copy(this, "xml/fme/lakes/lakes.xsd");
-            URI u1 = f.toURI();
+        String path = "xml/fme/lakes/lakes.xml";
+        File f = TestData.copy(this, path);
+        TestData.copy(this, "xml/fme/lakes/lakes.xsd");
+        URI u1 = f.toURI();
 
-            path = "xml/fme/roads/roads.xml";
-            f = TestData.copy(this, path);
-            TestData.copy(this, "xml/geoserver/roadSchema.xsd");
-            URI u2 = f.toURI();
+        path = "xml/fme/roads/roads.xml";
+        f = TestData.copy(this, path);
+        TestData.copy(this, "xml/geoserver/roadSchema.xsd");
+        URI u2 = f.toURI();
 
-            fr1 = FCBuffer.getFeatureReader(u1, 10, 10000);
-            fr2 = FCBuffer.getFeatureReader(u2, 10, 10000);
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> fr1 = FCBuffer.getFeatureReader(u1, 10, 10000);
+                FeatureReader<SimpleFeatureType, SimpleFeature> fr2 = FCBuffer.getFeatureReader(u2, 10, 10000)) {
 
-            assertNotNull("FeatureReader missing", fr1);
-            assertNotNull("FeatureReader missing", fr2);
+            Assert.assertNotNull("FeatureReader missing", fr1);
+            Assert.assertNotNull("FeatureReader missing", fr2);
 
             boolean cont = true;
             int count1, count2;
@@ -192,32 +177,25 @@ public class GMLStreamingParserStressTest extends TestCase {
                 cont = false;
                 for (int i = 0; i < 10 && fr1.hasNext(); i++) {
                     SimpleFeature ftr = fr1.next();
-                    assertTrue("Feature Null", ftr != null);
+                    Assert.assertNotNull("Feature Null", ftr);
                     //                    System.out.println(ftr);
                     cont = true;
                     count1++;
                 }
                 for (int i = 0; i < 10 && fr2.hasNext(); i++) {
                     SimpleFeature ftr = fr2.next();
-                    assertTrue("Feature Null", ftr != null);
+                    Assert.assertNotNull("Feature Null", ftr);
                     //                    System.out.println(ftr);
                     cont = true;
                     count2++;
                 }
             }
-            assertTrue("Must have used both readers", (count1 > 20 && count2 > 20));
+            Assert.assertTrue("Must have used both readers", (count1 > 20 && count2 > 20));
             // System.out.println("\n# Features: " + count1 + " , " + count2);
 
         } catch (Throwable e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
-            fail(e.toString());
-        } finally {
-            if (fr1 != null) {
-                ((FCBuffer) fr1).close();
-            }
-            if (fr2 != null) {
-                ((FCBuffer) fr2).close();
-            }
+            Assert.fail(e.toString());
         }
     }
 }

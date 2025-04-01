@@ -16,14 +16,20 @@
  */
 package org.geotools.data.ogr;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.Serializable;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.junit.Test;
 
 public abstract class OGRDataStoreFactoryTest extends TestCaseSupport {
 
@@ -31,8 +37,9 @@ public abstract class OGRDataStoreFactoryTest extends TestCaseSupport {
         super(dataStoreFactoryClass);
     }
 
+    @Test
     public void testLookup() throws Exception {
-        Map<String, Serializable> map = new HashMap<String, Serializable>();
+        Map<String, Serializable> map = new HashMap<>();
         map.put(OGRDataStoreFactory.OGR_NAME.key, getAbsolutePath(STATE_POP));
         DataStore ds = null;
         try {
@@ -50,8 +57,9 @@ public abstract class OGRDataStoreFactoryTest extends TestCaseSupport {
         }
     }
 
+    @Test
     public void testNamespace() throws Exception {
-        Map<String, Serializable> map = new HashMap<String, Serializable>();
+        Map<String, Serializable> map = new HashMap<>();
         URI namespace = new URI("http://jesse.com");
         map.put(OGRDataStoreFactory.NAMESPACEP.key, namespace);
         map.put(OGRDataStoreFactory.OGR_NAME.key, getAbsolutePath(STATE_POP));
@@ -59,18 +67,17 @@ public abstract class OGRDataStoreFactoryTest extends TestCaseSupport {
         try {
             store = dataStoreFactory.createDataStore(map);
             SimpleFeatureType schema =
-                    store.getSchema(
-                            STATE_POP.substring(
-                                    STATE_POP.lastIndexOf('/') + 1, STATE_POP.lastIndexOf('.')));
+                    store.getSchema(STATE_POP.substring(STATE_POP.lastIndexOf('/') + 1, STATE_POP.lastIndexOf('.')));
             assertEquals(namespace.toString(), schema.getName().getNamespaceURI());
         } finally {
             disposeQuietly(store);
         }
     }
 
+    @Test
     public void testNames() throws Exception {
         Set<String> drivers = dataStoreFactory.getAvailableDrivers();
-        assertTrue(drivers.size() > 0);
+        assertFalse(drivers.isEmpty());
         assertTrue(drivers.contains("ESRI Shapefile"));
     }
 }

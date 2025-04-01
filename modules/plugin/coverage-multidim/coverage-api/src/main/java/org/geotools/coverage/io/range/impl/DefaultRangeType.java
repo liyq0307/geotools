@@ -19,12 +19,12 @@ package org.geotools.coverage.io.range.impl;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.io.range.FieldType;
 import org.geotools.coverage.io.range.RangeType;
 import org.geotools.feature.NameImpl;
 import org.geotools.util.SimpleInternationalString;
-import org.opengis.feature.type.Name;
-import org.opengis.util.InternationalString;
 
 /**
  * Default implementation of {@link RangeType}
@@ -40,36 +40,30 @@ public class DefaultRangeType implements RangeType {
 
     private Set<Name> fieldTypesNames;
 
-    public DefaultRangeType(
-            final String name, final String description, final FieldType fieldType) {
-        this(
-                new NameImpl(name),
-                new SimpleInternationalString(description),
-                Collections.singleton(fieldType));
+    public DefaultRangeType(final String name, final String description, final FieldType fieldType) {
+        this(new NameImpl(name), new SimpleInternationalString(description), Collections.singleton(fieldType));
     }
 
-    public DefaultRangeType(
-            final String name, final String description, final Set<FieldType> fieldTypes) {
+    public DefaultRangeType(final String name, final String description, final Set<FieldType> fieldTypes) {
         this(new NameImpl(name), new SimpleInternationalString(description), fieldTypes);
     }
 
-    public DefaultRangeType(
-            final Name name,
-            final InternationalString description,
-            final Set<FieldType> fieldTypes) {
+    public DefaultRangeType(final Name name, final InternationalString description, final Set<FieldType> fieldTypes) {
         this.name = name;
         this.description = description;
-        this.fieldTypes = new LinkedHashSet<FieldType>(fieldTypes);
-        fieldTypesNames = new LinkedHashSet<Name>(fieldTypes.size());
+        this.fieldTypes = new LinkedHashSet<>(fieldTypes);
+        fieldTypesNames = new LinkedHashSet<>(fieldTypes.size());
         for (FieldType fieldType : fieldTypes) {
             fieldTypesNames.add(fieldType.getName());
         }
     }
 
+    @Override
     public InternationalString getDescription() {
         return description;
     }
 
+    @Override
     public FieldType getFieldType(String name) {
         for (FieldType fieldType : fieldTypes) {
             final Name ftName = fieldType.getName();
@@ -92,23 +86,28 @@ public class DefaultRangeType implements RangeType {
         return null;
     }
 
+    @Override
     public Set<Name> getFieldTypeNames() {
         return Collections.unmodifiableSet(fieldTypesNames);
     }
 
+    @Override
     public Set<FieldType> getFieldTypes() {
         return Collections.unmodifiableSet(fieldTypes);
     }
 
+    @Override
     public Name getName() {
         return name;
     }
 
+    @Override
     public int getNumFieldTypes() {
         return fieldTypes.size();
     }
 
     /** Simple Implementation of toString method for debugging purpose. */
+    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         final String lineSeparator = System.getProperty("line.separator", "\n");

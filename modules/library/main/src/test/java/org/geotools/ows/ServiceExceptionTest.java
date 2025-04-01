@@ -16,7 +16,7 @@
  */
 package org.geotools.ows;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertSame;
 
 import org.junit.Test;
 import org.xml.sax.SAXException;
@@ -32,8 +32,7 @@ public class ServiceExceptionTest {
         assertSame(throwable, sax2.getException());
 
         // Workaround with ServiceException
-        ServiceException serviceException1 =
-                (ServiceException) new ServiceException("example").initCause(throwable);
+        ServiceException serviceException1 = (ServiceException) new ServiceException("example").initCause(throwable);
         assertSame(throwable, serviceException1.getCause());
         assertSame(throwable, serviceException1.getException());
     }

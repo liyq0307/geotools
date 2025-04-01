@@ -26,14 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.NameImpl;
 import org.geotools.util.factory.FactoryRegistry;
-import org.opengis.feature.type.Name;
-import org.opengis.util.InternationalString;
 
 /**
- * Annotation driven process factory; used to wrap up a bunch of Java beans as a single Process
- * Factory.
+ * Annotation driven process factory; used to wrap up a bunch of Java beans as a single Process Factory.
  *
  * <p>To make use of this class you will need to:
  *
@@ -60,8 +59,8 @@ import org.opengis.util.InternationalString;
  *    }
  *    </pre>
  *       </ul>
- *   <li>Optional: If you are using this technique in an environment such as Spring you may wish to
- *       use a "marker interface" to allow Spring to discover implementations on the classpath.
+ *   <li>Optional: If you are using this technique in an environment such as Spring you may wish to use a "marker
+ *       interface" to allow Spring to discover implementations on the classpath.
  *       <pre>
  * public class BoundsProcess implements GeoServerProcess {
  *     ...
@@ -72,24 +71,21 @@ import org.opengis.util.InternationalString;
 public class AnnotatedBeanProcessFactory extends AnnotationDrivenProcessFactory {
     Map<String, Class<?>> classMap;
 
-    public AnnotatedBeanProcessFactory(
-            InternationalString title, String namespace, Class<?>... beanClasses) {
+    public AnnotatedBeanProcessFactory(InternationalString title, String namespace, Class<?>... beanClasses) {
         super(title, namespace);
         classMap = classMap(beanClasses);
     }
 
     /**
-     * Method responsible for using reflection on the list of bean classes and producing a map of
-     * process names to implementing java bean.
+     * Method responsible for using reflection on the list of bean classes and producing a map of process names to
+     * implementing java bean.
      *
-     * <p>This is isolated as a static method to allow for unit test; it is called by the
-     * constructor.
+     * <p>This is isolated as a static method to allow for unit test; it is called by the constructor.
      *
-     * @param beanClasses
      * @return class map from process name to implementing class.
      */
     static Map<String, Class<?>> classMap(Class<?>... beanClasses) {
-        Map<String, Class<?>> map = new HashMap<String, Class<?>>();
+        Map<String, Class<?>> map = new HashMap<>();
         for (Class<?> c : beanClasses) {
             String name = c.getSimpleName();
             if (name.endsWith("Process")) {
@@ -101,8 +97,7 @@ public class AnnotatedBeanProcessFactory extends AnnotationDrivenProcessFactory 
     }
 
     /**
-     * Used to go through the list of java beans; returning the DescribeProcess annotation for each
-     * one.
+     * Used to go through the list of java beans; returning the DescribeProcess annotation for each one.
      *
      * @param name Process name
      * @return DescribeProcess annotation for the named process
@@ -113,7 +108,7 @@ public class AnnotatedBeanProcessFactory extends AnnotationDrivenProcessFactory 
         if (c == null) {
             return null;
         } else {
-            return (DescribeProcess) c.getAnnotation(DescribeProcess.class);
+            return c.getAnnotation(DescribeProcess.class);
         }
     }
 
@@ -127,7 +122,7 @@ public class AnnotatedBeanProcessFactory extends AnnotationDrivenProcessFactory 
         Class<?> c = classMap.get(className);
         if (c != null) {
 
-            List<Method> candidates = new ArrayList<Method>();
+            List<Method> candidates = new ArrayList<>();
             for (Method m : c.getMethods()) {
                 if ("execute".equals(m.getName())) {
                     candidates.add(m);
@@ -144,9 +139,7 @@ public class AnnotatedBeanProcessFactory extends AnnotationDrivenProcessFactory 
                     if (hasProcessAnnotations(m)) {
                         if (selection != null) {
                             throw new IllegalArgumentException(
-                                    "Invalid process bean "
-                                            + className
-                                            + ", has two annotated execute methods");
+                                    "Invalid process bean " + className + ", has two annotated execute methods");
                         } else {
                             selection = m;
                         }
@@ -188,9 +181,10 @@ public class AnnotatedBeanProcessFactory extends AnnotationDrivenProcessFactory 
     }
 
     /** List of processes published; generated from the classMap created in the constructuor. */
+    @Override
     public Set<Name> getNames() {
-        Set<Name> result = new LinkedHashSet<Name>();
-        List<String> names = new ArrayList<String>(classMap.keySet());
+        Set<Name> result = new LinkedHashSet<>();
+        List<String> names = new ArrayList<>(classMap.keySet());
         Collections.sort(names);
         for (String name : names) {
             result.add(new NameImpl(namespace, name));
@@ -201,10 +195,10 @@ public class AnnotatedBeanProcessFactory extends AnnotationDrivenProcessFactory 
     /**
      * Create an instance of the named process bean.
      *
-     * <p>By having an actual object here we allow implementors to hold onto a bit of state if they
-     * wish. The object will need to have an <n>execute</b> method and be annotated with a describe
-     * process annotation.
+     * <p>By having an actual object here we allow implementors to hold onto a bit of state if they wish. The object
+     * will need to have an <n>execute</b> method and be annotated with a describe process annotation.
      */
+    @Override
     protected Object createProcessBean(Name name) {
         try {
             Class<?> processClass = classMap.get(name.getLocalPart());
@@ -218,8 +212,8 @@ public class AnnotatedBeanProcessFactory extends AnnotationDrivenProcessFactory 
     }
 
     /**
-     * Subclass of FactoryRegistry meant for convenience of looking up all the classes that
-     * implement a specific bean interface.
+     * Subclass of FactoryRegistry meant for convenience of looking up all the classes that implement a specific bean
+     * interface.
      */
     public static class BeanFactoryRegistry<T> extends FactoryRegistry {
 
@@ -228,14 +222,17 @@ public class AnnotatedBeanProcessFactory extends AnnotationDrivenProcessFactory 
         }
 
         public Class<T> getBeanClass() {
-            return (Class<T>)
-                    streamCategories().findFirst().orElseThrow(NoSuchElementException::new);
+            @SuppressWarnings("unchecked")
+            Class<T> result = (Class<T>) streamCategories().findFirst().orElseThrow(NoSuchElementException::new);
+            return result;
         }
 
         public Class<? extends T>[] lookupBeanClasses() {
-            return getFactories(getBeanClass(), null, null)
+            @SuppressWarnings("unchecked")
+            Class<? extends T>[] classes = getFactories(getBeanClass(), null, null)
                     .map(Object::getClass)
                     .toArray(Class[]::new);
+            return classes;
         }
     }
 }

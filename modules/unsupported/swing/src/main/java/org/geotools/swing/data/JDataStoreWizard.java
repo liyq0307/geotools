@@ -21,18 +21,17 @@ import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataAccessFactory.Param;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.FileDataStoreFinder;
+import org.geotools.api.data.DataAccessFactory.Param;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.FileDataStoreFinder;
 import org.geotools.swing.wizard.JWizard;
 import org.geotools.util.URLs;
 
 /**
  * Wizard prompting the user to enter or review connection parameters.
  *
- * <p>GeoTools DataStores that work with files are asked to provide a FileDataStoreFactorySpi
- * documenting what file extensions they support; and any additional parameters that may be
- * interesting etc.
+ * <p>GeoTools DataStores that work with files are asked to provide a FileDataStoreFactorySpi documenting what file
+ * extensions they support; and any additional parameters that may be interesting etc.
  */
 public class JDataStoreWizard extends JWizard {
     private static final long serialVersionUID = -3788708439279424698L;
@@ -56,8 +55,7 @@ public class JDataStoreWizard extends JWizard {
         this(null, new HashMap<String, Object>());
     }
     /**
-     * Quick transition from JFileDataStoreChooser; allowing applications to migrate to connection
-     * parameters.
+     * Quick transition from JFileDataStoreChooser; allowing applications to migrate to connection parameters.
      *
      * @param extension Extension used to look up FileDataStoreFactory
      */
@@ -65,11 +63,7 @@ public class JDataStoreWizard extends JWizard {
         this(extension == null ? null : FileDataStoreFinder.getDataStoreFactory(extension));
     }
 
-    /**
-     * Set up the wizard with a "default" set of parameters.
-     *
-     * @param format
-     */
+    /** Set up the wizard with a "default" set of parameters. */
     public JDataStoreWizard(DataStoreFactorySpi format) {
         this(format, new HashMap<String, Object>());
     }
@@ -79,7 +73,7 @@ public class JDataStoreWizard extends JWizard {
         super(format == null ? "Connect" : format.getDisplayName());
 
         if (params == null) {
-            connectionParameters = new HashMap<String, Object>();
+            connectionParameters = new HashMap<>();
         } else {
             connectionParameters = params;
         }
@@ -118,12 +112,7 @@ public class JDataStoreWizard extends JWizard {
         }
     }
 
-    /**
-     * Method used to fill in any required "programming" level defaults such as dbtype.
-     *
-     * @param format2
-     * @param params
-     */
+    /** Method used to fill in any required "programming" level defaults such as dbtype. */
     private void fillInDefaults(DataStoreFactorySpi format, Map<String, Object> params) {
         if (format == null) return;
         for (Param param : format.getParametersInfo()) {

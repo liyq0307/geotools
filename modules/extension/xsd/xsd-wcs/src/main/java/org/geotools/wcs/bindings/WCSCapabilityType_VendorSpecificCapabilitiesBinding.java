@@ -25,8 +25,7 @@ import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
 /**
- * Binding object for the type
- * http://www.opengis.net/wcs:WCSCapabilityType_VendorSpecificCapabilities.
+ * Binding object for the type http://www.opengis.net/wcs:WCSCapabilityType_VendorSpecificCapabilities.
  *
  * <p>
  *
@@ -46,6 +45,7 @@ import org.geotools.xsd.Node;
 public class WCSCapabilityType_VendorSpecificCapabilitiesBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WCS.WCSCapabilityType_VendorSpecificCapabilities;
     }
@@ -57,6 +57,7 @@ public class WCSCapabilityType_VendorSpecificCapabilitiesBinding extends Abstrac
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return null;
     }
@@ -68,6 +69,7 @@ public class WCSCapabilityType_VendorSpecificCapabilitiesBinding extends Abstrac
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         // TODO: implement and remove call to super

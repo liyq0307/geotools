@@ -56,17 +56,18 @@ import org.locationtech.jts.geom.LineString;
  *          </code>
  * </pre>
  */
+@SuppressWarnings("ComparableType")
 public class CurvePropertyTypeBinding extends org.geotools.gml3.bindings.CurvePropertyTypeBinding
         implements Comparable {
 
     GeometryFactory gf;
 
-    public CurvePropertyTypeBinding(
-            GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry, GeometryFactory gf) {
+    public CurvePropertyTypeBinding(GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry, GeometryFactory gf) {
         super(encodingUtils, idRegistry);
         this.gf = gf;
     }
 
+    @Override
     public Class<? extends Geometry> getGeometryType() {
         return LineString.class;
     }
@@ -76,6 +77,7 @@ public class CurvePropertyTypeBinding extends org.geotools.gml3.bindings.CurvePr
         return node.getChildValue(LineString.class);
     }
 
+    @Override
     public int compareTo(Object o) {
         if (o instanceof CurveTypeBinding) {
             return 1;

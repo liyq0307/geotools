@@ -27,12 +27,13 @@ import datetime
 extensions = ['sphinx.ext.todo','sphinx.ext.extlinks']
 
 extlinks = { 
-    'wiki': ('https://github.com/geotools/geotools/wiki/%s',''),
-    'website': ('http://geotools.org/%s',''),
-    'geoserver': ('http://docs.geoserver.org/latest/en/user/%s',''),
-    'developer': ('http://docs.geotools.org/latest/developer/%s',''),
-    'user': ('http://docs.geotools.org/latest/userguide/%s',''),
-    'geot': ('https://osgeo-org.atlassian.net/browse/GEOT-%s','GEOT-')
+    'wiki': ('https://github.com/geotools/geotools/wiki/%s', None),
+    'website': ('https://geotools.org/%s', None),
+    'geoserver': ('https://docs.geoserver.org/latest/en/user/%s', None),
+    'developer': ('https://docs.geotools.org/latest/developer/%s', None),
+    'user': ('https://docs.geotools.org/latest/userguide/%s', None),
+    'api': ('https://docs.geotools.org/latest/javadocs/%s', None),
+    'geot': ('https://osgeo-org.atlassian.net/browse/GEOT-%s','GEOT-%s')
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -65,7 +66,7 @@ copyright = u'{} Open Source Geospatial Foundation'.format(year)
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = '23-SNAPSHOT'
+release = '33-SNAPSHOT'
 
 # The short X.Y version.
 version = release

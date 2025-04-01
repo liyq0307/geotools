@@ -72,9 +72,10 @@ public class AdditionalOperatorsTypeImpl extends EObjectImpl implements Addition
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<ExtensionOperatorType> getOperator() {
         if (operator == null) {
-            operator = new EObjectContainmentEList<ExtensionOperatorType>(ExtensionOperatorType.class, this, Fes20Package.ADDITIONAL_OPERATORS_TYPE__OPERATOR);
+            operator = new EObjectContainmentEList<>(ExtensionOperatorType.class, this, Fes20Package.ADDITIONAL_OPERATORS_TYPE__OPERATOR);
         }
         return operator;
     }

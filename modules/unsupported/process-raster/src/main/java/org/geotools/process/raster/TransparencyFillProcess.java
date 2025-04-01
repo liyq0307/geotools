@@ -16,21 +16,23 @@
  */
 package org.geotools.process.raster;
 
+import it.geosolutions.jaiext.range.Range;
 import java.awt.RenderingHints;
 import java.awt.image.RenderedImage;
+import java.text.MessageFormat;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.ExtremaDescriptor;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.CoverageProcessor;
+import org.geotools.image.ImageWorker;
 import org.geotools.image.util.ImageUtilities;
 import org.geotools.metadata.i18n.ErrorKeys;
 import org.geotools.process.ProcessException;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
-import org.geotools.renderer.i18n.Errors;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.util.ProgressListener;
 
 /**
  * A transparency holes-dashes filling process
@@ -44,21 +46,33 @@ public class TransparencyFillProcess implements RasterProcess {
 
     @DescribeResult(name = "result", description = "The processed coverage")
     public GridCoverage2D execute(
-            @DescribeParameter(name = "data", description = "Input coverage")
-                    GridCoverage2D coverage,
+            @DescribeParameter(name = "data", description = "Input coverage") GridCoverage2D coverage,
+            @DescribeParameter(
+                            name = "width",
+                            description = "Width inside which searching for nearest pixel value",
+                            min = 0,
+                            max = 1)
+                    Integer width,
             //            @DescribeParameter(name = "type", description = "Type of filling
             // algorithm", min = 0) FillType type,
             ProgressListener listener)
             throws ProcessException {
 
         if (coverage == null) {
-            throw new ProcessException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, "coverage"));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, "coverage"));
+        }
+        RenderedImage ri = coverage.getRenderedImage();
+        boolean hasTransparency = false;
+        Number noData = 0;
+        if (ri.getColorModel().hasAlpha()) hasTransparency = true;
+        else {
+            Range noDataRange = new ImageWorker().extractNoDataProperty(ri);
+            if (noDataRange != null) {
+                noData = noDataRange.getMin();
+                hasTransparency = true;
+            }
         }
 
-        RenderedImage ri = coverage.getRenderedImage();
-
-        // If no transparency is involved, no need to do the checks
-        boolean hasTransparency = ri != null ? ri.getColorModel().hasAlpha() : false;
         if (!hasTransparency) {
             return coverage;
         }
@@ -68,8 +82,7 @@ public class TransparencyFillProcess implements RasterProcess {
         if (numBands == 4 || numBands == 2) {
             // Looking for statistics on alpha channel
             renderingHints = ImageUtilities.getRenderingHints(ri);
-            RenderedOp extremaOp =
-                    ExtremaDescriptor.create(ri, null, 1, 1, false, 1, renderingHints);
+            RenderedOp extremaOp = ExtremaDescriptor.create(ri, null, 1, 1, false, 1, renderingHints);
             double[][] extrema = (double[][]) extremaOp.getProperty("Extrema");
             double[] mins = extrema[0];
             // check if alpha is 255 on every pixel (fully opaque)
@@ -79,11 +92,12 @@ public class TransparencyFillProcess implements RasterProcess {
         if (!hasTransparency) {
             return coverage;
         }
-
         // Do the transparency fill operation
         final ParameterValueGroup param =
                 PROCESSOR.getOperation("TransparencyFill").getParameters();
         param.parameter("source").setValue(coverage);
+        param.parameter("noData").setValue(noData);
+        param.parameter("width").setValue(width);
         //        if (type != null && type instanceof FillType) {
         //            param.parameter("type").setValue(type);
         //        }

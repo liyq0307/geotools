@@ -42,6 +42,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.media.jai.RasterFactory;
 import javax.media.jai.TiledImage;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
@@ -53,7 +62,7 @@ import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.util.NullProgressListener;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position2D;
 import org.geotools.geometry.jts.Geometries;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -65,24 +74,14 @@ import org.geotools.util.SimpleInternationalString;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.geometry.Envelope;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.util.ProgressListener;
 
 /**
  * A Process to rasterize vector features in an input FeatureCollection.
  *
- * <p>A feature attribute is specified from which to extract the numeric values that will be written
- * to the output grid coverage. At present only int or float values are written to the output grid
- * coverage. If the attribute is of type Long it will be coerced to int values and a warning will be
- * logged. Similarly if the attribute is of type Double it will be coerced to float and a warning
- * logged.
+ * <p>A feature attribute is specified from which to extract the numeric values that will be written to the output grid
+ * coverage. At present only int or float values are written to the output grid coverage. If the attribute is of type
+ * Long it will be coerced to int values and a warning will be logged. Similarly if the attribute is of type Double it
+ * will be coerced to float and a warning logged.
  *
  * @author Steve Ansari, NOAA
  * @author Michael Bedward
@@ -90,10 +89,9 @@ import org.opengis.util.ProgressListener;
  * @version $Id$
  */
 @DescribeProcess(
-    title = "Transform",
-    description =
-            "Converts some or all of a feature collection to a raster grid, using an attribute to specify cell values."
-)
+        title = "Transform",
+        description =
+                "Converts some or all of a feature collection to a raster grid, using an attribute to specify cell values.")
 public class VectorToRasterProcess implements VectorProcess {
 
     private static final int COORD_GRID_CHUNK_SIZE = 1000;
@@ -132,14 +130,13 @@ public class VectorToRasterProcess implements VectorProcess {
     /**
      * A static helper method that can be called directy to run the process.
      *
-     * <p>The process interface is useful for advertising functionality to dynamic applications, but
-     * for 'hands on' coding this method is much more convenient than working via the {@linkplain
-     * org.geotools.process.Process#execute }.
+     * <p>The process interface is useful for advertising functionality to dynamic applications, but for 'hands on'
+     * coding this method is much more convenient than working via the {@linkplain org.geotools.process.Process#execute
+     * }.
      *
      * @param features the feature collection to be (wholly or partially) rasterized
-     * @param attribute source of values for the output grid: either a {@code String} for the name
-     *     of a numeric feature property or an {@code org.opengis.filter.expression.Expression} that
-     *     evaluates to a numeric value
+     * @param attribute source of values for the output grid: either a {@code String} for the name of a numeric feature
+     *     property or an {@code org.geotools.api.filter.expression.Expression} that evaluates to a numeric value
      * @param gridDim size of the output raster
      * @param bounds bounds (world coordinates) of the output raster
      * @param covName a name for the output raster
@@ -151,7 +148,7 @@ public class VectorToRasterProcess implements VectorProcess {
             SimpleFeatureCollection features,
             Object attribute,
             Dimension gridDim,
-            Envelope bounds,
+            Bounds bounds,
             String covName,
             ProgressListener monitor)
             throws VectorToRasterException {
@@ -162,51 +159,37 @@ public class VectorToRasterProcess implements VectorProcess {
 
     @DescribeResult(name = "result", description = "Rasterized grid")
     public GridCoverage2D execute(
-            @DescribeParameter(
-                        name = "features",
-                        description = "Features to process",
-                        min = 1,
-                        max = 1
-                    )
+            @DescribeParameter(name = "features", description = "Features to process", min = 1, max = 1)
                     SimpleFeatureCollection features,
             @DescribeParameter(
-                        name = "rasterWidth",
-                        description = "Width of the output grid in pixels",
-                        min = 1,
-                        max = 1,
-                        minValue = 1
-                    )
+                            name = "rasterWidth",
+                            description = "Width of the output grid in pixels",
+                            min = 1,
+                            max = 1,
+                            minValue = 1)
                     Integer rasterWidth,
             @DescribeParameter(
-                        name = "rasterHeight",
-                        description = "Height of the output grid in pixels",
-                        min = 1,
-                        max = 1,
-                        minValue = 1
-                    )
+                            name = "rasterHeight",
+                            description = "Height of the output grid in pixels",
+                            min = 1,
+                            max = 1,
+                            minValue = 1)
                     Integer rasterHeight,
             @DescribeParameter(
-                        name = "title",
-                        description = "Title to use for the output grid",
-                        min = 0,
-                        max = 1,
-                        defaultValue = "raster"
-                    )
+                            name = "title",
+                            description = "Title to use for the output grid",
+                            min = 0,
+                            max = 1,
+                            defaultValue = "raster")
                     String title,
             @DescribeParameter(
-                        name = "attribute",
-                        description = "Attribute name to use for the raster cell values",
-                        min = 1,
-                        max = 1
-                    )
+                            name = "attribute",
+                            description = "Attribute name to use for the raster cell values",
+                            min = 1,
+                            max = 1)
                     String attribute,
-            @DescribeParameter(
-                        name = "bounds",
-                        description = "Bounding box of the area to rasterize",
-                        min = 0,
-                        max = 1
-                    )
-                    Envelope bounds,
+            @DescribeParameter(name = "bounds", description = "Bounding box of the area to rasterize", min = 0, max = 1)
+                    Bounds bounds,
             ProgressListener progressListener) {
 
         Expression attributeExpr = null;
@@ -216,12 +199,7 @@ public class VectorToRasterProcess implements VectorProcess {
             throw new VectorToRasterException(e);
         }
         return convert(
-                features,
-                attributeExpr,
-                new Dimension(rasterWidth, rasterHeight),
-                bounds,
-                title,
-                progressListener);
+                features, attributeExpr, new Dimension(rasterWidth, rasterHeight), bounds, title, progressListener);
     }
 
     /**
@@ -282,15 +260,13 @@ public class VectorToRasterProcess implements VectorProcess {
                     break;
 
                 default:
-                    throw new UnsupportedOperationException(
-                            "Unsupported geometry type: " + geomType.getName());
+                    throw new UnsupportedOperationException("Unsupported geometry type: " + geomType.getName());
             }
         }
     }
 
     private Number getFeatureValue(SimpleFeature feature, Object attribute) {
-        Class<? extends Number> rtnType =
-                transferType == TransferType.FLOAT ? Float.class : Integer.class;
+        Class<? extends Number> rtnType = transferType == TransferType.FLOAT ? Float.class : Integer.class;
         if (valueSource == ValueSource.PROPERTY_NAME) {
             return rtnType.cast(feature.getAttribute((String) attribute));
         } else {
@@ -302,7 +278,7 @@ public class VectorToRasterProcess implements VectorProcess {
             SimpleFeatureCollection features,
             Object attribute,
             Dimension gridDim,
-            Envelope bounds,
+            Bounds bounds,
             String covName,
             ProgressListener monitor)
             throws VectorToRasterException {
@@ -318,8 +294,7 @@ public class VectorToRasterProcess implements VectorProcess {
         float scale = 100.0f / features.size();
         monitor.started();
 
-        SimpleFeatureIterator fi = features.features();
-        try {
+        try (SimpleFeatureIterator fi = features.features()) {
             int counter = 0;
             while (fi.hasNext()) {
                 try {
@@ -330,8 +305,6 @@ public class VectorToRasterProcess implements VectorProcess {
 
                 monitor.progress(scale * counter++);
             }
-        } finally {
-            fi.close();
         }
         monitor.complete();
 
@@ -341,8 +314,7 @@ public class VectorToRasterProcess implements VectorProcess {
         return gcf.create(covName, image, extent);
     }
 
-    private void initialize(
-            SimpleFeatureCollection features, Envelope bounds, Object attribute, Dimension gridDim)
+    private void initialize(SimpleFeatureCollection features, Bounds bounds, Object attribute, Dimension gridDim)
             throws VectorToRasterException {
 
         // check the attribute argument
@@ -364,9 +336,7 @@ public class VectorToRasterProcess implements VectorProcess {
             } else if (Double.class.isAssignableFrom(attClass)) {
                 transferType = TransferType.FLOAT;
                 Logger.getLogger(VectorToRasterProcess.class.getName())
-                        .log(
-                                Level.WARNING,
-                                "coercing double feature values to float raster values");
+                        .log(Level.WARNING, "coercing double feature values to float raster values");
 
             } else if (Long.class.isAssignableFrom(attClass)) {
                 transferType = TransferType.INTEGRAL;
@@ -405,20 +375,16 @@ public class VectorToRasterProcess implements VectorProcess {
                     }
                 }
                 if (hasException) {
-                    throw new VectorToRasterException(
-                            ((Expression) attribute).toString() + " does not evaluate to a number");
+                    throw new VectorToRasterException(attribute.toString() + " does not evaluate to a number");
                 }
             } else if (!Number.class.isAssignableFrom(value.getClass())) {
-                throw new VectorToRasterException(
-                        ((Expression) attribute).toString() + " does not evaluate to a number");
+                throw new VectorToRasterException(attribute.toString() + " does not evaluate to a number");
             } else if (Float.class.isAssignableFrom(value.getClass())) {
                 transferType = TransferType.FLOAT;
             } else if (Double.class.isAssignableFrom(value.getClass())) {
                 transferType = TransferType.FLOAT;
                 Logger.getLogger(VectorToRasterProcess.class.getName())
-                        .log(
-                                Level.WARNING,
-                                "coercing double feature values to float raster values");
+                        .log(Level.WARNING, "coercing double feature values to float raster values");
             } else if (Long.class.isAssignableFrom(value.getClass())) {
                 transferType = TransferType.INTEGRAL;
                 Logger.getLogger(VectorToRasterProcess.class.getName())
@@ -428,9 +394,8 @@ public class VectorToRasterProcess implements VectorProcess {
             }
 
         } else {
-            throw new VectorToRasterException(
-                    "value attribute must be a feature property name"
-                            + "or an org.opengis.filter.expression.Expression object");
+            throw new VectorToRasterException("value attribute must be a feature property name"
+                    + "or an org.geotools.api.filter.expression.Expression object");
         }
 
         minAttValue = maxAttValue = null;
@@ -443,19 +408,15 @@ public class VectorToRasterProcess implements VectorProcess {
 
         createImage(gridDim);
 
-        gridGeom =
-                new GridGeometry2D(new GridEnvelope2D(0, 0, gridDim.width, gridDim.height), extent);
+        gridGeom = new GridGeometry2D(new GridEnvelope2D(0, 0, gridDim.width, gridDim.height), extent);
     }
 
     /**
-     * Sets the output coverage bounds and checks whether features need to be transformed into the
-     * output CRS.
+     * Sets the output coverage bounds and checks whether features need to be transformed into the output CRS.
      *
-     * @param
      * @throws org.geotools.process.raster.VectorToRasterException
      */
-    private void setBounds(SimpleFeatureCollection features, Envelope bounds)
-            throws TransformException {
+    private void setBounds(SimpleFeatureCollection features, Bounds bounds) throws TransformException {
 
         ReferencedEnvelope featureBounds = features.getBounds();
 
@@ -476,9 +437,7 @@ public class VectorToRasterProcess implements VectorProcess {
         CoordinateReferenceSystem boundsCRS = extent.getCoordinateReferenceSystem();
 
         transformFeatures = false;
-        if (featuresCRS != null
-                && boundsCRS != null
-                && !CRS.equalsIgnoreMetadata(boundsCRS, featuresCRS)) {
+        if (featuresCRS != null && boundsCRS != null && !CRS.equalsIgnoreMetadata(boundsCRS, featuresCRS)) {
 
             try {
                 featureToRasterTransform = CRS.findMathTransform(featuresCRS, boundsCRS, true);
@@ -493,11 +452,10 @@ public class VectorToRasterProcess implements VectorProcess {
     }
 
     /**
-     * Create the tiled image and the associated graphics object that we will be used to draw the
-     * vector features into a raster.
+     * Create the tiled image and the associated graphics object that we will be used to draw the vector features into a
+     * raster.
      *
-     * <p>Note, the graphics objects will be an instance of TiledImageGraphics which is a sub-class
-     * of Graphics2D.
+     * <p>Note, the graphics objects will be an instance of TiledImageGraphics which is a sub-class of Graphics2D.
      */
     private void createImage(Dimension gridDim) {
 
@@ -511,11 +469,9 @@ public class VectorToRasterProcess implements VectorProcess {
     }
 
     /**
-     * Takes the 4-band ARGB image that we have been drawing into and converts it to a single-band
-     * image.
+     * Takes the 4-band ARGB image that we have been drawing into and converts it to a single-band image.
      *
-     * @todo There is probably a much easier / faster way to do this that still takes advantage of
-     *     image tiling (?)
+     * @todo There is probably a much easier / faster way to do this that still takes advantage of image tiling (?)
      */
     private void flattenImage() {
 
@@ -526,33 +482,28 @@ public class VectorToRasterProcess implements VectorProcess {
         }
     }
 
-    /**
-     * Takes the 4-band ARGB image that we have been drawing into and converts it to a single-band
-     * int image.
-     */
+    /** Takes the 4-band ARGB image that we have been drawing into and converts it to a single-band int image. */
     private void flattenImageToInt() {
         int numXTiles = image.getNumXTiles();
         int numYTiles = image.getNumYTiles();
 
-        SampleModel sm =
-                RasterFactory.createPixelInterleavedSampleModel(
-                        DataBuffer.TYPE_INT, image.getWidth(), image.getHeight(), 1);
+        SampleModel sm = RasterFactory.createPixelInterleavedSampleModel(
+                DataBuffer.TYPE_INT, image.getWidth(), image.getHeight(), 1);
 
-        TiledImage destImage =
-                new TiledImage(
-                        0,
-                        0,
-                        image.getWidth(),
-                        image.getHeight(),
-                        0,
-                        0,
-                        sm,
-                        new ComponentColorModel(
-                                ColorSpace.getInstance(ColorSpace.CS_GRAY),
-                                false,
-                                false,
-                                Transparency.OPAQUE,
-                                DataBuffer.TYPE_INT));
+        TiledImage destImage = new TiledImage(
+                0,
+                0,
+                image.getWidth(),
+                image.getHeight(),
+                0,
+                0,
+                sm,
+                new ComponentColorModel(
+                        ColorSpace.getInstance(ColorSpace.CS_GRAY),
+                        false,
+                        false,
+                        Transparency.OPAQUE,
+                        DataBuffer.TYPE_INT));
 
         for (int yt = 0; yt < numYTiles; yt++) {
             for (int xt = 0; xt < numXTiles; xt++) {
@@ -561,11 +512,7 @@ public class VectorToRasterProcess implements VectorProcess {
 
                 int[] data = new int[srcTile.getDataBuffer().getSize()];
                 srcTile.getDataElements(
-                        srcTile.getMinX(),
-                        srcTile.getMinY(),
-                        srcTile.getWidth(),
-                        srcTile.getHeight(),
-                        data);
+                        srcTile.getMinX(), srcTile.getMinY(), srcTile.getWidth(), srcTile.getHeight(), data);
 
                 Rectangle bounds = destTile.getBounds();
                 destTile.setPixels(bounds.x, bounds.y, bounds.width, bounds.height, data);
@@ -576,32 +523,27 @@ public class VectorToRasterProcess implements VectorProcess {
         image = destImage;
     }
 
-    /**
-     * Takes the 4-band ARGB image that we have been drawing into and converts it to a single-band
-     * float image
-     */
+    /** Takes the 4-band ARGB image that we have been drawing into and converts it to a single-band float image */
     private void flattenImageToFloat() {
         int numXTiles = image.getNumXTiles();
         int numYTiles = image.getNumYTiles();
 
-        SampleModel sm =
-                RasterFactory.createPixelInterleavedSampleModel(
-                        DataBuffer.TYPE_FLOAT, image.getWidth(), image.getHeight(), 1);
-        TiledImage destImage =
-                new TiledImage(
-                        0,
-                        0,
-                        image.getWidth(),
-                        image.getHeight(),
-                        0,
-                        0,
-                        sm,
-                        new ComponentColorModel(
-                                ColorSpace.getInstance(ColorSpace.CS_GRAY),
-                                false,
-                                false,
-                                Transparency.OPAQUE,
-                                DataBuffer.TYPE_FLOAT));
+        SampleModel sm = RasterFactory.createPixelInterleavedSampleModel(
+                DataBuffer.TYPE_FLOAT, image.getWidth(), image.getHeight(), 1);
+        TiledImage destImage = new TiledImage(
+                0,
+                0,
+                image.getWidth(),
+                image.getHeight(),
+                0,
+                0,
+                sm,
+                new ComponentColorModel(
+                        ColorSpace.getInstance(ColorSpace.CS_GRAY),
+                        false,
+                        false,
+                        Transparency.OPAQUE,
+                        DataBuffer.TYPE_FLOAT));
 
         for (int yt = 0; yt < numYTiles; yt++) {
             for (int xt = 0; xt < numXTiles; xt++) {
@@ -610,11 +552,7 @@ public class VectorToRasterProcess implements VectorProcess {
 
                 int[] data = new int[srcTile.getDataBuffer().getSize()];
                 srcTile.getDataElements(
-                        srcTile.getMinX(),
-                        srcTile.getMinY(),
-                        srcTile.getWidth(),
-                        srcTile.getHeight(),
-                        data);
+                        srcTile.getMinX(), srcTile.getMinY(), srcTile.getWidth(), srcTile.getHeight(), data);
 
                 Rectangle bounds = destTile.getBounds();
 
@@ -653,7 +591,7 @@ public class VectorToRasterProcess implements VectorProcess {
         }
 
         // Go through coordinate array in order received
-        DirectPosition2D worldPos = new DirectPosition2D();
+        Position2D worldPos = new Position2D();
         for (int n = 0; n < coords.length; n++) {
             worldPos.setLocation(coords[n].x, coords[n].y);
             GridCoordinates2D gridPos = gridGeom.worldToGrid(worldPos);

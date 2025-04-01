@@ -24,6 +24,19 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Set;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory;
+import org.geotools.api.referencing.operation.CoordinateOperationFactory;
+import org.geotools.api.referencing.operation.OperationNotFoundException;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.metadata.i18n.VocabularyKeys;
 import org.geotools.referencing.datum.BursaWolfParameters;
@@ -35,31 +48,16 @@ import org.geotools.referencing.wkt.Parser;
 import org.geotools.util.Arguments;
 import org.geotools.util.TableWriter;
 import org.geotools.util.factory.Hints;
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
-import org.opengis.referencing.operation.CoordinateOperationFactory;
-import org.opengis.referencing.operation.OperationNotFoundException;
-import org.opengis.util.InternationalString;
 
 /**
- * Implementation of the {@link CRS#main} method. Exists as a separated class in order to reduce the
- * class loading for applications that don't want to run this main method.
+ * Implementation of the {@link CRS#main} method. Exists as a separated class in order to reduce the class loading for
+ * applications that don't want to run this main method.
  *
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  */
 final class Command {
-    /**
-     * The hints for the factory to fetch. Null for now, but may be different in a future version.
-     */
+    /** The hints for the factory to fetch. Null for now, but may be different in a future version. */
     private static final Hints HINTS = null;
 
     /** The authority factory. */
@@ -70,10 +68,9 @@ final class Command {
 
     /** Creates an instance of the specified authority. */
     private Command(final String authority) {
-        factory =
-                (authority == null)
-                        ? CRS.getAuthorityFactory(false)
-                        : ReferencingFactoryFinder.getCRSAuthorityFactory(authority, HINTS);
+        factory = (authority == null)
+                ? CRS.getAuthorityFactory(false)
+                : ReferencingFactoryFinder.getCRSAuthorityFactory(authority, HINTS);
         formatter = new Parser();
     }
 
@@ -98,21 +95,20 @@ final class Command {
         out.println(" -forcexy       : Force \"longitude first\" axis order.");
         out.println(" -help          : Prints this message.");
         out.println(" -locale=ARG    : Formats texts in the specified locale.");
-        out.println(
-                " -operations    : Prints all available coordinate operations between a pair of CRS.");
+        out.println(" -operations    : Prints all available coordinate operations between a pair of CRS.");
         out.println(" -transform     : Prints the preferred math transform between a pair of CRS.");
     }
 
     /** Prints all objects as WKT. This is the default behavior when no option is specified. */
-    private void list(final PrintWriter out, final String[] args) throws FactoryException {
+    private void list(final PrintWriter out, final String... args) throws FactoryException {
         char[] separator = null;
-        for (int i = 0; i < args.length; i++) {
+        for (String arg : args) {
             if (separator == null) {
                 separator = getSeparator();
             } else {
                 out.println(separator);
             }
-            out.println(formatter.format(factory.createObject(args[i])));
+            out.println(formatter.format(factory.createObject(arg)));
             final String warning = formatter.getWarning();
             if (warning != null) {
                 out.println();
@@ -156,7 +152,7 @@ final class Command {
 
     /** Lists all CRS authority factories. */
     private static void factories(final PrintWriter out) {
-        final Set<Citation> done = new HashSet<Citation>();
+        final Set<Citation> done = new HashSet<>();
         final TableWriter table = new TableWriter(out, TableWriter.SINGLE_VERTICAL_LINE);
         final TableWriter notes = new TableWriter(out, " ");
         int noteCount = 0;
@@ -218,31 +214,27 @@ final class Command {
     }
 
     /** Prints the bursa-wolfs parameters for the specified CRS. */
-    private void bursaWolfs(final PrintWriter out, final String[] args) throws FactoryException {
+    private void bursaWolfs(final PrintWriter out, final String... args) throws FactoryException {
         final NumberFormat nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(3);
         nf.setMaximumFractionDigits(3);
         final TableWriter table = new TableWriter(out);
         table.writeHorizontalSeparator();
-        final String[] titles = {
-            Vocabulary.format(VocabularyKeys.TARGET), "dx", "dy", "dz", "ex", "ey", "ez", "ppm"
-        };
-        for (int i = 0; i < titles.length; i++) {
-            table.write(titles[i]);
+        final String[] titles = {Vocabulary.format(VocabularyKeys.TARGET), "dx", "dy", "dz", "ex", "ey", "ez", "ppm"};
+        for (String title : titles) {
+            table.write(title);
             table.nextColumn();
             table.setAlignment(TableWriter.ALIGN_CENTER);
         }
         table.writeHorizontalSeparator();
-        for (int i = 0; i < args.length; i++) {
-            IdentifiedObject object = factory.createObject(args[i]);
+        for (String arg : args) {
+            IdentifiedObject object = factory.createObject(arg);
             if (object instanceof CoordinateReferenceSystem) {
                 object = CRSUtilities.getDatum((CoordinateReferenceSystem) object);
             }
             if (object instanceof DefaultGeodeticDatum) {
-                final BursaWolfParameters[] params =
-                        ((DefaultGeodeticDatum) object).getBursaWolfParameters();
-                for (int j = 0; j < params.length; j++) {
-                    final BursaWolfParameters p = params[j];
+                final BursaWolfParameters[] params = ((DefaultGeodeticDatum) object).getBursaWolfParameters();
+                for (final BursaWolfParameters p : params) {
                     table.setAlignment(TableWriter.ALIGN_LEFT);
                     table.write(p.targetDatum.getName().getCode());
                     table.nextColumn();
@@ -291,17 +283,15 @@ final class Command {
     }
 
     /** Prints the operations between every pairs of the specified authority code. */
-    private void operations(final PrintWriter out, final String[] args) throws FactoryException {
+    private void operations(final PrintWriter out, final String... args) throws FactoryException {
         if (!(factory instanceof CoordinateOperationAuthorityFactory)) {
             return;
         }
-        final CoordinateOperationAuthorityFactory factory =
-                (CoordinateOperationAuthorityFactory) this.factory;
+        final CoordinateOperationAuthorityFactory factory = (CoordinateOperationAuthorityFactory) this.factory;
         char[] separator = null;
         for (int i = 0; i < args.length; i++) {
             for (int j = i + 1; j < args.length; j++) {
-                final Set<CoordinateOperation> op;
-                op = factory.createFromCoordinateReferenceSystemCodes(args[i], args[j]);
+                final Set<CoordinateOperation> op = factory.createFromCoordinateReferenceSystemCodes(args[i], args[j]);
                 for (final CoordinateOperation operation : op) {
                     if (separator == null) {
                         separator = getSeparator();
@@ -315,19 +305,17 @@ final class Command {
     }
 
     /** Prints the math transforms between every pairs of the specified authority code. */
-    private void transform(final PrintWriter out, final String[] args) throws FactoryException {
+    private void transform(final PrintWriter out, final String... args) throws FactoryException {
         if (!(factory instanceof CRSAuthorityFactory)) {
             return;
         }
         final CRSAuthorityFactory factory = (CRSAuthorityFactory) this.factory;
-        final CoordinateOperationFactory opFactory =
-                ReferencingFactoryFinder.getCoordinateOperationFactory(HINTS);
+        final CoordinateOperationFactory opFactory = ReferencingFactoryFinder.getCoordinateOperationFactory(HINTS);
         char[] separator = null;
         for (int i = 0; i < args.length; i++) {
             final CoordinateReferenceSystem crs1 = factory.createCoordinateReferenceSystem(args[i]);
             for (int j = i + 1; j < args.length; j++) {
-                final CoordinateReferenceSystem crs2 =
-                        factory.createCoordinateReferenceSystem(args[j]);
+                final CoordinateReferenceSystem crs2 = factory.createCoordinateReferenceSystem(args[j]);
                 final CoordinateOperation op;
                 try {
                     op = opFactory.createOperation(crs1, crs2);
@@ -346,8 +334,7 @@ final class Command {
     }
 
     /** Prints all {@linkplain AuthorityFactory authority factory} dependencies as a tree. */
-    private static void printAuthorityFactoryDependencies(
-            final PrintWriter out, final boolean colors) {
+    private static void printAuthorityFactoryDependencies(final PrintWriter out, final boolean colors) {
         final FactoryDependencies printer = new FactoryDependencies(CRS.getAuthorityFactory(false));
         printer.setAttributeEnabled(true);
         printer.setColorEnabled(colors);
@@ -363,7 +350,8 @@ final class Command {
     }
 
     /** Implementation of {@link CRS#main}. */
-    public static void execute(String[] args) {
+    @SuppressWarnings("PMD.CloseResource")
+    public static void execute(String... args) {
         final Arguments arguments = new Arguments(args);
         final PrintWriter out = arguments.out;
         Locale.setDefault(arguments.locale);

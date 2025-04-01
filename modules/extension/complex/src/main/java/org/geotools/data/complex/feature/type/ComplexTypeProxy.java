@@ -19,9 +19,10 @@ package org.geotools.data.complex.feature.type;
 
 import java.util.Collection;
 import java.util.Map;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
 
 /**
  * @author Gabriel Roldan (Axios Engineering)
@@ -33,19 +34,34 @@ public class ComplexTypeProxy extends AttributeTypeProxy implements ComplexType 
         super(typeName, registry);
     }
 
+    @Override
     public PropertyDescriptor getDescriptor(Name name) {
         return ((ComplexType) getSubject()).getDescriptor(name);
     }
 
+    @Override
     public PropertyDescriptor getDescriptor(String name) {
         return ((ComplexType) getSubject()).getDescriptor(name);
     }
 
+    @Override
     public Collection<PropertyDescriptor> getDescriptors() {
         return ((ComplexType) getSubject()).getDescriptors();
     }
 
+    @Override
     public boolean isInline() {
         return ((ComplexType) getSubject()).isInline();
+    }
+
+    @Override
+    public Class<Collection<Property>> getBinding() {
+        // TODO: dodgy, during tests subject is evaluated to a GeometryTypeImpl
+        // too, casting to a ComplexType results in tests failures
+        // in GeoServer app-schema tests, SimpleAttributeFeatureChainWfsTest
+        @SuppressWarnings("unchecked")
+        Class<Collection<Property>> result =
+                (Class<Collection<Property>>) getSubject().getBinding();
+        return result;
     }
 }

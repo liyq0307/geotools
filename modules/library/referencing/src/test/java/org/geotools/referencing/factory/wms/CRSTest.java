@@ -16,9 +16,20 @@
  */
 package org.geotools.referencing.factory.wms;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
@@ -26,12 +37,8 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.factory.AbstractAuthorityFactory;
 import org.geotools.referencing.factory.CachedCRSAuthorityDecorator;
 import org.geotools.referencing.factory.IdentifiedObjectFinder;
-import org.junit.*;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests {@link WebCRSFactory}.
@@ -77,7 +84,7 @@ public final class CRSTest {
         assertSame(crs, factory.createGeographicCRS("CRS:CRS84"));
         assertSame(crs, factory.createGeographicCRS("crs : crs84"));
         assertNotSame(crs, factory.createGeographicCRS("CRS:83"));
-        assertFalse(DefaultGeographicCRS.WGS84.equals(crs));
+        assertNotEquals(DefaultGeographicCRS.WGS84, crs);
         assertTrue(CRS.equalsIgnoreMetadata(DefaultGeographicCRS.WGS84, crs));
     }
 
@@ -96,8 +103,7 @@ public final class CRSTest {
     @Test
     public void testFind() throws FactoryException {
         final GeographicCRS CRS84 = factory.createGeographicCRS("CRS:84");
-        final IdentifiedObjectFinder finder =
-                factory.getIdentifiedObjectFinder(CoordinateReferenceSystem.class);
+        final IdentifiedObjectFinder finder = factory.getIdentifiedObjectFinder(CoordinateReferenceSystem.class);
         assertTrue("Newly created finder should default to full scan.", finder.isFullScanAllowed());
 
         finder.setFullScanAllowed(false);
@@ -108,15 +114,11 @@ public final class CRSTest {
 
         finder.setFullScanAllowed(true);
         assertSame(
-                "Allowing scanning should not make any difference for this CRS84 instance.",
-                CRS84,
-                finder.find(CRS84));
+                "Allowing scanning should not make any difference for this CRS84 instance.", CRS84, finder.find(CRS84));
 
         assertNotSame("Required condition for next test.", CRS84, DefaultGeographicCRS.WGS84);
-        assertFalse("Required condition for next test.", CRS84.equals(DefaultGeographicCRS.WGS84));
-        assertTrue(
-                "Required condition for next test.",
-                CRS.equalsIgnoreMetadata(CRS84, DefaultGeographicCRS.WGS84));
+        assertNotEquals("Required condition for next test.", CRS84, DefaultGeographicCRS.WGS84);
+        assertTrue("Required condition for next test.", CRS.equalsIgnoreMetadata(CRS84, DefaultGeographicCRS.WGS84));
 
         finder.setFullScanAllowed(false);
         assertNull(
@@ -130,21 +132,19 @@ public final class CRSTest {
                 finder.find(DefaultGeographicCRS.WGS84));
 
         finder.setFullScanAllowed(false);
-        assertNull(
-                "The scan result should not be cached.", finder.find(DefaultGeographicCRS.WGS84));
+        assertNull("The scan result should not be cached.", finder.find(DefaultGeographicCRS.WGS84));
 
         // --------------------------------------------------
         // Same test than above, using a CRS created from WKT
         // --------------------------------------------------
 
-        String wkt =
-                "GEOGCS[\"WGS 84\",\n"
-                        + "  DATUM[\"WGS84\",\n"
-                        + "    SPHEROID[\"WGS 84\", 6378137.0, 298.257223563]],\n"
-                        + "  PRIMEM[\"Greenwich\", 0.0],\n"
-                        + "  UNIT[\"degree\", 0.017453292519943295]]";
+        String wkt = "GEOGCS[\"WGS 84\",\n"
+                + "  DATUM[\"WGS84\",\n"
+                + "    SPHEROID[\"WGS 84\", 6378137.0, 298.257223563]],\n"
+                + "  PRIMEM[\"Greenwich\", 0.0],\n"
+                + "  UNIT[\"degree\", 0.017453292519943295]]";
         CoordinateReferenceSystem search = CRS.parseWKT(wkt);
-        assertFalse("Required condition for next test.", CRS84.equals(search));
+        assertNotEquals("Required condition for next test.", CRS84, search);
         assertTrue("Required condition for next test.", CRS.equalsIgnoreMetadata(CRS84, search));
 
         finder.setFullScanAllowed(false);
@@ -162,15 +162,14 @@ public final class CRSTest {
     }
 
     /**
-     * Tests the {@link IdentifiedObjectFinder#find} method through a buffered authority factory.
-     * The objects found are expected to be cached.
+     * Tests the {@link IdentifiedObjectFinder#find} method through a buffered authority factory. The objects found are
+     * expected to be cached.
      */
     @Test
     public void testBufferedFind() throws FactoryException {
         final AbstractAuthorityFactory factory = new CachedCRSAuthorityDecorator(this.factory);
         final GeographicCRS CRS84 = factory.createGeographicCRS("CRS:84");
-        final IdentifiedObjectFinder finder =
-                factory.getIdentifiedObjectFinder(CoordinateReferenceSystem.class);
+        final IdentifiedObjectFinder finder = factory.getIdentifiedObjectFinder(CoordinateReferenceSystem.class);
 
         finder.setFullScanAllowed(false);
         assertSame(

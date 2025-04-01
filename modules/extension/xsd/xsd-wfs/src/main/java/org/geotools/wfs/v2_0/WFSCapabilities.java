@@ -20,8 +20,7 @@ import java.util.Set;
 import org.geotools.xsd.XSD;
 
 /**
- * XSD for wfs 1.0. capabilities document; for non capabilities use {@link WFS}, as it's based on a
- * different schema.
+ * XSD for wfs 1.0. capabilities document; for non capabilities use {@link WFS}, as it's based on a different schema.
  *
  * @see WFSCapabilitiesConfiguration
  */
@@ -35,12 +34,12 @@ public final class WFSCapabilities extends XSD {
         return instance;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     @Override
     protected void addDependencies(Set dependencies) {
         /// dependencies.add(org.geotools.filter.v1_0.capabilities.OGC.getInstance());
     }
 
+    @Override
     public String getSchemaLocation() {
         return getClass().getResource("wfs.xsd").toString();
     }

@@ -17,12 +17,12 @@
 package org.geotools.kml.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.kml.KML;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Binding object for the type http://earth.google.com/kml/2.1:ContainerType.
@@ -44,6 +44,7 @@ import org.opengis.feature.simple.SimpleFeature;
  */
 public class ContainerTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.ContainerType;
     }
@@ -55,10 +56,12 @@ public class ContainerTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return SimpleFeature.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return Binding.AFTER;
     }
@@ -70,6 +73,7 @@ public class ContainerTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return value;
     }

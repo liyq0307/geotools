@@ -32,13 +32,9 @@ import java.io.File;
 import java.io.InputStream;
 import org.geotools.s3.S3Connector;
 import org.junit.After;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class CacheManagementTest {
-
-    public @Rule ExpectedException ex = ExpectedException.none();
 
     public @After void after() {
         System.clearProperty(CacheConfig.S3_CACHING_EH_CACHE_CONFIG);
@@ -46,7 +42,8 @@ public class CacheManagementTest {
 
     @Test
     public void testLoadExternalFileWithDefaultCache() throws Exception {
-        File cacheConfigFile = new File(getClass().getResource("ehcache-defaultcache.xml").toURI());
+        File cacheConfigFile =
+                new File(getClass().getResource("ehcache-defaultcache.xml").toURI());
         assertTrue(cacheConfigFile.exists());
         String configurationPath = cacheConfigFile.getAbsolutePath();
         System.setProperty(CacheConfig.S3_CACHING_EH_CACHE_CONFIG, configurationPath);
@@ -86,7 +83,8 @@ public class CacheManagementTest {
 
     @Test
     public void testDoesntFailIfExternalFileIsUnparseable() throws Exception {
-        File cacheConfigFile = new File(getClass().getResource("ehcache-malformed.xml").toURI());
+        File cacheConfigFile =
+                new File(getClass().getResource("ehcache-malformed.xml").toURI());
         assertTrue(cacheConfigFile.exists());
         String configurationPath = cacheConfigFile.getAbsolutePath();
         System.setProperty(CacheConfig.S3_CACHING_EH_CACHE_CONFIG, configurationPath);
@@ -97,8 +95,8 @@ public class CacheManagementTest {
 
     @Test
     public void testCacheFileGivenButNoCacheDefined() throws Exception {
-        File cacheConfigFile =
-                new File(getClass().getResource("ehcache-no-s3cache-defined.xml").toURI());
+        File cacheConfigFile = new File(
+                getClass().getResource("ehcache-no-s3cache-defined.xml").toURI());
         assertTrue(cacheConfigFile.exists());
         String configurationPath = cacheConfigFile.getAbsolutePath();
         System.setProperty(CacheConfig.S3_CACHING_EH_CACHE_CONFIG, configurationPath);
@@ -107,6 +105,7 @@ public class CacheManagementTest {
         testGetChunk();
     }
 
+    @SuppressWarnings("PMD.CloseResource")
     private void testGetChunk() {
         byte[] content = new byte[128];
         InputStream objectContent = new ByteArrayInputStream(content);

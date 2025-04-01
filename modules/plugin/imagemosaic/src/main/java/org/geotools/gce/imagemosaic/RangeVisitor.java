@@ -25,6 +25,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.visitor.AbstractCalcResult;
@@ -34,10 +38,6 @@ import org.geotools.util.Converters;
 import org.geotools.util.DateRange;
 import org.geotools.util.Range;
 import org.geotools.util.Utilities;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Generates a list of NumberRanges from a collection
@@ -62,8 +62,7 @@ class RangeVisitor implements FeatureCalc {
             final long endFirst = firstDateRange.getMaxValue().getTime();
             final long beginSecond = secondDateRange.getMinValue().getTime();
             final long endSecond = secondDateRange.getMaxValue().getTime();
-            return NumberRangeComparator.doubleCompare(
-                    beginFirst, endFirst, beginSecond, endSecond);
+            return NumberRangeComparator.doubleCompare(beginFirst, endFirst, beginSecond, endSecond);
         }
     }
 
@@ -71,8 +70,7 @@ class RangeVisitor implements FeatureCalc {
     static class NumberRangeComparator implements Comparator<Range<? extends Number>> {
 
         @Override
-        public int compare(
-                Range<? extends Number> firstRange, Range<? extends Number> secondRange) {
+        public int compare(Range<? extends Number> firstRange, Range<? extends Number> secondRange) {
             Utilities.ensureNonNull("firstRange", firstRange);
             Utilities.ensureNonNull("secondRange", secondRange);
             final Number firstRangeMin = firstRange.getMinValue();
@@ -126,14 +124,14 @@ class RangeVisitor implements FeatureCalc {
     protected Expression expr2;
 
     /** The comparator instance to sort items inside the Tree set */
-    private Comparator comparator;
+    private Comparator<? extends Range> comparator;
 
     /** The set containing the added ranges */
     Set<Range> set = null;
 
     /**
-     * A set of string representations of the returned ranges. Time ranges will be returned into a
-     * compact form so that intersecting ranges are merged together into a bigger time range.
+     * A set of string representations of the returned ranges. Time ranges will be returned into a compact form so that
+     * intersecting ranges are merged together into a bigger time range.
      */
     Set<String> minimalRanges = null;
 
@@ -144,21 +142,21 @@ class RangeVisitor implements FeatureCalc {
     /**
      * Range visitor constructor.
      *
-     * @param attributeTypeName1 the name of the attribute to be related to the left side of the
-     *     range
-     * @param attributeTypeName2 the name of the attribute to be related to the right side of the
-     *     range
+     * @param attributeTypeName1 the name of the attribute to be related to the left side of the range
+     * @param attributeTypeName2 the name of the attribute to be related to the right side of the range
      * @param rangeType the type of range, one of {@link RangeType#NUMBER},{@link RangeType#DATE}
      */
     public RangeVisitor(String attributeTypeName1, String attributeTypeName2, RangeType rangeType) {
         FilterFactory factory = CommonFactoryFinder.getFilterFactory(null);
         expr1 = factory.property(attributeTypeName1);
         expr2 = factory.property(attributeTypeName2);
-        this.comparator =
-                rangeType == RangeType.NUMBER
-                        ? new NumberRangeComparator()
-                        : new DateRangeComparator();
-        set = new TreeSet(comparator);
+        this.comparator = rangeType == RangeType.NUMBER ? new NumberRangeComparator() : new DateRangeComparator();
+        set = buildSet();
+    }
+
+    @SuppressWarnings("unchecked")
+    private TreeSet<Range> buildSet() {
+        return new TreeSet<>((Comparator<? super Range>) comparator);
     }
 
     public void init(SimpleFeatureCollection collection) {
@@ -169,6 +167,7 @@ class RangeVisitor implements FeatureCalc {
         visit((Feature) feature);
     }
 
+    @Override
     public void visit(Feature feature) {
         // we ignore null attributes
         final Object firstValue = expr1.evaluate(feature);
@@ -181,31 +180,31 @@ class RangeVisitor implements FeatureCalc {
     public void setValue(Object newSet) {
 
         if (newSet instanceof Collection) { // convert to set
-            this.set = new HashSet((Collection) newSet);
+            @SuppressWarnings("unchecked")
+            Collection<Range> cast = (Collection<Range>) newSet;
+            this.set = new HashSet<>(cast);
         } else {
-            Collection collection = Converters.convert(newSet, List.class);
+            @SuppressWarnings("unchecked")
+            Collection<Range> collection = Converters.convert(newSet, List.class);
             if (collection != null) {
-                this.set = new HashSet(collection);
+                this.set = new HashSet<>(collection);
             } else {
-                this.set = new HashSet(Collections.singleton(newSet));
+                Set<Range> singleton = Collections.singleton((Range) newSet);
+                this.set = new HashSet<>(singleton);
             }
         }
     }
 
     /** Reset the collected ranges */
     public void reset() {
-        this.set = new TreeSet(comparator);
+        this.set = buildSet();
         this.minimalRanges = null;
     }
 
-    /**
-     * Return the minimal set of Ranges
-     *
-     * @return
-     */
+    /** Return the minimal set of Ranges */
     public Set<String> getRange() {
         if (minimalRanges == null) {
-            minimalRanges = new LinkedHashSet<String>();
+            minimalRanges = new LinkedHashSet<>();
             populateRange();
         }
         return minimalRanges;
@@ -220,31 +219,34 @@ class RangeVisitor implements FeatureCalc {
         }
     }
 
+    @Override
     public CalcResult getResult() {
-        if (set.size() < 1) {
+        if (set.isEmpty()) {
             return CalcResult.NULL_RESULT;
         }
         return new RangeResult(set);
     }
 
     static class RangeResult extends AbstractCalcResult {
-        private Set ranges;
+        private Set<Range> ranges;
 
-        public RangeResult(Set newSet) {
+        public RangeResult(Set<Range> newSet) {
             ranges = newSet;
         }
 
+        @Override
         public Object getValue() {
-            return new HashSet(ranges);
+            return new HashSet<>(ranges);
         }
 
+        @Override
         public boolean isCompatible(CalcResult targetResults) {
             // list each calculation result which can merge with this type of result
-            if (targetResults instanceof RangeResult || targetResults == CalcResult.NULL_RESULT)
-                return true;
+            if (targetResults instanceof RangeResult || targetResults == CalcResult.NULL_RESULT) return true;
             return false;
         }
 
+        @Override
         public CalcResult merge(CalcResult resultsToAdd) {
             if (!isCompatible(resultsToAdd)) {
                 throw new IllegalArgumentException("Parameter is not a compatible type");
@@ -256,8 +258,10 @@ class RangeVisitor implements FeatureCalc {
 
             if (resultsToAdd instanceof RangeResult) {
                 // add one set to the other (to create one big unique list)
-                Set newSet = new HashSet(ranges);
-                newSet.addAll((Set) resultsToAdd.getValue());
+                Set<Range> newSet = new HashSet<>(ranges);
+                @SuppressWarnings("unchecked")
+                Set<Range> other = (Set<Range>) resultsToAdd.getValue();
+                newSet.addAll(other);
                 return new RangeResult(newSet);
             } else {
                 throw new IllegalArgumentException(

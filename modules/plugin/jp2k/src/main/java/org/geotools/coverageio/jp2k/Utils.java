@@ -28,7 +28,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
 import org.geotools.util.URLs;
 import org.geotools.util.Utilities;
 
@@ -74,8 +74,7 @@ class Utils {
                 sourceURL = URLs.fileToUrl(tempFile);
                 source = tempFile;
             }
-        } else if (source instanceof AccessibleStream
-                && ((AccessibleStream) source).getTarget() instanceof File) {
+        } else if (source instanceof AccessibleStream && ((AccessibleStream) source).getTarget() instanceof File) {
             final File inputFile = (File) ((AccessibleStream) source).getTarget();
             source = inputFile;
         }
@@ -90,23 +89,20 @@ class Utils {
     }
 
     /**
-     * Look for an {@link ImageReader} instance that is able to read the provided {@link
-     * ImageInputStream}, which must be non null.
+     * Look for an {@link ImageReader} instance that is able to read the provided {@link ImageInputStream}, which must
+     * be non null.
      *
      * <p>In case no reader is found, <code>null</code> is returned.
      *
-     * @param inStream an instance of {@link ImageInputStream} for which we need to find a suitable
-     *     {@link ImageReader}.
-     * @return a suitable instance of {@link ImageReader} or <code>null</code> if one cannot be
-     *     found.
+     * @param inStream an instance of {@link ImageInputStream} for which we need to find a suitable {@link ImageReader}.
+     * @return a suitable instance of {@link ImageReader} or <code>null</code> if one cannot be found.
      */
     static ImageReader getReader(final ImageInputStream inStream) {
         Utilities.ensureNonNull("inStream", inStream);
         // get a reader
         //		inStream.mark();
         try {
-            if (inStream instanceof AccessibleStream
-                    && ((AccessibleStream) inStream).getTarget() instanceof File) {
+            if (inStream instanceof AccessibleStream && ((AccessibleStream) inStream).getTarget() instanceof File) {
                 final File file = (File) ((AccessibleStream) inStream).getTarget();
                 if (FILEFILTER.accept(file))
                     return JP2KFormatFactory.getCachedSpi().createReaderInstance();
@@ -119,26 +115,13 @@ class Utils {
         }
     }
 
-    /**
-     * Retrieves an {@link ImageInputStream} for the provided input {@link File} .
-     *
-     * @param file
-     * @return
-     * @throws IOException
-     */
+    /** Retrieves an {@link ImageInputStream} for the provided input {@link File} . */
     static ImageInputStream getInputStream(final File file) throws IOException {
         final ImageInputStream inStream = ImageIO.createImageInputStream(file);
-        if (inStream == null) return null;
         return inStream;
     }
 
-    /**
-     * Setup a double from an array of bytes.
-     *
-     * @param bytes
-     * @param start
-     * @return
-     */
+    /** Setup a double from an array of bytes. */
     public static double bytes2double(final byte[] bytes, final int start) {
         int i = 0;
         final int length = 8;
@@ -157,13 +140,7 @@ class Utils {
         return Double.longBitsToDouble(accum);
     }
 
-    /**
-     * Setup a long from an array of bytes.
-     *
-     * @param bytes
-     * @param start
-     * @return
-     */
+    /** Setup a long from an array of bytes. */
     public static long bytes2long(final byte[] bytes, final int start) {
         int i = 0;
         final int length = 4;
@@ -183,17 +160,16 @@ class Utils {
     }
 
     private static IOFileFilter createFilter() {
-        IOFileFilter fileFilter =
-                Utils.includeFilters(
-                        FileFilterUtils.suffixFileFilter("jp2"),
-                        FileFilterUtils.suffixFileFilter("JP2"),
-                        FileFilterUtils.suffixFileFilter("j2c"),
-                        FileFilterUtils.suffixFileFilter("J2C"),
-                        FileFilterUtils.suffixFileFilter("jpx"),
-                        FileFilterUtils.suffixFileFilter("JPX"),
-                        FileFilterUtils.suffixFileFilter("jp2k"),
-                        FileFilterUtils.suffixFileFilter("JP2K"),
-                        FileFilterUtils.nameFileFilter("jpeg2000"));
+        IOFileFilter fileFilter = Utils.includeFilters(
+                FileFilterUtils.suffixFileFilter("jp2"),
+                FileFilterUtils.suffixFileFilter("JP2"),
+                FileFilterUtils.suffixFileFilter("j2c"),
+                FileFilterUtils.suffixFileFilter("J2C"),
+                FileFilterUtils.suffixFileFilter("jpx"),
+                FileFilterUtils.suffixFileFilter("JPX"),
+                FileFilterUtils.suffixFileFilter("jp2k"),
+                FileFilterUtils.suffixFileFilter("JP2K"),
+                FileFilterUtils.nameFileFilter("jpeg2000"));
         return fileFilter;
     }
 

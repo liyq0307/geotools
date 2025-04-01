@@ -1,32 +1,15 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2019, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
-
 // docs start source
-/*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
- *
- *    (C) 2006-2008, Open Source Geospatial Foundation (OSGeo)
- *
- *    This file is hereby placed into the Public Domain. This means anyone is
- *    free to do whatever they wish with this file. Use it well and enjoy!
- */
-
 package org.geotools.tutorial.filter;
 
 import java.awt.BorderLayout;
@@ -44,15 +27,18 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.DataStoreFinder;
-import org.geotools.data.Query;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.postgis.PostgisNGDataStoreFactory;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.swing.action.SafeAction;
 import org.geotools.swing.data.JDataStoreWizard;
@@ -61,16 +47,12 @@ import org.geotools.swing.wizard.JWizard;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
 
 /**
- * The Query Lab is an excuse to try out Filters and Expressions on your own data with a table to
- * show the results.
+ * The Query Lab is an excuse to try out Filters and Expressions on your own data with a table to show the results.
  *
- * <p>Remember when programming that you have other options then the CQL parser, you can directly
- * make a Filter using CommonFactoryFinder.getFilterFactory2().
+ * <p>Remember when programming that you have other options then the CQL parser, you can directly make a Filter using
+ * CommonFactoryFinder.getFilterFactory().
  */
 @SuppressWarnings("serial")
 public class QueryLab extends JFrame {
@@ -116,59 +98,51 @@ public class QueryLab extends JFrame {
         pack();
 
         // docs start file menu
-        fileMenu.add(
-                new SafeAction("Open shapefile...") {
-                    public void action(ActionEvent e) throws Throwable {
-                        connect(new ShapefileDataStoreFactory());
-                    }
-                });
-        fileMenu.add(
-                new SafeAction("Connect to PostGIS database...") {
-                    public void action(ActionEvent e) throws Throwable {
-                        connect(new PostgisNGDataStoreFactory());
-                    }
-                });
-        fileMenu.add(
-                new SafeAction("Connect to DataStore...") {
-                    public void action(ActionEvent e) throws Throwable {
-                        connect(null);
-                    }
-                });
+        fileMenu.add(new SafeAction("Open shapefile...") {
+            public void action(ActionEvent e) throws Throwable {
+                connect(new ShapefileDataStoreFactory());
+            }
+        });
+        fileMenu.add(new SafeAction("Connect to PostGIS database...") {
+            public void action(ActionEvent e) throws Throwable {
+                connect(new PostgisNGDataStoreFactory());
+            }
+        });
+        fileMenu.add(new SafeAction("Connect to DataStore...") {
+            public void action(ActionEvent e) throws Throwable {
+                connect(null);
+            }
+        });
         fileMenu.addSeparator();
-        fileMenu.add(
-                new SafeAction("Exit") {
-                    public void action(ActionEvent e) throws Throwable {
-                        System.exit(0);
-                    }
-                });
+        fileMenu.add(new SafeAction("Exit") {
+            public void action(ActionEvent e) throws Throwable {
+                System.exit(0);
+            }
+        });
         // docs end file menu
 
         // docs start data menu
-        dataMenu.add(
-                new SafeAction("Get features") {
-                    public void action(ActionEvent e) throws Throwable {
-                        filterFeatures();
-                    }
-                });
-        dataMenu.add(
-                new SafeAction("Count") {
-                    public void action(ActionEvent e) throws Throwable {
-                        countFeatures();
-                    }
-                });
-        dataMenu.add(
-                new SafeAction("Geometry") {
-                    public void action(ActionEvent e) throws Throwable {
-                        queryFeatures();
-                    }
-                });
+        dataMenu.add(new SafeAction("Get features") {
+            public void action(ActionEvent e) throws Throwable {
+                filterFeatures();
+            }
+        });
+        dataMenu.add(new SafeAction("Count") {
+            public void action(ActionEvent e) throws Throwable {
+                countFeatures();
+            }
+        });
+        dataMenu.add(new SafeAction("Geometry") {
+            public void action(ActionEvent e) throws Throwable {
+                queryFeatures();
+            }
+        });
         // docs end data menu
-        dataMenu.add(
-                new SafeAction("Center") {
-                    public void action(ActionEvent e) throws Throwable {
-                        centerFeatures();
-                    }
-                });
+        dataMenu.add(new SafeAction("Center") {
+            public void action(ActionEvent e) throws Throwable {
+                centerFeatures();
+            }
+        });
     }
     // docs end constructor
 

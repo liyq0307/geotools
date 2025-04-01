@@ -18,10 +18,10 @@
 package org.geotools.data.gen;
 
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * @author Christian Muüller
@@ -43,7 +43,7 @@ public class PreGeneralizedFeatureIterator implements SimpleFeatureIterator {
             SimpleFeatureIterator backendIterator,
             SimpleFeatureType featureTyp,
             SimpleFeatureType returnedFeatureType,
-            int indexMapping[],
+            int[] indexMapping,
             String geomPropertyName,
             String backendGeomPropertyName) {
         super();
@@ -55,23 +55,21 @@ public class PreGeneralizedFeatureIterator implements SimpleFeatureIterator {
         this.indexMapping = indexMapping;
     }
 
+    @Override
     public void close() {
         backendIterator.close();
     }
 
+    @Override
     public boolean hasNext() {
         return backendIterator.hasNext();
     }
 
+    @Override
     public SimpleFeature next() throws NoSuchElementException {
         SimpleFeature f = backendIterator.next();
         if (f == null) return null;
         return new PreGeneralizedSimpleFeature(
-                featureTyp,
-                returnedFeatureType,
-                indexMapping,
-                f,
-                geomPropertyName,
-                backendGeomPropertyName);
+                featureTyp, returnedFeatureType, indexMapping, f, geomPropertyName, backendGeomPropertyName);
     }
 }

@@ -21,7 +21,6 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.util.JSON;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -55,10 +54,10 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.mongodb.data.SchemaStoreDirectory;
-import org.geotools.data.ows.HTTPClient;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
+import org.geotools.http.HTTPClient;
 
 /** @author tkunicki@boundlessgeo.com */
 public class MongoUtil {
@@ -100,8 +99,7 @@ public class MongoUtil {
         setDBOValueInternal(dbo, path, value);
     }
 
-    private static void setDBOValueInternal(
-            DBObject currentDBO, Iterator<String> path, Object value) {
+    private static void setDBOValueInternal(DBObject currentDBO, Iterator<String> path, Object value) {
         String key = path.next();
         if (path.hasNext()) {
             Object next = currentDBO.get(key);
@@ -126,8 +124,12 @@ public class MongoUtil {
     }
 
     public static Set<String> findIndexedFields(DBCollection dbc, String type) {
-        Set<String> fields = new LinkedHashSet<String>();
         List<DBObject> indices = dbc.getIndexInfo();
+        return findIndexedFields(indices, type);
+    }
+
+    public static Set<String> findIndexedFields(List<DBObject> indices, String type) {
+        Set<String> fields = new LinkedHashSet<>();
         for (DBObject index : indices) {
             Object key = index.get("key");
             if (key instanceof DBObject) {
@@ -159,7 +161,7 @@ public class MongoUtil {
         if (dbo == null) {
             return Collections.emptyMap();
         }
-        Map<String, Class<?>> map = new LinkedHashMap<String, Class<?>>();
+        Map<String, Class<?>> map = new LinkedHashMap<>();
         for (Map.Entry<?, ?> e : ((Map<?, ?>) dbo.toMap()).entrySet()) {
             Object k = e.getKey();
             if (k instanceof String) {
@@ -198,8 +200,10 @@ public class MongoUtil {
     }
 
     public static String extractFilesNameFromUrl(String url) throws MalformedURLException {
-        URL urlObject = new URL(url);
-        return urlObject.getPath().replaceAll("/", "");
+        final URL urlObject = new URL(url);
+        String path = urlObject.getPath();
+        int lastSeparatorIndex = path.lastIndexOf("/");
+        return path.substring(lastSeparatorIndex > -1 ? lastSeparatorIndex + 1 : 0, path.length());
     }
 
     public static boolean isZipFile(File file) throws IOException {
@@ -221,26 +225,22 @@ public class MongoUtil {
     static void validateDirectory(File file) throws IOException {
         if (!file.exists() && !file.mkdirs()) {
             throw new IOException(
-                    "Schema store directory does not exist and could not be created: "
-                            + file.getAbsolutePath());
+                    "Schema store directory does not exist and could not be created: " + file.getAbsolutePath());
         }
         if (file.isDirectory()) {
             // File.canWrite() doesn't report as intended for directories on
             // certain platforms with certain permissions scenarios.  Will
             // instead we verify we can create a file then delete it.
             if (!File.createTempFile("test", ".tmp", file).delete()) {
-                throw new IOException(
-                        "Unable to write to schema store directory: " + file.getAbsolutePath());
+                throw new IOException("Unable to write to schema store directory: " + file.getAbsolutePath());
             }
         } else {
             throw new IOException(
-                    "Specified schema store directory exists but is not a directory: "
-                            + file.getAbsolutePath());
+                    "Specified schema store directory exists but is not a directory: " + file.getAbsolutePath());
         }
     }
 
-    static SimpleFeatureType getSimpleFeatureType(BufferedReader reader, Name name)
-            throws IOException {
+    static SimpleFeatureType getSimpleFeatureType(BufferedReader reader, Name name) throws IOException {
         try {
             String lineSeparator = System.getProperty("line.separator");
             StringBuilder jsonBuilder = new StringBuilder();
@@ -249,32 +249,22 @@ public class MongoUtil {
                 jsonBuilder.append(line);
                 jsonBuilder.append(lineSeparator);
             }
-            Object o = JSON.parse(jsonBuilder.toString());
-            if (o instanceof DBObject) {
-                return FeatureTypeDBObject.convert((DBObject) o, name);
-            }
+            BasicDBObject o = BasicDBObject.parse(jsonBuilder.toString());
+            return FeatureTypeDBObject.convert(o, name);
         } finally {
             reader.close();
         }
-        return null;
     }
 
     static File downloadSchemaFile(
-            String storeName,
-            URL url,
-            HTTPClient httpClient,
-            SchemaStoreDirectory downloadDirectory)
+            String storeName, URL url, HTTPClient httpClient, SchemaStoreDirectory downloadDirectory)
             throws IOException {
         File downloadDir = new File(downloadDirectory.getDirectory(), storeName);
         MongoUtil.validateDirectory(downloadDir);
         httpClient.setTryGzip(true);
         try (InputStream in = httpClient.get(url).getResponseStream()) {
             Logger.getGlobal()
-                    .info(
-                            "MongoDBStore:"
-                                    + storeName
-                                    + ":Downloading Schema File from :"
-                                    + url.toExternalForm());
+                    .info("MongoDBStore:" + storeName + ":Downloading Schema File from :" + url.toExternalForm());
 
             // create file in temp with name of store
             String filesName = MongoUtil.extractFilesNameFromUrl(url.toExternalForm());
@@ -282,11 +272,10 @@ public class MongoUtil {
 
             Files.copy(in, schemaStoreFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             Logger.getGlobal()
-                    .info(
-                            "MongoDBStore:"
-                                    + storeName
-                                    + ":Downloaded File Stored at :"
-                                    + schemaStoreFile.getAbsolutePath());
+                    .info("MongoDBStore:"
+                            + storeName
+                            + ":Downloaded File Stored at :"
+                            + schemaStoreFile.getAbsolutePath());
             return schemaStoreFile;
         }
     }
@@ -314,11 +303,10 @@ public class MongoUtil {
                 destinationParent.mkdirs();
 
                 if (!entry.isDirectory()) {
-                    try (BufferedInputStream is =
-                            new BufferedInputStream(zip.getInputStream(entry))) {
+                    try (BufferedInputStream is = new BufferedInputStream(zip.getInputStream(entry))) {
                         int currentByte;
                         // establish buffer for writing file
-                        byte data[] = new byte[BUFFER];
+                        byte[] data = new byte[BUFFER];
 
                         // write the current file to disk
                         FileOutputStream fos = new FileOutputStream(destFile);
@@ -344,8 +332,7 @@ public class MongoUtil {
         private File lastDirectory = null;
 
         @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-                throws IOException {
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
             return FileVisitResult.CONTINUE;
         }
 

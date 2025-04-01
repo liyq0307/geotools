@@ -16,10 +16,10 @@
  */
 package org.geotools.feature.visitor;
 
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * @author Cory Horner, Refractions
@@ -33,30 +33,23 @@ public class CollectionUtil {
      * @param visitor the visitor which already knows which attributes it wants to meet
      */
     static void accept(SimpleFeatureCollection collection, FeatureVisitor visitor) {
-        SimpleFeatureIterator iterator = collection.features();
-        try {
+        try (SimpleFeatureIterator iterator = collection.features()) {
             while (iterator.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) iterator.next();
+                SimpleFeature feature = iterator.next();
                 visitor.visit(feature);
             }
-        } finally {
-            iterator.close();
         }
     }
 
-    static void accept(SimpleFeatureCollection collection, FeatureVisitor[] visitors) {
-        SimpleFeatureIterator iterator = collection.features();
-        try {
+    static void accept(SimpleFeatureCollection collection, FeatureVisitor... visitors) {
+        try (SimpleFeatureIterator iterator = collection.features()) {
             while (iterator.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) iterator.next();
+                SimpleFeature feature = iterator.next();
 
-                for (int i = 0; i < visitors.length; i++) {
-                    FeatureVisitor visitor = visitors[i];
+                for (FeatureVisitor visitor : visitors) {
                     visitor.visit(feature);
                 }
             }
-        } finally {
-            iterator.close();
         }
     }
 

@@ -42,9 +42,8 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(
-    name = "attributesType",
-    propOrder = {"attribute"}
-)
+        name = "attributesType",
+        propOrder = {"attribute"})
 public class AttributesType {
 
     @XmlElement(required = true)
@@ -53,9 +52,9 @@ public class AttributesType {
     /**
      * Gets the value of the attribute property.
      *
-     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any
-     * modification you make to the returned list will be present inside the JAXB object. This is
-     * why there is not a <CODE>set</CODE> method for the attribute property.
+     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any modification you make
+     * to the returned list will be present inside the JAXB object. This is why there is not a <CODE>set</CODE> method
+     * for the attribute property.
      *
      * <p>For example, to add a new item, do as follows:
      *
@@ -67,7 +66,7 @@ public class AttributesType {
      */
     public List<AttributeType> getAttribute() {
         if (attribute == null) {
-            attribute = new ArrayList<AttributeType>();
+            attribute = new ArrayList<>();
         }
         return this.attribute;
     }

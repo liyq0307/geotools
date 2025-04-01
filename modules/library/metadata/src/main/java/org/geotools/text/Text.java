@@ -19,13 +19,13 @@ package org.geotools.text;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.GrowableInternationalString;
 import org.geotools.util.ResourceInternationalString;
 import org.geotools.util.SimpleInternationalString;
-import org.opengis.util.InternationalString;
 
 /**
- * Helper class for working with InternaionalString and other forms of Text.
+ * Helper class for working with InternationalString and other forms of Text.
  *
  * @author Jody Garnett
  */
@@ -35,10 +35,9 @@ public class Text {
     /**
      * Create a international string based on the provided English text.
      *
-     * <p>We will hook up this method to a properties file at a later time, making other
-     * translations available via the Factory SPI mechanism.
+     * <p>We will hook up this method to a properties file at a later time, making other translations available via the
+     * Factory SPI mechanism.
      *
-     * @param english
      * @return SimpleInternationalString
      */
     public static InternationalString text(String english) {

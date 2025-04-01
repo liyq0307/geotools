@@ -16,12 +16,12 @@
  */
 package org.geotools.filter.spatial;
 
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.spatial.Equals;
 import org.geotools.filter.GeometryFilterImpl;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.spatial.Equals;
 
 public class EqualsImpl extends GeometryFilterImpl implements Equals {
 
@@ -42,6 +42,7 @@ public class EqualsImpl extends GeometryFilterImpl implements Equals {
         else return false;
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }

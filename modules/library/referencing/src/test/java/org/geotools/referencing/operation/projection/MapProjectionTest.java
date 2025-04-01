@@ -19,14 +19,15 @@ package org.geotools.referencing.operation.projection;
 import static org.geotools.referencing.operation.projection.MapProjection.AbstractProvider.SEMI_MAJOR;
 import static org.geotools.referencing.operation.projection.MapProjection.AbstractProvider.SEMI_MINOR;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.geom.Point2D;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.MathTransformFactory;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.junit.Test;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.MathTransformFactory;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Tests the {@link MapProjection} implementation.
@@ -37,8 +38,8 @@ import org.opengis.referencing.operation.TransformException;
 public final class MapProjectionTest {
 
     /**
-     * Make a simple spherical Mercator (Google Mercator) CRS. We just use this as a simple example
-     * of a MapProjection since that class is abstract.
+     * Make a simple spherical Mercator (Google Mercator) CRS. We just use this as a simple example of a MapProjection
+     * since that class is abstract.
      */
     private static MapProjection createGoogleMercator() throws FactoryException {
         MathTransformFactory mtFactory = ReferencingFactoryFinder.getMathTransformFactory(null);
@@ -74,8 +75,8 @@ public final class MapProjectionTest {
         for (int i = 0; i < PROJECTED.length / 2; i++) {
             Point2D src = new Point2D.Double(GEOGRAPHIC[i * 2 + 0], GEOGRAPHIC[i * 2 + 1]);
             Point2D target = new Point2D.Double(PROJECTED[i * 2 + 0], PROJECTED[i * 2 + 1]);
-            assertEquals(true, mt.checkReciprocal(src, target, false));
-            assertEquals(true, mt.checkReciprocal(target, src, true));
+            assertTrue(mt.checkReciprocal(src, target, false));
+            assertTrue(mt.checkReciprocal(target, src, true));
         }
 
         mt.inverse().transform(PROJECTED, 0, dst, 0, PROJECTED.length / 2);
@@ -100,13 +101,11 @@ public final class MapProjectionTest {
                 0.001);
         assertEquals(
                 111319.49079,
-                mt.orthodromicDistance(
-                        new Point2D.Double(0.0, 89.0), new Point2D.Double(0.0, 90.0)),
+                mt.orthodromicDistance(new Point2D.Double(0.0, 89.0), new Point2D.Double(0.0, 90.0)),
                 0.001);
         assertEquals(
                 1942.76834,
-                mt.orthodromicDistance(
-                        new Point2D.Double(0.0, 89.0), new Point2D.Double(1.0, 89.0)),
+                mt.orthodromicDistance(new Point2D.Double(0.0, 89.0), new Point2D.Double(1.0, 89.0)),
                 0.001);
         assertEquals(
                 10018754.17139,

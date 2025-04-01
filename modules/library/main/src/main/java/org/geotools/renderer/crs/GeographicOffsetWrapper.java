@@ -16,16 +16,15 @@
  */
 package org.geotools.renderer.crs;
 
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.Matrix;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.TransformException;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.Matrix;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.TransformException;
 
 /**
- * Wraps a datum shift math transform and makes sure we are not introducing dateline jumps when
- * applying the datum shift
+ * Wraps a datum shift math transform and makes sure we are not introducing dateline jumps when applying the datum shift
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -37,19 +36,22 @@ class GeographicOffsetWrapper implements MathTransform {
         this.delegate = delegate;
     }
 
+    @Override
     public int getSourceDimensions() {
         return delegate.getSourceDimensions();
     }
 
+    @Override
     public int getTargetDimensions() {
         return delegate.getTargetDimensions();
     }
 
-    public DirectPosition transform(DirectPosition ptSrc, DirectPosition ptDst)
-            throws MismatchedDimensionException, TransformException {
+    @Override
+    public Position transform(Position ptSrc, Position ptDst) throws MismatchedDimensionException, TransformException {
         return delegate.transform(ptSrc, ptDst);
     }
 
+    @Override
     public void transform(double[] srcPts, int srcOff, double[] dstPts, int dstOff, int numPts)
             throws TransformException {
         double[] source = srcPts;
@@ -90,6 +92,7 @@ class GeographicOffsetWrapper implements MathTransform {
         }
     }
 
+    @Override
     public void transform(float[] srcPts, int srcOff, float[] dstPts, int dstOff, int numPts)
             throws TransformException {
         delegate.transform(srcPts, srcOff, dstPts, dstOff, numPts);
@@ -124,6 +127,7 @@ class GeographicOffsetWrapper implements MathTransform {
         }
     }
 
+    @Override
     public void transform(float[] srcPts, int srcOff, double[] dstPts, int dstOff, int numPts)
             throws TransformException {
         delegate.transform(srcPts, srcOff, dstPts, dstOff, numPts);
@@ -158,6 +162,7 @@ class GeographicOffsetWrapper implements MathTransform {
         }
     }
 
+    @Override
     public void transform(double[] srcPts, int srcOff, float[] dstPts, int dstOff, int numPts)
             throws TransformException {
         delegate.transform(srcPts, srcOff, dstPts, dstOff, numPts);
@@ -192,11 +197,12 @@ class GeographicOffsetWrapper implements MathTransform {
         }
     }
 
-    public Matrix derivative(DirectPosition point)
-            throws MismatchedDimensionException, TransformException {
+    @Override
+    public Matrix derivative(Position point) throws MismatchedDimensionException, TransformException {
         return delegate.derivative(point);
     }
 
+    @Override
     public MathTransform inverse() throws NoninvertibleTransformException {
         MathTransform inverse = delegate.inverse();
         if (inverse instanceof GeographicOffsetWrapper) {
@@ -206,10 +212,12 @@ class GeographicOffsetWrapper implements MathTransform {
         }
     }
 
+    @Override
     public boolean isIdentity() {
         return delegate.isIdentity();
     }
 
+    @Override
     public String toWKT() throws UnsupportedOperationException {
         return delegate.toWKT();
     }

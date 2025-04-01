@@ -17,19 +17,20 @@
 package org.geotools.referencing.factory.epsg;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.operation.CoordinateOperation; // For javadoc
+import org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory;
 import org.geotools.referencing.factory.IdentifiedObjectSet;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.operation.CoordinateOperation; // For javadoc
-import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
 
 /**
- * A lazy set of {@link CoordinateOperation} objects to be returned by the {@link
- * DirectEpsgFactory#createFromCoordinateReferenceSystemCodes
- * createFromCoordinateReferenceSystemCodes} method.
+ * A lazy set of {@link CoordinateOperation} objects to be returned by the
+ * {@link DirectEpsgFactory#createFromCoordinateReferenceSystemCodes createFromCoordinateReferenceSystemCodes} method.
  *
  * @since 2.2
  * @version $Id$
@@ -39,15 +40,24 @@ final class CoordinateOperationSet extends IdentifiedObjectSet {
     /** For compatibility with previous versions. */
     private static final long serialVersionUID = -2421669857023064667L;
 
+    // These operations are returned at the top of the results but they
+    // provide operations that are breaking several tests where a
+    // back-forward and transformation doesn't provide the same result back.
+    // We may need to revisit the sorting criteria/logic
+    static final Set<String> EXCLUDED_OPERATIONS = new HashSet<>(Set.of("9688"));
+
     /**
-     * The codes of {@link ProjectedCRS} objects for the specified {@link Conversion} codes, or
-     * {@code null} if none.
+     * The codes of {@link ProjectedCRS} objects for the specified {@link Conversion} codes, or {@code null} if none.
      */
-    private Map /*<String,String>*/ projections;
+    private Map<String, String> projections;
 
     /** Creates a new instance of this lazy set. */
     public CoordinateOperationSet(final AuthorityFactory factory) {
         super(factory);
+    }
+
+    public static boolean isExcludedOperation(String operationCode) {
+        return EXCLUDED_OPERATIONS.contains(operationCode);
     }
 
     /**
@@ -59,7 +69,7 @@ final class CoordinateOperationSet extends IdentifiedObjectSet {
     public boolean addAuthorityCode(final String code, final String crs) {
         if (crs != null) {
             if (projections == null) {
-                projections = new HashMap();
+                projections = new HashMap<>();
             }
             projections.put(code, crs);
         }
@@ -67,13 +77,12 @@ final class CoordinateOperationSet extends IdentifiedObjectSet {
     }
 
     /** Creates an object for the specified code. */
+    @Override
     protected IdentifiedObject createObject(final String code) throws FactoryException {
         if (projections != null) {
-            final String crs = (String) projections.get(code);
+            final String crs = projections.get(code);
             if (crs != null) {
-                return ((CRSAuthorityFactory) factory)
-                        .createProjectedCRS(crs)
-                        .getConversionFromBase();
+                return ((CRSAuthorityFactory) factory).createProjectedCRS(crs).getConversionFromBase();
             }
         }
         return ((CoordinateOperationAuthorityFactory) factory).createCoordinateOperation(code);

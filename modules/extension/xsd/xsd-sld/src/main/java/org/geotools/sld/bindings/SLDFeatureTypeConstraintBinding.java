@@ -18,13 +18,13 @@ package org.geotools.sld.bindings;
 
 import java.util.List;
 import javax.xml.namespace.QName;
-import org.geotools.styling.Extent;
-import org.geotools.styling.FeatureTypeConstraint;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.style.Extent;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.Filter;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -61,6 +61,7 @@ public class SLDFeatureTypeConstraintBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.FEATURETYPECONSTRAINT;
     }
@@ -72,6 +73,7 @@ public class SLDFeatureTypeConstraintBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -83,6 +85,7 @@ public class SLDFeatureTypeConstraintBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return FeatureTypeConstraint.class;
     }
@@ -94,6 +97,7 @@ public class SLDFeatureTypeConstraintBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -103,12 +107,14 @@ public class SLDFeatureTypeConstraintBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         String featureTypeName = (String) node.getChildValue("FeatureTypeName");
         Filter filter = (Filter) node.getChildValue("Filter");
 
-        List extentList = node.getChildValues("Extent");
-        Extent[] extents = (Extent[]) extentList.toArray(new Extent[extentList.size()]);
+        @SuppressWarnings("unchecked")
+        List<Extent> extentList = node.getChildValues("Extent");
+        Extent[] extents = extentList.toArray(new Extent[extentList.size()]);
 
         return styleFactory.createFeatureTypeConstraint(featureTypeName, filter, extents);
     }

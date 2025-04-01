@@ -19,6 +19,8 @@ package org.geotools.kml.bindings;
 import java.util.Arrays;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.kml.KML;
@@ -27,8 +29,6 @@ import org.geotools.xsd.Binding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Binding object for the type http://earth.google.com/kml/2.1:PlacemarkType.
@@ -61,6 +61,7 @@ public class PlacemarkTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.PlacemarkType;
     }
@@ -72,11 +73,12 @@ public class PlacemarkTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
-    @SuppressWarnings("rawtypes")
+    @Override
     public Class getType() {
         return SimpleFeature.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return Binding.AFTER;
     }
@@ -88,6 +90,7 @@ public class PlacemarkTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // retype from the abstract feature type, since extended data could have altered the schema
         // placemarks add an additional geometry field
@@ -116,11 +119,11 @@ public class PlacemarkTypeBinding extends AbstractComplexBinding {
         return b.buildFeature(feature.getID());
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         SimpleFeature feature = (SimpleFeature) object;
         if (KML.Geometry.getLocalPart().equals(name.getLocalPart())
-                || org.geotools.kml.v22.KML.AbstractGeometryGroup.getLocalPart()
-                        .equals(name.getLocalPart())) {
+                || org.geotools.kml.v22.KML.AbstractGeometryGroup.getLocalPart().equals(name.getLocalPart())) {
             return feature.getDefaultGeometry();
         }
 

@@ -64,6 +64,7 @@ public class XSQNameBinding implements SimpleBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.QNAME;
     }
@@ -75,6 +76,7 @@ public class XSQNameBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
@@ -87,6 +89,7 @@ public class XSQNameBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return QName.class;
     }
@@ -99,6 +102,7 @@ public class XSQNameBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
 
         // if value passed in was null just return "null" qname
@@ -108,9 +112,7 @@ public class XSQNameBinding implements SimpleBinding {
 
         QName qName = null;
         try {
-            qName =
-                    DatatypeConverterImpl.getInstance()
-                            .parseQName((String) value, namespaceContext);
+            qName = DatatypeConverterImpl.getInstance().parseQName((String) value, namespaceContext);
         } catch (Exception e) {
             // could occur if a prefix that was not registered was found
         }
@@ -140,6 +142,7 @@ public class XSQNameBinding implements SimpleBinding {
         return new QName(null, s);
     }
 
+    @Override
     public String encode(Object object, String value) throws Exception {
         try {
             return DatatypeConverterImpl.getInstance().printQName((QName) object, namespaceContext);

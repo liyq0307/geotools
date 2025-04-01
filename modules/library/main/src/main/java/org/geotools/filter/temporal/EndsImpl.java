@@ -17,10 +17,10 @@
  */
 package org.geotools.filter.temporal;
 
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.temporal.RelativePosition;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.temporal.RelativePosition;
 
 public class EndsImpl extends BinaryTemporalOperatorImpl implements Ends {
 
@@ -37,6 +37,7 @@ public class EndsImpl extends BinaryTemporalOperatorImpl implements Ends {
         return pos == RelativePosition.ENDS;
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }

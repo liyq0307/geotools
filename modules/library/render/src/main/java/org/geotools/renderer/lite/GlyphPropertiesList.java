@@ -16,55 +16,49 @@
  */
 package org.geotools.renderer.lite;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /** @author jfc173 */
 public class GlyphPropertiesList {
 
-    private Vector list = new Vector();
-    private Vector names = new Vector();
+    private List<GlyphProperty> list = new ArrayList<>();
+    private List<String> names = new ArrayList<>();
     private FilterFactory factory = CommonFactoryFinder.getFilterFactory(null);
 
     /** Creates a new instance of GlyphPropertiesList */
     public GlyphPropertiesList() {}
 
-    public void addProperty(String name, Class type, Object value) {
+    public void addProperty(String name, Class<?> type, Object value) {
         if (type.isAssignableFrom(value.getClass())) {
             list.add(new GlyphProperty(name, type, value));
             names.add(name);
         } else {
-            throw new RuntimeException(
-                    "Wrong class for setting variable "
-                            + name
-                            + ".  Expected a "
-                            + type
-                            + " but received a "
-                            + value.getClass()
-                            + ".");
+            throw new RuntimeException("Wrong class for setting variable "
+                    + name
+                    + ".  Expected a "
+                    + type
+                    + " but received a "
+                    + value.getClass()
+                    + ".");
         }
     }
 
-    /**
-     * the index i starts counting at 0, not 1. A list with two properties has property 0 and
-     * property 1.
-     */
+    /** the index i starts counting at 0, not 1. A list with two properties has property 0 and property 1. */
     public String getPropertyName(int i) {
-        return ((GlyphProperty) list.get(i)).getName();
+        return list.get(i).getName();
     }
 
     public int getPropertyIndex(String name) {
         return names.indexOf(name);
     }
 
-    /**
-     * the index i starts counting at 0, not 1. A list with two properties has property 0 and
-     * property 1.
-     */
+    /** the index i starts counting at 0, not 1. A list with two properties has property 0 and property 1. */
     public Class getPropertyType(int i) {
-        return ((GlyphProperty) list.get(i)).getType();
+        return list.get(i).getType();
     }
 
     public Class getPropertyType(String name) {
@@ -72,8 +66,7 @@ public class GlyphPropertiesList {
         if (index != -1) {
             return getPropertyType(index);
         } else {
-            throw new RuntimeException(
-                    "Tried to get the class of a non-existent property: " + name);
+            throw new RuntimeException("Tried to get the class of a non-existent property: " + name);
         }
     }
 
@@ -81,12 +74,9 @@ public class GlyphPropertiesList {
         return names.contains(name);
     }
 
-    /**
-     * the index i starts counting at 0, not 1. A list with two properties has property 0 and
-     * property 1.
-     */
+    /** the index i starts counting at 0, not 1. A list with two properties has property 0 and property 1. */
     public Object getPropertyValue(int i) {
-        return ((GlyphProperty) list.get(i)).getValue();
+        return list.get(i).getValue();
     }
 
     public Object getPropertyValue(String name) {
@@ -94,8 +84,7 @@ public class GlyphPropertiesList {
         if (index != -1) {
             return getPropertyValue(index);
         } else {
-            throw new RuntimeException(
-                    "Tried to get the class of a non-existent property: " + name);
+            throw new RuntimeException("Tried to get the class of a non-existent property: " + name);
         }
     }
 
@@ -122,7 +111,7 @@ public class GlyphPropertiesList {
     public void setPropertyValue(String name, Object value) {
         int index = names.indexOf(name);
         if (index != -1) {
-            GlyphProperty prop = (GlyphProperty) list.get(index);
+            GlyphProperty prop = list.get(index);
             if (value instanceof String) {
                 value = stringToLiteral((String) value);
             }
@@ -135,18 +124,16 @@ public class GlyphPropertiesList {
             if (prop.getType().isAssignableFrom(value.getClass())) {
                 prop.setValue(value);
             } else {
-                throw new RuntimeException(
-                        "Wrong class for setting variable "
-                                + name
-                                + ".  Expected a "
-                                + prop.getType()
-                                + " but received a "
-                                + value.getClass()
-                                + ".");
+                throw new RuntimeException("Wrong class for setting variable "
+                        + name
+                        + ".  Expected a "
+                        + prop.getType()
+                        + " but received a "
+                        + value.getClass()
+                        + ".");
             }
         } else {
-            throw new RuntimeException(
-                    "Tried to set the value of a non-existent property: " + name);
+            throw new RuntimeException("Tried to set the value of a non-existent property: " + name);
         }
     }
 }

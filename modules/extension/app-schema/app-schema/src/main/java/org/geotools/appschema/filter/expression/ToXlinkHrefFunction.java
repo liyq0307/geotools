@@ -19,19 +19,19 @@ package org.geotools.appschema.filter.expression;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.data.complex.util.ComplexFeatureConstants;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
- * This function redirects an attribute to be encoded as xlink:href, instead of being encoded as a
- * full attribute. This is useful in polymorphism, where static client property cannot be used when
- * the encoding is conditional. This function expects:
+ * This function redirects an attribute to be encoded as xlink:href, instead of being encoded as a full attribute. This
+ * is useful in polymorphism, where static client property cannot be used when the encoding is conditional. This
+ * function expects:
  *
  * <ol>
  *   <li>Expression: REFERENCE_VALUE (could be another function or literal)
@@ -48,7 +48,7 @@ public class ToXlinkHrefFunction implements Function {
     private final Literal fallback;
 
     public ToXlinkHrefFunction() {
-        this(new ArrayList<Expression>(), null);
+        this(new ArrayList<>(), null);
     }
 
     public ToXlinkHrefFunction(List<Expression> parameters, Literal fallback) {
@@ -56,35 +56,40 @@ public class ToXlinkHrefFunction implements Function {
         this.fallback = fallback;
     }
 
+    @Override
     public String getName() {
         return NAME.getName();
     }
 
+    @Override
     public FunctionName getFunctionName() {
         return NAME;
     }
 
+    @Override
     public List<Expression> getParameters() {
         return Collections.unmodifiableList(parameters);
     }
 
+    @Override
     public Literal getFallbackValue() {
         return fallback;
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public Object evaluate(Object object) {
         return evaluate(object, Hints.class);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public <T> T evaluate(Object object, Class<T> context) {
         return (T)
-                new Hints(
-                        ComplexFeatureConstants.STRING_KEY,
-                        parameters.get(0).evaluate(object, String.class));
+                new Hints(ComplexFeatureConstants.STRING_KEY, parameters.get(0).evaluate(object, String.class));
     }
 }

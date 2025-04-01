@@ -17,11 +17,11 @@
 package org.geotools.filter.v2_0.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
 import org.geotools.filter.v2_0.FES;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
 
 /**
  * Binding object for the type http://www.opengis.net/fes/2.0:BinaryTemporalOpType.
@@ -52,6 +52,7 @@ import org.opengis.filter.temporal.BinaryTemporalOperator;
 public class BinaryTemporalOpTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return FES.BinaryTemporalOpType;
     }
@@ -63,6 +64,7 @@ public class BinaryTemporalOpTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return BinaryTemporalOperator.class;
     }
@@ -74,6 +76,7 @@ public class BinaryTemporalOpTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return null;
     }

@@ -17,11 +17,11 @@
 package org.geotools.gml3.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.temporal.Position;
 import org.geotools.gml3.GML;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.temporal.Position;
 
 /**
  * Binding object for the type http://www.opengis.net/gml:TimePositionType.
@@ -57,6 +57,7 @@ import org.opengis.temporal.Position;
 public class TimePositionTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.TimePositionType;
     }
@@ -68,6 +69,7 @@ public class TimePositionTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Position.class;
     }
@@ -84,6 +86,7 @@ public class TimePositionTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return value;
     }

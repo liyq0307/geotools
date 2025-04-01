@@ -123,9 +123,10 @@ public class InsertTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<Object> getAny() {
     if (any == null) {
-      any = new EDataTypeUniqueEList<Object>(Object.class, this, Wfs20Package.INSERT_TYPE__ANY);
+      any = new EDataTypeUniqueEList<>(Object.class, this, Wfs20Package.INSERT_TYPE__ANY);
     }
     return any;
   }
@@ -135,6 +136,7 @@ public class InsertTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public String getInputFormat() {
     return inputFormat;
   }
@@ -144,6 +146,7 @@ public class InsertTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setInputFormat(String newInputFormat) {
     String oldInputFormat = inputFormat;
     inputFormat = newInputFormat;
@@ -158,6 +161,7 @@ public class InsertTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void unsetInputFormat() {
     String oldInputFormat = inputFormat;
     boolean oldInputFormatESet = inputFormatESet;
@@ -172,6 +176,7 @@ public class InsertTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public boolean isSetInputFormat() {
     return inputFormatESet;
   }
@@ -181,6 +186,7 @@ public class InsertTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public String getSrsName() {
     return srsName;
   }
@@ -190,6 +196,7 @@ public class InsertTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setSrsName(String newSrsName) {
     String oldSrsName = srsName;
     srsName = newSrsName;

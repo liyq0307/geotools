@@ -16,10 +16,16 @@
  */
 package org.geotools.parameter;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import javax.media.jai.JAI;
 import javax.media.jai.OperationDescriptor;
@@ -27,12 +33,12 @@ import javax.media.jai.OperationRegistry;
 import javax.media.jai.ParameterList;
 import javax.media.jai.RegistryElementDescriptor;
 import javax.media.jai.registry.RenderedRegistryMode;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.util.GenericName;
 import org.geotools.metadata.iso.citation.Citations;
 import org.junit.Test;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.util.GenericName;
 
 /**
  * Tests the wrapper for JAI's parameters.
@@ -48,18 +54,18 @@ public final class ImagingParametersTest {
         final String author = Citations.JAI.getTitle().toString();
         final String vendor = "com.sun.media.jai";
         final String mode = RenderedRegistryMode.MODE_NAME;
-        final RegistryElementDescriptor descriptor;
-        final ImagingParameterDescriptors parameters;
-        descriptor =
+        final RegistryElementDescriptor descriptor =
                 JAI.getDefaultInstance().getOperationRegistry().getDescriptor(mode, "AddConst");
-        parameters = new ImagingParameterDescriptors(descriptor);
+        final ImagingParameterDescriptors parameters = new ImagingParameterDescriptors(descriptor);
         final GenericName alias = parameters.getAlias().iterator().next();
         /*
          * Tests the operation-wide properties.
          */
         assertEquals("Name", "AddConst", parameters.getName().getCode());
         assertEquals(
-                "Authority", author, parameters.getName().getAuthority().getTitle().toString());
+                "Authority",
+                author,
+                parameters.getName().getAuthority().getTitle().toString());
         assertEquals("Vendor", vendor, alias.scope().name().toString());
         assertNotNull("Version", parameters.getName().getVersion());
         assertLocalized("Vendor", alias.scope().name().toInternationalString());
@@ -76,12 +82,11 @@ public final class ImagingParametersTest {
         assertNull("Maximum", param.getMaximumValue());
         assertNull("Valid values", param.getValidValues());
         assertLocalized("Remarks", param.getRemarks());
-        assertFalse(
-                parameters
-                        .getRemarks()
-                        .toString()
-                        .trim()
-                        .equalsIgnoreCase(param.getRemarks().toString().trim()));
+        assertFalse(parameters
+                .getRemarks()
+                .toString()
+                .trim()
+                .equalsIgnoreCase(param.getRemarks().toString().trim()));
         /*
          * Tests parameter values.
          */
@@ -93,10 +98,10 @@ public final class ImagingParametersTest {
             } else {
                 values.parameter("constants").setValue(new double[] {i});
             }
-            assertTrue(
-                    Arrays.equals(
-                            values.parameter("constants").doubleValueList(),
-                            (double[]) values.parameters.getObjectParameter("constants")));
+            assertArrayEquals(
+                    values.parameter("constants").doubleValueList(),
+                    (double[]) values.parameters.getObjectParameter("constants"),
+                    0.0);
             assertSame(before, values.parameter("constants"));
         }
         assertNotNull(values.toString());
@@ -106,18 +111,9 @@ public final class ImagingParametersTest {
         final ImagingParameters copy = values.clone();
         assertNotSame("clone", values, copy);
         assertNotSame("clone", values.parameters, copy.parameters);
-        if (false) {
-            // NOTE: As of J2SE 1.5 and JAI 1.1, ParameterBlockJAI
-            //       doesn't implements the 'equals' method.
-            assertEquals("clone", values.parameters, copy.parameters);
-            assertEquals("clone", values, copy);
-        }
     }
 
-    /**
-     * Ensures that the specified character sequence created from JAI parameters preserve the
-     * localization infos.
-     */
+    /** Ensures that the specified character sequence created from JAI parameters preserve the localization infos. */
     private static void assertLocalized(final String name, final CharSequence title) {
         assertTrue(name, title instanceof ImagingParameterDescription);
     }
@@ -128,30 +124,26 @@ public final class ImagingParametersTest {
         /*
          * The parameter descriptor for the subsampling.
          */
-        final ParameterDescriptor SPATIAL_SUBSAMPLING_X =
-                new DefaultParameterDescriptor(
-                        Citations.OGC,
-                        "xPeriod",
-                        Double.class, // Value class (mandatory)
-                        null, // Array of valid values
-                        null, // Default value
-                        0.0, // Minimal value
-                        null, // Maximal value
-                        null, // Unit of measure
-                        false); // Parameter is optional
+        final ParameterDescriptor SPATIAL_SUBSAMPLING_X = new DefaultParameterDescriptor<>(
+                Citations.OGC,
+                "xPeriod",
+                Double.class, // Value class (mandatory)
+                null, // Array of valid values
+                null, // Default value
+                0.0, // Minimal value
+                null, // Maximal value
+                null, // Unit of measure
+                false); // Parameter is optional
 
         // Gets the descriptors for extrema  JAI operation
         final OperationRegistry registry = JAI.getDefaultInstance().getOperationRegistry();
         final OperationDescriptor operation =
-                (OperationDescriptor)
-                        registry.getDescriptor(RenderedRegistryMode.MODE_NAME, "Extrema");
+                (OperationDescriptor) registry.getDescriptor(RenderedRegistryMode.MODE_NAME, "Extrema");
 
         // Gets the ImagingParameterDescriptors to replace xPeriod
-        final List<ParameterDescriptor> replacingDescriptors =
-                new ArrayList<ParameterDescriptor>(1);
+        final List<ParameterDescriptor> replacingDescriptors = new ArrayList<>(1);
         replacingDescriptors.add(SPATIAL_SUBSAMPLING_X);
-        final ImagingParameterDescriptors ripd =
-                new ImagingParameterDescriptors(operation, replacingDescriptors);
+        final ImagingParameterDescriptors ripd = new ImagingParameterDescriptors(operation, replacingDescriptors);
 
         // Sets the parameter we want to override
         final ParameterValueGroup rip = ripd.createValue();

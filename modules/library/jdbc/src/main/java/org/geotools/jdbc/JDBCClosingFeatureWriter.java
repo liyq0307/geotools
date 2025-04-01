@@ -18,10 +18,10 @@ package org.geotools.jdbc;
 
 import java.io.IOException;
 import java.sql.Connection;
-import org.geotools.data.DelegatingFeatureWriter;
-import org.geotools.data.FeatureWriter;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.DelegatingFeatureWriter;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 public class JDBCClosingFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleFeature> {
 
@@ -31,26 +31,33 @@ public class JDBCClosingFeatureWriter implements FeatureWriter<SimpleFeatureType
         this.writer = writer;
     }
 
+    @Override
     public SimpleFeatureType getFeatureType() {
         return (SimpleFeatureType) writer.getFeatureType();
     }
 
+    @Override
     public boolean hasNext() throws IOException {
         return writer.hasNext();
     }
 
+    @Override
     public SimpleFeature next() throws IOException {
         return (SimpleFeature) writer.next();
     }
 
+    @Override
     public void remove() throws IOException {
         writer.remove();
     }
 
+    @Override
     public void write() throws IOException {
         writer.write();
     }
 
+    @Override
+    @SuppressWarnings("PMD.CloseResource") // we are actually closing
     public void close() throws IOException {
         FeatureWriter w = writer;
         while (w instanceof DelegatingFeatureWriter) {
@@ -71,6 +78,8 @@ public class JDBCClosingFeatureWriter implements FeatureWriter<SimpleFeatureType
             } finally {
                 fs.getDataStore().releaseConnection(cx, fs.getState());
             }
+        } else if (w != null) {
+            writer.close();
         }
     }
 }

@@ -18,6 +18,10 @@
 package org.geotools.process.vector;
 
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.PropertyDescriptor;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.AttributeTypeBuilder;
@@ -28,10 +32,6 @@ import org.geotools.process.ProcessException;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.PropertyDescriptor;
 
 /**
  * A process providing the union between two feature collections
@@ -41,10 +41,9 @@ import org.opengis.feature.type.PropertyDescriptor;
  * @author Pietro Arena - Sinergis
  */
 @DescribeProcess(
-    title = "Union Feature Collections",
-    description =
-            "Returns single feature collection containing all features from two input feature collections.  The output attribute schema is a combination of the attributes from the inputs.  Attributes with same name but different types will be converted to strings."
-)
+        title = "Union Feature Collections",
+        description =
+                "Returns single feature collection containing all features from two input feature collections.  The output attribute schema is a combination of the attributes from the inputs.  Attributes with same name but different types will be converted to strings.")
 public class UnionFeatureCollection implements VectorProcess {
 
     static final String SCHEMA_NAME = "Union_Layer";
@@ -74,8 +73,7 @@ public class UnionFeatureCollection implements VectorProcess {
 
         SimpleFeatureType schema;
 
-        public UnitedFeatureCollection(
-                SimpleFeatureCollection delegate, SimpleFeatureCollection features)
+        public UnitedFeatureCollection(SimpleFeatureCollection delegate, SimpleFeatureCollection features)
                 throws ClassNotFoundException {
             super(delegate);
             this.features = features;
@@ -83,8 +81,7 @@ public class UnionFeatureCollection implements VectorProcess {
             // Create schema containing the attributes from both the feature collections
             SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
             for (AttributeDescriptor descriptor : delegate.getSchema().getAttributeDescriptors()) {
-                if (sameNames(features.getSchema(), descriptor)
-                        && !sameTypes(features.getSchema(), descriptor)) {
+                if (sameNames(features.getSchema(), descriptor) && !sameTypes(features.getSchema(), descriptor)) {
                     AttributeTypeBuilder builder = new AttributeTypeBuilder();
                     builder.setName(descriptor.getLocalName());
                     builder.setNillable(descriptor.isNillable());
@@ -93,11 +90,7 @@ public class UnionFeatureCollection implements VectorProcess {
                     builder.setMaxOccurs(descriptor.getMaxOccurs());
                     builder.setDefaultValue(descriptor.getDefaultValue());
                     builder.setCRS(
-                            this.delegate
-                                    .features()
-                                    .next()
-                                    .getFeatureType()
-                                    .getCoordinateReferenceSystem());
+                            this.delegate.features().next().getFeatureType().getCoordinateReferenceSystem());
                     AttributeDescriptor attributeDescriptor =
                             builder.buildDescriptor(descriptor.getName(), builder.buildType());
                     tb.add(attributeDescriptor);
@@ -106,8 +99,7 @@ public class UnionFeatureCollection implements VectorProcess {
                 }
             }
             for (AttributeDescriptor descriptor : features.getSchema().getAttributeDescriptors()) {
-                if (!sameNames(delegate.getSchema(), descriptor)
-                        && !sameTypes(delegate.getSchema(), descriptor)) {
+                if (!sameNames(delegate.getSchema(), descriptor) && !sameTypes(delegate.getSchema(), descriptor)) {
                     tb.add(descriptor);
                 }
             }
@@ -120,8 +112,7 @@ public class UnionFeatureCollection implements VectorProcess {
 
         @Override
         public SimpleFeatureIterator features() {
-            return new UnitedFeatureIterator(
-                    delegate.features(), delegate, features.features(), features, getSchema());
+            return new UnitedFeatureIterator(delegate.features(), delegate, features.features(), features, getSchema());
         }
 
         @Override
@@ -177,11 +168,13 @@ public class UnionFeatureCollection implements VectorProcess {
             fb = new SimpleFeatureBuilder(schema);
         }
 
+        @Override
         public void close() {
             firstDelegate.close();
             secondDelegate.close();
         }
 
+        @Override
         public boolean hasNext() {
 
             while (next == null && firstDelegate.hasNext()) {
@@ -205,6 +198,7 @@ public class UnionFeatureCollection implements VectorProcess {
             return next != null;
         }
 
+        @Override
         public SimpleFeature next() throws NoSuchElementException {
             if (!hasNext()) {
                 throw new NoSuchElementException("hasNext() returned false!");

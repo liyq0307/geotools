@@ -26,9 +26,14 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
 import org.geotools.data.collection.DelegateFeatureReader;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -40,11 +45,6 @@ import org.geotools.feature.FeatureReaderIterator;
 import org.geotools.feature.collection.DelegateSimpleFeatureIterator;
 import org.geotools.feature.collection.SubFeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * A starting point for implementing FeatureCollection's backed onto a FeatureReader.
@@ -57,9 +57,9 @@ import org.opengis.filter.sort.SortBy;
  *   <li>getBounds()
  *   <li>getCount()
  *   <li>collection()
- *       <p>This class will implement the 'extra' methods required by FeatureCollection for you (in
- *       simple terms based on the FeatureResults API). Anything that is <i>often</i> customised is
- *       available to you as a constructor parameters.
+ *       <p>This class will implement the 'extra' methods required by FeatureCollection for you (in simple terms based
+ *       on the FeatureResults API). Anything that is <i>often</i> customised is available to you as a constructor
+ *       parameters.
  *       <p>Enjoy.
  *
  * @author jgarnett
@@ -91,8 +91,8 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     protected void fireChange(SimpleFeature[] features, int type) {
         CollectionEvent cEvent = new CollectionEvent(this, features, type);
 
-        for (int i = 0, ii = listeners.size(); i < ii; i++) {
-            ((CollectionListener) listeners.get(i)).collectionChanged(cEvent);
+        for (CollectionListener listener : listeners) {
+            listener.collectionChanged(cEvent);
         }
     }
 
@@ -101,13 +101,13 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     }
 
     protected void fireChange(Collection coll, int type) {
-        SimpleFeature[] features = new SimpleFeature[coll.size()];
-        features = (SimpleFeature[]) coll.toArray(features);
+        @SuppressWarnings("unchecked")
+        SimpleFeature[] features = (SimpleFeature[]) coll.toArray(new SimpleFeature[coll.size()]);
         fireChange(features, type);
     }
 
     public FeatureReader<SimpleFeatureType, SimpleFeature> reader() throws IOException {
-        return new DelegateFeatureReader<SimpleFeatureType, SimpleFeature>(getSchema(), features());
+        return new DelegateFeatureReader<>(getSchema(), features());
     }
 
     //
@@ -116,9 +116,11 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     // To be implemented by subclass
     //
 
+    @Override
     public abstract ReferencedEnvelope getBounds();
 
-    public abstract int getCount() throws IOException;;
+    public abstract int getCount() throws IOException;
+    ;
 
     // public abstract SimpleFeatureCollection collection() throws IOException;
 
@@ -126,12 +128,11 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     // Additional Subclass "hooks"
     //
     /**
-     * Subclass may provide an implementation of this method to indicate that read/write support is
-     * provided.
+     * Subclass may provide an implementation of this method to indicate that read/write support is provided.
      *
-     * <p>All operations that attempt to modify the "data" will use this method, allowing them to
-     * throw an "UnsupportedOperationException" in the same manner as
-     * Collections.unmodifiableCollection(Collection c), or just return null.
+     * <p>All operations that attempt to modify the "data" will use this method, allowing them to throw an
+     * "UnsupportedOperationException" in the same manner as Collections.unmodifiableCollection(Collection c), or just
+     * return null.
      *
      * @throws UnsupportedOperationException To indicate that write support is not avaiable
      * @return the writer, or null if write support is not available
@@ -148,11 +149,11 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     //
     // Content Access
     //
-    /** Set of open resource iterators & featureIterators */
-    private final Set open = new HashSet();
+    /** Set of open resource iterators & featureIterators (no common super-class or interface) */
+    private final Set<Object> open = new HashSet<>();
 
     /** listeners */
-    protected List listeners = new ArrayList();
+    protected List<CollectionListener> listeners = new ArrayList<>();
 
     /** id used when serialized to gml */
     protected String id;
@@ -163,6 +164,7 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
      *
      * <p>So when we implement FeatureCollection.iterator() this will work out of the box.
      */
+    @Override
     public SimpleFeatureIterator features() {
         SimpleFeatureIterator iterator = new DelegateSimpleFeatureIterator(iterator());
         open.add(iterator);
@@ -185,14 +187,14 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     /**
      * Returns a FeatureWriterIterator, or FeatureReaderIterator over content.
      *
-     * <p>If you have a way to tell that you are readonly please subclass with a less hardcore check
-     * - this implementations catches a UnsupportedOpperationsException from wrtier()!
+     * <p>If you have a way to tell that you are readonly please subclass with a less hardcore check - this
+     * implementations catches a UnsupportedOpperationsException from wrtier()!
      *
      * @return Iterator, should be closed closeIterator
      */
     protected Iterator<SimpleFeature> openIterator() throws IOException {
         try {
-            FeatureWriter writer = writer();
+            FeatureWriter<SimpleFeatureType, SimpleFeature> writer = writer();
             if (writer != null) {
                 return new FeatureWriterIterator(writer());
             }
@@ -202,7 +204,7 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
         }
 
         try {
-            return new FeatureReaderIterator(reader());
+            return new FeatureReaderIterator<>(reader());
         } catch (IOException e) {
             return new NoContentIterator(e);
         }
@@ -219,8 +221,8 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
 
     protected void closeIterator(Iterator<SimpleFeature> close) throws IOException {
         if (close instanceof FeatureReaderIterator) {
-            FeatureReaderIterator<SimpleFeature> iterator =
-                    (FeatureReaderIterator<SimpleFeature>) close;
+            @SuppressWarnings("PMD.CloseResource")
+            FeatureReaderIterator<SimpleFeature> iterator = (FeatureReaderIterator<SimpleFeature>) close;
             iterator.close(); // only needs package visability
         } else if (close instanceof FeatureWriterIterator) {
             FeatureWriterIterator iterator = (FeatureWriterIterator) close;
@@ -234,23 +236,25 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     }
 
     /** Default implementation based on getCount() - this may be expensive */
+    @Override
     public int size() {
         try {
             return getCount();
         } catch (IOException e) {
             if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.log(
-                        Level.FINE, "IOException while calculating size() of FeatureCollection", e);
+                LOGGER.log(Level.FINE, "IOException while calculating size() of FeatureCollection", e);
             return 0;
         }
     }
 
     public void purge() {
-        for (Iterator i = open.iterator(); i.hasNext(); ) {
+        for (Iterator<Object> i = open.iterator(); i.hasNext(); ) {
             Object iterator = i.next();
             try {
                 if (iterator instanceof Iterator) {
-                    closeIterator((Iterator) iterator);
+                    @SuppressWarnings("unchecked")
+                    Iterator<SimpleFeature> cast = (Iterator<SimpleFeature>) iterator;
+                    closeIterator(cast);
                 }
                 if (iterator instanceof FeatureIterator) {
                     ((SimpleFeatureIterator) iterator).close();
@@ -268,13 +272,11 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     /**
      * Default implementation based on creating an reader, testing hasNext, and closing.
      *
-     * <p>For once the Collections API does not give us an escape route, we *have* to check the
-     * data.
+     * <p>For once the Collections API does not give us an escape route, we *have* to check the data.
      */
+    @Override
     public boolean isEmpty() {
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader = null;
-        try {
-            reader = reader();
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader = reader()) {
             try {
                 return !reader.hasNext();
             } catch (IOException e) {
@@ -282,25 +284,16 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
             }
         } catch (IOException e) {
             return true;
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    // return value already set
-                }
-            }
         }
     }
 
+    @Override
     public boolean contains(Object o) {
         if (!(o instanceof SimpleFeature)) return false;
         SimpleFeature value = (SimpleFeature) o;
         String ID = value.getID();
 
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader = null;
-        try {
-            reader = reader();
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader = reader()) {
             try {
                 while (reader.hasNext()) {
                     SimpleFeature feature = reader.next();
@@ -310,36 +303,28 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
                     if (value.equals(feature)) return true;
                 }
                 return false; // not found
-            } catch (IOException e) {
-                return false; // error seems like no features are available
-            } catch (NoSuchElementException e) {
-                return false; // error seems like no features are available
-            } catch (IllegalAttributeException e) {
+            } catch (IOException | IllegalAttributeException | NoSuchElementException e) {
                 return false; // error seems like no features are available
             }
         } catch (IOException e) {
             return false;
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    // return value already set
-                }
-            }
         }
     }
 
+    @Override
     public Object[] toArray() {
         return toArray(new SimpleFeature[size()]);
     }
 
+    @Override
     public <T> T[] toArray(T[] array) {
-        List<T> list = new ArrayList<T>();
-        Iterator i = iterator();
+        List<T> list = new ArrayList<>();
+        Iterator<SimpleFeature> i = iterator();
         try {
             while (i.hasNext()) {
-                list.add((T) i.next());
+                @SuppressWarnings("unchecked")
+                T next = (T) i.next();
+                list.add(next);
             }
         } finally {
             close(i);
@@ -355,6 +340,7 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
         return false;
     }
 
+    @Override
     public boolean containsAll(Collection<?> collection) {
         for (Object o : collection) {
             if (contains(o) == false) return false;
@@ -363,8 +349,7 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     }
 
     /**
-     * Optimized implementation of addAll that recognizes the use of collections obtained with
-     * subCollection( filter ).
+     * Optimized implementation of addAll that recognizes the use of collections obtained with subCollection( filter ).
      *
      * <p>This method is constructed by either:
      *
@@ -377,27 +362,22 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
         if (collection instanceof FeatureCollection) {
             return addAll((FeatureCollection<?, ?>) collection);
         }
-        try {
-            FeatureWriter writer = writer();
+        try (FeatureWriter writer = writer()) {
             if (writer == null) {
                 return false;
             }
-            try {
-                // skip to end
-                while (writer.hasNext()) {
-                    writer.next();
-                }
-                for (Object obj : collection) {
-                    if (obj instanceof SimpleFeature) {
-                        SimpleFeature copy = (SimpleFeature) obj;
-                        SimpleFeature feature = (SimpleFeature) writer.next();
+            // skip to end
+            while (writer.hasNext()) {
+                writer.next();
+            }
+            for (Object obj : collection) {
+                if (obj instanceof SimpleFeature) {
+                    SimpleFeature copy = (SimpleFeature) obj;
+                    SimpleFeature feature = (SimpleFeature) writer.next();
 
-                        feature.setAttributes(copy.getAttributes());
-                        writer.write();
-                    }
+                    feature.setAttributes(copy.getAttributes());
+                    writer.write();
                 }
-            } finally {
-                if (writer != null) writer.close();
             }
             return true;
         } catch (IOException ignore) {
@@ -419,8 +399,9 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
 
     public void clear() {}
 
+    @Override
     public void accepts(
-            org.opengis.feature.FeatureVisitor visitor, org.opengis.util.ProgressListener progress)
+            org.geotools.api.feature.FeatureVisitor visitor, org.geotools.api.util.ProgressListener progress)
             throws IOException {
         DataUtilities.visit(this, visitor, progress);
     }
@@ -428,9 +409,8 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     /**
      * Will return an optimized subCollection based on access to the origional FeatureSource.
      *
-     * <p>The subCollection is constructed by using an AND Filter. For the converse of this
-     * opperation please see collection.addAll( Collection ), it has been optimized to be aware of
-     * these filter based SubCollections.
+     * <p>The subCollection is constructed by using an AND Filter. For the converse of this opperation please see
+     * collection.addAll( Collection ), it has been optimized to be aware of these filter based SubCollections.
      *
      * <p>This method is intended in a manner similar to subList, example use: <code>
      * collection.subCollection( myFilter ).clear()
@@ -439,6 +419,7 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
      * @param filter Filter used to determine sub collection.
      * @since GeoTools 2.2, Filter 1.1
      */
+    @Override
     public SimpleFeatureCollection subCollection(Filter filter) {
         if (filter == Filter.INCLUDE) {
             return this;
@@ -449,18 +430,18 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
     /**
      * Construct a sorted view of this content.
      *
-     * <p>Sorts may be combined togther in a stable fashion, in congruence with the Filter 1.1
-     * specification. This method should also be able to handle GeoTools specific sorting through
-     * detecting order as a SortBy2 instance.
+     * <p>Sorts may be combined togther in a stable fashion, in congruence with the Filter 1.1 specification. This
+     * method should also be able to handle GeoTools specific sorting through detecting order as a SortBy2 instance.
      *
-     * @param order
      * @since GeoTools 2.2, Filter 1.1
      * @return FeatureList sorted according to provided order
      */
+    @Override
     public SimpleFeatureCollection sort(SortBy order) {
         return null; // new OrderedFeatureList( this, order );
     }
 
+    @Override
     public String getID() {
         return id;
     }
@@ -473,6 +454,7 @@ public abstract class DataFeatureCollection implements SimpleFeatureCollection {
         listeners.remove(listener);
     }
 
+    @Override
     public SimpleFeatureType getSchema() {
         return schema;
     }

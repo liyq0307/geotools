@@ -1,7 +1,7 @@
 package org.geotools.renderer.lite;
 
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.renderer.RenderListener;
-import org.opengis.feature.simple.SimpleFeature;
 
 public class CountingRenderListener implements RenderListener {
     public int features = 0;
@@ -10,6 +10,7 @@ public class CountingRenderListener implements RenderListener {
     /* (non-Javadoc)
      * @see org.geotools.renderer.lite.RenderListener#featureRenderer(org.geotools.feature.Feature)
      */
+    @Override
     public void featureRenderer(SimpleFeature feature) {
         features++;
     }
@@ -17,6 +18,7 @@ public class CountingRenderListener implements RenderListener {
     /* (non-Javadoc)
      * @see org.geotools.renderer.lite.RenderListener#errorOccurred(java.lang.Exception)
      */
+    @Override
     public void errorOccurred(Exception e) {
         errors++;
     }

@@ -16,9 +16,14 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import org.geotools.gml2.GML;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -28,22 +33,23 @@ public class GMLGeometryAssociationTypeBindingTest extends AbstractGMLBindingTes
     ElementInstance association;
     ElementInstance geometry;
 
-    protected void setUp() throws Exception {
+    @Override
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
-        association =
-                createElement(GML.NAMESPACE, "myAssociation", GML.GeometryAssociationType, null);
+        association = createElement(GML.NAMESPACE, "myAssociation", GML.GeometryAssociationType, null);
         geometry = createElement(GML.NAMESPACE, "myGeometry", GML.AbstractGeometryType, null);
     }
 
+    @Test
     public void testWithGeometry() throws Exception {
-        Node node =
-                createNode(
-                        association,
-                        new ElementInstance[] {geometry},
-                        new Object[] {new GeometryFactory().createPoint(new Coordinate(0, 0))},
-                        null,
-                        null);
+        Node node = createNode(
+                association,
+                new ElementInstance[] {geometry},
+                new Object[] {new GeometryFactory().createPoint(new Coordinate(0, 0))},
+                null,
+                null);
         GMLGeometryAssociationTypeBinding s =
                 (GMLGeometryAssociationTypeBinding) getBinding(GML.GeometryAssociationType);
         Geometry g = (Geometry) s.parse(association, node, null);
@@ -51,6 +57,7 @@ public class GMLGeometryAssociationTypeBindingTest extends AbstractGMLBindingTes
         assertTrue(g instanceof Point);
     }
 
+    @Test
     public void testWithoutGeometry() throws Exception {
         Node node = createNode(association, null, null, null, null);
         GMLGeometryAssociationTypeBinding s =

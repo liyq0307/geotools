@@ -22,9 +22,9 @@ import static org.junit.Assert.assertNotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import org.geotools.data.ows.HTTPResponse;
-import org.geotools.ows.MockHttpClient;
-import org.geotools.ows.MockHttpResponse;
+import org.geotools.http.HTTPResponse;
+import org.geotools.http.MockHttpClient;
+import org.geotools.http.MockHttpResponse;
 import org.geotools.ows.wms.Layer;
 import org.geotools.ows.wms.WebMapServer;
 import org.geotools.ows.wms.xml.Dimension;
@@ -44,6 +44,7 @@ public class DimensionParsingTest {
             this.capabilitiesFileName = capabilitiesFileName;
         }
 
+        @Override
         public HTTPResponse get(URL url) throws IOException {
             if (url.getQuery().contains("GetCapabilities")) {
                 File getCaps = TestData.file(this, capabilitiesFileName);
@@ -54,7 +55,8 @@ public class DimensionParsingTest {
                         "Don't know how to handle a get request over " + url.toExternalForm());
             }
         }
-    };
+    }
+    ;
 
     @Test
     public void testDimensionExtent130() throws Exception {

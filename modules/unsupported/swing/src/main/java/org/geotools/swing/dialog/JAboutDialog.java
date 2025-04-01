@@ -23,8 +23,6 @@ import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -32,17 +30,13 @@ import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import org.geotools.util.factory.GeoTools;
 
 /**
- * An 'About' dialog which displays information about the host environment, software licenses
- * pertaining to GeoTools (not implemented yet) and, if provided, summary details about your
- * application.
+ * An 'About' dialog which displays information about the host environment, software licenses pertaining to GeoTools
+ * (not implemented yet) and, if provided, summary details about your application.
  *
- * <p>Environment information is obtained from {@linkplain GeoTools#getEnvironmentInfo()} and
- * consists of:
+ * <p>Environment information is obtained from {@linkplain GeoTools#getEnvironmentInfo()} and consists of:
  *
  * <ul>
  *   <li>GeoTools version
@@ -50,18 +44,18 @@ import org.geotools.util.factory.GeoTools;
  *   <li>Host operating system and version
  * </ul>
  *
- * The GeoTools jar listing is obtained from {@linkplain GeoTools#getGeoToolsJarInfo()} and consists
- * of GeoTools jars (of the active version) on the application's class path.
+ * The GeoTools jar listing is obtained from {@linkplain GeoTools#getGeoToolsJarInfo()} and consists of GeoTools jars
+ * (of the active version) on the application's class path.
  *
- * <p>To have the dialog display details of your own application, you pass them as a String to the
- * dialog constructor as in this example:
+ * <p>To have the dialog display details of your own application, you pass them as a String to the dialog constructor as
+ * in this example:
  *
  * <pre><code>
  * final String appInfo = String.format(
  *           "GeoFoo: Map your foos in real time %nVersion 0.0.1");
  *
  * SwingUtilities.invokeLater(new Runnable() {
- *     &#64Override
+ *     @Override
  *     public void run() {
  *         JAboutDialog dialog = new JAboutDialog("About", appInfo);
  *         DialogUtils.showCentred(dialog);
@@ -69,8 +63,7 @@ import org.geotools.util.factory.GeoTools;
  * });
  * </code></pre>
  *
- * When no application details are provided the 'Application' category will not be shown in the
- * dialog's category list.
+ * When no application details are provided the 'Application' category will not be shown in the dialog's category list.
  *
  * @author Michael Bedward
  * @since 2.7
@@ -117,19 +110,19 @@ public class JAboutDialog extends AbstractSimpleDialog {
     /*
      * Model for the dialog list control which displays categories.
      */
-    private class CategoryListModel extends AbstractListModel {
+    private class CategoryListModel extends AbstractListModel<String> {
         @Override
         public int getSize() {
             return Category.values().length - (hasApplicationInfo ? 0 : 1);
         }
 
         @Override
-        public Object getElementAt(int index) {
+        public String getElementAt(int index) {
             return Category.getByIndex(index, hasApplicationInfo).toString();
         }
     }
 
-    private JList categoryList;
+    private JList<String> categoryList;
     private JTextArea textArea;
 
     /** Creates a new dialog to display environment information but no application details. */
@@ -172,17 +165,11 @@ public class JAboutDialog extends AbstractSimpleDialog {
     public JPanel createControlPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        categoryList = new JList(new CategoryListModel());
+        categoryList = new JList<>(new CategoryListModel());
         categoryList.setPreferredSize(new Dimension(LIST_WIDTH, DEFAULT_HEIGHT));
         categoryList.setBorder(BorderFactory.createTitledBorder("Categories"));
 
-        categoryList.addListSelectionListener(
-                new ListSelectionListener() {
-                    @Override
-                    public void valueChanged(ListSelectionEvent e) {
-                        showInfo(categoryList.getSelectedIndex());
-                    }
-                });
+        categoryList.addListSelectionListener(e -> showInfo(categoryList.getSelectedIndex()));
 
         panel.add(categoryList, BorderLayout.WEST);
 
@@ -213,23 +200,11 @@ public class JAboutDialog extends AbstractSimpleDialog {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
 
         JButton copyBtn = new JButton("Copy to clipboard");
-        copyBtn.addActionListener(
-                new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        copyToClipboard();
-                    }
-                });
+        copyBtn.addActionListener(e -> copyToClipboard());
         panel.add(copyBtn);
 
         JButton okBtn = new JButton("Done");
-        okBtn.addActionListener(
-                new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        onOK();
-                    }
-                });
+        okBtn.addActionListener(e -> onOK());
         panel.add(okBtn);
 
         return panel;
@@ -282,9 +257,7 @@ public class JAboutDialog extends AbstractSimpleDialog {
         textArea.setText("This is the licence info");
     }
 
-    /**
-     * Displays GeoTools jars on the classpath. This is only called on the event dispatch thread.
-     */
+    /** Displays GeoTools jars on the classpath. This is only called on the event dispatch thread. */
     private void showJarInfo() {
         textArea.setText(GeoTools.getGeoToolsJarInfo());
     }

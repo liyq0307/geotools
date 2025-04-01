@@ -62,9 +62,10 @@ public class DescribeCoverageTypeImpl extends RequestBaseTypeImpl implements Des
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public EList<String> getCoverageId() {
 		if (coverageId == null) {
-			coverageId = new EDataTypeEList<String>(String.class, this, Wcs20Package.DESCRIBE_COVERAGE_TYPE__COVERAGE_ID);
+			coverageId = new EDataTypeEList<>(String.class, this, Wcs20Package.DESCRIBE_COVERAGE_TYPE__COVERAGE_ID);
 		}
 		return coverageId;
 	}

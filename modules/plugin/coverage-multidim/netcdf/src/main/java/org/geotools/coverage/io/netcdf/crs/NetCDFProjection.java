@@ -26,25 +26,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.datum.Ellipsoid;
 import org.geotools.imageio.netcdf.utilities.NetCDFUtilities;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.datum.Ellipsoid;
 import si.uom.SI;
 import ucar.nc2.Attribute;
 import ucar.nc2.Variable;
 import ucar.nc2.constants.CF;
 import ucar.nc2.dataset.NetcdfDataset;
-import ucar.unidata.geoloc.LatLonPointImpl;
+import ucar.unidata.geoloc.LatLonPoints;
 
 /**
- * Class used to properly setup NetCDF CF Projection parameters. Given a known OGC Projection, it
- * will take care of remapping the Projection's parameters to NetCDF CF GridMapping parameters if
- * supported.
+ * Class used to properly setup NetCDF CF Projection parameters. Given a known OGC Projection, it will take care of
+ * remapping the Projection's parameters to NetCDF CF GridMapping parameters if supported.
  *
  * @see <a
  *     href="http://cfconventions.org/Data/cf-conventions/cf-conventions-1.6/build/cf-conventions.html#appendix-grid-mappings">NetCDF
@@ -53,17 +52,16 @@ import ucar.unidata.geoloc.LatLonPointImpl;
 public class NetCDFProjection {
 
     /** A Custom {@link CRSAuthorityFactory} used to parse custom NetCDF/GRIB CRSs */
-    private static List<CRSAuthorityFactory> crsFactories = new LinkedList<CRSAuthorityFactory>();
+    private static List<CRSAuthorityFactory> crsFactories = new LinkedList<>();
 
     public static final String PARAMS_SEPARATOR = "#";
 
-    private static final java.util.logging.Logger LOGGER =
-            Logger.getLogger(NetCDFProjection.class.toString());
+    private static final java.util.logging.Logger LOGGER = Logger.getLogger(NetCDFProjection.class.toString());
 
     /**
-     * Inner class for CoordinateReferenceSystem parsing on top of different NetCDF attributes, such
-     * as {@link NetCDFUtilities#SPATIAL_REF}, {@link NetCDFUtilities#CERP_ESRI_PE_STRING}, {@link
-     * NetCDFUtilities#GRID_MAPPING}.
+     * Inner class for CoordinateReferenceSystem parsing on top of different NetCDF attributes, such as
+     * {@link NetCDFUtilities#SPATIAL_REF}, {@link NetCDFUtilities#CERP_ESRI_PE_STRING},
+     * {@link NetCDFUtilities#GRID_MAPPING}.
      */
     abstract static class CRSParser {
         protected Attribute attribute;
@@ -72,22 +70,14 @@ public class NetCDFProjection {
             this.attribute = attribute;
         }
 
-        /**
-         * Parse the Coordinate Reference System
-         *
-         * @param variable
-         * @return
-         * @throws FactoryException
-         */
+        /** Parse the Coordinate Reference System */
         abstract CoordinateReferenceSystem parseCoordinateReferenceSystem(
                 Variable variable, Map<String, Object> crsProperties) throws FactoryException;
 
         /**
-         * Extract the {@link CoordinateReferenceSystem} from a NetCDF attribute (if present)
-         * containing a WKT String
+         * Extract the {@link CoordinateReferenceSystem} from a NetCDF attribute (if present) containing a WKT String
          *
          * @param wktAttribute the NetCDF {@link Attribute} if any, containing WKT definition.
-         * @return
          */
         private static CoordinateReferenceSystem parseWKT(Attribute wktAttribute) {
             CoordinateReferenceSystem crs = null;
@@ -104,12 +94,7 @@ public class NetCDFProjection {
             return crs;
         }
 
-        /**
-         * Get a proper {@link CRSParser} for the input Variable.
-         *
-         * @param var
-         * @return
-         */
+        /** Get a proper {@link CRSParser} for the input Variable. */
         public static NetCDFProjection.CRSParser getCRSParser(Variable var) {
             if (var != null) {
                 Attribute attr = null;
@@ -166,8 +151,7 @@ public class NetCDFProjection {
                 String ogcName = projection.getOGCName();
 
                 // The OGC projection parameters
-                ParameterValueGroup netcdfParameters =
-                        ProjectionBuilder.getDefaultparameters(ogcName);
+                ParameterValueGroup netcdfParameters = ProjectionBuilder.getDefaultparameters(ogcName);
 
                 // Get the OGC to NetCDF projection parameters
                 Map<String, String> paramsMapping = projection.getParameters();
@@ -176,19 +160,16 @@ public class NetCDFProjection {
                     handleParam(paramsMapping, netcdfParameters, ogcParameterKey, var);
                 }
 
-                Map<String, Object> map = new HashMap<String, Object>(crsProperties);
+                Map<String, Object> map = new HashMap<>(crsProperties);
                 map.put(NetCDFUtilities.NAME, projectionName);
                 return ProjectionBuilder.buildCRS(
-                        map,
-                        projection.getOgcParameters(netcdfParameters),
-                        buildEllipsoid(var, SI.METRE));
+                        map, projection.getOgcParameters(netcdfParameters), buildEllipsoid(var, SI.METRE));
             }
         }
     }
 
     /** NetCDF CF projection constructor */
-    public NetCDFProjection(
-            String projectionName, String ogcName, Map<String, String> parametersMapping) {
+    public NetCDFProjection(String projectionName, String ogcName, Map<String, String> parametersMapping) {
         this.name = projectionName;
         this.ogcName = ogcName;
         this.netCDFParametersMapping = Collections.unmodifiableMap(parametersMapping);
@@ -208,36 +189,24 @@ public class NetCDFProjection {
     /** The OGC Projection name, needed to instantiate projection parameters */
     private String ogcName;
 
-    /**
-     * Returns the underlying unmodifiable Referencing to NetCDF parameters mapping.
-     *
-     * @return
-     */
+    /** Returns the underlying unmodifiable Referencing to NetCDF parameters mapping. */
     public Map<String, String> getParameters() {
         return netCDFParametersMapping;
     }
 
-    /**
-     * Return the NetCDF CF GridMapping name
-     *
-     * @return
-     */
+    /** Return the NetCDF CF GridMapping name */
     public String getName() {
         return name;
     }
 
-    /**
-     * Return the OGC/GeoTools projection name
-     *
-     * @return
-     */
+    /** Return the OGC/GeoTools projection name */
     public String getOGCName() {
         return ogcName;
     }
 
     /**
-     * Subclasses override this if they wish to adjust OGC parameters after they are read from
-     * NetCDF. This is the inverse of {@link #getNetcdfParameters(ParameterValueGroup)}.
+     * Subclasses override this if they wish to adjust OGC parameters after they are read from NetCDF. This is the
+     * inverse of {@link #getNetcdfParameters(ParameterValueGroup)}.
      *
      * @param netcdfParameters parameter values read from NetCDF
      * @return parameter values used for OGC projection
@@ -247,8 +216,8 @@ public class NetCDFProjection {
     }
 
     /**
-     * Subclasses override this if they wish to adjust OGC parameters before they are written to
-     * NetCDF. This is the inverse of {@link #getOgcParameters(ParameterValueGroup)}.
+     * Subclasses override this if they wish to adjust OGC parameters before they are written to NetCDF. This is the
+     * inverse of {@link #getOgcParameters(ParameterValueGroup)}.
      *
      * @param ogcParameters parameter values used for OGC projection
      * @return parameter values written to NetCDF
@@ -278,8 +247,7 @@ public class NetCDFProjection {
     public static final NetCDFProjection ROTATED_POLE;
 
     /** The map of currently supported NetCDF CF Grid mappings */
-    private static final Map<String, NetCDFProjection> supportedProjections =
-            new HashMap<String, NetCDFProjection>();
+    private static final Map<String, NetCDFProjection> supportedProjections = new HashMap<>();
 
     static {
 
@@ -290,7 +258,7 @@ public class NetCDFProjection {
         // latitude of origin maps on both latitude_of_projection_origin and standard_parallel
 
         // Setting up Albers conical equal area
-        Map<String, String> alberseq_mapping = new HashMap<String, String>();
+        Map<String, String> alberseq_mapping = new HashMap<>();
         alberseq_mapping.put(NetCDFUtilities.CENTRAL_MERIDIAN, CF.LONGITUDE_OF_CENTRAL_MERIDIAN);
         alberseq_mapping.put(NetCDFUtilities.LATITUDE_OF_ORIGIN, CF.LATITUDE_OF_PROJECTION_ORIGIN);
         alberseq_mapping.put(NetCDFUtilities.STANDARD_PARALLEL_1, CF.STANDARD_PARALLEL);
@@ -298,33 +266,28 @@ public class NetCDFProjection {
         alberseq_mapping.put(NetCDFUtilities.FALSE_EASTING, CF.FALSE_EASTING);
         alberseq_mapping.put(NetCDFUtilities.FALSE_NORTHING, CF.FALSE_NORTHING);
         ALBERS_EQUAL_AREA =
-                new NetCDFProjection(
-                        CF.ALBERS_CONICAL_EQUAL_AREA, "Albers_Conic_Equal_Area", alberseq_mapping);
+                new NetCDFProjection(CF.ALBERS_CONICAL_EQUAL_AREA, "Albers_Conic_Equal_Area", alberseq_mapping);
 
         // Setting up Lambert Azimuthal equal area
-        Map<String, String> lazeq_mapping = new HashMap<String, String>();
+        Map<String, String> lazeq_mapping = new HashMap<>();
         lazeq_mapping.put(NetCDFUtilities.CENTRAL_MERIDIAN, CF.LONGITUDE_OF_PROJECTION_ORIGIN);
         lazeq_mapping.put(NetCDFUtilities.LATITUDE_OF_ORIGIN, CF.LATITUDE_OF_PROJECTION_ORIGIN);
         lazeq_mapping.put(NetCDFUtilities.FALSE_EASTING, CF.FALSE_EASTING);
         lazeq_mapping.put(NetCDFUtilities.FALSE_NORTHING, CF.FALSE_NORTHING);
         LAMBERT_AZIMUTHAL_EQUAL_AREA =
-                new NetCDFProjection(
-                        CF.LAMBERT_AZIMUTHAL_EQUAL_AREA,
-                        CF.LAMBERT_AZIMUTHAL_EQUAL_AREA,
-                        lazeq_mapping);
+                new NetCDFProjection(CF.LAMBERT_AZIMUTHAL_EQUAL_AREA, CF.LAMBERT_AZIMUTHAL_EQUAL_AREA, lazeq_mapping);
 
         // Setting up Transverse Mercator
-        Map<String, String> tm_mapping = new HashMap<String, String>();
+        Map<String, String> tm_mapping = new HashMap<>();
         tm_mapping.put(NetCDFUtilities.SCALE_FACTOR, CF.SCALE_FACTOR_AT_CENTRAL_MERIDIAN);
         tm_mapping.put(NetCDFUtilities.CENTRAL_MERIDIAN, CF.LONGITUDE_OF_CENTRAL_MERIDIAN);
         tm_mapping.put(NetCDFUtilities.LATITUDE_OF_ORIGIN, CF.LATITUDE_OF_PROJECTION_ORIGIN);
         tm_mapping.put(NetCDFUtilities.FALSE_EASTING, CF.FALSE_EASTING);
         tm_mapping.put(NetCDFUtilities.FALSE_NORTHING, CF.FALSE_NORTHING);
-        TRANSVERSE_MERCATOR =
-                new NetCDFProjection(CF.TRANSVERSE_MERCATOR, CF.TRANSVERSE_MERCATOR, tm_mapping);
+        TRANSVERSE_MERCATOR = new NetCDFProjection(CF.TRANSVERSE_MERCATOR, CF.TRANSVERSE_MERCATOR, tm_mapping);
 
         // Setting up Orthographic
-        Map<String, String> ortho_mapping = new HashMap<String, String>();
+        Map<String, String> ortho_mapping = new HashMap<>();
         ortho_mapping.put(NetCDFUtilities.CENTRAL_MERIDIAN, CF.LONGITUDE_OF_PROJECTION_ORIGIN);
         ortho_mapping.put(NetCDFUtilities.LATITUDE_OF_ORIGIN, CF.LATITUDE_OF_PROJECTION_ORIGIN);
         ortho_mapping.put(NetCDFUtilities.FALSE_EASTING, CF.FALSE_EASTING);
@@ -332,20 +295,16 @@ public class NetCDFProjection {
         ORTHOGRAPHIC = new NetCDFProjection(CF.ORTHOGRAPHIC, CF.ORTHOGRAPHIC, ortho_mapping);
 
         // Setting up Polar Stereographic
-        Map<String, String> polarstereo_mapping = new HashMap<String, String>();
-        polarstereo_mapping.put(
-                NetCDFUtilities.CENTRAL_MERIDIAN, CF.STRAIGHT_VERTICAL_LONGITUDE_FROM_POLE);
-        polarstereo_mapping.put(
-                NetCDFUtilities.LATITUDE_OF_ORIGIN, CF.LATITUDE_OF_PROJECTION_ORIGIN);
+        Map<String, String> polarstereo_mapping = new HashMap<>();
+        polarstereo_mapping.put(NetCDFUtilities.CENTRAL_MERIDIAN, CF.STRAIGHT_VERTICAL_LONGITUDE_FROM_POLE);
+        polarstereo_mapping.put(NetCDFUtilities.LATITUDE_OF_ORIGIN, CF.LATITUDE_OF_PROJECTION_ORIGIN);
         polarstereo_mapping.put(NetCDFUtilities.SCALE_FACTOR, CF.SCALE_FACTOR_AT_PROJECTION_ORIGIN);
         polarstereo_mapping.put(NetCDFUtilities.FALSE_EASTING, CF.FALSE_EASTING);
         polarstereo_mapping.put(NetCDFUtilities.FALSE_NORTHING, CF.FALSE_NORTHING);
-        POLAR_STEREOGRAPHIC =
-                new NetCDFProjection(
-                        CF.POLAR_STEREOGRAPHIC, CF.POLAR_STEREOGRAPHIC, polarstereo_mapping);
+        POLAR_STEREOGRAPHIC = new NetCDFProjection(CF.POLAR_STEREOGRAPHIC, CF.POLAR_STEREOGRAPHIC, polarstereo_mapping);
 
         // Setting up Stereographic
-        Map<String, String> stereo_mapping = new HashMap<String, String>();
+        Map<String, String> stereo_mapping = new HashMap<>();
         stereo_mapping.put(NetCDFUtilities.CENTRAL_MERIDIAN, CF.LONGITUDE_OF_PROJECTION_ORIGIN);
         stereo_mapping.put(NetCDFUtilities.LATITUDE_OF_ORIGIN, CF.LATITUDE_OF_PROJECTION_ORIGIN);
         stereo_mapping.put(NetCDFUtilities.SCALE_FACTOR, CF.SCALE_FACTOR_AT_PROJECTION_ORIGIN);
@@ -354,133 +313,102 @@ public class NetCDFProjection {
         STEREOGRAPHIC = new NetCDFProjection(CF.STEREOGRAPHIC, CF.STEREOGRAPHIC, stereo_mapping);
 
         // Setting up Lambert Conformal Conic base params
-        Map<String, String> lcc_mapping = new HashMap<String, String>();
+        Map<String, String> lcc_mapping = new HashMap<>();
         lcc_mapping.put(NetCDFUtilities.CENTRAL_MERIDIAN, CF.LONGITUDE_OF_CENTRAL_MERIDIAN);
         lcc_mapping.put(NetCDFUtilities.LATITUDE_OF_ORIGIN, CF.LATITUDE_OF_PROJECTION_ORIGIN);
         lcc_mapping.put(NetCDFUtilities.FALSE_EASTING, CF.FALSE_EASTING);
         lcc_mapping.put(NetCDFUtilities.FALSE_NORTHING, CF.FALSE_NORTHING);
 
         // Setting up Lambert Conformal Conic 1SP
-        Map<String, String> lcc_1sp_mapping = new HashMap<String, String>();
+        Map<String, String> lcc_1sp_mapping = new HashMap<>();
         lcc_1sp_mapping.putAll(lcc_mapping);
         lcc_1sp_mapping.put(
                 NetCDFUtilities.LATITUDE_OF_ORIGIN,
                 CF.LATITUDE_OF_PROJECTION_ORIGIN + PARAMS_SEPARATOR + CF.STANDARD_PARALLEL);
         LAMBERT_CONFORMAL_CONIC_1SP =
-                new NetCDFProjection(
-                        CF.LAMBERT_CONFORMAL_CONIC,
-                        CF.LAMBERT_CONFORMAL_CONIC + "_1SP",
-                        lcc_1sp_mapping);
+                new NetCDFProjection(CF.LAMBERT_CONFORMAL_CONIC, CF.LAMBERT_CONFORMAL_CONIC + "_1SP", lcc_1sp_mapping);
 
         // Setting up Lambert Conformal Conic 2SP
-        Map<String, String> lcc_2sp_mapping = new HashMap<String, String>();
+        Map<String, String> lcc_2sp_mapping = new HashMap<>();
         lcc_2sp_mapping.putAll(lcc_mapping);
         lcc_2sp_mapping.put(NetCDFUtilities.STANDARD_PARALLEL_1, CF.STANDARD_PARALLEL);
         lcc_2sp_mapping.put(NetCDFUtilities.STANDARD_PARALLEL_2, CF.STANDARD_PARALLEL);
         LAMBERT_CONFORMAL_CONIC_2SP =
-                new NetCDFProjection(
-                        CF.LAMBERT_CONFORMAL_CONIC,
-                        CF.LAMBERT_CONFORMAL_CONIC + "_2SP",
-                        lcc_2sp_mapping);
+                new NetCDFProjection(CF.LAMBERT_CONFORMAL_CONIC, CF.LAMBERT_CONFORMAL_CONIC + "_2SP", lcc_2sp_mapping);
 
         // Settinc up Mercator base params
-        Map<String, String> mercator_mapping = new HashMap<String, String>();
+        Map<String, String> mercator_mapping = new HashMap<>();
         mercator_mapping.put(NetCDFUtilities.CENTRAL_MERIDIAN, CF.LONGITUDE_OF_CENTRAL_MERIDIAN);
         mercator_mapping.put(NetCDFUtilities.LATITUDE_OF_ORIGIN, CF.LATITUDE_OF_PROJECTION_ORIGIN);
         mercator_mapping.put(NetCDFUtilities.FALSE_EASTING, CF.FALSE_EASTING);
         mercator_mapping.put(NetCDFUtilities.FALSE_NORTHING, CF.FALSE_NORTHING);
 
         // Setting up Mercator 1SP
-        Map<String, String> mercator_1sp_mapping = new HashMap<String, String>();
+        Map<String, String> mercator_1sp_mapping = new HashMap<>();
         mercator_1sp_mapping.putAll(mercator_mapping);
-        mercator_1sp_mapping.put(
-                NetCDFUtilities.SCALE_FACTOR, CF.SCALE_FACTOR_AT_PROJECTION_ORIGIN);
-        MERCATOR_1SP =
-                new NetCDFProjection(CF.MERCATOR, CF.MERCATOR + "_1SP", mercator_1sp_mapping);
+        mercator_1sp_mapping.put(NetCDFUtilities.SCALE_FACTOR, CF.SCALE_FACTOR_AT_PROJECTION_ORIGIN);
+        MERCATOR_1SP = new NetCDFProjection(CF.MERCATOR, CF.MERCATOR + "_1SP", mercator_1sp_mapping);
 
         // Setting up Mercator 2SP
-        Map<String, String> mercator_2sp_mapping = new HashMap<String, String>();
+        Map<String, String> mercator_2sp_mapping = new HashMap<>();
         mercator_2sp_mapping.putAll(mercator_mapping);
         mercator_2sp_mapping.put(NetCDFUtilities.STANDARD_PARALLEL_1, CF.STANDARD_PARALLEL);
-        MERCATOR_2SP =
-                new NetCDFProjection(CF.MERCATOR, CF.MERCATOR + "_2SP", mercator_2sp_mapping);
+        MERCATOR_2SP = new NetCDFProjection(CF.MERCATOR, CF.MERCATOR + "_2SP", mercator_2sp_mapping);
 
         // Setting up Rotated Pole
-        Map<String, String> rotated_pole_mapping = new HashMap<String, String>();
+        Map<String, String> rotated_pole_mapping = new HashMap<>();
         rotated_pole_mapping.put(NetCDFUtilities.CENTRAL_MERIDIAN, CF.GRID_NORTH_POLE_LONGITUDE);
         rotated_pole_mapping.put(NetCDFUtilities.LATITUDE_OF_ORIGIN, CF.GRID_NORTH_POLE_LATITUDE);
-        ROTATED_POLE =
-                new NetCDFProjection(
-                        CF.ROTATED_LATITUDE_LONGITUDE, "Rotated_Pole", rotated_pole_mapping) {
+        ROTATED_POLE = new NetCDFProjection(CF.ROTATED_LATITUDE_LONGITUDE, "Rotated_Pole", rotated_pole_mapping) {
 
-                    /*
-                     * Convert north_pole_longitude and north_pole_latitude to central_meridian and latitude_of_origin.
-                     */
-                    @Override
-                    public ParameterValueGroup getOgcParameters(
-                            ParameterValueGroup netcdfParameters) {
-                        double lonNorthPole =
-                                (Double)
-                                        netcdfParameters
-                                                .parameter(NetCDFUtilities.CENTRAL_MERIDIAN)
-                                                .getValue();
-                        double latNorthPole =
-                                (Double)
-                                        netcdfParameters
-                                                .parameter(NetCDFUtilities.LATITUDE_OF_ORIGIN)
-                                                .getValue();
-                        // Rotated pole is ambiguous so we assume an origin in the northern
-                        // hemisphere
-                        if (latNorthPole >= 90 || latNorthPole <= 0) {
-                            throw new RuntimeException(
-                                    "Unexpected north pole latitude: " + latNorthPole);
-                        }
-                        double lonOrigin = LatLonPointImpl.lonNormal(lonNorthPole + 180);
-                        double latOrigin = 90 - latNorthPole;
-                        ParameterValueGroup ogcParameters = netcdfParameters.clone();
-                        ogcParameters
-                                .parameter(NetCDFUtilities.CENTRAL_MERIDIAN)
-                                .setValue(lonOrigin);
-                        ogcParameters
-                                .parameter(NetCDFUtilities.LATITUDE_OF_ORIGIN)
-                                .setValue(latOrigin);
-                        return ogcParameters;
-                    }
+            /*
+             * Convert north_pole_longitude and north_pole_latitude to central_meridian and latitude_of_origin.
+             */
+            @Override
+            public ParameterValueGroup getOgcParameters(ParameterValueGroup netcdfParameters) {
+                double lonNorthPole = (Double) netcdfParameters
+                        .parameter(NetCDFUtilities.CENTRAL_MERIDIAN)
+                        .getValue();
+                double latNorthPole = (Double) netcdfParameters
+                        .parameter(NetCDFUtilities.LATITUDE_OF_ORIGIN)
+                        .getValue();
+                // Rotated pole is ambiguous so we assume an origin in the northern
+                // hemisphere
+                if (latNorthPole >= 90 || latNorthPole <= 0) {
+                    throw new RuntimeException("Unexpected north pole latitude: " + latNorthPole);
+                }
+                double lonOrigin = LatLonPoints.lonNormal(lonNorthPole + 180);
+                double latOrigin = 90 - latNorthPole;
+                ParameterValueGroup ogcParameters = netcdfParameters.clone();
+                ogcParameters.parameter(NetCDFUtilities.CENTRAL_MERIDIAN).setValue(lonOrigin);
+                ogcParameters.parameter(NetCDFUtilities.LATITUDE_OF_ORIGIN).setValue(latOrigin);
+                return ogcParameters;
+            }
 
-                    /*
-                     * Convert central_meridian and latitude_of_origin to north_pole_longitude and north_pole_latitude.
-                     */
-                    @Override
-                    public ParameterValueGroup getNetcdfParameters(
-                            ParameterValueGroup ogcParameters) {
-                        double lonOrigin =
-                                (Double)
-                                        ogcParameters
-                                                .parameter(NetCDFUtilities.CENTRAL_MERIDIAN)
-                                                .getValue();
-                        double latOrigin =
-                                (Double)
-                                        ogcParameters
-                                                .parameter(NetCDFUtilities.LATITUDE_OF_ORIGIN)
-                                                .getValue();
-                        // Rotated pole is ambiguous so we assumed above an origin in the
-                        // northern hemisphere and do not expect anything else here
-                        if (latOrigin >= 90 || latOrigin <= 0) {
-                            throw new RuntimeException(
-                                    "Unexpected latitude of origin: " + latOrigin);
-                        }
-                        double lonNorthPole = LatLonPointImpl.lonNormal(lonOrigin + 180);
-                        double latNorthPole = 90 - latOrigin;
-                        ParameterValueGroup netcdfParameters = ogcParameters.clone();
-                        netcdfParameters
-                                .parameter(NetCDFUtilities.CENTRAL_MERIDIAN)
-                                .setValue(lonNorthPole);
-                        netcdfParameters
-                                .parameter(NetCDFUtilities.LATITUDE_OF_ORIGIN)
-                                .setValue(latNorthPole);
-                        return netcdfParameters;
-                    }
-                };
+            /*
+             * Convert central_meridian and latitude_of_origin to north_pole_longitude and north_pole_latitude.
+             */
+            @Override
+            public ParameterValueGroup getNetcdfParameters(ParameterValueGroup ogcParameters) {
+                double lonOrigin = (Double) ogcParameters
+                        .parameter(NetCDFUtilities.CENTRAL_MERIDIAN)
+                        .getValue();
+                double latOrigin = (Double) ogcParameters
+                        .parameter(NetCDFUtilities.LATITUDE_OF_ORIGIN)
+                        .getValue();
+                // Rotated pole is ambiguous so we assumed above an origin in the
+                // northern hemisphere and do not expect anything else here
+                if (latOrigin >= 90 || latOrigin <= 0) {
+                    throw new RuntimeException("Unexpected latitude of origin: " + latOrigin);
+                }
+                double lonNorthPole = LatLonPoints.lonNormal(lonOrigin + 180);
+                double latNorthPole = 90 - latOrigin;
+                ParameterValueGroup netcdfParameters = ogcParameters.clone();
+                netcdfParameters.parameter(NetCDFUtilities.CENTRAL_MERIDIAN).setValue(lonNorthPole);
+                netcdfParameters.parameter(NetCDFUtilities.LATITUDE_OF_ORIGIN).setValue(latNorthPole);
+                return netcdfParameters;
+            }
+        };
 
         supportedProjections.put(CF.ALBERS_CONICAL_EQUAL_AREA, ALBERS_EQUAL_AREA);
         supportedProjections.put(CF.MERCATOR + "_1SP", MERCATOR_1SP);
@@ -494,10 +422,9 @@ public class NetCDFProjection {
         supportedProjections.put(STEREOGRAPHIC.name, STEREOGRAPHIC);
         supportedProjections.put(ROTATED_POLE.name, ROTATED_POLE);
 
-        for (final CRSAuthorityFactory factory :
-                ReferencingFactoryFinder.getCRSAuthorityFactories(null)) {
+        for (final CRSAuthorityFactory factory : ReferencingFactoryFinder.getCRSAuthorityFactories(null)) {
             // Retrieve the registered custom factory
-            final CRSAuthorityFactory f = (CRSAuthorityFactory) factory;
+            final CRSAuthorityFactory f = factory;
 
             // There may be multiple factories. Let take them in prioritized order
             // using the linkedList
@@ -526,8 +453,6 @@ public class NetCDFProjection {
     /**
      * Extract the georeferencing projection information from the specified variable and setup a
      * {@link CoordinateReferenceSystem} instance
-     *
-     * @throws FactoryException
      */
     public static CoordinateReferenceSystem parseProjection(Variable var) throws FactoryException {
         return parseProjection(var, CRSParser.getCRSParser(var));
@@ -536,29 +461,22 @@ public class NetCDFProjection {
     /**
      * Extract the georeferencing projection information from the specified variable and setup a
      * {@link CoordinateReferenceSystem} instance
-     *
-     * @throws FactoryException
      */
-    public static CoordinateReferenceSystem parseProjection(Variable var, CRSParser crsParser)
-            throws FactoryException {
+    public static CoordinateReferenceSystem parseProjection(Variable var, CRSParser crsParser) throws FactoryException {
         return parseProjection(var, crsParser, Collections.emptyMap());
     }
 
     /**
      * Extract the georeferencing projection information from the specified variable and setup a
      * {@link CoordinateReferenceSystem} instance
-     *
-     * @throws FactoryException
      */
     public static CoordinateReferenceSystem parseProjection(
-            Variable var, CRSParser crsParser, Map<String, Object> crsProperties)
-            throws FactoryException {
+            Variable var, CRSParser crsParser, Map<String, Object> crsProperties) throws FactoryException {
         if (crsParser == null) {
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(
-                        "No referencing attributes have been found.\n "
-                                + "Unable to parse a CF projection from this variable.\n"
-                                + "This probably means that is WGS84 or unsupported");
+                LOGGER.fine("No referencing attributes have been found.\n "
+                        + "Unable to parse a CF projection from this variable.\n"
+                        + "This probably means that is WGS84 or unsupported");
             }
             return null;
         }
@@ -567,13 +485,8 @@ public class NetCDFProjection {
     }
 
     /**
-     * Get the NetCDF Attribute related to the specified OGC parameter and set the proper value
-     * within the OGC parameters map.
-     *
-     * @param parametersMapping
-     * @param ogcParameters
-     * @param ogcParameterKey
-     * @param var
+     * Get the NetCDF Attribute related to the specified OGC parameter and set the proper value within the OGC
+     * parameters map.
      */
     private static void handleParam(
             Map<String, String> parametersMapping,
@@ -592,10 +505,7 @@ public class NetCDFProjection {
                 final int numValues = attribute.getLength();
                 if (numValues > 1) {
                     // Get the proper standard parallel if that's the case
-                    int index =
-                            ogcParameterKey.equalsIgnoreCase(NetCDFUtilities.STANDARD_PARALLEL_1)
-                                    ? 0
-                                    : 1;
+                    int index = ogcParameterKey.equalsIgnoreCase(NetCDFUtilities.STANDARD_PARALLEL_1) ? 0 : 1;
                     Number number = (Number) attribute.getValue(index);
                     value = number.doubleValue();
                 } else {
@@ -609,8 +519,7 @@ public class NetCDFProjection {
                 // Get the parameter value and handle special management for longitudes outside
                 // -180, 180
                 value = attribute.getNumericValue().doubleValue();
-                if (netCDFattributeName.contains("meridian")
-                        || netCDFattributeName.contains("longitude")) {
+                if (netCDFattributeName.contains("meridian") || netCDFattributeName.contains("longitude")) {
                     value = value - (360) * Math.floor(value / (360) + 0.5);
                 }
             }
@@ -623,9 +532,7 @@ public class NetCDFProjection {
 
     private static String getInputAttribute(String cfParam) {
         if (cfParam != null) {
-            return cfParam.contains(PARAMS_SEPARATOR)
-                    ? cfParam.split(PARAMS_SEPARATOR)[0]
-                    : cfParam;
+            return cfParam.contains(PARAMS_SEPARATOR) ? cfParam.split(PARAMS_SEPARATOR)[0] : cfParam;
         }
         return null;
     }
@@ -635,7 +542,6 @@ public class NetCDFProjection {
      *
      * @param gridMappingVariable the variable to be analyzed
      * @param linearUnit the linear Unit to be used for the ellipsoid
-     * @return
      */
     private static Ellipsoid buildEllipsoid(Variable gridMappingVariable, Unit<Length> linearUnit) {
         Number semiMajorAxis = null;
@@ -644,7 +550,7 @@ public class NetCDFProjection {
 
         // Preparing ellipsoid params to be sent to the NetCDFProjectionBuilder class
         // in order to get back an Ellipsoid
-        Map<String, Number> ellipsoidParams = new HashMap<String, Number>();
+        Map<String, Number> ellipsoidParams = new HashMap<>();
 
         // Looking for semiMajorAxis first
         Attribute semiMajorAxisAttribute = gridMappingVariable.findAttribute(CF.SEMI_MAJOR_AXIS);
@@ -671,8 +577,7 @@ public class NetCDFProjection {
 
         if (semiMinorAxis == null) {
             // Looking for inverse Flattening
-            Attribute inverseFlatteningAttribute =
-                    gridMappingVariable.findAttribute(CF.INVERSE_FLATTENING);
+            Attribute inverseFlatteningAttribute = gridMappingVariable.findAttribute(CF.INVERSE_FLATTENING);
             if (inverseFlatteningAttribute != null) {
                 inverseFlattening = inverseFlatteningAttribute.getNumericValue().doubleValue();
             }
@@ -685,12 +590,11 @@ public class NetCDFProjection {
     }
 
     /**
-     * Adjust the mappingName if needed. This may happen for some projections where different
-     * standard parallels may require _1SP or _2SP suffix.
+     * Adjust the mappingName if needed. This may happen for some projections where different standard parallels may
+     * require _1SP or _2SP suffix.
      *
      * @param mappingName the input netCDF mappingName
      * @param var the gridMapping variable
-     * @return
      */
     private static String getProjectionName(String mappingName, Variable var) {
         String projectionName = mappingName;
@@ -698,9 +602,7 @@ public class NetCDFProjection {
             Attribute standardParallel = var.findAttribute(CF.STANDARD_PARALLEL);
             // special Management for multiple standard parallels to use
             // the proper projection
-            projectionName =
-                    CF.LAMBERT_CONFORMAL_CONIC
-                            + (standardParallel.getLength() == 1 ? "_1SP" : "_2SP");
+            projectionName = CF.LAMBERT_CONFORMAL_CONIC + (standardParallel.getLength() == 1 ? "_1SP" : "_2SP");
         } else if (mappingName.equalsIgnoreCase(CF.MERCATOR)) {
             Attribute standardParallel = var.findAttribute(CF.STANDARD_PARALLEL);
             projectionName = CF.MERCATOR + (standardParallel == null ? "_2SP" : "_1SP");
@@ -708,25 +610,14 @@ public class NetCDFProjection {
         return projectionName;
     }
 
-    /**
-     * Look for a SPATIAL_REF global attribute and parsing it (as WKT) to setup a {@link
-     * CoordinateReferenceSystem}
-     *
-     * @param dataset
-     * @return
-     */
+    /** Look for a SPATIAL_REF global attribute and parsing it (as WKT) to setup a {@link CoordinateReferenceSystem} */
     public static CoordinateReferenceSystem parseProjection(NetcdfDataset dataset) {
         Attribute attribute = dataset.findAttribute(NetCDFUtilities.SPATIAL_REF);
         return CRSParser.parseWKT(attribute);
     }
 
-    /**
-     * Check if any custom EPSG maps the provided crs and return that one
-     *
-     * @throws FactoryException
-     */
-    public static CoordinateReferenceSystem lookupForCustomEpsg(CoordinateReferenceSystem crs)
-            throws FactoryException {
+    /** Check if any custom EPSG maps the provided crs and return that one */
+    public static CoordinateReferenceSystem lookupForCustomEpsg(CoordinateReferenceSystem crs) throws FactoryException {
         if (!crsFactories.isEmpty()) {
             for (CRSAuthorityFactory crsFactory : crsFactories) {
                 Set<String> codes = crsFactory.getAuthorityCodes(CoordinateReferenceSystem.class);
@@ -749,18 +640,9 @@ public class NetCDFProjection {
         return lookForVariableCRS(dataset, defaultCrs, Collections.emptyMap());
     }
 
-    /**
-     * Look for a CoordinateReferenceSystem defined into a variable
-     *
-     * @param dataset
-     * @param defaultCrs
-     * @return
-     * @throws FactoryException
-     */
+    /** Look for a CoordinateReferenceSystem defined into a variable */
     public static CoordinateReferenceSystem lookForVariableCRS(
-            NetcdfDataset dataset,
-            CoordinateReferenceSystem defaultCrs,
-            Map<String, Object> crsProperties)
+            NetcdfDataset dataset, CoordinateReferenceSystem defaultCrs, Map<String, Object> crsProperties)
             throws FactoryException {
         List<Variable> variables = dataset.getVariables();
         CoordinateReferenceSystem crs = defaultCrs;
@@ -770,9 +652,8 @@ public class NetCDFProjection {
                 // Referencing info found
                 crs = NetCDFProjection.parseProjection(variable, attrib, crsProperties);
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Detected NetCDFProjection through gridMapping variable: "
-                                    + (crs != null ? crs.toWKT() : "null"));
+                    LOGGER.fine("Detected NetCDFProjection through gridMapping variable: "
+                            + (crs != null ? crs.toWKT() : "null"));
                 }
                 break;
             }
@@ -781,19 +662,14 @@ public class NetCDFProjection {
     }
 
     /**
-     * Look for a dataset global {@link CoordinateReferenceSystem} definition provided through a
-     * spatial_ref global attribute.
-     *
-     * @param dataset
-     * @return
+     * Look for a dataset global {@link CoordinateReferenceSystem} definition provided through a spatial_ref global
+     * attribute.
      */
     public static CoordinateReferenceSystem lookForDatasetCRS(NetcdfDataset dataset) {
         CoordinateReferenceSystem projection = NetCDFProjection.parseProjection(dataset);
         if (projection != null) {
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(
-                        "Detected NetCDFProjection through spatial_ref attribute: "
-                                + projection.toWKT());
+                LOGGER.fine("Detected NetCDFProjection through spatial_ref attribute: " + projection.toWKT());
             }
         }
         return projection;

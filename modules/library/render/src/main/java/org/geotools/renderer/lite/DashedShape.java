@@ -16,7 +16,10 @@
  */
 package org.geotools.renderer.lite;
 
-import static java.lang.Math.*;
+import static java.lang.Math.abs;
+import static java.lang.Math.min;
+import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
 
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -31,8 +34,8 @@ import java.util.Arrays;
 import javax.imageio.ImageIO;
 
 /**
- * A shape wrapper that generates a stroked version of the shape without actually holding it all in
- * memory (it is streamed through the path iterator)
+ * A shape wrapper that generates a stroked version of the shape without actually holding it all in memory (it is
+ * streamed through the path iterator)
  *
  * @author Andrea Aime - OpenGeo
  */
@@ -49,44 +52,54 @@ public class DashedShape implements Shape {
         this.dashPhase = dashPhase;
     }
 
+    @Override
     public boolean contains(double x, double y, double w, double h) {
         return shape.contains(x, y, w, h);
     }
 
+    @Override
     public boolean contains(double x, double y) {
         return shape.contains(x, y);
     }
 
+    @Override
     public boolean contains(Point2D p) {
         return shape.contains(p);
     }
 
+    @Override
     public boolean contains(Rectangle2D r) {
         return shape.contains(r);
     }
 
+    @Override
     public Rectangle getBounds() {
         return shape.getBounds();
     }
 
+    @Override
     public Rectangle2D getBounds2D() {
         return shape.getBounds2D();
     }
 
+    @Override
     public boolean intersects(double x, double y, double w, double h) {
         return shape.intersects(x, y, w, h);
     }
 
+    @Override
     public boolean intersects(Rectangle2D r) {
         return shape.intersects(r);
     }
 
+    @Override
     public PathIterator getPathIterator(AffineTransform at) {
         // we need to work against a flattened iterator, the dashed iterator
         // cannot handle curved segments
         return new DashedIterator(shape.getPathIterator(at, 1), dashArray, dashPhase);
     }
 
+    @Override
     public PathIterator getPathIterator(AffineTransform at, double flatness) {
         // we need to work against a flattened iterator, the dashed iterator
         // cannot handle curved segments
@@ -179,12 +192,14 @@ public class DashedShape implements Shape {
             }
         }
 
+        @Override
         public int currentSegment(float[] coords) {
             coords[0] = dashedSegment[0];
             coords[1] = dashedSegment[1];
             return dashedType;
         }
 
+        @Override
         public int currentSegment(double[] coords) {
             float[] fcoord = new float[2];
             int retval = currentSegment(fcoord);
@@ -193,14 +208,17 @@ public class DashedShape implements Shape {
             return retval;
         }
 
+        @Override
         public int getWindingRule() {
             return delegate.getWindingRule();
         }
 
+        @Override
         public boolean isDone() {
             return done;
         }
 
+        @Override
         public void next() {
             // have we exhausted the previous segment?
             if (segmentLength == 0) {
@@ -245,8 +263,7 @@ public class DashedShape implements Shape {
                 // if the lastType is a line to we need to decide if we're pen down or pen
                 // up depending on what of the dash segments we're in
                 if (lastType == PathIterator.SEG_LINETO) {
-                    dashedType =
-                            dashIndex % 2 == 0 ? PathIterator.SEG_LINETO : PathIterator.SEG_MOVETO;
+                    dashedType = dashIndex % 2 == 0 ? PathIterator.SEG_LINETO : PathIterator.SEG_MOVETO;
                 } else {
                     dashedType = lastType;
                 }

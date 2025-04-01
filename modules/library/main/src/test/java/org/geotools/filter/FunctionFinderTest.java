@@ -16,9 +16,14 @@
  */
 package org.geotools.filter;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.function.InterpolateFunction;
 import org.geotools.util.factory.Hints;
@@ -27,12 +32,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Function;
 
 /** @author jody */
 public class FunctionFinderTest {
-    static org.opengis.filter.FilterFactory ff;
+    static org.geotools.api.filter.FilterFactory ff;
 
     FunctionFinder finder;
 
@@ -63,7 +66,7 @@ public class FunctionFinderTest {
     @Test
     public void testAllFunctionDescriptions() throws Exception {
         List<FunctionName> all = finder.getAllFunctionDescriptions();
-        assertTrue(all.size() > 0);
+        assertFalse(all.isEmpty());
         boolean found = false;
         for (FunctionName name : all) {
             if (name.getName().equals("Interpolate")) {

@@ -31,13 +31,13 @@ public class MLConfiguration extends Configuration {
         super(ML.getInstance());
     }
 
+    @Override
     protected final void registerBindings(MutablePicoContainer container) {
         container.registerComponentImplementation(ML.ATTACHMENTTYPE, MLAttachmentTypeBinding.class);
         container.registerComponentImplementation(ML.BODYTYPE, MLBodyTypeBinding.class);
         container.registerComponentImplementation(ML.ENVELOPETYPE, MLEnvelopeTypeBinding.class);
         container.registerComponentImplementation(ML.MAILSTYPE, MLMailsTypeBinding.class);
         container.registerComponentImplementation(ML.MAILTYPE, MLMailTypeBinding.class);
-        container.registerComponentImplementation(
-                ML.MIMETOPLEVELTYPE, MLMimeTopLevelTypeBinding.class);
+        container.registerComponentImplementation(ML.MIMETOPLEVELTYPE, MLMimeTopLevelTypeBinding.class);
     }
 }

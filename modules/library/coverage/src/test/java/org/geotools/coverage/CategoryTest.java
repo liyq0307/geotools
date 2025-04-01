@@ -20,9 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
+import org.geotools.api.referencing.operation.MathTransform1D;
+import org.geotools.api.referencing.operation.TransformException;
 import org.junit.Test;
-import org.opengis.referencing.operation.MathTransform1D;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Tests the {@link Category} implementation.
@@ -40,26 +40,9 @@ public final class CategoryTest {
         assertEquals(message, expected, ((Number) number).intValue());
     }
 
-    /** Checks if a {@link Comparable} is a number identical to the supplied float value. */
-    private static void assertValueEquals(
-            String message, Comparable<?> number, double expected, double EPS) {
-        assertTrue("Double.class", number instanceof Double);
-        final double actual = ((Number) number).doubleValue();
-        if (Double.isNaN(expected)) {
-            assertEquals(message, toHexString(expected), toHexString(actual));
-        } else {
-            assertEquals(message, expected, actual, EPS);
-        }
-    }
-
-    /** Returns the specified value as an hexadecimal string. Usefull for comparing NaN values. */
-    private static String toHexString(final double value) {
-        return Integer.toHexString(Float.floatToRawIntBits((float) value));
-    }
-
     /**
-     * Make sure that linear category produce the expected result. This test check also if the
-     * default {@link MathTransform1D} for a linear relation is right.
+     * Make sure that linear category produce the expected result. This test check also if the default
+     * {@link MathTransform1D} for a linear relation is right.
      *
      * @throws TransformException If an error occured while transforming a value.
      */

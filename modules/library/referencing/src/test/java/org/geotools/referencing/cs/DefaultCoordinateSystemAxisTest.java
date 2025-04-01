@@ -16,11 +16,36 @@
  */
 package org.geotools.referencing.cs;
 
-import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.*;
-import static org.junit.Assert.*;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.ALTITUDE;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.COMPASS_DIRECTION_COUNT;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.EASTING;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.ELLIPSOIDAL_HEIGHT;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.GEOCENTRIC_X;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.GEOCENTRIC_Y;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.GEOCENTRIC_Z;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.GEODETIC_LATITUDE;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.GEODETIC_LONGITUDE;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.LATITUDE;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.LONGITUDE;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.NORTHING;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.SOUTHING;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.WESTING;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.X;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.Y;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.Z;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.getAngle;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.getDirection;
+import static org.geotools.referencing.cs.DefaultCoordinateSystemAxis.getPredefined;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
-import org.junit.*;
-import org.opengis.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.junit.Test;
 
 /**
  * Tests the {@link DefaultCoordinateSystemAxis} class.
@@ -105,25 +130,24 @@ public final class DefaultCoordinateSystemAxisTest {
     /** Makes sure that the compass directions in {@link AxisDirection} are okay. */
     @Test
     public void testCompass() {
-        final AxisDirection[] compass =
-                new AxisDirection[] {
-                    AxisDirection.NORTH,
-                    AxisDirection.NORTH_NORTH_EAST,
-                    AxisDirection.NORTH_EAST,
-                    AxisDirection.EAST_NORTH_EAST,
-                    AxisDirection.EAST,
-                    AxisDirection.EAST_SOUTH_EAST,
-                    AxisDirection.SOUTH_EAST,
-                    AxisDirection.SOUTH_SOUTH_EAST,
-                    AxisDirection.SOUTH,
-                    AxisDirection.SOUTH_SOUTH_WEST,
-                    AxisDirection.SOUTH_WEST,
-                    AxisDirection.WEST_SOUTH_WEST,
-                    AxisDirection.WEST,
-                    AxisDirection.WEST_NORTH_WEST,
-                    AxisDirection.NORTH_WEST,
-                    AxisDirection.NORTH_NORTH_WEST
-                };
+        final AxisDirection[] compass = {
+            AxisDirection.NORTH,
+            AxisDirection.NORTH_NORTH_EAST,
+            AxisDirection.NORTH_EAST,
+            AxisDirection.EAST_NORTH_EAST,
+            AxisDirection.EAST,
+            AxisDirection.EAST_SOUTH_EAST,
+            AxisDirection.SOUTH_EAST,
+            AxisDirection.SOUTH_SOUTH_EAST,
+            AxisDirection.SOUTH,
+            AxisDirection.SOUTH_SOUTH_WEST,
+            AxisDirection.SOUTH_WEST,
+            AxisDirection.WEST_SOUTH_WEST,
+            AxisDirection.WEST,
+            AxisDirection.WEST_NORTH_WEST,
+            AxisDirection.NORTH_WEST,
+            AxisDirection.NORTH_NORTH_WEST
+        };
         assertEquals(compass.length, COMPASS_DIRECTION_COUNT);
         final int base = AxisDirection.NORTH.ordinal();
         final int h = compass.length / 2;
@@ -165,8 +189,7 @@ public final class DefaultCoordinateSystemAxisTest {
     }
 
     /** Compare the angle between the specified directions. */
-    private static void compareAngle(
-            final double expected, final String source, final String target) {
+    private static void compareAngle(final double expected, final String source, final String target) {
         final AxisDirection dir1 = getDirection(source);
         final AxisDirection dir2 = getDirection(target);
         assertNotNull(dir1);

@@ -16,25 +16,30 @@
  */
 package org.geotools.kml.bindings;
 
+import static org.junit.Assert.assertEquals;
+
 import java.awt.Color;
+import org.geotools.api.style.LineSymbolizer;
 import org.geotools.kml.KML;
 import org.geotools.kml.KMLTestSupport;
-import org.geotools.styling.LineSymbolizer;
 import org.geotools.styling.SLD;
 import org.geotools.xsd.Binding;
+import org.junit.Test;
 
 public class LineStyleTypeBindingTest extends KMLTestSupport {
+    @Test
     public void testType() {
         assertEquals(LineSymbolizer.class, binding(KML.LineStyleType).getType());
     }
 
+    @Test
     public void testExecutionMode() {
         assertEquals(Binding.AFTER, binding(KML.LineStyleType).getExecutionMode());
     }
 
+    @Test
     public void testParse() throws Exception {
-        String xml =
-                "<LineStyle>" + "<color>ffff0000</color>" + "<width>2</width>" + "</LineStyle>";
+        String xml = "<LineStyle>" + "<color>ffff0000</color>" + "<width>2</width>" + "</LineStyle>";
 
         buildDocument(xml);
 

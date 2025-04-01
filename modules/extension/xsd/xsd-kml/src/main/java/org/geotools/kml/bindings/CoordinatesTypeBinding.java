@@ -16,7 +16,6 @@
  */
 package org.geotools.kml.bindings;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
 import javax.xml.namespace.QName;
@@ -51,6 +50,7 @@ public class CoordinatesTypeBinding extends AbstractSimpleBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.CoordinatesType;
     }
@@ -62,11 +62,13 @@ public class CoordinatesTypeBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         // return Coordinate[].class;
         return CoordinateSequence.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
@@ -78,13 +80,14 @@ public class CoordinatesTypeBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
-        List list = (List) value;
+        @SuppressWarnings("unchecked")
+        List<String> list = (List) value;
         Coordinate[] coordinates = new Coordinate[list.size()];
         int i = 0;
-
-        for (Iterator l = list.iterator(); l.hasNext(); i++) {
-            StringTokenizer st = new StringTokenizer((String) l.next(), ",");
+        for (String s : list) {
+            StringTokenizer st = new StringTokenizer(s, ",");
             Coordinate c = new Coordinate();
 
             c.x = Double.parseDouble(st.nextToken());
@@ -94,12 +97,13 @@ public class CoordinatesTypeBinding extends AbstractSimpleBinding {
                 c.setZ(Double.parseDouble(st.nextToken()));
             }
 
-            coordinates[i] = c;
+            coordinates[i++] = c;
         }
 
         return csFactory.create(coordinates);
     }
 
+    @Override
     public String encode(Object object, String value) throws Exception {
         StringBuffer sb = new StringBuffer();
         CoordinateSequence cs = (CoordinateSequence) object;

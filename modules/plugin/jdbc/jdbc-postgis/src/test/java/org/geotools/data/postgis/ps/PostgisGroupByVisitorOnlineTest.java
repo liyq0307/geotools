@@ -16,16 +16,20 @@
  */
 package org.geotools.data.postgis.ps;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.io.IOException;
 import java.util.List;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.data.postgis.PostGISPSDialect;
 import org.geotools.data.postgis.PostgisGroupByVisitorTestSetup;
 import org.geotools.feature.visitor.Aggregate;
 import org.geotools.jdbc.JDBCGroupByVisitorOnlineTest;
 import org.geotools.jdbc.JDBCTestSetup;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Function;
+import org.junit.Test;
 
 public class PostgisGroupByVisitorOnlineTest extends JDBCGroupByVisitorOnlineTest {
 
@@ -34,6 +38,7 @@ public class PostgisGroupByVisitorOnlineTest extends JDBCGroupByVisitorOnlineTes
         return new PostgisGroupByVisitorTestSetup(new PostGISPSTestSetup());
     }
 
+    @Test
     public void testAggregateOnNonEncodableFunction() throws Exception {
         PostGISPSDialect sqlDialect = ((PostGISPSDialect) dataStore.getSQLDialect());
         boolean oldValue = sqlDialect.isFunctionEncodingEnabled();
@@ -45,6 +50,7 @@ public class PostgisGroupByVisitorOnlineTest extends JDBCGroupByVisitorOnlineTes
         }
     }
 
+    @Test
     public void testAggregateOnEncodableFunction() throws Exception {
         PostGISPSDialect sqlDialect = (PostGISPSDialect) dataStore.getSQLDialect();
         boolean oldValue = sqlDialect.isFunctionEncodingEnabled();
@@ -59,16 +65,19 @@ public class PostgisGroupByVisitorOnlineTest extends JDBCGroupByVisitorOnlineTes
     public void testAggregateOnFunction(boolean expectOptimized) throws IOException {
         FilterFactory ff = dataStore.getFilterFactory();
         Function buildingTypeSub =
-                ff.function(
-                        "strSubstring", ff.property("building_type"), ff.literal(0), ff.literal(3));
+                ff.function("strSubstring", ff.property("building_type"), ff.literal(0), ff.literal(3));
 
-        List<Object[]> value =
-                genericGroupByTestTest(Query.ALL, Aggregate.MAX, expectOptimized, buildingTypeSub);
+        List<Object[]> value = genericGroupByTestTest(Query.ALL, Aggregate.MAX, expectOptimized, buildingTypeSub);
         assertNotNull(value);
 
-        assertTrue(value.size() == 3);
+        assertEquals(3, value.size());
         checkValueContains(value, "HOU", "6.0");
         checkValueContains(value, "FAB", "500.0");
         checkValueContains(value, "SCH", "60.0");
+    }
+
+    @Test
+    public void testTimestampHistogramDate() throws Exception {
+        testTimestampHistogram("last_update_date");
     }
 }

@@ -16,7 +16,6 @@
  */
 package org.geotools.util;
 
-import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,8 +25,8 @@ import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Caching implementation for {@link ObjectCache}. This instance is used when caching is desired,
- * and memory use is an issue.
+ * Caching implementation for {@link ObjectCache}. This instance is used when caching is desired, and memory use is an
+ * issue.
  *
  * <p>Values are held in a WeakReference, the garbage collector may reclaim them at any time.
  *
@@ -36,13 +35,13 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Jody Garnett (Refractions Research)
  * @author Martin Desruisseaux (Geomatys)
  */
-final class WeakObjectCache implements ObjectCache {
+final class WeakObjectCache<K, V> implements ObjectCache<K, V> {
 
     /** The cached values for each key. */
-    private final Map /* <Object,WeakReference> */ cache;
+    private final Map<K, WeakReference<V>> cache;
 
     /** The locks for keys under construction. */
-    private final Map /* <K,ReentrantLock> */ locks;
+    private final Map<K, ReentrantLock> locks;
 
     /** Creates a new cache. */
     public WeakObjectCache() {
@@ -51,11 +50,12 @@ final class WeakObjectCache implements ObjectCache {
 
     /** Creates a new cache using the indicated initialSize. */
     public WeakObjectCache(final int initialSize) {
-        cache = Collections.synchronizedMap(new HashMap(initialSize));
-        locks = new HashMap();
+        cache = Collections.synchronizedMap(new HashMap<>(initialSize));
+        locks = new HashMap<>();
     }
 
     /** Removes all entries from this map. */
+    @Override
     public void clear() {
         synchronized (locks) {
             locks.clear();
@@ -66,17 +66,13 @@ final class WeakObjectCache implements ObjectCache {
     /**
      * Check if an entry exists in the cache.
      *
-     * @param key
      * @return boolean
      */
-    public boolean containsKey(final Object key) {
+    public boolean containsKey(final K key) {
         if (cache.containsKey(key)) {
-            Object stored = cache.get(key);
-            if (stored instanceof Reference) {
-                Reference reference = (Reference) stored;
-                return reference.get() != null;
-            }
-            return stored != null;
+            WeakReference<V> reference = cache.get(key);
+            if (reference == null) return false;
+            return reference.get() != null;
         }
         return false;
     }
@@ -86,32 +82,29 @@ final class WeakObjectCache implements ObjectCache {
      *
      * @param key The authority code.
      */
-    public Object get(final Object key) {
-        Object stored = cache.get(key);
-        if (stored instanceof Reference) {
-            Reference reference = (Reference) stored;
-            Object value = reference.get();
-            if (value == null) {
-                cache.remove(key);
-            }
-            return value;
+    @Override
+    public V get(final K key) {
+        WeakReference<V> reference = cache.get(key);
+        if (reference == null) return null;
+        V value = reference.get();
+        if (value == null) {
+            cache.remove(key);
         }
-        return stored;
+        return value;
     }
 
-    public Object peek(final Object key) {
-        Object stored = cache.get(key);
-        if (stored instanceof Reference) {
-            Reference reference = (Reference) stored;
-            return reference.get();
-        }
-        return stored;
+    @Override
+    public V peek(final K key) {
+        WeakReference<V> reference = cache.get(key);
+        if (reference == null) return null;
+        return reference.get();
     }
 
-    public void writeLock(final Object key) {
+    @Override
+    public void writeLock(final K key) {
         ReentrantLock lock;
         synchronized (locks) {
-            lock = (ReentrantLock) locks.get(key);
+            lock = locks.get(key);
             if (lock == null) {
                 lock = new ReentrantLock();
                 locks.put(key, lock);
@@ -122,9 +115,10 @@ final class WeakObjectCache implements ObjectCache {
         lock.lock();
     }
 
-    public void writeUnLock(final Object key) {
+    @Override
+    public void writeUnLock(final K key) {
         synchronized (locks) {
-            final ReentrantLock lock = (ReentrantLock) locks.get(key);
+            final ReentrantLock lock = locks.get(key);
             if (lock == null) {
                 throw new IllegalMonitorStateException("Cannot unlock prior to locking");
             }
@@ -141,9 +135,9 @@ final class WeakObjectCache implements ObjectCache {
         }
     }
 
-    boolean holdsLock(final Object key) {
+    boolean holdsLock(final K key) {
         synchronized (locks) {
-            final ReentrantLock lock = (ReentrantLock) locks.get(key);
+            final ReentrantLock lock = locks.get(key);
             if (lock != null) {
                 return lock.getHoldCount() != 0;
             }
@@ -152,24 +146,23 @@ final class WeakObjectCache implements ObjectCache {
     }
 
     /** Stores a value */
-    public void put(final Object key, final Object object) {
+    @Override
+    public void put(final K key, final V object) {
         writeLock(key);
-        WeakReference reference = new WeakReference(object);
+        WeakReference<V> reference = new WeakReference<>(object);
         cache.put(key, reference);
         writeUnLock(key);
     }
 
     /** @return the keys of the object currently in the set */
-    public Set<Object> getKeys() {
-        Set<Object> keys = null;
-
-        keys = new HashSet<Object>(cache.keySet());
-
-        return keys;
+    @Override
+    public Set<K> getKeys() {
+        return new HashSet<>(cache.keySet());
     }
 
     /** Removes the given key from the cache. */
-    public void remove(Object key) {
+    @Override
+    public void remove(K key) {
         synchronized (locks) {
             locks.remove(key);
             cache.remove(key);

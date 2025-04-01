@@ -9,8 +9,8 @@ package net.opengis.fes20;
 import org.eclipse.emf.common.util.EList;
 
 import org.eclipse.emf.ecore.EObject;
-import org.opengis.filter.capability.SpatialOperator;
-import org.opengis.filter.capability.SpatialOperators;
+import org.geotools.api.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.SpatialOperators;
 
 /**
  * <!-- begin-user-doc -->
@@ -44,6 +44,7 @@ public interface SpatialOperatorsType extends EObject, SpatialOperators {
      *        extendedMetaData="kind='element' name='SpatialOperator' namespace='##targetNamespace'"
      * @generated
      */
+    @Override
     EList<SpatialOperator> getOperators();
 
 } // SpatialOperatorsType

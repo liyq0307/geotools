@@ -18,23 +18,42 @@
 package org.geotools.ysld.parse;
 
 import static org.geotools.ysld.Ysld.transform;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Map;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ColorMapEntry;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.ContrastMethod;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicLegend;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.filter.Filters;
+import org.geotools.filter.function.EnvFunction;
 import org.geotools.filter.text.ecql.ECQL;
-import org.geotools.styling.*;
-import org.geotools.styling.Font;
-import org.geotools.styling.Stroke;
+import org.geotools.styling.SLD;
 import org.geotools.ysld.TestUtils;
 import org.geotools.ysld.YsldTests;
 import org.junit.Test;
-import org.opengis.style.ContrastMethod;
 
 public class YsldParseCookbookTest {
 
@@ -587,6 +606,45 @@ public class YsldParseCookbookTest {
         assertEquals(0, Filters.asInt(placement.getDisplacement().getDisplacementX()));
         assertEquals(25, Filters.asInt(placement.getDisplacement().getDisplacementY()));
         assertEquals(-45, Filters.asInt(placement.getRotation()));
+    }
+
+    @Test
+    public void testPointWithRuleVendorOption() throws Exception {
+        // <UserStyle>
+        //   <Title>Simple Point With Rule Vendor Option</Title>
+        //   <FeatureTypeStyle>
+        //     <Rule>
+        //       <PointSymbolizer>
+        //         <Graphic>
+        //           <Mark>
+        //             <WellKnownName>circle</WellKnownName>
+        //             <Fill>
+        //               <CssParameter name="fill">#FF0000</CssParameter>
+        //             </Fill>
+        //           </Mark>
+        //           <Size>6</Size>
+        //         </Graphic>
+        //       </PointSymbolizer>
+        //       <VendorOption name="inclusion">mapOnly</VendorOption>
+        //     </Rule>
+        //     <Rule>
+        //       <PointSymbolizer>
+        //         <Graphic>
+        //           <ExternalGraphic>
+        //              <OnlineResource xlink:type="simple" xlink:href="smileyface.png" />
+        //             <Format>image/png</Format>
+        //           </ExternalGraphic>
+        //           <Size>20</Size>
+        //         </Graphic>
+        //       </PointSymbolizer>
+        //       <VendorOption name="inclusion">legendOnly</VendorOption>
+        //     </Rule>
+        //   </FeatureTypeStyle>
+        // </UserStyle>
+        Style style = parse("point", "rule-option.sld");
+        List<Rule> rules = style.featureTypeStyles().get(0).rules();
+        assertThat(rules.get(0).getOptions(), hasEntry("inclusion", "mapOnly"));
+        assertThat(rules.get(1).getOptions(), hasEntry("inclusion", "legendOnly"));
     }
 
     @Test
@@ -1890,6 +1948,20 @@ public class YsldParseCookbookTest {
         e = raster.getColorMap().getColorMapEntry(1);
         assertEquals("#663333", Filters.asString(e.getColor()));
         assertEquals(256, Filters.asInt(e.getQuantity()));
+    }
+
+    @Test
+    public void testRasterWithBandSelectionExpression() throws Exception {
+        Style style = parse("raster", "band-selection-expression.sld");
+        RasterSymbolizer raster = SLD.rasterSymbolizer(style);
+        Expression name = raster.getChannelSelection().getGrayChannel().getChannelName();
+        assertEquals("1", name.evaluate(null, String.class).trim());
+        try {
+            EnvFunction.setLocalValue("B1", "2");
+            assertEquals("2", name.evaluate(null, String.class).trim());
+        } finally {
+            EnvFunction.clearLocalValues();
+        }
     }
 
     Style parse(String dir, String file) throws IOException {

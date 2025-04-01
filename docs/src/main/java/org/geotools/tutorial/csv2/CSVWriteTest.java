@@ -1,11 +1,13 @@
 /*
- * GeoTools - The Open Source Java GIS Toolkit
- * http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- * (C) 2010-2014, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- * This file is hereby placed into the Public Domain. This means anyone is
- * free to do whatever they wish with this file. Use it well and enjoy!
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.tutorial.csv2;
 
@@ -18,18 +20,22 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -41,10 +47,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 
 /**
  * Informal test used to document expected functionality for workshop.
@@ -85,10 +87,10 @@ public class CSVWriteTest {
 
     @After
     public void removeTemporaryLocations() throws IOException {
-        File list[] = tmp.listFiles();
+        File[] list = tmp.listFiles();
         if (list != null) {
-            for (int i = 0; i < list.length; i++) {
-                list[i].delete();
+            for (File value : list) {
+                value.delete();
             }
         }
         tmp.delete();
@@ -133,12 +135,9 @@ public class CSVWriteTest {
 
         System.out.println("Step 1");
         System.out.println("------");
-        System.out.println(
-                "start     auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-        System.out.println(
-                "start              t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-        System.out.println(
-                "start              t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+        System.out.println("start     auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+        System.out.println("start              t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+        System.out.println("start              t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
         // select feature to remove
         FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
@@ -148,32 +147,25 @@ public class CSVWriteTest {
         System.out.println();
         System.out.println("Step 2 transaction 1 removes feature 'fid1'");
         System.out.println("------");
-        System.out.println(
-                "t1 remove auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-        System.out.println(
-                "t1 remove          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-        System.out.println(
-                "t1 remove          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+        System.out.println("t1 remove auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+        System.out.println("t1 remove          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+        System.out.println("t1 remove          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
         // new feature to add!
         // 42.3601° N, 71.0589° W Boston 1300 2017
         GeometryFactory gf = JTSFactoryFinder.getGeometryFactory();
         Point boston = gf.createPoint(new Coordinate(-71.0589, 42.3601));
         SimpleFeature feature =
-                SimpleFeatureBuilder.build(
-                        type, new Object[] {boston, "Boston", 1300, 2017}, "locations.1");
+                SimpleFeatureBuilder.build(type, new Object[] {boston, "Boston", 1300, 2017}, "locations.1");
         SimpleFeatureCollection collection = DataUtilities.collection(feature);
         featureStore2.addFeatures(collection);
 
         System.out.println();
         System.out.println("Step 3 transaction 2 adds a new feature '" + feature.getID() + "'");
         System.out.println("------");
-        System.out.println(
-                "t2 add    auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-        System.out.println(
-                "t2 add             t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-        System.out.println(
-                "t1 add             t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+        System.out.println("t2 add    auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+        System.out.println("t2 add             t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+        System.out.println("t1 add             t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
         // commit transaction one
         t1.commit();
@@ -181,26 +173,19 @@ public class CSVWriteTest {
         System.out.println();
         System.out.println("Step 4 transaction 1 commits the removal of feature 'fid1'");
         System.out.println("------");
-        System.out.println(
-                "t1 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-        System.out.println(
-                "t1 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-        System.out.println(
-                "t1 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+        System.out.println("t1 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+        System.out.println("t1 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+        System.out.println("t1 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
         // commit transaction two
         t2.commit();
 
         System.out.println();
-        System.out.println(
-                "Step 5 transaction 2 commits the addition of '" + feature.getID() + "'");
+        System.out.println("Step 5 transaction 2 commits the addition of '" + feature.getID() + "'");
         System.out.println("------");
-        System.out.println(
-                "t2 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-        System.out.println(
-                "t2 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-        System.out.println(
-                "t2 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+        System.out.println("t2 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+        System.out.println("t2 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+        System.out.println("t2 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
         t1.close();
         t2.close();
@@ -221,18 +206,15 @@ public class CSVWriteTest {
 
         Transaction t = new DefaultTransaction("locations");
         try {
-            FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                    store.getFeatureWriter("locations", Filter.INCLUDE, t);
 
-            SimpleFeature feature;
-            try {
+            try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                    store.getFeatureWriter("locations", Filter.INCLUDE, t)) {
+                SimpleFeature feature;
                 while (writer.hasNext()) {
                     feature = writer.next();
                     System.out.println("remove " + feature.getID());
                     writer.remove(); // marking contents for removal
                 }
-            } finally {
-                writer.close();
             }
             System.out.println("commit " + t); // now the contents are removed
             t.commit();
@@ -257,19 +239,17 @@ public class CSVWriteTest {
         DataStore store = DataStoreFinder.getDataStore(params);
 
         final SimpleFeatureType type = store.getSchema("locations");
-        final FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
         SimpleFeature f;
         DefaultFeatureCollection collection = new DefaultFeatureCollection();
 
         // 42.3601° N, 71.0589° W Boston 1300 2017
         GeometryFactory gf = JTSFactoryFinder.getGeometryFactory();
         Point boston = gf.createPoint(new Coordinate(-71.0589, 42.3601));
-        SimpleFeature bf =
-                SimpleFeatureBuilder.build(
-                        type, new Object[] {boston, "Boston", 1300, 2017}, "locations.1");
+        SimpleFeature bf = SimpleFeatureBuilder.build(type, new Object[] {boston, "Boston", 1300, 2017}, "locations.1");
         collection.add(bf);
 
-        writer = store.getFeatureWriter("locations", Transaction.AUTO_COMMIT);
+        final FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                store.getFeatureWriter("locations", Transaction.AUTO_COMMIT);
         try {
             // remove all features
             while (writer.hasNext()) {
@@ -311,14 +291,13 @@ public class CSVWriteTest {
         DataStore duplicate = factory.createNewDataStore(params2);
         duplicate.createSchema(featureType);
 
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
         SimpleFeature feature, newFeature;
 
         Query query = new Query(featureType.getTypeName(), Filter.INCLUDE);
-        reader = store.getFeatureReader(query, Transaction.AUTO_COMMIT);
+        FeatureReader<SimpleFeatureType, SimpleFeature> reader = store.getFeatureReader(query, Transaction.AUTO_COMMIT);
 
-        writer = duplicate.getFeatureWriterAppend("duplicate", Transaction.AUTO_COMMIT);
+        FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                duplicate.getFeatureWriterAppend("duplicate", Transaction.AUTO_COMMIT);
         // writer = duplicate.getFeatureWriter("duplicate", Transaction.AUTO_COMMIT);
         try {
             while (reader.hasNext()) {

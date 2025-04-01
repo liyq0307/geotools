@@ -16,12 +16,12 @@
  */
 package org.geotools.data.shapefile.fid;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.files.ShpFiles;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.util.URLs;
 import org.junit.Test;
 
@@ -40,9 +40,7 @@ public class FidIndexerTest extends FIDTestCase {
         SimpleFeatureSource fs = ds.getFeatureSource();
         int features = fs.getCount(Query.ALL);
 
-        IndexedFidReader reader = new IndexedFidReader(shpFiles);
-
-        try {
+        try (IndexedFidReader reader = new IndexedFidReader(shpFiles)) {
             assertEquals(features, reader.getCount());
 
             int i = 1;
@@ -55,7 +53,6 @@ public class FidIndexerTest extends FIDTestCase {
 
             assertEquals(features, i - 1);
         } finally {
-            reader.close();
             ds.dispose();
         }
     }

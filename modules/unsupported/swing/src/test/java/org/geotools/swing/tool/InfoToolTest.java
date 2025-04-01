@@ -17,7 +17,9 @@
 
 package org.geotools.swing.tool;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Point;
 import java.awt.geom.Point2D;
@@ -25,9 +27,11 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.assertj.swing.core.MouseButton;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position2D;
 import org.geotools.map.Layer;
 import org.geotools.swing.testutils.GraphicsTestRunner;
 import org.geotools.swing.testutils.TestDataUtils;
@@ -35,8 +39,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Tests for the info cursor tool.
@@ -58,16 +60,15 @@ public class InfoToolTest extends CursorToolTestBase {
     public void setup() {
         // We override onReporterUpdated to give tests access to
         // the reporter text
-        tool =
-                new InfoTool() {
-                    @Override
-                    public void onReporterUpdated() {
-                        reporterText = getTextReporterConnection().getText();
-                        if (latch != null) {
-                            latch.countDown();
-                        }
-                    }
-                };
+        tool = new InfoTool() {
+            @Override
+            public void onReporterUpdated() {
+                reporterText = getTextReporterConnection().getText();
+                if (latch != null) {
+                    latch.countDown();
+                }
+            }
+        };
     }
 
     @Test
@@ -81,25 +82,20 @@ public class InfoToolTest extends CursorToolTestBase {
         SimpleFeatureSource fs = (SimpleFeatureSource) layer.getFeatureSource();
 
         final int featureIndex = rand.nextInt(fs.getFeatures().size());
-        SimpleFeatureIterator iter = fs.getFeatures().features();
         SimpleFeature feature = null;
-        try {
+        try (SimpleFeatureIterator iter = fs.getFeatures().features()) {
             int i = 0;
             while (i <= featureIndex) {
                 feature = iter.next();
                 i++;
             }
-
-        } finally {
-            iter.close();
         }
 
-        DirectPosition2D queryPos = TestDataUtils.getPosInFeature(feature);
+        Position2D queryPos = TestDataUtils.getPosInFeature(feature);
         Point2D p2d = mapPane.getWorldToScreenTransform().transform(queryPos, null);
 
         Point windowOrigin = mapPaneFixture.target().getLocationOnScreen();
-        Point screenQueryPos =
-                new Point(windowOrigin.x + (int) p2d.getX(), windowOrigin.y + (int) p2d.getY());
+        Point screenQueryPos = new Point(windowOrigin.x + (int) p2d.getX(), windowOrigin.y + (int) p2d.getY());
 
         mapPane.setCursorTool(tool);
         latch = new CountDownLatch(1);

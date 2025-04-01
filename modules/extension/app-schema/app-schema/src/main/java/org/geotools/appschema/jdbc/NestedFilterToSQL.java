@@ -21,6 +21,34 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.appschema.filter.FilterFactoryImplNamespaceAware;
 import org.geotools.appschema.filter.NestedAttributeExpression;
 import org.geotools.appschema.jdbc.JoiningJDBCFeatureSource.JoiningFieldEncoder;
@@ -37,36 +65,12 @@ import org.geotools.data.complex.util.XPathUtil.StepList;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.data.jdbc.FilterToSQLException;
 import org.geotools.filter.FilterAttributeExtractor;
-import org.geotools.jdbc.*;
+import org.geotools.jdbc.JDBCDataStore;
+import org.geotools.jdbc.PreparedFilterToSQL;
+import org.geotools.jdbc.PreparedStatementSQLDialect;
+import org.geotools.jdbc.PrimaryKey;
+import org.geotools.jdbc.PrimaryKeyColumn;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
@@ -97,12 +101,11 @@ import org.xml.sax.helpers.NamespaceSupport;
  *   <li>PropertyIsBetween
  * </ul>
  *
- * <p>Note that, in order to be successfully encoded, the filter must not involve more than one
- * nested attribute (i.e. comparing nested attributes is not supported), nor attributes that are
- * chained via polymorphic mappings.
+ * <p>Note that, in order to be successfully encoded, the filter must not involve more than one nested attribute (i.e.
+ * comparing nested attributes is not supported), nor attributes that are chained via polymorphic mappings.
  *
- * <p>If the visited filter does not involve nested attributes, its encoding is delegated to the
- * wrapped {@link FilterToSQL} instance.
+ * <p>If the visited filter does not involve nested attributes, its encoding is delegated to the wrapped
+ * {@link FilterToSQL} instance.
  *
  * @author Mauro Bartolomeoli, GeoSolutions
  * @author Stefano Costa, GeoSolutions
@@ -134,6 +137,7 @@ public class NestedFilterToSQL extends FilterToSQL {
         this.ff = new FilterFactoryImplNamespaceAware(rootMapping.getNamespaces());
     }
 
+    @Override
     public void encode(Filter filter) throws FilterToSQLException {
         if (out == null) throw new FilterToSQLException("Can't encode to a null writer.");
         original.setWriter(out);
@@ -158,15 +162,10 @@ public class NestedFilterToSQL extends FilterToSQL {
     }
 
     private void encodeMultipleValueJoin(
-            FeatureChainedAttributeDescriptor nestedAttribute,
-            JDBCDataStore store,
-            StringBuffer sql) {
+            FeatureChainedAttributeDescriptor nestedAttribute, JDBCDataStore store, StringBuffer sql) {
         FeatureTypeMapping featureMapping = nestedAttribute.getFeatureTypeOwningAttribute();
-        AttributeMapping mapping =
-                featureMapping.getAttributeMapping(nestedAttribute.getAttributePath());
-        if (mapping == null
-                || !mapping.isMultiValued()
-                || !(mapping.getMultipleValue() instanceof JdbcMultipleValue)) {
+        AttributeMapping mapping = featureMapping.getAttributeMapping(nestedAttribute.getAttributePath());
+        if (mapping == null || !mapping.isMultiValued() || !(mapping.getMultipleValue() instanceof JdbcMultipleValue)) {
             return;
         }
         JdbcMultipleValue multipleValue = (JdbcMultipleValue) mapping.getMultipleValue();
@@ -190,12 +189,10 @@ public class NestedFilterToSQL extends FilterToSQL {
 
     protected Object visitNestedFilter(Filter filter, Object extraData, String xpath) {
         try {
-            FeatureChainedAttributeVisitor nestedMappingsExtractor =
-                    new FeatureChainedAttributeVisitor(rootMapping);
+            FeatureChainedAttributeVisitor nestedMappingsExtractor = new FeatureChainedAttributeVisitor(rootMapping);
             nestedMappingsExtractor.visit(ff.property(xpath), null);
-            List<FeatureChainedAttributeDescriptor> attributes =
-                    nestedMappingsExtractor.getFeatureChainedAttributes();
-            if (attributes.size() >= 1) {
+            List<FeatureChainedAttributeDescriptor> attributes = nestedMappingsExtractor.getFeatureChainedAttributes();
+            if (!attributes.isEmpty()) {
                 if (attributes.size() > 1) out.write("(");
                 boolean first = true;
                 for (FeatureChainedAttributeDescriptor nestedAttrDescr : attributes) {
@@ -207,17 +204,12 @@ public class NestedFilterToSQL extends FilterToSQL {
             }
             return extraData;
 
-        } catch (java.io.IOException ioe) {
+        } catch (IOException | FilterToSQLException | SQLException ioe) {
             throw new RuntimeException("Problem writing filter: ", ioe);
-        } catch (SQLException e) {
-            throw new RuntimeException("Problem writing filter: ", e);
-        } catch (FilterToSQLException e) {
-            throw new RuntimeException("Problem writing filter: ", e);
         }
     }
 
-    private void encodeChainedAttribute(
-            Filter filter, String xpath, FeatureChainedAttributeDescriptor nestedAttrDescr)
+    private void encodeChainedAttribute(Filter filter, String xpath, FeatureChainedAttributeDescriptor nestedAttrDescr)
             throws IOException, SQLException, FilterToSQLException {
         int numMappings = nestedAttrDescr.chainSize();
         if (numMappings > 0 && nestedAttrDescr.isJoiningEnabled()) {
@@ -225,9 +217,8 @@ public class NestedFilterToSQL extends FilterToSQL {
 
             FeatureChainLink lastMappingStep = nestedAttrDescr.getLastLink();
             StringBuffer sql = encodeSelectKeyFrom(lastMappingStep);
-            JDBCDataStore store =
-                    (JDBCDataStore)
-                            lastMappingStep.getFeatureTypeMapping().getSource().getDataStore();
+            JDBCDataStore store = (JDBCDataStore)
+                    lastMappingStep.getFeatureTypeMapping().getSource().getDataStore();
             encodeMultipleValueJoin(nestedAttrDescr, store, sql);
 
             for (int i = numMappings - 2; i > 0; i--) {
@@ -263,8 +254,7 @@ public class NestedFilterToSQL extends FilterToSQL {
         }
     }
 
-    private void encodeJoinCondition(
-            FeatureChainedAttributeDescriptor nestedAttrDescr, int stepIdx, StringBuffer sql)
+    private void encodeJoinCondition(FeatureChainedAttributeDescriptor nestedAttrDescr, int stepIdx, StringBuffer sql)
             throws SQLException, IOException, FilterToSQLException {
         FeatureChainLink parentStep = nestedAttrDescr.getLink(stepIdx);
         FeatureChainLink nestedStep = nestedAttrDescr.getLink(stepIdx + 1);
@@ -300,7 +290,8 @@ public class NestedFilterToSQL extends FilterToSQL {
     private StringBuffer encodeSelectKeyFrom(FeatureChainLink lastMappingStep) throws SQLException {
         FeatureTypeMapping lastTypeMapping = lastMappingStep.getFeatureTypeMapping();
         JDBCDataStore store = (JDBCDataStore) lastTypeMapping.getSource().getDataStore();
-        SimpleFeatureType lastType = (SimpleFeatureType) lastTypeMapping.getSource().getSchema();
+        SimpleFeatureType lastType =
+                (SimpleFeatureType) lastTypeMapping.getSource().getSchema();
 
         // primary key
         PrimaryKey key = null;
@@ -332,17 +323,13 @@ public class NestedFilterToSQL extends FilterToSQL {
     }
 
     private void createWhereClause(
-            Filter filter,
-            String nestedProperty,
-            FeatureChainedAttributeDescriptor nestedAttrDescr,
-            StringBuffer sql)
+            Filter filter, String nestedProperty, FeatureChainedAttributeDescriptor nestedAttrDescr, StringBuffer sql)
             throws FilterToSQLException {
         FeatureChainLink lastLink = nestedAttrDescr.getLastLink();
         String simpleProperty = nestedAttrDescr.getAttributePath().toString();
         FeatureTypeMapping featureMapping = lastLink.getFeatureTypeMapping();
         JDBCDataStore store = (JDBCDataStore) featureMapping.getSource().getDataStore();
-        FeatureTypeMapping featureMappingForUnrolling =
-                nestedAttrDescr.getFeatureTypeOwningAttribute();
+        FeatureTypeMapping featureMappingForUnrolling = nestedAttrDescr.getFeatureTypeOwningAttribute();
 
         NamespaceAwareAttributeRenameVisitor duplicate =
                 new NamespaceAwareAttributeRenameVisitor(nestedProperty, simpleProperty);
@@ -358,7 +345,8 @@ public class NestedFilterToSQL extends FilterToSQL {
 
     private WrappedFilterToSql createFilterToSQL(FeatureTypeMapping featureMapping) {
         JDBCDataStore store = (JDBCDataStore) featureMapping.getSource().getDataStore();
-        SimpleFeatureType sourceType = (SimpleFeatureType) featureMapping.getSource().getSchema();
+        SimpleFeatureType sourceType =
+                (SimpleFeatureType) featureMapping.getSource().getSchema();
         FilterToSQL filterToSQL = null;
         if (store.getSQLDialect() instanceof PreparedStatementSQLDialect) {
             PreparedFilterToSQL preparedFilterToSQL = store.createPreparedFilterToSQL(sourceType);
@@ -371,8 +359,7 @@ public class NestedFilterToSQL extends FilterToSQL {
         return new WrappedFilterToSql(featureMapping, filterToSQL);
     }
 
-    private void encodeColumnName(
-            JDBCDataStore store, String colName, String typeName, StringBuffer sql, Hints hints)
+    private void encodeColumnName(JDBCDataStore store, String colName, String typeName, StringBuffer sql, Hints hints)
             throws SQLException {
         store.encodeTableName(typeName, sql, hints);
         sql.append(".");
@@ -380,8 +367,7 @@ public class NestedFilterToSQL extends FilterToSQL {
     }
 
     private void encodeAliasedColumnName(
-            JDBCDataStore store, String colName, String typeName, StringBuffer sql, Hints hints)
-            throws SQLException {
+            JDBCDataStore store, String colName, String typeName, StringBuffer sql, Hints hints) throws SQLException {
         store.dialect.encodeTableName(typeName, sql);
         sql.append(".");
         store.dialect.encodeColumnName(null, colName, sql);
@@ -485,17 +471,14 @@ public class NestedFilterToSQL extends FilterToSQL {
     }
 
     /**
-     * If replaceOrWithUnion flag is enabled this method will build main OR condition in the form of
-     * UNION queries like: SELECT id, name FROM table WHERE name = "Alf" OR name = "Rick" -> SELECT
-     * id, name FROM table WHERE name = "Alf" UNION SELECT id, name FROM table WHERE name = "Rick"
+     * If replaceOrWithUnion flag is enabled this method will build main OR condition in the form of UNION queries like:
+     * SELECT id, name FROM table WHERE name = "Alf" OR name = "Rick" -> SELECT id, name FROM table WHERE name = "Alf"
+     * UNION SELECT id, name FROM table WHERE name = "Rick"
      */
     @Override
     protected Object visit(BinaryLogicOperator filter, Object extraData) {
         String operator = (String) extraData;
-        if (!replaceOrWithUnion
-                || "AND".equalsIgnoreCase(operator)
-                || selectClause == null
-                || !rootBinaryOperator) {
+        if (!replaceOrWithUnion || "AND".equalsIgnoreCase(operator) || selectClause == null || !rootBinaryOperator) {
             rootBinaryOperator = false;
             return super.visit(filter, extraData);
         }
@@ -676,9 +659,8 @@ public class NestedFilterToSQL extends FilterToSQL {
 
             List<Expression> matchingMappings = mappings.findMappingsFor(simplifiedSteps, false);
 
-            if (matchingMappings.size() == 0) {
-                throw new IllegalArgumentException(
-                        "Can't find source expression for: " + targetXPath);
+            if (matchingMappings.isEmpty()) {
+                throw new IllegalArgumentException("Can't find source expression for: " + targetXPath);
             }
 
             return matchingMappings;

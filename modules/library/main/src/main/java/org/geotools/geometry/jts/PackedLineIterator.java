@@ -69,23 +69,14 @@ public final class PackedLineIterator extends AbstractLiteIterator {
      * @param ls The line string the iterator will use
      * @param at The affine transform applied to coordinates during iteration
      */
-    public PackedLineIterator(
-            LineString ls, AffineTransform at, boolean generalize, float maxDistance) {
+    public PackedLineIterator(LineString ls, AffineTransform at, boolean generalize, float maxDistance) {
         if (at == null) {
             at = new AffineTransform();
         }
 
         this.at = at;
-        xScale =
-                (float)
-                        Math.sqrt(
-                                (at.getScaleX() * at.getScaleX())
-                                        + (at.getShearX() * at.getShearX()));
-        yScale =
-                (float)
-                        Math.sqrt(
-                                (at.getScaleY() * at.getScaleY())
-                                        + (at.getShearY() * at.getShearY()));
+        xScale = (float) Math.sqrt((at.getScaleX() * at.getScaleX()) + (at.getShearX() * at.getShearX()));
+        yScale = (float) Math.sqrt((at.getScaleY() * at.getScaleY()) + (at.getShearY() * at.getShearY()));
 
         coordinates = (Double) ls.getCoordinateSequence();
         coordinateCount = coordinates.size();
@@ -113,8 +104,8 @@ public final class PackedLineIterator extends AbstractLiteIterator {
      * @param ls The line string the iterator will use
      * @param at The affine transform applied to coordinates during iteration
      * @param generalize if true apply simple distance based generalization
-     * @param maxDistance during iteration, a point will be skipped if it's distance from the
-     *     previous is less than maxDistance
+     * @param maxDistance during iteration, a point will be skipped if it's distance from the previous is less than
+     *     maxDistance
      */
     //    public LineIterator(
     //        LineString ls, AffineTransform at, boolean generalize,
@@ -142,11 +133,10 @@ public final class PackedLineIterator extends AbstractLiteIterator {
     }
 
     /**
-     * Returns the coordinates and type of the current path segment in the iteration. The return
-     * value is the path-segment type: SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or
-     * SEG_CLOSE. A double array of length 6 must be passed in and can be used to store the
-     * coordinates of the point(s). Each point is stored as a pair of double x,y coordinates.
-     * SEG_MOVETO and SEG_LINETO types returns one point, SEG_QUADTO returns two points, SEG_CUBICTO
+     * Returns the coordinates and type of the current path segment in the iteration. The return value is the
+     * path-segment type: SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or SEG_CLOSE. A double array of length 6 must
+     * be passed in and can be used to store the coordinates of the point(s). Each point is stored as a pair of double
+     * x,y coordinates. SEG_MOVETO and SEG_LINETO types returns one point, SEG_QUADTO returns two points, SEG_CUBICTO
      * returns 3 points and SEG_CLOSE does not return any points.
      *
      * @param coords an array that holds the data returned from this method
@@ -157,6 +147,7 @@ public final class PackedLineIterator extends AbstractLiteIterator {
      * @see #SEG_CUBICTO
      * @see #SEG_CLOSE
      */
+    @Override
     public int currentSegment(float[] coords) {
         if (currentCoord == 0) {
             coords[0] = (float) coordinates.getX(0);
@@ -211,6 +202,7 @@ public final class PackedLineIterator extends AbstractLiteIterator {
      * @see #WIND_EVEN_ODD
      * @see #WIND_NON_ZERO
      */
+    @Override
     public int getWindingRule() {
         return WIND_NON_ZERO;
     }
@@ -220,17 +212,18 @@ public final class PackedLineIterator extends AbstractLiteIterator {
      *
      * @return <code>true</code> if all the segments have been read; <code>false</code> otherwise.
      */
+    @Override
     public boolean isDone() {
         return done;
     }
 
     /**
-     * Moves the iterator to the next segment of the path forwards along the primary direction of
-     * traversal as long as there are more points in that direction.
+     * Moves the iterator to the next segment of the path forwards along the primary direction of traversal as long as
+     * there are more points in that direction.
      */
+    @Override
     public void next() {
-        if (((currentCoord == (coordinateCount - 1)) && !isClosed)
-                || ((currentCoord == coordinateCount) && isClosed)) {
+        if (((currentCoord == (coordinateCount - 1)) && !isClosed) || ((currentCoord == coordinateCount) && isClosed)) {
             done = true;
         } else {
             if (generalize) {
@@ -273,6 +266,7 @@ public final class PackedLineIterator extends AbstractLiteIterator {
     }
 
     /** @see java.awt.geom.PathIterator#currentSegment(double[]) */
+    @Override
     public int currentSegment(double[] coords) {
         return 0;
     }

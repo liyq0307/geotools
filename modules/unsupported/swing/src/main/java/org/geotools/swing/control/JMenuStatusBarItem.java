@@ -17,8 +17,6 @@
 
 package org.geotools.swing.control;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPopupMenu;
@@ -42,24 +40,19 @@ public class JMenuStatusBarItem extends StatusBarItem {
      * @param menu the pop-up menu to launch when the item is clicked
      * @throws IllegalArgumentException if {@code icon} or {@code menu} are {@code null}
      */
-    public JMenuStatusBarItem(
-            String name, final ImageIcon icon, final String toolTip, final JPopupMenu menu) {
-        this(
-                name,
-                icon,
-                toolTip,
-                new PopupMenuProvider() {
-                    {
-                        if (menu == null) {
-                            throw new IllegalArgumentException("menu must not be null");
-                        }
-                    }
+    public JMenuStatusBarItem(String name, final ImageIcon icon, final String toolTip, final JPopupMenu menu) {
+        this(name, icon, toolTip, new PopupMenuProvider() {
+            {
+                if (menu == null) {
+                    throw new IllegalArgumentException("menu must not be null");
+                }
+            }
 
-                    @Override
-                    public JPopupMenu getMenu() {
-                        return menu;
-                    }
-                });
+            @Override
+            public JPopupMenu getMenu() {
+                return menu;
+            }
+        });
     }
 
     /**
@@ -70,11 +63,7 @@ public class JMenuStatusBarItem extends StatusBarItem {
      * @param menuProvider an object to provide a (possibly dynamic) pop-up menu
      * @throws IllegalArgumentException if {@code icon} or {@code menuPRovider} are {@code null}
      */
-    public JMenuStatusBarItem(
-            String name,
-            final ImageIcon icon,
-            String toolTip,
-            final PopupMenuProvider menuProvider) {
+    public JMenuStatusBarItem(String name, final ImageIcon icon, String toolTip, final PopupMenuProvider menuProvider) {
 
         super(name, false);
 
@@ -87,13 +76,7 @@ public class JMenuStatusBarItem extends StatusBarItem {
 
         final JButton btn = new JButton(icon);
         btn.setBorderPainted(false);
-        btn.addActionListener(
-                new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent ae) {
-                        menuProvider.getMenu().show(btn, 0, 0);
-                    }
-                });
+        btn.addActionListener(ae -> menuProvider.getMenu().show(btn, 0, 0));
 
         if (toolTip != null && toolTip.trim().length() > 0) {
             btn.setToolTipText(toolTip);

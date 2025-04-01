@@ -1,14 +1,25 @@
 package org.geotools.map;
 
 import static org.geotools.map.MapContent.UNDISPOSED_MAPCONTENT_ERROR;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.logging.Level;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -18,7 +29,6 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.RenderListener;
 import org.geotools.renderer.lite.StreamingRenderer;
-import org.geotools.styling.*;
 import org.hamcrest.CoreMatchers;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -26,20 +36,17 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory2;
 
 /**
- * This test checks that we are not leaving undisposed map contents created inside the streaming
- * renderer. Done my best to isolate from other tests being run, but specific JVMs might ignore
- * that... if we see it is breaking the build on some platform we'll have to remove it
+ * This test checks that we are not leaving undisposed map contents created inside the streaming renderer. Done my best
+ * to isolate from other tests being run, but specific JVMs might ignore that... if we see it is breaking the build on
+ * some platform we'll have to remove it
  */
 @Ignore // sigh, as expected it's not working all the time
 public class StreamingRendererMapContentReleaseTest extends LoggerTest {
 
     private static final StyleFactory sf = CommonFactoryFinder.getStyleFactory();
-    private static final FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+    private static final FilterFactory ff = CommonFactoryFinder.getFilterFactory();
     private static final GeometryFactory geom = JTSFactoryFinder.getGeometryFactory();
 
     @BeforeClass
@@ -69,19 +76,18 @@ public class StreamingRendererMapContentReleaseTest extends LoggerTest {
 
         // populate with random features
         int featureNumber = 50;
-        ReferencedEnvelope bounds =
-                new ReferencedEnvelope(-20, 20, -30, 30, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope bounds = new ReferencedEnvelope(-20, 20, -30, 30, DefaultGeographicCRS.WGS84);
         PrimitiveIterator.OfDouble rand =
                 new Random().doubles(bounds.getMinX(), bounds.getMaxX()).iterator();
         SimpleFeatureBuilder fb = new SimpleFeatureBuilder(type);
         for (int i = 0; i < featureNumber; i++) {
 
-            ArrayList<Coordinate> points = new ArrayList();
+            List<Coordinate> points = new ArrayList<>();
             for (int j = 0; j < 5; j++) {
                 points.add(new Coordinate(rand.next(), rand.next()));
             }
 
-            fb.add(geom.createLineString(points.toArray(new Coordinate[points.size()])));
+            fb.add(geom.createLineString(points.toArray(new Coordinate[0])));
             fb.add("Feature " + i);
             coll.add(fb.buildFeature(null));
         }
@@ -92,9 +98,7 @@ public class StreamingRendererMapContentReleaseTest extends LoggerTest {
             renderAndStop(content, bounds);
             Runtime.getRuntime().runFinalization();
             String messages = getLogOutput();
-            assertThat(
-                    messages,
-                    CoreMatchers.not(CoreMatchers.containsString(UNDISPOSED_MAPCONTENT_ERROR)));
+            assertThat(messages, CoreMatchers.not(CoreMatchers.containsString(UNDISPOSED_MAPCONTENT_ERROR)));
             releaseLogger();
         }
     }
@@ -104,21 +108,20 @@ public class StreamingRendererMapContentReleaseTest extends LoggerTest {
         renderer.setMapContent(content);
 
         // stop rendering after 10 features
-        renderer.addRenderListener(
-                new RenderListener() {
-                    int count = 0;
+        renderer.addRenderListener(new RenderListener() {
+            int count = 0;
 
-                    @Override
-                    public void featureRenderer(SimpleFeature feature) {
-                        count++;
-                        if (count > 10) {
-                            renderer.stopRendering();
-                        }
-                    }
+            @Override
+            public void featureRenderer(SimpleFeature feature) {
+                count++;
+                if (count > 10) {
+                    renderer.stopRendering();
+                }
+            }
 
-                    @Override
-                    public void errorOccurred(Exception e) {}
-                });
+            @Override
+            public void errorOccurred(Exception e) {}
+        });
 
         Rectangle area = new Rectangle(0, 0, 2000, 2000);
         BufferedImage img = new BufferedImage(area.width, area.height, BufferedImage.TYPE_INT_ARGB);
@@ -131,7 +134,7 @@ public class StreamingRendererMapContentReleaseTest extends LoggerTest {
         int thick = 3;
 
         // create stroke
-        org.geotools.styling.Stroke stroke =
+        org.geotools.api.style.Stroke stroke =
                 sf.stroke(ff.literal(foreground), null, ff.literal(thick), null, null, null, null);
 
         // create line symbolizer

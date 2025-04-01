@@ -16,21 +16,23 @@
  */
 package org.geotools.xs.bindings;
 
+import static org.junit.Assert.fail;
+
 import javax.xml.namespace.QName;
 import org.geotools.xs.TestSchema;
 import org.geotools.xs.XS;
+import org.junit.Test;
 
 public class XSBooleanStrategyTest extends TestSchema {
     /**
-     * An instance of a datatype that is defined as ??boolean?? can have the following legal
-     * literals {true, false, 1, 0}.
-     *
-     * @throws Exception
+     * An instance of a datatype that is defined as ??boolean?? can have the following legal literals {true, false, 1,
+     * 0}.
      */
 
     /*
      * Test method for 'org.geotools.xs.strategies.XSBooleanStrategy.parse(Element, Node[], Object)'
      */
+    @Test
     public void testTruth() throws Exception {
         validateValues("true", Boolean.TRUE);
         validateValues("false", Boolean.FALSE);
@@ -38,6 +40,7 @@ public class XSBooleanStrategyTest extends TestSchema {
         validateValues("0", Boolean.FALSE);
     }
 
+    @Test
     public void testUntruth() throws Exception {
         try {
             validateValues("TRUE", Boolean.FALSE);
@@ -47,7 +50,15 @@ public class XSBooleanStrategyTest extends TestSchema {
         }
     }
 
+    @Override
     protected QName getQName() {
         return XS.BOOLEAN;
+    }
+
+    /** GEOT-7072: Non-comformant WFS implementations tend to send empty elements (e.g. {@code <value></value>}) */
+    @Test
+    public void testParseEmptyStringAsNull() throws Exception {
+        validateValues("", null);
+        validateValues("\t", null);
     }
 }

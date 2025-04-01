@@ -24,7 +24,7 @@ import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.EObjectImpl;
-import org.opengis.filter.capability.GeometryOperand;
+import org.geotools.api.filter.capability.GeometryOperand;
 
 /**
  * <!-- begin-user-doc -->
@@ -85,6 +85,7 @@ public class SpatialCapabilitiesTypeImpl extends EObjectImpl implements SpatialC
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public GeometryOperandsType getGeometryOperands2() {
         return geometryOperands;
     }
@@ -109,6 +110,7 @@ public class SpatialCapabilitiesTypeImpl extends EObjectImpl implements SpatialC
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setGeometryOperands(GeometryOperandsType newGeometryOperands) {
         if (newGeometryOperands != geometryOperands) {
             NotificationChain msgs = null;
@@ -128,6 +130,7 @@ public class SpatialCapabilitiesTypeImpl extends EObjectImpl implements SpatialC
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public SpatialOperatorsType getSpatialOperators() {
         return spatialOperators;
     }
@@ -152,6 +155,7 @@ public class SpatialCapabilitiesTypeImpl extends EObjectImpl implements SpatialC
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setSpatialOperators(SpatialOperatorsType newSpatialOperators) {
         if (newSpatialOperators != spatialOperators) {
             NotificationChain msgs = null;
@@ -252,7 +256,7 @@ public class SpatialCapabilitiesTypeImpl extends EObjectImpl implements SpatialC
 
     @Override
     public Collection<GeometryOperand> getGeometryOperands() {
-        List<GeometryOperand> geometryOperands = new ArrayList<GeometryOperand>();
+        List<GeometryOperand> geometryOperands = new ArrayList<>();
         if (getGeometryOperands2() != null) {
             for (GeometryOperandType go : getGeometryOperands2().getGeometryOperand()) {
                 geometryOperands.add(GeometryOperand.get(go.getName().getNamespaceURI(), go.getName().getLocalPart()));

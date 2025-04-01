@@ -17,11 +17,12 @@
 
 package org.geotools.swing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
@@ -53,12 +54,6 @@ import org.junit.runner.RunWith;
 @RunWith(GraphicsTestRunner.class)
 public class JMapPaneGraphicsTest extends JMapPaneGraphicsTestBase {
 
-    /**
-     * Set this to true to display the screen shot image of the label in the test {@linkplain
-     * #labelTextIsFittedProperly()}.
-     */
-    private static final boolean displayLabelImage = false;
-
     @BeforeClass
     public static void setUpOnce() {
         FailOnThreadViolationRepaintManager.install();
@@ -68,14 +63,12 @@ public class JMapPaneGraphicsTest extends JMapPaneGraphicsTestBase {
     public void setup() {
         listener = new WaitingMapPaneListener();
 
-        TestFrame frame =
-                GuiActionRunner.execute(
-                        new GuiQuery<TestFrame>() {
-                            @Override
-                            protected TestFrame executeInEDT() throws Throwable {
-                                return new TestFrame(listener);
-                            }
-                        });
+        TestFrame frame = GuiActionRunner.execute(new GuiQuery<TestFrame>() {
+            @Override
+            protected TestFrame executeInEDT() throws Throwable {
+                return new TestFrame(listener);
+            }
+        });
 
         window = new FrameFixture(frame);
     }
@@ -87,13 +80,7 @@ public class JMapPaneGraphicsTest extends JMapPaneGraphicsTestBase {
         mapPane = null;
     }
 
-    /**
-     * Test for GEOT-6342, background color is not used in 1st rendering of map
-     *
-     * @throws InvocationTargetException
-     * @throws InterruptedException
-     * @throws IOException
-     */
+    /** Test for GEOT-6342, background color is not used in 1st rendering of map */
     @Test
     public void drawLayersSetsBackgroundonStartup()
             throws InvocationTargetException, InterruptedException, IOException {
@@ -101,14 +88,7 @@ public class JMapPaneGraphicsTest extends JMapPaneGraphicsTestBase {
         window.show(new Dimension(WIDTH, HEIGHT));
         MapContent mapContent = createMapContent(createMatchedBounds(mapPane.getVisibleRect()));
         mapPane.setMapContent(mapContent);
-        SwingUtilities.invokeAndWait(
-                new Runnable() {
-
-                    @Override
-                    public void run() {
-                        mapPane.setBackground(Color.BLUE);
-                    }
-                });
+        SwingUtilities.invokeAndWait(() -> mapPane.setBackground(Color.BLUE));
 
         mapPane.drawLayers(true);
         BufferedImage image = (BufferedImage) mapPane.getBaseImage();
@@ -201,25 +181,22 @@ public class JMapPaneGraphicsTest extends JMapPaneGraphicsTestBase {
     @Test
     public void mapPaneShouldHonourInitialViewportBounds() throws Exception {
         window.show(new Dimension(WIDTH, HEIGHT));
-        Rectangle visRect = mapPane.getVisibleRect();
-        GuiActionRunner.execute(
-                new GuiTask() {
-                    @Override
-                    protected void executeInEDT() throws Throwable {
-                        window.target().setVisible(false);
-                    }
-                });
+        GuiActionRunner.execute(new GuiTask() {
+            @Override
+            protected void executeInEDT() throws Throwable {
+                window.target().setVisible(false);
+            }
+        });
 
         ReferencedEnvelope fullBounds = createMatchedBounds(mapPane.getVisibleRect());
         MapContent mapContent = createMapContent(fullBounds);
 
-        ReferencedEnvelope subBounds =
-                new ReferencedEnvelope(
-                        fullBounds.getMinX(),
-                        fullBounds.getMinX() + fullBounds.getWidth() / 2,
-                        fullBounds.getMinY(),
-                        fullBounds.getMinY() + fullBounds.getHeight() / 2,
-                        fullBounds.getCoordinateReferenceSystem());
+        ReferencedEnvelope subBounds = new ReferencedEnvelope(
+                fullBounds.getMinX(),
+                fullBounds.getMinX() + fullBounds.getWidth() / 2,
+                fullBounds.getMinY(),
+                fullBounds.getMinY() + fullBounds.getHeight() / 2,
+                fullBounds.getCoordinateReferenceSystem());
 
         mapContent.getViewport().setBounds(subBounds);
         listener.setExpected(MapPaneEvent.Type.NEW_MAPCONTENT);

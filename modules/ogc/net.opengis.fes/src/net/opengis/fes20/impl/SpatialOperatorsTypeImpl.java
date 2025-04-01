@@ -23,7 +23,7 @@ import org.eclipse.emf.ecore.impl.EObjectImpl;
 
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
-import org.opengis.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.SpatialOperator;
 
 /**
  * <!-- begin-user-doc -->
@@ -73,9 +73,10 @@ public class SpatialOperatorsTypeImpl extends EObjectImpl implements SpatialOper
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<SpatialOperator> getOperators() {
         if (spatialOperator == null) {
-            spatialOperator = new EObjectContainmentEList<SpatialOperator>(SpatialOperatorType.class, this, Fes20Package.SPATIAL_OPERATORS_TYPE__SPATIAL_OPERATOR);
+            spatialOperator = new EObjectContainmentEList<>(SpatialOperatorType.class, this, Fes20Package.SPATIAL_OPERATORS_TYPE__SPATIAL_OPERATOR);
         }
         return spatialOperator;
     }

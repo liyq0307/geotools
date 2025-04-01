@@ -19,10 +19,14 @@ package org.geotools.gml3.bindings;
 import java.util.Arrays;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.geometry.jts.CurvedGeometryFactory;
+import org.geotools.geometry.jts.MultiSurface;
+import org.geotools.gml3.ArcParameters;
 import org.geotools.gml3.GML;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.locationtech.jts.geom.CoordinateSequenceFactory;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
@@ -58,13 +62,24 @@ import org.locationtech.jts.geom.Polygon;
  * @generated
  */
 public class MultiSurfaceTypeBinding extends AbstractComplexBinding {
-    protected GeometryFactory gf;
 
-    public MultiSurfaceTypeBinding(GeometryFactory gf) {
-        this.gf = gf;
+    protected GeometryFactory gf;
+    protected CoordinateSequenceFactory cs;
+    protected ArcParameters arcParameters;
+
+    public MultiSurfaceTypeBinding(GeometryFactory gFactory) {
+        this.gf = gFactory;
+    }
+
+    public MultiSurfaceTypeBinding(
+            GeometryFactory gFactory, CoordinateSequenceFactory csFactory, ArcParameters arcParameters) {
+        this(gFactory);
+        this.cs = csFactory;
+        this.arcParameters = arcParameters;
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MultiSurfaceType;
     }
@@ -76,10 +91,12 @@ public class MultiSurfaceTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
-        return MultiPolygon.class;
+        return MultiSurface.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return BEFORE;
     }
@@ -91,31 +108,39 @@ public class MultiSurfaceTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         // &lt;element maxOccurs="unbounded" minOccurs="0" ref="gml:surfaceMember"/&gt;
-        List surfaces = node.getChildValues(Polygon.class);
+        List<Polygon> surfaces = node.getChildValues(Polygon.class);
 
         // &lt;element minOccurs="0" ref="gml:surfaceMembers"/&gt;
         if (node.hasChild(Polygon[].class)) {
-            surfaces.addAll(Arrays.asList((Polygon[]) node.getChildValue(Polygon[].class)));
+            surfaces.addAll(Arrays.asList(node.getChildValue(Polygon[].class)));
         }
 
-        return gf.createMultiPolygon((Polygon[]) surfaces.toArray(new Polygon[surfaces.size()]));
+        CurvedGeometryFactory factory = GML3ParsingUtils.getCurvedGeometryFactory(arcParameters, gf, null);
+
+        return factory.createMultiSurface(surfaces);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("surfaceMember".equals(name.getLocalPart())) {
-            MultiPolygon multiSurface = (MultiPolygon) object;
-            Polygon[] members = new Polygon[multiSurface.getNumGeometries()];
+            if ((object instanceof MultiSurface)) {
+                MultiPolygon multiSurface = (MultiPolygon) object;
+                Polygon[] members = new Polygon[multiSurface.getNumGeometries()];
 
-            for (int i = 0; i < members.length; i++) {
-                members[i] = (Polygon) multiSurface.getGeometryN(i);
+                for (int i = 0; i < members.length; i++) {
+                    members[i] = (Polygon) multiSurface.getGeometryN(i);
+                }
+
+                GML3EncodingUtils.setChildIDs(multiSurface);
+
+                return members;
+            } else {
+                return object;
             }
-
-            GML3EncodingUtils.setChildIDs(multiSurface);
-
-            return members;
         }
 
         return null;

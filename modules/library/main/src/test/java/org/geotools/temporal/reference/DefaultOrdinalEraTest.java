@@ -16,17 +16,18 @@
  */
 package org.geotools.temporal.reference;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
+import org.geotools.api.temporal.OrdinalEra;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.OrdinalEra;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultOrdinalEraTest {
@@ -46,10 +47,8 @@ public class DefaultOrdinalEraTest {
         Date beginning2 = cal.getTime();
         cal.set(2012, 1, 1);
         Date end2 = cal.getTime();
-        ordinalEra1 =
-                new DefaultOrdinalEra(new SimpleInternationalString("old Era"), beginning1, end1);
-        ordinalEra2 =
-                new DefaultOrdinalEra(new SimpleInternationalString("new Era"), beginning2, end2);
+        ordinalEra1 = new DefaultOrdinalEra(new SimpleInternationalString("old Era"), beginning1, end1);
+        ordinalEra2 = new DefaultOrdinalEra(new SimpleInternationalString("new Era"), beginning2, end2);
     }
 
     @After
@@ -62,21 +61,21 @@ public class DefaultOrdinalEraTest {
     @Test
     public void testGetName() {
         InternationalString result = ordinalEra1.getName();
-        assertFalse(ordinalEra2.getName().equals(result));
+        assertNotEquals(ordinalEra2.getName(), result);
     }
 
     /** Test of getBeginning method, of class DefaultOrdinalEra. */
     @Test
     public void testGetBeginning() {
         Date result = ordinalEra1.getBeginning();
-        assertFalse(ordinalEra2.getBeginning().equals(result));
+        assertNotEquals(ordinalEra2.getBeginning(), result);
     }
 
     /** Test of getEnd method, of class DefaultOrdinalEra. */
     @Test
     public void testGetEnd() {
         Date result = ordinalEra1.getEnd();
-        assertFalse(ordinalEra2.getEnd().equals(result));
+        assertNotEquals(ordinalEra2.getEnd(), result);
     }
 
     /** Test of getComposition method, of class DefaultOrdinalEra. */
@@ -91,7 +90,7 @@ public class DefaultOrdinalEraTest {
     public void testSetName() {
         InternationalString result = ordinalEra1.getName();
         ((DefaultOrdinalEra) ordinalEra1).setName(new SimpleInternationalString(""));
-        assertFalse(ordinalEra1.getName().equals(result));
+        assertNotEquals(ordinalEra1.getName(), result);
     }
 
     /** Test of setBeginning method, of class DefaultOrdinalEra. */
@@ -99,7 +98,7 @@ public class DefaultOrdinalEraTest {
     public void testSetBeginning() {
         Date result = ordinalEra1.getBeginning();
         ((DefaultOrdinalEra) ordinalEra1).setBeginning(new Date());
-        assertFalse(ordinalEra1.getBeginning().equals(result));
+        assertNotEquals(ordinalEra1.getBeginning(), result);
     }
 
     /** Test of setEnd method, of class DefaultOrdinalEra. */
@@ -107,7 +106,7 @@ public class DefaultOrdinalEraTest {
     public void testSetEnd() {
         Date result = ordinalEra1.getEnd();
         ((DefaultOrdinalEra) ordinalEra1).setEnd(new Date());
-        assertFalse(ordinalEra1.getEnd().equals(result));
+        assertNotEquals(ordinalEra1.getEnd(), result);
     }
 
     /** Test of getGroup method, of class DefaultOrdinalEra. */
@@ -123,31 +122,29 @@ public class DefaultOrdinalEraTest {
         DefaultOrdinalEra result = ((DefaultOrdinalEra) ordinalEra1).getGroup();
         cal.set(1900, 0, 0);
         ((DefaultOrdinalEra) ordinalEra1)
-                .setGroup(
-                        new DefaultOrdinalEra(
-                                new SimpleInternationalString(""), cal.getTime(), new Date()));
-        assertFalse(((DefaultOrdinalEra) ordinalEra1).getGroup().equals(result));
+                .setGroup(new DefaultOrdinalEra(new SimpleInternationalString(""), cal.getTime(), new Date()));
+        assertNotEquals(((DefaultOrdinalEra) ordinalEra1).getGroup(), result);
     }
 
     /** Test of equals method, of class DefaultOrdinalEra. */
     @Test
     public void testEquals() {
-        assertFalse(ordinalEra1.equals(null));
+        assertNotEquals(null, ordinalEra1);
         assertEquals(ordinalEra1, ordinalEra1);
-        assertFalse(ordinalEra1.equals(ordinalEra2));
+        assertNotEquals(ordinalEra1, ordinalEra2);
     }
 
     /** Test of hashCode method, of class DefaultOrdinalEra. */
     @Test
     public void testHashCode() {
         int result = ordinalEra1.hashCode();
-        assertFalse(ordinalEra2.hashCode() == result);
+        assertNotEquals(ordinalEra2.hashCode(), result);
     }
 
     /** Test of toString method, of class DefaultOrdinalEra. */
     @Test
     public void testToString() {
         String result = ordinalEra1.toString();
-        assertFalse(ordinalEra2.toString().equals(result));
+        assertNotEquals(ordinalEra2.toString(), result);
     }
 }

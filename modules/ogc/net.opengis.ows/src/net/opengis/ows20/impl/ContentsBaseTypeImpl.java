@@ -80,9 +80,10 @@ public class ContentsBaseTypeImpl extends EObjectImpl implements ContentsBaseTyp
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<DatasetDescriptionSummaryBaseType> getDatasetDescriptionSummary() {
     if (datasetDescriptionSummary == null) {
-      datasetDescriptionSummary = new EObjectContainmentEList<DatasetDescriptionSummaryBaseType>(DatasetDescriptionSummaryBaseType.class, this, Ows20Package.CONTENTS_BASE_TYPE__DATASET_DESCRIPTION_SUMMARY);
+      datasetDescriptionSummary = new EObjectContainmentEList<>(DatasetDescriptionSummaryBaseType.class, this, Ows20Package.CONTENTS_BASE_TYPE__DATASET_DESCRIPTION_SUMMARY);
     }
     return datasetDescriptionSummary;
   }
@@ -92,9 +93,10 @@ public class ContentsBaseTypeImpl extends EObjectImpl implements ContentsBaseTyp
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<MetadataType> getOtherSource() {
     if (otherSource == null) {
-      otherSource = new EObjectContainmentEList<MetadataType>(MetadataType.class, this, Ows20Package.CONTENTS_BASE_TYPE__OTHER_SOURCE);
+      otherSource = new EObjectContainmentEList<>(MetadataType.class, this, Ows20Package.CONTENTS_BASE_TYPE__OTHER_SOURCE);
     }
     return otherSource;
   }

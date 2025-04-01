@@ -16,7 +16,7 @@
  */
 package org.geotools.feature;
 
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 /**
  * A utility class for creating simple Comparators for Features.
@@ -25,23 +25,20 @@ import org.opengis.feature.simple.SimpleFeature;
  */
 public final class FeatureComparators {
     /** A utility comparator for comparison by id. */
-    public static final java.util.Comparator BY_ID =
-            new java.util.Comparator() {
-                public int compare(Object o1, Object o2) {
-                    SimpleFeature f1 = (SimpleFeature) o1;
-                    SimpleFeature f2 = (SimpleFeature) o2;
+    public static final java.util.Comparator BY_ID = (o1, o2) -> {
+        SimpleFeature f1 = (SimpleFeature) o1;
+        SimpleFeature f2 = (SimpleFeature) o2;
 
-                    return f1.getID().compareTo(f2.getID());
-                }
-            };
+        return f1.getID().compareTo(f2.getID());
+    };
 
     /** Private constructor so default constructor is not available for this utility class. */
     private FeatureComparators() {}
 
     /**
-     * Create a Comparator which compares Features by the attribute at the given index. The
-     * attribute at the index MUST be Comparable. This will probably not work for heterogenous
-     * collections, UNLESS the classes at the given index are the same.
+     * Create a Comparator which compares Features by the attribute at the given index. The attribute at the index MUST
+     * be Comparable. This will probably not work for heterogenous collections, UNLESS the classes at the given index
+     * are the same.
      *
      * @param idx The index to look up attributes at.
      * @return A new Comparator.
@@ -51,9 +48,9 @@ public final class FeatureComparators {
     }
 
     /**
-     * Create a Comparator which compares Features by the attribute found at the given path. The
-     * attribute found MUST be Comparable. This will probably not work for heterogenous collections,
-     * UNLESS the attributes found are the same class.
+     * Create a Comparator which compares Features by the attribute found at the given path. The attribute found MUST be
+     * Comparable. This will probably not work for heterogenous collections, UNLESS the attributes found are the same
+     * class.
      *
      * @param name The xpath to use while comparing.
      * @return A new Comparator.
@@ -83,6 +80,7 @@ public final class FeatureComparators {
          * @param o2 The second Feature
          * @return A value indicating less than, equal, or greater than.
          */
+        @Override
         public int compare(Object o1, Object o2) {
             SimpleFeature f1 = (SimpleFeature) o1;
             SimpleFeature f2 = (SimpleFeature) o2;
@@ -97,8 +95,9 @@ public final class FeatureComparators {
          * @param att2 The second attribute to compare.
          * @return A value indicating less than, equal, or greater than.
          */
+        @SuppressWarnings("unchecked")
         protected int compareAtts(Object att1, Object att2) {
-            return ((Comparable) att1).compareTo((Comparable) att2);
+            return ((Comparable) att1).compareTo(att2);
         }
     }
 
@@ -123,6 +122,7 @@ public final class FeatureComparators {
          * @param o2 The second Feature
          * @return A value indicating less than, equal, or greater than.
          */
+        @Override
         public int compare(Object o1, Object o2) {
             SimpleFeature f1 = (SimpleFeature) o1;
             SimpleFeature f2 = (SimpleFeature) o2;
@@ -137,6 +137,7 @@ public final class FeatureComparators {
          * @param att2 The second attribute to compare.
          * @return A value indicating less than, equal, or greater than.
          */
+        @SuppressWarnings("unchecked")
         protected int compareAtts(Object att1, Object att2) {
             if ((att1 == null) && (att2 == null)) {
                 return 0;
@@ -150,7 +151,7 @@ public final class FeatureComparators {
                 return 1;
             }
 
-            return ((Comparable) att1).compareTo((Comparable) att2);
+            return ((Comparable) att1).compareTo(att2);
         }
     }
 }

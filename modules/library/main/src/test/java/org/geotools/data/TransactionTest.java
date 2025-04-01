@@ -19,29 +19,32 @@ package org.geotools.data;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import junit.framework.TestCase;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.memory.MemoryDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.FeatureId;
 
-public class TransactionTest extends TestCase {
+public class TransactionTest {
     MemoryDataStore ds;
     SimpleFeatureType type;
     Geometry geom;
 
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         type = DataUtilities.createType("default", "name:String,*geom:Geometry");
         GeometryFactory fac = new GeometryFactory();
         geom = fac.createPoint(new Coordinate(10, 10));
@@ -49,10 +52,10 @@ public class TransactionTest extends TestCase {
         ds = new MemoryDataStore(new SimpleFeature[] {f1});
     }
 
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
+    @After
+    public void tearDown() throws Exception {}
 
+    @Test
     public void testAddFeature() throws Exception {
         SimpleFeature f1 = SimpleFeatureBuilder.build(type, new Object[] {"one", geom}, null);
         SimpleFeature f2 = SimpleFeatureBuilder.build(type, new Object[] {"two", geom}, null);
@@ -67,6 +70,7 @@ public class TransactionTest extends TestCase {
         // store.getCount(Query.ALL));
     }
 
+    @Test
     public void testRemoveFeature() throws Exception {
         SimpleFeature f1 = SimpleFeatureBuilder.build(type, new Object[] {"one", geom}, null);
 
@@ -86,13 +90,14 @@ public class TransactionTest extends TestCase {
         // store.getCount(Query.ALL));
     }
 
-    private void count(SimpleFeatureStore store, int expected)
-            throws IOException, IllegalAttributeException {
+    private void count(SimpleFeatureStore store, int expected) throws IOException, IllegalAttributeException {
         int i = 0;
-        for (SimpleFeatureIterator reader = store.getFeatures().features(); reader.hasNext(); ) {
-            reader.next();
-            i++;
+        try (SimpleFeatureIterator reader = store.getFeatures().features()) {
+            while (reader.hasNext()) {
+                reader.next();
+                i++;
+            }
         }
-        assertEquals("Number of known feature as obtained from reader", expected, i);
+        Assert.assertEquals("Number of known feature as obtained from reader", expected, i);
     }
 }

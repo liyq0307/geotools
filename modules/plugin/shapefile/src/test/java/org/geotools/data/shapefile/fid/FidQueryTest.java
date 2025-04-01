@@ -18,20 +18,28 @@ package org.geotools.data.shapefile.fid;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.geotools.data.Query;
+import java.util.Map.Entry;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.NameImpl;
@@ -41,20 +49,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.Id;
-import org.opengis.filter.identity.FeatureId;
 
 public class FidQueryTest extends FIDTestCase {
 
     private ShapefileDataStore ds;
 
-    private static final FilterFactory2 fac = CommonFactoryFinder.getFilterFactory2(null);
+    private static final FilterFactory fac = CommonFactoryFinder.getFilterFactory(null);
 
-    Map<String, SimpleFeature> fids = new HashMap<String, SimpleFeature>();
+    Map<String, SimpleFeature> fids = new HashMap<>();
 
     SimpleFeatureStore featureStore;
 
@@ -67,15 +69,12 @@ public class FidQueryTest extends FIDTestCase {
         numFeatures = 0;
         featureStore = (SimpleFeatureStore) ds.getFeatureSource();
         {
-            SimpleFeatureIterator features = featureStore.getFeatures().features();
-            try {
+            try (SimpleFeatureIterator features = featureStore.getFeatures().features()) {
                 while (features.hasNext()) {
                     numFeatures++;
                     SimpleFeature feature = features.next();
                     fids.put(feature.getID(), feature);
                 }
-            } finally {
-                if (features != null) features.close();
             }
             assertEquals(numFeatures, fids.size());
         }
@@ -112,12 +111,10 @@ public class FidQueryTest extends FIDTestCase {
 
         Query query = new Query(schema.getTypeName());
         FeatureId id = newFids.iterator().next();
-        String fid = id.getID();
 
         Filter filter = fac.id(Collections.singleton(id));
         query.setFilter(filter);
-        SimpleFeatureIterator features = featureStore.getFeatures(query).features();
-        try {
+        try (SimpleFeatureIterator features = featureStore.getFeatures(query).features()) {
             feature = features.next();
             for (int i = 0; i < schema.getAttributeCount(); i++) {
                 Object value = feature.getAttribute(i);
@@ -125,8 +122,6 @@ public class FidQueryTest extends FIDTestCase {
                 assertEquals(newValue, value);
             }
             assertFalse(features.hasNext());
-        } finally {
-            if (features != null) features.close();
         }
     }
 
@@ -135,20 +130,15 @@ public class FidQueryTest extends FIDTestCase {
         SimpleFeature feature = this.fids.values().iterator().next();
         int newId = 237594123;
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
         Id createFidFilter = ff.id(Collections.singleton(ff.featureId(feature.getID())));
 
-        SimpleFeatureType schema = feature.getFeatureType();
         featureStore.modifyFeatures(new NameImpl("ID"), Integer.valueOf(newId), createFidFilter);
 
-        SimpleFeatureIterator features = featureStore.getFeatures(createFidFilter).features();
-        try {
-            assertFalse(feature.equals(features.next()));
-        } finally {
-            if (features != null) {
-                features.close();
-            }
+        try (SimpleFeatureIterator features =
+                featureStore.getFeatures(createFidFilter).features()) {
+            assertNotEquals(feature, features.next());
         }
         feature.setAttribute("ID", Integer.valueOf(newId));
         this.assertFidsMatch();
@@ -156,16 +146,8 @@ public class FidQueryTest extends FIDTestCase {
 
     @Test
     public void testDeleteFeature() throws Exception {
-        SimpleFeatureIterator features = featureStore.getFeatures().features();
-        SimpleFeature feature;
-        try {
-            feature = features.next();
-        } finally {
-            if (features != null) {
-                features.close();
-            }
-        }
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        SimpleFeature feature = DataUtilities.first(featureStore.getFeatures());
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         Id fidFilter = ff.id(Collections.singleton(ff.featureId(feature.getID())));
 
         featureStore.removeFeatures(fidFilter);
@@ -173,23 +155,17 @@ public class FidQueryTest extends FIDTestCase {
 
         assertEquals(fids.size(), featureStore.getCount(Query.ALL));
 
-        features = featureStore.getFeatures(fidFilter).features();
-        try {
+        try (SimpleFeatureIterator features =
+                featureStore.getFeatures(fidFilter).features()) {
             assertFalse(features.hasNext());
-        } finally {
-            if (features != null) {
-                features.close();
-            }
         }
 
         this.assertFidsMatch();
     }
 
     /**
-     * Attempt to test GEOT-5830 User reports that deleting a feature, re-requesting the data gives
-     * a duplicate FID and the subsequent attempt to delete fails due to corrupt FIX
-     *
-     * @throws Exception
+     * Attempt to test GEOT-5830 User reports that deleting a feature, re-requesting the data gives a duplicate FID and
+     * the subsequent attempt to delete fails due to corrupt FIX
      */
     @Test
     public void testDeleteCloseAndRerequestFID() throws Exception {
@@ -199,7 +175,7 @@ public class FidQueryTest extends FIDTestCase {
         try (SimpleFeatureIterator features = allfeatures.features()) {
             feature = features.next();
         }
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         Id fidFilter = ff.id(Collections.singleton(ff.featureId(feature.getID())));
 
         featureStore.removeFeatures(fidFilter);
@@ -223,7 +199,7 @@ public class FidQueryTest extends FIDTestCase {
         allfeatures = featureStore.getFeatures();
         try (SimpleFeatureIterator features = allfeatures.features()) {
 
-            SimpleFeature f = (SimpleFeature) features.next();
+            SimpleFeature f = features.next();
             assertFalse(fidFilter.evaluate(f));
         }
 
@@ -241,24 +217,19 @@ public class FidQueryTest extends FIDTestCase {
 
         int i = 0;
 
-        for (Iterator iter = fids.entrySet().iterator(); iter.hasNext(); ) {
+        for (Entry<String, SimpleFeature> stringSimpleFeatureEntry : fids.entrySet()) {
             i++;
-            Map.Entry entry = (Map.Entry) iter.next();
-            String fid = (String) entry.getKey();
+            Entry<String, SimpleFeature> entry = stringSimpleFeatureEntry;
+            String fid = entry.getKey();
             FeatureId id = fac.featureId(fid);
             Filter filter = fac.id(Collections.singleton(id));
             query.setFilter(filter);
-            SimpleFeatureIterator features = null;
-            try {
-                features = featureStore.getFeatures(query).features();
+            try (SimpleFeatureIterator features =
+                    featureStore.getFeatures(query).features()) {
                 assertTrue("Missing feature for fid " + fid, features.hasNext());
                 SimpleFeature feature = features.next();
                 assertFalse("More than one feature with fid " + fid, features.hasNext());
                 assertEquals(i + "th feature", entry.getValue(), feature);
-            } finally {
-                if (features != null) {
-                    features.close();
-                }
             }
         }
     }

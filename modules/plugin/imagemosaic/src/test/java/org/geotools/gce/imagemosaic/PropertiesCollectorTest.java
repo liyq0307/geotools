@@ -17,10 +17,12 @@
 package org.geotools.gce.imagemosaic;
 
 import static org.geotools.util.URLs.fileToUrl;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,9 +36,9 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.geotools.TestData;
+import org.geotools.api.data.Query;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.HarvestedSource;
-import org.geotools.data.Query;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollector;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollectorFinder;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollectorSPI;
@@ -47,8 +49,6 @@ import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
 
 /** @author Simone Giannecchini, GeoSolutions SAS */
 public class PropertiesCollectorTest {
@@ -71,10 +71,9 @@ public class PropertiesCollectorTest {
     public void test() {
 
         // get the spi
-        final Set<PropertiesCollectorSPI> spis =
-                PropertiesCollectorFinder.getPropertiesCollectorSPI();
+        final Set<PropertiesCollectorSPI> spis = PropertiesCollectorFinder.getPropertiesCollectorSPI();
         assertNotNull(spis);
-        assertTrue(!spis.isEmpty());
+        assertFalse(spis.isEmpty());
         assertEquals(15, spis.size());
     }
 
@@ -82,10 +81,9 @@ public class PropertiesCollectorTest {
     public void testString() throws IOException {
 
         // get the spi
-        final Set<PropertiesCollectorSPI> spis =
-                PropertiesCollectorFinder.getPropertiesCollectorSPI();
+        final Set<PropertiesCollectorSPI> spis = PropertiesCollectorFinder.getPropertiesCollectorSPI();
         assertNotNull(spis);
-        assertTrue(!spis.isEmpty());
+        assertFalse(spis.isEmpty());
         URL testUrl = TestData.url(this, "time_geotiff/stringregex.properties");
         // test a regex
         PropertiesCollectorSPI spi;
@@ -99,17 +97,16 @@ public class PropertiesCollectorTest {
             }
         }
 
-        assertTrue(false);
+        fail();
     }
 
     @Test
     public void testTime() throws IOException {
 
         // get the spi
-        final Set<PropertiesCollectorSPI> spis =
-                PropertiesCollectorFinder.getPropertiesCollectorSPI();
+        final Set<PropertiesCollectorSPI> spis = PropertiesCollectorFinder.getPropertiesCollectorSPI();
         assertNotNull(spis);
-        assertTrue(!spis.isEmpty());
+        assertFalse(spis.isEmpty());
         URL testUrl = TestData.url(this, "time_geotiff/timeregex.properties");
         // test a regex
         PropertiesCollectorSPI spi;
@@ -122,7 +119,7 @@ public class PropertiesCollectorTest {
                 return;
             }
         }
-        assertTrue(false);
+        fail();
     }
 
     @Test
@@ -142,11 +139,8 @@ public class PropertiesCollectorTest {
         }
         FileUtils.copyDirectory(source, directory2);
         // remove all files but one from the source dir
-        for (File file :
-                directory1.listFiles(
-                        f ->
-                                !f.getName().startsWith("passA2006128193711.")
-                                        && !f.getName().endsWith(".properties"))) {
+        for (File file : directory1.listFiles(f ->
+                !f.getName().startsWith("passA2006128193711.") && !f.getName().endsWith(".properties"))) {
             assertTrue(file.delete());
         }
 
@@ -182,23 +176,18 @@ public class PropertiesCollectorTest {
             reader.getGranules(null, true)
                     .getGranules(Query.ALL)
                     .accepts(
-                            new FeatureVisitor() {
-                                @Override
-                                public void visit(Feature feature) {
-                                    String location =
-                                            (String) feature.getProperty("location").getValue();
-                                    int idxSlash = location.lastIndexOf('\\');
-                                    int idxBackslash = location.lastIndexOf('/');
-                                    String name = location;
-                                    if (idxSlash > -1 || idxBackslash > -1) {
-                                        name =
-                                                location.substring(
-                                                        Math.max(idxSlash, idxBackslash) + 1);
-                                    }
-                                    Date ingest =
-                                            (Date) feature.getProperty("ingestion").getValue();
-                                    mappedDates.put(name, ingest);
+                            feature -> {
+                                String location =
+                                        (String) feature.getProperty("location").getValue();
+                                int idxSlash = location.lastIndexOf('\\');
+                                int idxBackslash = location.lastIndexOf('/');
+                                String name = location;
+                                if (idxSlash > -1 || idxBackslash > -1) {
+                                    name = location.substring(Math.max(idxSlash, idxBackslash) + 1);
                                 }
+                                Date ingest =
+                                        (Date) feature.getProperty("ingestion").getValue();
+                                mappedDates.put(name, ingest);
                             },
                             null);
 
@@ -215,10 +204,7 @@ public class PropertiesCollectorTest {
             long now = System.currentTimeMillis();
             long oneHour = 1000 * 60 * 60;
             for (Date d : mappedDates.values()) {
-                assertThat(
-                        d + " vs " + new Date(),
-                        now - d.getTime(),
-                        Matchers.lessThanOrEqualTo(oneHour));
+                assertThat(d + " vs " + new Date(), now - d.getTime(), Matchers.lessThanOrEqualTo(oneHour));
             }
         } finally {
             reader.dispose();

@@ -16,22 +16,21 @@
  */
 package org.geotools.util;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import org.geotools.api.util.Cloneable;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
-import org.opengis.util.Cloneable;
 
 /**
- * A {@linkplain Collections#checkedList checked} and {@linkplain Collections#synchronizedList
- * synchronized} {@link java.util.List}. Type checks are performed at run-time in addition of
- * compile-time checks. The synchronization lock can be modified at runtime by overriding the {@link
- * #getLock} method.
+ * A {@linkplain Collections#checkedList checked} and {@linkplain Collections#synchronizedList synchronized}
+ * {@link java.util.List}. Type checks are performed at run-time in addition of compile-time checks. The synchronization
+ * lock can be modified at runtime by overriding the {@link #getLock} method.
  *
- * <p>This class is similar to using the wrappers provided in {@link Collections}, minus the cost of
- * indirection levels and with the addition of overrideable methods.
+ * <p>This class is similar to using the wrappers provided in {@link Collections}, minus the cost of indirection levels
+ * and with the addition of overrideable methods.
  *
  * @param <E> The type of elements in the list.
  * @since 2.1
@@ -77,6 +76,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
      *
      * @since 2.4
      */
+    @Override
     public Class<E> getElementType() {
         return type;
     }
@@ -84,13 +84,13 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
     /** Make sure that {@link #type} is non-null. */
     private void ensureNonNull() {
         if (type == null) {
-            throw new IllegalArgumentException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, "type"));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, "type"));
         }
     }
 
     /**
-     * Checks the type of the specified object. The default implementation ensure that the object is
-     * assignable to the type specified at construction time.
+     * Checks the type of the specified object. The default implementation ensure that the object is assignable to the
+     * type specified at construction time.
      *
      * @param element the object to check, or {@code null}.
      * @throws IllegalArgumentException if the specified element is not of the expected type.
@@ -98,7 +98,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
     protected void ensureValidType(final E element) throws IllegalArgumentException {
         if (element != null && !type.isInstance(element)) {
             throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.ILLEGAL_CLASS_$2, element.getClass(), type));
+                    MessageFormat.format(ErrorKeys.ILLEGAL_CLASS_$2, element.getClass(), type));
         }
     }
 
@@ -108,8 +108,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
      * @param collection the collection to check, or {@code null}.
      * @throws IllegalArgumentException if at least one element is not of the expected type.
      */
-    private void ensureValid(final Collection<? extends E> collection)
-            throws IllegalArgumentException {
+    private void ensureValid(final Collection<? extends E> collection) throws IllegalArgumentException {
         if (collection != null) {
             for (final E element : collection) {
                 ensureValidType(element);
@@ -118,10 +117,10 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
     }
 
     /**
-     * Checks if changes in this collection are allowed. This method is automatically invoked after
-     * this collection got the {@linkplain #getLock lock} and before any operation that may change
-     * the content. The default implementation does nothing (i.e. this collection is modifiable).
-     * Subclasses should override this method if they want to control write access.
+     * Checks if changes in this collection are allowed. This method is automatically invoked after this collection got
+     * the {@linkplain #getLock lock} and before any operation that may change the content. The default implementation
+     * does nothing (i.e. this collection is modifiable). Subclasses should override this method if they want to control
+     * write access.
      *
      * @throws UnsupportedOperationException if this collection is unmodifiable.
      * @since 2.5
@@ -129,9 +128,8 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
     protected void checkWritePermission() throws UnsupportedOperationException {}
 
     /**
-     * Returns the synchronization lock. The default implementation returns {@code this}. Subclasses
-     * that override this method should be careful to update the lock reference when this list is
-     * {@linkplain #clone cloned}.
+     * Returns the synchronization lock. The default implementation returns {@code this}. Subclasses that override this
+     * method should be careful to update the lock reference when this list is {@linkplain #clone cloned}.
      *
      * @return The synchronization lock.
      * @since 2.5
@@ -145,7 +143,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
     public Iterator<E> iterator() {
         final Object lock = getLock();
         synchronized (lock) {
-            return new SynchronizedIterator<E>(super.iterator(), lock);
+            return new SynchronizedIterator<>(super.iterator(), lock);
         }
     }
 
@@ -178,10 +176,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
         }
     }
 
-    /**
-     * Returns the index of the first occurrence of the specified element in this list, or -1 if
-     * none.
-     */
+    /** Returns the index of the first occurrence of the specified element in this list, or -1 if none. */
     @Override
     public int indexOf(Object o) {
         synchronized (getLock()) {
@@ -189,10 +184,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
         }
     }
 
-    /**
-     * Returns the index of the last occurrence of the specified element in this list, or -1 if
-     * none.
-     */
+    /** Returns the index of the last occurrence of the specified element in this list, or -1 if none. */
     @Override
     public int lastIndexOf(Object o) {
         synchronized (getLock()) {
@@ -219,8 +211,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
      * @throws UnsupportedOperationException if this collection is unmodifiable.
      */
     @Override
-    public E set(final int index, final E element)
-            throws IllegalArgumentException, UnsupportedOperationException {
+    public E set(final int index, final E element) throws IllegalArgumentException, UnsupportedOperationException {
         ensureValidType(element);
         synchronized (getLock()) {
             checkWritePermission();
@@ -237,8 +228,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
      * @throws UnsupportedOperationException if this collection is unmodifiable.
      */
     @Override
-    public boolean add(final E element)
-            throws IllegalArgumentException, UnsupportedOperationException {
+    public boolean add(final E element) throws IllegalArgumentException, UnsupportedOperationException {
         ensureValidType(element);
         synchronized (getLock()) {
             checkWritePermission();
@@ -256,8 +246,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
      * @throws UnsupportedOperationException if this collection is unmodifiable.
      */
     @Override
-    public void add(final int index, final E element)
-            throws IllegalArgumentException, UnsupportedOperationException {
+    public void add(final int index, final E element) throws IllegalArgumentException, UnsupportedOperationException {
         ensureValidType(element);
         synchronized (getLock()) {
             checkWritePermission();
@@ -266,8 +255,8 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
     }
 
     /**
-     * Appends all of the elements in the specified collection to the end of this list, in the order
-     * that they are returned by the specified Collection's Iterator.
+     * Appends all of the elements in the specified collection to the end of this list, in the order that they are
+     * returned by the specified Collection's Iterator.
      *
      * @param collection the elements to be inserted into this list.
      * @return {@code true} if this list changed as a result of the call.
@@ -285,8 +274,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
     }
 
     /**
-     * Inserts all of the elements in the specified collection into this list, starting at the
-     * specified position.
+     * Inserts all of the elements in the specified collection into this list, starting at the specified position.
      *
      * @param index index at which to insert first element fromm the specified collection.
      * @param collection elements to be inserted into this list.
@@ -364,10 +352,7 @@ public class CheckedArrayList<E> extends ArrayList<E> implements CheckedCollecti
         }
     }
 
-    /**
-     * Increases the capacity, if necessary, to ensure that it can hold the given number of
-     * elements.
-     */
+    /** Increases the capacity, if necessary, to ensure that it can hold the given number of elements. */
     @Override
     public void ensureCapacity(final int minCapacity) {
         synchronized (getLock()) {

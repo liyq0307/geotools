@@ -19,13 +19,12 @@ package org.geotools.data.gen;
 
 import java.awt.RenderingHints.Key;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.Repository;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.Repository;
 import org.geotools.data.gen.info.GeneralizationInfos;
 import org.geotools.data.gen.info.GeneralizationInfosProvider;
 import org.geotools.data.gen.info.GeneralizationInfosProviderImpl;
@@ -37,38 +36,36 @@ import org.geotools.data.gen.info.GeneralizationInfosProviderImpl;
  *     <p>RepositoryClassName (String,mandatory) Name of a class implementing {@link Repository}
  *     <p>GeneralizationInfosProviderClassName (String,mandatory) Name of a class implementing
  *     {@link GeneralizationInfosProvider}
- *     <p>GeneralizationInfosProviderProviderParam (Object,optional) Parameter object for {@link
- *     GeneralizationInfosProvider#getGeneralizationInfos(Object)}
+ *     <p>GeneralizationInfosProviderProviderParam (Object,optional) Parameter object for
+ *     {@link GeneralizationInfosProvider#getGeneralizationInfos(Object)}
  */
 public class PreGeneralizedDataStoreFactory implements DataStoreFactorySpi {
 
-    public static final Param REPOSITORY_CLASS =
-            new Param(
-                    "RepositoryClassName",
-                    String.class,
-                    "Class name for data store repository implementation",
-                    true,
-                    DSFinderRepository.class.getName());
+    public static final Param REPOSITORY_CLASS = new Param(
+            "RepositoryClassName",
+            String.class,
+            "Class name for data store repository implementation",
+            true,
+            DSFinderRepository.class.getName());
 
-    public static final Param GENERALIZATION_INFOS_PROVIDER_CLASS =
-            new Param(
-                    "GeneralizationInfosProviderClassName",
-                    String.class,
-                    "Class name for GeneralizationInfosProvider implementation",
-                    true,
-                    GeneralizationInfosProviderImpl.class.getName());
+    public static final Param GENERALIZATION_INFOS_PROVIDER_CLASS = new Param(
+            "GeneralizationInfosProviderClassName",
+            String.class,
+            "Class name for GeneralizationInfosProvider implementation",
+            true,
+            GeneralizationInfosProviderImpl.class.getName());
 
-    public static final Param GENERALIZATION_INFOS_PROVIDER_PARAM =
-            new Param(
-                    "GeneralizationInfosProviderParam",
-                    String.class,
-                    "Optional config parameter for GeneralizationInfosProvider implementation",
-                    false);
+    public static final Param GENERALIZATION_INFOS_PROVIDER_PARAM = new Param(
+            "GeneralizationInfosProviderParam",
+            String.class,
+            "Optional config parameter for GeneralizationInfosProvider implementation",
+            false);
 
     public static final Param NAMESPACEP =
             new Param("namespace", URI.class, "uri to a the namespace", false); // not required
 
-    public DataStore createDataStore(Map<String, Serializable> params) throws IOException {
+    @Override
+    public DataStore createDataStore(Map<String, ?> params) throws IOException {
 
         String providerClassName = (String) GENERALIZATION_INFOS_PROVIDER_CLASS.lookUp(params);
         String repositoryClassName = (String) REPOSITORY_CLASS.lookUp(params);
@@ -77,13 +74,12 @@ public class PreGeneralizedDataStoreFactory implements DataStoreFactorySpi {
         URI namespace = (URI) NAMESPACEP.lookUp(params);
 
         try {
-            Class providerClass = Class.forName(providerClassName);
-            GeneralizationInfosProvider provider =
-                    (GeneralizationInfosProvider)
-                            providerClass.getDeclaredConstructor().newInstance();
+            Class<?> providerClass = Class.forName(providerClassName);
+            GeneralizationInfosProvider provider = (GeneralizationInfosProvider)
+                    providerClass.getDeclaredConstructor().newInstance();
             GeneralizationInfos gInfos = provider.getGeneralizationInfos(providerParam);
 
-            Class repositoryClass = Class.forName(repositoryClassName);
+            Class<?> repositoryClass = Class.forName(repositoryClassName);
             Repository repository =
                     (Repository) repositoryClass.getDeclaredConstructor().newInstance();
 
@@ -93,11 +89,13 @@ public class PreGeneralizedDataStoreFactory implements DataStoreFactorySpi {
         }
     }
 
-    public DataStore createNewDataStore(Map<String, Serializable> params) throws IOException {
+    @Override
+    public DataStore createNewDataStore(Map<String, ?> params) throws IOException {
         throw new UnsupportedOperationException();
     }
 
-    public boolean canProcess(Map<String, Serializable> params) {
+    @Override
+    public boolean canProcess(Map<String, ?> params) {
         String repositoryClass = null, providerClass = null;
         try {
             repositoryClass = (String) REPOSITORY_CLASS.lookUp(params);
@@ -113,27 +111,29 @@ public class PreGeneralizedDataStoreFactory implements DataStoreFactorySpi {
         return true;
     }
 
+    @Override
     public String getDescription() {
         return "Data store supporting generalized geometries";
     }
 
+    @Override
     public String getDisplayName() {
         return "Generalizing data store";
     }
 
+    @Override
     public Param[] getParametersInfo() {
         return new Param[] {
-            REPOSITORY_CLASS,
-            GENERALIZATION_INFOS_PROVIDER_CLASS,
-            GENERALIZATION_INFOS_PROVIDER_PARAM,
-            NAMESPACEP
+            REPOSITORY_CLASS, GENERALIZATION_INFOS_PROVIDER_CLASS, GENERALIZATION_INFOS_PROVIDER_PARAM, NAMESPACEP
         };
     }
 
+    @Override
     public boolean isAvailable() {
         return true;
     }
 
+    @Override
     public Map<Key, ?> getImplementationHints() {
         return Collections.emptyMap();
     }

@@ -16,17 +16,24 @@
  */
 package org.geotools.referencing.factory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.GeographicCRS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.factory.Hints;
-import org.junit.*;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.GeographicCRS;
+import org.junit.Test;
 
 /**
  * Tests the {@link HTTP_AuthorityFactory} class backed by WMS or AUTO factories.
@@ -88,7 +95,7 @@ public final class HTTP_AuthorityFactoryTest {
         assertSame(crs, CRS.decode("http://www.opengis.net/gml/srs/crs.xml#84"));
         assertSame(crs, CRS.decode("CRS:84"));
         assertNotSame(crs, DefaultGeographicCRS.WGS84);
-        assertFalse(DefaultGeographicCRS.WGS84.equals(crs));
+        assertNotEquals(DefaultGeographicCRS.WGS84, crs);
         assertTrue(CRS.equalsIgnoreMetadata(DefaultGeographicCRS.WGS84, crs));
 
         // Test CRS:83

@@ -20,9 +20,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 import org.geotools.data.ows.AbstractGetCapabilitiesRequest;
-import org.geotools.data.ows.HTTPResponse;
-import org.geotools.data.ows.Request;
 import org.geotools.data.ows.Response;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.xml.XMLHandlerHints;
 import org.xml.sax.EntityResolver;
@@ -35,7 +34,7 @@ public class GetCapabilitiesRequest extends AbstractGetCapabilitiesRequest {
 
     @Override
     protected void initService() {
-        setProperty(Request.SERVICE, "WFS");
+        setProperty(processKey(SERVICE), "WFS");
     }
 
     @Override

@@ -16,7 +16,15 @@
  */
 package org.geotools.renderer.lite;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FontFormatException;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.HeadlessException;
+import java.awt.Panel;
+import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
@@ -24,6 +32,13 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.Raster;
 import java.io.IOException;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.NamedStyle;
+import org.geotools.api.style.ResourceLocator;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.UserLayer;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.MapContent;
@@ -32,13 +47,6 @@ import org.geotools.renderer.RenderListener;
 import org.geotools.renderer.style.FontCache;
 import org.geotools.sld.v1_1.SLDConfiguration;
 import org.geotools.styling.DefaultResourceLocator;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.NamedStyle;
-import org.geotools.styling.ResourceLocator;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.UserLayer;
 import org.geotools.test.TestData;
 import org.geotools.xml.styling.SLDParser;
 import org.geotools.xsd.Parser;
@@ -65,8 +73,7 @@ public abstract class RendererBaseTest {
      * @throws Exception In the event of failure
      */
     protected static BufferedImage showRender(
-            String testName, GTRenderer renderer, long timeOut, ReferencedEnvelope... bounds)
-            throws Exception {
+            String testName, GTRenderer renderer, long timeOut, ReferencedEnvelope... bounds) throws Exception {
         return showRender(testName, renderer, timeOut, bounds, null);
     }
 
@@ -81,11 +88,7 @@ public abstract class RendererBaseTest {
      * @throws Exception In the event of failure
      */
     protected static BufferedImage showRender(
-            String testName,
-            GTRenderer renderer,
-            long timeOut,
-            ReferencedEnvelope[] bounds,
-            RenderListener listener)
+            String testName, GTRenderer renderer, long timeOut, ReferencedEnvelope[] bounds, RenderListener listener)
             throws Exception {
         BufferedImage[] images = new BufferedImage[bounds.length];
         for (int i = 0; i < images.length; i++) {
@@ -111,35 +114,33 @@ public abstract class RendererBaseTest {
         return image;
     }
 
-    public static void showImage(String testName, long timeOut, final BufferedImage image)
-            throws InterruptedException {
+    public static void showImage(String testName, long timeOut, final BufferedImage image) throws InterruptedException {
         final String headless = System.getProperty("java.awt.headless", "false");
         if (!headless.equalsIgnoreCase("true") && TestData.isInteractiveTest()) {
             try {
                 Frame frame = new Frame(testName);
-                frame.addWindowListener(
-                        new WindowAdapter() {
+                frame.addWindowListener(new WindowAdapter() {
 
-                            public void windowClosing(WindowEvent e) {
-                                e.getWindow().dispose();
-                            }
-                        });
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        e.getWindow().dispose();
+                    }
+                });
 
-                Panel p =
-                        new Panel() {
+                Panel p = new Panel() {
 
-                            /** <code>serialVersionUID</code> field */
-                            private static final long serialVersionUID = 1L;
+                    /** <code>serialVersionUID</code> field */
+                    private static final long serialVersionUID = 1L;
 
-                            {
-                                setPreferredSize(
-                                        new Dimension(image.getWidth(), image.getHeight()));
-                            }
+                    {
+                        setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
+                    }
 
-                            public void paint(Graphics g) {
-                                g.drawImage(image, 0, 0, this);
-                            }
-                        };
+                    @Override
+                    public void paint(Graphics g) {
+                        g.drawImage(image, 0, 0, this);
+                    }
+                };
 
                 frame.add(p);
                 frame.pack();
@@ -153,8 +154,7 @@ public abstract class RendererBaseTest {
         }
     }
 
-    public static BufferedImage renderImage(
-            GTRenderer renderer, ReferencedEnvelope bounds, RenderListener listener) {
+    public static BufferedImage renderImage(GTRenderer renderer, ReferencedEnvelope bounds, RenderListener listener) {
         int w = 300;
         int h = 300;
         return renderImage(renderer, bounds, listener, w, h);
@@ -178,8 +178,7 @@ public abstract class RendererBaseTest {
             totalWidth += bufferedImage.getWidth();
             height = Math.max(height, bufferedImage.getHeight());
         }
-        BufferedImage joinedImage =
-                new BufferedImage(totalWidth, height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage joinedImage = new BufferedImage(totalWidth, height, BufferedImage.TYPE_INT_ARGB);
         Graphics g = joinedImage.getGraphics();
         int x = 0;
         for (BufferedImage bufferedImage : images) {
@@ -221,14 +220,7 @@ public abstract class RendererBaseTest {
         }
     }
 
-    /**
-     * Utility to quickly render a set of vector data on top of a buffered image
-     *
-     * @param sources
-     * @param styles
-     * @return
-     * @throws Exception
-     */
+    /** Utility to quickly render a set of vector data on top of a buffered image */
     public static BufferedImage render(MapContent map) throws Exception {
         StreamingRenderer r = new StreamingRenderer();
         r.setMapContent(map);
@@ -236,14 +228,7 @@ public abstract class RendererBaseTest {
         return RendererBaseTest.showRender("testPointLabeling", r, 5000, map.getMaxBounds());
     }
 
-    /**
-     * Load a style from the test-data directory associated with the object.
-     *
-     * @param loader
-     * @param sldFilename
-     * @return
-     * @throws IOException
-     */
+    /** Load a style from the test-data directory associated with the object. */
     public static Style loadStyle(Object loader, String sldFilename) throws IOException {
         StyleFactory factory = CommonFactoryFinder.getStyleFactory(null);
 
@@ -254,26 +239,19 @@ public abstract class RendererBaseTest {
         return style;
     }
 
-    /**
-     * Load a Symbology Encoding style from the test-data directory associated with the object.
-     *
-     * @param loader
-     * @param sldFilename
-     * @return
-     * @throws IOException
-     */
+    /** Load a Symbology Encoding style from the test-data directory associated with the object. */
     protected static Style loadSEStyle(Object loader, String sldFilename) throws IOException {
         try {
             final java.net.URL surl = TestData.getResource(loader, sldFilename);
-            SLDConfiguration configuration =
-                    new SLDConfiguration() {
-                        protected void configureContext(
-                                org.picocontainer.MutablePicoContainer container) {
-                            DefaultResourceLocator locator = new DefaultResourceLocator();
-                            locator.setSourceUrl(surl);
-                            container.registerComponentInstance(ResourceLocator.class, locator);
-                        };
-                    };
+            SLDConfiguration configuration = new SLDConfiguration() {
+                @Override
+                protected void configureContext(org.picocontainer.MutablePicoContainer container) {
+                    DefaultResourceLocator locator = new DefaultResourceLocator();
+                    locator.setSourceUrl(surl);
+                    container.registerComponentInstance(ResourceLocator.class, locator);
+                }
+                ;
+            };
             Parser parser = new Parser(configuration);
 
             StyledLayerDescriptor sld = (StyledLayerDescriptor) parser.parse(surl.openStream());
@@ -290,9 +268,9 @@ public abstract class RendererBaseTest {
                 }
 
                 if (styles != null) {
-                    for (int j = 0; j < styles.length; i++) {
-                        if (!(styles[j] instanceof NamedStyle)) {
-                            return styles[j];
+                    for (Style s : styles) {
+                        if (!(s instanceof NamedStyle)) {
+                            return s;
                         }
                     }
                 }
@@ -306,28 +284,14 @@ public abstract class RendererBaseTest {
         }
     }
 
-    /**
-     * Checks the pixel i/j has the specified color
-     *
-     * @param image
-     * @param i
-     * @param j
-     * @param color
-     */
+    /** Checks the pixel i/j has the specified color */
     public static void assertPixel(BufferedImage image, int i, int j, Color color) {
         Color actual = getPixelColor(image, i, j);
 
         Assert.assertEquals(color, actual);
     }
 
-    /**
-     * Checks the pixel i/j has the specified color
-     *
-     * @param image
-     * @param i
-     * @param j
-     * @param color
-     */
+    /** Checks the pixel i/j has the specified color */
     public static void assertPixel(BufferedImage image, int i, int j, Color color, int tolerance) {
         Color actual = getPixelColor(image, i, j);
 
@@ -336,15 +300,7 @@ public abstract class RendererBaseTest {
         Assert.assertTrue(Math.abs(color.getBlue() - actual.getBlue()) < tolerance);
     }
 
-    /**
-     * Gets a specific pixel color from the specified buffered image
-     *
-     * @param image
-     * @param i
-     * @param j
-     * @param color
-     * @return
-     */
+    /** Gets a specific pixel color from the specified buffered image */
     private static Color getPixelColor(BufferedImage image, int i, int j) {
         ColorModel cm = image.getColorModel();
         Raster raster = image.getRaster();
@@ -352,12 +308,7 @@ public abstract class RendererBaseTest {
 
         Color actual;
         if (cm.hasAlpha()) {
-            actual =
-                    new Color(
-                            cm.getRed(pixel),
-                            cm.getGreen(pixel),
-                            cm.getBlue(pixel),
-                            cm.getAlpha(pixel));
+            actual = new Color(cm.getRed(pixel), cm.getGreen(pixel), cm.getBlue(pixel), cm.getAlpha(pixel));
         } else {
             actual = new Color(cm.getRed(pixel), cm.getGreen(pixel), cm.getBlue(pixel), 255);
         }
@@ -367,10 +318,8 @@ public abstract class RendererBaseTest {
     /** Configure the Bistream Vera Sans font so that it's available to the JVM */
     public static void setupVeraFonts() throws IOException, FontFormatException {
         FontCache.getDefaultInstance()
-                .registerFont(
-                        java.awt.Font.createFont(
-                                java.awt.Font.TRUETYPE_FONT,
-                                TestData.getResource(RendererBaseTest.class, "Vera.ttf")
-                                        .openStream()));
+                .registerFont(java.awt.Font.createFont(
+                        java.awt.Font.TRUETYPE_FONT,
+                        TestData.getResource(RendererBaseTest.class, "Vera.ttf").openStream()));
     }
 }

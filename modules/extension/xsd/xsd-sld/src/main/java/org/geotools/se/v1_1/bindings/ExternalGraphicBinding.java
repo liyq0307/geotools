@@ -18,11 +18,11 @@ package org.geotools.se.v1_1.bindings;
 
 import javax.swing.Icon;
 import javax.xml.namespace.QName;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.ResourceLocator;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.se.v1_1.SE;
 import org.geotools.sld.bindings.SLDExternalGraphicBinding;
-import org.geotools.styling.ExternalGraphic;
-import org.geotools.styling.ResourceLocator;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
@@ -71,6 +71,7 @@ public class ExternalGraphicBinding extends SLDExternalGraphicBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.ExternalGraphic;
     }
@@ -82,6 +83,7 @@ public class ExternalGraphicBinding extends SLDExternalGraphicBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         ExternalGraphic g;
         if (node.hasChild("InlineContent")) {

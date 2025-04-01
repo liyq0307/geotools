@@ -17,23 +17,18 @@
 package org.geotools.map;
 
 import java.util.logging.Level;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.style.Style;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.util.FeatureUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.feature.SchemaException;
-import org.geotools.geometry.Envelope2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.styling.Style;
-import org.geotools.util.factory.FactoryRegistryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Layer used to draw a raster {@link GridCoverage}.
  *
- * <p>Direct access to the {@link GridCoverage} is available using {@link #getCoverage()}, the
- * outline of the raster is also available via {@link #toFeatureCollection()} for vector based
- * rendering systems.
+ * <p>Direct access to the {@link GridCoverage} is available using {@link #getCoverage()}, the outline of the raster is
+ * also available via {@link #toFeatureCollection()} for vector based rendering systems.
  *
  * @author Jody Garnett
  * @version 8.0
@@ -47,22 +42,12 @@ public class GridCoverageLayer extends RasterLayer {
      * Create layer to draw the provided grid coverage.
      *
      * @param coverage The new layer that has been added.
-     * @param style
-     * @throws SchemaException
-     * @throws FactoryRegistryException
-     * @throws TransformException
      */
     public GridCoverageLayer(GridCoverage2D coverage, Style style) {
         super(style);
         this.coverage = coverage;
     }
-    /**
-     * Create layer to draw the provided grid coverage.
-     *
-     * @param coverage
-     * @param style
-     * @param title
-     */
+    /** Create layer to draw the provided grid coverage. */
     public GridCoverageLayer(GridCoverage2D coverage, Style style, String title) {
         super(style, title);
         this.coverage = coverage;
@@ -98,10 +83,11 @@ public class GridCoverageLayer extends RasterLayer {
      *
      * @return layer bounds generated from the grid coverage.
      */
+    @Override
     public ReferencedEnvelope getBounds() {
         if (coverage != null) {
             CoordinateReferenceSystem crs = coverage.getCoordinateReferenceSystem();
-            Envelope2D bounds = coverage.getEnvelope2D();
+            ReferencedEnvelope bounds = coverage.getEnvelope2D();
             if (bounds != null) {
                 return new ReferencedEnvelope(bounds);
             } else if (crs != null) {
@@ -111,6 +97,7 @@ public class GridCoverageLayer extends RasterLayer {
         return null;
     }
 
+    @Override
     public SimpleFeatureCollection toFeatureCollection() {
         SimpleFeatureCollection collection;
         try {

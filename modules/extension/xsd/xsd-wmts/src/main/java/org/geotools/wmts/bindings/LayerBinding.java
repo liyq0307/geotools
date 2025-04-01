@@ -59,6 +59,7 @@ public class LayerBinding extends AbstractSimpleBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WMTS.Layer;
     }
@@ -71,6 +72,7 @@ public class LayerBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class<LayerType> getType() {
         return LayerType.class;
     }
@@ -85,8 +87,7 @@ public class LayerBinding extends AbstractSimpleBinding {
     @SuppressWarnings("unchecked")
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         LayerType layer = factory.createLayerType();
-        List<Node> children;
-        children = node.getChildren("Abstract");
+        List<Node> children = node.getChildren("Abstract");
         for (Node c : children) {
             layer.getAbstract().add(c.getValue());
         }
@@ -95,9 +96,8 @@ public class LayerBinding extends AbstractSimpleBinding {
             layer.getBoundingBox().add(c.getValue());
         }
         layer.getWGS84BoundingBox().add(node.getChildValue("WGS84BoundingBox"));
-        layer.getDatasetDescriptionSummary()
-                .addAll(node.getChildren(DatasetDescriptionSummaryBaseType.class));
-        layer.getDimension().addAll(node.getChildren(DimensionType.class));
+        layer.getDatasetDescriptionSummary().addAll(node.getChildren(DatasetDescriptionSummaryBaseType.class));
+        layer.getDimension().addAll(node.getChildValues(DimensionType.class));
         children = node.getChildren("Format");
         for (Node c : children) {
             layer.getFormat().add((String) c.getValue());
@@ -109,7 +109,7 @@ public class LayerBinding extends AbstractSimpleBinding {
         layer.setIdentifier((CodeType) node.getChildValue("Identifier"));
         layer.getKeywords().addAll(node.getChildren("Keyword"));
         layer.getMetadata().addAll(node.getChildren(MetadataType.class));
-        layer.getResourceURL().addAll(node.getChildren(URLTemplateType.class));
+        layer.getResourceURL().addAll(node.getChildValues(URLTemplateType.class));
         children = node.getChildren("Style");
         for (Node c : children) {
             layer.getStyle().add((StyleType) c.getValue());

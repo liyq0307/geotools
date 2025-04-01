@@ -34,12 +34,10 @@ public class HanaGeographyTestSetup extends JDBCGeographyTestSetup {
     @Override
     protected void createGeoPointTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.createTestSchema();
 
-            String[][] cols = {
-                {"id", "INT PRIMARY KEY"}, {"name", "VARCHAR(64)"}, {"geo", "ST_Geometry(4326)"}
-            };
+            String[][] cols = {{"id", "INT PRIMARY KEY"}, {"name", "VARCHAR(64)"}, {"geo", "ST_Geometry(4326)"}};
             htu.createRegisteredTestTable(POINT_TABLE, cols);
 
             htu.insertIntoTestTable(
@@ -63,7 +61,7 @@ public class HanaGeographyTestSetup extends JDBCGeographyTestSetup {
     @Override
     protected void dropGeoPointTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.dropTestTableCascade(POINT_TABLE);
         }
     }
@@ -71,12 +69,10 @@ public class HanaGeographyTestSetup extends JDBCGeographyTestSetup {
     @Override
     protected void createGeoLineTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.createTestSchema();
 
-            String[][] cols = {
-                {"id", "INT PRIMARY KEY"}, {"name", "VARCHAR(64)"}, {"geo", "ST_Geometry(4326)"}
-            };
+            String[][] cols = {{"id", "INT PRIMARY KEY"}, {"name", "VARCHAR(64)"}, {"geo", "ST_Geometry(4326)"}};
             htu.createRegisteredTestTable(LINE_TABLE, cols);
 
             htu.insertIntoTestTable(
@@ -90,7 +86,7 @@ public class HanaGeographyTestSetup extends JDBCGeographyTestSetup {
     @Override
     protected void dropGeoLineTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.dropTestTableCascade(LINE_TABLE);
         }
     }

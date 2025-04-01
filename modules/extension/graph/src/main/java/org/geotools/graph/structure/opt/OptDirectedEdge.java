@@ -80,11 +80,7 @@ public class OptDirectedEdge extends OptGraphable implements DirectedEdge {
         return (node == m_in ? m_out : node == m_out ? m_in : null);
     }
 
-    /**
-     * Unsupported Operation.
-     *
-     * @throws UnsupportedOperationException
-     */
+    /** Unsupported Operation. */
     @Override
     public void reverse() {
         throw new UnsupportedOperationException(getClass().getName() + "#reverse()");
@@ -93,11 +89,9 @@ public class OptDirectedEdge extends OptGraphable implements DirectedEdge {
     /** @see Edge#compareNodes(Edge) */
     @Override
     public int compareNodes(Edge other) {
-        if (m_in.equals(other.getNodeA()) && m_out.equals(other.getNodeB()))
-            return (Edge.EQUAL_NODE_ORIENTATION);
+        if (m_in.equals(other.getNodeA()) && m_out.equals(other.getNodeB())) return (Edge.EQUAL_NODE_ORIENTATION);
 
-        if (m_in.equals(other.getNodeB()) && m_out.equals(other.getNodeA()))
-            return (Edge.OPPOSITE_NODE_ORIENTATION);
+        if (m_in.equals(other.getNodeB()) && m_out.equals(other.getNodeA())) return (Edge.OPPOSITE_NODE_ORIENTATION);
 
         return (Edge.UNEQUAL_NODE_ORIENTATION);
     }
@@ -108,20 +102,17 @@ public class OptDirectedEdge extends OptGraphable implements DirectedEdge {
         ArrayList<Edge> related = new ArrayList<>(m_in.getDegree() + m_out.getDegree() - 2);
 
         Edge[] edges = m_in.getInEdgeArray();
-        for (int i = 0; i < edges.length; i++) {
-            related.add(edges[i]);
+        for (Edge edge : edges) {
+            related.add(edge);
         }
 
         edges = m_in.getOutEdgeArray();
-        for (int i = 0; i < edges.length; i++) {
-            Edge e = edges[i];
-            if (!e.equals(this) && !(e.getNodeA().equals(e.getNodeB()))) related.add(edges[i]);
+        for (Edge e : edges) {
+            if (!e.equals(this) && !(e.getNodeA().equals(e.getNodeB()))) related.add(e);
         }
 
         edges = m_out.getInEdgeArray();
-        for (int i = 0; i < edges.length; i++) {
-            Edge e = edges[i];
-
+        for (Edge e : edges) {
             switch (compareNodes(e)) {
                 case Edge.EQUAL_NODE_ORIENTATION:
                 case Edge.OPPOSITE_NODE_ORIENTATION:
@@ -133,10 +124,8 @@ public class OptDirectedEdge extends OptGraphable implements DirectedEdge {
         }
 
         edges = m_out.getOutEdgeArray();
-        for (int i = 0; i < edges.length; i++) {
-            Edge e = edges[i];
-
-            switch (compareNodes(edges[i])) {
+        for (Edge e : edges) {
+            switch (compareNodes(e)) {
                 case Edge.EQUAL_NODE_ORIENTATION:
                 case Edge.OPPOSITE_NODE_ORIENTATION:
                     continue; // already added
@@ -208,11 +197,7 @@ public class OptDirectedEdge extends OptGraphable implements DirectedEdge {
             }
         }
 
-        /**
-         * Unsupported Operation.
-         *
-         * @throws UnsupportedOperationException
-         */
+        /** Unsupported Operation. */
         @Override
         public void remove() {
             throw new UnsupportedOperationException(getClass().getName() + "#remove()");

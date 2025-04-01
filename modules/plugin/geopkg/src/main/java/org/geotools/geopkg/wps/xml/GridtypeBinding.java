@@ -51,6 +51,7 @@ import org.geotools.xsd.Node;
 public class GridtypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GPKG.gridtype;
     }
@@ -62,6 +63,7 @@ public class GridtypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return TileMatrix.class;
     }
@@ -73,6 +75,7 @@ public class GridtypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         int zoomlevel = (Integer) node.getChildValue("zoomlevel");
@@ -83,7 +86,6 @@ public class GridtypeBinding extends AbstractComplexBinding {
         double xpixelsize = ((BigDecimal) node.getChildValue("pixelxsize")).doubleValue();
         double ypixelsize = ((BigDecimal) node.getChildValue("pixelysize")).doubleValue();
 
-        return new TileMatrix(
-                zoomlevel, matrixwidth, matrixheight, tilewidth, tilheight, xpixelsize, ypixelsize);
+        return new TileMatrix(zoomlevel, matrixwidth, matrixheight, tilewidth, tilheight, xpixelsize, ypixelsize);
     }
 }

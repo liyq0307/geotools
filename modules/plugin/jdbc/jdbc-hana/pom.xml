@@ -7,18 +7,14 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                               http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools.jdbc</groupId>
     <artifactId>gt-jdbc</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
-
 
   <!-- =========================================================== -->
   <!--     Module Description                                      -->
@@ -27,12 +23,8 @@
   <artifactId>gt-jdbc-hana</artifactId>
   <packaging>jar</packaging>
   <name>SAP HANA DataStore</name>
-  
 
-
-  <description>
-    DataStore for SAP HANA Database.
-  </description>
+  <description>DataStore for SAP HANA Database.</description>
 
   <licenses>
     <license>
@@ -47,8 +39,8 @@
   <!-- =========================================================== -->
   <developers>
     <developer>
-      <name>Stefan Uhrig</name>
       <id>stefanuhrig</id>
+      <name>Stefan Uhrig</name>
       <email>stefan.uhrig@sap.com</email>
       <organization>SAP SE</organization>
       <roles>
@@ -58,30 +50,43 @@
     </developer>
   </developers>
 
-  <profiles>
-    <!-- If you have access to the HANA JDBC driver you can build  -->
-    <!-- this geotools plugin with that driver:                    -->
-    <!-- Install into maven:
-            mvn install:install-file -Dfile=ngdbc.jar \
-                -DgroupId=com.sap.db.jdbc -DartifactId=ngdbc \
-                -Dversion={version} -Dpackaging=jar -DgeneratePom=true
-                                                                   -->
-    <!-- You can then supply -Dhana=true on the command line       -->
-    <profile>
-      <id>hanaDriver</id>
-      <activation>
-        <property>
-          <name>hana</name>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>com.sap.db.jdbc</groupId>
-          <artifactId>ngdbc</artifactId>
-          <version>[2.0.0,)</version>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
+  <dependencies>
+    <dependency>
+      <groupId>javax.measure</groupId>
+      <artifactId>unit-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.sap.cloud.db.jdbc</groupId>
+      <artifactId>ngdbc</artifactId>
+      <version>[2.0.0,)</version>
+      <!--
+      The SAP DEVELOPER LICENSE AGREEMENT does not permit redistribution
+      of the JDBC driver, but it permits the installation on devices you
+      own or control. Hence, downloading it for running the tests should
+      be fine.
+      -->
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.stephenc.jcip</groupId>
+      <artifactId>jcip-annotations</artifactId>
+      <version>1.0-1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <parallel>classesAndMethods</parallel>
+          <threadCount>16</threadCount>
+          <perCoreThreadCount>false</perCoreThreadCount>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

@@ -16,61 +16,70 @@
  */
 package org.geotools.gml3.bindings;
 
-import org.geotools.geometry.DirectPosition1D;
-import org.geotools.geometry.DirectPosition2D;
-import org.geotools.geometry.DirectPosition3D;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import org.geotools.api.geometry.Position;
+import org.geotools.geometry.Position1D;
+import org.geotools.geometry.Position2D;
+import org.geotools.geometry.Position3D;
+import org.geotools.geometry.jts.coordinatesequence.CoordinateSequences;
 import org.geotools.gml3.GML;
 import org.geotools.gml3.GML3TestSupport;
+import org.junit.Test;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.geometry.DirectPosition;
 import org.w3c.dom.Document;
 
 public class DirectPositionListTypeBindingTest extends GML3TestSupport {
+    @Test
     public void test1D() throws Exception {
         GML3MockData.element(GML.posList, document, document);
         document.getDocumentElement().setAttribute("srsDimension", "1");
         document.getDocumentElement().setAttribute("count", "2");
         document.getDocumentElement().appendChild(document.createTextNode("1.0 2.0 "));
 
-        DirectPosition[] dps = (DirectPosition[]) parse();
+        Position[] dps = (Position[]) parse();
         assertNotNull(dps);
 
         assertEquals(2, dps.length);
-        assertTrue(dps[0] instanceof DirectPosition1D);
-        assertTrue(dps[1] instanceof DirectPosition1D);
+        assertTrue(dps[0] instanceof Position1D);
+        assertTrue(dps[1] instanceof Position1D);
 
         assertEquals(1d, dps[0].getOrdinate(0), 0d);
         assertEquals(2d, dps[1].getOrdinate(0), 0d);
     }
 
+    @Test
     public void test2D() throws Exception {
         GML3MockData.element(GML.posList, document, document);
         document.getDocumentElement().setAttribute("srsDimension", "2");
         document.getDocumentElement().setAttribute("count", "1");
         document.getDocumentElement().appendChild(document.createTextNode("1.0 2.0 "));
 
-        DirectPosition[] dps = (DirectPosition[]) parse();
+        Position[] dps = (Position[]) parse();
         assertNotNull(dps);
 
         assertEquals(1, dps.length);
-        assertTrue(dps[0] instanceof DirectPosition2D);
+        assertTrue(dps[0] instanceof Position2D);
 
         assertEquals(1d, dps[0].getOrdinate(0), 0d);
         assertEquals(2d, dps[0].getOrdinate(1), 0d);
     }
 
+    @Test
     public void test3D() throws Exception {
         GML3MockData.element(GML.posList, document, document);
         document.getDocumentElement().setAttribute("srsDimension", "3");
 
         document.getDocumentElement().appendChild(document.createTextNode("1.0 2.0 1.0 3 4 5"));
 
-        DirectPosition[] dps = (DirectPosition[]) parse();
+        Position[] dps = (Position[]) parse();
         assertNotNull(dps);
 
         assertEquals(2, dps.length);
-        assertTrue(dps[0] instanceof DirectPosition3D);
+        assertTrue(dps[0] instanceof Position3D);
 
         assertEquals(1d, dps[0].getOrdinate(0), 0d);
         assertEquals(2d, dps[0].getOrdinate(1), 0d);
@@ -81,17 +90,19 @@ public class DirectPositionListTypeBindingTest extends GML3TestSupport {
         assertEquals(5d, dps[1].getOrdinate(2), 0d);
     }
 
+    @Test
     public void testEncode2D() throws Exception {
         LineString line = GML3MockData.lineStringLite2D();
         CoordinateSequence seq = line.getCoordinateSequence();
         Document doc = encode(seq, GML.posList);
-        checkPosListOrdinates(doc, 2 * line.getNumPoints());
+        checkPosListOrdinates(doc, CoordinateSequences.coordinateDimension(seq) * line.getNumPoints());
     }
 
+    @Test
     public void testEncode3D() throws Exception {
         LineString line = GML3MockData.lineStringLite3D();
         CoordinateSequence seq = line.getCoordinateSequence();
         Document doc = encode(seq, GML.posList);
-        checkPosListOrdinates(doc, 3 * line.getNumPoints());
+        checkPosListOrdinates(doc, CoordinateSequences.coordinateDimension(seq) * line.getNumPoints());
     }
 }

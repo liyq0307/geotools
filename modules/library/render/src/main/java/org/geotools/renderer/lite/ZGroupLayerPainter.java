@@ -19,17 +19,17 @@ package org.geotools.renderer.lite;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.renderer.lite.StreamingRenderer.RenderableFeature;
-import org.opengis.feature.Feature;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * Paints a group of {@link LiteFeatureTypeStyle} all associated with the same {@link FeatureSource}
  *
  * @author Andrea Aime - GeoSolutions
  */
-class ZGroupLayerPainter {
+class ZGroupLayerPainter implements AutoCloseable {
 
     Feature currentFeature;
 
@@ -48,10 +48,7 @@ class ZGroupLayerPainter {
     boolean complete = false;
 
     public ZGroupLayerPainter(
-            MarkFeatureIterator iterator,
-            List<LiteFeatureTypeStyle> lfts,
-            StreamingRenderer renderer,
-            String layerId)
+            MarkFeatureIterator iterator, List<LiteFeatureTypeStyle> lfts, StreamingRenderer renderer, String layerId)
             throws IOException {
         super();
         this.iterator = iterator;
@@ -76,7 +73,8 @@ class ZGroupLayerPainter {
         for (int i = 0; i < lfts.size(); i++) {
             while (!complete && reference.equals(currentKey)) {
                 renderable.setFeature(currentFeature);
-                renderer.processFeature(renderable, lfts.get(i));
+                LiteFeatureTypeStyle lftsi = lfts.get(i);
+                renderer.processFeature(renderable, lftsi, lftsi.projectionHandler);
                 if (renderer.renderingStopRequested) {
                     return;
                 }
@@ -121,6 +119,7 @@ class ZGroupLayerPainter {
         return complete;
     }
 
+    @Override
     public void close() {
         if (iterator != null) {
             iterator.close();

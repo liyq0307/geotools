@@ -19,18 +19,18 @@ package org.geotools.coverage.processing.operation;
 import java.awt.image.RenderedImage;
 import java.util.Map;
 import javax.media.jai.ParameterBlockJAI;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.OperationJAI;
 import org.geotools.util.NumberRange;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 /**
- * Maps the sample values of a coverage from one range to another range. The rescaling is done by
- * multiplying each sample value by one of a set of constants and then adding another constant to
- * the result of the multiplication. The destination sample values are defined by the pseudocode:
+ * Maps the sample values of a coverage from one range to another range. The rescaling is done by multiplying each
+ * sample value by one of a set of constants and then adding another constant to the result of the multiplication. The
+ * destination sample values are defined by the pseudocode:
  *
  * <BLOCKQUOTE>
  *
@@ -100,16 +100,19 @@ public class Rescale extends OperationJAI {
      * @todo Not yet implemented.
      */
     @Override
-    protected NumberRange deriveRange(final NumberRange[] ranges, final Parameters parameters) {
+    protected NumberRange<? extends Number> deriveRange(
+            final NumberRange<? extends Number>[] ranges, final Parameters parameters) {
         return super.deriveRange(ranges, parameters);
     }
 
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        GridCoverage2D source = (GridCoverage2D) parameters2.parameter("source0").getValue();
+    @Override
+    protected void handleJAIEXTParams(ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
+        GridCoverage2D source =
+                (GridCoverage2D) parameters2.parameter("source0").getValue();
         handleROINoDataInternal(parameters, source, "Rescale", 2, 3);
     }
 
+    @Override
     protected Map<String, ?> getProperties(
             RenderedImage data,
             CoordinateReferenceSystem crs,
@@ -117,7 +120,6 @@ public class Rescale extends OperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], "Rescale", 2, 3, 5);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], "Rescale", 2, 3, 5);
     }
 }

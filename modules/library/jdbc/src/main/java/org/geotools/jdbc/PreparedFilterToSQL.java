@@ -22,22 +22,21 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.data.jdbc.FilterToSQL;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.Id;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.identity.Identifier;
 
 /**
  * Extension of FilterToSQL intended for use with prepared statements.
  *
- * <p>Each time a {@link Literal} is visited, a '?' is encoded, and the value and type of the
- * literal are stored, available after the fact via {@link #getLiteralValues()} and {@link
- * #getLiteralTypes()}.
+ * <p>Each time a {@link Literal} is visited, a '?' is encoded, and the value and type of the literal are stored,
+ * available after the fact via {@link #getLiteralValues()} and {@link #getLiteralTypes()}.
  *
  * @author Justin Deoliveira, OpenGEO
  * @author Andrea Aime, OpenGEO
@@ -53,21 +52,12 @@ public class PreparedFilterToSQL extends FilterToSQL {
     protected PreparedStatementSQLDialect dialect;
     boolean prepareEnabled = true;
 
-    /**
-     * Contructor taking a reference to the SQL dialect, will use it to encode geometry placeholders
-     *
-     * @param dialect
-     */
+    /** Contructor taking a reference to the SQL dialect, will use it to encode geometry placeholders */
     public PreparedFilterToSQL(PreparedStatementSQLDialect dialect) {
         this.dialect = dialect;
     }
 
-    /**
-     * If true (default) a sql statement with literal placemarks is created, otherwise a normal
-     * statement is created
-     *
-     * @return
-     */
+    /** If true (default) a sql statement with literal placemarks is created, otherwise a normal statement is created */
     public boolean isPrepareEnabled() {
         return prepareEnabled;
     }
@@ -80,6 +70,7 @@ public class PreparedFilterToSQL extends FilterToSQL {
         super(out);
     }
 
+    @Override
     public Object visit(Literal expression, Object context) throws RuntimeException {
         if (!prepareEnabled) return super.visit(expression, context);
 
@@ -102,8 +93,7 @@ public class PreparedFilterToSQL extends FilterToSQL {
         literalValues.add(literalValue);
         SRIDs.add(currentSRID);
         dimensions.add(currentDimension);
-        descriptors.add(
-                context instanceof AttributeDescriptor ? (AttributeDescriptor) context : null);
+        descriptors.add(context instanceof AttributeDescriptor ? (AttributeDescriptor) context : null);
         literalTypes.add(clazz);
 
         try {
@@ -114,8 +104,7 @@ public class PreparedFilterToSQL extends FilterToSQL {
                 if (Geometry.class.isAssignableFrom(literalValue.getClass())) {
                     int srid = currentSRID != null ? currentSRID : -1;
                     int dimension = currentDimension != null ? currentDimension : -1;
-                    dialect.prepareGeometryValue(
-                            (Geometry) literalValue, dimension, srid, Geometry.class, sb);
+                    dialect.prepareGeometryValue((Geometry) literalValue, dimension, srid, Geometry.class, sb);
                 } else if (encodingFunction) {
                     dialect.prepareFunctionArgument(clazz, sb);
                 } else {
@@ -131,11 +120,9 @@ public class PreparedFilterToSQL extends FilterToSQL {
     }
 
     /**
-     * When returning true, the {@link Literal} visit will turn {@link Envelope} objects (typically
-     * coming from {@link org.opengis.filter.spatial.BBOX} filters) into {@link Polygon}. Defaults
-     * to true, subclasses can override.
-     *
-     * @return
+     * When returning true, the {@link Literal} visit will turn {@link Envelope} objects (typically coming from
+     * {@link org.geotools.api.filter.spatial.BBOX} filters) into {@link Polygon}. Defaults to true, subclasses can
+     * override.
      */
     protected boolean convertEnvelopeToPolygon() {
         return true;
@@ -156,6 +143,7 @@ public class PreparedFilterToSQL extends FilterToSQL {
      * @param filter the
      * @throws RuntimeException If there's a problem writing output
      */
+    @Override
     public Object visit(Id filter, Object extraData) {
 
         if (primaryKey == null) {
@@ -173,6 +161,11 @@ public class PreparedFilterToSQL extends FilterToSQL {
                 out.write("(");
 
                 for (int j = 0; j < attValues.size(); j++) {
+                    // in case of join the pk columns need to be qualified with alias
+                    if (filter instanceof JoinId) {
+                        out.write(escapeName(((JoinId) filter).getAlias()));
+                        out.write(".");
+                    }
                     out.write(escapeName(columns.get(j).getName()));
                     out.write(" = ");
                     out.write('?');
@@ -212,31 +205,19 @@ public class PreparedFilterToSQL extends FilterToSQL {
         return literalTypes;
     }
 
-    /**
-     * Returns the list of native SRID for each literal that happens to be a geometry, or null
-     * otherwise
-     *
-     * @return
-     */
+    /** Returns the list of native SRID for each literal that happens to be a geometry, or null otherwise */
     public List<Integer> getSRIDs() {
         return SRIDs;
     }
 
-    /**
-     * Returns the list of dimensions for each literal tha happens to be a geometry, or null
-     * otherwise
-     *
-     * @return
-     */
+    /** Returns the list of dimensions for each literal tha happens to be a geometry, or null otherwise */
     public List<Integer> getDimensions() {
         return dimensions;
     }
 
     /**
-     * Returns the attribute descriptors compared to a given literal (if any, not always available,
-     * normally only needed if arrays are involved)
-     *
-     * @return
+     * Returns the attribute descriptors compared to a given literal (if any, not always available, normally only needed
+     * if arrays are involved)
      */
     public List<AttributeDescriptor> getDescriptors() {
         return descriptors;

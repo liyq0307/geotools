@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.xml.namespace.QName;
-import junit.framework.TestCase;
 import org.eclipse.xsd.XSDElementDeclaration;
 import org.eclipse.xsd.XSDFactory;
 import org.eclipse.xsd.XSDSchema;
@@ -41,9 +40,12 @@ import org.geotools.xsd.SimpleBinding;
 import org.geotools.xsd.impl.BindingLoader;
 import org.geotools.xsd.impl.ElementImpl;
 import org.geotools.xsd.impl.PicoMap;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.picocontainer.defaults.DefaultPicoContainer;
 
-public abstract class TestSchema extends TestCase {
+public abstract class TestSchema {
     public static URL url;
     public static XSDSchema schema;
     public static XSDSchema xsd;
@@ -60,7 +62,7 @@ public abstract class TestSchema extends TestCase {
 
         xsd = schema.getSchemaForSchema();
 
-        Map bindings = new HashMap();
+        Map<QName, Object> bindings = new HashMap<>();
 
         new XSConfiguration().registerBindings(new PicoMap(bindings));
         factory = new BindingLoader(bindings);
@@ -72,14 +74,9 @@ public abstract class TestSchema extends TestCase {
 
     public TestSchema() {}
 
-    public TestSchema(String name) {
-        super(name);
-    }
-
     /**
      * Limited to a search of simple types, no QName required.
      *
-     * @param name
      * @return XSDSimpleTypeDefinition
      */
     public XSDSimpleTypeDefinition xsdSimple(String name) {
@@ -93,9 +90,7 @@ public abstract class TestSchema extends TestCase {
         Class xs = XS.class;
         Field[] fields = xs.getFields();
 
-        for (int i = 0; i < fields.length; i++) {
-            Field field = fields[i];
-
+        for (Field field : fields) {
             if (field.getName().equalsIgnoreCase(name)) {
                 return (QName) field.get(null);
             }
@@ -126,29 +121,29 @@ public abstract class TestSchema extends TestCase {
     public ElementInstance element(String text, QName original, String name) {
         try {
             File temp = File.createTempFile("name", "xsd");
-            FileWriter file = new FileWriter(temp);
-            BufferedWriter buff = new BufferedWriter(file);
-            PrintWriter print = new PrintWriter(buff);
-            print.println(
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                            + "  <xsd:schema xmlns:my=\"http://mails/refractions/net\""
-                            + "              xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\""
-                            + "              targetNamespace=\"http://localhost//test\">"
-                            + "  <xsd:element name=\""
-                            + name
-                            + "\" type=\"xsd:"
-                            + original.getLocalPart()
-                            + "\"/>"
-                            + "</xsd:schema>");
+            try (FileWriter file = new FileWriter(temp);
+                    BufferedWriter buff = new BufferedWriter(file);
+                    PrintWriter print = new PrintWriter(buff)) {
+                print.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        + "  <xsd:schema xmlns:my=\"http://mails/refractions/net\""
+                        + "              xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\""
+                        + "              targetNamespace=\"http://localhost//test\">"
+                        + "  <xsd:element name=\""
+                        + name
+                        + "\" type=\"xsd:"
+                        + original.getLocalPart()
+                        + "\"/>"
+                        + "</xsd:schema>");
 
-            URL url = URLs.fileToUrl(temp);
-            XSDParser parser = new XSDParser(Collections.emptyMap());
-            parser.parse(url.toString());
+                URL url = URLs.fileToUrl(temp);
+                XSDParser parser = new XSDParser(Collections.emptyMap());
+                parser.parse(url.toString());
 
-            XSDSchema schema = parser.getSchema();
-            Map map = schema.getSimpleTypeIdMap();
+                XSDSchema schema = parser.getSchema();
+                Map map = schema.getSimpleTypeIdMap();
 
-            return (ElementInstance) map.get(name);
+                return (ElementInstance) map.get(name);
+            }
         } catch (Throwable t) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", t);
 
@@ -157,24 +152,31 @@ public abstract class TestSchema extends TestCase {
     }
 
     /**
-     * Will call the parse method on the strategy object, passing it <code>given</code> to use as a
-     * value. It will then perform <code>assertEquals(expected, result);</code>
+     * Will call the parse method on the strategy object, passing it <code>given</code> to use as a value. It will then
+     * perform <code>assertEquals(expected, result);</code>
      *
      * @param given the value to pass to the parse method
      * @param expected used to compare against the result of the parse method
-     * @throws Exception
      */
     public void validateValues(String given, Object expected) throws Exception {
         Object result = strategy.parse(element(given, qname), given);
-        assertEquals(expected, result);
+        validateValues(result, expected);
+    }
+
+    protected void validateValues(Object result, Object expected) throws Exception {
+        if (null == expected) {
+            Assert.assertNull(result);
+        } else {
+            Assert.assertEquals(expected, result);
+        }
     }
 
     /** Each subclass must indicate which kind of QName they wish to operate against. */
     protected abstract QName getQName();
 
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         // TODO Auto-generated method stub
-        super.setUp();
 
         qname = getQName();
 
@@ -184,10 +186,11 @@ public abstract class TestSchema extends TestCase {
         }
     }
 
+    @Test
     public void testSetUp() {
         if (getQName() != null) {
-            assertNotNull("XSD typedef", typeDef);
-            assertNotNull(strategy);
+            Assert.assertNotNull("XSD typedef", typeDef);
+            Assert.assertNotNull(strategy);
         }
     }
 }

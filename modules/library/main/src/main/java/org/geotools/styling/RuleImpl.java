@@ -18,16 +18,22 @@ package org.geotools.styling;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.metadata.citation.OnLineResource;
+import org.geotools.api.style.Description;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicLegend;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.visitor.DuplicatingFilterVisitor;
 import org.geotools.util.Utilities;
-import org.opengis.filter.Filter;
-import org.opengis.metadata.citation.OnLineResource;
-import org.opengis.style.GraphicLegend;
-import org.opengis.style.Rule;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
 
 /**
  * Provides the default implementation of Rule.
@@ -36,7 +42,7 @@ import org.opengis.util.Cloneable;
  * @author Johann Sorel (Geomatys)
  * @version $Id$
  */
-public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
+public class RuleImpl implements Rule, Cloneable {
     private List<Symbolizer> symbolizers = new ArrayList<>();
 
     private GraphicLegend legend;
@@ -47,19 +53,20 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
     private double maxScaleDenominator = Double.POSITIVE_INFINITY;
     private double minScaleDenominator = 0.0;
     private OnLineResource online = null;
+    protected Map<String, String> options;
 
     /** Creates a new instance of DefaultRule */
     protected RuleImpl() {}
 
     /** Creates a new instance of DefaultRule */
-    protected RuleImpl(Symbolizer[] symbolizers) {
+    protected RuleImpl(Symbolizer... symbolizers) {
         this.symbolizers.addAll(Arrays.asList(symbolizers));
     }
 
     protected RuleImpl(
-            org.geotools.styling.Symbolizer[] symbolizers,
-            org.opengis.style.Description desc,
-            GraphicLegend legend,
+            Symbolizer[] symbolizers,
+            Description desc,
+            Graphic legend,
             String name,
             Filter filter,
             boolean isElseFilter,
@@ -68,7 +75,7 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
         this.symbolizers = new ArrayList<>(Arrays.asList(symbolizers));
         description.setAbstract(desc.getAbstract());
         description.setTitle(desc.getTitle());
-        this.legend = legend;
+        this.legend = (GraphicLegend) legend;
         this.name = name;
         this.filter = filter;
         hasElseFilter = isElseFilter;
@@ -78,8 +85,8 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
 
     /** Copy constructor */
     public RuleImpl(Rule rule) {
-        this.symbolizers = new ArrayList<Symbolizer>();
-        for (org.opengis.style.Symbolizer sym : rule.symbolizers()) {
+        this.symbolizers = new ArrayList<>();
+        for (org.geotools.api.style.Symbolizer sym : rule.symbolizers()) {
             if (sym instanceof Symbolizer) {
                 this.symbolizers.add((Symbolizer) sym);
             }
@@ -90,7 +97,7 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
         if (rule.getDescription() != null && rule.getDescription().getAbstract() != null) {
             this.description.setTitle(rule.getDescription().getAbstract());
         }
-        if (rule.getLegend() instanceof org.geotools.styling.Graphic) {
+        if (rule.getLegend() instanceof Graphic) {
             this.legend = rule.getLegend();
         }
         this.name = rule.getName();
@@ -100,23 +107,25 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
         this.minScaleDenominator = rule.getMinScaleDenominator();
     }
 
+    @Override
     public GraphicLegend getLegend() {
         return legend;
     }
 
+    @Override
     public void setLegend(GraphicLegend legend) {
         this.legend = legend;
     }
 
+    @Override
     public List<Symbolizer> symbolizers() {
         return symbolizers;
     }
 
-    public org.geotools.styling.Symbolizer[] getSymbolizers() {
+    @Override
+    public Symbolizer[] getSymbolizers() {
 
-        final org.geotools.styling.Symbolizer[] ret;
-
-        ret = new org.geotools.styling.Symbolizer[symbolizers.size()];
+        final Symbolizer[] ret = new Symbolizer[symbolizers.size()];
         for (int i = 0, n = symbolizers.size(); i < n; i++) {
             ret[i] = symbolizers.get(i);
         }
@@ -124,34 +133,42 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
         return ret;
     }
 
+    @Override
     public DescriptionImpl getDescription() {
         return description;
     }
 
-    public void setDescription(org.opengis.style.Description description) {
+    @Override
+    public void setDescription(org.geotools.api.style.Description description) {
         this.description = DescriptionImpl.cast(description);
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    @Override
     public Filter getFilter() {
         return filter;
     }
 
+    @Override
     public void setFilter(Filter filter) {
         this.filter = filter;
     }
 
+    @Override
     public boolean isElseFilter() {
         return hasElseFilter;
     }
 
+    @Override
     public void setElseFilter(boolean defaultb) {
         hasElseFilter = defaultb;
     }
@@ -161,6 +178,7 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
      *
      * @return Value of property maxScaleDenominator.
      */
+    @Override
     public double getMaxScaleDenominator() {
         return maxScaleDenominator;
     }
@@ -170,6 +188,7 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
      *
      * @param maxScaleDenominator New value of property maxScaleDenominator.
      */
+    @Override
     public void setMaxScaleDenominator(double maxScaleDenominator) {
         this.maxScaleDenominator = maxScaleDenominator;
     }
@@ -179,6 +198,7 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
      *
      * @return Value of property minScaleDenominator.
      */
+    @Override
     public double getMinScaleDenominator() {
         return minScaleDenominator;
     }
@@ -188,23 +208,23 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
      *
      * @param minScaleDenominator New value of property minScaleDenominator.
      */
+    @Override
     public void setMinScaleDenominator(double minScaleDenominator) {
         this.minScaleDenominator = minScaleDenominator;
     }
 
-    public Object accept(StyleVisitor visitor, Object data) {
+    @Override
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    @Override
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
-    /**
-     * Creates a deep copy clone of the rule.
-     *
-     * @see org.geotools.styling.Rule#clone()
-     */
+    /** Creates a deep copy clone of the rule. */
+    @Override
     public Object clone() {
         try {
             RuleImpl clone = (RuleImpl) super.clone();
@@ -216,17 +236,16 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
                 clone.filter = null;
             } else {
                 DuplicatingFilterVisitor visitor = new DuplicatingFilterVisitor();
-                clone.filter =
-                        (Filter)
-                                filter.accept(visitor, CommonFactoryFinder.getFilterFactory2(null));
+                clone.filter = (Filter) filter.accept(visitor, CommonFactoryFinder.getFilterFactory(null));
             }
             clone.hasElseFilter = hasElseFilter;
             clone.legend = legend;
 
-            clone.symbolizers = new ArrayList<Symbolizer>(symbolizers);
+            clone.symbolizers = new ArrayList<>(symbolizers);
 
             clone.maxScaleDenominator = maxScaleDenominator;
             clone.minScaleDenominator = minScaleDenominator;
+            clone.options = options;
 
             return clone;
         } catch (CloneNotSupportedException e) {
@@ -237,11 +256,12 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
     /**
      * Generates a hashcode for the Rule.
      *
-     * <p>For complex styles this can be an expensive operation since the hash code is computed
-     * using all the hashcodes of the object within the style.
+     * <p>For complex styles this can be an expensive operation since the hash code is computed using all the hashcodes
+     * of the object within the style.
      *
      * @return The hashcode.
      */
+    @Override
     public int hashCode() {
         final int PRIME = 1000003;
         int result = 0;
@@ -261,6 +281,10 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
             result = (PRIME * result) + filter.hashCode();
         }
 
+        if (options != null) {
+            result = (PRIME * result) + options.hashCode();
+        }
+
         result = (PRIME * result) + (hasElseFilter ? 1 : 0);
 
         long temp = Double.doubleToLongBits(maxScaleDenominator);
@@ -278,12 +302,12 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
      *
      * <p>Two RuleImpls are equal if all their properties are equal.
      *
-     * <p>For complex styles this can be an expensive operation since it checks all objects for
-     * equality.
+     * <p>For complex styles this can be an expensive operation since it checks all objects for equality.
      *
      * @param oth The other rule to compare with.
      * @return True if this and oth are equal.
      */
+    @Override
     public boolean equals(Object oth) {
         if (this == oth) {
             return true;
@@ -301,7 +325,8 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
                     && (Double.doubleToLongBits(maxScaleDenominator)
                             == Double.doubleToLongBits(other.maxScaleDenominator))
                     && (Double.doubleToLongBits(minScaleDenominator)
-                            == Double.doubleToLongBits(other.minScaleDenominator));
+                            == Double.doubleToLongBits(other.minScaleDenominator))
+                    && getOptions().equals(other.getOptions());
         }
 
         return false;
@@ -325,13 +350,16 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
                 buf.append("\n");
             }
         }
+        buf.append(getOptions());
         return buf.toString();
     }
 
+    @Override
     public OnLineResource getOnlineResource() {
         return online;
     }
 
+    @Override
     public void setOnlineResource(OnLineResource online) {
         this.online = online;
     }
@@ -345,5 +373,18 @@ public class RuleImpl implements org.geotools.styling.Rule, Cloneable {
             RuleImpl copy = new RuleImpl(rule); // replace with casting ...
             return copy;
         }
+    }
+
+    @Override
+    public boolean hasOption(String key) {
+        return options != null && options.containsKey(key);
+    }
+
+    @Override
+    public Map<String, String> getOptions() {
+        if (options == null) {
+            options = new LinkedHashMap<>();
+        }
+        return options;
     }
 }

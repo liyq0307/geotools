@@ -112,17 +112,16 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(
-    name = "",
-    propOrder = {
-        "schemas",
-        "domains",
-        "coverages",
-        "multipleBandsDimensions",
-        "datastore",
-        "collectors",
-        "parameters"
-    }
-)
+        name = "",
+        propOrder = {
+            "schemas",
+            "domains",
+            "coverages",
+            "multipleBandsDimensions",
+            "datastore",
+            "collectors",
+            "parameters"
+        })
 @XmlRootElement(name = "Indexer")
 public class Indexer {
 
@@ -134,14 +133,14 @@ public class Indexer {
 
     protected Indexer.MultipleBandsDimensions multipleBandsDimensions;
 
-    @XmlElement(required = true)
     protected Indexer.Datastore datastore;
 
     protected Indexer.Collectors collectors;
 
     protected ParametersType parameters;
 
-    @XmlTransient private File indexerFile;
+    @XmlTransient
+    private File indexerFile;
 
     /**
      * Gets the value of the schemas property.
@@ -302,9 +301,8 @@ public class Indexer {
      */
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(
-        name = "",
-        propOrder = {"collector"}
-    )
+            name = "",
+            propOrder = {"collector"})
     public static class Collectors {
 
         protected List<Indexer.Collectors.Collector> collector;
@@ -312,9 +310,9 @@ public class Indexer {
         /**
          * Gets the value of the collector property.
          *
-         * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore
-         * any modification you make to the returned list will be present inside the JAXB object.
-         * This is why there is not a <CODE>set</CODE> method for the collector property.
+         * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any modification you
+         * make to the returned list will be present inside the JAXB object. This is why there is not a <CODE>set</CODE>
+         * method for the collector property.
          *
          * <p>For example, to add a new item, do as follows:
          *
@@ -322,12 +320,11 @@ public class Indexer {
          * getCollector().add(newItem);
          * </pre>
          *
-         * <p>Objects of the following type(s) are allowed in the list {@link
-         * Indexer.Collectors.Collector }
+         * <p>Objects of the following type(s) are allowed in the list {@link Indexer.Collectors.Collector }
          */
         public List<Indexer.Collectors.Collector> getCollector() {
             if (collector == null) {
-                collector = new ArrayList<Indexer.Collectors.Collector>();
+                collector = new ArrayList<>();
             }
             return this.collector;
         }
@@ -335,8 +332,7 @@ public class Indexer {
         /**
          * Java class for anonymous complex type.
          *
-         * <p>The following schema fragment specifies the expected content contained within this
-         * class.
+         * <p>The following schema fragment specifies the expected content contained within this class.
          *
          * <pre>
          * &lt;complexType>
@@ -356,9 +352,8 @@ public class Indexer {
          */
         @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(
-            name = "",
-            propOrder = {"spi", "type", "value", "mapped"}
-        )
+                name = "",
+                propOrder = {"spi", "type", "value", "mapped"})
         public static class Collector {
 
             @XmlElement(required = true)
@@ -503,9 +498,8 @@ public class Indexer {
      */
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(
-        name = "",
-        propOrder = {"coverage"}
-    )
+            name = "",
+            propOrder = {"coverage"})
     public static class Coverages {
 
         @XmlElement(required = true)
@@ -514,9 +508,9 @@ public class Indexer {
         /**
          * Gets the value of the coverage property.
          *
-         * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore
-         * any modification you make to the returned list will be present inside the JAXB object.
-         * This is why there is not a <CODE>set</CODE> method for the coverage property.
+         * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any modification you
+         * make to the returned list will be present inside the JAXB object. This is why there is not a <CODE>set</CODE>
+         * method for the coverage property.
          *
          * <p>For example, to add a new item, do as follows:
          *
@@ -524,12 +518,11 @@ public class Indexer {
          * getCoverage().add(newItem);
          * </pre>
          *
-         * <p>Objects of the following type(s) are allowed in the list {@link
-         * Indexer.Coverages.Coverage }
+         * <p>Objects of the following type(s) are allowed in the list {@link Indexer.Coverages.Coverage }
          */
         public List<Indexer.Coverages.Coverage> getCoverage() {
             if (coverage == null) {
-                coverage = new ArrayList<Indexer.Coverages.Coverage>();
+                coverage = new ArrayList<>();
             }
             return this.coverage;
         }
@@ -537,8 +530,7 @@ public class Indexer {
         /**
          * Java class for anonymous complex type.
          *
-         * <p>The following schema fragment specifies the expected content contained within this
-         * class.
+         * <p>The following schema fragment specifies the expected content contained within this class.
          *
          * <pre>
          * &lt;complexType>
@@ -560,9 +552,8 @@ public class Indexer {
          */
         @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(
-            name = "",
-            propOrder = {"schema", "origName", "domains", "name", "nameCollector"}
-        )
+                name = "",
+                propOrder = {"schema", "origName", "domains", "name", "nameCollector", "parameters"})
         public static class Coverage {
 
             @XmlElement(required = true)
@@ -577,6 +568,8 @@ public class Indexer {
             protected String name;
 
             protected String nameCollector;
+
+            protected ParametersType parameters;
 
             /**
              * Gets the value of the schema property.
@@ -667,6 +660,16 @@ public class Indexer {
             public void setNameCollector(String value) {
                 this.nameCollector = value;
             }
+
+            /** Returns coverage specific parameters. */
+            public ParametersType getParameters() {
+                return parameters;
+            }
+
+            /** Sets the coverage specific parameters */
+            public void setParameters(ParametersType parameters) {
+                this.parameters = parameters;
+            }
         }
     }
 
@@ -690,9 +693,8 @@ public class Indexer {
      */
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(
-        name = "",
-        propOrder = {"database", "parameters"}
-    )
+            name = "",
+            propOrder = {"database", "parameters"})
     public static class Datastore {
 
         protected String database;
@@ -774,22 +776,19 @@ public class Indexer {
      */
     @XmlAccessorType(XmlAccessType.FIELD)
     @XmlType(
-        name = "",
-        propOrder = {"multipleBandsDimension"}
-    )
+            name = "",
+            propOrder = {"multipleBandsDimension"})
     public static class MultipleBandsDimensions {
 
         @XmlElement(required = true)
-        protected List<Indexer.MultipleBandsDimensions.MultipleBandsDimension>
-                multipleBandsDimension;
+        protected List<Indexer.MultipleBandsDimensions.MultipleBandsDimension> multipleBandsDimension;
 
         /**
          * Gets the value of the multipleBandsDimension property.
          *
-         * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore
-         * any modification you make to the returned list will be present inside the JAXB object.
-         * This is why there is not a <CODE>set</CODE> method for the multipleBandsDimension
-         * property.
+         * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any modification you
+         * make to the returned list will be present inside the JAXB object. This is why there is not a <CODE>set</CODE>
+         * method for the multipleBandsDimension property.
          *
          * <p>For example, to add a new item, do as follows:
          *
@@ -797,14 +796,12 @@ public class Indexer {
          *    getMultipleBandsDimension().add(newItem);
          * </pre>
          *
-         * <p>Objects of the following type(s) are allowed in the list {@link
-         * Indexer.MultipleBandsDimensions.MultipleBandsDimension }
+         * <p>Objects of the following type(s) are allowed in the list
+         * {@link Indexer.MultipleBandsDimensions.MultipleBandsDimension }
          */
-        public List<Indexer.MultipleBandsDimensions.MultipleBandsDimension>
-                getMultipleBandsDimension() {
+        public List<Indexer.MultipleBandsDimensions.MultipleBandsDimension> getMultipleBandsDimension() {
             if (multipleBandsDimension == null) {
-                multipleBandsDimension =
-                        new ArrayList<Indexer.MultipleBandsDimensions.MultipleBandsDimension>();
+                multipleBandsDimension = new ArrayList<>();
             }
             return this.multipleBandsDimension;
         }
@@ -812,8 +809,7 @@ public class Indexer {
         /**
          * Java class for anonymous complex type.
          *
-         * <p>The following schema fragment specifies the expected content contained within this
-         * class.
+         * <p>The following schema fragment specifies the expected content contained within this class.
          *
          * <pre>
          * &lt;complexType&gt;
@@ -830,9 +826,8 @@ public class Indexer {
          */
         @XmlAccessorType(XmlAccessType.FIELD)
         @XmlType(
-            name = "",
-            propOrder = {"name", "bandsNames"}
-        )
+                name = "",
+                propOrder = {"name", "bandsNames"})
         public static class MultipleBandsDimension {
 
             @XmlElement(required = true)

@@ -35,8 +35,7 @@ import org.locationtech.jts.geom.Polygon;
  */
 public class SubHandlerPolygon extends SubHandler {
     /** The logger for the GML module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(SubHandlerPolygon.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(SubHandlerPolygon.class);
 
     /** Factory for creating the Polygon geometry. */
     private GeometryFactory geometryFactory = new GeometryFactory();
@@ -48,7 +47,7 @@ public class SubHandlerPolygon extends SubHandler {
     private LinearRing outerBoundary = null;
 
     /** Stores Polygon's inner boundaries (holes). */
-    private ArrayList innerBoundaries = new ArrayList();
+    private ArrayList<LinearRing> innerBoundaries = new ArrayList<>();
 
     /** Remembers the current location in the parsing stream (inner or outer boundary). */
     private int location = 0;
@@ -68,6 +67,7 @@ public class SubHandlerPolygon extends SubHandler {
      * @param message Name of sub geometry located.
      * @param type Type of sub geometry located.
      */
+    @Override
     public void subGeometry(String message, int type) {
         // if we have found a linear ring, either
         // add it to the list of inner boundaries if we are reading them
@@ -101,6 +101,7 @@ public class SubHandlerPolygon extends SubHandler {
      *
      * @param coordinate Name of sub geometry located.
      */
+    @Override
     public void addCoordinate(Coordinate coordinate) {
         currentHandler.addCoordinate(coordinate);
     }
@@ -111,6 +112,7 @@ public class SubHandlerPolygon extends SubHandler {
      * @param message Name of GML element that prompted this check.
      * @return Flag indicating whether or not the geometry is ready to be returned.
      */
+    @Override
     public boolean isComplete(String message) {
         // the conditions checked here are that the endGeometry message that
         // prompted this check is a Polygon and that this Polygon has an outer
@@ -137,9 +139,9 @@ public class SubHandlerPolygon extends SubHandler {
      * @param geometryFactory Geometry factory to be used in Polygon creation.
      * @return Completed OGC Polygon.
      */
+    @Override
     public Geometry create(GeometryFactory geometryFactory) {
-        for (int i = 0; i < innerBoundaries.size(); i++) {
-            LinearRing hole = (LinearRing) innerBoundaries.get(i);
+        for (LinearRing hole : innerBoundaries) {
             if (hole.crosses(outerBoundary)) {
                 LOGGER.warning("Topology Error building polygon");
 
@@ -147,8 +149,7 @@ public class SubHandlerPolygon extends SubHandler {
             }
         }
 
-        LinearRing[] rings =
-                (LinearRing[]) innerBoundaries.toArray(new LinearRing[innerBoundaries.size()]);
+        LinearRing[] rings = innerBoundaries.toArray(new LinearRing[innerBoundaries.size()]);
         Polygon polygon = geometryFactory.createPolygon(outerBoundary, rings);
         polygon.setUserData(getSRS());
         polygon.setSRID(getSRID());

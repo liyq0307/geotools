@@ -20,8 +20,7 @@ import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.GeometryFactory;
 
 /**
- * Simple support class that allows accumulating doubles in an array, transparently growing it as
- * the data gets added.
+ * Simple support class that allows accumulating doubles in an array, transparently growing it as the data gets added.
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -31,57 +30,35 @@ class GrowableOrdinateArray {
 
     private int curr;
 
-    /**
-     * Creates an array of the given initial size
-     *
-     * @param size
-     */
+    /** Creates an array of the given initial size */
     public GrowableOrdinateArray(int size) {
         this.data = new double[size];
     }
 
-    /**
-     * Builds an initialized array, which will be primed when {@link #ensureLength(int)} is called
-     */
+    /** Builds an initialized array, which will be primed when {@link #ensureLength(int)} is called */
     GrowableOrdinateArray() {}
 
-    /**
-     * Appends a single number to the array
-     *
-     * @param d
-     */
+    /** Appends a single number to the array */
     public void add(double d) {
         ensureLength(curr + 1);
         data[curr++] = d;
     }
 
-    /**
-     * Appends a two numbers to the array
-     *
-     * @param d
-     */
+    /** Appends a two numbers to the array */
     public void add(double d1, double d2) {
         ensureLength(curr + 2);
         data[curr++] = d1;
         data[curr++] = d2;
     }
 
-    /**
-     * Appends a list of doubles to the array
-     *
-     * @param d
-     */
+    /** Appends a list of doubles to the array */
     public void addAll(double... d) {
         ensureLength(curr + d.length);
         System.arraycopy(d, 0, data, curr, d.length);
         curr += d.length;
     }
 
-    /**
-     * Appends a whole coordinate sequence to the array
-     *
-     * @param cs
-     */
+    /** Appends a whole coordinate sequence to the array */
     public void addAll(CoordinateSequence cs) {
         int coordinatesCount = cs.size();
         ensureLength(curr + coordinatesCount * 2);
@@ -92,11 +69,7 @@ class GrowableOrdinateArray {
         curr += coordinatesCount * 2;
     }
 
-    /**
-     * Returns the accumulated numbers, in an array cut to the current size
-     *
-     * @return
-     */
+    /** Returns the accumulated numbers, in an array cut to the current size */
     public double[] getData() {
         if (data == null) {
             return new double[0];
@@ -110,21 +83,12 @@ class GrowableOrdinateArray {
         }
     }
 
-    /**
-     * Returns the current data array, raw, uncut
-     *
-     * @return
-     */
+    /** Returns the current data array, raw, uncut */
     public double[] getDataRaw() {
         return data;
     }
 
-    /**
-     * Turns the array of ordinates into a coordinate sequence
-     *
-     * @param gf
-     * @return
-     */
+    /** Turns the array of ordinates into a coordinate sequence */
     public CoordinateSequence toCoordinateSequence(GeometryFactory gf) {
         double[] data = getData();
         CoordinateSequence cs = JTS.createCS(gf.getCoordinateSequenceFactory(), data.length / 2, 2);
@@ -141,18 +105,13 @@ class GrowableOrdinateArray {
 
     public void setSize(int newSize) {
         if (newSize < 0) {
-            throw new IllegalArgumentException(
-                    "The size must zero or positive, it was " + newSize + " instead");
+            throw new IllegalArgumentException("The size must zero or positive, it was " + newSize + " instead");
         }
         ensureLength(newSize);
         curr = newSize;
     }
 
-    /**
-     * Ensures the data array has the specified lenght, or grows it otherwise
-     *
-     * @param length
-     */
+    /** Ensures the data array has the specified lenght, or grows it otherwise */
     void ensureLength(int length) {
         if (data == null) {
             data = new double[length];
@@ -170,12 +129,7 @@ class GrowableOrdinateArray {
         }
     }
 
-    /**
-     * Reverses the values between start and end assuming it's a packed array of x/y ordinates
-     *
-     * @param start
-     * @param size
-     */
+    /** Reverses the values between start and end assuming it's a packed array of x/y ordinates */
     public void reverseOrdinates(int start, int end) {
         int limit = (start + end) / 2;
         for (int i = start; i < limit; i += 2) {
@@ -210,13 +164,7 @@ class GrowableOrdinateArray {
         add(data[0], data[1]);
     }
 
-    /**
-     * Copies a sub-array from another growable array
-     *
-     * @param other
-     * @param from
-     * @param to
-     */
+    /** Copies a sub-array from another growable array */
     public void copy(GrowableOrdinateArray other, int from, int to) {
         ensureLength(to + 1);
         System.arraycopy(other.data, 0, data, 0, to + 1);

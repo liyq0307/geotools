@@ -25,6 +25,7 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import org.eclipse.emf.ecore.resource.URIHandler;
 import org.geotools.xsd.impl.ElementHandler;
 import org.geotools.xsd.impl.NodeImpl;
 import org.geotools.xsd.impl.ParserHandler;
@@ -66,15 +67,23 @@ public class PullParser {
         handler.setContextCustomizer(contextCustomizer);
     }
 
+    /** Sets if the parsing should be strict or not */
+    public void setStrict(boolean strict) {
+        this.handler.setStrict(strict);
+    }
+
+    /** Changes the URIHandler for this parser */
+    public void setURIHandler(URIHandler uriHandler) {
+        this.handler.getURIHandlers().clear();
+        this.handler.getURIHandlers().add(uriHandler);
+    }
+
     public Object parse() throws XMLStreamException, IOException, SAXException {
         if (handler.getLogger() == null) {
             handler.startDocument();
         }
 
-        int depth = 0;
-
-        LOOP:
-        do {
+        while (pp.hasNext()) {
             int e = pp.next();
 
             switch (e) {
@@ -85,11 +94,8 @@ public class PullParser {
                         handler.startPrefixMapping(pre != null ? pre : "", pp.getNamespaceURI(i));
                     }
 
-                    {
-                        QName qName = pp.getName();
-                        handler.startElement(
-                                pp.getNamespaceURI(), pp.getLocalName(), str(qName), atts);
-                    }
+                    handler.startElement(pp.getNamespaceURI(), pp.getLocalName(), str(pp.getName()), atts);
+
                     break;
 
                 case XMLStreamReader.CHARACTERS:
@@ -98,12 +104,7 @@ public class PullParser {
                     break;
 
                 case XMLStreamReader.END_ELEMENT:
-                    depth--;
-
-                    {
-                        QName qName = pp.getName();
-                        handler.endElement(pp.getNamespaceURI(), pp.getLocalName(), str(qName));
-                    }
+                    handler.endElement(pp.getNamespaceURI(), pp.getLocalName(), str(pp.getName()));
 
                     count = pp.getNamespaceCount();
                     // undeclare them in reverse order
@@ -116,14 +117,14 @@ public class PullParser {
                         return handler.getObject();
                     }
 
-                    if (depth == 0) {
-                        return null;
-                    }
                     break;
+
                 case XMLStreamReader.END_DOCUMENT:
-                    break LOOP;
+                    handler.endDocument();
+
+                    break;
             }
-        } while (true);
+        }
 
         return null;
     }
@@ -140,6 +141,10 @@ public class PullParser {
         XMLInputFactory factory = XMLInputFactory.newInstance();
         factory.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, true);
         factory.setProperty(XMLInputFactory.IS_VALIDATING, false);
+        // disable DTDs
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        // disable external entities
+        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
         try {
             return factory.createXMLStreamReader(input);
         } catch (XMLStreamException e) {
@@ -148,25 +153,27 @@ public class PullParser {
     }
 
     String str(QName qName) {
-        return qName.getPrefix() != null
-                ? qName.getPrefix() + ":" + qName.getLocalPart()
-                : qName.getLocalPart();
+        return qName.getPrefix() != null ? qName.getPrefix() + ":" + qName.getLocalPart() : qName.getLocalPart();
     }
 
     class Attributes implements org.xml.sax.Attributes {
 
+        @Override
         public int getLength() {
             return pp.getAttributeCount();
         }
 
+        @Override
         public String getURI(int index) {
             return pp.getAttributeNamespace(index);
         }
 
+        @Override
         public String getLocalName(int index) {
             return pp.getAttributeLocalName(index);
         }
 
+        @Override
         public String getQName(int index) {
             final String prefix = pp.getAttributePrefix(index);
             if (prefix != null) {
@@ -176,14 +183,17 @@ public class PullParser {
             }
         }
 
+        @Override
         public String getType(int index) {
             return pp.getAttributeType(index);
         }
 
+        @Override
         public String getValue(int index) {
             return pp.getAttributeValue(index);
         }
 
+        @Override
         public int getIndex(String uri, String localName) {
             for (int i = 0; i < pp.getAttributeCount(); i++) {
                 if (pp.getAttributeNamespace(i).equals(uri)
@@ -194,6 +204,7 @@ public class PullParser {
             return -1;
         }
 
+        @Override
         public int getIndex(String qName) {
             for (int i = 0; i < pp.getAttributeCount(); i++) {
                 if ((pp.getAttributePrefix(i) + ":" + pp.getAttributeLocalName(i)).equals(qName)) {
@@ -203,6 +214,7 @@ public class PullParser {
             return -1;
         }
 
+        @Override
         public String getType(String uri, String localName) {
             for (int i = 0; i < pp.getAttributeCount(); i++) {
                 if (pp.getAttributeNamespace(i).equals(uri)
@@ -213,6 +225,7 @@ public class PullParser {
             return null;
         }
 
+        @Override
         public String getType(String qName) {
             for (int i = 0; i < pp.getAttributeCount(); i++) {
                 if ((pp.getAttributePrefix(i) + ":" + pp.getAttributeName(i)).equals(qName)) {
@@ -222,10 +235,12 @@ public class PullParser {
             return null;
         }
 
+        @Override
         public String getValue(String uri, String localName) {
             return pp.getAttributeValue(uri, localName);
         }
 
+        @Override
         public String getValue(String qName) {
             return pp.getAttributeValue(null, qName);
         }
@@ -312,15 +327,13 @@ public class PullParser {
 
         public OrPullParserHandler(Configuration config, Object... handlerSpecs) {
             super(config);
-            Collection<PullParserHandler> handlers =
-                    new ArrayList<PullParserHandler>(handlerSpecs.length);
+            Collection<PullParserHandler> handlers = new ArrayList<>(handlerSpecs.length);
             for (Object spec : handlerSpecs) {
                 if (spec instanceof Class) {
                     handlers.add(new TypePullParserHandler((Class<?>) spec, config));
                 } else if (spec instanceof QName) {
                     // TODO ignoring the namespace
-                    handlers.add(
-                            new ElementIgnoringNamespacePullParserHandler((QName) spec, config));
+                    handlers.add(new ElementIgnoringNamespacePullParserHandler((QName) spec, config));
                 } else if (spec instanceof PullParserHandler) {
                     handlers.add((PullParserHandler) spec);
                 } else {

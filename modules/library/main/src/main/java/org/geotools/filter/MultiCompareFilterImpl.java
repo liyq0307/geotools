@@ -18,7 +18,9 @@ package org.geotools.filter;
 
 import java.util.Collection;
 import java.util.Collections;
-import org.opengis.filter.expression.Expression;
+import java.util.List;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.util.Converters;
 
 /**
  * Support for Multi-valued properties when comparing
@@ -44,32 +46,45 @@ public abstract class MultiCompareFilterImpl extends CompareFilterImpl {
         this.matchAction = matchAction;
     }
 
-    protected MultiCompareFilterImpl(
-            Expression e1, Expression e2, boolean matchCase, MatchAction matchAction) {
+    protected MultiCompareFilterImpl(Expression e1, Expression e2, boolean matchCase, MatchAction matchAction) {
         super(e1, e2, matchCase);
         this.matchAction = matchAction;
     }
 
+    @Override
     public MatchAction getMatchAction() {
         return matchAction;
     }
 
+    private Collection<Object> toCollection(Object obj) {
+        Object collection = null;
+        if (obj instanceof Collection) {
+            collection = obj;
+        }
+        if (obj != null && obj.getClass().isArray()) {
+            collection = Converters.convert(obj, List.class);
+        }
+        @SuppressWarnings("unchecked")
+        Collection<Object> cast = (Collection<Object>) collection;
+        return cast;
+    }
+
+    @Override
     public final boolean evaluate(Object feature) {
         final Object object1 = eval(expression1, feature);
         final Object object2 = eval(expression2, feature);
 
-        if (!(object1 instanceof Collection) && !(object2 instanceof Collection)) {
+        Collection<Object> collection1 = toCollection(object1);
+        Collection<Object> collection2 = toCollection(object2);
+
+        if (collection1 == null && collection2 == null) {
             return evaluateInternal(object1, object2);
         }
 
         Collection<Object> leftValues =
-                object1 instanceof Collection
-                        ? (Collection<Object>) object1
-                        : Collections.<Object>singletonList(object1);
+                collection1 instanceof Collection ? collection1 : Collections.singletonList(object1);
         Collection<Object> rightValues =
-                object2 instanceof Collection
-                        ? (Collection<Object>) object2
-                        : Collections.<Object>singletonList(object2);
+                collection2 instanceof Collection ? collection2 : Collections.singletonList(object2);
 
         int count = 0;
 

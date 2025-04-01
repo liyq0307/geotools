@@ -34,27 +34,21 @@ import org.geotools.gce.grassraster.GrassBinaryImageWriter;
  * @see GrassBinaryImageReader
  * @see GrassBinaryImageWriterSpi
  */
-@SuppressWarnings("nls")
 public class GrassBinaryImageWriterSpi extends ImageWriterSpi {
     private static final String[] suffixes = {""};
-    private static final String[] formatNames = {
-        "grass", "GRASS", "grassbin", "GRASS binary raster"
-    };
+    private static final String[] formatNames = {"grass", "GRASS", "grassbin", "GRASS binary raster"};
     private static final String[] MIMETypes = {"image/grass"};
     private static final String version = "1.0";
     private static final String vendorName = "www.hydrologis.com";
 
     /** the class name of the image writer. */
-    private static final String writerCN =
-            "eu.hydrologis.jgrass.grassbinary.imageio.io.GrassBinaryImageWriter";
+    private static final String writerCN = "eu.hydrologis.jgrass.grassbinary.imageio.io.GrassBinaryImageWriter";
 
     /** the outputTypes handled by the {@link GrassBinaryImageWriter}. */
-    private static final Class<?>[] outputTypes = new Class[] {File.class};
+    private static final Class<?>[] outputTypes = {File.class};
 
     /** the readerSpiName */
-    private static final String[] rSN = {
-        "eu.hydrologis.jgrass.grassbinary.imageio.io.GrassBinaryImageReaderSpi"
-    };
+    private static final String[] rSN = {"eu.hydrologis.jgrass.grassbinary.imageio.io.GrassBinaryImageReaderSpi"};
 
     /** the flag for stream metadata support. */
     private static final boolean supportsStandardStreamMetadataFormat = false;
@@ -97,15 +91,18 @@ public class GrassBinaryImageWriterSpi extends ImageWriterSpi {
                 extraImageMetadataFormatClassNames);
     }
 
+    @Override
     public boolean canEncodeImage(ImageTypeSpecifier its) {
         // TODO what has to be done here?
         return true;
     }
 
+    @Override
     public ImageWriter createWriterInstance(Object extension) throws IOException {
         return new GrassBinaryImageWriter(this, null);
     }
 
+    @Override
     public String getDescription(Locale locale) {
         return "GRASS binary raster image writer service provider interface, version " + version;
     }

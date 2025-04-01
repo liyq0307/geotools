@@ -54,6 +54,10 @@ public class SLDMockData {
         return size;
     }
 
+    static Element emptySize(Document document, Node parent) {
+        return element(SLD.SIZE, document, parent);
+    }
+
     static Element opacity(Document document, Node parent) {
         Element opacity = element(SLD.OPACITY, document, parent);
         opacity.appendChild(document.createTextNode("1"));
@@ -61,11 +65,19 @@ public class SLDMockData {
         return opacity;
     }
 
+    static Element emptyOpacity(Document document, Node parent) {
+        return element(SLD.OPACITY, document, parent);
+    }
+
     static Element rotation(Document document, Node parent) {
         Element rotation = element(SLD.ROTATION, document, parent);
         rotation.appendChild(document.createTextNode("90"));
 
         return rotation;
+    }
+
+    static Element emptyRotation(Document document, Node parent) {
+        return element(SLD.ROTATION, document, parent);
     }
 
     static Element pointPlacement(Document document, Node parent) {
@@ -131,6 +143,33 @@ public class SLDMockData {
         opacity(document, graphic);
         rotation(document, graphic);
 
+        return graphic;
+    }
+
+    static Element graphicWithEmptyRotation(Document document, Node parent) {
+        Element graphic = element(SLD.GRAPHIC, document, parent);
+        mark(document, graphic);
+        size(document, graphic);
+        opacity(document, graphic);
+        emptyRotation(document, graphic);
+        return graphic;
+    }
+
+    static Element graphicWithEmptySize(Document document, Node parent) {
+        Element graphic = element(SLD.GRAPHIC, document, parent);
+        mark(document, graphic);
+        emptySize(document, graphic);
+        opacity(document, graphic);
+        rotation(document, graphic);
+        return graphic;
+    }
+
+    static Element graphicWithEmptyOpacity(Document document, Node parent) {
+        Element graphic = element(SLD.GRAPHIC, document, parent);
+        mark(document, graphic);
+        size(document, graphic);
+        emptyOpacity(document, graphic);
+        rotation(document, graphic);
         return graphic;
     }
 
@@ -227,7 +266,7 @@ public class SLDMockData {
 
         Element channel = element(SLD.REDCHANNEL, document, channelSelection);
         Element sourceChannelName = element(SLD.SOURCECHANNELNAME, document, channel);
-        Element expression = envFuntionfilter(document, sourceChannelName);
+        envFuntionfilter(document, sourceChannelName);
 
         channel = element(SLD.GREENCHANNEL, document, channelSelection);
         sourceChannelName = element(SLD.SOURCECHANNELNAME, document, channel);
@@ -273,8 +312,7 @@ public class SLDMockData {
 
         Element gammaValue = element(SLD.GAMMAVALUE, document, contrastEnhancement);
         gammaValue.appendChild(document.createTextNode("1.23"));
-
-        Element histogram = element(SLD.HISTOGRAM, document, contrastEnhancement);
+        element(SLD.HISTOGRAM, document, contrastEnhancement);
 
         return contrastEnhancement;
     }
@@ -317,7 +355,13 @@ public class SLDMockData {
         contrastEnhancement(document, rasterSymbolizer);
         shadedRelief(document, rasterSymbolizer);
         imageOutline(document, rasterSymbolizer);
+        return rasterSymbolizer;
+    }
 
+    static Element rasterSymbolizerWithVendorOptions(Document document, Node parent) {
+        Element rasterSymbolizer = rasterSymbolizer(document, parent);
+        vendorOption(document, rasterSymbolizer, "name", "value");
+        vendorOption(document, rasterSymbolizer, "name2", "value2");
         return rasterSymbolizer;
     }
 
@@ -459,6 +503,13 @@ public class SLDMockData {
         rasterSymbolizer(document, rule);
         textSymbolizer(document, rule);
 
+        return rule;
+    }
+
+    static Element ruleWithVendorOptions(Document document, Node parent) {
+        Element rule = rule(document, parent);
+        vendorOption(document, rule, "name", "value");
+        vendorOption(document, rule, "name2", "value2");
         return rule;
     }
 

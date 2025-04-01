@@ -16,15 +16,15 @@
  */
 package org.geotools.filter.visitor;
 
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
 
 /**
  * This class does *nothing* - useful to prevent null checks in AbstractFilterVisitor.
@@ -33,34 +33,42 @@ import org.opengis.filter.expression.Subtract;
  */
 public class NullExpressionVisitor implements ExpressionVisitor {
 
+    @Override
     public Object visit(NilExpression expression, Object extraData) {
         return null;
     }
 
+    @Override
     public Object visit(Add expression, Object extraData) {
         return null;
     }
 
+    @Override
     public Object visit(Divide expression, Object extraData) {
         return null;
     }
 
+    @Override
     public Object visit(Function expression, Object extraData) {
         return null;
     }
 
+    @Override
     public Object visit(Literal expression, Object extraData) {
         return null;
     }
 
+    @Override
     public Object visit(Multiply expression, Object extraData) {
         return null;
     }
 
+    @Override
     public Object visit(PropertyName expression, Object extraData) {
         return null;
     }
 
+    @Override
     public Object visit(Subtract expression, Object extraData) {
         return null;
     }

@@ -21,7 +21,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -51,17 +50,16 @@ import org.xml.sax.helpers.NamespaceSupport;
 /**
  * GeoTools XML parser.
  *
- * <p>This parser uses a sax based driver to parse an input stream into a single object. For
- * streaming look at {@link StreamingParser}. If the source document being parsed as already been
- * parsed into a {@link Document} the {@link DOMParser} class may be used.
+ * <p>This parser uses a sax based driver to parse an input stream into a single object. For streaming look at
+ * {@link StreamingParser}. If the source document being parsed as already been parsed into a {@link Document} the
+ * {@link DOMParser} class may be used.
  *
  * <p>
  *
  * <h3>Schema Resolution</h3>
  *
- * See {@link Configuration} javadocs for instructions on how to customize schema resolution. This
- * is often desirable in the case that the instance document being parsed contains invalid uri's in
- * schema imports and includes.
+ * See {@link Configuration} javadocs for instructions on how to customize schema resolution. This is often desirable in
+ * the case that the instance document being parsed contains invalid uri's in schema imports and includes.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -74,8 +72,7 @@ public class Parser {
     private static final String SAX_PROPERTY_PREFIX = "http://xml.org/sax/properties/";
 
     private static final String JAXP_PROPERTY_PREFIX = "http://www.oracle.com/xml/jaxp/properties/";
-    private static final String JDK_ENTITY_EXPANSION_LIMIT =
-            JAXP_PROPERTY_PREFIX + "entityExpansionLimit";
+    private static final String JDK_ENTITY_EXPANSION_LIMIT = JAXP_PROPERTY_PREFIX + "entityExpansionLimit";
     private static final Integer DEFAULT_ENTITY_EXPANSION_LIMIT = 100;
 
     /** sax handler which maintains the element stack */
@@ -108,11 +105,7 @@ public class Parser {
         return handler;
     }
 
-    /**
-     * Allows the caller to customize the Pico context used for parsing
-     *
-     * @param contextCustomizer
-     */
+    /** Allows the caller to customize the Pico context used for parsing */
     public void setContextCustomizer(ContextCustomizer contextCustomizer) {
         handler.setContextCustomizer(contextCustomizer);
     }
@@ -120,32 +113,24 @@ public class Parser {
     /**
      * Parses an instance documented defined by an input stream.
      *
-     * <p>The object returned from the parse is the object which has been bound to the root element
-     * of the document. This method should only be called once for a single instance document.
+     * <p>The object returned from the parse is the object which has been bound to the root element of the document.
+     * This method should only be called once for a single instance document.
      *
      * @return The object representation of the root element of the document.
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
      */
-    public Object parse(InputStream input)
-            throws IOException, SAXException, ParserConfigurationException {
+    public Object parse(InputStream input) throws IOException, SAXException, ParserConfigurationException {
         return parse(new InputSource(input));
     }
 
     /**
      * Parses an instance documented defined by a reader.
      *
-     * <p>The object returned from the parse is the object which has been bound to the root element
-     * of the document. This method should only be called once for a single instance document.
+     * <p>The object returned from the parse is the object which has been bound to the root element of the document.
+     * This method should only be called once for a single instance document.
      *
      * @return The object representation of the root element of the document.
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
      */
-    public Object parse(Reader reader)
-            throws IOException, SAXException, ParserConfigurationException {
+    public Object parse(Reader reader) throws IOException, SAXException, ParserConfigurationException {
         return parse(new InputSource(reader));
     }
 
@@ -159,10 +144,6 @@ public class Parser {
      *
      * @return @return The object representation of the root element of the document.
      *
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
-     * @throws TransformerException
      *
      * @since 2.6
      */
@@ -178,24 +159,18 @@ public class Parser {
 
         tx.transform(source, result);
 
-        return parse(
-                new ByteArrayInputStream(
-                        ((ByteArrayOutputStream) result.getOutputStream()).toByteArray()));
+        return parse(new ByteArrayInputStream(((ByteArrayOutputStream) result.getOutputStream()).toByteArray()));
     }
 
     /**
      * Parses an instance documented defined by a sax input source.
      *
-     * <p>The object returned from the parse is the object which has been bound to the root element
-     * of the document. This method should only be called once for a single instance document.
+     * <p>The object returned from the parse is the object which has been bound to the root element of the document.
+     * This method should only be called once for a single instance document.
      *
      * @return The object representation of the root element of the document.
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
      */
-    public Object parse(InputSource source)
-            throws IOException, SAXException, ParserConfigurationException {
+    public Object parse(InputSource source) throws IOException, SAXException, ParserConfigurationException {
         parser = parser();
 
         parser.parse(source, handler);
@@ -206,12 +181,10 @@ public class Parser {
     /**
      * Sets the strict parsing flag.
      *
-     * <p>When set to <code>true</code>, this will cause the parser to operate in a strict mode,
-     * which means that xml being parsed must be exactly correct with respect to the schema it
-     * references.
+     * <p>When set to <code>true</code>, this will cause the parser to operate in a strict mode, which means that xml
+     * being parsed must be exactly correct with respect to the schema it references.
      *
-     * <p>Some examples of cases in which the parser will throw an exception while operating in
-     * strict mode:
+     * <p>Some examples of cases in which the parser will throw an exception while operating in strict mode:
      *
      * <ul>
      *   <li>no 'schemaLocation' specified, or specified incorrectly
@@ -225,7 +198,7 @@ public class Parser {
     }
 
     /**
-     * Sets the flag controlling wether the parser should validate or not.
+     * Sets the flag controlling whether the parser should validate or not.
      *
      * @param validating Validation flag, <code>true</code> to validate, otherwise <code>false
      *     </code>
@@ -242,12 +215,11 @@ public class Parser {
     /**
      * Sets the flag which controls how the parser handles validation errors.
      *
-     * <p>When this flag is set, the parser will throw an exception when it encounters a validation
-     * error. Otherwise the error will be stored, retrievable from {@link #getValidationErrors()}.
+     * <p>When this flag is set, the parser will throw an exception when it encounters a validation error. Otherwise the
+     * error will be stored, retrievable from {@link #getValidationErrors()}.
      *
-     * <p>The default behavior is to set this flag to <code>false</code>. So client code should
-     * explicitly set this flag if it is desired that the exception be thrown when the validation
-     * error occurs.
+     * <p>The default behavior is to set this flag to <code>false</code>. So client code should explicitly set this flag
+     * if it is desired that the exception be thrown when the validation error occurs.
      *
      * @param fail failure flag, <code>true</code> to fail, otherwise <code>false</code>
      */
@@ -261,8 +233,8 @@ public class Parser {
     }
 
     /**
-     * Sets flag that controls whether the parser will process mixed content in a way that preserves
-     * order of child elements and text.
+     * Sets flag that controls whether the parser will process mixed content in a way that preserves order of child
+     * elements and text.
      *
      * @since 2.7
      */
@@ -271,11 +243,11 @@ public class Parser {
     }
 
     /**
-     * Flag that controls whether the parser will process mixed content in a way that preserves
-     * order of child elements and text.
+     * Flag that controls whether the parser will process mixed content in a way that preserves order of child elements
+     * and text.
      *
-     * <p>By default the parser will simply concatenate blindly all child text and not preserve
-     * order with respect to other elements within a mixed content type.
+     * <p>By default the parser will simply concatenate blindly all child text and not preserve order with respect to
+     * other elements within a mixed content type.
      *
      * @since 2.7
      */
@@ -284,8 +256,8 @@ public class Parser {
     }
 
     /**
-     * Sets Flag that forces of the check for {@link ParserDelegate} even in cases where an element
-     * can be parsed normally.
+     * Sets Flag that forces of the check for {@link ParserDelegate} even in cases where an element can be parsed
+     * normally.
      *
      * @since 8.0
      * @see Parser#isForceParserDelegate()
@@ -295,11 +267,10 @@ public class Parser {
     }
 
     /**
-     * Flag that forces of the check for {@link ParserDelegate} even in cases where an element can
-     * be parsed normally.
+     * Flag that forces of the check for {@link ParserDelegate} even in cases where an element can be parsed normally.
      *
-     * <p>By default the parser will only lookup parser delegates when the element is unrecognized
-     * with regard to the schema and can't be parsed normally.
+     * <p>By default the parser will only lookup parser delegates when the element is unrecognized with regard to the
+     * schema and can't be parsed normally.
      *
      * @since 8.0
      */
@@ -307,11 +278,7 @@ public class Parser {
         return handler.isForceParserDelegate();
     }
 
-    /**
-     * Set EntityResolver
-     *
-     * @param entityResolver
-     */
+    /** Set EntityResolver */
     public void setEntityResolver(EntityResolver entityResolver) {
         handler.setEntityResolver(entityResolver);
     }
@@ -326,11 +293,9 @@ public class Parser {
     }
 
     /**
-     * Informs the parser of the type of the root element to be used in cases where it can not be
-     * inferred.
+     * Informs the parser of the type of the root element to be used in cases where it can not be inferred.
      *
-     * <p>This method is used in cases where the element being parsed is not declared as global in
-     * the schema.
+     * <p>This method is used in cases where the element being parsed is not declared as global in the schema.
      *
      * @param typeName The type name of the root element.
      * @since 8.0
@@ -353,71 +318,50 @@ public class Parser {
      *
      * @return A list of errors, or an empty list if none.
      */
-    public List getValidationErrors() {
+    public List<Exception> getValidationErrors() {
         return handler.getValidationErrors();
     }
 
     /**
      * Validates an instance document defined by a input stream.
      *
-     * <p>Clients should call {@link #getValidationErrors()} after this method to retrieve any
-     * validation errors that occurred. Clients do not need to call {@link #setValidating(boolean)}
-     * when using this method to validate.
+     * <p>Clients should call {@link #getValidationErrors()} after this method to retrieve any validation errors that
+     * occurred. Clients do not need to call {@link #setValidating(boolean)} when using this method to validate.
      *
-     * <p>This method does not do any of the work done by {@link #parse(InputSource)}, it only
-     * validates.
-     *
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
+     * <p>This method does not do any of the work done by {@link #parse(InputSource)}, it only validates.
      */
-    public void validate(InputStream in)
-            throws IOException, SAXException, ParserConfigurationException {
+    public void validate(InputStream in) throws IOException, SAXException, ParserConfigurationException {
         validate(new InputSource(in));
     }
 
     /**
      * Validates an instance document defined by a reader.
      *
-     * <p>Clients should call {@link #getValidationErrors()} after this method to retrieve any
-     * validation errors that occurred. Clients do not need to call {@link #setValidating(boolean)}
-     * when using this method to validate.
+     * <p>Clients should call {@link #getValidationErrors()} after this method to retrieve any validation errors that
+     * occurred. Clients do not need to call {@link #setValidating(boolean)} when using this method to validate.
      *
-     * <p>This method does not do any of the work done by {@link #parse(InputSource)}, it only
-     * validates.
-     *
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
+     * <p>This method does not do any of the work done by {@link #parse(InputSource)}, it only validates.
      */
-    public void validate(Reader reader)
-            throws IOException, SAXException, ParserConfigurationException {
+    public void validate(Reader reader) throws IOException, SAXException, ParserConfigurationException {
         validate(new InputSource(reader));
     }
 
     /**
      * Validates an instance document defined by a input source.
      *
-     * <p>Clients should call {@link #getValidationErrors()} after this method to retrieve any
-     * validation errors that occurred. Clients do not need to call {@link #setValidating(boolean)}
-     * when using this method to validate.
+     * <p>Clients should call {@link #getValidationErrors()} after this method to retrieve any validation errors that
+     * occurred. Clients do not need to call {@link #setValidating(boolean)} when using this method to validate.
      *
-     * <p>This method does not do any of the work done by {@link #parse(InputSource)}, it only
-     * validates.
-     *
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
+     * <p>This method does not do any of the work done by {@link #parse(InputSource)}, it only validates.
      */
-    public void validate(InputSource source)
-            throws IOException, SAXException, ParserConfigurationException {
+    public void validate(InputSource source) throws IOException, SAXException, ParserConfigurationException {
         SAXParser parser = parser(true);
         parser.parse(source, handler.getValidator());
     }
 
     /**
-     * Returns the schema objects referenced by the instance document being parsed. This method can
-     * only be called after a successful parse has begun.
+     * Returns the schema objects referenced by the instance document being parsed. This method can only be called after
+     * a successful parse has begun.
      *
      * @return The schema objects used to parse the document, or null if parsing has not commenced.
      */
@@ -432,11 +376,11 @@ public class Parser {
     /**
      * Returns the namespace mappings maintained by the parser.
      *
-     * <p>Clients may register additional namespace mappings. This is useful when an application
-     * wishes to provide some "default" namespace mappings.
+     * <p>Clients may register additional namespace mappings. This is useful when an application wishes to provide some
+     * "default" namespace mappings.
      *
-     * <p>Clients should register namespace mappings in the current "context", ie do not call {@link
-     * NamespaceSupport#pushContext()}. Example: <code>
+     * <p>Clients should register namespace mappings in the current "context", ie do not call
+     * {@link NamespaceSupport#pushContext()}. Example: <code>
      * Parser parser = new Parser( ... );
      * parser.getNamespaces().declarePrefix( "foo", "http://www.foo.com" );
      * ...
@@ -475,8 +419,7 @@ public class Parser {
         if (validate) {
             pFactory.setFeature("http://xml.org/sax/features/validation", true);
             pFactory.setFeature("http://apache.org/xml/features/validation/schema", true);
-            pFactory.setFeature(
-                    "http://apache.org/xml/features/validation/schema-full-checking", true);
+            pFactory.setFeature("http://apache.org/xml/features/validation/schema-full-checking", true);
         }
 
         SAXParser parser = pFactory.newSAXParser();
@@ -484,9 +427,7 @@ public class Parser {
         // set the schema sources of this configuration, and all dependent ones
         StringBuffer schemaLocation = new StringBuffer();
 
-        for (Iterator d = handler.getConfiguration().allDependencies().iterator(); d.hasNext(); ) {
-            Configuration dependency = (Configuration) d.next();
-
+        for (Configuration dependency : handler.getConfiguration().allDependencies()) {
             // ignore xs namespace
             if (XS.NAMESPACE.equals(dependency.getNamespaceURI())) {
                 continue;
@@ -505,8 +446,7 @@ public class Parser {
 
         // set the property to map namespaces to schema locations
         parser.setProperty(
-                "http://apache.org/xml/properties/schema/external-schemaLocation",
-                schemaLocation.toString());
+                "http://apache.org/xml/properties/schema/external-schemaLocation", schemaLocation.toString());
         // add the handler as a LexicalHandler too.
         parser.setProperty(SAX_PROPERTY_PREFIX + LEXICAL_HANDLER_PROPERTY, handler);
         // set Entity expansion limit
@@ -521,15 +461,12 @@ public class Parser {
         try {
             parser.setProperty(
                     JDK_ENTITY_EXPANSION_LIMIT,
-                    entityExpansionLimit != null
-                            ? entityExpansionLimit
-                            : DEFAULT_ENTITY_EXPANSION_LIMIT);
+                    entityExpansionLimit != null ? entityExpansionLimit : DEFAULT_ENTITY_EXPANSION_LIMIT);
         } catch (SAXNotRecognizedException ex) {
-            LOGGER.warning(
-                    "Sax parser property '"
-                            + JDK_ENTITY_EXPANSION_LIMIT
-                            + "' not recognized.  "
-                            + "Xerces version is incompatible.");
+            LOGGER.warning("Sax parser property '"
+                    + JDK_ENTITY_EXPANSION_LIMIT
+                    + "' not recognized.  "
+                    + "Xerces version is incompatible.");
         }
     }
 

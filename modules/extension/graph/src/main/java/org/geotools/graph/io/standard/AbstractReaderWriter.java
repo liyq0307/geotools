@@ -17,6 +17,7 @@
 package org.geotools.graph.io.standard;
 
 import java.util.HashMap;
+import java.util.Map;
 import org.geotools.graph.io.GraphReaderWriter;
 
 /**
@@ -25,7 +26,7 @@ import org.geotools.graph.io.GraphReaderWriter;
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
  */
 public abstract class AbstractReaderWriter implements GraphReaderWriter {
-    private HashMap m_properties;
+    private Map<String, Object> m_properties;
 
     /** GraphGenerator property key * */
     public static final String GENERATOR = "GENERATOR";
@@ -41,12 +42,11 @@ public abstract class AbstractReaderWriter implements GraphReaderWriter {
 
     /** Constructs an AbstractReaderWriter. */
     public AbstractReaderWriter() {
-        m_properties = new HashMap();
+        m_properties = new HashMap<>();
     }
 
     /**
-     * Sets a property. Some properties dont have values associated with them, they are just set,
-     * and unset.
+     * Sets a property. Some properties dont have values associated with them, they are just set, and unset.
      *
      * @param name Name of property
      */
@@ -55,11 +55,13 @@ public abstract class AbstractReaderWriter implements GraphReaderWriter {
     }
 
     /** @see GraphReaderWriter#setProperty(String, Object) */
+    @Override
     public void setProperty(String name, Object obj) {
         m_properties.put(name, obj);
     }
 
     /** @see GraphReaderWriter#getProperty(String) */
+    @Override
     public Object getProperty(String name) {
         return (m_properties.get(name));
     }

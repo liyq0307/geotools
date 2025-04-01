@@ -22,15 +22,15 @@ import java.util.List;
 import org.eclipse.xsd.XSDTypeDefinition;
 
 public class TypeWalker {
-    /** Cached type hieracty */
-    HashMap /*<XSDTypeDefinition,List>*/ cache = new HashMap();
+    /** Cached type hierarchy */
+    HashMap<XSDTypeDefinition, List<XSDTypeDefinition>> cache = new HashMap<>();
 
-    /** Walks from the bottom of the type hierachy to the top. */
+    /** Walks from the bottom of the type hierarchy to the top. */
     public void walk(XSDTypeDefinition base, Visitor visitor) {
         List types = types(base);
 
-        for (int i = 0; i < types.size(); i++) {
-            XSDTypeDefinition type = (XSDTypeDefinition) types.get(i);
+        for (Object o : types) {
+            XSDTypeDefinition type = (XSDTypeDefinition) o;
 
             // do the visit, if visitor returns false, break out
             if (!visitor.visit(type)) {
@@ -39,7 +39,7 @@ public class TypeWalker {
         }
     }
 
-    /** Walks from the top of the type hierachy to the bottom. */
+    /** Walks from the top of the type hierarchy to the bottom. */
     public void rwalk(XSDTypeDefinition base, Visitor visitor) {
         List types = types(base);
 
@@ -54,10 +54,10 @@ public class TypeWalker {
     }
 
     private List types(XSDTypeDefinition base) {
-        List types = (List) cache.get(base);
+        List<XSDTypeDefinition> types = cache.get(base);
 
         if (types == null) {
-            types = new ArrayList();
+            types = new ArrayList<>();
 
             XSDTypeDefinition type = base;
 
@@ -83,8 +83,7 @@ public class TypeWalker {
          * Supplies the current type to the visitor.
          *
          * @param type The current type.
-         * @return True to signal that the walk should continue, false to signal the walk should
-         *     stop.
+         * @return True to signal that the walk should continue, false to signal the walk should stop.
          */
         boolean visit(XSDTypeDefinition type);
     }

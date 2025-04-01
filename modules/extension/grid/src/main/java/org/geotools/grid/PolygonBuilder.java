@@ -41,8 +41,7 @@ public abstract class PolygonBuilder {
         this.gridBounds = gridBounds;
     }
 
-    public boolean buildGrid(
-            GridFeatureBuilder gridFeatureBuilder, double vertexSpacing, ListFeatureCollection fc) {
+    public boolean buildGrid(GridFeatureBuilder gridFeatureBuilder, double vertexSpacing, ListFeatureCollection fc) {
 
         boolean result = true;
 
@@ -59,7 +58,7 @@ public abstract class PolygonBuilder {
             while (el.getBounds().getMaxX() <= gridBounds.getMaxX()) {
                 if (((Envelope) gridBounds).contains(el.getBounds())) {
                     if (gridFeatureBuilder.getCreateFeature(el)) {
-                        Map<String, Object> attrMap = new HashMap<String, Object>();
+                        Map<String, Object> attrMap = new HashMap<>();
                         gridFeatureBuilder.setAttributes(el, attrMap);
 
                         if (densify) {

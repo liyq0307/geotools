@@ -19,6 +19,7 @@ package org.geotools.gml3.bindings;
 import java.util.Collection;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.FeatureCollection;
@@ -26,7 +27,6 @@ import org.geotools.gml3.GML;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Binding object for the type http://www.opengis.net/gml:AbstractFeatureCollectionType.
@@ -56,6 +56,7 @@ import org.opengis.feature.simple.SimpleFeature;
  */
 public class AbstractFeatureCollectionTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.AbstractFeatureCollectionType;
     }
@@ -67,6 +68,7 @@ public class AbstractFeatureCollectionTypeBinding extends AbstractComplexBinding
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return FeatureCollection.class;
     }
@@ -78,6 +80,7 @@ public class AbstractFeatureCollectionTypeBinding extends AbstractComplexBinding
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         SimpleFeatureCollection featureCollection =
                 (SimpleFeatureCollection) node.getChildValue(FeatureCollection.class);
@@ -93,18 +96,18 @@ public class AbstractFeatureCollectionTypeBinding extends AbstractComplexBinding
         collection.addAll(childValues);
 
         // &lt;element minOccurs="0" ref="gml:featureMembers"/&gt;
-        SimpleFeature[] featureMembers =
-                (SimpleFeature[]) node.getChildValue(SimpleFeature[].class);
+        SimpleFeature[] featureMembers = node.getChildValue(SimpleFeature[].class);
 
         if (featureMembers != null) {
-            for (int i = 0; i < featureMembers.length; i++) {
-                collection.add(featureMembers[i]);
+            for (SimpleFeature featureMember : featureMembers) {
+                collection.add(featureMember);
             }
         }
 
         return featureCollection;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) {
         // just return the features themselves
         if (GML.featureMembers.equals(name)) {

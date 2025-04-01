@@ -68,9 +68,10 @@ public class DCMIRecordTypeImpl extends AbstractRecordTypeImpl implements DCMIRe
      * <!-- begin-user-doc -->
      * <!-- end-user-doc -->
      */
+    @Override
     public EList<SimpleLiteral> getDCElement() {
         if (dcElement == null) {
-            dcElement = new EObjectContainmentEList<SimpleLiteral>(SimpleLiteral.class, this, Csw20Package.DCMI_RECORD_TYPE__DC_ELEMENT);
+            dcElement = new EObjectContainmentEList<>(SimpleLiteral.class, this, Csw20Package.DCMI_RECORD_TYPE__DC_ELEMENT);
         }
         return dcElement;
     }

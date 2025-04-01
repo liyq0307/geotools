@@ -22,8 +22,8 @@ import java.io.Reader;
 import java.util.Collections;
 import java.util.EmptyStackException;
 import java.util.List;
+import org.geotools.styling.zoom.ZoomContextFinder;
 import org.geotools.ysld.YamlUtil;
-import org.geotools.ysld.parse.ZoomContextFinder;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 import org.yaml.snakeyaml.events.AliasEvent;
 import org.yaml.snakeyaml.events.Event;
@@ -42,9 +42,7 @@ public class YsldValidator {
      * Validate the passed style
      *
      * @param input Reader for the style
-     * @return List of {@link MarkedYAMLException} representing any errors, or an empty list if the
-     *     style is valid
-     * @throws IOException
+     * @return List of {@link MarkedYAMLException} representing any errors, or an empty list if the style is valid
      */
     public List<MarkedYAMLException> validate(Reader input) throws IOException {
         YsldValidateContext context = new YsldValidateContext();

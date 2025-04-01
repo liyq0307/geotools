@@ -36,11 +36,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.geotools.geojson.geom.GeometryHandler;
 import org.geotools.util.Converters;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.ContentHandler;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 
 public class GeoJSONUtil {
 
@@ -49,8 +53,7 @@ public class GeoJSONUtil {
 
     public static final TimeZone TIME_ZONE = TimeZone.getTimeZone("GMT");
 
-    public static final FastDateFormat dateFormatter =
-            FastDateFormat.getInstance(DATE_FORMAT, TIME_ZONE);
+    public static final FastDateFormat dateFormatter = FastDateFormat.getInstance(DATE_FORMAT, TIME_ZONE);
 
     //
     // io
@@ -72,7 +75,6 @@ public class GeoJSONUtil {
      *
      * @param input The input object.
      * @return A reader.
-     * @throws IOException
      */
     public static Reader toReader(Object input) throws IOException {
         if (input instanceof BufferedReader) {
@@ -114,9 +116,28 @@ public class GeoJSONUtil {
      *
      * @param output The output object.
      * @return A writer.
-     * @throws IOException
      */
     public static Writer toWriter(Object output) throws IOException {
+        // If the user passed in an OutputStreamWriter, we'll trust them to close it themselves.
+        if (output instanceof OutputStreamWriter) {
+            return new Writer() {
+                Writer writer = new BufferedWriter((Writer) output);
+
+                @Override
+                public void write(char[] cbuf, int off, int len) throws IOException {
+                    writer.write(cbuf, off, len);
+                }
+
+                @Override
+                public void flush() throws IOException {
+                    writer.flush();
+                }
+
+                @Override
+                public void close() throws IOException {}
+            };
+        }
+
         if (output instanceof BufferedWriter) {
             return (BufferedWriter) output;
         }
@@ -159,6 +180,31 @@ public class GeoJSONUtil {
     private static void value(Object value, StringBuilder sb) {
         if (value == null) {
             nul(sb);
+        } else if (value instanceof List) {
+            sb.append('[');
+            boolean firstValue = true;
+            for (Object member : (List) value) {
+                if (firstValue) {
+                    firstValue = false;
+                } else {
+                    sb.append(',');
+                }
+
+                value(member, sb);
+            }
+            sb.append(']');
+        } else if (value instanceof Map) {
+            sb.append('{');
+            boolean firstEntry = true;
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
+                if (firstEntry) {
+                    firstEntry = false;
+                } else {
+                    sb.append(',');
+                }
+                entry(entry.getKey().toString(), entry.getValue(), sb);
+            }
+            sb.append('}');
         } else if (value.getClass().isArray()) {
             array(value, sb);
         } else if (value instanceof Number || value instanceof Boolean || value instanceof Date) {
@@ -206,15 +252,13 @@ public class GeoJSONUtil {
     //
     // parsing
     //
+    @SuppressWarnings("unchecked")
     public static <T> T trace(T handler, Class<T> clazz) {
-        return (T)
-                Proxy.newProxyInstance(
-                        handler.getClass().getClassLoader(),
-                        new Class[] {clazz},
-                        new TracingHandler(handler));
+        return (T) Proxy.newProxyInstance(
+                handler.getClass().getClassLoader(), new Class[] {clazz}, new TracingHandler(handler));
     }
 
-    public static boolean addOrdinate(List ordinates, Object value) {
+    public static boolean addOrdinate(List<Object> ordinates, Object value) {
         if (ordinates != null) {
             ordinates.add(value);
         }
@@ -226,8 +270,7 @@ public class GeoJSONUtil {
         Coordinate c = new Coordinate();
         if (ordinates.size() <= 1) {
             throw new ParseException(
-                    ParseException.ERROR_UNEXPECTED_EXCEPTION,
-                    "Too few ordinates to create coordinate");
+                    ParseException.ERROR_UNEXPECTED_EXCEPTION, "Too few ordinates to create coordinate");
         }
         if (ordinates.size() > 1) {
             c.x = ((Number) ordinates.get(0)).doubleValue();
@@ -239,40 +282,89 @@ public class GeoJSONUtil {
         return c;
     }
 
-    public static Coordinate[] createCoordinates(List coordinates) {
-        return (Coordinate[]) coordinates.toArray(new Coordinate[coordinates.size()]);
+    public static Coordinate[] createCoordinates(List<Coordinate> coordinates) {
+        return coordinates.toArray(new Coordinate[coordinates.size()]);
     }
 
-    public static <T> T parse(IContentHandler<T> handler, Object input, boolean trace)
-            throws IOException {
-        Reader reader = toReader(input);
-        if (trace) {
-            handler =
-                    (IContentHandler<T>)
-                            Proxy.newProxyInstance(
-                                    handler.getClass().getClassLoader(),
-                                    new Class[] {IContentHandler.class},
-                                    new TracingHandler(handler));
-        }
+    @SuppressWarnings("unchecked")
+    public static <T> T parse(IContentHandler<T> handler, Object input, boolean trace) throws IOException {
+        try (Reader reader = toReader(input)) {
+            if (trace) {
+                handler = (IContentHandler<T>) Proxy.newProxyInstance(
+                        handler.getClass().getClassLoader(),
+                        new Class[] {IContentHandler.class},
+                        new TracingHandler(handler));
+            }
 
-        JSONParser parser = new JSONParser();
-        try {
-            parser.parse(reader, handler);
-            return handler.getValue();
-        } catch (ParseException e) {
-            throw (IOException) new IOException().initCause(e);
+            JSONParser parser = new JSONParser();
+            try {
+                parser.parse(reader, handler);
+                return handler.getValue();
+            } catch (ParseException e) {
+                throw (IOException) new IOException().initCause(e);
+            }
         }
     }
 
     public static void encode(String json, Object output) throws IOException {
-        Writer w = toWriter(output);
-        w.write(json);
-        w.flush();
+        try (Writer w = toWriter(output)) {
+            w.write(json);
+            w.flush();
+        }
     }
 
     public static void encode(Map<String, Object> obj, Object output) throws IOException {
-        Writer w = toWriter(output);
-        JSONObject.writeJSONString(obj, w);
-        w.flush();
+        try (Writer w = toWriter(output)) {
+            JSONObject.writeJSONString(obj, w);
+            w.flush();
+        }
+    }
+
+    public static Object replaceGeometry(Object justAdded) throws ParseException, IOException {
+        if (justAdded instanceof Map) {
+            Map map = (Map) justAdded;
+            if (map.size() == 2
+                    && map.containsKey("type")
+                    && (map.containsKey("coordinates") || map.containsKey("geometries"))) {
+                return reparseMapToGeography(map);
+            }
+        }
+
+        return justAdded;
+    }
+
+    private static Geometry reparseMapToGeography(Map map) throws ParseException, IOException {
+        GeometryHandler geomHandler = new GeometryHandler(new GeometryFactory());
+
+        replayMap(map, geomHandler);
+        return geomHandler.getValue();
+    }
+
+    static void replayMap(Map map, ContentHandler handler) throws ParseException, IOException {
+        handler.startObject();
+        for (Object key : map.keySet()) {
+            handler.startObjectEntry((String) key);
+            replayObject(map.get(key), handler);
+            handler.endObjectEntry();
+        }
+        handler.endObject();
+    }
+
+    private static void replayObject(Object object, ContentHandler handler) throws ParseException, IOException {
+        if (object instanceof Map) {
+            replayMap((Map) object, handler);
+        } else if (object instanceof List) {
+            replayList((List) object, handler);
+        } else {
+            handler.primitive(object);
+        }
+    }
+
+    private static void replayList(List list, ContentHandler handler) throws ParseException, IOException {
+        handler.startArray();
+        for (Object o : list) {
+            replayObject(o, handler);
+        }
+        handler.endArray();
     }
 }

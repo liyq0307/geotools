@@ -28,8 +28,8 @@ public class NullPropertyAccessorFactory implements PropertyAccessorFactory {
 
     private static PropertyAccessor NULLPA = new NullPropertyAccessor();
 
-    public PropertyAccessor createPropertyAccessor(
-            Class type, String xpath, Class target, Hints hints) {
+    @Override
+    public PropertyAccessor createPropertyAccessor(Class type, String xpath, Class target, Hints hints) {
         return NULLPA;
     }
 
@@ -41,17 +41,18 @@ public class NullPropertyAccessorFactory implements PropertyAccessorFactory {
     static class NullPropertyAccessor implements PropertyAccessor {
 
         /** We can handle *one* case and one case only */
+        @Override
         public boolean canHandle(Object object, String xpath, Class target) {
             return "Expression/NIL".equals(xpath); // case sensitive
         }
 
-        public Object get(Object object, String xpath, Class target)
-                throws IllegalArgumentException {
+        @Override
+        public <T> T get(Object object, String xpath, Class<T> target) throws IllegalArgumentException {
             return null;
         }
 
-        public void set(Object object, String xpath, Object value, Class target)
-                throws IllegalArgumentException {
+        @Override
+        public <T> void set(Object object, String xpath, T value, Class<T> target) throws IllegalArgumentException {
             throw new IllegalArgumentException("Cannot assign a value to Expression/NIL.");
         }
     }

@@ -16,22 +16,20 @@
  */
 package org.geotools.util.factory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- * An implementation of {@link org.geotools.util.factory.FactoryIteratorProvider} over the {@link
- * DummyFactory}.
+ * An implementation of {@link org.geotools.util.factory.FactoryIteratorProvider} over the {@link DummyFactory}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
  */
 public final class DummyFactoryIteratorProvider implements FactoryIteratorProvider {
     /**
-     * {@code true} for iterating over the first half or examples, or {@code false} for iterating
-     * over the second half.
+     * {@code true} for iterating over the first half or examples, or {@code false} for iterating over the second half.
      */
     private final boolean firstHalf;
 
@@ -41,18 +39,17 @@ public final class DummyFactoryIteratorProvider implements FactoryIteratorProvid
     }
 
     /** Returns an iterator over all {@link DummyFactory}. */
+    @Override
     @SuppressWarnings("unchecked")
     public <T> Iterator<T> iterator(final Class<T> category) {
         assertEquals(DummyFactory.class, category);
         final DummyFactory[] factories;
         if (firstHalf) {
-            factories =
-                    new DummyFactory[] {
-                        new DummyFactory.Example1(), new DummyFactory.Example2(),
-                    };
+            factories = new DummyFactory[] {
+                new DummyFactory.Example1(), new DummyFactory.Example2(),
+            };
         } else {
-            factories =
-                    new DummyFactory[] {new DummyFactory.Example3(), new DummyFactory.Example4()};
+            factories = new DummyFactory[] {new DummyFactory.Example3(), new DummyFactory.Example4()};
         }
         return (Iterator) Arrays.asList(factories).iterator();
     }

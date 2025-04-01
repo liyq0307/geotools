@@ -20,7 +20,8 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.sf.ehcache.*;
+import net.sf.ehcache.Cache;
+import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 import net.sf.ehcache.config.ConfigurationFactory;
@@ -64,15 +65,11 @@ public enum CacheManagement {
             }
         }
         if (cacheConfig.getDefaultCacheConfiguration() == null) {
-            CacheConfiguration defaultCacheConfiguration =
-                    new CacheConfiguration()
-                            .persistence(
-                                    new PersistenceConfiguration()
-                                            .strategy(
-                                                    PersistenceConfiguration.Strategy
-                                                            .LOCALTEMPSWAP))
-                            .timeToIdleSeconds(config.getTimeToIdle())
-                            .timeToLiveSeconds(config.getTimeToLive());
+            CacheConfiguration defaultCacheConfiguration = new CacheConfiguration()
+                    .persistence(
+                            new PersistenceConfiguration().strategy(PersistenceConfiguration.Strategy.LOCALTEMPSWAP))
+                    .timeToIdleSeconds(config.getTimeToIdle())
+                    .timeToLiveSeconds(config.getTimeToLive());
 
             defaultCacheConfiguration.setMaxBytesLocalDisk((long) config.getDiskCacheSize());
             defaultCacheConfiguration.setMaxBytesLocalHeap((long) config.getHeapSize());
@@ -91,16 +88,15 @@ public enum CacheManagement {
             manager.addCache(DEFAULT_CACHE);
         }
         Cache cache = manager.getCache(DEFAULT_CACHE);
-        SelfPopulatingCache populatingCache =
-                new SelfPopulatingCache(cache, new S3ChunkEntryFactory(config));
+        SelfPopulatingCache populatingCache = new SelfPopulatingCache(cache, new S3ChunkEntryFactory(config));
         manager.replaceCacheWithDecoratedCache(cache, populatingCache);
 
         return manager;
     }
 
     /**
-     * @return {@code null} if the cache can't be loaded from the given file, so the default config
-     *     can be used; otherwise the CacheManagement class won't be loaded at all
+     * @return {@code null} if the cache can't be loaded from the given file, so the default config can be used;
+     *     otherwise the CacheManagement class won't be loaded at all
      */
     private static Configuration loadConfiguration(String configFile) {
         try {
@@ -110,8 +106,7 @@ public enum CacheManagement {
             logger().log(
                             Level.WARNING,
                             String.format(
-                                    "Unable to configure S3 GeoTiff cache from %s, using default config",
-                                    configFile),
+                                    "Unable to configure S3 GeoTiff cache from %s, using default config", configFile),
                             e);
         }
         return null;

@@ -16,7 +16,9 @@
  */
 package org.geotools.gce.imagemosaic.properties.time;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -24,6 +26,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Set;
 import java.util.TimeZone;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.SchemaException;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollector;
@@ -31,8 +35,6 @@ import org.geotools.gce.imagemosaic.properties.PropertiesCollectorFinder;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollectorSPI;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class TimestampFileNameExtractorTest {
 
@@ -50,8 +52,7 @@ public class TimestampFileNameExtractorTest {
     @Test
     public void testParseIsoTimestamp() {
         PropertiesCollectorSPI spi = getTimestampSpi();
-        PropertiesCollector collector =
-                spi.create("regex=[0-9]{8}T[0-9]{6}", Arrays.asList("time"));
+        PropertiesCollector collector = spi.create("regex=[0-9]{8}T[0-9]{6}", Arrays.asList("time"));
         File file = new File("polyphemus_20130301T000000.nc");
         collector.collect(file);
         collector.setProperties(feature);
@@ -63,8 +64,7 @@ public class TimestampFileNameExtractorTest {
     @Test
     public void testUnableToParse() {
         PropertiesCollectorSPI spi = getTimestampSpi();
-        PropertiesCollector collector =
-                spi.create("regex=[0-9]{8}T[0-9]{6}", Arrays.asList("time"));
+        PropertiesCollector collector = spi.create("regex=[0-9]{8}T[0-9]{6}", Arrays.asList("time"));
 
         // Note that the number of 0 after the T char isn't enough
         // will throw an illegalArgumentException while parsing
@@ -83,8 +83,7 @@ public class TimestampFileNameExtractorTest {
     @Test
     public void testParseCustomTimestamp() {
         PropertiesCollectorSPI spi = getTimestampSpi();
-        PropertiesCollector collector =
-                spi.create("regex=[0-9]{14},format=yyyyMMddHHmmss", Arrays.asList("time"));
+        PropertiesCollector collector = spi.create("regex=[0-9]{14},format=yyyyMMddHHmmss", Arrays.asList("time"));
         File file = new File("polyphemus_20130301000000.nc");
         collector.collect(file);
         collector.setProperties(feature);
@@ -94,11 +93,23 @@ public class TimestampFileNameExtractorTest {
     }
 
     @Test
+    public void testParseCustomTimestampUseHighTime() {
+        PropertiesCollectorSPI spi = getTimestampSpi();
+        PropertiesCollector collector =
+                spi.create("regex=[0-9]{10},format=yyyyMMddHH,useHighTime=true", Arrays.asList("time"));
+        File file = new File("Temperature_2017111319.tif");
+        collector.collect(file);
+        collector.setProperties(feature);
+        Date time = (Date) feature.getAttribute("time");
+        assertNotNull(time);
+        assertEquals("2017-11-13T19:59:59.999Z", df.format(time));
+    }
+
+    @Test
     public void testParseFullPathTimestamp() {
         PropertiesCollectorSPI spi = getTimestampSpi();
         String regex = "(?:\\\\)(\\d{8})(?:\\\\)(?:file.)(T\\d{6})(?:.txt)";
-        PropertiesCollector collector =
-                spi.create("regex=" + regex + ",fullPath=true", Arrays.asList("time"));
+        PropertiesCollector collector = spi.create("regex=" + regex + ",fullPath=true", Arrays.asList("time"));
         File file = new File("c:\\data\\20120602\\file.T120000.txt");
         collector.collect(file);
         collector.setProperties(feature);
@@ -108,19 +119,73 @@ public class TimestampFileNameExtractorTest {
     }
 
     @Test
+    public void testTimestampWithHighTimeRange() {
+        PropertiesCollectorSPI spi = getTimestampSpi();
+        PropertiesCollector collector = spi.create("regex=[0-9]{8},useHighTime=true", Arrays.asList("time"));
+        File file = new File("polyphemus_20130301.nc");
+        collector.collect(file);
+        collector.setProperties(feature);
+        Date time = (Date) feature.getAttribute("time");
+        assertNotNull(time);
+        // Getting the higher time value of that time range
+        assertEquals("2013-03-01T23:59:59.999Z", df.format(time));
+    }
+
+    @Test
     public void testParseFullPathTimestampWithCustomFormat() {
         PropertiesCollectorSPI spi = getTimestampSpi();
         String regex = "(?:\\\\)(\\d{8})(?:\\\\)(?:file.)(t\\d{2}z)(?:.txt)";
         PropertiesCollector collector =
-                spi.create(
-                        "regex=" + regex + ",format=yyyyMMdd't'HH'z',fullPath=true",
-                        Arrays.asList("time"));
+                spi.create("regex=" + regex + ",format=yyyyMMdd't'HH'z',fullPath=true", Arrays.asList("time"));
         File file = new File("c:\\data\\20120602\\file.t12z.txt");
         collector.collect(file);
         collector.setProperties(feature);
         Date time = (Date) feature.getAttribute("time");
         assertNotNull(time);
         assertEquals("2012-06-02T12:00:00.000Z", df.format(time));
+    }
+
+    @Test
+    public void testParseFullPathTimestampWithCustomFormat2() {
+        PropertiesCollectorSPI spi = getTimestampSpi();
+        String regex = "(?:\\\\)(\\d{8})(?:\\\\)(?:file.)(t\\d{2}z)(?:.txt)";
+        PropertiesCollector collector =
+                spi.create("regex=" + regex + ",fullPath=true,format=yyyyMMdd't'HH'z'", Arrays.asList("time"));
+        File file = new File("c:\\data\\20120602\\file.t12z.txt");
+        collector.collect(file);
+        collector.setProperties(feature);
+        Date time = (Date) feature.getAttribute("time");
+        assertNotNull(time);
+        assertEquals("2012-06-02T12:00:00.000Z", df.format(time));
+    }
+
+    @Test
+    public void testParseFullPathTimestampWithCustomFormatHighTimeRange() {
+        PropertiesCollectorSPI spi = getTimestampSpi();
+        String regex = "(?:\\\\)(\\d{8})(?:\\\\)(?:file.)(t\\d{2}z)(?:.txt)";
+        PropertiesCollector collector = spi.create(
+                "regex=" + regex + ",fullPath=true,format=yyyyMMdd't'HH'z',useHighTime=true", Arrays.asList("time"));
+        File file = new File("c:\\data\\20120602\\file.t12z.txt");
+        collector.collect(file);
+        collector.setProperties(feature);
+        Date time = (Date) feature.getAttribute("time");
+        assertNotNull(time);
+        assertEquals("2012-06-02T12:59:59.999Z", df.format(time));
+    }
+
+    @Test
+    public void testParseFullPathTimestampWithCustomFormatHighTimeRange2() {
+        PropertiesCollectorSPI spi = getTimestampSpi();
+        String regex = "(?:\\\\)(\\d{8})(?:\\\\)(?:file.)(t\\d{2}z)(?:.txt)";
+        PropertiesCollector collector = spi.create(
+                "regex=" + regex + ",format=yyyyMMdd't'HH'z', useHighTime=true,   fullPath=true",
+                Arrays.asList("time"));
+        File file = new File("c:\\data\\20120602\\file.t12z.txt");
+        collector.collect(file);
+        collector.setProperties(feature);
+        Date time = (Date) feature.getAttribute("time");
+        assertNotNull(time);
+        assertEquals("2012-06-02T12:59:59.999Z", df.format(time));
     }
 
     private PropertiesCollectorSPI getTimestampSpi() {

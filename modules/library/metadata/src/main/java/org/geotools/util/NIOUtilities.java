@@ -16,7 +16,9 @@
  */
 package org.geotools.util;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.AccessController;
@@ -41,13 +43,13 @@ import org.geotools.util.logging.Logging;
 public final class NIOUtilities {
 
     /** The buffer cache, partitioned by buffer size and fully concurrent */
-    static Map<Integer, Queue<Object>> cache = new ConcurrentHashMap<Integer, Queue<Object>>();
+    static Map<Integer, Queue<Object>> cache = new ConcurrentHashMap<>();
 
-    static Map<Class, Method> cleanerMethodCache = new ConcurrentHashMap<Class, Method>();
+    static Map<Class, Method> cleanerMethodCache = new ConcurrentHashMap<>();
 
     /**
-     * The maximum size of the hard reference cache (the soft one can be unbounded, the GC will
-     * regulate its size according to the memory pressure)
+     * The maximum size of the hard reference cache (the soft one can be unbounded, the GC will regulate its size
+     * according to the memory pressure)
      */
     static int maxCacheSize = 2 * 1024 * 1024;
 
@@ -68,22 +70,16 @@ public final class NIOUtilities {
         directBuffersEnabled = "TRUE".equalsIgnoreCase(directBuffers);
     }
 
-    /**
-     * Wheter direct buffers are used, or not (defaults to true)
-     *
-     * @return
-     */
+    /** Wheter direct buffers are used, or not (defaults to true) */
     public static boolean isDirectBuffersEnabled() {
         return directBuffersEnabled;
     }
 
     /**
-     * If the flag is true {@link #allocate(int)} will allocate a direct buffer,, otherwise heap
-     * buffers will be used. Direct buffers are normally faster, but their cleanup is platform
-     * dependent and not guaranteed, under high load and in combination with some garbage collectors
-     * that might result in a JVM crash (failure to perform native memory allocation)
-     *
-     * @param directBuffersEnabled
+     * If the flag is true {@link #allocate(int)} will allocate a direct buffer,, otherwise heap buffers will be used.
+     * Direct buffers are normally faster, but their cleanup is platform dependent and not guaranteed, under high load
+     * and in combination with some garbage collectors that might result in a JVM crash (failure to perform native
+     * memory allocation)
      */
     public static void setDirectBuffersEnabled(boolean directBuffersEnabled) {
         NIOUtilities.directBuffersEnabled = directBuffersEnabled;
@@ -93,23 +89,17 @@ public final class NIOUtilities {
     private NIOUtilities() {}
 
     /**
-     * Sets the maximum byte buffer cache size, in bytes (set to 0 to only use soft references in
-     * the case, a positive value will make the cache use hard references up to the max cache size)
-     *
-     * @param maxCacheSize
+     * Sets the maximum byte buffer cache size, in bytes (set to 0 to only use soft references in the case, a positive
+     * value will make the cache use hard references up to the max cache size)
      */
     public static void setMaxCacheSize(int maxCacheSize) {
         NIOUtilities.maxCacheSize = maxCacheSize;
     }
 
     /**
-     * Allocates and returns a {@link ByteBuffer}. The buffer capacity will generally be greater
-     * than of two that can contain the specified limit, the buffer limit will be set at the
-     * specified value. The buffers are pooled, so remember to call {@link #clean(ByteBuffer,
-     * false)} to return the buffer to the pool.
-     *
-     * @param limit
-     * @return
+     * Allocates and returns a {@link ByteBuffer}. The buffer capacity will generally be greater than of two that can
+     * contain the specified limit, the buffer limit will be set at the specified value. The buffers are pooled, so
+     * remember to call {@link #clean(ByteBuffer, false)} to return the buffer to the pool.
      */
     public static ByteBuffer allocate(int size) {
         // look for a free cached buffer that has still not been garbage collected
@@ -127,7 +117,7 @@ public final class NIOUtilities {
             }
             // clean up the buffer and return it
             if (buffer != null) {
-                buffer.clear();
+                ((Buffer) buffer).clear();
                 return buffer;
             }
         }
@@ -140,12 +130,7 @@ public final class NIOUtilities {
         }
     }
 
-    /**
-     * Returns the buffer queue associated to the specified size
-     *
-     * @param size
-     * @return
-     */
+    /** Returns the buffer queue associated to the specified size */
     private static Queue<Object> getBuffers(int size) {
         Queue<Object> result = cache.get(size);
         if (result == null) {
@@ -155,7 +140,7 @@ public final class NIOUtilities {
             synchronized (cache) {
                 result = cache.get(size);
                 if (result == null) {
-                    result = new ConcurrentLinkedQueue<Object>();
+                    result = new ConcurrentLinkedQueue<>();
                     cache.put(size, result);
                 }
             }
@@ -167,13 +152,10 @@ public final class NIOUtilities {
      * Depending on the type of buffer different cleanup action will be taken:
      *
      * <ul>
-     *   <li>if the buffer is memory mapped (as per the specified parameter) the effect is the same
-     *       as {@link #clean(ByteBuffer)}
+     *   <li>if the buffer is memory mapped (as per the specified parameter) the effect is the same as
+     *       {@link #clean(ByteBuffer)}
      *   <li>if the buffer is not memory mapped it will be returned to the buffer cache
      * </ul>
-     *
-     * @param buffer
-     * @return
      */
     public static boolean clean(final ByteBuffer buffer, boolean memoryMapped) {
         if (memoryMapped) {
@@ -188,55 +170,82 @@ public final class NIOUtilities {
     }
 
     /**
-     * Really closes a {@code MappedByteBuffer} without the need to wait for garbage collection. Any
-     * problems with closing a buffer on Windows (the problem child in this case) will be logged as
-     * {@code SEVERE} to the logger of the package name. To force logging of errors, set the System
-     * property "org.geotools.io.debugBuffer" to "true".
-     *
-     * <p>Starting from Java 9 the underlying Java runtime issue got fixed, so the method returns
-     * immediately in that case, without forcing any cleaning by reflection on a non exposed API
+     * Really closes a {@code MappedByteBuffer} without the need to wait for garbage collection. Any problems with
+     * closing a buffer on Windows (the problem child in this case) will be logged as {@code SEVERE} to the logger of
+     * the package name. To force logging of errors, set the System property "org.geotools.io.debugBuffer" to "true".
      *
      * @param buffer The buffer to close.
      * @return true if the operation was successful, false otherwise.
      * @see java.nio.MappedByteBuffer
      */
     public static boolean clean(final ByteBuffer buffer) {
-        // the issue was fixed in Java 9+, and Java 8 too from a given point, but testing
-        // the minor version is annoying
-        if (buffer == null
-                || !buffer.isDirect()
-                || SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_9)) {
+        if (buffer == null || !buffer.isDirect()) {
             return true;
         }
 
-        Boolean b =
-                AccessController.doPrivileged(
-                        new PrivilegedAction<Boolean>() {
-                            public Boolean run() {
-                                Boolean success = Boolean.FALSE;
-                                try {
-                                    Method getCleanerMethod = getCleanerMethod(buffer);
-                                    if (getCleanerMethod != null) {
-                                        Object cleaner =
-                                                getCleanerMethod.invoke(buffer, (Object[]) null);
-                                        if (cleaner != null) {
-                                            Method clean =
-                                                    cleaner.getClass()
-                                                            .getMethod("clean", (Class[]) null);
-                                            clean.invoke(cleaner, (Object[]) null);
-                                            success = Boolean.TRUE;
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    // This really is a show stopper on windows
-                                    if (isLoggable()) {
-                                        log(e, buffer);
-                                    }
-                                }
-                                return success;
-                            }
-                        });
-        return b.booleanValue();
+        PrivilegedAction<Boolean> action = SystemUtils.isJavaVersionAtLeast(JavaVersion.JAVA_9)
+                ? () -> new CleanupAfterJdk8(buffer).clean()
+                : () -> new CleanupPriorJdk9(buffer).clean();
+
+        return AccessController.doPrivileged(action).booleanValue();
+    }
+
+    private static class CleanupPriorJdk9 {
+        private final ByteBuffer buffer;
+
+        CleanupPriorJdk9(ByteBuffer buffer) {
+            this.buffer = buffer;
+        }
+
+        Boolean clean() {
+            Boolean success = Boolean.FALSE;
+            try {
+                Method getCleanerMethod = getCleanerMethod(buffer);
+                if (getCleanerMethod != null) {
+                    Object cleaner = getCleanerMethod.invoke(buffer, (Object[]) null);
+                    if (cleaner != null) {
+                        Method clean = cleaner.getClass().getMethod("clean", (Class[]) null);
+                        clean.invoke(cleaner, (Object[]) null);
+                        success = Boolean.TRUE;
+                    }
+                }
+            } catch (Exception e) {
+                // This really is a show stopper on windows
+                if (isLoggable()) {
+                    log(e, buffer);
+                }
+            }
+            return success;
+        }
+    }
+
+    private static class CleanupAfterJdk8 {
+        private final ByteBuffer buffer;
+
+        CleanupAfterJdk8(ByteBuffer buffer) {
+            this.buffer = buffer;
+        }
+
+        Boolean clean() {
+            Boolean success = Boolean.FALSE;
+            try {
+                // https://bugs.openjdk.java.net/browse/JDK-8171377
+                // https://bugs.openjdk.java.net/browse/JDK-4724038
+                final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+                final Field theUnsafeField = unsafeClass.getDeclaredField("theUnsafe");
+                theUnsafeField.setAccessible(true);
+                final Object theUnsafe = theUnsafeField.get(null);
+                final Method invokeCleanerMethod = unsafeClass.getMethod("invokeCleaner", ByteBuffer.class);
+                invokeCleanerMethod.invoke(theUnsafe, buffer);
+
+                success = Boolean.TRUE;
+            } catch (Exception e) {
+                if (isLoggable()) {
+                    log(e, buffer);
+                }
+            }
+            return success;
+        }
     }
 
     static Method getCleanerMethod(final ByteBuffer buffer) throws NoSuchMethodException {
@@ -262,7 +271,7 @@ public final class NIOUtilities {
 
         // clean up the buffer -> we need to zero out its contents as if it was just
         // created or some shapefile tests will start failing
-        buffer.clear();
+        ((Buffer) buffer).clear();
         buffer.order(ByteOrder.BIG_ENDIAN);
 
         // set the buffer back in the cache, either as a soft reference or as
@@ -293,13 +302,12 @@ public final class NIOUtilities {
     /** Logs a warning message. */
     private static synchronized void log(final Exception e, final ByteBuffer buffer) {
         warned = true;
-        String message =
-                "Error attempting to close a mapped byte buffer : "
-                        + buffer.getClass().getName()
-                        + "\n JVM : "
-                        + System.getProperty("java.version")
-                        + ' '
-                        + System.getProperty("java.vendor");
+        String message = "Error attempting to close a mapped byte buffer : "
+                + buffer.getClass().getName()
+                + "\n JVM : "
+                + System.getProperty("java.version")
+                + ' '
+                + System.getProperty("java.vendor");
         Logging.getLogger(NIOUtilities.class).log(Level.SEVERE, message, e);
     }
 }

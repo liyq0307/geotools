@@ -40,16 +40,19 @@ public final class WCS extends XSD {
     /** private constructor */
     private WCS() {}
 
-    protected void addDependencies(Set dependencies) {
+    @Override
+    protected void addDependencies(Set<XSD> dependencies) {
         dependencies.add(OWS.getInstance());
     }
 
     /** Returns 'http://www.opengis.net/wcs/2.0'. */
+    @Override
     public String getNamespaceURI() {
         return NAMESPACE;
     }
 
     /** Returns the location of 'wcsAll.xsd.'. */
+    @Override
     public String getSchemaLocation() {
         return getClass().getResource("wcsAll.xsd").toString();
     }
@@ -57,8 +60,7 @@ public final class WCS extends XSD {
     /** @generated */
     public static final String NAMESPACE = "http://www.opengis.net/wcs/2.0";
 
-    public static final String NAMESPACE_RANGESUBSET =
-            "http://www.opengis.net/wcs/range-subsetting/1.0";
+    public static final String NAMESPACE_RANGESUBSET = "http://www.opengis.net/wcs/range-subsetting/1.0";
 
     /* Type Definitions */
     /** @generated */
@@ -66,16 +68,13 @@ public final class WCS extends XSD {
     /** @generated */
     public static final QName ContentsType = new QName(NAMESPACE, "ContentsType");
     /** @generated */
-    public static final QName CoverageDescriptionsType =
-            new QName(NAMESPACE, "CoverageDescriptionsType");
+    public static final QName CoverageDescriptionsType = new QName(NAMESPACE, "CoverageDescriptionsType");
     /** @generated */
-    public static final QName CoverageDescriptionType =
-            new QName(NAMESPACE, "CoverageDescriptionType");
+    public static final QName CoverageDescriptionType = new QName(NAMESPACE, "CoverageDescriptionType");
     /** @generated */
     public static final QName CoverageOfferingsType = new QName(NAMESPACE, "CoverageOfferingsType");
     /** @generated */
-    public static final QName CoverageSubtypeParentType =
-            new QName(NAMESPACE, "CoverageSubtypeParentType");
+    public static final QName CoverageSubtypeParentType = new QName(NAMESPACE, "CoverageSubtypeParentType");
     /** @generated */
     public static final QName CoverageSummaryType = new QName(NAMESPACE, "CoverageSummaryType");
     /** @generated */

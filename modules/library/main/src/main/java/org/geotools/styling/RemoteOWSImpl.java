@@ -16,23 +16,29 @@
  */
 package org.geotools.styling;
 
+import org.geotools.api.style.RemoteOWS;
+
 public class RemoteOWSImpl implements RemoteOWS {
 
     private String service;
     private String onlineResource;
 
+    @Override
     public String getService() {
         return service;
     }
 
+    @Override
     public void setService(String service) {
         this.service = service;
     }
 
+    @Override
     public String getOnlineResource() {
         return onlineResource;
     }
 
+    @Override
     public void setOnlineResource(String onlineResource) {
         this.onlineResource = onlineResource;
     }

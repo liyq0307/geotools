@@ -18,28 +18,26 @@ package org.geotools.referencing.operation.transform;
 
 import java.awt.geom.AffineTransform;
 import java.io.Serializable;
-import org.geotools.geometry.GeneralDirectPosition;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.Matrix;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.GeneralPosition;
 import org.geotools.referencing.operation.LinearTransform;
 import org.geotools.referencing.operation.matrix.MatrixFactory;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.Matrix;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * The identity transform. The data are only copied without any transformation. This class is used
- * for identity transform of dimension greater than 2. For 1D and 2D identity transforms, {@link
- * LinearTransform1D} and {@link java.awt.geom.AffineTransform} already provide their own
- * optimisations.
+ * The identity transform. The data are only copied without any transformation. This class is used for identity
+ * transform of dimension greater than 2. For 1D and 2D identity transforms, {@link LinearTransform1D} and
+ * {@link java.awt.geom.AffineTransform} already provide their own optimisations.
  *
  * @since 2.0
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  */
-public class IdentityTransform extends AbstractMathTransform
-        implements LinearTransform, Serializable {
+public class IdentityTransform extends AbstractMathTransform implements LinearTransform, Serializable {
     /** Serial number for interoperability with different versions. */
     private static final long serialVersionUID = -5339040282922138164L;
 
@@ -47,8 +45,8 @@ public class IdentityTransform extends AbstractMathTransform
     private final int dimension;
 
     /**
-     * Identity transforms for dimensions ranging from to 0 to 7. Elements in this array will be
-     * created only when first requested.
+     * Identity transforms for dimensions ranging from to 0 to 7. Elements in this array will be created only when first
+     * requested.
      */
     private static final LinearTransform[] POOL = new LinearTransform[8];
 
@@ -83,29 +81,26 @@ public class IdentityTransform extends AbstractMathTransform
         return candidate;
     }
 
-    /**
-     * Tests whether this transform does not move any points. This implementation always returns
-     * {@code true}.
-     */
+    /** Tests whether this transform does not move any points. This implementation always returns {@code true}. */
     @Override
     public boolean isIdentity() {
         return true;
     }
 
-    /**
-     * Tests whether this transform does not move any points. This implementation always returns
-     * {@code true}.
-     */
+    /** Tests whether this transform does not move any points. This implementation always returns {@code true}. */
+    @Override
     public boolean isIdentity(double tolerance) {
         return true;
     }
 
     /** Gets the dimension of input points. */
+    @Override
     public int getSourceDimensions() {
         return dimension;
     }
 
     /** Gets the dimension of output points. */
+    @Override
     public int getTargetDimensions() {
         return dimension;
     }
@@ -127,30 +122,30 @@ public class IdentityTransform extends AbstractMathTransform
     }
 
     /** Returns a copy of the identity matrix. */
+    @Override
     public Matrix getMatrix() {
         return MatrixFactory.create(dimension + 1);
     }
 
     /**
-     * Gets the derivative of this transform at a point. For an identity transform, the derivative
-     * is the same everywhere.
+     * Gets the derivative of this transform at a point. For an identity transform, the derivative is the same
+     * everywhere.
      */
     @Override
-    public Matrix derivative(final DirectPosition point) {
+    public Matrix derivative(final Position point) {
         return MatrixFactory.create(dimension);
     }
 
     /**
-     * Copies the values from {@code ptSrc} to {@code ptDst}. Overrides the super-class method for
-     * performance reason.
+     * Copies the values from {@code ptSrc} to {@code ptDst}. Overrides the super-class method for performance reason.
      *
      * @since 2.2
      */
     @Override
-    public DirectPosition transform(final DirectPosition ptSrc, final DirectPosition ptDst) {
+    public Position transform(final Position ptSrc, final Position ptDst) {
         if (ptSrc.getDimension() == dimension) {
             if (ptDst == null) {
-                return new GeneralDirectPosition(ptSrc);
+                return new GeneralPosition(ptSrc);
             }
             if (ptDst.getDimension() == dimension) {
                 for (int i = 0; i < dimension; i++) {
@@ -169,14 +164,13 @@ public class IdentityTransform extends AbstractMathTransform
 
     /** Transforms an array of floating point coordinates by this transform. */
     @Override
-    public void transform(
-            final float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts) {
+    public void transform(final float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts) {
         System.arraycopy(srcPts, srcOff, dstPts, dstOff, numPts * dimension);
     }
 
     /** Transforms an array of floating point coordinates by this transform. */
-    public void transform(
-            final double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts) {
+    @Override
+    public void transform(final double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts) {
         System.arraycopy(srcPts, srcOff, dstPts, dstOff, numPts * dimension);
     }
 
@@ -187,8 +181,8 @@ public class IdentityTransform extends AbstractMathTransform
     }
 
     /**
-     * Returns a hash value for this transform. This value need not remain consistent between
-     * different implementations of the same class.
+     * Returns a hash value for this transform. This value need not remain consistent between different implementations
+     * of the same class.
      */
     @Override
     public int hashCode() {

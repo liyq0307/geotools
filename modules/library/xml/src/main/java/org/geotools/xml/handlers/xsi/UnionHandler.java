@@ -36,9 +36,10 @@ public class UnionHandler extends XSIElementHandler {
 
     private String id;
     private String memberTypes;
-    private List simpleTypes;
+    private List<SimpleTypeHandler> simpleTypes;
 
     /** @see java.lang.Object#hashCode() */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
         return LOCALNAME.hashCode()
@@ -48,6 +49,7 @@ public class UnionHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
+    @Override
     public XSIElementHandler getHandler(String namespaceURI, String localName) {
         if (SchemaHandler.namespaceURI.equalsIgnoreCase(namespaceURI)) {
             // child types
@@ -55,7 +57,7 @@ public class UnionHandler extends XSIElementHandler {
             // simpleType
             if (SimpleTypeHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (simpleTypes == null) {
-                    simpleTypes = new LinkedList();
+                    simpleTypes = new LinkedList<>();
                 }
 
                 SimpleTypeHandler sth = new SimpleTypeHandler();
@@ -69,9 +71,9 @@ public class UnionHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
+    @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
         id = atts.getValue("", "id");
 
@@ -87,6 +89,7 @@ public class UnionHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -97,16 +100,18 @@ public class UnionHandler extends XSIElementHandler {
     }
 
     /** @return list of simpleTypeHandlers representing the nested simpleTypes */
-    public List getSimpleTypes() {
+    public List<SimpleTypeHandler> getSimpleTypes() {
         return simpleTypes;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandlerType() */
+    @Override
     public int getHandlerType() {
         return UNION;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String) */
+    @Override
     public void endElement(String namespaceURI, String localName) {
         // do nothing
     }

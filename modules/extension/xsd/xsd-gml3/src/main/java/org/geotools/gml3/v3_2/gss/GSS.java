@@ -18,9 +18,10 @@ package org.geotools.gml3.v3_2.gss;
 
 import java.util.Set;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.type.Schema;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.gml3.v3_2.gco.GCO;
-import org.opengis.feature.type.Schema;
+import org.geotools.xsd.XSD;
 
 /**
  * This interface contains the qualified names of all the types,elements, and attributes in the
@@ -41,7 +42,8 @@ public final class GSS extends GML.DelegatingXSD {
     /** private constructor */
     private GSS() {}
 
-    protected void addDependencies(Set dependencies) {
+    @Override
+    protected void addDependencies(Set<XSD> dependencies) {
         dependencies.add(GCO.getInstance());
         dependencies.add(GML.getInstance());
     }
@@ -52,11 +54,13 @@ public final class GSS extends GML.DelegatingXSD {
     }
 
     /** Returns 'http://www.isotc211.org/2005/gss'. */
+    @Override
     public String getNamespaceURI() {
         return NAMESPACE;
     }
 
     /** Returns the location of 'gss.xsd.'. */
+    @Override
     public String getSchemaLocation() {
         return getClass().getResource("gss.xsd").toString();
     }

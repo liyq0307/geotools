@@ -34,8 +34,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.Vector;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.data.vpf.file.VPFFile;
 import org.geotools.data.vpf.file.VPFFileFactory;
 import org.geotools.data.vpf.readers.AreaGeometryFactory;
@@ -49,20 +60,13 @@ import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.feature.type.AnnotationFeatureType;
+import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /**
- * A VPF feature class. Note that feature classes may contain one or more feature types. However,
- * all of the feature types of a feature class share the same schema. A feature type will therefore
- * delegate its schema related operations to its feature class.
+ * A VPF feature class. Note that feature classes may contain one or more feature types. However, all of the feature
+ * types of a feature class share the same schema. A feature type will therefore delegate its schema related operations
+ * to its feature class.
  *
  * @author <a href="mailto:jeff@ionicenterprise.com">Jeff Yutzler</a>
  * @source $URL$
@@ -72,7 +76,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
     private SimpleFeatureType featureType;
 
     /** The columns that are part of this feature class */
-    private final List<VPFColumn> columns = new Vector<VPFColumn>();
+    private final List<VPFColumn> columns = new ArrayList<>();
 
     private final Map<String, ColumnSet> columnSet = new LinkedHashMap<>();
     private final Map<String, TableRelation> relations = new LinkedHashMap<>();
@@ -103,12 +107,13 @@ public class VPFFeatureClass implements SimpleFeatureType {
 
     private boolean enableFeatureCache = true;
 
-    private final List<SimpleFeature> featureCache = new ArrayList<SimpleFeature>();
+    private final List<SimpleFeature> featureCache = new ArrayList<>();
 
     private int cacheRow = 0;
 
     private boolean debug = false;
 
+    static final Logger LOGGER = Logging.getLogger(VPFFeatureClass.class);
     /**
      * Constructor
      *
@@ -117,8 +122,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
      * @param cDirectoryName the directory containing the class
      * @throws SchemaException For problems making one of the feature classes as a FeatureType.
      */
-    public VPFFeatureClass(VPFCoverage cCoverage, String cName, String cDirectoryName)
-            throws SchemaException {
+    public VPFFeatureClass(VPFCoverage cCoverage, String cName, String cDirectoryName) throws SchemaException {
         this(cCoverage, cName, cDirectoryName, null);
     }
 
@@ -128,12 +132,11 @@ public class VPFFeatureClass implements SimpleFeatureType {
      * @param cCoverage the owning coverage
      * @param cName the name of the class
      * @param cDirectoryName the directory containing the class
-     * @param cNamespace the namespace to create features with. If null then a default from
-     *     VPFLibrary.DEFAULTNAMESPACE is assigned.
+     * @param cNamespace the namespace to create features with. If null then a default from VPFLibrary.DEFAULTNAMESPACE
+     *     is assigned.
      * @throws SchemaException For problems making one of the feature classes as a FeatureType.
      */
-    public VPFFeatureClass(
-            VPFCoverage cCoverage, String cName, String cDirectoryName, URI cNamespace)
+    public VPFFeatureClass(VPFCoverage cCoverage, String cName, String cDirectoryName, URI cNamespace)
             throws SchemaException {
         coverage = cCoverage;
         directoryName = cDirectoryName;
@@ -153,7 +156,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
         String fcsFileName = directoryName + File.separator + TABLE_FCS;
 
         try {
-            VPFFile fcsFile = (VPFFile) VPFFileFactory.getInstance().getFile(fcsFileName);
+            VPFFile fcsFile = VPFFileFactory.getInstance().getFile(fcsFileName);
 
             Iterator<SimpleFeature> iter = fcsFile.readAllRows().iterator();
 
@@ -163,8 +166,9 @@ public class VPFFeatureClass implements SimpleFeatureType {
             }
 
             while (iter.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) iter.next();
-                String featureClassName = feature.getAttribute("feature_class").toString().trim();
+                SimpleFeature feature = iter.next();
+                String featureClassName =
+                        feature.getAttribute("feature_class").toString().trim();
 
                 if (typeName.equals(featureClassName)) {
                     if (this.debug) {
@@ -182,7 +186,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
             String geometryName = null;
 
             while (iter2.hasNext()) {
-                column = (VPFColumn) iter2.next();
+                column = iter2.next();
                 if (column == null) continue;
                 if (column.isGeometry()) {
                     geometryName = column.getName();
@@ -238,9 +242,8 @@ public class VPFFeatureClass implements SimpleFeatureType {
         }
 
         try {
-            VPFFile vpfFile1 =
-                    VPFFileFactory.getInstance()
-                            .getFile(directoryName.concat(File.separator).concat(table1));
+            VPFFile vpfFile1 = VPFFileFactory.getInstance()
+                    .getFile(directoryName.concat(File.separator).concat(table1));
             // addFileToTable(vpfFile1);
 
             if (!columnSet.containsKey(table1)) {
@@ -264,9 +267,8 @@ public class VPFFeatureClass implements SimpleFeatureType {
                     joinColumn2 = null;
                     isGeometryTable = true;
                 } else {
-                    vpfFile2 =
-                            VPFFileFactory.getInstance()
-                                    .getFile(directoryName.concat(File.separator).concat(table2));
+                    vpfFile2 = VPFFileFactory.getInstance()
+                            .getFile(directoryName.concat(File.separator).concat(table2));
                     // addFileToTable(vpfFile2);
                     joinColumn2 = vpfFile2.getColumn(table2Key);
                 }
@@ -311,7 +313,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
 
     public synchronized void reset() {
 
-        if (!this.enableFeatureCache || this.featureCache.size() == 0) {
+        if (!this.enableFeatureCache || this.featureCache.isEmpty()) {
             Iterator<Map.Entry<String, ColumnSet>> itr = columnSet.entrySet().iterator();
             Map.Entry<String, ColumnSet> first = itr.next();
 
@@ -355,7 +357,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
 
     public synchronized boolean hasNext() {
 
-        if (this.enableFeatureCache && this.featureCache.size() > 0) {
+        if (this.enableFeatureCache && !this.featureCache.isEmpty()) {
             return this.cacheRow < this.featureCache.size();
         } else {
             return this.internalHasNext();
@@ -375,8 +377,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
         return rootTable.hasNext();
     }
 
-    public synchronized List<SimpleFeature> readAllRows(SimpleFeatureType featureType)
-            throws IOException {
+    public synchronized List<SimpleFeature> readAllRows(SimpleFeatureType featureType) throws IOException {
 
         this.enableFeatureCache = true;
         this.featureCache.clear();
@@ -390,14 +391,14 @@ public class VPFFeatureClass implements SimpleFeatureType {
     public synchronized SimpleFeature readNext(SimpleFeatureType featureType) {
 
         SimpleFeature nextFeature = null;
-        if (this.enableFeatureCache && this.featureCache.size() == 0) {
+        if (this.enableFeatureCache && this.featureCache.isEmpty()) {
             this.reset();
             while (this.internalHasNext()) {
                 SimpleFeature feature = joinRows(featureType);
 
                 this.featureCache.add(feature);
             }
-            if (this.featureCache.size() > 0) {
+            if (!this.featureCache.isEmpty()) {
                 this.closeFiles();
             }
         }
@@ -428,7 +429,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
                 for (int inx = 0; inx < vpfFile.getAttributeCount(); inx++) {
                     VPFColumn col = vpfFile.getColumn(inx);
                     String colName = col.getName();
-                    if (columns.size() > 0 && colName.equalsIgnoreCase("id")) continue;
+                    if (!columns.isEmpty() && colName.equalsIgnoreCase("id")) continue;
                     columns.add(col);
                 }
             }
@@ -497,7 +498,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
                     geometry = jcs.geometryFactory.buildGeometry(this, fcs.currRow);
                 } catch (Exception e) {
                     geometry = null;
-                    e.printStackTrace();
+                    LOGGER.log(Level.SEVERE, "", e);
                 }
                 jcs.geometry = geometry;
 
@@ -527,14 +528,13 @@ public class VPFFeatureClass implements SimpleFeatureType {
         return combineColumnSets(featureId, featureType);
     }
 
-    private synchronized SimpleFeature combineColumnSets(
-            String featureId, SimpleFeatureType featureType) {
+    private synchronized SimpleFeature combineColumnSets(String featureId, SimpleFeatureType featureType) {
 
         Iterator<Map.Entry<String, ColumnSet>> itr = columnSet.entrySet().iterator();
 
         Geometry geometry = null;
 
-        List<Object> vlist = new ArrayList<Object>();
+        List<Object> vlist = new ArrayList<>();
 
         // List<AttributeDescriptor> attributes = featureType.getAttributeDescriptors();
 
@@ -550,7 +550,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
                 int colCount = cs.colNames.size();
                 for (int inx = 0; inx < colCount; inx++) {
                     String colName = cs.colNames.get(inx);
-                    if (vlist.size() > 0 && colName.equalsIgnoreCase("id")) continue;
+                    if (!vlist.isEmpty() && colName.equalsIgnoreCase("id")) continue;
                     Object value = row != null ? row.getAttribute(colName) : null;
                     vlist.add(value);
                 }
@@ -570,8 +570,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
     }
 
     /**
-     * Create a geometry column (usually for feature classes that make use of tiles so simple joins
-     * can not be used)
+     * Create a geometry column (usually for feature classes that make use of tiles so simple joins can not be used)
      *
      * @param table The name of the table containing the geometric primitives
      * @return An <code>AttributeType</code> for the geometry column which is actually a <code>
@@ -587,19 +586,17 @@ public class VPFFeatureClass implements SimpleFeatureType {
 
         CoordinateReferenceSystem crs = getCoverage().getLibrary().getCoordinateReferenceSystem();
         if (crs != null) {
-            descriptor =
-                    new AttributeTypeBuilder()
-                            .binding(Geometry.class)
-                            .nillable(true)
-                            .length(-1)
-                            .crs(crs)
-                            .buildDescriptor("GEOMETRY");
+            descriptor = new AttributeTypeBuilder()
+                    .binding(Geometry.class)
+                    .nillable(true)
+                    .length(-1)
+                    .crs(crs)
+                    .buildDescriptor("GEOMETRY");
         } else {
-            descriptor =
-                    new AttributeTypeBuilder()
-                            .binding(Geometry.class)
-                            .nillable(true)
-                            .buildDescriptor("GEOMETRY");
+            descriptor = new AttributeTypeBuilder()
+                    .binding(Geometry.class)
+                    .nillable(true)
+                    .buildDescriptor("GEOMETRY");
         }
 
         VPFColumn result = new VPFColumn("GEOMETRY", descriptor); // how to construct
@@ -608,8 +605,8 @@ public class VPFFeatureClass implements SimpleFeatureType {
         return result;
     }
     /**
-     * Identifies the type of geometry factory to use based on the name of the table containing the
-     * geometry, then constructs the appropriate geometry factory object.
+     * Identifies the type of geometry factory to use based on the name of the table containing the geometry, then
+     * constructs the appropriate geometry factory object.
      *
      * @param table The name of the geometry table
      */
@@ -656,10 +653,9 @@ public class VPFFeatureClass implements SimpleFeatureType {
     public synchronized List<VPFFile> getFileList() {
         // return fileList;
 
-        List<ColumnSet> csets = new ArrayList<ColumnSet>(columnSet.values());
-        List<VPFFile> fileList = new ArrayList<VPFFile>();
-        for (int i = 0; i < csets.size(); i++) {
-            ColumnSet cs = csets.get(i);
+        List<ColumnSet> csets = new ArrayList<>(columnSet.values());
+        List<VPFFile> fileList = new ArrayList<>();
+        for (ColumnSet cs : csets) {
             fileList.add(cs.table);
         }
         return fileList;
@@ -672,6 +668,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
     /* (non-Javadoc)
      * @see org.geotools.feature.FeatureType#getTypeName()
      */
+    @Override
     public String getTypeName() {
         return featureType.getTypeName();
     }
@@ -683,6 +680,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
     /* (non-Javadoc)
      * @see org.geotools.feature.FeatureType#getAttributeCount()
      */
+    @Override
     public int getAttributeCount() {
         return featureType.getAttributeCount();
     }
@@ -690,6 +688,7 @@ public class VPFFeatureClass implements SimpleFeatureType {
     /* (non-Javadoc)
      * @see org.geotools.feature.FeatureType#isAbstract()
      */
+    @Override
     public boolean isAbstract() {
         return featureType.isAbstract();
     }
@@ -699,94 +698,117 @@ public class VPFFeatureClass implements SimpleFeatureType {
         return geometryFactory;
     }
 
+    @Override
     public boolean equals(Object obj) {
         return featureType.equals(obj);
     }
 
+    @Override
     public int hashCode() {
         return featureType.hashCode();
     }
 
+    @Override
     public AttributeDescriptor getDescriptor(Name name) {
         return featureType.getDescriptor(name);
     }
 
+    @Override
     public AttributeDescriptor getDescriptor(String name) {
         return featureType.getDescriptor(name);
     }
 
+    @Override
     public AttributeDescriptor getDescriptor(int index) {
         return featureType.getDescriptor(index);
     }
 
-    public List getAttributeDescriptors() {
+    @Override
+    public List<AttributeDescriptor> getAttributeDescriptors() {
         return featureType.getAttributeDescriptors();
     }
 
-    public org.opengis.feature.type.AttributeType getType(Name name) {
+    @Override
+    public org.geotools.api.feature.type.AttributeType getType(Name name) {
         return featureType.getType(name);
     }
 
-    public org.opengis.feature.type.AttributeType getType(String name) {
+    @Override
+    public org.geotools.api.feature.type.AttributeType getType(String name) {
         return featureType.getType(name);
     }
 
-    public org.opengis.feature.type.AttributeType getType(int index) {
+    @Override
+    public org.geotools.api.feature.type.AttributeType getType(int index) {
         return featureType.getType(index);
     }
 
-    public List getTypes() {
+    @Override
+    public List<AttributeType> getTypes() {
         return featureType.getTypes();
     }
 
+    @Override
     public CoordinateReferenceSystem getCoordinateReferenceSystem() {
         return featureType.getCoordinateReferenceSystem();
     }
 
+    @Override
     public GeometryDescriptor getGeometryDescriptor() {
         return featureType.getGeometryDescriptor();
     }
 
-    public Class getBinding() {
+    @Override
+    public Class<Collection<Property>> getBinding() {
         return featureType.getBinding();
     }
 
-    public Collection getDescriptors() {
+    @Override
+    public Collection<PropertyDescriptor> getDescriptors() {
         return featureType.getDescriptors();
     }
 
+    @Override
     public boolean isInline() {
         return featureType.isInline();
     }
 
-    public org.opengis.feature.type.AttributeType getSuper() {
+    @Override
+    public org.geotools.api.feature.type.AttributeType getSuper() {
         return featureType.getSuper();
     }
 
+    @Override
     public boolean isIdentified() {
         return featureType.isIdentified();
     }
 
+    @Override
     public InternationalString getDescription() {
         return featureType.getDescription();
     }
 
+    @Override
     public Name getName() {
         return featureType.getName();
     }
 
+    @Override
     public int indexOf(String name) {
         return featureType.indexOf(name);
     }
 
+    @Override
     public int indexOf(Name name) {
         return featureType.indexOf(name);
     }
 
+    @Override
     public List<Filter> getRestrictions() {
         return featureType.getRestrictions();
     }
 
+    @Override
     public Map<Object, Object> getUserData() {
         return featureType.getUserData();
     }

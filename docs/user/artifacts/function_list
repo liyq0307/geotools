@@ -99,23 +99,27 @@ Contains 203 functions.
 
 * ``result`` (``String``)
 
-``EqualArea(value, classes, areaFunction)``: returns ``EqualArea``
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+``EqualArea(value, classes, areaFunction, percentages)``: returns ``EqualArea``
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 * ``value`` (``Double``) required
 
 * ``classes`` (``Integer``) required
 
-* ``areaFunction`` (``Double``) optional
+* ``areaFunction`` (``Double``) optional if no parameter follows, otherwise required
+
+* ``percentages`` (``Boolean``) optional
 
 * ``EqualArea`` (``RangedClassifier``)
 
-``EqualInterval(value, classes)``: returns ``EqualInterval``
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+``EqualInterval(value, classes, percentages)``: returns ``EqualInterval``
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 * ``value`` (``Double``) required
 
 * ``classes`` (``Integer``) required
+
+* ``percentages`` (``Boolean``) optional
 
 * ``EqualInterval`` (``RangedClassifier``)
 
@@ -139,12 +143,14 @@ Contains 203 functions.
 
 * ``lookup``
 
-``Jenks(value, classes)``: returns ``Jenks``
-''''''''''''''''''''''''''''''''''''''''''''
+``Jenks(value, classes, percentages)``: returns ``Jenks``
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 * ``value`` (``Double``) required
 
 * ``classes`` (``Integer``) required
+
+* ``percentages`` (``Boolean``) optional
 
 * ``Jenks`` (``RangedClassifier``)
 
@@ -155,12 +161,14 @@ Contains 203 functions.
 
 * ``exists`` (``Boolean``)
 
-``Quantile(value, classes)``: returns ``Quantile``
-''''''''''''''''''''''''''''''''''''''''''''''''''
+``Quantile(value, classes, percentages)``: returns ``Quantile``
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 * ``value`` (``Double``) required
 
 * ``classes`` (``Integer``) required
+
+* ``percentages`` (``Boolean``) optional
 
 * ``Quantile`` (``RangedClassifier``)
 
@@ -179,21 +187,25 @@ Contains 203 functions.
 
 * ``return``
 
-``StandardDeviation(value, classes)``: returns ``StandardDeviation``
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+``StandardDeviation(value, classes, percentages)``: returns ``StandardDeviation``
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 * ``value`` (``Double``) required
 
 * ``classes`` (``Integer``) required
+
+* ``percentages`` (``Boolean``) optional
 
 * ``StandardDeviation`` (``RangedClassifier``)
 
-``UniqueInterval(value, classes)``: returns ``UniqueInterval``
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+``UniqueInterval(value, classes, percentages)``: returns ``UniqueInterval``
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 * ``value`` (``Double``) required
 
 * ``classes`` (``Integer``) required
+
+* ``percentages`` (``Boolean``) optional
 
 * ``UniqueInterval`` (``RangedClassifier``)
 
@@ -1214,6 +1226,17 @@ Contains 203 functions.
 * ``weight`` (``Double``) required
 
 * ``result`` (``Color``)
+
+``northFix(targetCRS, point, angle, sourceCRS)``: returns ``result``
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+* ``targetCRS`` (``CoordinateRefereneSystem``) required. Rendering CRS.
+
+* ``point`` (``Point``) required. Point where the north direction is computed.
+
+* ``angle`` (``Double``) optional. Angle to be north-fixed. Default is 0.
+
+* ``sourceCRS`` (``CoordinateRefereneSystem``) optional. CRS of the source point. If missing, automatically looked up from the geometry user data, the feature type description, or the point SRID.
 
 ``modulo(dividend, divisor)``: returns ``modulo``
 '''''''''''''''''''''''''''''''''''''''''''''''''
@@ -2458,10 +2481,12 @@ Contains 102 functions.
 
 * ``result`` (``SimpleFeatureCollection``)
 
-``TransparencyFill(data)``: returns ``result``
-''''''''''''''''''''''''''''''''''''''''''''''
+``TransparencyFill(data, width)``: returns ``result``
+''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
 * ``data`` (``GridCoverage2D``) required
+
+* ``width`` (``Integer``) optional
 
 * ``result`` (``GridCoverage2D``)
 
@@ -2936,4 +2961,3 @@ Contains 1 functions.
 * ``tolerance`` (``double``) required
 
 * ``labelPoint`` (``Point``)
-

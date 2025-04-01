@@ -34,7 +34,6 @@ public class ServiceTypeBinding extends AbstractComplexEMFBinding {
         return WFSCapabilities.Service;
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public Class getType() {
         return ServiceIdentificationType.class;
@@ -51,8 +50,8 @@ public class ServiceTypeBinding extends AbstractComplexEMFBinding {
         if (keywords != null) {
             KeywordsType kwd = ows10Factory.createKeywordsType();
             String[] split = (keywords).split(",");
-            for (int i = 0; i < split.length; i++) {
-                String kw = split[i].trim();
+            for (String s : split) {
+                String kw = s.trim();
                 kwd.getKeyword().add(kw);
             }
             service.getKeywords().add(kwd);

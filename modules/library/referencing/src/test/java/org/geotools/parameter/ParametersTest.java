@@ -39,25 +39,26 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import javax.measure.MetricPrefix;
+import org.geotools.api.parameter.InvalidParameterCardinalityException;
+import org.geotools.api.parameter.InvalidParameterNameException;
+import org.geotools.api.parameter.InvalidParameterTypeException;
+import org.geotools.api.parameter.InvalidParameterValueException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.datum.VerticalDatumType;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.referencing.operation.matrix.GeneralMatrix;
 import org.geotools.referencing.operation.transform.ProjectiveTransform;
 import org.geotools.referencing.wkt.Formatter;
+import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.parameter.InvalidParameterCardinalityException;
-import org.opengis.parameter.InvalidParameterNameException;
-import org.opengis.parameter.InvalidParameterTypeException;
-import org.opengis.parameter.InvalidParameterValueException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.datum.VerticalDatumType;
-import org.opengis.referencing.operation.MathTransform;
 import si.uom.NonSI;
 import si.uom.SI;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.unit.MetricPrefix;
+import tech.units.indriya.AbstractUnit;
 
 /**
  * Tests the <code>org.geotools.parameter</code> package.
@@ -67,9 +68,9 @@ import tec.uom.se.unit.MetricPrefix;
  */
 public final class ParametersTest {
     /**
-     * Tests integer and floating point values in a wide range of values. Some on those values are
-     * cached (e.g. 0, 90, 360) because frequently used. It should be transparent to the user. Test
-     * also unit conversions (degrees to radians in this case).
+     * Tests integer and floating point values in a wide range of values. Some on those values are cached (e.g. 0, 90,
+     * 360) because frequently used. It should be transparent to the user. Test also unit conversions (degrees to
+     * radians in this case).
      */
     @Test
     public void testSequence() {
@@ -91,13 +92,12 @@ public final class ParametersTest {
     }
 
     /**
-     * Creates a parameter bounded by some range of integer numbers, and tests values inside and
-     * outside this range. Tests also the uses of values of the wrong type.
+     * Creates a parameter bounded by some range of integer numbers, and tests values inside and outside this range.
+     * Tests also the uses of values of the wrong type.
      */
     @Test
     public void testRangeIntegers() {
-        Parameter<Integer> param;
-        param = new Parameter(DefaultParameterDescriptor.create("Range", 15, -30, +40));
+        Parameter<Integer> param = new Parameter<>(DefaultParameterDescriptor.create("Range", 15, -30, +40));
         assertEquals("intValue", 15, param.intValue());
         assertEquals("doubleValue", 15, param.doubleValue(), 0.0);
         param.setValue(12);
@@ -128,13 +128,12 @@ public final class ParametersTest {
     }
 
     /**
-     * Creates a parameter bounded by some range of floating point numbers, and tests values inside
-     * and outside this range. Tests also the uses of values of the wrong types.
+     * Creates a parameter bounded by some range of floating point numbers, and tests values inside and outside this
+     * range. Tests also the uses of values of the wrong types.
      */
     @Test
     public void testRangeDoubles() {
-        Parameter<Double> param;
-        param = new Parameter(DefaultParameterDescriptor.create("Range", 15.0, -30.0, +40.0, null));
+        Parameter<Double> param = new Parameter<>(DefaultParameterDescriptor.create("Range", 15.0, -30.0, +40.0, null));
         assertEquals("intValue", 15, param.intValue());
         assertEquals("doubleValue", 15, param.doubleValue(), 0.0);
         param.setValue(12.0);
@@ -165,18 +164,14 @@ public final class ParametersTest {
     }
 
     /**
-     * Tests parameter for a code list. Try to inserts invalid values. Try also to insert a new code
-     * list. This operation should fails if the new code list is created after the parameter.
+     * Tests parameter for a code list. Try to inserts invalid values. Try also to insert a new code list. This
+     * operation should fails if the new code list is created after the parameter.
      */
     @Test
     public void testCodeList() {
-        Parameter<AxisDirection> param =
-                Parameter.create("Test", AxisDirection.class, AxisDirection.DISPLAY_UP);
+        Parameter<AxisDirection> param = Parameter.create("Test", AxisDirection.class, AxisDirection.DISPLAY_UP);
         ParameterDescriptor op = param.getDescriptor();
-        assertEquals(
-                "Set<AxisDirection>",
-                new HashSet<AxisDirection>(Arrays.asList(AxisDirection.values())),
-                op.getValidValues());
+        assertEquals("Set<AxisDirection>", new HashSet<>(Arrays.asList(AxisDirection.values())), op.getValidValues());
         assertNull("defaultValue", op.getDefaultValue());
         param.setValue(AxisDirection.DOWN);
         try {
@@ -202,12 +197,9 @@ public final class ParametersTest {
     /** Test {@link DefaultParameterDescriptor} construction. */
     @Test
     public void testParameterDescriptor() {
-        ParameterDescriptor<Double> dDescriptor;
-        ParameterDescriptor<Integer> iDescriptor;
-        ParameterValue<Double> parameter;
 
-        dDescriptor = DefaultParameterDescriptor.create("Test", 12, 4, 20, SI.METRE);
-        parameter = dDescriptor.createValue();
+        ParameterDescriptor<Double> dDescriptor = DefaultParameterDescriptor.create("Test", 12, 4, 20, SI.METRE);
+        ParameterValue<Double> parameter = dDescriptor.createValue();
         assertEquals("name", "Test", dDescriptor.getName().getCode());
         assertEquals("unit", SI.METRE, dDescriptor.getUnit());
         assertEquals("class", Double.class, dDescriptor.getValueClass());
@@ -243,14 +235,14 @@ public final class ParametersTest {
             assertEquals("value", i / 100, parameter.doubleValue(SI.METRE), 0);
         }
         try {
-            iDescriptor = DefaultParameterDescriptor.create("Test", 3, 4, 20);
+            DefaultParameterDescriptor.create("Test", 3, 4, 20);
             fail("setValue(< min)");
         } catch (InvalidParameterValueException exception) {
             // This is the expected exception.
             assertEquals("Test", exception.getParameterName());
         }
         try {
-            iDescriptor = DefaultParameterDescriptor.create("Test", 12, 20, 4);
+            DefaultParameterDescriptor.create("Test", 12, 20, 4);
             fail("ParameterDescriptor(min > max)");
         } catch (IllegalArgumentException exception) {
             // This is the expected exception.
@@ -260,12 +252,9 @@ public final class ParametersTest {
     /** Test {@link Parameter} construction. */
     @Test
     public void testParameterValue() throws IOException, ClassNotFoundException {
-        Parameter<?> parameter;
-        ParameterDescriptor<?> descriptor;
-        Set<?> validValues;
 
-        parameter = Parameter.create("Test", 14);
-        descriptor = parameter.getDescriptor();
+        Parameter<?> parameter = Parameter.create("Test", 14);
+        ParameterDescriptor<?> descriptor = parameter.getDescriptor();
         assertNull("unit", parameter.getUnit());
         assertEquals("intValue", 14, parameter.intValue());
         assertEquals("doubleValue", 14, parameter.doubleValue(), 0);
@@ -292,7 +281,7 @@ public final class ParametersTest {
         serialize(parameter);
 
         parameter = Parameter.create("Test", 3, SI.METRE);
-        descriptor = (ParameterDescriptor) parameter.getDescriptor();
+        descriptor = parameter.getDescriptor();
         assertEquals("intValue", 3, parameter.intValue());
         assertEquals("doubleValue", 3, parameter.doubleValue(), 0);
         assertEquals("doubleValue", 300, parameter.doubleValue(MetricPrefix.CENTI(SI.METRE)), 0);
@@ -312,8 +301,8 @@ public final class ParametersTest {
         serialize(parameter);
 
         parameter = Parameter.create("Test", AxisDirection.class, AxisDirection.NORTH);
-        descriptor = (ParameterDescriptor) parameter.getDescriptor();
-        validValues = descriptor.getValidValues();
+        descriptor = parameter.getDescriptor();
+        Set<?> validValues = descriptor.getValidValues();
         assertEquals("value", AxisDirection.NORTH, parameter.getValue());
         assertEquals("name", "Test", descriptor.getName().getCode());
         assertNull("unit", descriptor.getUnit());
@@ -324,10 +313,7 @@ public final class ParametersTest {
         assertTrue("validValues", validValues.contains(AxisDirection.SOUTH));
         assertTrue("validValues", validValues.contains(AxisDirection.DISPLAY_LEFT));
         assertTrue("validValues", validValues.contains(AxisDirection.PAST));
-        assertEquals(
-                "validValues",
-                new HashSet<AxisDirection>(Arrays.asList(AxisDirection.values())),
-                validValues);
+        assertEquals("validValues", new HashSet<>(Arrays.asList(AxisDirection.values())), validValues);
         try {
             parameter.doubleValue();
             fail("doubleValue should not be allowed on AxisDirection");
@@ -340,55 +326,23 @@ public final class ParametersTest {
 
     /** Test parameter values group. */
     @Test
-    @SuppressWarnings("serial")
+    @SuppressWarnings({"serial", "unchecked"})
     public void testGroup() throws IOException {
         final ParameterWriter writer = new ParameterWriter(new StringWriter());
         final Integer ONE = 1;
-        final ParameterDescriptor<Integer> p1, p2, p3, p4;
-        p1 =
+        final ParameterDescriptor<Integer> p1 = new DefaultParameterDescriptor<>(
+                Collections.singletonMap("name", "1"), Integer.class, null, ONE, null, null, null, true);
+        final ParameterDescriptor<Integer> p2 = new DefaultParameterDescriptor<>(
+                Collections.singletonMap("name", "2"), Integer.class, null, ONE, null, null, null, true);
+        final ParameterDescriptor<Integer> p3 = new DefaultParameterDescriptor<>(
+                Collections.singletonMap("name", "3"), Integer.class, null, ONE, null, null, null, false);
+        final ParameterDescriptor<Integer> p4 =
                 new DefaultParameterDescriptor<Integer>(
-                        Collections.singletonMap("name", "1"),
-                        Integer.class,
-                        null,
-                        ONE,
-                        null,
-                        null,
-                        null,
-                        true);
-        p2 =
-                new DefaultParameterDescriptor<Integer>(
-                        Collections.singletonMap("name", "2"),
-                        Integer.class,
-                        null,
-                        ONE,
-                        null,
-                        null,
-                        null,
-                        true);
-        p3 =
-                new DefaultParameterDescriptor<Integer>(
-                        Collections.singletonMap("name", "3"),
-                        Integer.class,
-                        null,
-                        ONE,
-                        null,
-                        null,
-                        null,
-                        false);
-        p4 =
-                new DefaultParameterDescriptor<Integer>(
-                        Collections.singletonMap("name", "4"),
-                        Integer.class,
-                        null,
-                        ONE,
-                        null,
-                        null,
-                        null,
-                        false) {
+                        Collections.singletonMap("name", "4"), Integer.class, null, ONE, null, null, null, false) {
                     /**
-                     * We are cheating here: <code>maximumOccurs</code> should always be 1 for
-                     * <code>ParameterValue</code>. However, the Geotools implementation should be
-                     * robust enough to accept other values. We will test that.
+                     * We are cheating here: <code>maximumOccurs</code> should always be 1 for <code>ParameterValue
+                     * </code>. However, the Geotools implementation should be robust enough to accept other values. We
+                     * will test that.
                      */
                     @Override
                     public int getMaximumOccurs() {
@@ -396,29 +350,22 @@ public final class ParametersTest {
                     }
                 };
 
-        final Parameter v1, v2, v3, v4, v1b, v2b, v3b, v4b;
-        v1 = new Parameter<Integer>(p1);
+        final Parameter v1 = new Parameter<>(p1);
         v1.setValue(10);
-        v2 = new Parameter<Integer>(p2);
+        final Parameter v2 = new Parameter<>(p2);
         v2.setValue(20);
-        v3 = new Parameter<Integer>(p3);
+        final Parameter v3 = new Parameter<>(p3);
         v3.setValue(30);
-        v4 = new Parameter<Integer>(p4);
+        final Parameter v4 = new Parameter<>(p4);
         v4.setValue(40);
-        v1b = new Parameter<Integer>(p1);
+        final Parameter v1b = new Parameter<>(p1);
         v1b.setValue(-10);
-        v2b = new Parameter<Integer>(p2);
+        final Parameter v2b = new Parameter<>(p2);
         v2b.setValue(-20);
-        v3b = new Parameter<Integer>(p3);
+        final Parameter v3b = new Parameter<>(p3);
         v3b.setValue(-30);
-        v4b = new Parameter<Integer>(p4);
+        final Parameter v4b = new Parameter<>(p4);
         v4b.setValue(-40);
-
-        ParameterDescriptorGroup descriptor;
-        ParameterGroup group;
-        Collection content;
-        Map<String, ?> properties;
-        Parameter automatic;
 
         /* --------------------------------------------- *
          * Case (v1, v2, v3) where:
@@ -426,10 +373,10 @@ public final class ParametersTest {
          *    - v2   is mandatory
          *    - v3   is optional
          * --------------------------------------------- */
-        properties = Collections.singletonMap("name", "group");
-        group = new ParameterGroup(properties, new Parameter[] {v1, v2, v3});
-        descriptor = group.getDescriptor();
-        content = descriptor.descriptors();
+        Map<String, ?> properties = Collections.singletonMap("name", "group");
+        ParameterGroup group = new ParameterGroup(properties, new Parameter[] {v1, v2, v3});
+        ParameterDescriptorGroup descriptor = group.getDescriptor();
+        Collection content = descriptor.descriptors();
         writer.format(group); // Ensure there is no exception there.
         assertEquals("name", "group", descriptor.getName().getCode());
         assertEquals("descriptors", 3, content.size());
@@ -488,10 +435,7 @@ public final class ParametersTest {
         assertEquals("values.size()", 3, content.size());
 
         // Tests equality
-        assertEquals(
-                "new",
-                group,
-                group = new ParameterGroup(descriptor, new Parameter[] {v1b, v2b, v3b}));
+        assertEquals("new", group, group = new ParameterGroup(descriptor, new Parameter[] {v1b, v2b, v3b}));
 
         /* --------------------------------------------- *
          * Case (v1, v2) where:
@@ -502,7 +446,7 @@ public final class ParametersTest {
         group = new ParameterGroup(descriptor, new Parameter[] {v1, v2});
         descriptor = group.getDescriptor();
         content = group.values();
-        automatic = (Parameter) v3.getDescriptor().createValue();
+        Parameter automatic = (Parameter) v3.getDescriptor().createValue();
         writer.format(group); // Ensure there is no exception there.
         assertEquals("values.size()", 2, content.size());
         assertTrue("contains(v1)", content.contains(v1));
@@ -515,8 +459,7 @@ public final class ParametersTest {
         assertSame("parameter(\"1\")", v1, group.parameter("1"));
         assertSame("parameter(\"2\")", v2, group.parameter("2"));
         assertFalse("contains(automatic)", content.contains(automatic));
-        assertNotEquals(
-                "parameter(\"3\")", v3, group.parameter("3")); // Should have automatically created.
+        assertNotEquals("parameter(\"3\")", v3, group.parameter("3")); // Should have automatically created.
         assertTrue("contains(automatic)", content.contains(automatic));
         try {
             assertNotNull(group.parameter("4"));
@@ -588,8 +531,7 @@ public final class ParametersTest {
         assertSame("parameter(\"4\")", v4, group.parameter("4"));
         assertTrue("remove(v3)", content.remove(v3));
         assertFalse("contains(automatic)", content.contains(automatic));
-        assertNotEquals(
-                "parameter(\"3\")", v3, group.parameter("3")); // Should have automatically created.
+        assertNotEquals("parameter(\"3\")", v3, group.parameter("3")); // Should have automatically created.
         assertTrue("contains(automatic)", content.contains(automatic));
 
         try {
@@ -755,6 +697,8 @@ public final class ParametersTest {
 
     /** Tests the storage of matrix parameters. */
     @Test
+    // code is using equals with extra parameters and semantics compared to the built-in equals
+    @SuppressWarnings("PMD.SimplifiableTestAssertion")
     public void testMatrixEdit() {
         final int size = 8;
         final Random random = new Random(47821365);
@@ -772,10 +716,8 @@ public final class ParametersTest {
                 GeneralMatrix copy = matrix.clone();
                 copy.setSize(height, width);
                 parameters.setMatrix(copy);
-                assertEquals(
-                        "height", height, ((Parameter) parameters.parameter("num_row")).intValue());
-                assertEquals(
-                        "width", width, ((Parameter) parameters.parameter("num_col")).intValue());
+                assertEquals("height", height, parameters.parameter("num_row").intValue());
+                assertEquals("width", width, parameters.parameter("num_col").intValue());
                 assertTrue("equals", copy.equals(parameters.getMatrix(), 0));
                 assertEquals("equals", parameters, parameters.clone());
             }
@@ -783,14 +725,14 @@ public final class ParametersTest {
     }
 
     /** Test the serialization of the given object. */
+    @SuppressWarnings("BanSerializableRead")
     private static void serialize(final Object object) throws IOException, ClassNotFoundException {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final ObjectOutputStream outs = new ObjectOutputStream(out);
         outs.writeObject(object);
         outs.close();
 
-        final ObjectInputStream in =
-                new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
+        final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
         final Object test = in.readObject();
         in.close();
 
@@ -804,6 +746,6 @@ public final class ParametersTest {
         assertNotNull(message, o1);
         assertNotNull(message, o2);
         assertNotSame(message, o1, o2);
-        assertFalse(message, o1.equals(o2));
+        Assert.assertNotEquals(message, o1, o2);
     }
 }

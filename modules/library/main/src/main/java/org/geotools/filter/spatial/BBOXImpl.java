@@ -16,6 +16,15 @@
  */
 package org.geotools.filter.spatial;
 
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.filter.AttributeExpressionImpl;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.LiteralExpressionImpl;
@@ -30,15 +39,6 @@ import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.TopologyException;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class BBOXImpl extends AbstractPreparedGeometryFilter implements BBOX {
 
@@ -55,11 +55,8 @@ public class BBOXImpl extends AbstractPreparedGeometryFilter implements BBOX {
         if (e2 != null) setExpression2(e2);
     }
 
-    public BBOXImpl(
-            Expression name, double minx, double miny, double maxx, double maxy, String srs) {
-        this(
-                name,
-                new LiteralExpressionImpl(boundingPolygon(new Envelope(minx, maxx, miny, maxy))));
+    public BBOXImpl(Expression name, double minx, double miny, double maxx, double maxy, String srs) {
+        this(name, new LiteralExpressionImpl(boundingPolygon(new Envelope(minx, maxx, miny, maxy))));
         this.srs = srs;
     }
 
@@ -70,18 +67,8 @@ public class BBOXImpl extends AbstractPreparedGeometryFilter implements BBOX {
     }
 
     public BBOXImpl(
-            Expression name,
-            double minx,
-            double miny,
-            double maxx,
-            double maxy,
-            String srs,
-            MatchAction matchAction) {
-        this(
-                name,
-                new LiteralExpressionImpl(
-                        boundingPolygon(buildEnvelope(minx, maxx, miny, maxy, srs))),
-                matchAction);
+            Expression name, double minx, double miny, double maxx, double maxy, String srs, MatchAction matchAction) {
+        this(name, new LiteralExpressionImpl(boundingPolygon(buildEnvelope(minx, maxx, miny, maxy, srs))), matchAction);
         this.srs = srs;
     }
 
@@ -94,21 +81,19 @@ public class BBOXImpl extends AbstractPreparedGeometryFilter implements BBOX {
         switch (literals) {
             case BOTH:
                 return cacheValue;
-            case RIGHT:
-                {
-                    return preppedEvaluate(rightPreppedGeom, left);
-                }
-            case LEFT:
-                {
-                    return preppedEvaluate(leftPreppedGeom, right);
-                }
-            default:
-                {
-                    return basicEvaluate(left, right);
-                }
+            case RIGHT: {
+                return preppedEvaluate(rightPreppedGeom, left);
+            }
+            case LEFT: {
+                return preppedEvaluate(leftPreppedGeom, right);
+            }
+            default: {
+                return basicEvaluate(left, right);
+            }
         }
     }
 
+    @Override
     protected boolean basicEvaluate(Geometry left, Geometry right) {
         Envelope envLeft = left.getEnvelopeInternal();
         Envelope envRight = right.getEnvelopeInternal();
@@ -139,10 +124,12 @@ public class BBOXImpl extends AbstractPreparedGeometryFilter implements BBOX {
         // then true is returned in all cases
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public void setExpression1(Expression expression) {
         // BBOX filters can be also created setting the expressions directly, and some
         // old code sets the property name the other way around, try to handle this silliness
@@ -150,6 +137,7 @@ public class BBOXImpl extends AbstractPreparedGeometryFilter implements BBOX {
         super.setExpression1(expression);
     }
 
+    @Override
     public void setExpression2(Expression expression) {
         // BBOX filters can be also created setting the expressions directly, and some
         // old code sets the property name the other way around, try to handle this silliness
@@ -183,7 +171,7 @@ public class BBOXImpl extends AbstractPreparedGeometryFilter implements BBOX {
                         }
                     }
                 } else {
-                    env = (Envelope) bbox.evaluate(null, Envelope.class);
+                    env = bbox.evaluate(null, Envelope.class);
                 }
                 if (env == null) return;
                 minx = env.getMinX();
@@ -200,8 +188,7 @@ public class BBOXImpl extends AbstractPreparedGeometryFilter implements BBOX {
      *
      * @param env The envelope to set as the bounds.
      * @throws IllegalFilterException If the box can not be created.
-     * @task Currently sets the SRID to null, which can cause problems with JTS when it comes to
-     *     doing spatial tests
+     * @task Currently sets the SRID to null, which can cause problems with JTS when it comes to doing spatial tests
      */
     public static Polygon boundingPolygon(Envelope env) {
         Coordinate[] coords = new Coordinate[5];
@@ -228,8 +215,7 @@ public class BBOXImpl extends AbstractPreparedGeometryFilter implements BBOX {
         return polygon;
     }
 
-    private static ReferencedEnvelope buildEnvelope(
-            double minx, double maxx, double miny, double maxy, String srs) {
+    private static ReferencedEnvelope buildEnvelope(double minx, double maxx, double miny, double maxy, String srs) {
         CoordinateReferenceSystem crs = null;
 
         if (srs != null && !("".equals(srs)))

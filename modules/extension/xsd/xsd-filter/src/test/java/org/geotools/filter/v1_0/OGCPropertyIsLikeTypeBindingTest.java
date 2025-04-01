@@ -16,25 +16,34 @@
  */
 package org.geotools.filter.v1_0;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+
 import java.io.ByteArrayInputStream;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsLike;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Parser;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsLike;
+import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 public class OGCPropertyIsLikeTypeBindingTest extends FilterTestSupport {
+
+    @Test
     public void testType() {
         assertEquals(PropertyIsLike.class, binding(OGC.PropertyIsLikeType).getType());
     }
 
+    @Test
     public void testExecutionMode() {
         assertEquals(Binding.OVERRIDE, binding(OGC.PropertyIsLikeType).getExecutionMode());
     }
 
+    @Test
     public void testParse() throws Exception {
         FilterMockData.propertyIsLike(document, document);
 
@@ -48,6 +57,7 @@ public class OGCPropertyIsLikeTypeBindingTest extends FilterTestSupport {
         assertEquals("z", isLike.getEscape());
     }
 
+    @Test
     public void testEncode() throws Exception {
         Document doc = encode(FilterMockData.propertyIsLike(), OGC.PropertyIsLike);
 
@@ -63,6 +73,7 @@ public class OGCPropertyIsLikeTypeBindingTest extends FilterTestSupport {
         assertEquals("z", doc.getDocumentElement().getAttribute("escape"));
     }
 
+    @Test
     public void testEncodeAsFilter() throws Exception {
         Document doc = encode(FilterMockData.propertyIsLike(), OGC.Filter);
         // print(doc);
@@ -87,16 +98,13 @@ public class OGCPropertyIsLikeTypeBindingTest extends FilterTestSupport {
     /*
      * test for GEOT-5920 can't have function on LHS Like filters
      *
-     * @throws Exception
      */
-
+    @Test
     public void testEncodeWithFunctionAsFilter() throws Exception {
         Document doc = encode(FilterMockData.propertyIsLike2(), OGC.Filter);
         // print(doc);
 
-        NodeList property =
-                doc.getDocumentElement()
-                        .getElementsByTagNameNS(OGC.NAMESPACE, OGC.Function.getLocalPart());
+        NodeList property = doc.getDocumentElement().getElementsByTagNameNS(OGC.NAMESPACE, OGC.Function.getLocalPart());
         assertEquals(1, property.getLength());
 
         assertNotNull(property.item(0).getChildNodes());
@@ -122,6 +130,7 @@ public class OGCPropertyIsLikeTypeBindingTest extends FilterTestSupport {
     /*
      * Tests for GEOS-8738 backward Like test
      */
+    @Test
     public void testBackwardLikeFilter() throws Exception {
         String f =
                 "<ogc:Filter  xmlns:ogc=\"http://www.opengis.net/ogc\"><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escapeChar=\"!\">\n"
@@ -151,6 +160,7 @@ public class OGCPropertyIsLikeTypeBindingTest extends FilterTestSupport {
         assertEquals("!", e.getAttribute("escape"));
     }
 
+    @Test
     public void testBackwardLikeFilterWithFunction() throws Exception {
         String f =
                 "<ogc:Filter  xmlns:ogc=\"http://www.opengis.net/ogc\"><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escapeChar=\"!\">\n"

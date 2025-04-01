@@ -16,22 +16,20 @@
  */
 package org.geotools.sld.bindings;
 
-import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.Halo;
+import org.geotools.api.style.LabelPlacement;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.sld.CssParameter;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Font;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.Halo;
-import org.geotools.styling.LabelPlacement;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.TextSymbolizer2;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -79,6 +77,7 @@ public class SLDTextSymbolizerBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.TEXTSYMBOLIZER;
     }
@@ -90,6 +89,7 @@ public class SLDTextSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -101,6 +101,7 @@ public class SLDTextSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return TextSymbolizer.class;
     }
@@ -112,6 +113,7 @@ public class SLDTextSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -121,6 +123,7 @@ public class SLDTextSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         TextSymbolizer ts = styleFactory.createTextSymbolizer();
 
@@ -160,8 +163,8 @@ public class SLDTextSymbolizerBinding extends AbstractComplexBinding {
             ts.setFill((Fill) node.getChildValue("Fill"));
         }
 
-        if (node.hasChild("Graphic") && ts instanceof TextSymbolizer2) {
-            ((TextSymbolizer2) ts).setGraphic((Graphic) node.getChildValue("Graphic"));
+        if (node.hasChild("Graphic")) {
+            ts.setGraphic((Graphic) node.getChildValue("Graphic"));
         }
 
         if (node.hasChild("Priority")) {
@@ -169,9 +172,8 @@ public class SLDTextSymbolizerBinding extends AbstractComplexBinding {
         }
 
         // &lt;xsd:element ref="sld:VendorOption" minOccurs="0" maxOccurs="unbounded"/&gt;
-        for (CssParameter param : (List<CssParameter>) node.getChildValues(CssParameter.class)) {
-            ts.getOptions()
-                    .put(param.getName(), param.getExpression().evaluate(null, String.class));
+        for (CssParameter param : node.getChildValues(CssParameter.class)) {
+            ts.getOptions().put(param.getName(), param.getExpression().evaluate(null, String.class));
         }
         return ts;
     }

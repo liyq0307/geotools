@@ -18,10 +18,10 @@ package org.geotools.coverage.io.range.impl;
 
 import java.util.Collections;
 import java.util.Set;
+import org.geotools.api.coverage.SampleDimension;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.io.range.FieldType;
-import org.opengis.coverage.SampleDimension;
-import org.opengis.feature.type.Name;
-import org.opengis.util.InternationalString;
 
 public class DefaultFieldType implements FieldType {
     // private List<Axis<?, ?>> axes;
@@ -32,13 +32,7 @@ public class DefaultFieldType implements FieldType {
     // private Unit<Quantity> unit;
     private Set<SampleDimension> sampleDimensions;
 
-    /**
-     * @param name
-     * @param description
-     * @param unit
-     * @param axes
-     * @param samples
-     */
+    /** */
     public DefaultFieldType(
             Name name,
             InternationalString description,
@@ -72,10 +66,12 @@ public class DefaultFieldType implements FieldType {
     // return null;
     // }
 
+    @Override
     public InternationalString getDescription() {
         return description;
     }
 
+    @Override
     public Name getName() {
         return name;
     }
@@ -84,6 +80,7 @@ public class DefaultFieldType implements FieldType {
     // return null; // TODO: need to figure out how to record this association
     // }
 
+    @Override
     public Set<SampleDimension> getSampleDimensions() {
         if (sampleDimensions != null) {
             return Collections.unmodifiableSet(sampleDimensions);

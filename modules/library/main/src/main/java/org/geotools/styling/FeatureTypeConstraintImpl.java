@@ -17,8 +17,11 @@
 package org.geotools.styling;
 
 import java.util.Arrays;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.style.Extent;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.StyleVisitor;
 import org.geotools.util.Utilities;
-import org.opengis.filter.Filter;
 
 public class FeatureTypeConstraintImpl implements FeatureTypeConstraint, Cloneable {
     /** the feature type name */
@@ -30,34 +33,42 @@ public class FeatureTypeConstraintImpl implements FeatureTypeConstraint, Cloneab
     /** the extents */
     Extent[] extents;
 
+    @Override
     public String getFeatureTypeName() {
         return featureTypeName;
     }
 
+    @Override
     public void setFeatureTypeName(String name) {
         this.featureTypeName = name;
     }
 
+    @Override
     public Filter getFilter() {
         return filter;
     }
 
+    @Override
     public void setFilter(Filter filter) {
         this.filter = filter;
     }
 
+    @Override
     public Extent[] getExtents() {
         return extents;
     }
 
+    @Override
     public void setExtents(Extent[] extents) {
         this.extents = extents;
     }
 
+    @Override
     public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
+    @Override
     public int hashCode() {
         final int PRIME = 1000003;
         int result = 0;
@@ -76,6 +87,7 @@ public class FeatureTypeConstraintImpl implements FeatureTypeConstraint, Cloneab
         return result;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;

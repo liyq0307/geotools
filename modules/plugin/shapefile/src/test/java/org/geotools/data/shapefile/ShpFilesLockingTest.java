@@ -19,7 +19,8 @@ package org.geotools.data.shapefile;
 import static org.geotools.data.shapefile.files.ShpFileType.DBF;
 import static org.geotools.data.shapefile.files.ShpFileType.SHP;
 import static org.geotools.data.shapefile.files.ShpFileType.SHX;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.net.URL;
@@ -59,7 +60,8 @@ public class ShpFilesLockingTest implements FileWriter {
 
         File file = shpFiles.acquireReadFile(SHP, this);
         // under windows the two paths can be just different in terms of case..
-        assertEquals(new File(path).getCanonicalPath().toLowerCase(), file.getPath().toLowerCase());
+        assertEquals(
+                new File(path).getCanonicalPath().toLowerCase(), file.getPath().toLowerCase());
         assertEquals(1, shpFiles.numberOfLocks());
 
         shpFiles.unlockRead(file, this);
@@ -82,7 +84,8 @@ public class ShpFilesLockingTest implements FileWriter {
 
         File file = shpFiles.acquireWriteFile(SHP, this);
         // under windows the two paths can be just different in terms of case..
-        assertEquals(new File(path).getCanonicalPath().toLowerCase(), file.getPath().toLowerCase());
+        assertEquals(
+                new File(path).getCanonicalPath().toLowerCase(), file.getPath().toLowerCase());
         assertEquals(1, shpFiles.numberOfLocks());
 
         shpFiles.unlockWrite(file, this);
@@ -97,13 +100,7 @@ public class ShpFilesLockingTest implements FileWriter {
         URL url = shpFiles.acquireRead(DBF, this);
         assertEquals("http://somefile.com/shp.dbf", url.toExternalForm());
         assertEquals(1, shpFiles.numberOfLocks());
-        FileWriter testWriter =
-                new FileWriter() {
-
-                    public String id() {
-                        return "Other";
-                    }
-                };
+        FileWriter testWriter = () -> "Other";
 
         // same thread should work
         Result<URL, State> result1 = shpFiles.tryAcquireRead(SHX, testWriter);
@@ -128,13 +125,7 @@ public class ShpFilesLockingTest implements FileWriter {
         URL url = shpFiles.acquireRead(DBF, this);
         assertEquals("http://somefile.com/shp.dbf", url.toExternalForm());
         assertEquals(1, shpFiles.numberOfLocks());
-        FileWriter testWriter =
-                new FileWriter() {
-
-                    public String id() {
-                        return "Other";
-                    }
-                };
+        FileWriter testWriter = () -> "Other";
 
         // same thread should work
         Result<URL, State> result1 = shpFiles.tryAcquireRead(SHX, testWriter);
@@ -162,13 +153,7 @@ public class ShpFilesLockingTest implements FileWriter {
         URL url = shpFiles.acquireWrite(DBF, this);
         assertEquals("http://somefile.com/shp.dbf", url.toExternalForm());
         assertEquals(1, shpFiles.numberOfLocks());
-        FileWriter testWriter =
-                new FileWriter() {
-
-                    public String id() {
-                        return "Other";
-                    }
-                };
+        FileWriter testWriter = () -> "Other";
 
         // same thread should work
         Result<URL, State> result1 = shpFiles.tryAcquireWrite(SHX, testWriter);
@@ -189,6 +174,7 @@ public class ShpFilesLockingTest implements FileWriter {
         shpFiles.dispose();
     }
 
+    @Override
     public String id() {
         return getClass().getName();
     }

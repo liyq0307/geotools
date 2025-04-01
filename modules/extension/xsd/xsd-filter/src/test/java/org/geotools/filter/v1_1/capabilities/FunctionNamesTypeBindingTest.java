@@ -16,10 +16,13 @@
  */
 package org.geotools.filter.v1_1.capabilities;
 
+import static org.junit.Assert.assertEquals;
+
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.Binding;
-import org.opengis.filter.capability.FunctionName;
+import org.junit.Test;
 import org.w3c.dom.Document;
 
 /**
@@ -41,14 +44,17 @@ import org.w3c.dom.Document;
  * @generated
  */
 public class FunctionNamesTypeBindingTest extends OGCTestSupport {
+    @Test
     public void testType() {
         assertEquals(FunctionName[].class, binding(OGC.FunctionNamesType).getType());
     }
 
+    @Test
     public void testExectionMode() {
         assertEquals(Binding.OVERRIDE, binding(OGC.FunctionNamesType).getExecutionMode());
     }
 
+    @Test
     public void testParse() throws Exception {
         FilterMockData.functionNames(document, document);
 
@@ -59,13 +65,12 @@ public class FunctionNamesTypeBindingTest extends OGCTestSupport {
         assertEquals("bar", functions[1].getName());
     }
 
+    @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.functionNames(),
-                        new QName(OGC.NAMESPACE, "FunctionNames"),
-                        OGC.FunctionNamesType);
+        Document dom = encode(
+                FilterMockData.functionNames(), new QName(OGC.NAMESPACE, "FunctionNames"), OGC.FunctionNamesType);
 
-        assertEquals(2, dom.getElementsByTagNameNS(OGC.NAMESPACE, "FunctionName").getLength());
+        assertEquals(
+                2, dom.getElementsByTagNameNS(OGC.NAMESPACE, "FunctionName").getLength());
     }
 }

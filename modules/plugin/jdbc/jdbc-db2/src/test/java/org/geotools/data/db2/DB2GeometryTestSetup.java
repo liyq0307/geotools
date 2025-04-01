@@ -28,13 +28,12 @@ public class DB2GeometryTestSetup extends JDBCGeometryTestSetup {
 
     @Override
     protected void dropSpatialTable(String tableName) throws Exception {
-        Connection con = getDataSource().getConnection();
-        try {
-            DB2Util.executeUnRegister(DB2TestUtil.SCHEMA, tableName, "goem", con);
-            DB2TestUtil.dropTable(DB2TestUtil.SCHEMA, tableName, con);
-        } catch (SQLException e) {
+        try (Connection con = getDataSource().getConnection()) {
+            try {
+                DB2Util.executeUnRegister(DB2TestUtil.SCHEMA, tableName, "goem", con);
+                DB2TestUtil.dropTable(DB2TestUtil.SCHEMA, tableName, con);
+            } catch (SQLException e) {
+            }
         }
-
-        con.close();
     }
 }

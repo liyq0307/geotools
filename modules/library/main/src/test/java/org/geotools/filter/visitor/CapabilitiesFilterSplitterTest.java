@@ -22,22 +22,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.spatial.BBOX;
 import org.geotools.filter.Capabilities;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.spatial.BBOX;
 
 /**
  * @author Jesse
  * @author ported from PostPreProcessFilterSplittingVisitor at 2.5.2 by Gabriel Roldan
  */
-@SuppressWarnings({"nls", "unchecked"})
+@SuppressWarnings("unchecked")
 public class CapabilitiesFilterSplitterTest extends AbstractCapabilitiesFilterSplitterTests {
 
     private Capabilities simpleLogicalCaps = new Capabilities();
@@ -122,9 +122,7 @@ public class CapabilitiesFilterSplitterTest extends AbstractCapabilitiesFilterSp
         runTest(f, Capabilities.SIMPLE_COMPARISONS_OPENGIS, nameAtt);
     }
 
-    /**
-     * an update is in transaction that modifies an attribute that NOT is referenced in the query
-     */
+    /** an update is in transaction that modifies an attribute that NOT is referenced in the query */
     @Test
     public void testVisitCompareFilterWithUpdateDifferentAttribute() throws Exception {
         Filter f = createPropertyIsEqualToFilter(nameAtt, "david");
@@ -166,7 +164,6 @@ public class CapabilitiesFilterSplitterTest extends AbstractCapabilitiesFilterSp
     }
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void testVisitIdFilterWithNoIdCapabilities() throws Exception {
         // Id Filter
         HashSet ids = new HashSet();
@@ -193,7 +190,8 @@ public class CapabilitiesFilterSplitterTest extends AbstractCapabilitiesFilterSp
         assertEquals(filter, visitor.getFilterPost());
         assertEquals(Filter.INCLUDE, visitor.getFilterPre());
 
-        simpleLogicalCaps.addName(testFunction.getName(), testFunction.getParameters().size());
+        simpleLogicalCaps.addName(
+                testFunction.getName(), testFunction.getParameters().size());
         visitor = newVisitor(simpleLogicalCaps);
 
         filter.accept(visitor, null);
@@ -217,7 +215,8 @@ public class CapabilitiesFilterSplitterTest extends AbstractCapabilitiesFilterSp
         assertEquals(funtionFilter.toString(), visitor.getFilterPost().toString());
         assertEquals(geomFilter.toString(), visitor.getFilterPre().toString());
 
-        simpleLogicalCaps.addName(testFunction.getName(), testFunction.getParameters().size());
+        simpleLogicalCaps.addName(
+                testFunction.getName(), testFunction.getParameters().size());
         visitor = newVisitor(simpleLogicalCaps);
 
         andFilter.accept(visitor, null);
@@ -241,7 +240,8 @@ public class CapabilitiesFilterSplitterTest extends AbstractCapabilitiesFilterSp
         assertEquals(Filter.INCLUDE, visitor.getFilterPre());
         assertEquals(orFilter, visitor.getFilterPost());
 
-        simpleLogicalCaps.addName(testFunction.getName(), testFunction.getParameters().size());
+        simpleLogicalCaps.addName(
+                testFunction.getName(), testFunction.getParameters().size());
         visitor = newVisitor(simpleLogicalCaps);
 
         orFilter.accept(visitor, null);
@@ -263,7 +263,8 @@ public class CapabilitiesFilterSplitterTest extends AbstractCapabilitiesFilterSp
         assertEquals(not, visitor.getFilterPost());
         assertEquals(Filter.INCLUDE, visitor.getFilterPre());
 
-        simpleLogicalCaps.addName(testFunction.getName(), testFunction.getParameters().size());
+        simpleLogicalCaps.addName(
+                testFunction.getName(), testFunction.getParameters().size());
         visitor = newVisitor(simpleLogicalCaps);
 
         not.accept(visitor, null);
@@ -275,7 +276,8 @@ public class CapabilitiesFilterSplitterTest extends AbstractCapabilitiesFilterSp
     @Test
     public void testNullParentNullAccessor() throws Exception {
         simpleLogicalCaps.addType(BBOX.class);
-        simpleLogicalCaps.addName(testFunction.getName(), testFunction.getParameters().size());
+        simpleLogicalCaps.addName(
+                testFunction.getName(), testFunction.getParameters().size());
         visitor = newVisitor(simpleLogicalCaps);
 
         Filter funtionFilter = createFunctionFilter();
@@ -311,7 +313,8 @@ public class CapabilitiesFilterSplitterTest extends AbstractCapabilitiesFilterSp
         f = ff.and(f, g);
 
         simpleLogicalCaps.addType(BBOX.class);
-        simpleLogicalCaps.addName(testFunction.getName(), testFunction.getParameters().size());
+        simpleLogicalCaps.addName(
+                testFunction.getName(), testFunction.getParameters().size());
 
         visitor = new CapabilitiesFilterSplitter(simpleLogicalCaps, null, null);
         f.accept(visitor, null);
@@ -319,25 +322,23 @@ public class CapabilitiesFilterSplitterTest extends AbstractCapabilitiesFilterSp
         assertEquals(f, visitor.getFilterPre());
         assertEquals(Filter.INCLUDE, visitor.getFilterPost());
 
-        visitor =
-                new CapabilitiesFilterSplitter(
-                        simpleLogicalCaps,
-                        null,
-                        new ClientTransactionAccessor() {
+        visitor = new CapabilitiesFilterSplitter(simpleLogicalCaps, null, new ClientTransactionAccessor() {
 
-                            public Filter getDeleteFilter() {
-                                return null;
-                            }
+            @Override
+            public Filter getDeleteFilter() {
+                return null;
+            }
 
-                            public Filter getUpdateFilter(String attributePath) {
-                                if (attributePath.equals("eventtype")) {
-                                    HashSet ids = new HashSet();
-                                    ids.add(ff.featureId("fid"));
-                                    return ff.id(ids);
-                                }
-                                return null;
-                            }
-                        });
+            @Override
+            public Filter getUpdateFilter(String attributePath) {
+                if (attributePath.equals("eventtype")) {
+                    HashSet ids = new HashSet();
+                    ids.add(ff.featureId("fid"));
+                    return ff.id(ids);
+                }
+                return null;
+            }
+        });
 
         f.accept(visitor, null);
 

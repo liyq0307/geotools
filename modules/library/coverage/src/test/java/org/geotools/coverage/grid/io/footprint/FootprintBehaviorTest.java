@@ -16,14 +16,14 @@
  */
 package org.geotools.coverage.grid.io.footprint;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.util.Arrays;
@@ -43,9 +43,7 @@ public class FootprintBehaviorTest {
         assertNotNull(values);
         Set<String> testSet = new HashSet<>(Arrays.asList(values));
         Set<String> expectedSet =
-                Arrays.stream(FootprintBehavior.values())
-                        .map(v -> v.name())
-                        .collect(Collectors.toSet());
+                Arrays.stream(FootprintBehavior.values()).map(v -> v.name()).collect(Collectors.toSet());
         assertEquals(expectedSet, testSet);
     }
 
@@ -76,8 +74,7 @@ public class FootprintBehaviorTest {
     @Test
     public void testPostProcessTransparent() {
         BufferedImage bi = new BufferedImage(10, 10, BufferedImage.TYPE_BYTE_GRAY);
-        RenderedImage postProcessed =
-                FootprintBehavior.Transparent.postProcessBlankResponse(bi, null);
+        RenderedImage postProcessed = FootprintBehavior.Transparent.postProcessBlankResponse(bi, null);
         assertNotSame(bi, postProcessed);
         checkEmptyROI(postProcessed);
         // has also been expanded and alpha channel added

@@ -17,10 +17,10 @@
 package org.geotools.se.v1_1.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.feature.NameImpl;
 import org.geotools.se.v1_1.SE;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
@@ -73,6 +73,7 @@ public class CoverageStyleBinding extends FeatureTypeStyleBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.CoverageStyle;
     }
@@ -84,6 +85,7 @@ public class CoverageStyleBinding extends FeatureTypeStyleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         FeatureTypeStyle fts = (FeatureTypeStyle) super.parse(instance, node, value);
@@ -91,11 +93,10 @@ public class CoverageStyleBinding extends FeatureTypeStyleBinding {
         if (node.hasChild("CoverageName")) {
             QName name = (QName) node.getChildValue("CoverageName");
             fts.featureTypeNames()
-                    .add(
-                            new NameImpl(
-                                    name.getPrefix() != null
-                                            ? name.getPrefix() + ":" + name.getLocalPart()
-                                            : name.getLocalPart()));
+                    .add(new NameImpl(
+                            name.getPrefix() != null
+                                    ? name.getPrefix() + ":" + name.getLocalPart()
+                                    : name.getLocalPart()));
         }
 
         return fts;

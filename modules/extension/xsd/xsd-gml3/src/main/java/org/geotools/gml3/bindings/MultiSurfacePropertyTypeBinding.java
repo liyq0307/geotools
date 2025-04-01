@@ -49,16 +49,17 @@ import org.locationtech.jts.geom.MultiPolygon;
  */
 public class MultiSurfacePropertyTypeBinding extends GeometryPropertyTypeBindingBase {
 
-    public MultiSurfacePropertyTypeBinding(
-            GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry) {
+    public MultiSurfacePropertyTypeBinding(GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry) {
         super(encodingUtils, idRegistry);
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MultiSurfacePropertyType;
     }
 
+    @Override
     public Class<? extends Geometry> getGeometryType() {
         // return MultiSurface.class;
         return MultiPolygon.class;

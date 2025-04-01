@@ -16,16 +16,17 @@
  */
 package org.geotools.temporal.reference;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.util.Collection;
+import org.geotools.api.temporal.OrdinalEra;
+import org.geotools.api.temporal.OrdinalReferenceSystem;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.OrdinalEra;
-import org.opengis.temporal.OrdinalReferenceSystem;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultOrdinalReferenceSystemTest {
@@ -63,22 +64,22 @@ public class DefaultOrdinalReferenceSystemTest {
     /** Test of equals method, of class DefaultOrdinalReferenceSystem. */
     @Test
     public void testEquals() {
-        assertFalse(ordinalReferenceSystem1.equals(null));
+        assertNotEquals(null, ordinalReferenceSystem1);
         assertEquals(ordinalReferenceSystem1, ordinalReferenceSystem1);
-        assertFalse(ordinalReferenceSystem1.equals(ordinalReferenceSystem2));
+        assertNotEquals(ordinalReferenceSystem1, ordinalReferenceSystem2);
     }
 
     /** Test of hashCode method, of class DefaultOrdinalReferenceSystem. */
     @Test
     public void testHashCode() {
         int result = ordinalReferenceSystem1.hashCode();
-        assertFalse(ordinalReferenceSystem2.hashCode() == result);
+        assertNotEquals(ordinalReferenceSystem2.hashCode(), result);
     }
 
     /** Test of toString method, of class DefaultOrdinalReferenceSystem. */
     @Test
     public void testToString() {
         String result = ordinalReferenceSystem1.toString();
-        assertFalse(ordinalReferenceSystem2.toString().equals(result));
+        assertNotEquals(ordinalReferenceSystem2.toString(), result);
     }
 }

@@ -61,8 +61,7 @@ public class ValidatorHandler extends DefaultHandler2 {
     }
 
     @Override
-    public InputSource resolveEntity(String publicId, String systemId)
-            throws IOException, SAXException {
+    public InputSource resolveEntity(String publicId, String systemId) throws IOException, SAXException {
         if (entityResolver != null) {
             return entityResolver.resolveEntity(publicId, systemId);
         } else {
@@ -81,7 +80,7 @@ public class ValidatorHandler extends DefaultHandler2 {
 
     @Override
     public void startDocument() throws SAXException {
-        errors = new ArrayList();
+        errors = new ArrayList<>();
     }
 
     @Override

@@ -16,9 +16,9 @@
  */
 package org.geotools.referencing.operation.transform;
 
-import org.opengis.referencing.operation.MathTransform1D;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.TransformException;
+import org.geotools.api.referencing.operation.MathTransform1D;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.TransformException;
 
 /**
  * Concatenated transform where both transforms are one-dimensional.
@@ -27,26 +27,24 @@ import org.opengis.referencing.operation.TransformException;
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  */
-final class ConcatenatedTransformDirect1D extends ConcatenatedTransformDirect
-        implements MathTransform1D {
+final class ConcatenatedTransformDirect1D extends ConcatenatedTransformDirect implements MathTransform1D {
     /** Serial number for interoperability with different versions. */
     private static final long serialVersionUID = 1064398659892864966L;
 
     /**
-     * The first math transform. This field is identical to {@link
-     * ConcatenatedTransform#transform1}. Only the type is different.
+     * The first math transform. This field is identical to {@link ConcatenatedTransform#transform1}. Only the type is
+     * different.
      */
     private final MathTransform1D transform1;
 
     /**
-     * The second math transform. This field is identical to {@link
-     * ConcatenatedTransform#transform1}. Only the type is different.
+     * The second math transform. This field is identical to {@link ConcatenatedTransform#transform1}. Only the type is
+     * different.
      */
     private final MathTransform1D transform2;
 
     /** Constructs a concatenated transform. */
-    public ConcatenatedTransformDirect1D(
-            final MathTransform1D transform1, final MathTransform1D transform2) {
+    public ConcatenatedTransformDirect1D(final MathTransform1D transform1, final MathTransform1D transform2) {
         super(transform1, transform2);
         this.transform1 = transform1;
         this.transform2 = transform2;
@@ -59,11 +57,13 @@ final class ConcatenatedTransformDirect1D extends ConcatenatedTransformDirect
     }
 
     /** Transforms the specified value. */
+    @Override
     public double transform(final double value) throws TransformException {
         return transform2.transform(transform1.transform(value));
     }
 
     /** Gets the derivative of this function at a value. */
+    @Override
     public double derivative(final double value) throws TransformException {
         final double value1 = transform1.derivative(value);
         final double value2 = transform2.derivative(transform1.transform(value));

@@ -23,13 +23,18 @@ import static org.junit.Assert.assertTrue;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.awt.image.RenderedImage;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
-import javax.media.jai.iterator.RectIter;
-import javax.media.jai.iterator.RectIterFactory;
+import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.metadata.spatial.PixelOrientation;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
@@ -45,6 +50,7 @@ import org.geotools.process.Process;
 import org.geotools.process.Processors;
 import org.geotools.process.feature.AbstractFeatureCollectionProcessFactory;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
+import org.geotools.util.logging.Logging;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
@@ -54,13 +60,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.metadata.spatial.PixelOrientation;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.util.ProgressListener;
 
 /**
  * Unit tests for rasterizing vector features.
@@ -68,6 +67,8 @@ import org.opengis.util.ProgressListener;
  * @author Michael Bedward
  */
 public class VectorToRasterProcessTest {
+
+    static final Logger LOGGER = Logging.getLogger(VectorToRasterProcessTest.class);
 
     @Test
     public void testCreateProcess() throws Exception {
@@ -85,8 +86,7 @@ public class VectorToRasterProcessTest {
         String covName = "Test";
         ProgressListener monitor = null;
 
-        GridCoverage2D cov =
-                VectorToRasterProcess.process(features, "value", gridDim, bounds, covName, monitor);
+        GridCoverage2D cov = VectorToRasterProcess.process(features, "value", gridDim, bounds, covName, monitor);
 
         // textPrint(cov);
 
@@ -95,13 +95,13 @@ public class VectorToRasterProcessTest {
          * to see the two small rectangles (values 1 and 3) 'on top' of
          * the larger rectangle (value 2)
          */
-        Map<Integer, Envelope> rects = new HashMap<Integer, Envelope>();
-        SimpleFeatureIterator iter = features.features();
-        while (iter.hasNext()) {
-            SimpleFeature sf = iter.next();
-            rects.put(
-                    (Integer) sf.getAttribute("value"),
-                    ((Geometry) sf.getDefaultGeometry()).getEnvelopeInternal());
+        Map<Integer, Envelope> rects = new HashMap<>();
+        try (SimpleFeatureIterator iter = features.features()) {
+            while (iter.hasNext()) {
+                SimpleFeature sf = iter.next();
+                rects.put(
+                        (Integer) sf.getAttribute("value"), ((Geometry) sf.getDefaultGeometry()).getEnvelopeInternal());
+            }
         }
 
         try {
@@ -127,8 +127,7 @@ public class VectorToRasterProcessTest {
 
     @Test
     public void rasterizePoints() throws Exception {
-        ReferencedEnvelope bounds =
-                new ReferencedEnvelope(-10, 10, -20, 20, DefaultEngineeringCRS.GENERIC_2D);
+        ReferencedEnvelope bounds = new ReferencedEnvelope(-10, 10, -20, 20, DefaultEngineeringCRS.GENERIC_2D);
         Dimension gridDim = new Dimension(100, 100);
 
         SimpleFeatureCollection features = createPoints(bounds, gridDim);
@@ -136,12 +135,10 @@ public class VectorToRasterProcessTest {
         String covName = "Test";
         ProgressListener monitor = null;
 
-        GridCoverage2D cov =
-                VectorToRasterProcess.process(features, "value", gridDim, bounds, covName, monitor);
+        GridCoverage2D cov = VectorToRasterProcess.process(features, "value", gridDim, bounds, covName, monitor);
 
-        SimpleFeatureIterator iter = features.features();
-        int[] covValues = new int[1];
-        try {
+        try (SimpleFeatureIterator iter = features.features()) {
+            int[] covValues = new int[1];
             while (iter.hasNext()) {
                 SimpleFeature feature = iter.next();
                 Coordinate coord = ((Geometry) feature.getDefaultGeometry()).getCoordinate();
@@ -151,8 +148,6 @@ public class VectorToRasterProcessTest {
                 cov.evaluate(worldPos, covValues);
                 assertEquals(value, covValues[0]);
             }
-        } finally {
-            iter.close();
         }
     }
 
@@ -170,7 +165,7 @@ public class VectorToRasterProcessTest {
 
         ProgressListener monitor = null;
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put(AbstractFeatureCollectionProcessFactory.FEATURES.key, features);
         map.put("attribute", "value");
         map.put("rasterWidth", gridDim.width);
@@ -185,27 +180,25 @@ public class VectorToRasterProcessTest {
         /*
          * Verify each vertex is the correct value
          */
-        SimpleFeatureIterator iter = features.features();
-        float[] covValue = new float[1];
-        GridCoordinates2D gridP = new GridCoordinates2D();
-        while (iter.hasNext()) {
-            SimpleFeature feature = iter.next();
-            Coordinate[] coords = ((Geometry) feature.getDefaultGeometry()).getCoordinates();
-            for (Coordinate coord : coords) {
-                gridP.x = coord.x == gridDim.width ? (int) coord.x - 1 : (int) coord.x;
-                gridP.y = coord.y == gridDim.height ? (int) coord.y - 1 : (int) coord.y;
+        try (SimpleFeatureIterator iter = features.features()) {
+            float[] covValue = new float[1];
+            GridCoordinates2D gridP = new GridCoordinates2D();
+            while (iter.hasNext()) {
+                SimpleFeature feature = iter.next();
+                Coordinate[] coords = ((Geometry) feature.getDefaultGeometry()).getCoordinates();
+                for (Coordinate coord : coords) {
+                    gridP.x = coord.x == gridDim.width ? (int) coord.x - 1 : (int) coord.x;
+                    gridP.y = coord.y == gridDim.height ? (int) coord.y - 1 : (int) coord.y;
 
-                cov.evaluate(gridP, covValue);
-                Float value = (Float) feature.getAttribute("value");
-                assertEquals(value.floatValue(), covValue[0], .01);
+                    cov.evaluate(gridP, covValue);
+                    Float value = (Float) feature.getAttribute("value");
+                    assertEquals(value.floatValue(), covValue[0], .01);
+                }
             }
         }
     }
 
-    /**
-     * Runs the Process.execute method using LineStrings with String values that evaluate to
-     * integers.
-     */
+    /** Runs the Process.execute method using LineStrings with String values that evaluate to integers. */
     @Test
     public void executeProcessWithString() throws Exception {
         Process p = Processors.createProcess(new NameImpl("vec", "VectorToRaster"));
@@ -218,7 +211,7 @@ public class VectorToRasterProcessTest {
 
         ProgressListener monitor = null;
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put(AbstractFeatureCollectionProcessFactory.FEATURES.key, features);
         map.put("attribute", "value");
         map.put("rasterWidth", gridDim.width);
@@ -233,26 +226,27 @@ public class VectorToRasterProcessTest {
         /*
          * Verify each vertex is the correct value
          */
-        SimpleFeatureIterator iter = features.features();
-        int[] covValue = new int[1];
-        GridCoordinates2D gridP = new GridCoordinates2D();
-        while (iter.hasNext()) {
-            SimpleFeature feature = iter.next();
-            Coordinate[] coords = ((Geometry) feature.getDefaultGeometry()).getCoordinates();
-            for (Coordinate coord : coords) {
-                gridP.x = coord.x == gridDim.width ? (int) coord.x - 1 : (int) coord.x;
-                gridP.y = coord.y == gridDim.height ? (int) coord.y - 1 : (int) coord.y;
+        try (SimpleFeatureIterator iter = features.features()) {
+            int[] covValue = new int[1];
+            GridCoordinates2D gridP = new GridCoordinates2D();
+            while (iter.hasNext()) {
+                SimpleFeature feature = iter.next();
+                Coordinate[] coords = ((Geometry) feature.getDefaultGeometry()).getCoordinates();
+                for (Coordinate coord : coords) {
+                    gridP.x = coord.x == gridDim.width ? (int) coord.x - 1 : (int) coord.x;
+                    gridP.y = coord.y == gridDim.height ? (int) coord.y - 1 : (int) coord.y;
 
-                cov.evaluate(gridP, covValue);
-                int value = Integer.valueOf((String) feature.getAttribute("value"));
-                assertEquals(covValue[0], value);
+                    cov.evaluate(gridP, covValue);
+                    int value = Integer.valueOf((String) feature.getAttribute("value"));
+                    assertEquals(covValue[0], value);
+                }
             }
         }
     }
 
     /**
-     * Create a set of three features, each of which is a rectangular polygon. The features are
-     * arranged roughly like this:
+     * Create a set of three features, each of which is a rectangular polygon. The features are arranged roughly like
+     * this:
      *
      * <pre>
      *             |---------------|
@@ -279,51 +273,27 @@ public class VectorToRasterProcessTest {
         WKTReader reader = new WKTReader();
 
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
-        SimpleFeature feature;
 
-        feature =
-                buildFeature(
-                        builder,
-                        reader,
-                        "MULTIPOLYGON(((10 10, 10 20, 30 20, 30 10, 10 10)))",
-                        "left",
-                        1);
+        SimpleFeature feature =
+                buildFeature(builder, reader, "MULTIPOLYGON(((10 10, 10 20, 30 20, 30 10, 10 10)))", "left", 1);
         fc.add(feature);
 
-        feature =
-                buildFeature(
-                        builder,
-                        reader,
-                        "MULTIPOLYGON(((40 10, 40 20, 60 20, 60 10, 40 10)))",
-                        "right",
-                        3);
+        feature = buildFeature(builder, reader, "MULTIPOLYGON(((40 10, 40 20, 60 20, 60 10, 40 10)))", "right", 3);
         fc.add(feature);
 
-        feature =
-                buildFeature(
-                        builder,
-                        reader,
-                        "MULTIPOLYGON(((20 0, 20 30, 50 30, 50 0, 20 0)))",
-                        "middle",
-                        2);
+        feature = buildFeature(builder, reader, "MULTIPOLYGON(((20 0, 20 30, 50 30, 50 0, 20 0)))", "middle", 2);
         fc.add(feature);
 
         return fc;
     }
 
     /**
-     * Creates randomly located points constrained so that only one point can lie in any grid cell.
-     * The number of points will be approx number of grid cells / 4.
-     *
-     * @param numPoints
-     * @return
+     * Creates randomly located points constrained so that only one point can lie in any grid cell. The number of points
+     * will be approx number of grid cells / 4.
      */
-    private SimpleFeatureCollection createPoints(ReferencedEnvelope bounds, Dimension gridDim)
-            throws Exception {
+    private SimpleFeatureCollection createPoints(ReferencedEnvelope bounds, Dimension gridDim) throws Exception {
 
         final double PROB_POINT = 0.25;
-        final double xres = bounds.getWidth() / gridDim.width;
-        final double yres = bounds.getHeight() / gridDim.height;
 
         final GridGeometry2D gridGeom =
                 new GridGeometry2D(new GridEnvelope2D(0, 0, gridDim.width, gridDim.height), bounds);
@@ -348,14 +318,10 @@ public class VectorToRasterProcessTest {
             for (int x = 0; x < gridDim.width; x++) {
                 if (rand.nextDouble() < PROB_POINT) {
                     gridPos.setLocation(x, y);
-                    DirectPosition worldPos = gridGeom.gridToWorld(gridPos);
+                    Position worldPos = gridGeom.gridToWorld(gridPos);
 
-                    String wkt =
-                            String.format(
-                                    Locale.US,
-                                    "MULTIPOINT((%f %f))",
-                                    worldPos.getOrdinate(0),
-                                    worldPos.getOrdinate(1));
+                    String wkt = String.format(
+                            Locale.US, "MULTIPOINT((%f %f))", worldPos.getOrdinate(0), worldPos.getOrdinate(1));
                     fc.add(buildFeature(builder, reader, wkt, "p" + i, i));
                     i++;
                 }
@@ -377,9 +343,8 @@ public class VectorToRasterProcessTest {
         WKTReader reader = new WKTReader();
 
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
-        SimpleFeature feature;
 
-        feature = buildFeature(builder, reader, "LINESTRING(10 0, 10 20)", "horizontal", "1");
+        SimpleFeature feature = buildFeature(builder, reader, "LINESTRING(10 0, 10 20)", "horizontal", "1");
         fc.add(feature);
 
         feature = buildFeature(builder, reader, "LINESTRING(0 10, 20 10)", "vertical", "2");
@@ -404,22 +369,14 @@ public class VectorToRasterProcessTest {
         WKTReader reader = new WKTReader();
 
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
-        SimpleFeature feature;
 
-        feature =
-                buildFeature(builder, reader, "LINESTRING(10 0, 10 20)", "horizontal", (float) 1.1);
+        SimpleFeature feature = buildFeature(builder, reader, "LINESTRING(10 0, 10 20)", "horizontal", (float) 1.1);
         fc.add(feature);
 
         feature = buildFeature(builder, reader, "LINESTRING(0 10, 20 10)", "vertical", (float) 2.2);
         fc.add(feature);
 
-        feature =
-                buildFeature(
-                        builder,
-                        reader,
-                        "LINESTRING(0 20,0 0,20 0,20 20,0 20)",
-                        "box",
-                        (float) 3.3);
+        feature = buildFeature(builder, reader, "LINESTRING(0 20,0 0,20 0,20 20,0 20)", "box", (float) 3.3);
         fc.add(feature);
 
         return fc;
@@ -473,42 +430,5 @@ public class VectorToRasterProcessTest {
         } catch (ParseException pex) {
             throw new RuntimeException("Error in the wkt: " + wkt);
         }
-    }
-
-    /** Dump the float values in a (small) grid coverage to the console */
-    private void textPrintFloat(GridCoverage2D cov) {
-        RenderedImage img = cov.getRenderedImage();
-        int nb = img.getSampleModel().getNumBands();
-        RectIter iter = RectIterFactory.create(img, null);
-        float[] pixel = new float[nb];
-        do {
-            do {
-                iter.getPixel(pixel);
-                for (int i = 0; i < nb; i++) {
-                    // System.out.print(pixel[i]);
-                }
-            } while (!iter.nextPixelDone());
-            iter.startPixels();
-            // System.out.println();
-        } while (!iter.nextLineDone());
-    }
-
-    /** Dump the int values in a (small) grid coverage to the console */
-    private void textPrint(GridCoverage2D cov) {
-        RenderedImage img = cov.getRenderedImage();
-        int nb = img.getSampleModel().getNumBands();
-        RectIter iter = RectIterFactory.create(img, null);
-        int[] pixel = new int[nb];
-        int w = img.getWidth();
-        do {
-            do {
-                iter.getPixel(pixel);
-                for (int i = 0; i < nb; i++) {
-                    // System.out.print(pixel[i]);
-                }
-            } while (!iter.nextPixelDone());
-            iter.startPixels();
-            // System.out.println();
-        } while (!iter.nextLineDone());
     }
 }

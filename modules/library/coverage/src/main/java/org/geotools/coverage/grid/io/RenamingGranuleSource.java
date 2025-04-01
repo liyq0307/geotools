@@ -17,12 +17,12 @@
 package org.geotools.coverage.grid.io;
 
 import java.io.IOException;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.store.ReTypingFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /** {@link GranuleSource} wrapper exposing a different type name */
 public class RenamingGranuleSource implements GranuleSource {
@@ -58,9 +58,14 @@ public class RenamingGranuleSource implements GranuleSource {
     public SimpleFeatureCollection getGranules(Query q) throws IOException {
         Query renamed = renameQuery(q);
         SimpleFeatureCollection granules = delegate.getGranules(renamed);
-        SimpleFeatureType targetSchema = this.schema;
+        SimpleFeatureType targetSchema = granules.getSchema();
         if (q.getPropertyNames() != Query.ALL_NAMES) {
-            targetSchema = SimpleFeatureTypeBuilder.retype(schema, q.getPropertyNames());
+            SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
+            tb.init(targetSchema);
+            tb.setName(name);
+            targetSchema = tb.buildFeatureType();
+        } else {
+            targetSchema = this.schema;
         }
         return new ReTypingFeatureCollection(granules, targetSchema);
     }

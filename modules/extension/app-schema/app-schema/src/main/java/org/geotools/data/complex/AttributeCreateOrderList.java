@@ -25,21 +25,19 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A Collection of AttributeMappings that correspond to complex types that need to be created. It
- * returns them in an order such that parent elements are created first, and so children elements
- * can be slotted straight into them.
+ * A Collection of AttributeMappings that correspond to complex types that need to be created. It returns them in an
+ * order such that parent elements are created first, and so children elements can be slotted straight into them.
  *
  * @author Russell Petty (GeoScience Victoria)
  */
 public class AttributeCreateOrderList {
 
     private String rootLabel;
-    private Map<String, List<AttributeMapping>> childrenList =
-            new HashMap<String, List<AttributeMapping>>();
+    private Map<String, List<AttributeMapping>> childrenList = new HashMap<>();
 
     public AttributeCreateOrderList(String rootLabel) {
         this.rootLabel = rootLabel;
-        List<AttributeMapping> newAttMapping = new ArrayList<AttributeMapping>();
+        List<AttributeMapping> newAttMapping = new ArrayList<>();
         childrenList.put(rootLabel, newAttMapping);
     }
 
@@ -62,7 +60,7 @@ public class AttributeCreateOrderList {
         if (childrenList.containsKey(parentLabel)) {
             newAttMapping = childrenList.get(parentLabel);
         } else {
-            newAttMapping = new ArrayList<AttributeMapping>();
+            newAttMapping = new ArrayList<>();
             childrenList.put(parentLabel, newAttMapping);
         }
         newAttMapping.add(attMapping);
@@ -81,9 +79,10 @@ public class AttributeCreateOrderList {
         boolean isInitialised = false;
         boolean isHasNextBeenCalled = false;
         private Iterator<AttributeMapping> currentListIterator;
-        private Set<String> unprocessedTreeNodes = new HashSet<String>(childrenList.keySet());
-        private Set<String> returnedUnprocessedNodes = new HashSet<String>();
+        private Set<String> unprocessedTreeNodes = new HashSet<>(childrenList.keySet());
+        private Set<String> returnedUnprocessedNodes = new HashSet<>();
 
+        @Override
         public boolean hasNext() {
             isHasNextBeenCalled = true;
             if (!isInitialised) {
@@ -102,10 +101,10 @@ public class AttributeCreateOrderList {
             return true;
         }
 
+        @Override
         public AttributeMapping next() {
             if (!isHasNextBeenCalled) {
-                throw new IllegalStateException(
-                        "next method called without hasNext being called first.");
+                throw new IllegalStateException("next method called without hasNext being called first.");
             }
             isHasNextBeenCalled = false;
             AttributeMapping next = currentListIterator.next();
@@ -113,6 +112,7 @@ public class AttributeCreateOrderList {
             return next;
         }
 
+        @Override
         public void remove() {
             throw new UnsupportedOperationException("remove not supported");
         }
@@ -126,10 +126,9 @@ public class AttributeCreateOrderList {
 
         private void getNextList() {
             if (returnedUnprocessedNodes.isEmpty()) {
-                throw new IllegalStateException(
-                        "Please check your mapping file. No attribute found for parentLabel: '"
-                                + unprocessedTreeNodes.toString()
-                                + "' or root label has no matching children.");
+                throw new IllegalStateException("Please check your mapping file. No attribute found for parentLabel: '"
+                        + unprocessedTreeNodes.toString()
+                        + "' or root label has no matching children.");
             }
             Iterator<String> it = returnedUnprocessedNodes.iterator();
             boolean listFound = false;

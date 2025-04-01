@@ -1,0 +1,80 @@
+/*
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
+ *
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
+ *
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+ */
+package org.geotools.wmts;
+
+import java.awt.Rectangle;
+import java.io.File;
+import java.net.URL;
+import javax.imageio.ImageIO;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.coverage.grid.GridCoverage2D;
+import org.geotools.coverage.grid.GridEnvelope2D;
+import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.coverage.grid.io.AbstractGridFormat;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.ows.wmts.WebMapTileServer;
+import org.geotools.ows.wmts.map.WMTSCoverageReader;
+import org.geotools.ows.wmts.model.WMTSLayer;
+import org.geotools.parameter.Parameter;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
+
+/**
+ * Uses the WMTSCoverageReader to write a mosaicked image of tiles covering a given extent.
+ *
+ * <p>The extent is given in a projection that is not provided by the server.
+ *
+ * <p>You must give a path to where the file should be saved. It will be in PNG.
+ *
+ * @author Roar Brænden
+ */
+public class WMTSCoverage {
+
+    private static final String WMTS_ORTOFOTO_URL =
+            "https://geodata.npolar.no/arcgis/rest/services/Basisdata/NP_Ortofoto_Svalbard_WMTS_25833/MapServer/WMTS/1.0.0/WMTSCapabilities.xml";
+
+    public static void main(String[] args) throws Exception {
+
+        if (args.length < 1) {
+            throw new IllegalArgumentException("You must provide a path for the resulting image.");
+        }
+
+        File resultFile = new File(args[0]);
+        // start wmtsCoverage example
+        WebMapTileServer wmts = new WebMapTileServer(new URL(WMTS_ORTOFOTO_URL));
+        WMTSLayer layer = wmts.getCapabilities().getLayerList().get(0);
+        WMTSCoverageReader reader = new WMTSCoverageReader(wmts, layer);
+
+        ReferencedEnvelope envelope =
+                new ReferencedEnvelope(17.0697, 18.1937, 79.3052, 79.4667, DefaultGeographicCRS.WGS84);
+
+        CoordinateReferenceSystem upsCrs = CRS.decode("EPSG:32661");
+        ReferencedEnvelope upsExtent = new ReferencedEnvelope(
+                JTS.transform(envelope, CRS.findMathTransform(DefaultGeographicCRS.WGS84, upsCrs)), upsCrs);
+
+        System.out.println(upsExtent);
+
+        int width = 1400;
+        int height = 1400;
+
+        Parameter<GridGeometry2D> readGG =
+                (Parameter<GridGeometry2D>) AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
+        readGG.setValue(new GridGeometry2D(new GridEnvelope2D(new Rectangle(width, height)), upsExtent));
+
+        GeneralParameterValue[] parameters = new GeneralParameterValue[] {readGG};
+        GridCoverage2D coverage = reader.read(parameters);
+        ImageIO.write(coverage.getRenderedImage(), "png", resultFile);
+        // end wmtsCoverage example
+    }
+}

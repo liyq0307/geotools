@@ -21,21 +21,21 @@ package org.geotools.brewer.styling.filter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.brewer.styling.builder.Builder;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Id;
-import org.opengis.filter.identity.Identifier;
 
 /** FilterBuilder acting as a simple wrapper around an Expression. */
 public class IdBuilder<P> implements Builder<Id> {
     protected Filter filter; // placeholder just to keep us going right now
-    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory2(null);
+    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
     protected P parent;
 
     protected boolean unset = false;
-    private List<Identifier> ids = new ArrayList<Identifier>();
+    private List<Identifier> ids = new ArrayList<>();
 
     public IdBuilder() {
         reset();
@@ -47,11 +47,12 @@ public class IdBuilder<P> implements Builder<Id> {
     }
 
     /** Build the expression. */
+    @Override
     public Id build() {
         if (unset) {
             return null;
         }
-        return ff.id(new HashSet<Identifier>(ids));
+        return ff.id(new HashSet<>(ids));
     }
 
     public IdBuilder<P> fid(String fid) {
@@ -75,12 +76,14 @@ public class IdBuilder<P> implements Builder<Id> {
         return parent;
     }
 
+    @Override
     public IdBuilder<P> reset() {
-        this.filter = org.opengis.filter.Filter.EXCLUDE;
+        this.filter = org.geotools.api.filter.Filter.EXCLUDE;
         this.unset = false;
         return this;
     }
 
+    @Override
     public IdBuilder<P> reset(Id filter) {
         if (filter == null) {
             return unset();
@@ -91,6 +94,7 @@ public class IdBuilder<P> implements Builder<Id> {
         return this;
     }
 
+    @Override
     public IdBuilder<P> unset() {
         this.unset = true;
         this.ids.clear();

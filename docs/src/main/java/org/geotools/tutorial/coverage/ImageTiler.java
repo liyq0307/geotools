@@ -1,35 +1,22 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2019, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
- */
-
-/*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
- *
- *    (C) 2011, Open Source Geospatial Foundation (OSGeo)
- *
- *    This file is hereby placed into the Public Domain. This means anyone is
- *    free to do whatever they wish with this file. Use it well and enjoy!
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 // docs start prelim
 package org.geotools.tutorial.coverage;
 
 import java.io.File;
 import java.io.IOException;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
@@ -37,17 +24,13 @@ import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.coverage.processing.CoverageProcessor;
 import org.geotools.coverage.processing.Operations;
 import org.geotools.gce.geotiff.GeoTiffFormat;
-import org.geotools.geometry.Envelope2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.Arguments;
 import org.geotools.util.factory.Hints;
-import org.opengis.geometry.Envelope;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Simple tiling of a coverage based simply on the number vertical/horizontal tiles desired and
- * subdividing the geographic envelope. Uses coverage processing operations.
+ * Simple tiling of a coverage based simply on the number vertical/horizontal tiles desired and subdividing the
+ * geographic envelope. Uses coverage processing operations.
  */
 public class ImageTiler {
 
@@ -114,7 +97,6 @@ public class ImageTiler {
      * Argument parsing and initial setup.
      *
      * @param args Program arguments
-     * @throws Exception
      */
     // docs start main
     public static void main(String[] args) throws Exception {
@@ -140,10 +122,8 @@ public class ImageTiler {
 
     private static void printUsage() {
         System.out.println(
-                "Usage: -f inputFile -o outputDirectory [-tw tileWidth<default:256> "
-                        + "-th tileHeight<default:256> ");
-        System.out.println(
-                "-htc horizontalTileCount<default:16> -vtc verticalTileCount<default:8>");
+                "Usage: -f inputFile -o outputDirectory [-tw tileWidth<default:256> " + "-th tileHeight<default:256> ");
+        System.out.println("-htc horizontalTileCount<default:16> -vtc verticalTileCount<default:8>");
     }
     // docs end main
 
@@ -155,7 +135,7 @@ public class ImageTiler {
      * @return the cropped coverage
      */
     // docs start cropping
-    private GridCoverage2D cropCoverage(GridCoverage2D gridCoverage, Envelope envelope) {
+    private GridCoverage2D cropCoverage(GridCoverage2D gridCoverage, Bounds envelope) {
         CoverageProcessor processor = CoverageProcessor.getInstance();
 
         // An example of manually creating the operation and parameters we want
@@ -180,7 +160,7 @@ public class ImageTiler {
      * @return tile envelope
      */
     // docs start make envelope
-    private Envelope getTileEnvelope(
+    private Bounds getTileEnvelope(
             double coverageMinX,
             double coverageMinY,
             double geographicTileWidth,
@@ -194,8 +174,7 @@ public class ImageTiler {
         double envelopeStartY = (verticalIndex * geographicTileHeight) + coverageMinY;
         double envelopeEndY = envelopeStartY + geographicTileHeight;
 
-        return new ReferencedEnvelope(
-                envelopeStartX, envelopeEndX, envelopeStartY, envelopeEndY, targetCRS);
+        return new ReferencedEnvelope(envelopeStartX, envelopeEndX, envelopeStartY, envelopeEndY, targetCRS);
     }
     // docs end make envelope
 
@@ -216,20 +195,14 @@ public class ImageTiler {
         // docs end load coverage
 
         // docs start envelope
-        Envelope2D coverageEnvelope = gridCoverage.getEnvelope2D();
-        double coverageMinX = coverageEnvelope.getBounds().getMinX();
-        double coverageMaxX = coverageEnvelope.getBounds().getMaxX();
-        double coverageMinY = coverageEnvelope.getBounds().getMinY();
-        double coverageMaxY = coverageEnvelope.getBounds().getMaxY();
+        ReferencedEnvelope coverageEnvelope = gridCoverage.getEnvelope2D();
+        double coverageMinX = coverageEnvelope.getMinX();
+        double coverageMaxX = coverageEnvelope.getMaxX();
+        double coverageMinY = coverageEnvelope.getMinY();
+        double coverageMaxY = coverageEnvelope.getMaxY();
 
-        int htc =
-                this.getNumberOfHorizontalTiles() != null
-                        ? this.getNumberOfHorizontalTiles()
-                        : NUM_HORIZONTAL_TILES;
-        int vtc =
-                this.getNumberOfVerticalTiles() != null
-                        ? this.getNumberOfVerticalTiles()
-                        : NUM_VERTICAL_TILES;
+        int htc = this.getNumberOfHorizontalTiles() != null ? this.getNumberOfHorizontalTiles() : NUM_HORIZONTAL_TILES;
+        int vtc = this.getNumberOfVerticalTiles() != null ? this.getNumberOfVerticalTiles() : NUM_VERTICAL_TILES;
 
         double geographicTileWidth = (coverageMaxX - coverageMinX) / (double) htc;
         double geographicTileHeight = (coverageMaxY - coverageMinY) / (double) vtc;
@@ -248,15 +221,8 @@ public class ImageTiler {
 
                 System.out.println("Processing tile at indices i: " + i + " and j: " + j);
                 // create the envelope of the tile
-                Envelope envelope =
-                        getTileEnvelope(
-                                coverageMinX,
-                                coverageMinY,
-                                geographicTileWidth,
-                                geographicTileHeight,
-                                targetCRS,
-                                i,
-                                j);
+                Bounds envelope = getTileEnvelope(
+                        coverageMinX, coverageMinY, geographicTileWidth, geographicTileHeight, targetCRS, i, j);
 
                 GridCoverage2D finalCoverage = cropCoverage(gridCoverage, envelope);
 
@@ -276,17 +242,15 @@ public class ImageTiler {
     /**
      * Scale the coverage based on the set tileScale
      *
-     * <p>As an alternative to using parameters to do the operations, we can use the Operations
-     * class to do them in a slightly more type safe way.
+     * <p>As an alternative to using parameters to do the operations, we can use the Operations class to do them in a
+     * slightly more type safe way.
      *
      * @param coverage the coverage to scale
      * @return the scaled coverage
      */
     private GridCoverage2D scaleCoverage(GridCoverage2D coverage) {
         Operations ops = new Operations(null);
-        coverage =
-                (GridCoverage2D)
-                        ops.scale(coverage, this.getTileScale(), this.getTileScale(), 0, 0);
+        coverage = (GridCoverage2D) ops.scale(coverage, this.getTileScale(), this.getTileScale(), 0, 0);
         return coverage;
     }
 }

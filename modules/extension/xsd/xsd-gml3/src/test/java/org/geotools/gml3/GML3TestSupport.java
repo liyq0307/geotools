@@ -16,10 +16,10 @@
  */
 package org.geotools.gml3;
 
-import java.util.HashMap;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.Map;
-import org.custommonkey.xmlunit.SimpleNamespaceContext;
-import org.custommonkey.xmlunit.XMLUnit;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.test.XMLTestSupport;
 import org.w3c.dom.Document;
@@ -72,24 +72,20 @@ import org.w3c.dom.NodeList;
 public abstract class GML3TestSupport extends XMLTestSupport {
 
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        Map<String, String> namespaces = new HashMap<String, String>();
-        namespaces.put("xs", "http://www.w3.org/2001/XMLSchema");
-        namespaces.put("xsd", "http://www.w3.org/2001/XMLSchema");
-        namespaces.put("gml", "http://www.opengis.net/gml");
-        namespaces.put("xlink", "http://www.w3.org/1999/xlink");
-        namespaces.put("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-        XMLUnit.setXpathNamespaceContext(new SimpleNamespaceContext(namespaces));
-
-        registerNamespaceMapping("gml", "http://www.opengis.net/gml");
+    protected Map<String, String> getNamespaces() {
+        return namespaces(
+                Namespace("xs", "http://www.w3.org/2001/XMLSchema"),
+                Namespace("xsd", "http://www.w3.org/2001/XMLSchema"),
+                Namespace("gml", "http://www.opengis.net/gml"),
+                Namespace("xlink", "http://www.w3.org/1999/xlink"),
+                Namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance"));
     }
 
     /*
      * binds to the GMLConfiguration in the current package
      * i.e. this is a GML3 specific binding configuration.
      */
+    @Override
     protected Configuration createConfiguration() {
         return new GMLConfiguration(enableExtendedArcSurfaceSupport());
     }
@@ -103,11 +99,8 @@ public abstract class GML3TestSupport extends XMLTestSupport {
     }
 
     /**
-     * Checks that a posList exists, has a string as content, and the string encodes nOrdinates
-     * ordinates correctly (i.e. blank-separated).
-     *
-     * @param doc
-     * @param expectedNumOrdinates
+     * Checks that a posList exists, has a string as content, and the string encodes nOrdinates ordinates correctly
+     * (i.e. blank-separated).
      */
     private void checkOrdinates(Document doc, String ordTag, int expectedNumOrdinates) {
         NodeList nl = doc.getElementsByTagNameNS(GML.NAMESPACE, ordTag);
@@ -118,13 +111,7 @@ public abstract class GML3TestSupport extends XMLTestSupport {
         assertEquals(expectedNumOrdinates, ord.length);
     }
 
-    /**
-     * Checks that a given geometry element has an srsDimension attribute with an expected value
-     *
-     * @param doc
-     * @param tag
-     * @param expectedDim
-     */
+    /** Checks that a given geometry element has an srsDimension attribute with an expected value */
     protected void checkDimension(Document doc, String tag, int expectedDim) {
         NodeList lsNL = doc.getElementsByTagNameNS(GML.NAMESPACE, tag);
         Node geomNode = lsNL.item(0);
@@ -147,7 +134,6 @@ public abstract class GML3TestSupport extends XMLTestSupport {
     /**
      * Return the gml:id of a Node (must be an Element).
      *
-     * @param node
      * @return the gml:id
      */
     protected String getID(Node node) {

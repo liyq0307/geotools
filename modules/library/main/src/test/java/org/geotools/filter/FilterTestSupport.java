@@ -17,26 +17,25 @@
 package org.geotools.filter;
 
 import java.util.logging.Logger;
-import junit.framework.TestCase;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.junit.Before;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Common filter testing code factored up here.
  *
  * @author Chris Holmes
  */
-public abstract class FilterTestSupport extends TestCase {
+public abstract class FilterTestSupport {
     /** Standard logging instance */
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(FilterTestSupport.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(FilterTestSupport.class);
     /** Schema on which to preform tests */
     protected static SimpleFeatureType testSchema = null;
 
@@ -45,16 +44,8 @@ public abstract class FilterTestSupport extends TestCase {
 
     protected boolean setup = false;
 
-    /**
-     * Creates a new instance of TestCaseSupport
-     *
-     * @param name what to call this...
-     */
-    public FilterTestSupport(String name) {
-        super(name);
-    }
-
-    protected void setUp() throws SchemaException, IllegalAttributeException {
+    @Before
+    public void setUp() throws SchemaException, IllegalAttributeException {
         if (setup) {
             return;
         } else {
@@ -96,7 +87,7 @@ public abstract class FilterTestSupport extends TestCase {
         // Builds the test feature
         Object[] attributes = new Object[10];
         attributes[0] = geomFac.createLineString(coords);
-        attributes[1] = Boolean.valueOf(true);
+        attributes[1] = Boolean.TRUE;
         attributes[2] = Character.valueOf('t');
         attributes[3] = Byte.valueOf("10");
         attributes[4] = Short.valueOf("101");

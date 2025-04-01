@@ -24,33 +24,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
-import org.geotools.data.Parameter;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
- * A value for a CSS property. Values can be several things, including from literals, expressions,
- * composition of multiple values.
+ * A value for a CSS property. Values can be several things, including from literals, expressions, composition of
+ * multiple values.
  *
  * @author Andrea Aime - GeoSolutions
  */
 abstract class Value {
 
-    static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    static final FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
     public static final Value NONE = new None();
 
     public static final Map<String, String> COLORS_TO_HEX;
 
     static {
-        COLORS_TO_HEX = new HashMap<String, String>();
+        COLORS_TO_HEX = new HashMap<>();
         COLORS_TO_HEX.put("aliceblue", "#f0f8ff");
         COLORS_TO_HEX.put("antiquewhite", "#faebd7");
         COLORS_TO_HEX.put("aqua", "#00ffff");
@@ -200,13 +198,9 @@ abstract class Value {
         COLORS_TO_HEX.put("yellowgreen", "#9acd32");
     }
 
-    /**
-     * Turns this value into a OGC expression. Only literals and expressions can be converted to a
-     * OGC expression
-     */
-    public org.opengis.filter.expression.Expression toExpression() {
-        throw new UnsupportedOperationException(
-                "Cannot turn this value into a OGC expression: " + this);
+    /** Turns this value into a OGC expression. Only literals and expressions can be converted to a OGC expression */
+    public org.geotools.api.filter.expression.Expression toExpression() {
+        throw new UnsupportedOperationException("Cannot turn this value into a OGC expression: " + this);
     }
 
     /** Turns this value into a literal. Only true literals support this operation */
@@ -254,7 +248,8 @@ abstract class Value {
             return true;
         }
 
-        public org.opengis.filter.expression.Expression toExpression() {
+        @Override
+        public org.geotools.api.filter.expression.Expression toExpression() {
             Matcher matcher = PERCENTAGE.matcher(body);
             if (matcher.matches()) {
                 String group = matcher.group(1);
@@ -264,6 +259,7 @@ abstract class Value {
             return FF.literal(body);
         }
 
+        @Override
         public String toLiteral() {
             return body;
         }
@@ -292,12 +288,7 @@ abstract class Value {
 
         public List<Value> parameters;
 
-        /**
-         * Builds a function
-         *
-         * @param name
-         * @param parameters
-         */
+        /** Builds a function */
         public Function(String name, List<Value> parameters) {
             super();
             this.parameters = parameters;
@@ -308,12 +299,7 @@ abstract class Value {
             }
         }
 
-        /**
-         * Builds a function
-         *
-         * @param name
-         * @param parameters
-         */
+        /** Builds a function */
         public Function(String name, Value... parameters) {
             this(name, Arrays.asList(parameters));
         }
@@ -333,13 +319,11 @@ abstract class Value {
         }
 
         @Override
-        public org.opengis.filter.expression.Expression toExpression() {
+        public org.geotools.api.filter.expression.Expression toExpression() {
             // turn function call if possible
-            org.opengis.filter.expression.Expression[] params =
-                    this.parameters
-                            .stream()
-                            .map(v -> v.toExpression())
-                            .toArray(s -> new org.opengis.filter.expression.Expression[s]);
+            org.geotools.api.filter.expression.Expression[] params = this.parameters.stream()
+                    .map(v -> v.toExpression())
+                    .toArray(s -> new org.geotools.api.filter.expression.Expression[s]);
             return FF.function(this.name, params);
         }
 
@@ -373,12 +357,7 @@ abstract class Value {
 
         public Map<String, Value> parameters;
 
-        /**
-         * Builds a function
-         *
-         * @param name
-         * @param parameters
-         */
+        /** Builds a function */
         public TransformFunction(String name, Map<String, Value> parameters) {
             super();
             this.parameters = parameters;
@@ -419,13 +398,12 @@ abstract class Value {
         }
 
         @Override
-        public org.opengis.filter.expression.Expression toExpression() {
+        public org.geotools.api.filter.expression.Expression toExpression() {
             Map<String, Parameter<?>> paramInfo = loadProcessInfo(processName(name));
             if (paramInfo == null) {
-                throw new RuntimeException(
-                        "Could not locate rendering transformation named " + name);
+                throw new RuntimeException("Could not locate rendering transformation named " + name);
             }
-            List<org.opengis.filter.expression.Expression> arguments = new ArrayList<>();
+            List<org.geotools.api.filter.expression.Expression> arguments = new ArrayList<>();
 
             // See if we have to add the implicit parameter layer
             String inputLayerParameter = getInputLayerParameter(paramInfo);
@@ -437,11 +415,11 @@ abstract class Value {
             for (Map.Entry<String, Value> p : parameters.entrySet()) {
                 String key = p.getKey();
                 Value v = p.getValue();
-                org.opengis.filter.expression.Expression ex = toParamFunction(key, v);
+                org.geotools.api.filter.expression.Expression ex = toParamFunction(key, v);
                 arguments.add(ex);
             }
 
-            org.opengis.filter.expression.Expression[] argsArray = toExpressionArray(arguments);
+            org.geotools.api.filter.expression.Expression[] argsArray = toExpressionArray(arguments);
             return FF.function(name, argsArray);
         }
 
@@ -460,33 +438,29 @@ abstract class Value {
             return null;
         }
 
-        private org.opengis.filter.expression.Expression toParamFunction(String key, Value v) {
-            List<org.opengis.filter.expression.Expression> paramArgs = new ArrayList<>();
+        private org.geotools.api.filter.expression.Expression toParamFunction(String key, Value v) {
+            List<org.geotools.api.filter.expression.Expression> paramArgs = new ArrayList<>();
             // the param name
             paramArgs.add(FF.literal(key));
             if (v instanceof MultiValue) {
                 MultiValue mv = (MultiValue) v;
                 for (Value cv : mv.values) {
-                    final org.opengis.filter.expression.Expression ex = cv.toExpression();
+                    final org.geotools.api.filter.expression.Expression ex = cv.toExpression();
                     paramArgs.add(ex);
                 }
             } else if (v != null) {
-                final org.opengis.filter.expression.Expression ex = v.toExpression();
+                final org.geotools.api.filter.expression.Expression ex = v.toExpression();
                 paramArgs.add(ex);
             }
-            org.opengis.filter.expression.Expression[] paramArgsArray =
-                    toExpressionArray(paramArgs);
-            org.opengis.filter.expression.Function function =
-                    FF.function("parameter", paramArgsArray);
+            org.geotools.api.filter.expression.Expression[] paramArgsArray = toExpressionArray(paramArgs);
+            org.geotools.api.filter.expression.Function function = FF.function("parameter", paramArgsArray);
             return function;
         }
 
-        private org.opengis.filter.expression.Expression[] toExpressionArray(
-                List<org.opengis.filter.expression.Expression> arguments) {
-            org.opengis.filter.expression.Expression[] argsArray =
-                    (org.opengis.filter.expression.Expression[])
-                            arguments.toArray(
-                                    new org.opengis.filter.expression.Expression[arguments.size()]);
+        private org.geotools.api.filter.expression.Expression[] toExpressionArray(
+                List<org.geotools.api.filter.expression.Expression> arguments) {
+            org.geotools.api.filter.expression.Expression[] argsArray =
+                    arguments.toArray(new org.geotools.api.filter.expression.Expression[arguments.size()]);
             return argsArray;
         }
 
@@ -503,33 +477,24 @@ abstract class Value {
         public static Map<String, Parameter<?>> loadProcessInfo(Name name) {
             Class<?> processorsClass = null;
             try {
-                processorsClass =
-                        Class.forName(
-                                "org.geotools.process.Processors",
-                                false,
-                                Value.class.getClassLoader());
+                processorsClass = Class.forName("org.geotools.process.Processors", false, Value.class.getClassLoader());
                 Method getParameterInfo = processorsClass.getMethod("getParameterInfo", Name.class);
                 return (Map<String, Parameter<?>>) getParameterInfo.invoke(null, name);
             } catch (Exception e) {
                 throw new RuntimeException("Error looking up process info", e);
             }
         }
-
-        private boolean isRenderingTransformation(FunctionName fn) {
-            // TODO Auto-generated method stub
-            return false;
-        }
     }
 
     /**
-     * An expression, backed by an OGC {@link org.opengis.filter.expression.Expression}
+     * An expression, backed by an OGC {@link org.geotools.api.filter.expression.Expression}
      *
      * @author Andrea Aime - GeoSolutions
      */
     static class Expression extends Value {
-        public org.opengis.filter.expression.Expression expression;
+        public org.geotools.api.filter.expression.Expression expression;
 
-        public Expression(org.opengis.filter.expression.Expression expression) {
+        public Expression(org.geotools.api.filter.expression.Expression expression) {
             super();
             this.expression = expression;
         }
@@ -559,13 +524,14 @@ abstract class Value {
             return "Expression [expression=" + expression + "]";
         }
 
-        public org.opengis.filter.expression.Expression toExpression() {
+        @Override
+        public org.geotools.api.filter.expression.Expression toExpression() {
             return expression;
         }
 
+        @Override
         public String toLiteral() {
-            throw new UnsupportedOperationException(
-                    "Cannot turn this value into a literal: " + this);
+            throw new UnsupportedOperationException("Cannot turn this value into a literal: " + this);
         }
     }
 
@@ -624,7 +590,7 @@ abstract class Value {
         private None() {}
 
         @Override
-        public org.opengis.filter.expression.Expression toExpression() {
+        public org.geotools.api.filter.expression.Expression toExpression() {
             return null;
         }
 

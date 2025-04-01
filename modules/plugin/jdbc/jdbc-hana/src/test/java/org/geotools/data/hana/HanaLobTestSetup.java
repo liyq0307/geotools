@@ -32,7 +32,7 @@ public class HanaLobTestSetup extends JDBCLobTestSetup {
     @Override
     protected void createLobTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.createTestSchema();
 
             String[][] cols = {
@@ -43,19 +43,14 @@ public class HanaLobTestSetup extends JDBCLobTestSetup {
             };
             htu.createRegisteredTestTable(TABLE, cols);
 
-            htu.insertIntoTestTable(
-                    TABLE,
-                    1,
-                    new byte[] {1, 2, 3, 4, 5},
-                    "small clob",
-                    new byte[] {6, 7, 8, 9, 10});
+            htu.insertIntoTestTable(TABLE, 1, new byte[] {1, 2, 3, 4, 5}, "small clob", new byte[] {6, 7, 8, 9, 10});
         }
     }
 
     @Override
     protected void dropLobTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.dropTestTableCascade(TABLE);
         }
     }

@@ -40,19 +40,19 @@ public class RestrictionHandler extends XSIElementHandler {
     private String id;
     private String base;
     private Object child;
-    private List constraints;
-    private List attrDecs;
+    private List<FacetHandler> constraints;
+    private List<XSIElementHandler> attrDecs;
     private AnyAttributeHandler anyAttribute;
 
     /** @see java.lang.Object#hashCode() */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return LOCALNAME.hashCode()
-                * ((id == null) ? 1 : id.hashCode())
-                * ((base == null) ? 1 : base.hashCode());
+        return LOCALNAME.hashCode() * ((id == null) ? 1 : id.hashCode()) * ((base == null) ? 1 : base.hashCode());
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
+    @Override
     public XSIElementHandler getHandler(String namespaceURI, String localName) throws SAXException {
         if (SchemaHandler.namespaceURI.equalsIgnoreCase(namespaceURI)) {
             // child types
@@ -65,10 +65,7 @@ public class RestrictionHandler extends XSIElementHandler {
                     child = sch;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + SimpleTypeHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + SimpleTypeHandler.LOCALNAME + "' declaration.");
                 }
 
                 return sch;
@@ -77,7 +74,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // enumeration
             if (EnumerationHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 EnumerationHandler eh = new EnumerationHandler();
@@ -89,7 +86,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // fractionDigits
             if (FractionDigitsHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 FractionDigitsHandler eh = new FractionDigitsHandler();
@@ -101,7 +98,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // length
             if (LengthHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 LengthHandler eh = new LengthHandler();
@@ -113,7 +110,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // minInclusive
             if (MinInclusiveHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 MinInclusiveHandler eh = new MinInclusiveHandler();
@@ -125,7 +122,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // maxInclusive
             if (MaxInclusiveHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 MaxInclusiveHandler eh = new MaxInclusiveHandler();
@@ -137,7 +134,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // minExclusive
             if (MinExclusiveHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 MinExclusiveHandler eh = new MinExclusiveHandler();
@@ -149,7 +146,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // maxExclusive
             if (MaxExclusiveHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 MaxExclusiveHandler eh = new MaxExclusiveHandler();
@@ -161,7 +158,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // maxLength
             if (MaxLengthHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 MaxLengthHandler eh = new MaxLengthHandler();
@@ -173,7 +170,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // minLength
             if (MinLengthHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 MinLengthHandler eh = new MinLengthHandler();
@@ -185,7 +182,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // pattern
             if (PatternHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 PatternHandler eh = new PatternHandler();
@@ -197,7 +194,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // totalDigits
             if (TotalDigitsHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (constraints == null) {
-                    constraints = new LinkedList();
+                    constraints = new LinkedList<>();
                 }
 
                 TotalDigitsHandler eh = new TotalDigitsHandler();
@@ -214,10 +211,7 @@ public class RestrictionHandler extends XSIElementHandler {
                     child = sch;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + AllHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + AllHandler.LOCALNAME + "' declaration.");
                 }
 
                 return sch;
@@ -231,10 +225,7 @@ public class RestrictionHandler extends XSIElementHandler {
                     child = sch;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + ChoiceHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + ChoiceHandler.LOCALNAME + "' declaration.");
                 }
 
                 return sch;
@@ -248,10 +239,7 @@ public class RestrictionHandler extends XSIElementHandler {
                     child = sch;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + GroupHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + GroupHandler.LOCALNAME + "' declaration.");
                 }
 
                 return sch;
@@ -265,10 +253,7 @@ public class RestrictionHandler extends XSIElementHandler {
                     child = sch;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + SequenceHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + SequenceHandler.LOCALNAME + "' declaration.");
                 }
 
                 return sch;
@@ -277,7 +262,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // attribute
             if (AttributeHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (attrDecs == null) {
-                    attrDecs = new LinkedList();
+                    attrDecs = new LinkedList<>();
                 }
 
                 AttributeHandler ah = new AttributeHandler();
@@ -289,7 +274,7 @@ public class RestrictionHandler extends XSIElementHandler {
             // attributeGroup
             if (AttributeGroupHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (attrDecs == null) {
-                    attrDecs = new LinkedList();
+                    attrDecs = new LinkedList<>();
                 }
 
                 AttributeGroupHandler ah = new AttributeGroupHandler();
@@ -306,10 +291,7 @@ public class RestrictionHandler extends XSIElementHandler {
                     anyAttribute = sch;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + AnyAttributeHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + AnyAttributeHandler.LOCALNAME + "' declaration.");
                 }
 
                 return sch;
@@ -320,9 +302,9 @@ public class RestrictionHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
+    @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
         id = atts.getValue("", "id");
 
@@ -338,6 +320,7 @@ public class RestrictionHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -377,11 +360,13 @@ public class RestrictionHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandlerType() */
+    @Override
     public int getHandlerType() {
         return RESTRICTION;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String) */
+    @Override
     public void endElement(String namespaceURI, String localName) {
         // do nothing
     }
@@ -398,11 +383,13 @@ class EnumerationHandler extends FacetHandler {
     public static final String LOCALNAME = "enumeration";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.ENUMERATION;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -419,11 +406,13 @@ class FractionDigitsHandler extends FacetHandler {
     public static final String LOCALNAME = "fractionDigits";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.FRACTIONDIGITS;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -440,11 +429,13 @@ class LengthHandler extends FacetHandler {
     public static final String LOCALNAME = "length";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.LENGTH;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -461,11 +452,13 @@ class MinInclusiveHandler extends FacetHandler {
     public static final String LOCALNAME = "minInclusive";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.MININCLUSIVE;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -482,11 +475,13 @@ class MaxInclusiveHandler extends FacetHandler {
     public static final String LOCALNAME = "maxInclusive";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.MAXINCLUSIVE;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -503,11 +498,13 @@ class MinExclusiveHandler extends FacetHandler {
     public static final String LOCALNAME = "minExclusive";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.MINEXCLUSIVE;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -524,11 +521,13 @@ class MaxExclusiveHandler extends FacetHandler {
     public static final String LOCALNAME = "maxExclusive";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.MAXEXCLUSIVE;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -545,11 +544,13 @@ class MinLengthHandler extends FacetHandler {
     public static final String LOCALNAME = "minLength";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.MINLENGTH;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -566,11 +567,13 @@ class MaxLengthHandler extends FacetHandler {
     public static final String LOCALNAME = "maxLength";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.MAXLENGTH;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -587,11 +590,13 @@ class PatternHandler extends FacetHandler {
     public static final String LOCALNAME = "pattern";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.PATTERN;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -608,11 +613,13 @@ class TotalDigitsHandler extends FacetHandler {
     public static final String LOCALNAME = "totalDigits";
 
     /** @see org.geotools.xml.XSIHandlers.FacetHandler#getBinding() */
+    @Override
     public int getType() {
         return Facet.TOTALDIGITS;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }

@@ -24,31 +24,31 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.coverage.grid.io.footprint.MultiLevelROI;
 import org.geotools.coverage.grid.io.footprint.MultiLevelROIProvider;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.visitor.FeatureCalc;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.geometry.BoundingBox;
 
 /**
- * Applies read/write locks around all operations to protect the underlying store, which might not
- * be able to handle this scenario correctly
+ * Applies read/write locks around all operations to protect the underlying store, which might not be able to handle
+ * this scenario correctly
  */
-class LockingGranuleCatalog extends GranuleCatalog {
+public class LockingGranuleCatalog extends GranuleCatalog {
 
     GranuleCatalog delegate;
     ReadWriteLock rwLock = new ReentrantReadWriteLock(true);
 
     /** */
     public LockingGranuleCatalog(GranuleCatalog delegate, Hints hints) {
-        super(hints);
+        super(hints, delegate.getConfigurations());
         this.delegate = delegate;
     }
 
@@ -97,14 +97,12 @@ class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
-    public void addGranule(String typeName, SimpleFeature granule, Transaction transaction)
-            throws IOException {
+    public void addGranule(String typeName, SimpleFeature granule, Transaction transaction) throws IOException {
         guardIO(() -> delegate.addGranule(typeName, granule, transaction), rwLock.writeLock());
     }
 
     @Override
-    public void addGranules(
-            String typeName, Collection<SimpleFeature> granules, Transaction transaction)
+    public void addGranules(String typeName, Collection<SimpleFeature> granules, Transaction transaction)
             throws IOException {
         guardIO(() -> delegate.addGranules(typeName, granules, transaction), rwLock.writeLock());
     }
@@ -115,8 +113,7 @@ class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
-    public void createType(String namespace, String typeName, String typeSpec)
-            throws IOException, SchemaException {
+    public void createType(String namespace, String typeName, String typeSpec) throws IOException, SchemaException {
         Lock lock = rwLock.writeLock();
         try {
             lock.lock();
@@ -132,8 +129,7 @@ class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
-    public void createType(String identification, String typeSpec)
-            throws SchemaException, IOException {
+    public void createType(String identification, String typeSpec) throws SchemaException, IOException {
         Lock lock = rwLock.writeLock();
         try {
             lock.lock();
@@ -166,8 +162,24 @@ class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
+    public BoundingBox getBounds(final String typeName, Transaction t) {
+        Lock lock = rwLock.readLock();
+        try {
+            lock.lock();
+            return delegate.getBounds(typeName, t);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
     public SimpleFeatureCollection getGranules(Query q) throws IOException {
         return guardIO(() -> delegate.getGranules(q), rwLock.readLock());
+    }
+
+    @Override
+    public SimpleFeatureCollection getGranules(Query q, Transaction t) throws IOException {
+        return guardIO(() -> delegate.getGranules(q, t), rwLock.readLock());
     }
 
     @Override
@@ -196,8 +208,14 @@ class LockingGranuleCatalog extends GranuleCatalog {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public int removeGranules(Query query) {
         return guard(() -> delegate.removeGranules(query), rwLock.writeLock());
+    }
+
+    @Override
+    public int removeGranules(Query query, Transaction transaction) {
+        return guard(() -> delegate.removeGranules(query, transaction), rwLock.writeLock());
     }
 
     @Override
@@ -234,5 +252,14 @@ class LockingGranuleCatalog extends GranuleCatalog {
     @Override
     public void drop() throws IOException {
         guardIO(() -> delegate.drop(), rwLock.writeLock());
+    }
+
+    @Override
+    protected String getParentLocation() {
+        return delegate.getParentLocation();
+    }
+
+    public GranuleCatalog getAdaptee() {
+        return delegate;
     }
 }

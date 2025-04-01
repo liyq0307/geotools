@@ -7,18 +7,14 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-  <project xmlns="http://maven.apache.org/POM/4.0.0" 
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-           xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                               http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>library</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
-  
 
   <!-- =========================================================== -->
   <!--     Module Description                                      -->
@@ -28,15 +24,9 @@
   <packaging>jar</packaging>
   <name>JDBC DataStore Support</name>
 
-  <description>
-    Abstract datastore implementation and helper classes / apis to be extended
-    by datastores backed by releational databases accesible via jdbc.
-  </description>
-  
-  <properties>
-    <moduleIdentifier>org.geotools.jdbc</moduleIdentifier>
-  </properties>
-  
+  <description>Abstract datastore implementation and helper classes / apis to be extended
+    by datastores backed by releational databases accesible via jdbc.</description>
+
   <licenses>
     <license>
       <name>Lesser General Public License (LGPL)</name>
@@ -45,14 +35,13 @@
     </license>
   </licenses>
 
-
   <!-- =========================================================== -->
   <!--     Developers and Contributors                             -->
   <!-- =========================================================== -->
   <developers>
     <developer>
-      <name>Andrea Aime</name>
       <id>aaime</id>
+      <name>Andrea Aime</name>
       <email>aaime@users.sourceforge.net</email>
       <roles>
         <role>Java Developer</role>
@@ -69,6 +58,9 @@
     </developer>
   </developers>
 
+  <properties>
+    <moduleIdentifier>org.geotools.jdbc</moduleIdentifier>
+  </properties>
 
   <!-- =========================================================== -->
   <!--     Dependency Management                                   -->
@@ -79,13 +71,9 @@
       <artifactId>gt-main</artifactId>
       <version>${project.version}</version>
     </dependency>
-     <dependency>
+    <dependency>
       <groupId>commons-dbcp</groupId>
       <artifactId>commons-dbcp</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
@@ -93,31 +81,9 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>    
+    <dependency>
       <groupId>com.mockrunner</groupId>
       <artifactId>mockrunner-jdbc</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymock</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymockclassextension</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>oro</groupId>
-      <artifactId>oro</artifactId>
-      <!-- The version number is specified in the parent POM. -->
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <!-- The version number is specified in the parent POM. -->
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -138,10 +104,10 @@
         <artifactId>maven-jar-plugin</artifactId>
         <executions>
           <execution>
-            <phase>package</phase>
             <goals>
               <goal>test-jar</goal>
             </goals>
+            <phase>package</phase>
           </execution>
         </executions>
       </plugin>

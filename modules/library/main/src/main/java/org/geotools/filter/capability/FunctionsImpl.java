@@ -21,8 +21,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.capability.Functions;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.capability.Functions;
 
 /**
  * Implementation of the Functions interface.
@@ -34,23 +34,23 @@ public class FunctionsImpl implements Functions {
     Set<FunctionName> functionNames;
 
     public FunctionsImpl() {
-        this(new ArrayList<FunctionName>());
+        this(new ArrayList<>());
     }
 
     public FunctionsImpl(Collection<FunctionName> functionNames) {
-        this.functionNames = new HashSet<FunctionName>(functionNames);
+        this.functionNames = new HashSet<>(functionNames);
     }
 
-    public FunctionsImpl(FunctionName[] functionNames) {
+    public FunctionsImpl(FunctionName... functionNames) {
         if (functionNames == null) {
             functionNames = new FunctionName[] {};
         }
 
-        this.functionNames = new HashSet<FunctionName>(Arrays.asList(functionNames));
+        this.functionNames = new HashSet<>(Arrays.asList(functionNames));
     }
 
     public FunctionsImpl(Functions copy) {
-        this.functionNames = new HashSet<FunctionName>();
+        this.functionNames = new HashSet<>();
         if (copy.getFunctionNames() != null) {
             for (FunctionName functionName : copy.getFunctionNames()) {
                 this.functionNames.add(new FunctionNameImpl(functionName));
@@ -58,14 +58,16 @@ public class FunctionsImpl implements Functions {
         }
     }
 
+    @Override
     public Collection<FunctionName> getFunctionNames() {
         return functionNames;
     }
 
     public void setFunctionNames(Collection<FunctionName> functionNames) {
-        this.functionNames = new HashSet<FunctionName>(functionNames);
+        this.functionNames = new HashSet<>(functionNames);
     }
 
+    @Override
     public FunctionName getFunctionName(String name) {
         if (name == null || functionNames == null) {
             return null;

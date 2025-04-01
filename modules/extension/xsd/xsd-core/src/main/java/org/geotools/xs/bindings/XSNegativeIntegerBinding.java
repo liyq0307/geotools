@@ -44,6 +44,7 @@ import org.geotools.xsd.SimpleBinding;
  */
 public class XSNegativeIntegerBinding implements SimpleBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.NEGATIVEINTEGER;
     }
@@ -55,6 +56,7 @@ public class XSNegativeIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -67,6 +69,7 @@ public class XSNegativeIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Number.class;
     }
@@ -79,12 +82,12 @@ public class XSNegativeIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         Number number = (Number) value;
 
         if (number.longValue() == 0) {
-            throw new IllegalArgumentException(
-                    "negativeInteger value '" + number + "' required to be negative");
+            throw new IllegalArgumentException("negativeInteger value '" + number + "' required to be negative");
         }
 
         return number;
@@ -97,6 +100,7 @@ public class XSNegativeIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public String encode(Object object, String value) {
         // TODO: implement
         return null;

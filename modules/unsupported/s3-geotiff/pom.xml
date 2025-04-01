@@ -15,36 +15,43 @@
   ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   ~ Lesser General Public License for more details.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <parent>
-    <artifactId>unsupported</artifactId>
-    <groupId>org.geotools</groupId>
-    <version>23-SNAPSHOT</version>
-  </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
- <developers>
-   <developer>
-     <name>Trucker</name>
-   </developer>
-   <developer>
-     <name>Niels Charlier</name>
-   </developer>
-   <developer>
-     <name>Timothy De Bock</name>
-     <email>timothy.debock.github@gmail.com</email>
-   </developer>
- </developers>
+  <parent>
+    <groupId>org.geotools</groupId>
+    <artifactId>unsupported</artifactId>
+    <version>33-SNAPSHOT</version>
+  </parent>
 
   <artifactId>gt-s3-geotiff</artifactId>
+
+  <name>S3 GeoTIFF plugin</name>
+
+  <description>Support for GeoTiffs hosted on Amazon S3 or on other Amazon S3 compatible services, via a custom GeoTools GridFormat.</description>
+
+  <developers>
+    <developer>
+      <name>Trucker</name>
+    </developer>
+    <developer>
+      <name>Niels Charlier</name>
+    </developer>
+    <developer>
+      <name>Timothy De Bock</name>
+      <email>timothy.debock.github@gmail.com</email>
+    </developer>
+  </developers>
+
+  <properties>
+    <!-- Allow old version of EHCache to work, I presume? This module is on the chopping block anyways -->
+    <test.otherJVMParams>--add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.ref=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.locks=ALL-UNNAMED</test.otherJVMParams>
+  </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-s3</artifactId>
-      <version>1.11.36</version>
+      <version>1.12.261</version>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
@@ -69,11 +76,11 @@
       <artifactId>ehcache</artifactId>
       <version>2.10.3</version>
     </dependency>
-	<dependency>
-		<groupId>org.mockito</groupId>
-		<artifactId>mockito-core</artifactId>
-		<scope>test</scope>
-		<type>jar</type>
-	</dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

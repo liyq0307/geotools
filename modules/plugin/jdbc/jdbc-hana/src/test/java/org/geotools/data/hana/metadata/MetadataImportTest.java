@@ -20,15 +20,24 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.data.hana.HanaTestSetup;
+import java.util.Properties;
+import org.geotools.data.hana.HanaTestSetupDefault;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.jdbc.JDBCTestSupport;
+import org.junit.Test;
 
 /** @author Stefan Uhrig, SAP SE */
 public class MetadataImportTest extends JDBCTestSupport {
 
+    @SuppressWarnings("PMD.CloseResource") // no actual need to close the PrintStream
+    @Test
     public void testMetadataImport() throws Exception {
-        List<String> args = new ArrayList<String>();
+        // This test pollutes the test database by creating non-schema specific metadata. Skip if
+        // polluting tests are disabled.
+        if ("off".equals(getFixture().getProperty("pollution", "on"))) return;
+
+        List<String> args = new ArrayList<>();
+        Properties fixture = getFixture();
         args.add(fixture.getProperty("user"));
         args.add(fixture.getProperty("host"));
         args.add(fixture.getProperty("instance"));
@@ -37,12 +46,7 @@ public class MetadataImportTest extends JDBCTestSupport {
             args.add(database);
         }
         MetadataImport.IPasswordReader passwordReader =
-                new MetadataImport.IPasswordReader() {
-                    @Override
-                    public char[] readPassword() {
-                        return fixture.getProperty("password").toCharArray();
-                    }
-                };
+                () -> fixture.getProperty("password").toCharArray();
 
         PrintStream out = System.out;
         System.setOut(new PrintStream(new ByteArrayOutputStream()));
@@ -55,6 +59,6 @@ public class MetadataImportTest extends JDBCTestSupport {
 
     @Override
     protected JDBCTestSetup createTestSetup() {
-        return new HanaTestSetup();
+        return new HanaTestSetupDefault();
     }
 }

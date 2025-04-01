@@ -17,61 +17,74 @@
 
 package org.geotools.data.gen;
 
-import org.geotools.data.Repository;
+import org.geotools.api.data.Repository;
+import org.junit.Test;
 
-public class ShapeFilePreGeneralizedFeatureSourceTest
-        extends AbstractPreGeneralizedFeatureSourceTest {
+public class ShapeFilePreGeneralizedFeatureSourceTest extends AbstractPreGeneralizedFeatureSourceTest {
 
     static final String ConfigName = "src/test/resources/geninfo_shapefile.xml";
 
+    @Override
     protected Repository getRepository() {
         return new DSFinderRepository();
     }
 
+    @Test
     public void testPropertySelection() {
         testPropertySelection(ConfigName);
     }
 
+    @Test
     public void testGetCount() {
         testGetCount(ConfigName);
     }
 
+    @Test
     public void testGetBounds() {
         testGetBounds(ConfigName);
     }
 
+    @Test
     public void testFeatureReader() {
         testFeatureReader(ConfigName);
     }
 
+    @Test
     public void testFeatureReaderWithoutGeom() {
         testFeatureReaderWithoutGeom(ConfigName);
     }
 
+    @Test
     public void testGetFeatures() {
         testGetFeatures(ConfigName);
     }
 
+    @Test
     public void testGetFeatures2() {
         testGetFeatures2(ConfigName);
     }
 
+    @Test
     public void testGetFeatures3() {
         testGetFeatures3(ConfigName);
     }
 
+    @Test
     public void testGetDataStore() {
         testGetDataStore(ConfigName);
     }
 
+    @Test
     public void testGetNameAndInfo() {
         testNameAndInfo(ConfigName);
     }
 
+    @Test
     public void testQueryCapabilities() {
         testQueryCapabilities(ConfigName, true);
     }
 
+    @Test
     public void testGetSchema() {
         testGetSchema(ConfigName);
     }

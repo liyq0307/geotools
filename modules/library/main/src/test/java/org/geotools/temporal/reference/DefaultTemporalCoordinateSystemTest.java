@@ -16,10 +16,14 @@
  */
 package org.geotools.temporal.reference;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.util.Calendar;
 import java.util.Date;
+import org.geotools.api.temporal.TemporalCoordinate;
+import org.geotools.api.temporal.TemporalCoordinateSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.object.DefaultTemporalCoordinate;
@@ -27,9 +31,6 @@ import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.TemporalCoordinate;
-import org.opengis.temporal.TemporalCoordinateSystem;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultTemporalCoordinateSystemTest {
@@ -46,14 +47,11 @@ public class DefaultTemporalCoordinateSystemTest {
         Calendar cal = Calendar.getInstance();
         cal.set(2000, 1, 1);
         temporalCoordinateSystem1 =
-                new DefaultTemporalCoordinateSystem(
-                        name1, null, cal.getTime(), new SimpleInternationalString("day"));
-        temporalCoordinate1 =
-                new DefaultTemporalCoordinate(temporalCoordinateSystem1, null, 50785.48);
+                new DefaultTemporalCoordinateSystem(name1, null, cal.getTime(), new SimpleInternationalString("day"));
+        temporalCoordinate1 = new DefaultTemporalCoordinate(temporalCoordinateSystem1, null, 50785.48);
         cal.set(1981, 6, 25);
         temporalCoordinateSystem2 =
-                new DefaultTemporalCoordinateSystem(
-                        name2, null, cal.getTime(), new SimpleInternationalString("month"));
+                new DefaultTemporalCoordinateSystem(name2, null, cal.getTime(), new SimpleInternationalString("month"));
         temporalCoordinate2 = new DefaultTemporalCoordinate(temporalCoordinateSystem2, null, 285);
     }
 
@@ -70,7 +68,7 @@ public class DefaultTemporalCoordinateSystemTest {
     public void testSetOrigin() {
         Date result = temporalCoordinateSystem1.getOrigin();
         ((DefaultTemporalCoordinateSystem) temporalCoordinateSystem1).setOrigin(new Date());
-        assertFalse(temporalCoordinateSystem1.getOrigin().equals(result));
+        assertNotEquals(temporalCoordinateSystem1.getOrigin(), result);
     }
 
     /** Test of setInterval method, of class DefaultTemporalCoordinateSystem. */
@@ -79,21 +77,21 @@ public class DefaultTemporalCoordinateSystemTest {
         InternationalString result = temporalCoordinateSystem1.getInterval();
         ((DefaultTemporalCoordinateSystem) temporalCoordinateSystem1)
                 .setInterval(new SimpleInternationalString("hour"));
-        assertFalse(temporalCoordinateSystem1.getInterval().equals(result));
+        assertNotEquals(temporalCoordinateSystem1.getInterval(), result);
     }
 
     /** Test of getOrigin method, of class DefaultTemporalCoordinateSystem. */
     @Test
     public void testGetOrigin() {
         Date result = temporalCoordinateSystem1.getOrigin();
-        assertFalse(temporalCoordinateSystem2.getOrigin().equals(result));
+        assertNotEquals(temporalCoordinateSystem2.getOrigin(), result);
     }
 
     /** Test of getInterval method, of class DefaultTemporalCoordinateSystem. */
     @Test
     public void testGetInterval() {
         InternationalString result = temporalCoordinateSystem1.getInterval();
-        assertFalse(temporalCoordinateSystem2.getInterval().equals(result));
+        assertNotEquals(temporalCoordinateSystem2.getInterval(), result);
     }
 
     /** Test of transformCoord method, of class DefaultTemporalCoordinateSystem. */
@@ -101,35 +99,35 @@ public class DefaultTemporalCoordinateSystemTest {
     public void testTransformCoord() {
 
         Date result = temporalCoordinateSystem1.transformCoord(temporalCoordinate1);
-        assertFalse(temporalCoordinateSystem2.transformCoord(temporalCoordinate2).equals(result));
+        assertNotEquals(temporalCoordinateSystem2.transformCoord(temporalCoordinate2), result);
     }
 
     /** Test of transformDateTime method, of class DefaultTemporalCoordinateSystem. */
     @Test
     public void testTransformDateTime() {
         TemporalCoordinate result = temporalCoordinateSystem1.transformDateTime(new Date());
-        assertFalse(temporalCoordinateSystem2.transformDateTime(new Date()).equals(result));
+        assertNotEquals(temporalCoordinateSystem2.transformDateTime(new Date()), result);
     }
 
     /** Test of equals method, of class DefaultTemporalCoordinateSystem. */
     @Test
     public void testEquals() {
-        assertFalse(temporalCoordinateSystem1.equals(null));
+        assertNotEquals(null, temporalCoordinateSystem1);
         assertEquals(temporalCoordinateSystem1, temporalCoordinateSystem1);
-        assertFalse(temporalCoordinateSystem1.equals(temporalCoordinateSystem2));
+        assertNotEquals(temporalCoordinateSystem1, temporalCoordinateSystem2);
     }
 
     /** Test of hashCode method, of class DefaultTemporalCoordinateSystem. */
     @Test
     public void testHashCode() {
         int result = temporalCoordinateSystem1.hashCode();
-        assertFalse(temporalCoordinateSystem2.hashCode() == result);
+        assertNotEquals(temporalCoordinateSystem2.hashCode(), result);
     }
 
     /** Test of toString method, of class DefaultTemporalCoordinateSystem. */
     @Test
     public void testToString() {
         String result = temporalCoordinateSystem1.toString();
-        assertFalse(temporalCoordinateSystem2.toString().equals(result));
+        assertNotEquals(temporalCoordinateSystem2.toString(), result);
     }
 }

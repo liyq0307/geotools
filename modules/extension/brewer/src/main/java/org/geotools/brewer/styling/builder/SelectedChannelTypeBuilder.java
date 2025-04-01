@@ -16,15 +16,14 @@
  */
 package org.geotools.brewer.styling.builder;
 
-import org.geotools.styling.SelectedChannelType;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.SelectedChannelType;
 
 public class SelectedChannelTypeBuilder extends AbstractStyleBuilder<SelectedChannelType> {
 
     private Expression channelName;
 
-    private ContrastEnhancementBuilder contrastEnhancement =
-            new ContrastEnhancementBuilder(this).unset();
+    private ContrastEnhancementBuilder contrastEnhancement = new ContrastEnhancementBuilder(this).unset();
 
     public SelectedChannelTypeBuilder() {
         this(null);
@@ -52,15 +51,16 @@ public class SelectedChannelTypeBuilder extends AbstractStyleBuilder<SelectedCha
         return contrastEnhancement;
     }
 
+    @Override
     public SelectedChannelType build() {
         if (unset) {
             return null;
         }
-        SelectedChannelType selectedChannelType =
-                sf.selectedChannelType(channelName, contrastEnhancement.build());
+        SelectedChannelType selectedChannelType = sf.selectedChannelType(channelName, contrastEnhancement.build());
         return selectedChannelType;
     }
 
+    @Override
     public SelectedChannelTypeBuilder reset() {
         contrastEnhancement.reset();
         channelName = null;
@@ -68,6 +68,7 @@ public class SelectedChannelTypeBuilder extends AbstractStyleBuilder<SelectedCha
         return this;
     }
 
+    @Override
     public SelectedChannelTypeBuilder reset(SelectedChannelType selectedChannelType) {
         if (selectedChannelType == null) {
             return reset();
@@ -78,6 +79,7 @@ public class SelectedChannelTypeBuilder extends AbstractStyleBuilder<SelectedCha
         return this;
     }
 
+    @Override
     public SelectedChannelTypeBuilder unset() {
         return (SelectedChannelTypeBuilder) super.unset();
     }

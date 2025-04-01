@@ -16,21 +16,40 @@
  */
 package org.geotools.data.collection;
 
+import java.awt.RenderingHints;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureListener;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureListener;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.EmptyFeatureCollection;
 import org.geotools.data.store.ReTypingFeatureCollection;
 import org.geotools.data.store.ReprojectingFeatureCollection;
@@ -39,107 +58,92 @@ import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 
 /**
  * A FeatureSource using a spatial index to hold on to features and serve them up for fast display.
  *
- * <p>This is a port of Andrea's CachingFeatureSource (which is slightly more compliced and rebuilds
- * the cache as an origional feature source changes). Our implementation here knows up front that
- * the features are in memory and does its best to take advantage of the fact. A caching feature
- * source for fast data access.
+ * <p>This is a port of Andrea's CachingFeatureSource (which is slightly more compliced and rebuilds the cache as an
+ * origional feature source changes). Our implementation here knows up front that the features are in memory and does
+ * its best to take advantage of the fact. A caching feature source for fast data access.
  *
- * <p>Please note that this FeatureSource is strictly "read-only" and thus does not support feature
- * events.
+ * <p>Please note that this FeatureSource is strictly "read-only" and thus does not support feature events.
  */
 public class SpatialIndexFeatureSource implements SimpleFeatureSource {
     SpatialIndexFeatureCollection contents;
 
-    private static final Set<Class> supportedFilterTypes =
-            new HashSet<Class>(
-                    Arrays.asList(
-                            BBOX.class,
-                            Contains.class,
-                            Crosses.class,
-                            DWithin.class,
-                            Equals.class,
-                            Intersects.class,
-                            Overlaps.class,
-                            Touches.class,
-                            Within.class));
+    private static final Set<Class> supportedFilterTypes = new HashSet<>(Arrays.asList(
+            BBOX.class,
+            Contains.class,
+            Crosses.class,
+            DWithin.class,
+            Equals.class,
+            Intersects.class,
+            Overlaps.class,
+            Touches.class,
+            Within.class));
 
     public SpatialIndexFeatureSource(SpatialIndexFeatureCollection original) {
         this.contents = original;
     }
 
+    @Override
     public void addFeatureListener(FeatureListener listener) {}
 
+    @Override
     public void removeFeatureListener(FeatureListener listener) {}
 
+    @Override
     public DataStore getDataStore() {
         return null; // not applicable
     }
 
+    @Override
     public ReferencedEnvelope getBounds() throws IOException {
         return contents.getBounds();
     }
 
+    @Override
     public ReferencedEnvelope getBounds(Query query) throws IOException {
         return getFeatures(query).getBounds();
     }
 
+    @Override
     public int getCount(Query query) throws IOException {
         return getFeatures(query).size();
     }
 
+    @Override
     public SimpleFeatureType getSchema() {
         return contents.getSchema();
     }
 
+    @Override
     public SimpleFeatureCollection getFeatures() throws IOException {
         return contents;
     }
 
+    @Override
     public SimpleFeatureCollection getFeatures(Filter filter) throws IOException {
         Query query = new Query(getSchema().getName().getLocalPart(), filter);
         return getFeatures(query);
     }
 
+    @Override
     public SimpleFeatureCollection getFeatures(Query query) throws IOException {
         Envelope bounds = getEnvelope(query.getFilter());
         return getFeatureCollection(query, bounds);
     }
 
-    private SimpleFeatureCollection getFeatureCollection(Query query, Envelope bounds)
-            throws IOException {
+    private SimpleFeatureCollection getFeatureCollection(Query query, Envelope bounds) throws IOException {
         query = DataUtilities.resolvePropertyNames(query, getSchema());
         final int offset = query.getStartIndex() != null ? query.getStartIndex() : 0;
         if (offset > 0 && query.getSortBy() == null) {
             if (!getQueryCapabilities().supportsSorting(query.getSortBy())) {
-                throw new IllegalStateException(
-                        "Feature source does not support this sorting "
-                                + "so there is no way a stable paging (offset/limit) can be performed");
+                throw new IllegalStateException("Feature source does not support this sorting "
+                        + "so there is no way a stable paging (offset/limit) can be performed");
             }
             Query copy = new Query(query);
-            copy.setSortBy(new SortBy[] {SortBy.NATURAL_ORDER});
+            copy.setSortBy(SortBy.NATURAL_ORDER);
             query = copy;
         }
         SimpleFeatureCollection collection;
@@ -157,19 +161,17 @@ public class SpatialIndexFeatureSource implements SimpleFeatureSource {
         }
         // step two: reproject
         if (query.getCoordinateSystemReproject() != null) {
-            collection =
-                    new ReprojectingFeatureCollection(
-                            collection, query.getCoordinateSystemReproject());
+            collection = new ReprojectingFeatureCollection(collection, query.getCoordinateSystemReproject());
         }
         // step two sort! (note this makes a sorted copy)
         if (query.getSortBy() != null && query.getSortBy().length != 0) {
-            SimpleFeature array[] = collection.toArray(new SimpleFeature[collection.size()]);
+            SimpleFeature[] array = collection.toArray(new SimpleFeature[collection.size()]);
             // Arrays sort is stable (not resorting equal elements)
             for (SortBy sortBy : query.getSortBy()) {
                 Comparator<SimpleFeature> comparator = DataUtilities.sortComparator(sortBy);
                 Arrays.sort(array, comparator);
             }
-            ArrayList<SimpleFeature> list = new ArrayList<SimpleFeature>(Arrays.asList(array));
+            ArrayList<SimpleFeature> list = new ArrayList<>(Arrays.asList(array));
             collection = new ListFeatureCollection(getSchema(), list);
         }
 
@@ -187,8 +189,7 @@ public class SpatialIndexFeatureSource implements SimpleFeatureSource {
         if (query.getPropertyNames() != Query.ALL_NAMES) {
             // rebuild the type and wrap the reader
             SimpleFeatureType schema = collection.getSchema();
-            SimpleFeatureType target =
-                    SimpleFeatureTypeBuilder.retype(schema, query.getPropertyNames());
+            SimpleFeatureType target = SimpleFeatureTypeBuilder.retype(schema, query.getPropertyNames());
             if (!target.equals(schema)) {
                 collection = new ReTypingFeatureCollection(collection, target);
             }
@@ -200,8 +201,7 @@ public class SpatialIndexFeatureSource implements SimpleFeatureSource {
         Envelope result = new Envelope();
         if (filter instanceof And) {
             Envelope bounds = new Envelope();
-            for (Iterator iter = ((And) filter).getChildren().iterator(); iter.hasNext(); ) {
-                Filter f = (Filter) iter.next();
+            for (Filter f : ((And) filter).getChildren()) {
                 Envelope e = getEnvelope(f);
                 if (e == null) {
                     return null;
@@ -231,14 +231,17 @@ public class SpatialIndexFeatureSource implements SimpleFeatureSource {
         return result;
     }
 
+    @Override
     public ResourceInfo getInfo() {
         return null;
     }
 
+    @Override
     public Name getName() {
         return contents.getSchema().getName();
     }
 
+    @Override
     public QueryCapabilities getQueryCapabilities() {
         return new QueryCapabilities() {
             @Override
@@ -248,8 +251,8 @@ public class SpatialIndexFeatureSource implements SimpleFeatureSource {
         };
     }
 
-    public Set getSupportedHints() {
-        HashSet hints = new HashSet();
-        return hints;
+    @Override
+    public Set<RenderingHints.Key> getSupportedHints() {
+        return new HashSet<>();
     }
 }

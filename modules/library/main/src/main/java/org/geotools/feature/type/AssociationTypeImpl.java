@@ -17,12 +17,12 @@
 package org.geotools.feature.type;
 
 import java.util.List;
+import org.geotools.api.feature.type.AssociationType;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.Utilities;
-import org.opengis.feature.type.AssociationType;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
 
 public class AssociationTypeImpl extends PropertyTypeImpl implements AssociationType {
 
@@ -39,18 +39,22 @@ public class AssociationTypeImpl extends PropertyTypeImpl implements Association
         this.relatedType = referenceType;
     }
 
+    @Override
     public AttributeType getRelatedType() {
         return relatedType;
     }
 
+    @Override
     public AssociationType getSuper() {
         return (AssociationType) super.getSuper();
     }
 
+    @Override
     public int hashCode() {
         return super.hashCode() ^ relatedType.hashCode();
     }
 
+    @Override
     public boolean equals(Object other) {
         if (!(other instanceof AssociationTypeImpl)) {
             return false;
@@ -61,6 +65,7 @@ public class AssociationTypeImpl extends PropertyTypeImpl implements Association
         return super.equals(ass) && Utilities.equals(relatedType, ass.getRelatedType());
     }
 
+    @Override
     public String toString() {
         return new StringBuffer(super.toString())
                 .append("; relatedType=[")

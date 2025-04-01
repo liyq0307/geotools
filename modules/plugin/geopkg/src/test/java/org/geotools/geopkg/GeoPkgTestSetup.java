@@ -56,9 +56,11 @@ public class GeoPkgTestSetup extends JDBCTestSetup {
     protected void setUpData() throws Exception {
         super.setUpData();
 
+        runSafe("DELETE FROM gpkg_data_column_constraints");
         removeTable("ft1");
         removeTable("ft2");
         removeTable("ft3");
+        removeTable("ft_array");
 
         GeometryBuilder gb = new GeometryBuilder();
 
@@ -66,7 +68,7 @@ public class GeoPkgTestSetup extends JDBCTestSetup {
         String sql = "CREATE TABLE ft1 (id INTEGER PRIMARY KEY, geometry BLOB)";
         run(sql);
 
-        sql = "ALTER TABLE ft1 add intProperty INTEGER";
+        sql = "ALTER TABLE ft1 add intProperty MEDIUMINT";
         run(sql);
 
         sql = "ALTER TABLE ft1 add doubleProperty DOUBLE";
@@ -87,9 +89,8 @@ public class GeoPkgTestSetup extends JDBCTestSetup {
         sql = "INSERT INTO gpkg_geometry_columns VALUES ('ft1', 'geometry', 'POINT', 4326, 0, 0)";
         run(sql);
 
-        sql =
-                "INSERT INTO gpkg_contents (table_name, data_type, identifier, srs_id) VALUES "
-                        + "('ft1', 'features', 'ft1', 4326)";
+        sql = "INSERT INTO gpkg_contents (table_name, data_type, identifier, srs_id) VALUES "
+                + "('ft1', 'features', 'ft1', 4326)";
         run(sql);
     }
 
@@ -100,6 +101,7 @@ public class GeoPkgTestSetup extends JDBCTestSetup {
         runSafe("DROP VIEW  IF EXISTS " + tableName);
         runSafe("DELETE FROM gpkg_geometry_columns where table_name ='" + tableName + "'");
         runSafe("DELETE FROM gpkg_contents where table_name ='" + tableName + "'");
+        runSafe("DELETE FROM gpkg_data_columns where table_name ='" + tableName + "'");
         runSafe("DELETE FROM gpkg_extensions where table_name ='" + tableName + "'");
         runSafe("DELETE FROM gt_pk_metadata where table_name ='" + tableName + "'");
     }
@@ -110,9 +112,7 @@ public class GeoPkgTestSetup extends JDBCTestSetup {
     }
 
     public static String toHexString(byte[] bytes) {
-        final char[] hexArray = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
-        };
+        final char[] hexArray = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
         char[] hexChars = new char[bytes.length * 2];
         int v;
         for (int j = 0; j < bytes.length; j++) {
@@ -131,16 +131,14 @@ public class GeoPkgTestSetup extends JDBCTestSetup {
         return fixture;
     }
 
-    protected void createSpatialIndex(
-            String tableName, String geometryColumn, String primaryKeyColumn)
+    protected void createSpatialIndex(String tableName, String geometryColumn, String primaryKeyColumn)
             throws SQLException, IOException {
         Map<String, String> properties = new HashMap<>();
         properties.put("t", tableName);
         properties.put("c", geometryColumn);
         properties.put("i", primaryKeyColumn);
 
-        try (InputStream is =
-                        GeoPackage.class.getResourceAsStream(GeoPackage.SPATIAL_INDEX + ".sql");
+        try (InputStream is = GeoPackage.class.getResourceAsStream(GeoPackage.SPATIAL_INDEX + ".sql");
                 Connection cx = getConnection()) {
             SqlUtil.runScript(is, cx, properties);
         }

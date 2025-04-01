@@ -39,14 +39,16 @@ import org.geotools.util.factory.Hints;
  *   <li>{@link XMLGregorianCalendar} to {@link to {@link String}}
  * </ul>
  *
- * <p>The hint {@link ConverterFactory#SAFE_CONVERSION} is used to control which conversions will be
- * applied.
+ * <p>The hint {@link ConverterFactory#SAFE_CONVERSION} is used to control which conversions will be applied.
  *
  * @author Simone Giannecchini, GeoSolutions
  * @since 9.0
  */
 class TemporalConverterFactoryHack implements ConverterFactory {
 
+    private static final TimeZone GMT = TimeZone.getTimeZone("GMT");
+
+    @Override
     public Converter createConverter(Class source, Class target, Hints hints) {
 
         if (Date.class.isAssignableFrom(source)) {
@@ -57,9 +59,10 @@ class TemporalConverterFactoryHack implements ConverterFactory {
                 df.setTimeZone(TimeZone.getTimeZone("UTC")); // we DO work only with UTC times
 
                 return new Converter() {
-                    public Object convert(Object source, Class target) throws Exception {
+                    @Override
+                    public <T> T convert(Object source, Class<T> target) throws Exception {
                         if (source instanceof Date) {
-                            return df.format((Date) source);
+                            return target.cast(df.format((Date) source));
                         }
                         return null;
                     }
@@ -77,9 +80,10 @@ class TemporalConverterFactoryHack implements ConverterFactory {
                 df.setTimeZone(TimeZone.getTimeZone("UTC")); // we DO work only with UTC times
 
                 return new Converter() {
-                    public Object convert(Object source, Class target) throws Exception {
+                    @Override
+                    public <T> T convert(Object source, Class<T> target) throws Exception {
                         if (source instanceof Calendar) {
-                            return df.format(((Calendar) source).getTime());
+                            return target.cast(df.format(((Calendar) source).getTime()));
                         }
                         return null;
                     }
@@ -94,15 +98,13 @@ class TemporalConverterFactoryHack implements ConverterFactory {
                 df.setTimeZone(TimeZone.getTimeZone("UTC")); // we DO work only with UTC times
 
                 return new Converter() {
-                    public Object convert(Object source, Class target) throws Exception {
+                    @Override
+                    public <T> T convert(Object source, Class<T> target) throws Exception {
                         if (source instanceof XMLGregorianCalendar) {
-                            return df.format(
-                                    ((XMLGregorianCalendar) source)
-                                            .toGregorianCalendar(
-                                                    TimeZone.getTimeZone("GMT"),
-                                                    Locale.getDefault(),
-                                                    null)
-                                            .getTime());
+                            XMLGregorianCalendar xmlc = (XMLGregorianCalendar) source;
+                            Date date = xmlc.toGregorianCalendar(GMT, Locale.getDefault(), null)
+                                    .getTime();
+                            return target.cast(df.format(date));
                         }
                         return null;
                     }

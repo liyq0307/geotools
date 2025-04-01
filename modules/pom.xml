@@ -7,18 +7,14 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-  <project xmlns="http://maven.apache.org/POM/4.0.0" 
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-           xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                               http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>geotools</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
-  
 
   <!-- =========================================================== -->
   <!--     Module Description                                      -->
@@ -27,9 +23,7 @@
   <artifactId>modules</artifactId>
   <packaging>pom</packaging>
   <name>Geotools modules</name>
-  <description>
-    Geotools libraries.
-  </description>
+  <description>Geotools libraries.</description>
 
   <licenses>
     <license>
@@ -39,6 +33,16 @@
     </license>
   </licenses>
 
+  <!-- =========================================================== -->
+  <!--     Modules included in the build                           -->
+  <!-- =========================================================== -->
+  <modules>
+    <module>library</module>
+    <module>ogc</module>
+    <module>plugin</module>
+    <module>extension</module>
+    <module>unsupported</module>
+  </modules>
 
   <!-- =========================================================== -->
   <!--     Dependencies to be inherited by all modules.            -->
@@ -51,42 +55,4 @@
     </dependency>
   </dependencies>
 
-
-  <!-- =========================================================== -->
-  <!--     Modules included in the build                           -->
-  <!-- =========================================================== -->
-  <modules>
-    <module>library</module>
-    <module>ogc</module>    
-    <module>plugin</module>
-    <module>extension</module>
-    <module>unsupported</module>
-  </modules>
-
-
-  <!-- =========================================================== -->
-  <!--     Build Configuration                                     -->
-  <!--         copies all JARs in a single directory.              -->
-  <!-- =========================================================== -->
-  <profiles>
-    <profile>
-      <id>collect</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.geotools.maven</groupId>
-            <artifactId>jar-collector</artifactId>
-            <version>${project.version}</version>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>collect</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 </project>

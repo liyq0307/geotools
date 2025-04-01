@@ -33,7 +33,6 @@ import net.opengis.wps10.ResponseFormType;
 import net.opengis.wps10.Wps10Factory;
 import org.geotools.data.ows.AbstractGetCapabilitiesRequest;
 import org.geotools.data.ows.GetCapabilitiesRequest;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Response;
 import org.geotools.data.wps.request.AbstractDescribeProcessRequest;
 import org.geotools.data.wps.request.AbstractExecuteProcessRequest;
@@ -42,13 +41,14 @@ import org.geotools.data.wps.request.ExecuteProcessRequest;
 import org.geotools.data.wps.response.DescribeProcessResponse;
 import org.geotools.data.wps.response.ExecuteProcessResponse;
 import org.geotools.data.wps.response.WPSGetCapabilitiesResponse;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 
 /**
  * Provides support for the Web Processing Service 1.0.0 Specification.
  *
- * <p>WPS1_0_0 provides both name and version information that may be checked against a
- * GetCapabilities document during version negotiation.
+ * <p>WPS1_0_0 provides both name and version information that may be checked against a GetCapabilities document during
+ * version negotiation.
  *
  * @author gdavis
  */
@@ -68,6 +68,7 @@ public class WPS1_0_0 extends WPSSpecification {
      *
      * @return the expect version value for this specification
      */
+    @Override
     public String getVersion() {
         return "1.0.0"; // $NON-NLS-1$
     }
@@ -79,6 +80,7 @@ public class WPS1_0_0 extends WPSSpecification {
      * @param server a URL that points to the 1.0.0 server
      * @return a AbstractGetCapabilitiesRequest object that can provide a valid request
      */
+    @Override
     public GetCapabilitiesRequest createGetCapabilitiesRequest(URL server) {
         return new GetCapsRequest(server);
     }
@@ -90,8 +92,7 @@ public class WPS1_0_0 extends WPSSpecification {
     }
 
     @Override
-    public ExecuteProcessRequest createExecuteProcessRequest(URL onlineResource)
-            throws UnsupportedOperationException {
+    public ExecuteProcessRequest createExecuteProcessRequest(URL onlineResource) throws UnsupportedOperationException {
         return new InternalExecuteProcessRequest(onlineResource, null);
     }
 
@@ -120,8 +121,7 @@ public class WPS1_0_0 extends WPSSpecification {
     }
 
     @Override
-    public ResponseFormType createResponseForm(
-            ResponseDocumentType responseDoc, OutputDefinitionType rawOutput) {
+    public ResponseFormType createResponseForm(ResponseDocumentType responseDoc, OutputDefinitionType rawOutput) {
         ResponseFormType responseForm = wpsFactory.createResponseFormType();
 
         if (responseDoc != null) {
@@ -147,6 +147,7 @@ public class WPS1_0_0 extends WPSSpecification {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public ResponseDocumentType createResponseDocumentType(
             boolean lineage, boolean status, boolean storeExecuteResponse, String outputType) {
         ResponseDocumentType responseDoc = wpsFactory.createResponseDocumentType();
@@ -177,64 +178,64 @@ public class WPS1_0_0 extends WPSSpecification {
             super(urlGetCapabilities);
         }
 
+        @Override
         protected void initVersion() {
-            properties.setProperty(VERSION, "1.0.0");
+            properties.setProperty(processKey(VERSION), "1.0.0");
         }
 
+        @Override
         protected void initRequest() {
-            setProperty("REQUEST", "GetCapabilities");
+            setProperty(processKey("REQUEST"), "GetCapabilities");
         }
 
+        @Override
         protected void initService() {
-            setProperty("SERVICE", "WPS");
+            setProperty(processKey("SERVICE"), "WPS");
         }
 
+        @Override
         protected String processKey(String key) {
             return WPS1_0_0.processKey(key);
         }
 
-        public Response createResponse(HTTPResponse httpResponse)
-                throws ServiceException, IOException {
+        @Override
+        public Response createResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
             return new WPSGetCapabilitiesResponse(httpResponse, hints);
         }
     }
 
     public static class InternalDescribeProcessRequest extends AbstractDescribeProcessRequest {
 
-        /**
-         * @param onlineResource
-         * @param properties
-         */
+        /** */
         public InternalDescribeProcessRequest(URL onlineResource, Properties properties) {
             super(onlineResource, properties);
         }
 
+        @Override
         protected void initVersion() {
-            setProperty(VERSION, "1.0.0");
+            setProperty(processKey(VERSION), "1.0.0");
         }
 
-        public Response createResponse(HTTPResponse httpResponse)
-                throws ServiceException, IOException {
+        @Override
+        public Response createResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
             return new DescribeProcessResponse(httpResponse);
         }
     }
 
     public static class InternalExecuteProcessRequest extends AbstractExecuteProcessRequest {
 
-        /**
-         * @param onlineResource
-         * @param properties
-         */
+        /** */
         public InternalExecuteProcessRequest(URL onlineResource, Properties properties) {
             super(onlineResource, properties);
         }
 
+        @Override
         protected void initVersion() {
-            setProperty(VERSION, "1.0.0");
+            setProperty(processKey(VERSION), "1.0.0");
         }
 
-        public Response createResponse(HTTPResponse httpResponse)
-                throws ServiceException, IOException {
+        @Override
+        public Response createResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
             return new ExecuteProcessResponse(
                     httpResponse, responseForm != null && responseForm.getRawDataOutput() != null);
         }

@@ -21,6 +21,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -31,9 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 public class ClassifyByRangeProcessTest {
 
@@ -70,17 +70,16 @@ public class ClassifyByRangeProcessTest {
     @Test
     public void testClassifyAddsAttribute() {
         ClassifyByRangeProcess cp = new ClassifyByRangeProcess();
-        SimpleFeatureCollection result =
-                cp.execute(
-                        fc,
-                        "value",
-                        new String[] {"2", "5", "10"},
-                        new String[] {"A", "B", "C", "D"},
-                        null,
-                        null,
-                        false,
-                        "myclass",
-                        null);
+        SimpleFeatureCollection result = cp.execute(
+                fc,
+                "value",
+                new String[] {"2", "5", "10"},
+                new String[] {"A", "B", "C", "D"},
+                null,
+                null,
+                false,
+                "myclass",
+                null);
         SimpleFeatureType ft = result.getSchema();
         assertEquals(4, ft.getAttributeCount());
         AttributeDescriptor classAttribute = ft.getDescriptor("myclass");
@@ -91,45 +90,45 @@ public class ClassifyByRangeProcessTest {
     @Test
     public void testClassifyValues() {
         ClassifyByRangeProcess cp = new ClassifyByRangeProcess();
-        SimpleFeatureCollection result =
-                cp.execute(
-                        fc,
-                        "value",
-                        new String[] {"2", "5", "10"},
-                        new String[] {"A", "B", "C", "D"},
-                        null,
-                        null,
-                        false,
-                        "class",
-                        null);
+        SimpleFeatureCollection result = cp.execute(
+                fc,
+                "value",
+                new String[] {"2", "5", "10"},
+                new String[] {"A", "B", "C", "D"},
+                null,
+                null,
+                false,
+                "class",
+                null);
         assertEquals(3, result.size());
-        SimpleFeatureIterator iterator = result.features();
-        SimpleFeature ft = iterator.next();
-        assertEquals("A", ft.getAttribute("class"));
-        ft = iterator.next();
-        assertEquals("C", ft.getAttribute("class"));
+        try (SimpleFeatureIterator iterator = result.features()) {
+            SimpleFeature ft = iterator.next();
+            assertEquals("A", ft.getAttribute("class"));
+            ft = iterator.next();
+            assertEquals("C", ft.getAttribute("class"));
+        }
     }
 
     @Test
     public void testClassifyValuesInclude() {
         ClassifyByRangeProcess cp = new ClassifyByRangeProcess();
-        SimpleFeatureCollection result =
-                cp.execute(
-                        fc,
-                        "value",
-                        new String[] {"2", "5", "10"},
-                        new String[] {"A", "B", "C", "D"},
-                        null,
-                        null,
-                        true,
-                        "class",
-                        null);
+        SimpleFeatureCollection result = cp.execute(
+                fc,
+                "value",
+                new String[] {"2", "5", "10"},
+                new String[] {"A", "B", "C", "D"},
+                null,
+                null,
+                true,
+                "class",
+                null);
         assertEquals(3, result.size());
-        SimpleFeatureIterator iterator = result.features();
-        SimpleFeature ft = iterator.next();
-        assertEquals("A", ft.getAttribute("class"));
-        ft = iterator.next();
-        assertEquals("B", ft.getAttribute("class"));
+        try (SimpleFeatureIterator iterator = result.features()) {
+            SimpleFeature ft = iterator.next();
+            assertEquals("A", ft.getAttribute("class"));
+            ft = iterator.next();
+            assertEquals("B", ft.getAttribute("class"));
+        }
     }
 
     @Test
@@ -158,16 +157,7 @@ public class ClassifyByRangeProcessTest {
         ClassifyByRangeProcess cp = new ClassifyByRangeProcess();
         boolean error = false;
         try {
-            cp.execute(
-                    fc,
-                    "value",
-                    null,
-                    new String[] {"A", "B", "C", "D"},
-                    null,
-                    null,
-                    true,
-                    "class",
-                    null);
+            cp.execute(fc, "value", null, new String[] {"A", "B", "C", "D"}, null, null, true, "class", null);
         } catch (ProcessException e) {
             error = true;
         }
@@ -177,17 +167,16 @@ public class ClassifyByRangeProcessTest {
     @Test
     public void testClassifyDefaultOutput() {
         ClassifyByRangeProcess cp = new ClassifyByRangeProcess();
-        SimpleFeatureCollection result =
-                cp.execute(
-                        fc,
-                        "value",
-                        new String[] {"2", "5", "10"},
-                        new String[] {"A", "B", "C", "D"},
-                        null,
-                        null,
-                        false,
-                        null,
-                        null);
+        SimpleFeatureCollection result = cp.execute(
+                fc,
+                "value",
+                new String[] {"2", "5", "10"},
+                new String[] {"A", "B", "C", "D"},
+                null,
+                null,
+                false,
+                null,
+                null);
         SimpleFeatureType ft = result.getSchema();
         assertEquals(4, ft.getAttributeCount());
         AttributeDescriptor classAttribute = ft.getDescriptor("class");
@@ -199,22 +188,14 @@ public class ClassifyByRangeProcessTest {
     public void testClassifyDefaultOutputValues() {
         ClassifyByRangeProcess cp = new ClassifyByRangeProcess();
         SimpleFeatureCollection result =
-                cp.execute(
-                        fc,
-                        "value",
-                        new String[] {"2", "5", "10"},
-                        null,
-                        null,
-                        null,
-                        false,
-                        "class",
-                        null);
+                cp.execute(fc, "value", new String[] {"2", "5", "10"}, null, null, null, false, "class", null);
         assertEquals(3, result.size());
-        SimpleFeatureIterator iterator = result.features();
-        SimpleFeature ft = iterator.next();
-        assertEquals("1", ft.getAttribute("class"));
-        ft = iterator.next();
-        assertEquals("3", ft.getAttribute("class"));
+        try (SimpleFeatureIterator iterator = result.features()) {
+            SimpleFeature ft = iterator.next();
+            assertEquals("1", ft.getAttribute("class"));
+            ft = iterator.next();
+            assertEquals("3", ft.getAttribute("class"));
+        }
     }
 
     @Test
@@ -241,73 +222,57 @@ public class ClassifyByRangeProcessTest {
     @Test
     public void testClassifyWithClassifierEqualInterval() {
         ClassifyByRangeProcess cp = new ClassifyByRangeProcess();
-        SimpleFeatureCollection result =
-                cp.execute(
-                        fc,
-                        "value",
-                        null,
-                        new String[] {"A", "B", "C", "D", "E"},
-                        "EqualInterval",
-                        3,
-                        true,
-                        "class",
-                        null);
+        SimpleFeatureCollection result = cp.execute(
+                fc, "value", null, new String[] {"A", "B", "C", "D", "E"}, "EqualInterval", 3, true, "class", null);
         assertEquals(3, result.size());
-        SimpleFeatureIterator iterator = result.features();
-        SimpleFeature ft = iterator.next();
-        assertEquals("A", ft.getAttribute("class"));
-        ft = iterator.next();
-        assertEquals("C", ft.getAttribute("class"));
-        ft = iterator.next();
-        assertEquals("D", ft.getAttribute("class"));
+        try (SimpleFeatureIterator iterator = result.features()) {
+            SimpleFeature ft = iterator.next();
+            assertEquals("A", ft.getAttribute("class"));
+            ft = iterator.next();
+            assertEquals("C", ft.getAttribute("class"));
+            ft = iterator.next();
+            assertEquals("D", ft.getAttribute("class"));
+        }
     }
 
     @Test
     public void testClassifyWithClassifierEqualIntervalMoreClasses() {
         ClassifyByRangeProcess cp = new ClassifyByRangeProcess();
-        SimpleFeatureCollection result =
-                cp.execute(
-                        fc,
-                        "value",
-                        null,
-                        new String[] {"A", "B", "C", "D", "E", "F", "G"},
-                        "EqualInterval",
-                        5,
-                        true,
-                        "class",
-                        null);
+        SimpleFeatureCollection result = cp.execute(
+                fc,
+                "value",
+                null,
+                new String[] {"A", "B", "C", "D", "E", "F", "G"},
+                "EqualInterval",
+                5,
+                true,
+                "class",
+                null);
         assertEquals(3, result.size());
-        SimpleFeatureIterator iterator = result.features();
-        SimpleFeature ft = iterator.next();
-        assertEquals("A", ft.getAttribute("class"));
-        ft = iterator.next();
-        assertEquals("D", ft.getAttribute("class"));
-        ft = iterator.next();
-        assertEquals("F", ft.getAttribute("class"));
+        try (SimpleFeatureIterator iterator = result.features()) {
+            SimpleFeature ft = iterator.next();
+            assertEquals("A", ft.getAttribute("class"));
+            ft = iterator.next();
+            assertEquals("D", ft.getAttribute("class"));
+            ft = iterator.next();
+            assertEquals("F", ft.getAttribute("class"));
+        }
     }
 
     @Test
     public void testClassifyWithQuantileInterval() {
         ClassifyByRangeProcess cp = new ClassifyByRangeProcess();
-        SimpleFeatureCollection result =
-                cp.execute(
-                        fc,
-                        "value",
-                        null,
-                        new String[] {"A", "B", "C", "D", "E"},
-                        "Quantile",
-                        3,
-                        true,
-                        "class",
-                        null);
+        SimpleFeatureCollection result = cp.execute(
+                fc, "value", null, new String[] {"A", "B", "C", "D", "E"}, "Quantile", 3, true, "class", null);
         assertEquals(3, result.size());
-        SimpleFeatureIterator iterator = result.features();
-        SimpleFeature ft = iterator.next();
-        assertEquals("A", ft.getAttribute("class"));
-        ft = iterator.next();
-        assertEquals("B", ft.getAttribute("class"));
-        ft = iterator.next();
-        assertEquals("C", ft.getAttribute("class"));
+        try (SimpleFeatureIterator iterator = result.features()) {
+            SimpleFeature ft = iterator.next();
+            assertEquals("A", ft.getAttribute("class"));
+            ft = iterator.next();
+            assertEquals("B", ft.getAttribute("class"));
+            ft = iterator.next();
+            assertEquals("C", ft.getAttribute("class"));
+        }
     }
 
     @Test
@@ -315,17 +280,8 @@ public class ClassifyByRangeProcessTest {
         ClassifyByRangeProcess cp = new ClassifyByRangeProcess();
         boolean error = false;
         try {
-            SimpleFeatureCollection result =
-                    cp.execute(
-                            fc,
-                            "value",
-                            null,
-                            new String[] {"A", "B", "C", "D", "E"},
-                            "NotExisting",
-                            3,
-                            true,
-                            "class",
-                            null);
+            cp.execute(
+                    fc, "value", null, new String[] {"A", "B", "C", "D", "E"}, "NotExisting", 3, true, "class", null);
         } catch (Exception e) {
             error = true;
         }

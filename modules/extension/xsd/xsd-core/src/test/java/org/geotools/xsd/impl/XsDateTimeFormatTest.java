@@ -16,7 +16,8 @@
  */
 package org.geotools.xsd.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.text.ParseException;
 import java.util.Calendar;
@@ -69,8 +70,8 @@ public class XsDateTimeFormatTest {
         XsDateTimeFormat format = new XsDateTimeFormat();
         // Set a date
         String time = "2014-10-12T09:00Z";
-        // Parse the Date
-        Object parseObject = format.parseObject(time);
+        // Parse the Date, should throw an exception
+        format.parseObject(time);
     }
 
     @Test

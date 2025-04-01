@@ -35,15 +35,14 @@ public class CircleTypeBinding extends AbstractComplexBinding {
     ArcParameters arcParameters;
 
     public CircleTypeBinding(
-            GeometryFactory gFactory,
-            CoordinateSequenceFactory csFactory,
-            ArcParameters arcParameters) {
+            GeometryFactory gFactory, CoordinateSequenceFactory csFactory, ArcParameters arcParameters) {
         this.gFactory = gFactory;
         this.csFactory = csFactory;
         this.arcParameters = arcParameters;
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.CircleType;
     }
@@ -55,6 +54,7 @@ public class CircleTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return LineString.class;
     }

@@ -34,85 +34,105 @@ import org.picocontainer.defaults.DecoratingComponentAdapter;
 import org.picocontainer.defaults.InstanceComponentAdapter;
 
 /**
- * A {@link Map} dectorator which implements the {@link MutablePicoContainer} interface.
+ * A {@link Map} decorator which implements the {@link MutablePicoContainer} interface.
  *
- * <p>This class is used internally to help transitition from pico container to a map based system
- * for registering bindings.
+ * <p>This class is used internally to help transition from pico container to a map based system for registering
+ * bindings.
  *
  * @author Justin Deoliveira, The Open Planning Project, jdeolive@openplans.org
  */
+// MutablePicoContainer has no generics, and is dead as a library, no point trying to make this
+// one better
+@SuppressWarnings("unchecked")
 public class PicoMap implements Map, MutablePicoContainer {
 
-    Map delegate;
+    Map<Object, Object> delegate;
 
     public PicoMap(Map delegate) {
         this.delegate = delegate;
     }
 
+    @Override
     public void clear() {
         delegate.clear();
     }
 
+    @Override
     public boolean containsKey(Object key) {
         return delegate.containsKey(key);
     }
 
+    @Override
     public boolean containsValue(Object value) {
         return delegate.containsValue(value);
     }
 
+    @Override
     public Set entrySet() {
         return delegate.entrySet();
     }
 
+    @Override
     public boolean equals(Object o) {
         return delegate.equals(o);
     }
 
+    @Override
     public Object get(Object key) {
         return delegate.get(key);
     }
 
+    @Override
     public int hashCode() {
         return delegate.hashCode();
     }
 
+    @Override
     public boolean isEmpty() {
         return delegate.isEmpty();
     }
 
+    @Override
     public Set keySet() {
         return delegate.keySet();
     }
 
+    @Override
     public Object put(Object key, Object value) {
         return delegate.put(key, value);
     }
 
+    @Override
     public void putAll(Map t) {
         delegate.putAll(t);
     }
 
+    @Override
     public Object remove(Object key) {
         return delegate.remove(key);
     }
 
+    @Override
     public int size() {
         return delegate.size();
     }
 
+    @Override
     public Collection values() {
         return delegate.values();
     }
 
+    @Override
     public boolean addChildContainer(PicoContainer child) {
         return false;
     }
 
+    @Override
     public MutablePicoContainer makeChildContainer() {
         return null;
     }
 
+    @Override
     public ComponentAdapter registerComponent(ComponentAdapter componentAdapter) {
         if (componentAdapter instanceof DecoratingComponentAdapter) {
             componentAdapter = ((DecoratingComponentAdapter) componentAdapter).getDelegate();
@@ -120,8 +140,7 @@ public class PicoMap implements Map, MutablePicoContainer {
 
         Object key = componentAdapter.getComponentKey();
         if (componentAdapter instanceof InstanceComponentAdapter) {
-            Object instance =
-                    ((InstanceComponentAdapter) componentAdapter).getComponentInstance(null);
+            Object instance = ((InstanceComponentAdapter) componentAdapter).getComponentInstance(null);
             put(key, instance);
         } else {
             Class implementation = componentAdapter.getComponentImplementation();
@@ -131,43 +150,49 @@ public class PicoMap implements Map, MutablePicoContainer {
         return componentAdapter;
     }
 
+    @Override
     public ComponentAdapter registerComponentImplementation(Class componentImplementation) {
         put(componentImplementation, componentImplementation);
         return null;
     }
 
-    public ComponentAdapter registerComponentImplementation(
-            Object componentKey, Class componentImplementation) {
+    @Override
+    public ComponentAdapter registerComponentImplementation(Object componentKey, Class componentImplementation) {
         put(componentKey, componentImplementation);
         return null;
     }
 
+    @Override
     public ComponentAdapter registerComponentImplementation(
             Object componentKey, Class componentImplementation, Parameter[] parameters) {
         put(componentKey, componentImplementation);
         return null;
     }
 
+    @Override
     public ComponentAdapter registerComponentInstance(Object componentInstance) {
         put(componentInstance, componentInstance);
         return null;
     }
 
-    public ComponentAdapter registerComponentInstance(
-            Object componentKey, Object componentInstance) {
+    @Override
+    public ComponentAdapter registerComponentInstance(Object componentKey, Object componentInstance) {
         put(componentKey, componentInstance);
         return null;
     }
 
+    @Override
     public boolean removeChildContainer(PicoContainer child) {
         return false;
     }
 
+    @Override
     public ComponentAdapter unregisterComponent(Object componentKey) {
         remove(componentKey);
         return null;
     }
 
+    @Override
     public ComponentAdapter unregisterComponentByInstance(Object componentInstance) {
         if (componentInstance == null) {
             return null;
@@ -188,8 +213,10 @@ public class PicoMap implements Map, MutablePicoContainer {
         return null;
     }
 
+    @Override
     public void accept(PicoVisitor visitor) {}
 
+    @Override
     public ComponentAdapter getComponentAdapter(Object componentKey) {
         if (componentKey == null) {
             return null;
@@ -208,6 +235,7 @@ public class PicoMap implements Map, MutablePicoContainer {
         return new InstanceComponentAdapter(componentKey, o);
     }
 
+    @Override
     public ComponentAdapter getComponentAdapterOfType(Class componentType) {
         List adapters = getComponentAdaptersOfType(componentType);
         if (adapters.isEmpty()) {
@@ -217,26 +245,28 @@ public class PicoMap implements Map, MutablePicoContainer {
         return (ComponentAdapter) adapters.iterator().next();
     }
 
+    @Override
     public Collection getComponentAdapters() {
         List adapters = new ArrayList();
 
-        for (Iterator e = entrySet().iterator(); e.hasNext(); ) {
-            Entry entry = (Entry) e.next();
+        for (Object o : entrySet()) {
+            Entry entry = (Entry) o;
             adapters.add(getComponentAdapter(entry.getKey()));
         }
 
         return adapters;
     }
 
+    @Override
     public List getComponentAdaptersOfType(Class componentType) {
         if (componentType == null) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         List adapters = new ArrayList();
 
-        for (Iterator e = entrySet().iterator(); e.hasNext(); ) {
-            Entry entry = (Entry) e.next();
+        for (Object o : entrySet()) {
+            Entry entry = (Entry) o;
 
             if (entry.getValue() instanceof Class) {
                 Class clazz = (Class) entry.getValue();
@@ -253,6 +283,7 @@ public class PicoMap implements Map, MutablePicoContainer {
         return adapters;
     }
 
+    @Override
     public Object getComponentInstance(Object componentKey) {
         if (componentKey == null) {
             return null;
@@ -272,14 +303,15 @@ public class PicoMap implements Map, MutablePicoContainer {
         }
     }
 
+    @Override
     public Object getComponentInstanceOfType(Class componentType) {
         if (componentType == null) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         // first look for instance
-        for (Iterator e = entrySet().iterator(); e.hasNext(); ) {
-            Entry entry = (Entry) e.next();
+        for (Object value : entrySet()) {
+            Entry entry = (Entry) value;
 
             if (entry.getValue() instanceof Class) {
                 continue;
@@ -290,8 +322,8 @@ public class PicoMap implements Map, MutablePicoContainer {
             }
         }
 
-        for (Iterator e = entrySet().iterator(); e.hasNext(); ) {
-            Entry entry = (Entry) e.next();
+        for (Object o : entrySet()) {
+            Entry entry = (Entry) o;
 
             if (entry.getValue() instanceof Class) {
                 Class clazz = (Class) entry.getValue();
@@ -304,25 +336,27 @@ public class PicoMap implements Map, MutablePicoContainer {
         return null;
     }
 
+    @Override
     public List getComponentInstances() {
         ArrayList instances = new ArrayList();
 
-        for (Iterator e = entrySet().iterator(); e.hasNext(); ) {
-            Entry entry = (Entry) e.next();
+        for (Object o : entrySet()) {
+            Entry entry = (Entry) o;
             instances.add(getComponentInstance(entry.getKey()));
         }
 
         return instances;
     }
 
+    @Override
     public List getComponentInstancesOfType(Class componentType) {
         if (componentType == null) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         ArrayList instances = new ArrayList();
-        for (Iterator e = entrySet().iterator(); e.hasNext(); ) {
-            Entry entry = (Entry) e.next();
+        for (Object o : entrySet()) {
+            Entry entry = (Entry) o;
 
             if (entry.getValue() instanceof Class) {
                 Class clazz = (Class) entry.getValue();
@@ -339,16 +373,21 @@ public class PicoMap implements Map, MutablePicoContainer {
         return instances;
     }
 
+    @Override
     public PicoContainer getParent() {
         return null;
     }
 
+    @Override
     @SuppressWarnings("deprecation")
     public void verify() throws PicoVerificationException {}
 
+    @Override
     public void start() {}
 
+    @Override
     public void stop() {}
 
+    @Override
     public void dispose() {}
 }

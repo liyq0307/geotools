@@ -21,10 +21,9 @@ import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
 
 /**
- * Used by {@linkplain DefaultRenderingExecutor} to hold a single {@code Layer} that is being passed
- * to a renderer. Calling the {@code dispose} method of this class does not dispose of the layer
- * unlike {@linkplain MapContent#dispose()}. It does not permit subsequent changes to its layer
- * list.
+ * Used by {@linkplain DefaultRenderingExecutor} to hold a single {@code Layer} that is being passed to a renderer.
+ * Calling the {@code dispose} method of this class does not dispose of the layer unlike
+ * {@linkplain MapContent#dispose()}. It does not permit subsequent changes to its layer list.
  *
  * @author Michael Bedward
  * @since 8.0
@@ -45,31 +44,19 @@ public class SingleLayerMapContent extends MapContent {
         super.addLayer(layer);
     }
 
-    /**
-     * Throws an {@code UnsupportedOperationException} if called.
-     *
-     * @return
-     */
+    /** Throws an {@code UnsupportedOperationException} if called. */
     @Override
     public boolean addLayer(Layer layer) {
         throw new UnsupportedOperationException("Should not be called");
     }
 
-    /**
-     * Throws an {@code UnsupportedOperationException} if called.
-     *
-     * @return
-     */
+    /** Throws an {@code UnsupportedOperationException} if called. */
     @Override
     public void moveLayer(int sourcePosition, int destPosition) {
         throw new UnsupportedOperationException("Should not be called");
     }
 
-    /**
-     * Throws an {@code UnsupportedOperationException} if called.
-     *
-     * @return
-     */
+    /** Throws an {@code UnsupportedOperationException} if called. */
     @Override
     public boolean removeLayer(Layer layer) {
         throw new UnsupportedOperationException("Should not be called");

@@ -17,112 +17,104 @@
 
 package org.geotools.referencing.operation.matrix;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.geom.AffineTransform;
 import org.junit.Test;
 
 /**
- * Test functionality GeneralMatrix Tests {@link
- * org.geotools.referencing.operation.matrix.GeneralMatrix}.
+ * Test functionality GeneralMatrix Tests {@link org.geotools.referencing.operation.matrix.GeneralMatrix}.
  *
  * @version $Id$
  * @author James Hughes
  */
+// code is using equals with extra parameters and semantics compared to the built-in equals
+@SuppressWarnings("PMD.SimplifiableTestAssertion")
 public class GeneralMatrixTest {
 
     private static double EPSILON_TOLERANCE = 0.000001;
 
-    private static double[][] zero2 =
-            new double[][] {
-                {0.0, 0.0},
-                {0.0, 0.0}
-            };
+    private static double[][] zero2 = {
+        {0.0, 0.0},
+        {0.0, 0.0}
+    };
 
-    private static double[][] id2 =
-            new double[][] {
-                {1.0, 0.0},
-                {0.0, 1.0}
-            };
+    private static double[][] id2 = {
+        {1.0, 0.0},
+        {0.0, 1.0}
+    };
 
-    private static double[][] id4 =
-            new double[][] {
-                {1.0, 0.0, 0.0, 0.0},
-                {0.0, 1.0, 0.0, 0.0},
-                {0.0, 0.0, 1.0, 0.0},
-                {0.0, 0.0, 0.0, 1.0}
-            };
+    private static double[][] id4 = {
+        {1.0, 0.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0, 0.0},
+        {0.0, 0.0, 1.0, 0.0},
+        {0.0, 0.0, 0.0, 1.0}
+    };
 
-    private static double[][] id23 =
-            new double[][] {
-                {1.0, 0.0, 0.0},
-                {0.0, 1.0, 0.0}
-            };
+    private static double[][] id23 = {
+        {1.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0}
+    };
 
-    private static double[][] id32 =
-            new double[][] {
-                {1.0, 0.0},
-                {0.0, 1.0},
-                {0.0, 0.0}
-            };
+    private static double[][] id32 = {
+        {1.0, 0.0},
+        {0.0, 1.0},
+        {0.0, 0.0}
+    };
 
-    private static double[][] array1 =
-            new double[][] {
-                {1.2, -3.4},
-                {-5.6, 7.8},
-                {9.0, -1.0}
-            };
+    private static double[][] array1 = {
+        {1.2, -3.4},
+        {-5.6, 7.8},
+        {9.0, -1.0}
+    };
 
-    private static double[][] negativeArray1 =
-            new double[][] {
-                {-1.2, 3.4},
-                {5.6, -7.8},
-                {-9.0, 1.0}
-            };
+    private static double[][] negativeArray1 = {
+        {-1.2, 3.4},
+        {5.6, -7.8},
+        {-9.0, 1.0}
+    };
 
-    private static double[] array1flatten = new double[] {1.2, -3.4, -5.6, 7.8, 9.0, -1.0};
+    private static double[] array1flatten = {1.2, -3.4, -5.6, 7.8, 9.0, -1.0};
 
-    private static AffineTransform affineTransform =
-            new AffineTransform(1.2, 3.4, 5.6, 7.8, 9.0, 1.0);
+    private static AffineTransform affineTransform = new AffineTransform(1.2, 3.4, 5.6, 7.8, 9.0, 1.0);
 
-    private static double[][] affineMatrix =
-            new double[][] {
-                {1.2, 5.6, 9.0},
-                {3.4, 7.8, 1.0},
-                {0.0, 0.0, 1.0}
-            };
+    private static double[][] affineMatrix = {
+        {1.2, 5.6, 9.0},
+        {3.4, 7.8, 1.0},
+        {0.0, 0.0, 1.0}
+    };
 
-    private static double[][] matrix33 =
-            new double[][] {
-                {1.2, 5.6, 9.0},
-                {3.4, 7.8, 1.0},
-                {-2.3, 4.6, 1.0}
-            };
+    private static double[][] matrix33 = {
+        {1.2, 5.6, 9.0},
+        {3.4, 7.8, 1.0},
+        {-2.3, 4.6, 1.0}
+    };
 
-    private static double[][] sub32 =
-            new double[][] {
-                {1.2, 5.6},
-                {3.4, 7.8},
-                {-2.3, 4.6}
-            };
+    private static double[][] sub32 = {
+        {1.2, 5.6},
+        {3.4, 7.8},
+        {-2.3, 4.6}
+    };
 
-    private static double[][] sub22 =
-            new double[][] {
-                {1.2, 5.6},
-                {3.4, 7.8}
-            };
+    private static double[][] sub22 = {
+        {1.2, 5.6},
+        {3.4, 7.8}
+    };
 
-    private static double[][] arrayA =
-            new double[][] {
-                {2, 6},
-                {4, 7}
-            };
+    private static double[][] arrayA = {
+        {2, 6},
+        {4, 7}
+    };
 
-    private static double[][] arrayAInverse =
-            new double[][] {
-                {-0.7, 0.6},
-                {0.4, -0.2}
-            };
+    private static double[][] arrayAInverse = {
+        {-0.7, 0.6},
+        {0.4, -0.2}
+    };
 
     private static GeneralMatrix generalAffineMatrix = new GeneralMatrix(affineMatrix);
     private static GeneralMatrix matrix1 = new GeneralMatrix(array1);
@@ -230,32 +222,26 @@ public class GeneralMatrixTest {
         // OrderedAxisAuthorityFactoryTest relies on DefaultCoordinateOperationFactory checking
         // inverse
         // accuracy to 1E-9, previously vecmath accomplished 1E-10
-        GeneralMatrix matrix =
-                new GeneralMatrix(
-                        new double[][] {
-                            {1.0000000000000002, 0.0, -1.1641532182693481E-10},
-                            {0.0, 1.0000000000000002, 0.0},
-                            {0.0, 0.0, 1.0}
-                        });
+        GeneralMatrix matrix = new GeneralMatrix(new double[][] {
+            {1.0000000000000002, 0.0, -1.1641532182693481E-10},
+            {0.0, 1.0000000000000002, 0.0},
+            {0.0, 0.0, 1.0}
+        });
 
         GeneralMatrix inverse = matrix.clone();
         inverse.invert();
         matrix.mul(inverse);
 
-        GeneralMatrix sourceScale =
-                new GeneralMatrix(
-                        new double[][] {
-                            {0.9996, 0.0, 500000.0},
-                            {0.0, 0.9996, 0.0},
-                            {0.0, 0.0, 1.0}
-                        });
-        GeneralMatrix targetScale =
-                new GeneralMatrix(
-                        new double[][] {
-                            {0.9996, 0.0, 500000.0},
-                            {0.0, 0.9996, 0.0},
-                            {0.0, 0.0, 1.0}
-                        });
+        GeneralMatrix sourceScale = new GeneralMatrix(new double[][] {
+            {0.9996, 0.0, 500000.0},
+            {0.0, 0.9996, 0.0},
+            {0.0, 0.0, 1.0}
+        });
+        GeneralMatrix targetScale = new GeneralMatrix(new double[][] {
+            {0.9996, 0.0, 500000.0},
+            {0.0, 0.9996, 0.0},
+            {0.0, 0.0, 1.0}
+        });
         sourceScale.invert();
         targetScale.multiply(sourceScale);
 
@@ -308,12 +294,12 @@ public class GeneralMatrixTest {
         GeneralMatrix gm1 = new GeneralMatrix(affineMatrix);
         GeneralMatrix gm2 = new GeneralMatrix(affineMatrix);
 
-        assertTrue(gm1.equals(gm2));
+        assertEquals(gm1, gm2);
 
         gm2.setElement(2, 2, gm2.getElement(2, 2) + 0.0001);
         assertTrue(gm1.equals(gm2, 0.001));
         assertTrue(GeneralMatrix.epsilonEquals(gm1, gm2, 0.001));
-        assertFalse(gm1.equals(gm2));
+        assertNotEquals(gm1, gm2);
     }
 
     @Test
@@ -331,6 +317,6 @@ public class GeneralMatrixTest {
         assertArrayEquals(m22.getElements(), sub22);
 
         big.copySubMatrix(0, 0, 2, 2, 0, 0, second);
-        assertTrue(m22.equals(second));
+        assertEquals(m22, second);
     }
 }

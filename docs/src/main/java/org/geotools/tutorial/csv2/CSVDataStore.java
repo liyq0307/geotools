@@ -1,11 +1,13 @@
 /*
- * GeoTools - The Open Source Java GIS Toolkit
- * http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- * (C) 2010-2014, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- * This file is hereby placed into the Public Domain. This means anyone is
- * free to do whatever they wish with this file. Use it well and enjoy!
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.tutorial.csv2;
 
@@ -19,7 +21,11 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
@@ -27,10 +33,6 @@ import org.geotools.feature.NameImpl;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
 
 /**
  * DataStore for Comma Separated Value (CSV) files.
@@ -50,8 +52,7 @@ public class CSVDataStore extends ContentDataStore {
 
     // reader start
     /**
-     * Allow read access to file; for our package visible "friends". Please close the reader when
-     * done.
+     * Allow read access to file; for our package visible "friends". Please close the reader when done.
      *
      * @return CsvReader for file
      */
@@ -79,8 +80,7 @@ public class CSVDataStore extends ContentDataStore {
         GeometryDescriptor geometryDescrptor = featureType.getGeometryDescriptor();
         if (geometryDescrptor != null
                 && CRS.equalsIgnoreMetadata(
-                        DefaultGeographicCRS.WGS84,
-                        geometryDescrptor.getCoordinateReferenceSystem())
+                        DefaultGeographicCRS.WGS84, geometryDescrptor.getCoordinateReferenceSystem())
                 && geometryDescrptor.getType().getBinding().isAssignableFrom(Point.class)) {
             header.add("LAT");
             header.add("LON");

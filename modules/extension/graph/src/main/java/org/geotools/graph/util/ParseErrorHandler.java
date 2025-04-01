@@ -18,7 +18,7 @@ package org.geotools.graph.util;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
 import org.geotools.util.logging.Logging;
 import org.xml.sax.SAXException;
@@ -29,18 +29,20 @@ public class ParseErrorHandler extends DefaultHandler implements Serializable {
 
     static final Logger LOGGER = Logging.getLogger(ParseErrorHandler.class);
 
-    ArrayList m_parseErrors = null;
+    List<SAXParseException> m_parseErrors = null;
 
     public ParseErrorHandler() {
         super();
-        m_parseErrors = new ArrayList();
+        m_parseErrors = new ArrayList<>();
     }
 
+    @Override
     public void error(SAXParseException e) throws SAXException {
         super.error(e);
         m_parseErrors.add(e);
     }
 
+    @Override
     public void fatalError(SAXParseException e) throws SAXException {
         super.fatalError(e);
         m_parseErrors.add(e);
@@ -51,23 +53,22 @@ public class ParseErrorHandler extends DefaultHandler implements Serializable {
     }
 
     public boolean noErrors() {
-        return (m_parseErrors.size() == 0);
+        return (m_parseErrors.isEmpty());
     }
 
     public void printErrors() {
-        for (Iterator itr = m_parseErrors.iterator(); itr.hasNext(); ) {
-            SAXParseException e = (SAXParseException) itr.next();
+        for (SAXParseException e : m_parseErrors) {
             LOGGER.severe(e.getMessage());
         }
     }
 
+    @Override
     public String toString() {
         StringBuffer out = new StringBuffer();
-        for (Iterator itr = m_parseErrors.iterator(); itr.hasNext(); ) {
-            SAXParseException e = (SAXParseException) itr.next();
+        for (SAXParseException e : m_parseErrors) {
             out.append(e.getMessage());
         }
 
-        return (out.toString());
+        return out.toString();
     }
 }

@@ -28,35 +28,37 @@ import org.apache.commons.dbcp.DelegatingStatement;
  */
 public class DBCPUnWrapper implements UnWrapper {
 
+    @Override
     public boolean canUnwrap(Connection conn) {
         return conn instanceof DelegatingConnection;
     }
 
+    @Override
     public Connection unwrap(Connection conn) {
         if (!canUnwrap(conn))
             throw new IllegalArgumentException(
                     "This unwrapper can only handle instances of " + DelegatingConnection.class);
         Connection unwrapped = ((DelegatingConnection) conn).getInnermostDelegate();
         if (unwrapped == null)
-            throw new RuntimeException(
-                    "Could not unwrap connection. Is the DBCP pool configured "
-                            + "to allow access to underlying connections?");
+            throw new RuntimeException("Could not unwrap connection. Is the DBCP pool configured "
+                    + "to allow access to underlying connections?");
         return unwrapped;
     }
 
+    @Override
     public boolean canUnwrap(Statement st) {
         return st instanceof DelegatingStatement;
     }
 
+    @Override
     public Statement unwrap(Statement statement) {
         if (!canUnwrap(statement))
             throw new IllegalArgumentException(
                     "This unwrapper can only handle instances of " + DelegatingStatement.class);
         Statement unwrapped = ((DelegatingStatement) statement).getInnermostDelegate();
         if (unwrapped == null)
-            throw new RuntimeException(
-                    "Could not unwrap connection. Is the DBCP pool configured "
-                            + "to allow access to underlying connections?");
+            throw new RuntimeException("Could not unwrap connection. Is the DBCP pool configured "
+                    + "to allow access to underlying connections?");
         return unwrapped;
     }
 }

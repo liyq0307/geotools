@@ -17,9 +17,11 @@
 package org.geotools.data.shapefile.index.quadtree.fs;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 import org.geotools.data.shapefile.index.quadtree.StoreException;
 
@@ -33,36 +35,30 @@ public class IndexHeader {
     private static final String SIGNATURE = "SQT";
     private static final byte VERSION = 1;
     private static final byte[] RESERVED = {0, 0, 0};
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(IndexHeader.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(IndexHeader.class);
     private byte byteOrder;
 
     public IndexHeader(byte byteOrder) {
         this.byteOrder = byteOrder;
     }
 
-    /**
-     * @param channel
-     * @throws IOException
-     * @throws StoreException
-     */
+    /** */
     public IndexHeader(ReadableByteChannel channel) throws IOException, StoreException {
         ByteBuffer buf = ByteBuffer.allocate(8);
 
         channel.read(buf);
-        buf.flip();
+        ((Buffer) buf).flip();
 
         byte[] tmp = new byte[3];
         buf.get(tmp);
 
-        String s = new String(tmp, "US-ASCII");
+        String s = new String(tmp, StandardCharsets.US_ASCII);
 
         if (!s.equals(SIGNATURE)) {
             // Old file format
-            LOGGER.warning(
-                    "Old qix file format; this file format "
-                            + "is deprecated; It is strongly recommended "
-                            + "to regenerate it in new format.");
+            LOGGER.warning("Old qix file format; this file format "
+                    + "is deprecated; It is strongly recommended "
+                    + "to regenerate it in new format.");
 
             buf.position(0);
             tmp = buf.array();
@@ -82,7 +78,7 @@ public class IndexHeader {
     }
 
     public void writeTo(ByteBuffer buf) {
-        Charset charSet = Charset.forName("US-ASCII");
+        Charset charSet = StandardCharsets.US_ASCII;
 
         ByteBuffer tmp = charSet.encode(SIGNATURE);
         tmp.position(0);

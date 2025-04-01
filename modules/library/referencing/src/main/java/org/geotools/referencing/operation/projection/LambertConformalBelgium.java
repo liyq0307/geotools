@@ -16,16 +16,16 @@
  */
 package org.geotools.referencing.operation.projection;
 
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.ConicProjection;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.metadata.i18n.VocabularyKeys;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.ConicProjection;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Lambert Conical Conformal 2SP Belgium Projection.
@@ -47,12 +47,12 @@ public class LambertConformalBelgium extends LambertConformal {
      * @param parameters The parameter values in standard units.
      * @throws ParameterNotFoundException if a mandatory parameter is missing.
      */
-    protected LambertConformalBelgium(final ParameterValueGroup parameters)
-            throws ParameterNotFoundException {
+    protected LambertConformalBelgium(final ParameterValueGroup parameters) throws ParameterNotFoundException {
         super(parameters, true);
     }
 
     /** {@inheritDoc} */
+    @Override
     public ParameterDescriptorGroup getParameterDescriptors() {
         return Provider.PARAMETERS;
     }
@@ -66,9 +66,8 @@ public class LambertConformalBelgium extends LambertConformal {
     //////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for a {@linkplain LambertConformalBelgium Lambert Conformal 2SP Belgium} projection
-     * (EPSG code 9803).
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for a
+     * {@linkplain LambertConformalBelgium Lambert Conformal 2SP Belgium} projection (EPSG code 9803).
      *
      * @since 2.2
      * @version $Id$
@@ -80,25 +79,22 @@ public class LambertConformalBelgium extends LambertConformal {
         private static final long serialVersionUID = -6388030784088639876L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(
-                                    Citations.OGC, "Lambert_Conformal_Conic_2SP_Belgium"),
-                            new NamedIdentifier(
-                                    Citations.EPSG, "Lambert Conic Conformal (2SP Belgium)"),
-                            new NamedIdentifier(Citations.EPSG, "9803"),
-                            new NamedIdentifier(
-                                    Citations.GEOTOOLS,
-                                    Vocabulary.formatInternational(
-                                            VocabularyKeys.LAMBERT_CONFORMAL_PROJECTION))
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR, SEMI_MINOR,
-                            CENTRAL_MERIDIAN, LATITUDE_OF_ORIGIN,
-                            STANDARD_PARALLEL_1, STANDARD_PARALLEL_2,
-                            FALSE_EASTING, FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.OGC, "Lambert_Conformal_Conic_2SP_Belgium"),
+                    new NamedIdentifier(Citations.EPSG, "Lambert Conic Conformal (2SP Belgium)"),
+                    new NamedIdentifier(Citations.EPSG, "9803"),
+                    new NamedIdentifier(
+                            Citations.GEOTOOLS,
+                            Vocabulary.formatInternational(VocabularyKeys.LAMBERT_CONFORMAL_PROJECTION)),
+                    new NamedIdentifier(Citations.PROJ, "lcc")
+                },
+                new ParameterDescriptor[] {
+                    SEMI_MAJOR, SEMI_MINOR,
+                    CENTRAL_MERIDIAN, LATITUDE_OF_ORIGIN,
+                    STANDARD_PARALLEL_1, STANDARD_PARALLEL_2,
+                    FALSE_EASTING, FALSE_NORTHING
+                });
 
         /** Constructs a new provider. */
         public Provider() {
@@ -118,6 +114,7 @@ public class LambertConformalBelgium extends LambertConformal {
          * @return The created math transform.
          * @throws ParameterNotFoundException if a required parameter was not found.
          */
+        @Override
         protected MathTransform createMathTransform(final ParameterValueGroup parameters)
                 throws ParameterNotFoundException {
             return new LambertConformalBelgium(parameters);

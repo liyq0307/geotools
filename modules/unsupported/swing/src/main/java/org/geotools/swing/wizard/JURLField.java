@@ -16,8 +16,6 @@
  */
 package org.geotools.swing.wizard;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -27,8 +25,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
-import org.geotools.data.FileDataStoreFactorySpi;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.FileDataStoreFactorySpi;
+import org.geotools.api.data.Parameter;
 import org.geotools.swing.data.JFileDataStoreChooser;
 import org.geotools.swing.wizard.JWizard.Controller;
 import org.geotools.util.URLs;
@@ -48,18 +46,14 @@ public class JURLField extends ParamField {
         super(parameter);
     }
 
+    @Override
     public JComponent doLayout() {
         final JPanel panel = new JPanel(new MigLayout("insets 0"));
         panel.add(field = new JTextField(32), "width 200::700, growx");
         // field.setActionCommand(FINISH); // pressing return will Finish wizard
 
         panel.add(browse = new JButton("Browse"), "wrap");
-        browse.addActionListener(
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        browse();
-                    }
-                });
+        browse.addActionListener(e -> browse());
         return panel;
     }
 
@@ -84,6 +78,7 @@ public class JURLField extends ParamField {
         }
     }
 
+    @Override
     public URL getValue() {
         String txt = field.getText();
         if (txt == null || txt.equals("")) {
@@ -101,12 +96,14 @@ public class JURLField extends ParamField {
         return null;
     }
 
+    @Override
     public void addListener(Controller controller) {
         // field.addKeyListener(controller);
         field.addActionListener(controller);
         field.getDocument().addDocumentListener(controller);
     }
 
+    @Override
     public void removeListener(Controller controller) {
         // field.removeKeyListener(controller);
         field.removeActionListener(controller);
@@ -131,6 +128,7 @@ public class JURLField extends ParamField {
         return null; // not a file
     }
 
+    @Override
     public void setValue(Object value) {
         if (value instanceof File) {
             File file = (File) value;
@@ -143,6 +141,7 @@ public class JURLField extends ParamField {
         }
     }
 
+    @Override
     public boolean validate() {
         String txt = field.getText();
         if (txt == null || txt.equals("")) {

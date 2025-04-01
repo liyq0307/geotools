@@ -20,11 +20,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.awt.image.RenderedImage;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.Viewer;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
  * Tests the Subsample Average operation.
@@ -122,10 +122,10 @@ public final class SubsampleAverageTest extends GridProcessingTestBase {
          * unexpectedly. I think it is a JAI issue because here below I am using
          * the rule they claim to follow.
          */
-        if (false) {
-            assertEquals(w / 3.0, scaledImage.getWidth(), EPS);
-            assertEquals(h / 3.0, scaledImage.getHeight(), EPS);
-        }
+        //        if (false) {
+        //            assertEquals(w / 3.0, scaledImage.getWidth(), EPS);
+        //            assertEquals(h / 3.0, scaledImage.getHeight(), EPS);
+        //        }
         if (SHOW) {
             Viewer.show(scaled);
         } else {

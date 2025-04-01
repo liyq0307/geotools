@@ -59,6 +59,7 @@ public class PolygonTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.PolygonType;
     }
@@ -70,6 +71,7 @@ public class PolygonTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Polygon.class;
     }
@@ -81,18 +83,21 @@ public class PolygonTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         LinearRing outer = (LinearRing) node.getChildValue("outerBoundaryIs");
         LinearRing[] inner = null;
 
         if (node.hasChild("innerBoundaryIs")) {
-            List l = node.getChildValues("innerBoundaryIs");
-            inner = (LinearRing[]) l.toArray(new LinearRing[l.size()]);
+            @SuppressWarnings("unchecked")
+            List<LinearRing> l = node.getChildValues("innerBoundaryIs");
+            inner = l.toArray(new LinearRing[l.size()]);
         }
 
         return geometryFactory.createPolygon(outer, inner);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         Polygon p = (Polygon) object;
         if ("outerBoundaryIs".equals(name.getLocalPart())) {
@@ -101,7 +106,7 @@ public class PolygonTypeBinding extends AbstractComplexBinding {
             if (p.getNumInteriorRing() > 0) {
                 LinearRing[] interior = new LinearRing[p.getNumInteriorRing()];
                 for (int i = 0; i < interior.length; i++) {
-                    interior[i] = (LinearRing) p.getInteriorRingN(i);
+                    interior[i] = p.getInteriorRingN(i);
                 }
 
                 return interior;

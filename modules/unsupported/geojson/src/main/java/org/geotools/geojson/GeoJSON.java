@@ -17,13 +17,13 @@
 package org.geotools.geojson;
 
 import java.io.IOException;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.geojson.feature.FeatureJSON;
 import org.geotools.geojson.geom.GeometryJSON;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class GeoJSON {
     static GeometryJSON gjson = new GeometryJSON();
@@ -47,8 +47,7 @@ public class GeoJSON {
             } else if (obj instanceof CoordinateReferenceSystem) {
                 fjson.writeCRS((CoordinateReferenceSystem) obj, output);
             } else {
-                throw new IllegalArgumentException(
-                        "Unable able to encode object of type " + obj.getClass());
+                throw new IllegalArgumentException("Unable able to encode object of type " + obj.getClass());
             }
         }
     }

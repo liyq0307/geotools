@@ -18,28 +18,26 @@
 package org.geotools.data.mongodb;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.mongodb.util.JSON;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /** @author tkunicki@boundlessgeo.com */
 public class FeatureTypeDBObjectTest {
@@ -47,21 +45,17 @@ public class FeatureTypeDBObjectTest {
     public FeatureTypeDBObjectTest() {}
 
     @Test
-    public void testRoundTripConversion()
-            throws FileNotFoundException, IOException, FactoryException {
+    public void testRoundTripConversion() throws FileNotFoundException, IOException, FactoryException {
 
         SimpleFeatureType original = buildDummyFeatureType("dummy");
 
-        DBObject dbo = FeatureTypeDBObject.convert(original);
+        BasicDBObject dbo = FeatureTypeDBObject.convert(original);
 
         // make sure we're dealing with proper BSON/JSON by round-tripping it
         // through serialization...
-        StringBuilder jsonBuffer = new StringBuilder();
-        JSON.serialize(dbo, jsonBuffer);
-        String json = jsonBuffer.toString();
-        Object o = JSON.parse(json);
-        assertThat(o, is(instanceOf(DBObject.class)));
-        dbo = (DBObject) o;
+        String json = dbo.toJson();
+
+        dbo = BasicDBObject.parse(json);
 
         SimpleFeatureType result = FeatureTypeDBObject.convert(dbo);
 
@@ -118,8 +112,7 @@ public class FeatureTypeDBObjectTest {
         return original;
     }
 
-    static void compareFeatureTypes(
-            SimpleFeatureType left, SimpleFeatureType right, boolean strictGeometryClass) {
+    static void compareFeatureTypes(SimpleFeatureType left, SimpleFeatureType right, boolean strictGeometryClass) {
 
         assertThat(right.getTypeName(), is(equalTo(left.getTypeName())));
         // verify feature type user data persisted
@@ -127,8 +120,7 @@ public class FeatureTypeDBObjectTest {
         Map<?, ?> originalUserData = left.getUserData();
         assertThat(resultUserData.size(), is(equalTo(originalUserData.size())));
         for (Map.Entry entry : resultUserData.entrySet()) {
-            assertThat(
-                    entry.getValue(), (Matcher) is(equalTo(originalUserData.get(entry.getKey()))));
+            assertThat(entry.getValue(), is(equalTo(originalUserData.get(entry.getKey()))));
         }
 
         // verify we persist and restore same number of attributes
@@ -140,18 +132,13 @@ public class FeatureTypeDBObjectTest {
         // verify we persist and restore CRS (this should always be WGS84 in the wild)
         assertTrue(
                 "CRS are equal",
-                CRS.equalsIgnoreMetadata(
-                        right.getCoordinateReferenceSystem(), left.getCoordinateReferenceSystem()));
+                CRS.equalsIgnoreMetadata(right.getCoordinateReferenceSystem(), left.getCoordinateReferenceSystem()));
 
         if (strictGeometryClass) {
             assertThat(
                     right.getGeometryDescriptor().getType().getBinding().getSimpleName(),
-                    is(
-                            equalTo(
-                                    left.getGeometryDescriptor()
-                                            .getType()
-                                            .getBinding()
-                                            .getSimpleName())));
+                    is(equalTo(
+                            left.getGeometryDescriptor().getType().getBinding().getSimpleName())));
         } else {
             // NOTE!  Geometry type is generalized when persisted...
             assertThat(
@@ -179,8 +166,7 @@ public class FeatureTypeDBObjectTest {
             Map<?, ?> oadUserData = oad.getUserData();
             assertThat(radUserData.size(), is(equalTo(oadUserData.size())));
             for (Map.Entry entry : radUserData.entrySet()) {
-                assertThat(
-                        entry.getValue(), (Matcher) is(equalTo(oadUserData.get(entry.getKey()))));
+                assertThat(entry.getValue(), is(equalTo(oadUserData.get(entry.getKey()))));
             }
         }
     }

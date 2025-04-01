@@ -27,11 +27,10 @@ import org.geotools.ysld.Ysld;
 /** Handles xml parse events for {@link org.geotools.styling.Symbolizer} elements. */
 public class SymbolizerHandler extends SldTransformHandler {
 
-    Map<String, String> options = new LinkedHashMap<String, String>();
+    Map<String, String> options = new LinkedHashMap<>();
 
     @Override
-    public void element(XMLStreamReader xml, SldTransformContext context)
-            throws XMLStreamException, IOException {
+    public void element(XMLStreamReader xml, SldTransformContext context) throws XMLStreamException, IOException {
         String name = xml.getLocalName();
         if ("Geometry".equals(name)) {
             context.scalar("geometry").push(new ExpressionHandler());

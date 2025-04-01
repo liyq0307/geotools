@@ -16,10 +16,12 @@
  */
 package org.geotools.referencing.cs;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
-import org.junit.*;
-import org.opengis.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.junit.Test;
 
 /**
  * Tests the {@link DirectionAlongMeridian} class.
@@ -34,11 +36,9 @@ public final class DirectionAlongMeridianTest {
     /** Tests the {@link DirectionAlongMeridian#parse} method. */
     @Test
     public void testParse() {
-        DirectionAlongMeridian dir;
-        String name;
 
-        name = "South along 180 deg";
-        dir = DirectionAlongMeridian.parse(name);
+        String name = "South along 180 deg";
+        DirectionAlongMeridian dir = DirectionAlongMeridian.parse(name);
         assertNotNull(dir);
         assertEquals(AxisDirection.SOUTH, dir.baseDirection);
         assertEquals(180, dir.meridian, 0);
@@ -84,6 +84,6 @@ public final class DirectionAlongMeridianTest {
         assertEquals(-90, m2.getAngle(m1), EPS);
         assertEquals(-1, m1.compareTo(m2));
         assertEquals(+1, m2.compareTo(m1));
-        assertFalse(m1.equals(m2));
+        assertNotEquals(m1, m2);
     }
 }

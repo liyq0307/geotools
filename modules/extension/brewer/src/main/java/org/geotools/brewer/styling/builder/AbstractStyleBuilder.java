@@ -16,14 +16,14 @@
  */
 package org.geotools.brewer.styling.builder;
 
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Style;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.filter.text.ecql.ECQL;
-import org.geotools.styling.Style;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.Expression;
 
-abstract class AbstractStyleBuilder<T> extends AbstractSLDBuilder<T> {
+abstract class AbstractStyleBuilder<T> extends AbstractSLDBuilder<T> implements Builder<T> {
 
     public AbstractStyleBuilder(AbstractSLDBuilder<?> parent) {
         super(parent);
@@ -81,6 +81,7 @@ abstract class AbstractStyleBuilder<T> extends AbstractSLDBuilder<T> {
         }
     }
 
+    @Override
     public Object buildRoot() {
         if (parent != null) {
             return parent.build();
@@ -91,16 +92,19 @@ abstract class AbstractStyleBuilder<T> extends AbstractSLDBuilder<T> {
 
     protected abstract void buildStyleInternal(StyleBuilder sb);
 
+    @Override
     protected void init(Builder<T> other) {
         reset(other.build());
     }
 
-    public AbstractStyleBuilder<T> unset() {
+    @Override
+    public AbstractSLDBuilder<T> unset() {
         reset();
         unset = true;
         return this;
     }
 
+    @Override
     boolean isUnset() {
         return unset;
     }

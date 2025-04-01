@@ -22,22 +22,24 @@ import static org.geotools.data.shapefile.files.ShpFileType.SHP;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -48,59 +50,61 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
+import org.apache.commons.lang3.SystemUtils;
 import org.geotools.util.URLs;
 import org.geotools.util.logging.Logging;
 
 /**
  * The collection of all the files that are the shapefile and its metadata and indices.
  *
- * <p>This class has methods for performing actions on the files. Currently mainly for obtaining
- * read and write channels and streams. But in the future a move method may be introduced.
+ * <p>This class has methods for performing actions on the files. Currently mainly for obtaining read and write channels
+ * and streams. But in the future a move method may be introduced.
  *
- * <p>Note: The method that require locks (such as getInputStream()) will automatically acquire
- * locks and the javadocs should document how to release the lock. Therefore the methods {@link
- * #acquireRead(ShpFileType, FileReader)} and {@link #acquireWrite(ShpFileType, FileWriter)} svn
+ * <p>Note: The method that require locks (such as getInputStream()) will automatically acquire locks and the javadocs
+ * should document how to release the lock. Therefore the methods {@link #acquireRead(ShpFileType, FileReader)} and
+ * {@link #acquireWrite(ShpFileType, FileWriter)} svn
  *
  * @author jesse
  */
 public class ShpFiles {
 
+    public static final boolean DEFAULT_SKIP_SCAN = false;
+
     static final Logger LOGGER = Logging.getLogger(ShpFiles.class);
 
-    /**
-     * The urls for each type of file that is associated with the shapefile. The key is the type of
-     * file
-     */
-    private final Map<ShpFileType, URL> urls = new ConcurrentHashMap<ShpFileType, URL>();
+    /** The urls for each type of file that is associated with the shapefile. The key is the type of file */
+    private final Map<ShpFileType, URL> urls = new ConcurrentHashMap<>();
 
     /** A read/write lock, so that we can have concurrent readers */
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    /**
-     * The set of locker sources per thread. Used as a debugging aid and to upgrade/downgrade the
-     * locks
-     */
-    private final Map<Thread, Collection<ShpFilesLocker>> lockers =
-            new ConcurrentHashMap<Thread, Collection<ShpFilesLocker>>();
+    /** The set of locker sources per thread. Used as a debugging aid and to upgrade/downgrade the locks */
+    private final Map<Thread, Collection<ShpFilesLocker>> lockers = new ConcurrentHashMap<>();
 
     /** A cache for read only memory mapped buffers */
     private final MemoryMapCache mapCache = new MemoryMapCache();
 
     private boolean memoryMapCacheEnabled;
 
+    public ShpFiles(String fileName) throws MalformedURLException {
+        this(fileName, DEFAULT_SKIP_SCAN);
+    }
+
     /**
      * Searches for all the files and adds then to the map of files.
      *
      * @param fileName the filename or url of any one of the shapefile files
-     * @throws MalformedURLException if it isn't possible to create a URL from string. It will be
-     *     used to create a file and create a URL from that if both fail this exception is thrown
+     * @param skipScan skip the scan for alternative shapefile extensions (i.e. .SHP, .shp.XML, ...)
+     * @throws MalformedURLException if it isn't possible to create a URL from string. It will be used to create a file
+     *     and create a URL from that if both fail this exception is thrown
      */
-    public ShpFiles(String fileName) throws MalformedURLException {
+    public ShpFiles(String fileName, boolean skipScan) throws MalformedURLException {
         try {
             URL url = new URL(fileName);
-            init(url);
+            init(url, skipScan);
         } catch (MalformedURLException e) {
-            init(new File(fileName).toURI().toURL());
+            init(new File(fileName).toURI().toURL(), skipScan);
         }
     }
 
@@ -111,7 +115,11 @@ public class ShpFiles {
      * @throws FileNotFoundException if the shapefile associated with file is not found
      */
     public ShpFiles(File file) throws MalformedURLException {
-        init(file.toURI().toURL());
+        this(file, DEFAULT_SKIP_SCAN);
+    }
+
+    public ShpFiles(File file, boolean skipScan) throws MalformedURLException {
+        init(file.toURI().toURL(), skipScan);
     }
 
     /**
@@ -120,24 +128,34 @@ public class ShpFiles {
      * @param url any one of the shapefile files
      */
     public ShpFiles(URL url) throws IllegalArgumentException {
-        init(url);
+        this(url, DEFAULT_SKIP_SCAN);
     }
 
-    private void init(URL url) {
+    /**
+     * Searches for all the files and adds then to the map of files.
+     *
+     * @param url any one of the shapefile files
+     * @param skipScan avoid searching for other extensions when missing.
+     */
+    public ShpFiles(URL url, boolean skipScan) throws IllegalArgumentException {
+        init(url, skipScan);
+    }
+
+    private void init(URL url, boolean skipScan) {
         String base = baseName(url);
         if (base == null) {
             throw new IllegalArgumentException(
-                    url.getPath()
-                            + " is not one of the files types that is known to be associated with a shapefile");
+                    url.getPath() + " is not one of the files types that is known to be associated with a shapefile");
         }
 
         String urlString = url.toExternalForm();
         char lastChar = urlString.charAt(urlString.length() - 1);
         boolean upperCase = Character.isUpperCase(lastChar);
 
+        boolean isGz = urlString.toLowerCase().endsWith(".gz");
         for (ShpFileType type : ShpFileType.values()) {
 
-            String extensionWithPeriod = type.extensionWithPeriod;
+            String extensionWithPeriod = isGz ? type.gzExtensionWithPeriod : type.extensionWithPeriod;
             if (upperCase) {
                 extensionWithPeriod = extensionWithPeriod.toUpperCase();
             } else {
@@ -158,10 +176,11 @@ public class ShpFiles {
         // if the files are local check each file to see if it exists
         // if not then search for a file of the same name but try all combinations of the
         // different cases that the extension can be made up of.
-        // IE Shp, SHP, Shp, ShP etc...
-        if (isLocal()) {
+        // IE Shp, SHP, shp, ShP etc...
+        // Note that WINDOWS is case-insensitive, so we can skip the search in that case
+        if (!SystemUtils.IS_OS_WINDOWS && isLocal() && !skipScan) {
             Set<Entry<ShpFileType, URL>> entries = urls.entrySet();
-            Map<ShpFileType, URL> toUpdate = new HashMap<ShpFileType, URL>();
+            Map<ShpFileType, URL> toUpdate = new HashMap<>();
             for (Entry<ShpFileType, URL> entry : entries) {
                 if (!exists(entry.getKey())) {
                     url = findExistingFile(entry.getKey(), entry.getValue());
@@ -182,14 +201,8 @@ public class ShpFiles {
             // doesn't exist
             return null;
         }
-        File[] files =
-                directory.listFiles(
-                        new FilenameFilter() {
-
-                            public boolean accept(File dir, String name) {
-                                return file.getName().equalsIgnoreCase(name);
-                            }
-                        });
+        File[] files = directory.listFiles((dir, name) ->
+                file.getName().equalsIgnoreCase(name) || (file.getName() + ".gz").equalsIgnoreCase(name));
         if (files != null && files.length > 0) {
             try {
                 return files[0].toURI().toURL();
@@ -255,7 +268,7 @@ public class ShpFiles {
      * @return the URLs (in string form) of all the files for the shapefile datastore.
      */
     public Map<ShpFileType, String> getFileNames() {
-        Map<ShpFileType, String> result = new HashMap<ShpFileType, String>();
+        Map<ShpFileType, String> result = new HashMap<>();
         Set<Entry<ShpFileType, URL>> entries = urls.entrySet();
 
         for (Entry<ShpFileType, URL> entry : entries) {
@@ -266,23 +279,23 @@ public class ShpFiles {
     }
 
     /**
-     * Returns the string form of the url that identifies the file indicated by the type parameter
-     * or null if it is known that the file does not exist.
+     * Returns the string form of the url that identifies the file indicated by the type parameter or null if it is
+     * known that the file does not exist.
      *
-     * <p>Note: a URL should NOT be constructed from the string instead the URL should be obtained
-     * through calling one of the aquireLock methods.
+     * <p>Note: a URL should NOT be constructed from the string instead the URL should be obtained through calling one
+     * of the aquireLock methods.
      *
      * @param type indicates the type of file the caller is interested in.
-     * @return the string form of the url that identifies the file indicated by the type parameter
-     *     or null if it is known that the file does not exist.
+     * @return the string form of the url that identifies the file indicated by the type parameter or null if it is
+     *     known that the file does not exist.
      */
     public String get(ShpFileType type) {
         return urls.get(type).toExternalForm();
     }
 
     /**
-     * Returns the number of locks on the current set of shapefile files. This is not thread safe so
-     * do not count on it to have a completely accurate picture but it can be useful debugging
+     * Returns the number of locks on the current set of shapefile files. This is not thread safe so do not count on it
+     * to have a completely accurate picture but it can be useful debugging
      *
      * @return the number of locks on the current set of shapefile files.
      */
@@ -295,15 +308,15 @@ public class ShpFiles {
     }
 
     /**
-     * Acquire a File for read only purposes. It is recommended that get*Stream or get*Channel
-     * methods are used when reading or writing to the file is desired.
+     * Acquire a File for read only purposes. It is recommended that get*Stream or get*Channel methods are used when
+     * reading or writing to the file is desired.
      *
      * @see #getInputStream(ShpFileType, FileReader)
      * @see #getReadChannel(ShpFileType, FileReader)
      * @see #getWriteChannel(ShpFileType, FileReader)
      * @param type the type of the file desired.
-     * @param requestor the object that is requesting the File. The same object must release the
-     *     lock and is also used for debugging.
+     * @param requestor the object that is requesting the File. The same object must release the lock and is also used
+     *     for debugging.
      * @return the File type requested
      */
     public File acquireReadFile(ShpFileType type, FileReader requestor) {
@@ -315,15 +328,15 @@ public class ShpFiles {
     }
 
     /**
-     * Acquire a URL for read only purposes. It is recommended that get*Stream or get*Channel
-     * methods are used when reading or writing to the file is desired.
+     * Acquire a URL for read only purposes. It is recommended that get*Stream or get*Channel methods are used when
+     * reading or writing to the file is desired.
      *
      * @see #getInputStream(ShpFileType, FileReader)
      * @see #getReadChannel(ShpFileType, FileReader)
      * @see #getWriteChannel(ShpFileType, FileReader)
      * @param type the type of the file desired.
-     * @param requestor the object that is requesting the URL. The same object must release the lock
-     *     and is also used for debugging.
+     * @param requestor the object that is requesting the URL. The same object must release the lock and is also used
+     *     for debugging.
      * @return the URL to the file of the type requested
      */
     public URL acquireRead(ShpFileType type, FileReader requestor) {
@@ -337,34 +350,33 @@ public class ShpFiles {
     }
 
     /**
-     * Tries to acquire a URL for read only purposes. Returns null if the acquire failed or if the
-     * file does not.
+     * Tries to acquire a URL for read only purposes. Returns null if the acquire failed or if the file does not.
      *
-     * <p>It is recommended that get*Stream or get*Channel methods are used when reading or writing
-     * to the file is desired.
+     * <p>It is recommended that get*Stream or get*Channel methods are used when reading or writing to the file is
+     * desired.
      *
      * @see #getInputStream(ShpFileType, FileReader)
      * @see #getReadChannel(ShpFileType, FileReader)
      * @see #getWriteChannel(ShpFileType, FileReader)
      * @param type the type of the file desired.
-     * @param requestor the object that is requesting the URL. The same object must release the lock
-     *     and is also used for debugging.
+     * @param requestor the object that is requesting the URL. The same object must release the lock and is also used
+     *     for debugging.
      * @return A result object containing the URL or the reason for the failure.
      */
     public Result<URL, State> tryAcquireRead(ShpFileType type, FileReader requestor) {
         URL url = urls.get(type);
         if (url == null) {
-            return new Result<URL, State>(null, State.NOT_EXIST);
+            return new Result<>(null, State.NOT_EXIST);
         }
 
         boolean locked = readWriteLock.readLock().tryLock();
         if (!locked) {
-            return new Result<URL, State>(null, State.LOCKED);
+            return new Result<>(null, State.LOCKED);
         }
 
         getCurrentThreadLockers().add(new ShpFilesLocker(url, requestor));
 
-        return new Result<URL, State>(url, State.GOOD);
+        return new Result<>(url, State.GOOD);
     }
 
     /**
@@ -395,31 +407,32 @@ public class ShpFiles {
         if (requestor == null) {
             throw new NullPointerException("requestor cannot be null");
         }
+        LOGGER.fine(() -> "Read lock: " + url + " by " + requestor.id());
+        Collection<ShpFilesLocker> threadLockers = getCurrentThreadLockers();
+        ShpFilesLocker requestedLocker = threadLockers.stream()
+                .filter(l -> l.compare(url, requestor))
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException("Expected requestor "
+                        + requestor
+                        + " to have locked the url but it does not hold the lock for the URL"));
 
-        Collection threadLockers = getCurrentThreadLockers();
-        boolean removed = threadLockers.remove(new ShpFilesLocker(url, requestor));
-        if (!removed) {
-            throw new IllegalArgumentException(
-                    "Expected requestor "
-                            + requestor
-                            + " to have locked the url but it does not hold the lock for the URL");
-        }
-        if (threadLockers.size() == 0) lockers.remove(Thread.currentThread());
+        threadLockers.remove(requestedLocker);
+        if (threadLockers.isEmpty()) lockers.remove(Thread.currentThread());
         readWriteLock.readLock().unlock();
     }
 
     /**
      * Acquire a File for read and write purposes.
      *
-     * <p>It is recommended that get*Stream or get*Channel methods are used when reading or writing
-     * to the file is desired.
+     * <p>It is recommended that get*Stream or get*Channel methods are used when reading or writing to the file is
+     * desired.
      *
      * @see #getInputStream(ShpFileType, FileReader)
      * @see #getReadChannel(ShpFileType, FileReader)
      * @see #getWriteChannel(ShpFileType, FileReader)
      * @param type the type of the file desired.
-     * @param requestor the object that is requesting the File. The same object must release the
-     *     lock and is also used for debugging.
+     * @param requestor the object that is requesting the File. The same object must release the lock and is also used
+     *     for debugging.
      * @return the File to the file of the type requested
      */
     public File acquireWriteFile(ShpFileType type, FileWriter requestor) {
@@ -433,15 +446,15 @@ public class ShpFiles {
     /**
      * Acquire a URL for read and write purposes.
      *
-     * <p>It is recommended that get*Stream or get*Channel methods are used when reading or writing
-     * to the file is desired.
+     * <p>It is recommended that get*Stream or get*Channel methods are used when reading or writing to the file is
+     * desired.
      *
      * @see #getInputStream(ShpFileType, FileReader)
      * @see #getReadChannel(ShpFileType, FileReader)
      * @see #getWriteChannel(ShpFileType, FileReader)
      * @param type the type of the file desired.
-     * @param requestor the object that is requesting the URL. The same object must release the lock
-     *     and is also used for debugging.
+     * @param requestor the object that is requesting the URL. The same object must release the lock and is also used
+     *     for debugging.
      * @return the URL to the file of the type requested
      */
     public URL acquireWrite(ShpFileType type, FileWriter requestor) {
@@ -460,25 +473,24 @@ public class ShpFiles {
     }
 
     /**
-     * Tries to acquire a URL for read/write purposes. Returns null if the acquire failed or if the
-     * file does not exist
+     * Tries to acquire a URL for read/write purposes. Returns null if the acquire failed or if the file does not exist
      *
-     * <p>It is recommended that get*Stream or get*Channel methods are used when reading or writing
-     * to the file is desired.
+     * <p>It is recommended that get*Stream or get*Channel methods are used when reading or writing to the file is
+     * desired.
      *
      * @see #getInputStream(ShpFileType, FileReader)
      * @see #getReadChannel(ShpFileType, FileReader)
      * @see #getWriteChannel(ShpFileType, FileReader)
      * @param type the type of the file desired.
-     * @param requestor the object that is requesting the URL. The same object must release the lock
-     *     and is also used for debugging.
+     * @param requestor the object that is requesting the URL. The same object must release the lock and is also used
+     *     for debugging.
      * @return A result object containing the URL or the reason for the failure.
      */
     public Result<URL, State> tryAcquireWrite(ShpFileType type, FileWriter requestor) {
 
         URL url = urls.get(type);
         if (url == null) {
-            return new Result<URL, State>(null, State.NOT_EXIST);
+            return new Result<>(null, State.NOT_EXIST);
         }
 
         Collection<ShpFilesLocker> threadLockers = getCurrentThreadLockers();
@@ -489,16 +501,16 @@ public class ShpFiles {
             locked = readWriteLock.writeLock().tryLock();
             if (locked == false) {
                 regainReadLocks(threadLockers);
-                return new Result<URL, State>(null, State.LOCKED);
+                return new Result<>(null, State.LOCKED);
             }
         }
 
         threadLockers.add(new ShpFilesLocker(url, requestor));
-        return new Result<URL, State>(url, State.GOOD);
+        return new Result<>(url, State.GOOD);
     }
 
     /**
-     * Unlocks a read lock. The file and requestor must be the the same as the one of the lockers.
+     * Unlocks a write lock. The file and requestor must be the the same as the one of the lockers.
      *
      * @param file file that was locked
      * @param requestor the class that requested the file
@@ -513,7 +525,7 @@ public class ShpFiles {
     }
 
     /**
-     * Unlocks a read lock. The requestor must be have previously obtained a lock for the url.
+     * Unlocks a write lock. The requestor must be have previously obtained a lock for the url.
      *
      * @param url url that was locked
      * @param requestor the class that requested the url
@@ -525,16 +537,17 @@ public class ShpFiles {
         if (requestor == null) {
             throw new NullPointerException("requestor cannot be null");
         }
+        LOGGER.fine(() -> "Write lock: " + url + " by " + requestor.id());
         Collection<ShpFilesLocker> threadLockers = getCurrentThreadLockers();
-        boolean removed = threadLockers.remove(new ShpFilesLocker(url, requestor));
-        if (!removed) {
-            throw new IllegalArgumentException(
-                    "Expected requestor "
-                            + requestor
-                            + " to have locked the url but it does not hold the lock for the URL");
-        }
+        ShpFilesLocker requestedLocker = threadLockers.stream()
+                .filter(l -> l.compare(url, requestor))
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException("Expected requestor "
+                        + requestor
+                        + " to have locked the url but it does not hold the lock for the URL"));
+        threadLockers.remove(requestedLocker);
 
-        if (threadLockers.size() == 0) {
+        if (threadLockers.isEmpty()) {
             lockers.remove(Thread.currentThread());
         } else {
             // get back read locks before giving up the write one
@@ -543,25 +556,17 @@ public class ShpFiles {
         readWriteLock.writeLock().unlock();
     }
 
-    /**
-     * Returns the list of lockers attached to a given thread, or creates it if missing
-     *
-     * @return
-     */
-    private Collection<ShpFilesLocker> getCurrentThreadLockers() {
+    /** Returns the list of lockers attached to a given thread, or creates it if missing */
+    Collection<ShpFilesLocker> getCurrentThreadLockers() {
         Collection<ShpFilesLocker> threadLockers = lockers.get(Thread.currentThread());
         if (threadLockers == null) {
-            threadLockers = new ArrayList<ShpFilesLocker>();
+            threadLockers = new ArrayList<>();
             lockers.put(Thread.currentThread(), threadLockers);
         }
         return threadLockers;
     }
 
-    /**
-     * Gives up all read locks in preparation for lock upgade
-     *
-     * @param threadLockers
-     */
+    /** Gives up all read locks in preparation for lock upgade */
     private void relinquishReadLocks(Collection<ShpFilesLocker> threadLockers) {
         for (ShpFilesLocker shpFilesLocker : threadLockers) {
             if (shpFilesLocker.reader != null && !shpFilesLocker.upgraded) {
@@ -571,11 +576,7 @@ public class ShpFiles {
         }
     }
 
-    /**
-     * Re-takes the read locks in preparation for lock downgrade
-     *
-     * @param threadLockers
-     */
+    /** Re-takes the read locks in preparation for lock downgrade */
     private void regainReadLocks(Collection<ShpFilesLocker> threadLockers) {
         for (ShpFilesLocker shpFilesLocker : threadLockers) {
             if (shpFilesLocker.reader != null && shpFilesLocker.upgraded) {
@@ -594,22 +595,21 @@ public class ShpFiles {
         return urls.get(ShpFileType.SHP).toExternalForm().toLowerCase().startsWith("file:");
     }
 
-    /**
-     * Returns true if the files are writable
-     *
-     * @return
-     */
-    public boolean isWritable() {
-        if (!isLocal()) {
-            return false;
-        }
-        return URLs.urlToFile(urls.get(SHP)).canWrite() && URLs.urlToFile(urls.get(DBF)).canWrite();
+    /** @return whether the files are gzip-ped. */
+    public boolean isGz() {
+        return urls.get(ShpFileType.SHP).toExternalForm().toLowerCase().endsWith(".gz");
     }
 
-    /**
-     * Delete all the shapefile files. If the files are not local or the one files cannot be deleted
-     * return false.
-     */
+    /** Returns true if the files are writable */
+    public boolean isWritable() {
+        if (!isLocal() || isGz()) {
+            return false;
+        }
+        return URLs.urlToFile(urls.get(SHP)).canWrite()
+                && URLs.urlToFile(urls.get(DBF)).canWrite();
+    }
+
+    /** Delete all the shapefile files. If the files are not local or the one files cannot be deleted return false. */
     public boolean delete() {
         BasicShpFileWriter requestor = new BasicShpFileWriter("ShpFiles for deleting all files");
         URL writeLockURL = acquireWrite(SHP, requestor);
@@ -633,36 +633,33 @@ public class ShpFiles {
     }
 
     /**
-     * Opens a input stream for the indicated file. A read lock is requested at the method call and
-     * released on close.
+     * Opens a input stream for the indicated file. A read lock is requested at the method call and released on close.
      *
      * @param type the type of file to open the stream to.
      * @param requestor the object requesting the stream
      * @return an input stream
      * @throws IOException if a problem occurred opening the stream.
      */
-    public InputStream getInputStream(ShpFileType type, final FileReader requestor)
-            throws IOException {
+    public InputStream getInputStream(ShpFileType type, final FileReader requestor) throws IOException {
         final URL url = acquireRead(type, requestor);
 
         try {
-            FilterInputStream input =
-                    new FilterInputStream(url.openStream()) {
+            FilterInputStream input = new FilterInputStream(url.openStream()) {
 
-                        private volatile boolean closed = false;
+                private volatile boolean closed = false;
 
-                        @Override
-                        public void close() throws IOException {
-                            try {
-                                super.close();
-                            } finally {
-                                if (!closed) {
-                                    closed = true;
-                                    unlockRead(url, requestor);
-                                }
-                            }
+                @Override
+                public void close() throws IOException {
+                    try {
+                        super.close();
+                    } finally {
+                        if (!closed) {
+                            closed = true;
+                            unlockRead(url, requestor);
                         }
-                    };
+                    }
+                }
+            };
             return input;
         } catch (Throwable e) {
             unlockRead(url, requestor);
@@ -679,21 +676,19 @@ public class ShpFiles {
     }
 
     /**
-     * Opens a output stream for the indicated file. A write lock is requested at the method call
-     * and released on close.
+     * Opens a output stream for the indicated file. A write lock is requested at the method call and released on close.
      *
      * @param type the type of file to open the stream to.
      * @param requestor the object requesting the stream
      * @return an output stream
      * @throws IOException if a problem occurred opening the stream.
      */
-    public OutputStream getOutputStream(ShpFileType type, final FileWriter requestor)
-            throws IOException {
+    @SuppressWarnings("PMD.CloseResource") // resource is returned
+    public OutputStream getOutputStream(ShpFileType type, final FileWriter requestor) throws IOException {
         final URL url = acquireWrite(type, requestor);
-
+        OutputStream out = null;
         try {
 
-            OutputStream out;
             if (isLocal()) {
                 File file = URLs.urlToFile(url);
                 out = new FileOutputStream(file);
@@ -703,27 +698,29 @@ public class ShpFiles {
                 out = connection.getOutputStream();
             }
 
-            FilterOutputStream output =
-                    new FilterOutputStream(out) {
+            FilterOutputStream output = new FilterOutputStream(out) {
 
-                        private volatile boolean closed = false;
+                private volatile boolean closed = false;
 
-                        @Override
-                        public void close() throws IOException {
-                            try {
-                                super.close();
-                            } finally {
-                                if (!closed) {
-                                    closed = true;
-                                    unlockWrite(url, requestor);
-                                }
-                            }
+                @Override
+                public void close() throws IOException {
+                    try {
+                        super.close();
+                    } finally {
+                        if (!closed) {
+                            closed = true;
+                            unlockWrite(url, requestor);
                         }
-                    };
+                    }
+                }
+            };
 
             return output;
         } catch (Throwable e) {
             unlockWrite(url, requestor);
+            if (out != null) {
+                out.close();
+            }
             if (e instanceof IOException) {
                 throw (IOException) e;
             } else if (e instanceof RuntimeException) {
@@ -737,32 +734,31 @@ public class ShpFiles {
     }
 
     /**
-     * Obtain a ReadableByteChannel from the given URL. If the url protocol is file, a FileChannel
-     * will be returned. Otherwise a generic channel will be obtained from the urls input stream.
+     * Obtain a ReadableByteChannel from the given URL. If the url protocol is file, a FileChannel will be returned.
+     * Otherwise a generic channel will be obtained from the urls input stream.
      *
-     * <p>A read lock is obtained when this method is called and released when the channel is
-     * closed.
+     * <p>A read lock is obtained when this method is called and released when the channel is closed.
      *
      * @param type the type of file to open the channel to.
      * @param requestor the object requesting the channel
      */
-    public ReadableByteChannel getReadChannel(ShpFileType type, FileReader requestor)
-            throws IOException {
+    @SuppressWarnings("PMD.CloseResource") // cannot close RAF/IS locally, the channel refers to it
+    public ReadableByteChannel getReadChannel(ShpFileType type, FileReader requestor) throws IOException {
         URL url = acquireRead(type, requestor);
         ReadableByteChannel channel = null;
         try {
-            if (isLocal()) {
-
+            if (isLocal() && !isGz()) {
                 File file = URLs.urlToFile(url);
 
+                @SuppressWarnings("resource")
                 RandomAccessFile raf = new RandomAccessFile(file, "r");
                 channel = new FileChannelDecorator(raf.getChannel(), this, url, requestor);
-
             } else {
                 InputStream in = url.openConnection().getInputStream();
-                channel =
-                        new ReadableByteChannelDecorator(
-                                Channels.newChannel(in), this, url, requestor);
+                if (isGz()) {
+                    in = new GZIPInputStream(in);
+                }
+                channel = new ReadableByteChannelDecorator(Channels.newChannel(in), this, url, requestor);
             }
         } catch (Throwable e) {
             unlockRead(url, requestor);
@@ -780,20 +776,19 @@ public class ShpFiles {
     }
 
     /**
-     * Obtain a WritableByteChannel from the given URL. If the url protocol is file, a FileChannel
-     * will be returned. Currently, this method will return a generic channel for remote urls,
-     * however both shape and dbf writing can only occur with a local FileChannel channel.
+     * Obtain a WritableByteChannel from the given URL. If the url protocol is file, a FileChannel will be returned.
+     * Currently, this method will return a generic channel for remote urls, however both shape and dbf writing can only
+     * occur with a local FileChannel channel.
      *
-     * <p>A write lock is obtained when this method is called and released when the channel is
-     * closed.
+     * <p>A write lock is obtained when this method is called and released when the channel is closed.
      *
      * @param type the type of file to open the stream to.
      * @param requestor the object requesting the stream
      * @return a WritableByteChannel for the provided file type
      * @throws IOException if there is an error opening the stream
      */
-    public WritableByteChannel getWriteChannel(ShpFileType type, FileWriter requestor)
-            throws IOException {
+    @SuppressWarnings("PMD.CloseResource") // closeable resource are returned
+    public WritableByteChannel getWriteChannel(ShpFileType type, FileWriter requestor) throws IOException {
 
         URL url = acquireWrite(type, requestor);
 
@@ -803,6 +798,7 @@ public class ShpFiles {
 
                 File file = URLs.urlToFile(url);
 
+                @SuppressWarnings("resource")
                 RandomAccessFile raf = new RandomAccessFile(file, "rw");
                 channel = new FileChannelDecorator(raf.getChannel(), this, url, requestor);
 
@@ -810,9 +806,7 @@ public class ShpFiles {
 
             } else {
                 OutputStream out = url.openConnection().getOutputStream();
-                channel =
-                        new WritableByteChannelDecorator(
-                                Channels.newChannel(out), this, url, requestor);
+                channel = new WritableByteChannelDecorator(Channels.newChannel(out), this, url, requestor);
             }
 
             return channel;
@@ -840,8 +834,8 @@ public class ShpFiles {
     }
 
     /**
-     * Obtains a Storage file for the type indicated. An id is provided so that the same file can be
-     * obtained at a later time with just the id
+     * Obtains a Storage file for the type indicated. An id is provided so that the same file can be obtained at a later
+     * time with just the id
      *
      * @param type the type of file to create and return
      * @return StorageFile
@@ -859,23 +853,21 @@ public class ShpFiles {
     public String getTypeName() {
         String path = SHP.toBase(urls.get(SHP));
         int slash = Math.max(0, path.lastIndexOf('/') + 1);
-        return path.substring(slash);
+        String typeName = path.substring(slash);
+        try {
+            // ensure that special characters are correctly decoded
+            typeName = URLDecoder.decode(typeName, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            LOGGER.log(
+                    Level.WARNING,
+                    "Failed to decode shp file url using UTF-8. "
+                            + " Retrieving the Type Name from the not decoded url");
+        }
+        return typeName;
     }
 
-    /**
-     * Internal method that the file channel decorators will call to allow reuse of the memory
-     * mapped buffers
-     *
-     * @param wrapped
-     * @param url
-     * @param mode
-     * @param position
-     * @param size
-     * @return
-     * @throws IOException
-     */
-    MappedByteBuffer map(FileChannel wrapped, URL url, MapMode mode, long position, long size)
-            throws IOException {
+    /** Internal method that the file channel decorators will call to allow reuse of the memory mapped buffers */
+    MappedByteBuffer map(FileChannel wrapped, URL url, MapMode mode, long position, long size) throws IOException {
         if (memoryMapCacheEnabled) {
             return mapCache.map(wrapped, url, mode, position, size);
         } else {
@@ -884,20 +876,16 @@ public class ShpFiles {
     }
 
     /**
-     * Returns the status of the memory map cache. When enabled the memory mapped portions of the
-     * files are cached and shared (giving each thread a clone of it)
-     *
-     * @param memoryMapCacheEnabled
+     * Returns the status of the memory map cache. When enabled the memory mapped portions of the files are cached and
+     * shared (giving each thread a clone of it)
      */
     public boolean isMemoryMapCacheEnabled() {
         return memoryMapCacheEnabled;
     }
 
     /**
-     * Enables the memory map cache. When enabled the memory mapped portions of the files are cached
-     * and shared (giving each thread a clone of it)
-     *
-     * @param memoryMapCacheEnabled
+     * Enables the memory map cache. When enabled the memory mapped portions of the files are cached and shared (giving
+     * each thread a clone of it)
      */
     public void setMemoryMapCacheEnabled(boolean memoryMapCacheEnabled) {
         this.memoryMapCacheEnabled = memoryMapCacheEnabled;
@@ -915,8 +903,7 @@ public class ShpFiles {
      */
     public boolean exists(ShpFileType fileType) throws IllegalArgumentException {
         if (!isLocal()) {
-            throw new IllegalArgumentException(
-                    "This method only makes sense if the files are local");
+            throw new IllegalArgumentException("This method only makes sense if the files are local");
         }
         URL url = urls.get(fileType);
         if (url == null) {

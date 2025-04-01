@@ -16,12 +16,21 @@
  */
 package org.geotools.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.NotSerializableException;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.*;
+import org.junit.Test;
 
 /**
  * Tests the {@link Classes} static methods.
@@ -33,7 +42,7 @@ public final class ClassesTest {
     /** Tests {@link Classes#mostSpecificClass} and {@link Classes#commonClass}. */
     @Test
     public void testCommonParent() {
-        final Set<Object> types = new HashSet<Object>();
+        final Set<Object> types = new HashSet<>();
 
         assertTrue(types.add(new NotSerializableException()));
         assertEquals(NotSerializableException.class, Classes.commonClass(types));
@@ -73,24 +82,19 @@ public final class ClassesTest {
      * @throws NoSuchMethodException Should never occur.
      */
     @Test
-    public void testBoundOfParameterizedAttribute()
-            throws NoSuchFieldException, NoSuchMethodException {
+    public void testBoundOfParameterizedAttribute() throws NoSuchFieldException, NoSuchMethodException {
         final Class<?>[] g = null;
-        final Class<?>[] s = new Class[] {Set.class};
+        final Class<?>[] s = {Set.class};
         final Class<ClassesTest> c = ClassesTest.class;
         assertNull(Classes.boundOfParameterizedAttribute(c.getMethod("getter0", g)));
         assertNull(Classes.boundOfParameterizedAttribute(c.getMethod("setter0", s)));
         assertEquals(Long.class, Classes.boundOfParameterizedAttribute(c.getField("attrib2")));
-        assertEquals(
-                Integer.class, Classes.boundOfParameterizedAttribute(c.getMethod("getter1", g)));
+        assertEquals(Integer.class, Classes.boundOfParameterizedAttribute(c.getMethod("getter1", g)));
         assertEquals(Byte.class, Classes.boundOfParameterizedAttribute(c.getMethod("getter2", g)));
-        assertEquals(
-                Object.class, Classes.boundOfParameterizedAttribute(c.getMethod("getter3", g)));
-        assertEquals(
-                String.class, Classes.boundOfParameterizedAttribute(c.getMethod("setter1", s)));
+        assertEquals(Object.class, Classes.boundOfParameterizedAttribute(c.getMethod("getter3", g)));
+        assertEquals(String.class, Classes.boundOfParameterizedAttribute(c.getMethod("setter1", s)));
         assertEquals(Short.class, Classes.boundOfParameterizedAttribute(c.getMethod("setter2", s)));
-        assertEquals(
-                Object.class, Classes.boundOfParameterizedAttribute(c.getMethod("setter3", s)));
+        assertEquals(Object.class, Classes.boundOfParameterizedAttribute(c.getMethod("setter3", s)));
     }
 
     public Set<? extends Long> attrib2 = null;

@@ -19,27 +19,25 @@ package org.geotools.referencing.factory.gridshift;
 import au.com.objectix.jgridshift.GridShiftFile;
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.factory.ReferencingFactory;
 import org.geotools.util.SoftValueHashMap;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.AbstractFactory;
 import org.geotools.util.factory.BufferedFactory;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.FactoryException;
 
 /**
- * Loads and caches NTv2 grid files. Thisthat incorporates a soft cache mechanism to keep grids in
- * memory when first loaded. It also checks NTv2 grid file format in {@link #isNTv2Grid(String)}
- * method.
+ * Loads and caches NTv2 grid files. Thisthat incorporates a soft cache mechanism to keep grids in memory when first
+ * loaded. It also checks NTv2 grid file format in {@link #isNTv2Grid(String)} method.
  *
  * @author Oscar Fonts
  */
@@ -57,19 +55,18 @@ public class NTv2GridShiftFactory extends ReferencingFactory implements Buffered
     /** Constructs a factory with the default priority. */
     public NTv2GridShiftFactory() {
         super();
-        ntv2GridCache = new SoftValueHashMap<String, GridShiftFile>(GRID_CACHE_HARD_REFERENCES);
+        ntv2GridCache = new SoftValueHashMap<>(GRID_CACHE_HARD_REFERENCES);
     }
 
     /**
      * Constructs an instance using the specified priority level.
      *
-     * @param priority The priority for this factory, as a number between {@link
-     *     AbstractFactory#MINIMUM_PRIORITY MINIMUM_PRIORITY} and {@link
-     *     AbstractFactory#MAXIMUM_PRIORITY MAXIMUM_PRIORITY} inclusive.
+     * @param priority The priority for this factory, as a number between {@link AbstractFactory#MINIMUM_PRIORITY
+     *     MINIMUM_PRIORITY} and {@link AbstractFactory#MAXIMUM_PRIORITY MAXIMUM_PRIORITY} inclusive.
      */
     public NTv2GridShiftFactory(final int priority) {
         super(priority);
-        ntv2GridCache = new SoftValueHashMap<String, GridShiftFile>(GRID_CACHE_HARD_REFERENCES);
+        ntv2GridCache = new SoftValueHashMap<>(GRID_CACHE_HARD_REFERENCES);
     }
 
     /**
@@ -124,8 +121,6 @@ public class NTv2GridShiftFactory extends ReferencingFactory implements Buffered
      * @return true if file has NTv2 format, false otherwise
      */
     protected boolean isNTv2GridFileValid(URL url) {
-        RandomAccessFile raf = null;
-        InputStream is = null;
         try {
 
             // Loading as RandomAccessFile doesn't load the full grid
@@ -135,39 +130,28 @@ public class NTv2GridShiftFactory extends ReferencingFactory implements Buffered
                 File file = URLs.urlToFile(url);
 
                 if (!file.exists() || !file.canRead()) {
-                    throw new IOException(Errors.format(ErrorKeys.FILE_DOES_NOT_EXIST_$1, file));
+                    throw new IOException(MessageFormat.format(ErrorKeys.FILE_DOES_NOT_EXIST_$1, file));
                 }
 
-                raf = new RandomAccessFile(file, "r");
-
-                // will throw an exception if not a valid file
-                new GridShiftFile().loadGridShiftFile(raf);
+                try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+                    // will throw an exception if not a valid file
+                    new GridShiftFile().loadGridShiftFile(raf);
+                }
             } else {
-                InputStream in = new BufferedInputStream(url.openConnection().getInputStream());
+                try (InputStream in =
+                        new BufferedInputStream(url.openConnection().getInputStream())) {
 
-                // will throw an exception if not a valid file
-                new GridShiftFile().loadGridShiftFile(in, false);
+                    // will throw an exception if not a valid file
+                    new GridShiftFile().loadGridShiftFile(in, false);
+                }
             }
 
             return true; // No exception thrown => valid file.
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IOException e) {
             // This usually means resource is not a valid NTv2 file.
             // Let exception message describe the cause.
             LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
             return false;
-        } catch (IOException e) {
-            LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
-            return false;
-        } finally {
-            try {
-                if (raf != null) raf.close();
-            } catch (IOException e) {
-            }
-
-            try {
-                if (is != null) is.close();
-            } catch (IOException e) {
-            }
         }
     }
 
@@ -178,33 +162,19 @@ public class NTv2GridShiftFactory extends ReferencingFactory implements Buffered
      *
      * @param location the NTv2 file absolute path
      * @return the grid, or {@code null} on error
-     * @throws FactoryException
      */
     private GridShiftFile loadNTv2Grid(URL location) throws FactoryException {
-        InputStream in = null;
-        try {
+        try (InputStream in = new BufferedInputStream(location.openStream())) {
             GridShiftFile grid = new GridShiftFile();
-            in = new BufferedInputStream(location.openStream());
             grid.loadGridShiftFile(in, false); // Load full grid in memory
             in.close();
             return grid;
-        } catch (FileNotFoundException e) {
-            LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
-            return null;
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
             return null;
         } catch (IllegalArgumentException e) {
             LOGGER.log(Level.SEVERE, e.getLocalizedMessage(), e);
             throw new FactoryException(e.getLocalizedMessage(), e);
-        } finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (IOException e) {
-                // never mind
-            }
         }
     }
 }

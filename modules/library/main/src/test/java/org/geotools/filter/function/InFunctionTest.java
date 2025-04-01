@@ -17,10 +17,14 @@
 
 package org.geotools.filter.function;
 
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.PropertyName;
+import static org.junit.Assert.assertEquals;
+
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.PropertyName;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test class for {@link InFunction}.
@@ -33,25 +37,23 @@ public class InFunctionTest extends FunctionTestSupport {
 
     private SimpleFeature feature;
 
-    public InFunctionTest(String testName) {
-        super(testName);
-    }
-
     @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
         feature = featureCollection.features().next();
     }
 
+    @Test
     public void testIntPresent() {
         PropertyName exp = ff.property("foo");
-        Function func =
-                ff.function(FUNCTION_NAME, exp, ff.literal(3), ff.literal(4), ff.literal(5));
+        Function func = ff.function(FUNCTION_NAME, exp, ff.literal(3), ff.literal(4), ff.literal(5));
         Object result = func.evaluate(feature);
         assertEquals(true, result);
     }
 
+    @Test
     public void testIntMissing() {
         PropertyName exp = ff.property("foo");
         Function func = ff.function(FUNCTION_NAME, exp, ff.literal(1), ff.literal(2));
@@ -59,27 +61,23 @@ public class InFunctionTest extends FunctionTestSupport {
         assertEquals(false, result);
     }
 
+    @Test
     public void testDoublePresent() {
         PropertyName exp = ff.property("bar");
-        Function func =
-                ff.function(FUNCTION_NAME, exp, ff.literal(2.5), ff.literal(2.6), ff.literal(3.0));
+        Function func = ff.function(FUNCTION_NAME, exp, ff.literal(2.5), ff.literal(2.6), ff.literal(3.0));
         Object result = func.evaluate(feature);
         assertEquals(true, result);
     }
 
+    @Test
     public void testDoubleMissing() {
         PropertyName exp = ff.property("bar");
-        Function func =
-                ff.function(
-                        FUNCTION_NAME,
-                        exp,
-                        ff.literal(2.499999),
-                        ff.literal("2.500001"),
-                        ff.literal(2));
+        Function func = ff.function(FUNCTION_NAME, exp, ff.literal(2.499999), ff.literal("2.500001"), ff.literal(2));
         Object result = func.evaluate(feature);
         assertEquals(false, result);
     }
 
+    @Test
     public void testStringPresent() {
         PropertyName exp = ff.property("group");
         Function func = ff.function(FUNCTION_NAME, exp, ff.literal("Group0"), ff.literal("Group1"));
@@ -87,25 +85,19 @@ public class InFunctionTest extends FunctionTestSupport {
         assertEquals(true, result);
     }
 
+    @Test
     public void testStringMissing() {
         PropertyName exp = ff.property("group");
         Function func =
-                ff.function(
-                        FUNCTION_NAME,
-                        exp,
-                        ff.literal("Group1"),
-                        ff.literal("Group2"),
-                        ff.literal("Group3"));
+                ff.function(FUNCTION_NAME, exp, ff.literal("Group1"), ff.literal("Group2"), ff.literal("Group3"));
         Object result = func.evaluate(feature);
         assertEquals(false, result);
     }
 
+    @Test
     public void testMixedType() {
         PropertyName exp = ff.property("group");
-        Expression[] args =
-                new Expression[] {
-                    exp, ff.literal(1), ff.literal(2.5), ff.literal("Group1"), ff.literal(4)
-                };
+        Expression[] args = {exp, ff.literal(1), ff.literal(2.5), ff.literal("Group1"), ff.literal(4)};
         Function func = ff.function(FUNCTION_NAME, args);
         Object result = func.evaluate(feature);
         assertEquals(false, result);
@@ -123,6 +115,7 @@ public class InFunctionTest extends FunctionTestSupport {
         assertEquals(true, result);
     }
 
+    @Test
     public void testLongList() {
         final int NUM_ARGS = 500;
         PropertyName exp = ff.property("group");
@@ -143,6 +136,7 @@ public class InFunctionTest extends FunctionTestSupport {
         assertEquals(true, result);
     }
 
+    @Test
     public void testNullComparison() {
         PropertyName exp = ff.property("not_there");
         Function func = ff.function(FUNCTION_NAME, exp, ff.literal(1), ff.literal(null));
@@ -154,6 +148,7 @@ public class InFunctionTest extends FunctionTestSupport {
         assertEquals(false, result);
     }
 
+    @Test
     public void testTypelessComparison() {
         PropertyName exp = ff.property("foo");
         Function func = ff.function(FUNCTION_NAME, exp, ff.literal("4"));

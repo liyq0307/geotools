@@ -50,23 +50,23 @@ public class ImportHandler extends XSIElementHandler {
     }
 
     /** @see java.lang.Object#hashCode() */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return (LOCALNAME.hashCode() * ((schemaLocation == null) ? 1 : schemaLocation.hashCode()))
-                + hashCodeOffset;
+        return (LOCALNAME.hashCode() * ((schemaLocation == null) ? 1 : schemaLocation.hashCode())) + hashCodeOffset;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
+    @Override
     public XSIElementHandler getHandler(String namespaceURI, String localName) {
         return null;
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
-    public void startElement(String namespaceURI, String localName, Attributes atts)
-            throws SAXException {
+    @Override
+    public void startElement(String namespaceURI, String localName, Attributes atts) throws SAXException {
         String sl = atts.getValue("", "schemaLocation");
 
         if (sl == null) {
@@ -93,12 +93,12 @@ public class ImportHandler extends XSIElementHandler {
         }
 
         if (namespaceURI.equalsIgnoreCase(namespace1)) {
-            throw new SAXException(
-                    "You may not import a namespace with the same name as the current namespace");
+            throw new SAXException("You may not import a namespace with the same name as the current namespace");
         }
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -114,11 +114,13 @@ public class ImportHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandlerType() */
+    @Override
     public int getHandlerType() {
         return DEFAULT;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String) */
+    @Override
     public void endElement(String namespaceURI, String localName) {
         // do nothing
     }

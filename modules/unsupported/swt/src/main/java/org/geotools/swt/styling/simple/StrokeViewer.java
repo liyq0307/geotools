@@ -26,7 +26,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Stroke;
+import org.geotools.api.style.Stroke;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.swt.utils.Messages;
 
@@ -127,8 +127,6 @@ public class StrokeViewer {
     /**
      * TODO summary sentence for createControl ...
      *
-     * @param parent
-     * @param klisten
      * @return Generated composite
      */
     public Composite createControl(Composite parent, KeyListener klisten) {
@@ -160,29 +158,17 @@ public class StrokeViewer {
         return part;
     }
 
-    /**
-     * Accepts a listener that will be notified when content changes.
-     *
-     * @param listener1
-     */
+    /** Accepts a listener that will be notified when content changes. */
     public void addListener(SelectionListener listener1) {
         this.listener = listener1;
     }
 
-    /**
-     * Remove listener.
-     *
-     * @param listener1
-     */
+    /** Remove listener. */
     public void removeListener(SelectionListener listener1) {
         if (this.listener == listener1) this.listener = null;
     }
 
-    /**
-     * TODO summary sentence for fire ...
-     *
-     * @param event
-     */
+    /** TODO summary sentence for fire ... */
     protected void fire(SelectionEvent event) {
         if (this.listener == null) return;
         this.listener.widgetSelected(event);
@@ -206,13 +192,7 @@ public class StrokeViewer {
         }
     }
 
-    /**
-     * TODO summary sentence for setStroke ...
-     *
-     * @param line
-     * @param mode
-     * @param defaultColor
-     */
+    /** TODO summary sentence for setStroke ... */
     public void setStroke(Stroke aLine, Mode mode, Color defaultColor) {
         listen(false);
         try {
@@ -253,7 +233,6 @@ public class StrokeViewer {
     /**
      * TODO summary sentence for getStroke ...
      *
-     * @param build
      * @return Stroke defined by this model
      */
     public Stroke getStroke(StyleBuilder build) {

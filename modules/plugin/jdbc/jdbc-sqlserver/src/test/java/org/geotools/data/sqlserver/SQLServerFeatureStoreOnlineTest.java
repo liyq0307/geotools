@@ -21,7 +21,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Transaction;
 import org.geotools.jdbc.JDBCFeatureStoreOnlineTest;
 import org.geotools.jdbc.JDBCTestSetup;
 
@@ -37,6 +37,7 @@ public class SQLServerFeatureStoreOnlineTest extends JDBCFeatureStoreOnlineTest 
         // does not work, see GEOT-2832
     }
 
+    @Override
     public void testAddFeaturesUseProvidedFid() throws IOException {
         // cannot work in general since the primary column is an identity:
         // - it is not possible to insert into an indentity column unless the IDENTITY_INSERT
@@ -62,9 +63,7 @@ public class SQLServerFeatureStoreOnlineTest extends JDBCFeatureStoreOnlineTest 
         try {
             cx = dataStore.getConnection(Transaction.AUTO_COMMIT);
             st = cx.createStatement();
-            rs =
-                    st.executeQuery(
-                            "SELECT is_read_committed_snapshot_on FROM sys.databases WHERE name= db_name()");
+            rs = st.executeQuery("SELECT is_read_committed_snapshot_on FROM sys.databases WHERE name= db_name()");
             if (rs.next()) {
                 if (rs.getBoolean(1)) {
                     super.testExternalConnection();

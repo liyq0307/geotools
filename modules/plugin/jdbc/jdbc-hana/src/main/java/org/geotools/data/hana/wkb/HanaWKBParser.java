@@ -37,9 +37,9 @@ import org.locationtech.jts.geom.Polygon;
 /**
  * A parser for the well-known-binary created by HANA.
  *
- * <p>The JTS parser cannot be used to parse 3- or 4-dimensional geometries because of different
- * type code conventions. HANA offsets type codes by multiples of 1000 (as described in the relevant
- * OGC and SQL/MM standard) while JTS expects specific bits to be set.
+ * <p>The JTS parser cannot be used to parse 3- or 4-dimensional geometries because of different type code conventions.
+ * HANA offsets type codes by multiples of 1000 (as described in the relevant OGC and SQL/MM standard) while JTS expects
+ * specific bits to be set.
  *
  * @author Stefan Uhrig, SAP SE
  */
@@ -155,9 +155,13 @@ public class HanaWKBParser {
         return factory.createPolygon(shell, holes);
     }
 
-    private MultiPoint parseMultiPoint() {
-        CoordinateSequence cs = readCoordinateSequence();
-        return factory.createMultiPoint(cs);
+    private MultiPoint parseMultiPoint() throws HanaWKBParserException {
+        int numPoints = data.getInt();
+        Point[] points = new Point[numPoints];
+        for (int i = 0; i < numPoints; ++i) {
+            points[i] = (Point) parseSubGeometry(GeometryType.MULTIPOINT);
+        }
+        return factory.createMultiPoint(points);
     }
 
     private MultiLineString parseMultiLineString() throws HanaWKBParserException {
@@ -195,8 +199,23 @@ public class HanaWKBParser {
     }
 
     private LinearRing parseLinearRing() {
-        CoordinateSequence cs = readCoordinateSequence();
+        CoordinateSequence cs = patchRing(readCoordinateSequence());
         return factory.createLinearRing(cs);
+    }
+
+    private CoordinateSequence patchRing(CoordinateSequence cs) {
+        if ((cs.size() >= 4) || (cs.size() == 0)) {
+            return cs;
+        }
+        Coordinate[] coords = new Coordinate[4];
+        for (int i = 0; i < cs.size(); ++i) {
+            coords[i] = cs.getCoordinate(i);
+        }
+        for (int i = cs.size(); i < 4; ++i) {
+            coords[i] = cs.getCoordinate(0);
+        }
+        CoordinateSequenceFactory csf = factory.getCoordinateSequenceFactory();
+        return csf.create(coords);
     }
 
     private CoordinateSequence readCoordinateSequence() {
@@ -272,8 +291,7 @@ public class HanaWKBParser {
                 data.order(ByteOrder.LITTLE_ENDIAN);
                 break;
             default:
-                throw new HanaWKBParserException(
-                        MessageFormat.format("Invalid BOM value {0}", order));
+                throw new HanaWKBParserException(MessageFormat.format("Invalid BOM value {0}", order));
         }
     }
 }

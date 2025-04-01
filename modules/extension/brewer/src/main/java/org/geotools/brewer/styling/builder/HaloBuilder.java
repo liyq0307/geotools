@@ -16,10 +16,10 @@
  */
 package org.geotools.brewer.styling.builder;
 
-import org.geotools.styling.Halo;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Halo;
 
-public class HaloBuilder extends AbstractStyleBuilder<org.opengis.style.Halo> {
+public class HaloBuilder extends AbstractStyleBuilder<Halo> {
     Expression radius;
 
     FillBuilder fill = new FillBuilder(this);
@@ -38,7 +38,8 @@ public class HaloBuilder extends AbstractStyleBuilder<org.opengis.style.Halo> {
      *
      * @return current HaloBuilder for chaining operations
      */
-    public HaloBuilder unset() {
+    @Override
+    public AbstractStyleBuilder<Halo> unset() {
         return (HaloBuilder) super.unset();
     }
 
@@ -50,7 +51,8 @@ public class HaloBuilder extends AbstractStyleBuilder<org.opengis.style.Halo> {
      * @return current HaloBuilder
      *     <p>for chaining operations
      */
-    public HaloBuilder reset() {
+    @Override
+    public Builder<Halo> reset() {
         unset = false; //
         radius = literal(0);
         fill.reset();
@@ -64,7 +66,8 @@ public class HaloBuilder extends AbstractStyleBuilder<org.opengis.style.Halo> {
      * @param halo Halo under construction; if null HaloBuilder will be unset()
      * @return current HaloBuilder for chaining operations
      */
-    public HaloBuilder reset(org.opengis.style.Halo halo) {
+    @Override
+    public Builder<Halo> reset(org.geotools.api.style.Halo halo) {
         if (halo == null) {
             return unset();
         }
@@ -93,6 +96,7 @@ public class HaloBuilder extends AbstractStyleBuilder<org.opengis.style.Halo> {
         return fill;
     }
 
+    @Override
     public Halo build() {
         if (unset) return null;
 
@@ -102,6 +106,7 @@ public class HaloBuilder extends AbstractStyleBuilder<org.opengis.style.Halo> {
         return halo;
     }
 
+    @Override
     protected void buildStyleInternal(StyleBuilder sb) {
         sb.featureTypeStyle().rule().text().halo().init(this);
     }

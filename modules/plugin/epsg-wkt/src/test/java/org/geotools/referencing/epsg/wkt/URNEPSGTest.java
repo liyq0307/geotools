@@ -16,16 +16,18 @@
  */
 package org.geotools.referencing.epsg.wkt;
 
-import junit.framework.TestCase;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class URNEPSGTest extends TestCase {
+public class URNEPSGTest {
 
+    @Test
     public void test() throws Exception {
         CoordinateReferenceSystem crs1 = CRS.decode("EPSG:4326");
         CoordinateReferenceSystem crs2 = CRS.decode("urn:x-ogc:def:crs:EPSG:6.11.2:4326");
 
-        assertEquals(crs1, crs2);
+        Assert.assertEquals(crs1, crs2);
     }
 }

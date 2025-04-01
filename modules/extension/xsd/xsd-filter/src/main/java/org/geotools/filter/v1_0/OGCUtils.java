@@ -16,9 +16,12 @@
  */
 package org.geotools.filter.v1_0;
 
-import java.util.Iterator;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.gml2.GML;
 import org.geotools.xsd.Node;
@@ -27,10 +30,6 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Filter parsing / encoding utility class.
@@ -39,8 +38,7 @@ import org.opengis.filter.expression.PropertyName;
  */
 public class OGCUtils {
     /**
-     * Implementation of getProperty for {@link BinarySpatialOpTypeBinding} and {@link
-     * DistanceBufferTypeBinding}
+     * Implementation of getProperty for {@link BinarySpatialOpTypeBinding} and {@link DistanceBufferTypeBinding}
      *
      * @param e1 First expression
      * @param e2 Second expression
@@ -98,14 +96,14 @@ public class OGCUtils {
      * @param node The parse tree.
      * @return A two element array of expressions for a BinarySpatialOp type.
      */
-    static Expression[] spatial(Node node, FilterFactory2 ff, GeometryFactory gf) {
+    static Expression[] spatial(Node node, FilterFactory ff, GeometryFactory gf) {
         List names = node.getChildValues(PropertyName.class);
         if (names.size() == 2) {
             // join
             return new Expression[] {(Expression) names.get(0), (Expression) names.get(1)};
         }
 
-        PropertyName name = (PropertyName) node.getChildValue(PropertyName.class);
+        PropertyName name = node.getChildValue(PropertyName.class);
         Expression spatial = null;
 
         if (node.hasChild(Geometry.class)) {
@@ -113,18 +111,16 @@ public class OGCUtils {
         } else if (node.hasChild(Envelope.class)) {
             // JD: creating an envelope here would break a lot of our code, for instance alot of
             // code that encodes a filter into sql will choke on this
-            Envelope envelope = (Envelope) node.getChildValue(Envelope.class);
-            Polygon polygon =
-                    gf.createPolygon(
-                            gf.createLinearRing(
-                                    new Coordinate[] {
-                                        new Coordinate(envelope.getMinX(), envelope.getMinY()),
-                                        new Coordinate(envelope.getMaxX(), envelope.getMinY()),
-                                        new Coordinate(envelope.getMaxX(), envelope.getMaxY()),
-                                        new Coordinate(envelope.getMinX(), envelope.getMaxY()),
-                                        new Coordinate(envelope.getMinX(), envelope.getMinY())
-                                    }),
-                            null);
+            Envelope envelope = node.getChildValue(Envelope.class);
+            Polygon polygon = gf.createPolygon(
+                    gf.createLinearRing(new Coordinate[] {
+                        new Coordinate(envelope.getMinX(), envelope.getMinY()),
+                        new Coordinate(envelope.getMaxX(), envelope.getMinY()),
+                        new Coordinate(envelope.getMaxX(), envelope.getMaxY()),
+                        new Coordinate(envelope.getMinX(), envelope.getMaxY()),
+                        new Coordinate(envelope.getMinX(), envelope.getMinY())
+                    }),
+                    null);
 
             if (envelope instanceof ReferencedEnvelope) {
                 polygon.setUserData(((ReferencedEnvelope) envelope).getCoordinateReferenceSystem());
@@ -133,9 +129,7 @@ public class OGCUtils {
             spatial = ff.literal(polygon);
         } else {
             // look for an expression that is not a property name
-            for (Iterator c = node.getChildren().iterator(); c.hasNext(); ) {
-                Node child = (Node) c.next();
-
+            for (Node child : node.getChildren()) {
                 // if property name, skip
                 if (child.getValue() instanceof PropertyName) {
                     continue;

@@ -18,21 +18,20 @@ package org.geotools.referencing.operation.transform;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.Transformation;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.parameter.DefaultParameterDescriptor;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.referencing.operation.MathTransformProvider;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.Transformation;
 
 /**
- * The provider for the {@link WarpTransform2D}. This provider constructs a JAI {@linkplain
- * WarpPolynomial image warp} from a set of polynomial coefficients, and wrap it in a {@link
- * WarpTransform2D} object.
+ * The provider for the {@link WarpTransform2D}. This provider constructs a JAI {@linkplain WarpPolynomial image warp}
+ * from a set of polynomial coefficients, and wrap it in a {@link WarpTransform2D} object.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -46,12 +45,12 @@ public class WarpTransform2DProvider extends MathTransformProvider {
             DefaultParameterDescriptor.create("degree", 2, 1, WarpTransform2D.MAX_DEGREE);
 
     /** Descriptor for the "{@link WarpPolynomial#getXCoeffs xCoeffs}" parameter value. */
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings("unchecked")
     public static final ParameterDescriptor<?> X_COEFFS =
             new DefaultParameterDescriptor("xCoeffs", float[].class, null, null);
 
     /** Descriptor for the "{@link WarpPolynomial#getYCoeffs yCoeffs}" parameter value. */
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings("unchecked")
     public static final ParameterDescriptor<?> Y_COEFFS =
             new DefaultParameterDescriptor("yCoeffs", float[].class, null, null);
 
@@ -71,27 +70,15 @@ public class WarpTransform2DProvider extends MathTransformProvider {
         final Float ONE = 1f;
         PRE_SCALE_X = DefaultParameterDescriptor.create("preScaleX", null, Float.class, ONE, false);
         PRE_SCALE_Y = DefaultParameterDescriptor.create("preScaleY", null, Float.class, ONE, false);
-        POST_SCALE_X =
-                DefaultParameterDescriptor.create("postScaleX", null, Float.class, ONE, false);
-        POST_SCALE_Y =
-                DefaultParameterDescriptor.create("postScaleY", null, Float.class, ONE, false);
+        POST_SCALE_X = DefaultParameterDescriptor.create("postScaleX", null, Float.class, ONE, false);
+        POST_SCALE_Y = DefaultParameterDescriptor.create("postScaleY", null, Float.class, ONE, false);
     }
 
     /** The parameters group. */
-    static final ParameterDescriptorGroup PARAMETERS =
-            createDescriptorGroup(
-                    new NamedIdentifier[] {
-                        new NamedIdentifier(Citations.GEOTOOLS, "WarpPolynomial")
-                    },
-                    new ParameterDescriptor[] {
-                        DEGREE,
-                        X_COEFFS,
-                        Y_COEFFS,
-                        PRE_SCALE_X,
-                        PRE_SCALE_Y,
-                        POST_SCALE_X,
-                        POST_SCALE_Y
-                    });
+    static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+            new NamedIdentifier[] {new NamedIdentifier(Citations.GEOTOOLS, "WarpPolynomial")},
+            new ParameterDescriptor[] {DEGREE, X_COEFFS, Y_COEFFS, PRE_SCALE_X, PRE_SCALE_Y, POST_SCALE_X, POST_SCALE_Y
+            });
 
     /** Create a provider for warp transforms. */
     public WarpTransform2DProvider() {
@@ -111,8 +98,9 @@ public class WarpTransform2DProvider extends MathTransformProvider {
      * @return The created math transform.
      * @throws ParameterNotFoundException if a required parameter was not found.
      */
-    protected MathTransform createMathTransform(final ParameterValueGroup values)
-            throws ParameterNotFoundException {
+    @Override
+    @SuppressWarnings("unchecked")
+    protected MathTransform createMathTransform(final ParameterValueGroup values) throws ParameterNotFoundException {
         final int degree = intValue(DEGREE, values);
         final float[] xCoeffs = (float[]) value(X_COEFFS, values);
         final float[] yCoeffs = (float[]) value(Y_COEFFS, values);
@@ -124,63 +112,55 @@ public class WarpTransform2DProvider extends MathTransformProvider {
             final Object warp;
             switch (degree) {
                 case 1:
-                    warp =
-                            createWarp(
-                                    "javax.media.jai.WarpAffine",
-                                    xCoeffs,
-                                    yCoeffs,
-                                    preScaleX,
-                                    preScaleY,
-                                    postScaleX,
-                                    postScaleY);
+                    warp = createWarp(
+                            "javax.media.jai.WarpAffine",
+                            xCoeffs,
+                            yCoeffs,
+                            preScaleX,
+                            preScaleY,
+                            postScaleX,
+                            postScaleY);
                     break;
                 case 2:
-                    warp =
-                            createWarp(
-                                    "javax.media.jai.WarpQuadratic",
-                                    xCoeffs,
-                                    yCoeffs,
-                                    preScaleX,
-                                    preScaleY,
-                                    postScaleX,
-                                    postScaleY);
+                    warp = createWarp(
+                            "javax.media.jai.WarpQuadratic",
+                            xCoeffs,
+                            yCoeffs,
+                            preScaleX,
+                            preScaleY,
+                            postScaleX,
+                            postScaleY);
                     break;
                 case 3:
-                    warp =
-                            createWarp(
-                                    "javax.media.jai.WarpCubic",
-                                    xCoeffs,
-                                    yCoeffs,
-                                    preScaleX,
-                                    preScaleY,
-                                    postScaleX,
-                                    postScaleY);
+                    warp = createWarp(
+                            "javax.media.jai.WarpCubic",
+                            xCoeffs,
+                            yCoeffs,
+                            preScaleX,
+                            preScaleY,
+                            postScaleX,
+                            postScaleY);
                     break;
                 default:
-                    warp =
-                            createWarp(
-                                    "javax.media.jai.WarpGeneralPolynomial",
-                                    xCoeffs,
-                                    yCoeffs,
-                                    preScaleX,
-                                    preScaleY,
-                                    postScaleX,
-                                    postScaleY);
+                    warp = createWarp(
+                            "javax.media.jai.WarpGeneralPolynomial",
+                            xCoeffs,
+                            yCoeffs,
+                            preScaleX,
+                            preScaleY,
+                            postScaleX,
+                            postScaleY);
                     break;
             }
-            Class<? extends MathTransform> transformClass;
-            transformClass =
-                    (Class<? extends MathTransform>)
-                            Class.forName(
-                                    "org.geotools.referencing.operation.transform.WarpTransform2D");
+            Class<? extends MathTransform> transformClass = (Class<? extends MathTransform>)
+                    Class.forName("org.geotools.referencing.operation.transform.WarpTransform2D");
             Class warpClass = Class.forName("javax.media.jai.Warp");
 
             Constructor<? extends MathTransform> createTransform =
                     transformClass.getConstructor(new Class[] {warpClass, warpClass});
             return createTransform.newInstance(warp, null);
         } catch (Exception jaiUnavailable) {
-            throw new UnsupportedOperationException(
-                    "WarpTransform2D requires Java Advanced Imaging extension");
+            throw new UnsupportedOperationException("WarpTransform2D requires Java Advanced Imaging extension");
         }
     }
 
@@ -192,23 +172,13 @@ public class WarpTransform2DProvider extends MathTransformProvider {
             final float preScaleY,
             final float postScaleX,
             final float postScaleY)
-            throws ClassNotFoundException, NoSuchMethodException, SecurityException,
-                    InstantiationException, IllegalAccessException, IllegalArgumentException,
-                    InvocationTargetException {
-        Class warpClass = Class.forName(warpName);
-        Class[] params =
-                new Class[] {
-                    float[].class,
-                    float[].class,
-                    float.class,
-                    float.class,
-                    float.class,
-                    float.class,
-                    float.class
-                };
+            throws ClassNotFoundException, NoSuchMethodException, SecurityException, InstantiationException,
+                    IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        Class<?> warpClass = Class.forName(warpName);
+        Class[] params = {float[].class, float[].class, float.class, float.class, float.class, float.class, float.class
+        };
         Constructor<?> constrctor = warpClass.getConstructor(params);
-        return constrctor.newInstance(
-                xCoeffs, yCoeffs, preScaleX, preScaleY, postScaleX, postScaleY);
+        return constrctor.newInstance(xCoeffs, yCoeffs, preScaleX, preScaleY, postScaleX, postScaleY);
     }
 
     /**
@@ -218,7 +188,7 @@ public class WarpTransform2DProvider extends MathTransformProvider {
      * @param group The parameter value group to search into.
      * @return The requested parameter value, or {@code 1} if none.
      */
-    private static float scale(final ParameterDescriptor param, final ParameterValueGroup group)
+    private static float scale(final ParameterDescriptor<Float> param, final ParameterValueGroup group)
             throws ParameterNotFoundException {
         final Object value = value(param, group);
         return (value != null) ? ((Number) value).floatValue() : 1;

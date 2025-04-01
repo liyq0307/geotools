@@ -93,10 +93,12 @@ public class XsDateTimeFormat extends Format {
         return result;
     }
 
+    @Override
     public Object parseObject(String pString, ParsePosition pParsePosition) {
         return parseObject(pString, pParsePosition, false);
     }
 
+    @SuppressWarnings("PMD.CognitiveComplexity")
     public Object parseObject(String pString, ParsePosition pParsePosition, boolean lenient) {
         if (pString == null) {
             throw new NullPointerException("The String argument must not be null.");
@@ -177,8 +179,7 @@ public class XsDateTimeFormat extends Format {
                         if (offset >= length) {
                             pString = pString + "T";
                         } else {
-                            pString =
-                                    pString.substring(0, offset) + "T" + pString.substring(offset);
+                            pString = pString.substring(0, offset) + "T" + pString.substring(offset);
                         }
                         ++offset;
                         length = pString.length();
@@ -284,10 +285,7 @@ public class XsDateTimeFormat extends Format {
                     if (millis > 999) {
                         // If lenient, add 000
                         if (lenient) {
-                            pString =
-                                    pString.substring(0, offsetBefore)
-                                            + "000"
-                                            + pString.substring(offset);
+                            pString = pString.substring(0, offsetBefore) + "000" + pString.substring(offset);
                             length = pString.length();
                         } else {
                             pParsePosition.setErrorIndex(offset);
@@ -372,6 +370,7 @@ public class XsDateTimeFormat extends Format {
         pBuffer.append(s);
     }
 
+    @Override
     public StringBuffer format(Object pCalendar, StringBuffer pBuffer, FieldPosition pPos) {
         if (pCalendar == null) {
             throw new NullPointerException("The Calendar argument must not be null.");

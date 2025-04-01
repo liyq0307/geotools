@@ -1,21 +1,14 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2019, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
-
 package org.geotools.metadata;
 
 import java.io.FileInputStream;
@@ -27,6 +20,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.metadata.citation.ResponsibleParty;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.CitationImpl;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.metadata.iso.citation.ResponsiblePartyImpl;
@@ -40,15 +37,11 @@ import org.geotools.util.ResourceInternationalString;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.SuppressFBWarnings;
 import org.geotools.util.Utilities;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.metadata.citation.ResponsibleParty;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
 
 @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
 public class MetadataExamples {
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         MetadataExamples examples = new MetadataExamples();
 
         examples.exampleRange();
@@ -215,8 +208,7 @@ public class MetadataExamples {
 
     private void exampleResourceInternationalString() {
         // exampleResourceInternationalString start
-        ResourceInternationalString greeting =
-                new ResourceInternationalString("message.properties", "greeting");
+        ResourceInternationalString greeting = new ResourceInternationalString("message.properties", "greeting");
 
         System.out.println(greeting); // will output best match to current Locale
         System.out.println(greeting.toString(Locale.CANADA_FRENCH)); // should output best match

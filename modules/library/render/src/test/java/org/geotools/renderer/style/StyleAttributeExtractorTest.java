@@ -6,16 +6,20 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.Rule;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.function.EnvFunction;
-import org.geotools.styling.*;
+import org.geotools.styling.StyleBuilder;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.PropertyName;
 
 public class StyleAttributeExtractorTest {
     FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
@@ -39,12 +43,7 @@ public class StyleAttributeExtractorTest {
     @Test
     public void testGeometryTransformation() {
         PointSymbolizer ps = sb.createPointSymbolizer();
-        ps.setGeometry(
-                ff.function(
-                        "offset",
-                        ff.property("the_geom"),
-                        ff.property("offx"),
-                        ff.property("offy")));
+        ps.setGeometry(ff.function("offset", ff.property("the_geom"), ff.property("offx"), ff.property("offy")));
         Rule r = sb.createRule(ps);
 
         StyleAttributeExtractor extractor = new StyleAttributeExtractor();
@@ -61,12 +60,7 @@ public class StyleAttributeExtractorTest {
     @Test
     public void testPropertyFucntion() {
         PointSymbolizer ps = sb.createPointSymbolizer();
-        ps.setGeometry(
-                ff.function(
-                        "offset",
-                        ff.property("the_geom"),
-                        ff.property("offx"),
-                        ff.property("offy")));
+        ps.setGeometry(ff.function("offset", ff.property("the_geom"), ff.property("offx"), ff.property("offy")));
         Function func = ff.function("property", ff.function("env", ff.literal("pname")));
         PropertyIsEqualTo filter = ff.equals(func, ff.literal("test"));
         Rule r = sb.createRule(ps);

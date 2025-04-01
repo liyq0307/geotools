@@ -16,16 +16,9 @@
  */
 package org.geotools.gce.imagemosaic;
 
-import static org.apache.commons.io.filefilter.FileFilterUtils.and;
-import static org.apache.commons.io.filefilter.FileFilterUtils.makeFileOnly;
-import static org.apache.commons.io.filefilter.FileFilterUtils.nameFileFilter;
-import static org.apache.commons.io.filefilter.FileFilterUtils.notFileFilter;
-import static org.apache.commons.io.filefilter.FileFilterUtils.suffixFileFilter;
-
-import java.awt.*;
+import java.awt.Color;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -37,13 +30,20 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.media.jai.Interpolation;
 import org.apache.commons.io.FilenameUtils;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
+import org.geotools.api.data.DataAccessFactory.Param;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
-import org.geotools.data.DataAccessFactory.Param;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.shapefile.ShapefileDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.gce.imagemosaic.catalog.CatalogConfigurationBean;
 import org.geotools.gce.imagemosaic.catalog.GranuleCatalog;
 import org.geotools.parameter.DefaultParameterDescriptor;
@@ -54,17 +54,10 @@ import org.geotools.util.URLs;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.coverage.grid.Format;
-import org.opengis.coverage.grid.GridCoverageWriter;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * {@link AbstractGridFormat} subclass for controlling {@link ImageMosaicReader} creation. As the
- * name says, it handles mosaic of georeferenced images, which means
+ * {@link AbstractGridFormat} subclass for controlling {@link ImageMosaicReader} creation. As the name says, it handles
+ * mosaic of georeferenced images, which means
  *
  * <ol>
  *   <li>tiff+tfw+prj
@@ -73,8 +66,8 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  *   <li>geotiff
  * </ol>
  *
- * This does not mean that you throw there a couple of images and it will do the trick no matter how
- * these images are. Requirements are:
+ * This does not mean that you throw there a couple of images and it will do the trick no matter how these images are.
+ * Requirements are:
  *
  * <ul>
  *   <li>(almost) equal spatial resolution
@@ -83,112 +76,99 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  *   <li>same projection
  * </ul>
  *
- * The first requirement can be relaxed a little but if they have the same spatial resolution the
- * performances are much better. There are parameters that you can use to control the behaviour of
- * the mosaic in terms of thresholding and transparency. They are as follows:
+ * The first requirement can be relaxed a little but if they have the same spatial resolution the performances are much
+ * better. There are parameters that you can use to control the behaviour of the mosaic in terms of thresholding and
+ * transparency. They are as follows:
  *
  * <ul>
- *   <li>--DefaultParameterDescriptor FINAL_ALPHA = new DefaultParameterDescriptor( "FinalAlpha",
- *       Boolean.class, null, Boolean.FALSE)-- It asks the plugin to add transparency on the final
- *       created mosaic. IT simply performs a threshonding looking for areas where there is no data,
- *       i.e., intensity is really low and transform them into transparent areas. It is obvious that
- *       depending on the nature of the input images it might interfere with the original values.
+ *   <li>--DefaultParameterDescriptor FINAL_ALPHA = new DefaultParameterDescriptor( "FinalAlpha", Boolean.class, null,
+ *       Boolean.FALSE)-- It asks the plugin to add transparency on the final created mosaic. IT simply performs a
+ *       threshonding looking for areas where there is no data, i.e., intensity is really low and transform them into
+ *       transparent areas. It is obvious that depending on the nature of the input images it might interfere with the
+ *       original values.
  *   <li>---ALPHA_THRESHOLD = new DefaultParameterDescriptor( "AlphaThreshold", Double.class, null,
- *       Double.valueOf(1));--- Controls the transparency addition by specifying the treshold to
- *       use.
- *   <li>INPUT_IMAGE_THRESHOLD = new DefaultParameterDescriptor( "InputImageROI", Boolean.class,
- *       null, Boolean.FALSE)--- INPUT_IMAGE_THRESHOLD_VALUE = new DefaultParameterDescriptor(
- *       "InputImageROIThreshold", Integer.class, null, Integer.valueOf(1));--- These two can be
- *       used to control the application of ROIs on the input images based on tresholding values.
- *       Basically using the threshold you can ask the mosaic plugin to load or not certain pixels
+ *       Double.valueOf(1));--- Controls the transparency addition by specifying the treshold to use.
+ *   <li>INPUT_IMAGE_THRESHOLD = new DefaultParameterDescriptor( "InputImageROI", Boolean.class, null, Boolean.FALSE)---
+ *       INPUT_IMAGE_THRESHOLD_VALUE = new DefaultParameterDescriptor( "InputImageROIThreshold", Integer.class, null,
+ *       Integer.valueOf(1));--- These two can be used to control the application of ROIs on the input images based on
+ *       tresholding values. Basically using the threshold you can ask the mosaic plugin to load or not certain pixels
  *       of the original images.
  *
  * @author Simone Giannecchini (simboss), GeoSolutions
- * @author Stefan Alfons Krueger (alfonx), Wikisquare.de : Support for
- *     jar:file:foo.jar/bar.properties URLs
+ * @author Stefan Alfons Krueger (alfonx), Wikisquare.de : Support for jar:file:foo.jar/bar.properties URLs
  * @since 2.3
  */
-@SuppressWarnings("rawtypes")
 public final class ImageMosaicFormat extends AbstractGridFormat implements Format {
 
     static final double DEFAULT_ARTIFACTS_FILTER_PTILE_THRESHOLD = 0.1;
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ImageMosaicFormat.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ImageMosaicFormat.class);
 
     /** Filter tiles based on attributes from the input coverage */
     public static final ParameterDescriptor<Filter> FILTER =
-            new DefaultParameterDescriptor<Filter>("Filter", Filter.class, null, null);
+            new DefaultParameterDescriptor<>("Filter", Filter.class, null, null);
 
     /** Control the type of the final mosaic. */
-    public static final ParameterDescriptor<Boolean> FADING =
-            new DefaultParameterDescriptor<Boolean>(
-                    "Fading",
-                    Boolean.class,
-                    new Boolean[] {Boolean.TRUE, Boolean.FALSE},
-                    Boolean.FALSE);
+    public static final ParameterDescriptor<Boolean> FADING = new DefaultParameterDescriptor<>(
+            "Fading", Boolean.class, new Boolean[] {Boolean.TRUE, Boolean.FALSE}, Boolean.FALSE);
 
     /** Control the transparency of the output coverage. */
     public static final ParameterDescriptor<Color> OUTPUT_TRANSPARENT_COLOR =
-            new DefaultParameterDescriptor<Color>(
-                    "OutputTransparentColor", Color.class, null, null);
+            new DefaultParameterDescriptor<>("OutputTransparentColor", Color.class, null, null);
 
     /** Control the thresholding on the input coverage */
     public static final ParameterDescriptor<Integer> MAX_ALLOWED_TILES =
-            new DefaultParameterDescriptor<Integer>(
-                    "MaxAllowedTiles", Integer.class, null, Integer.valueOf(-1));
+            new DefaultParameterDescriptor<>("MaxAllowedTiles", Integer.class, null, Integer.valueOf(-1));
 
     /** Control the default artifact filter luminance thresholding on the input coverages */
     public static final ParameterDescriptor<Integer> DEFAULT_ARTIFACTS_FILTER_THRESHOLD =
-            new DefaultParameterDescriptor<Integer>(
-                    "DefaultArtifactsFilterThreshold", Integer.class, null, Integer.MIN_VALUE);
+            new DefaultParameterDescriptor<>("DefaultArtifactsFilterThreshold", Integer.class, null, Integer.MIN_VALUE);
 
     /** Control the artifact filter ptile thresholding */
-    public static final ParameterDescriptor<Double> ARTIFACTS_FILTER_PTILE_THRESHOLD =
-            new DefaultParameterDescriptor<Double>(
-                    "ArtifactsFilterPtileThreshold",
-                    Double.class,
-                    null,
-                    Double.valueOf(DEFAULT_ARTIFACTS_FILTER_PTILE_THRESHOLD));
+    public static final ParameterDescriptor<Double> ARTIFACTS_FILTER_PTILE_THRESHOLD = new DefaultParameterDescriptor<>(
+            "ArtifactsFilterPtileThreshold",
+            Double.class,
+            null,
+            Double.valueOf(DEFAULT_ARTIFACTS_FILTER_PTILE_THRESHOLD));
 
     /**
-     * Defines a virtual native resolution. It virtually represents the native resolution to be used
-     * after reading a dataset before doing any other operation. It could be useful to limit somehow
-     * the data quality offered to the final user. As an instance if we have data at resolutions
-     * 0.5m, 1m, 2m, 4m, 8m and the virtual native resolution is 4m, and the request is looking for
-     * data at 2m resolution we should downsample the best nearest level to 4m and then get back at
-     * 2m. This will result in potentially pixellated output. When specified, values should be
-     * always positive.
+     * Defines a virtual native resolution. It virtually represents the native resolution to be used after reading a
+     * dataset before doing any other operation. It could be useful to limit somehow the data quality offered to the
+     * final user. As an instance if we have data at resolutions 0.5m, 1m, 2m, 4m, 8m and the virtual native resolution
+     * is 4m, and the request is looking for data at 2m resolution we should downsample the best nearest level to 4m and
+     * then get back at 2m. This will result in potentially pixellated output. When specified, values should be always
+     * positive.
      */
     public static final ParameterDescriptor<double[]> VIRTUAL_NATIVE_RESOLUTION =
-            new DefaultParameterDescriptor<double[]>(
-                    "VirtualNativeResolution", double[].class, null, null);
+            new DefaultParameterDescriptor<>("VirtualNativeResolution", double[].class, null, null);
 
     /** Control the threading behavior for this plugin. */
-    public static final ParameterDescriptor<Boolean> ALLOW_MULTITHREADING =
-            new DefaultParameterDescriptor<Boolean>(
-                    "AllowMultithreading",
-                    Boolean.class,
-                    new Boolean[] {Boolean.TRUE, Boolean.FALSE},
-                    Boolean.FALSE);
+    public static final ParameterDescriptor<Boolean> ALLOW_MULTITHREADING = new DefaultParameterDescriptor<>(
+            "AllowMultithreading", Boolean.class, new Boolean[] {Boolean.TRUE, Boolean.FALSE}, Boolean.FALSE);
 
     /** Control the background values for the output coverage */
     public static final ParameterDescriptor<double[]> BACKGROUND_VALUES =
-            new DefaultParameterDescriptor<double[]>(
-                    "BackgroundValues", double[].class, null, null);
+            new DefaultParameterDescriptor<>("BackgroundValues", double[].class, null, null);
 
     /** Control the interpolation to be used in mosaicking */
-    public static final ParameterDescriptor<Interpolation> INTERPOLATION =
-            AbstractGridFormat.INTERPOLATION;
+    public static final ParameterDescriptor<Interpolation> INTERPOLATION = AbstractGridFormat.INTERPOLATION;
 
     /** Control the requested resolution calculation. */
-    public static final ParameterDescriptor<Boolean> ACCURATE_RESOLUTION =
-            new DefaultParameterDescriptor<Boolean>(
-                    "Accurate resolution computation",
-                    Boolean.class,
-                    new Boolean[] {Boolean.TRUE, Boolean.FALSE},
-                    Boolean.FALSE);
+    public static final ParameterDescriptor<Boolean> ACCURATE_RESOLUTION = new DefaultParameterDescriptor<>(
+            "Accurate resolution computation",
+            Boolean.class,
+            new Boolean[] {Boolean.TRUE, Boolean.FALSE},
+            Boolean.FALSE);
+
+    /**
+     * When this read parameter is set to true, the reader will produce output in the requested CRS, assuming it matches
+     * one of the native CRSs, as reported by the #GridCoverage2DReader@MULTICRS_EPSGCODES metadata entry, and that the
+     * requested grid geometry is expressed in said CRS. When set to false (default), then only the native CRS declared
+     * by #GridCoverage2DReader@getCoordinateReferenceSystem will be produced in output
+     */
+    public static final ParameterDescriptor<Boolean> OUTPUT_TO_ALTERNATIVE_CRS = new DefaultParameterDescriptor<>(
+            "Output To Alternative CRS", Boolean.class, new Boolean[] {Boolean.TRUE, Boolean.FALSE}, Boolean.FALSE);
 
     /**
      * Optional Sorting for the granules of the mosaic.
@@ -198,61 +178,55 @@ public final class ImageMosaicFormat extends AbstractGridFormat implements Forma
      * <p>It does work only with DBMS as indexes
      */
     public static final ParameterDescriptor<String> SORT_BY =
-            new DefaultParameterDescriptor<String>("SORTING", String.class, null, null);
+            new DefaultParameterDescriptor<>("SORTING", String.class, null, null);
 
     /**
      * Merging behavior for the various granules of the mosaic we are going to produce.
      *
      * <p>
      *
-     * <p>This parameter controls whether we want to merge in a single mosaic or stack all the bands
-     * into the final mosaic.
+     * <p>This parameter controls whether we want to merge in a single mosaic or stack all the bands into the final
+     * mosaic.
      */
-    public static final ParameterDescriptor<String> MERGE_BEHAVIOR =
-            new DefaultParameterDescriptor<String>(
-                    "MergeBehavior",
-                    String.class,
-                    MergeBehavior.valuesAsStrings(),
-                    MergeBehavior.getDefault().toString());
+    public static final ParameterDescriptor<String> MERGE_BEHAVIOR = new DefaultParameterDescriptor<>(
+            "MergeBehavior",
+            String.class,
+            MergeBehavior.valuesAsStrings(),
+            MergeBehavior.getDefault().toString());
 
     /**
      * Controls the removal of excess granules
      *
      * <p>
      *
-     * <p>This parameter controls whether the mosaic will attempt to remove excess granules, that
-     * is, granules not contributing pixels to the output, before performing the mosaicking. This is
-     * useful only if granules are overlapping, do not enable otherwise.
+     * <p>This parameter controls whether the mosaic will attempt to remove excess granules, that is, granules not
+     * contributing pixels to the output, before performing the mosaicking. This is useful only if granules are
+     * overlapping, do not enable otherwise.
      */
     public static final ParameterDescriptor<ExcessGranulePolicy> EXCESS_GRANULE_REMOVAL =
-            new DefaultParameterDescriptor<ExcessGranulePolicy>(
+            new DefaultParameterDescriptor<>(
                     "ExcessGranuleRemoval",
                     ExcessGranulePolicy.class,
                     new ExcessGranulePolicy[] {ExcessGranulePolicy.NONE, ExcessGranulePolicy.ROI},
                     ExcessGranulePolicy.NONE);
 
     /**
-     * mask (as a polygon in native coordinates) to be applied to the produced mosaic. At the
-     * moment, it will be ignored in case of Heterogeneous CRS.
+     * mask (as a polygon in native coordinates) to be applied to the produced mosaic. At the moment, it will be ignored
+     * in case of Heterogeneous CRS.
      */
     public static final ParameterDescriptor<Geometry> GEOMETRY_MASK =
-            new DefaultParameterDescriptor<Geometry>("GeometryMask", Geometry.class, null, null);
+            new DefaultParameterDescriptor<>("GeometryMask", Geometry.class, null, null);
 
     /** Control the Masking buffering (in raster size) */
     public static final ParameterDescriptor<Double> MASKING_BUFFER_PIXELS =
-            new DefaultParameterDescriptor<Double>(
-                    "MaskingBufferPixels", Double.class, null, Double.valueOf(-1));
+            new DefaultParameterDescriptor<>("MaskingBufferPixels", Double.class, null, Double.valueOf(-1));
 
     /**
-     * Control whether to set the ROI property in the output mosaic (as an instance, even when
-     * background values are set which usually results into setting a null ROI after the mosaic)
+     * Control whether to set the ROI property in the output mosaic (as an instance, even when background values are set
+     * which usually results into setting a null ROI after the mosaic)
      */
-    public static final ParameterDescriptor<Boolean> SET_ROI_PROPERTY =
-            new DefaultParameterDescriptor<Boolean>(
-                    "SetRoiProperty",
-                    Boolean.class,
-                    new Boolean[] {Boolean.TRUE, Boolean.FALSE},
-                    Boolean.FALSE);
+    public static final ParameterDescriptor<Boolean> SET_ROI_PROPERTY = new DefaultParameterDescriptor<>(
+            "SetRoiProperty", Boolean.class, new Boolean[] {Boolean.TRUE, Boolean.FALSE}, Boolean.FALSE);
 
     /** Creates an instance and sets the metadata. */
     public ImageMosaicFormat() {
@@ -261,7 +235,7 @@ public final class ImageMosaicFormat extends AbstractGridFormat implements Forma
 
     /** Sets the metadata information. */
     private void setInfo() {
-        final HashMap<String, String> info = new HashMap<String, String>();
+        final HashMap<String, String> info = new HashMap<>();
         info.put("name", "ImageMosaic");
         info.put("description", "Image mosaicking plugin");
         info.put("vendor", "Geotools");
@@ -271,30 +245,27 @@ public final class ImageMosaicFormat extends AbstractGridFormat implements Forma
 
         // reading parameters
         readParameters =
-                new ParameterGroup(
-                        new DefaultParameterDescriptorGroup(
-                                mInfo,
-                                new GeneralParameterDescriptor[] {
-                                    READ_GRIDGEOMETRY2D,
-                                    INPUT_TRANSPARENT_COLOR,
-                                    OUTPUT_TRANSPARENT_COLOR,
-                                    USE_JAI_IMAGEREAD,
-                                    BACKGROUND_VALUES,
-                                    SUGGESTED_TILE_SIZE,
-                                    ALLOW_MULTITHREADING,
-                                    MAX_ALLOWED_TILES,
-                                    TIME,
-                                    ELEVATION,
-                                    FILTER,
-                                    ACCURATE_RESOLUTION,
-                                    SORT_BY,
-                                    MERGE_BEHAVIOR,
-                                    FOOTPRINT_BEHAVIOR,
-                                    OVERVIEW_POLICY,
-                                    BANDS,
-                                    EXCESS_GRANULE_REMOVAL,
-                                    RESCALE_PIXELS
-                                }));
+                new ParameterGroup(new DefaultParameterDescriptorGroup(mInfo, new GeneralParameterDescriptor[] {
+                    READ_GRIDGEOMETRY2D,
+                    INPUT_TRANSPARENT_COLOR,
+                    OUTPUT_TRANSPARENT_COLOR,
+                    USE_JAI_IMAGEREAD,
+                    BACKGROUND_VALUES,
+                    SUGGESTED_TILE_SIZE,
+                    ALLOW_MULTITHREADING,
+                    MAX_ALLOWED_TILES,
+                    TIME,
+                    ELEVATION,
+                    FILTER,
+                    ACCURATE_RESOLUTION,
+                    SORT_BY,
+                    MERGE_BEHAVIOR,
+                    FOOTPRINT_BEHAVIOR,
+                    OVERVIEW_POLICY,
+                    BANDS,
+                    EXCESS_GRANULE_REMOVAL,
+                    RESCALE_PIXELS
+                }));
 
         // reading parameters
         writeParameters = null;
@@ -328,12 +299,7 @@ public final class ImageMosaicFormat extends AbstractGridFormat implements Forma
         return accepts(source, null);
     }
 
-    /**
-     * Checks that the provided {@link ImageMosaicDescriptor} is well formed.
-     *
-     * @param source
-     * @return
-     */
+    /** Checks that the provided {@link ImageMosaicDescriptor} is well formed. */
     private static boolean checkDescriptor(final ImageMosaicDescriptor source) {
         // TODO: improve checks
         final GranuleCatalog catalog = source.getCatalog();
@@ -408,8 +374,7 @@ public final class ImageMosaicFormat extends AbstractGridFormat implements Forma
             boolean shapefile = true;
             try {
                 final File sourceF = URLs.urlToFile(sourceURL);
-                if (FilenameUtils.getName(sourceF.getAbsolutePath())
-                        .equalsIgnoreCase("datastore.properties")) {
+                if (FilenameUtils.getName(sourceF.getAbsolutePath()).equalsIgnoreCase(Utils.DATASTORE_PROPERTIES)) {
                     shapefile = false;
                     // load spi anche check it
                     // read the properties file
@@ -421,21 +386,16 @@ public final class ImageMosaicFormat extends AbstractGridFormat implements Forma
                     // SPI
                     final String SPIClass = properties.getProperty("SPI");
                     // create a datastore as instructed
-                    final DataStoreFactorySpi spi =
-                            (DataStoreFactorySpi)
-                                    Class.forName(SPIClass).getDeclaredConstructor().newInstance();
+                    final DataStoreFactorySpi spi = (DataStoreFactorySpi)
+                            Class.forName(SPIClass).getDeclaredConstructor().newInstance();
 
                     // get the params
-                    final Map<String, Serializable> params = new HashMap<String, Serializable>();
+                    final Map<String, Serializable> params = new HashMap<>();
                     final Param[] paramsInfo = spi.getParametersInfo();
                     for (Param p : paramsInfo) {
                         // search for this param and set the value if found
                         if (properties.containsKey(p.key))
-                            params.put(
-                                    p.key,
-                                    (Serializable)
-                                            Converters.convert(
-                                                    properties.getProperty(p.key), p.type));
+                            params.put(p.key, (Serializable) Converters.convert(properties.getProperty(p.key), p.type));
                         else if (p.required && p.sample == null) {
                             if (LOGGER.isLoggable(Level.FINE))
                                 LOGGER.fine("Required parameter missing: " + p.toString());
@@ -475,26 +435,13 @@ public final class ImageMosaicFormat extends AbstractGridFormat implements Forma
                     final File parent = URLs.urlToFile(sourceURL).getParentFile();
 
                     // this can be used to look for properties files that do NOT define a datastore
-                    final File[] properties =
-                            parent.listFiles(
-                                    (FilenameFilter)
-                                            and(
-                                                    notFileFilter(
-                                                            nameFileFilter("indexer.properties")),
-                                                    and(
-                                                            notFileFilter(
-                                                                    nameFileFilter(
-                                                                            "datastore.properties")),
-                                                            makeFileOnly(
-                                                                    suffixFileFilter(
-                                                                            ".properties")))));
+                    final File[] properties = parent.listFiles(Utils.MOSAIC_PROPERTY_FILTER);
 
                     // do we have a valid datastore + mosaic properties pair?
                     if (properties != null) {
                         for (File propFile : properties) {
                             if (Utils.checkFileReadable(propFile)
-                                    && Utils.loadMosaicProperties(URLs.fileToUrl(propFile))
-                                            != null) {
+                                    && Utils.loadMosaicProperties(URLs.fileToUrl(propFile)) != null) {
                                 propsUrl = URLs.fileToUrl(propFile);
                                 break;
                             }
@@ -534,19 +481,14 @@ public final class ImageMosaicFormat extends AbstractGridFormat implements Forma
                     return false;
                 }
 
-                crs =
-                        featureSource
-                                .getSchema()
-                                .getGeometryDescriptor()
-                                .getCoordinateReferenceSystem();
+                crs = featureSource.getSchema().getGeometryDescriptor().getCoordinateReferenceSystem();
                 if (crs == null) return false;
                 // looking for the location attribute
                 final String locationAttributeName = catalogBean.getLocationAttribute();
                 if (locationAttributeName != null
                         && schema != null
                         && (schema.getDescriptor(locationAttributeName) == null
-                                && schema.getDescriptor(locationAttributeName.toUpperCase())
-                                        == null)) {
+                                && schema.getDescriptor(locationAttributeName.toUpperCase()) == null)) {
                     return false;
                 }
 
@@ -556,8 +498,7 @@ public final class ImageMosaicFormat extends AbstractGridFormat implements Forma
                 try {
                     if (tileIndexStore != null) tileIndexStore.dispose();
                 } catch (Throwable e) {
-                    if (LOGGER.isLoggable(Level.FINE))
-                        LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
+                    if (LOGGER.isLoggable(Level.FINE)) LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
                 }
             }
 
@@ -577,8 +518,7 @@ public final class ImageMosaicFormat extends AbstractGridFormat implements Forma
             final ImageMosaicReader reader = new ImageMosaicReader(source, hints);
             return reader;
         } catch (MalformedURLException e) {
-            if (LOGGER.isLoggable(Level.WARNING))
-                LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
+            if (LOGGER.isLoggable(Level.WARNING)) LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
             return null;
         } catch (IOException e) {
             if (LOGGER.isLoggable(Level.FINE)) LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);

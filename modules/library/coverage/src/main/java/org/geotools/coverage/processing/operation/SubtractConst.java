@@ -24,21 +24,20 @@ import java.awt.image.RenderedImage;
 import java.util.Map;
 import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.operator.SubtractConstDescriptor;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.OperationJAI;
 import org.geotools.util.NumberRange;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 // Geotools dependencies
 
 /**
- * Subtracts constants (one for each band) from every sample values of the source coverage. If the
- * number of constants supplied is less than the number of bands of the destination, then the
- * constant from entry 0 is applied to all the bands. Otherwise, a constant from a different entry
- * is applied to each band.
+ * Subtracts constants (one for each band) from every sample values of the source coverage. If the number of constants
+ * supplied is less than the number of bands of the destination, then the constant from entry 0 is applied to all the
+ * bands. Otherwise, a constant from a different entry is applied to each band.
  *
  * <p><STRONG>Name:</STRONG>&nbsp;<CODE>"SubtractConst"</CODE><br>
  * <STRONG>JAI operator:</STRONG>&nbsp;<CODE>"{@linkplain SubtractConstDescriptor SubtractConst}"
@@ -86,12 +85,15 @@ public class SubtractConst extends OperationJAI {
         super("SubtractConst", getOperationDescriptor(JAIExt.getOperationName("SubtractConst")));
     }
 
+    @Override
     public String getName() {
         return "SubtractConst";
     }
 
     /** Returns the expected range of values for the resulting image. */
-    protected NumberRange deriveRange(final NumberRange[] ranges, final Parameters parameters) {
+    @Override
+    protected NumberRange<? extends Number> deriveRange(
+            final NumberRange<? extends Number>[] ranges, final Parameters parameters) {
         final double[] constants = (double[]) parameters.parameters.getObjectParameter("constants");
         if (constants.length == 1) {
             final double c = constants[0];
@@ -103,15 +105,17 @@ public class SubtractConst extends OperationJAI {
         return super.deriveRange(ranges, parameters);
     }
 
-    protected void handleJAIEXTParams(
-            ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
-        GridCoverage2D source = (GridCoverage2D) parameters2.parameter("source0").getValue();
+    @Override
+    protected void handleJAIEXTParams(ParameterBlockJAI parameters, ParameterValueGroup parameters2) {
+        GridCoverage2D source =
+                (GridCoverage2D) parameters2.parameter("source0").getValue();
         if (JAIExt.isJAIExtOperation("operationConst")) {
             parameters.set(Operator.SUBTRACT, 1);
         }
         handleROINoDataInternal(parameters, source, "operationConst", 2, 3);
     }
 
+    @Override
     protected Map<String, ?> getProperties(
             RenderedImage data,
             CoordinateReferenceSystem crs,
@@ -119,7 +123,6 @@ public class SubtractConst extends OperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], "operationConst", 2, 3, 4);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], "operationConst", 2, 3, 4);
     }
 }

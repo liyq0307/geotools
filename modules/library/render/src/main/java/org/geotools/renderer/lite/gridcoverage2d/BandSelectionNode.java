@@ -23,35 +23,35 @@ import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
+import java.text.MessageFormat;
 import java.util.List;
 import javax.media.jai.ImageLayout;
 import javax.media.jai.JAI;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.CoverageProcessor;
 import org.geotools.coverage.processing.operation.SelectSampleDimension;
 import org.geotools.renderer.i18n.ErrorKeys;
-import org.geotools.renderer.i18n.Errors;
 import org.geotools.renderer.i18n.Vocabulary;
 import org.geotools.renderer.i18n.VocabularyKeys;
-import org.geotools.styling.SelectedChannelType;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.Hints;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.util.InternationalString;
 
 /**
- * This {@link CoverageProcessingNode} has been built for taking care of the band select operation
- * within the context of applying SLD 1.0.
+ * This {@link CoverageProcessingNode} has been built for taking care of the band select operation within the context of
+ * applying SLD 1.0.
  *
  * @author Simone Giannecchini, GeoSolutions.
  */
-class BandSelectionNode extends StyleVisitorCoverageProcessingNodeAdapter
-        implements CoverageProcessingNode {
+class BandSelectionNode extends StyleVisitorCoverageProcessingNodeAdapter implements CoverageProcessingNode {
 
     /*
      * (non-Javadoc)
      * @see CoverageProcessingNode#getName()
      */
+    @Override
     public InternationalString getName() {
         return Vocabulary.formatInternational(VocabularyKeys.BAND_SELECTION);
     }
@@ -84,8 +84,7 @@ class BandSelectionNode extends StyleVisitorCoverageProcessingNodeAdapter
                 1,
                 hints,
                 SimpleInternationalString.wrap("BandSelectionNode"),
-                SimpleInternationalString.wrap(
-                        "Node which applies a BandSelection following SLD 1.0 spec."));
+                SimpleInternationalString.wrap("Node which applies a BandSelection following SLD 1.0 spec."));
     }
 
     /*
@@ -93,6 +92,7 @@ class BandSelectionNode extends StyleVisitorCoverageProcessingNodeAdapter
      *
      * @see org.geotools.renderer.lite.gridcoverage2d.BaseCoverageProcessingNode#execute()
      */
+    @Override
     protected GridCoverage2D execute() {
         // preconditions
         assert this.getSources().size() <= 1;
@@ -106,7 +106,8 @@ class BandSelectionNode extends StyleVisitorCoverageProcessingNodeAdapter
         final List<CoverageProcessingNode> sources = this.getSources();
         if (sources != null && !sources.isEmpty()) {
             final GridCoverage2D source = (GridCoverage2D) getSource(0).getOutput();
-            GridCoverageRendererUtilities.ensureSourceNotNull(source, this.getName().toString());
+            GridCoverageRendererUtilities.ensureSourceNotNull(
+                    source, this.getName().toString());
             GridCoverage2D output = null;
             if (bandIndex != -1) {
                 // /////////////////////////////////////////////////////////////////////
@@ -123,8 +124,7 @@ class BandSelectionNode extends StyleVisitorCoverageProcessingNodeAdapter
                 final int numSampleDimensions = source.getNumSampleDimensions();
                 if (bandIndex < 1 || bandIndex > numSampleDimensions)
                     throw new IllegalArgumentException(
-                            Errors.format(
-                                    ErrorKeys.BAD_BAND_NUMBER_$1, Integer.valueOf(bandIndex)));
+                            MessageFormat.format(ErrorKeys.BAD_BAND_NUMBER_$1, Integer.valueOf(bandIndex)));
 
                 // //
                 //
@@ -159,20 +159,16 @@ class BandSelectionNode extends StyleVisitorCoverageProcessingNodeAdapter
                     final ImageLayout layout = new ImageLayout();
                     final RenderedImage sourceRaster = source.getRenderedImage();
                     final SampleModel oldSM = sourceRaster.getSampleModel();
-                    final ColorModel cm =
-                            new ComponentColorModel(
-                                    ColorSpace.getInstance(ColorSpace.CS_GRAY),
-                                    false,
-                                    false,
-                                    Transparency.OPAQUE,
-                                    oldSM.getDataType());
+                    final ColorModel cm = new ComponentColorModel(
+                            ColorSpace.getInstance(ColorSpace.CS_GRAY),
+                            false,
+                            false,
+                            Transparency.OPAQUE,
+                            oldSM.getDataType());
                     layout.setColorModel(cm);
-                    layout.setSampleModel(
-                            cm.createCompatibleSampleModel(oldSM.getWidth(), oldSM.getHeight()));
+                    layout.setSampleModel(cm.createCompatibleSampleModel(oldSM.getWidth(), oldSM.getHeight()));
                     hints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
-                    output =
-                            (GridCoverage2D)
-                                    new SelectSampleDimension().doOperation(parameters, hints);
+                    output = (GridCoverage2D) new SelectSampleDimension().doOperation(parameters, hints);
                 }
 
                 // postcondition
@@ -192,6 +188,7 @@ class BandSelectionNode extends StyleVisitorCoverageProcessingNodeAdapter
         throw new IllegalStateException("No source was set for this Node.");
     }
 
+    @Override
     public void visit(SelectedChannelType sct) {
         // /////////////////////////////////////////////////////////////////////
         //
@@ -203,10 +200,8 @@ class BandSelectionNode extends StyleVisitorCoverageProcessingNodeAdapter
                 bandIndex = sct.getChannelName().evaluate(null, Integer.class);
             } catch (NumberFormatException e) {
                 // something bad happened
-                final IllegalArgumentException iee =
-                        new IllegalArgumentException(
-                                Errors.format(
-                                        ErrorKeys.BAD_BAND_NUMBER_$1, Integer.valueOf(bandIndex)));
+                final IllegalArgumentException iee = new IllegalArgumentException(
+                        MessageFormat.format(ErrorKeys.BAD_BAND_NUMBER_$1, Integer.valueOf(bandIndex)));
                 iee.initCause(e);
                 throw iee;
             }

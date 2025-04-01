@@ -17,9 +17,8 @@
 package org.geotools.wfs.v2_0;
 
 /**
- * Parser configuration for the wfs 1.0 {@link WFSCapabilities schema}, different from the {@link
- * WFSConfiguration} because WFS 1.0 bases capabilities document and request/response documents on
- * different schemas.
+ * Parser configuration for the wfs 1.0 {@link WFSCapabilities schema}, different from the {@link WFSConfiguration}
+ * because WFS 1.0 bases capabilities document and request/response documents on different schemas.
  *
  * @see WFSCapabilities
  */
@@ -34,5 +33,6 @@ public class WFSCapabilitiesConfiguration extends WFSConfiguration {
         addDependency(new org.geotools.ows.v1_1.OWSConfiguration());
     }
 
+    @Override
     protected void configureBindings(org.picocontainer.MutablePicoContainer container) {}
 }

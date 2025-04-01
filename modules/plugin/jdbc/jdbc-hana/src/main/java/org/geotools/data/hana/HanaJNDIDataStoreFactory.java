@@ -18,6 +18,7 @@ package org.geotools.data.hana;
 
 import static org.geotools.data.hana.HanaDataStoreFactory.ENCODE_FUNCTIONS;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.geotools.jdbc.JDBCJNDIDataStoreFactory;
 
@@ -32,9 +33,21 @@ public class HanaJNDIDataStoreFactory extends JDBCJNDIDataStoreFactory {
         super(new HanaDataStoreFactory());
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @Override
+    @SuppressWarnings("unchecked")
     protected void setupParameters(Map parameters) {
-        super.setupParameters(parameters);
-        parameters.put(ENCODE_FUNCTIONS.key, ENCODE_FUNCTIONS);
+        LinkedHashMap<String, Object> parentParams = new LinkedHashMap<>();
+        super.setupParameters(parentParams);
+
+        // Insert additional parameters at the proper place
+        for (Map.Entry<String, Object> param : parentParams.entrySet()) {
+            parameters.put(param.getKey(), param.getValue());
+            if (EXPOSE_PK.key.equals(param.getKey())) {
+                parameters.put(ENCODE_FUNCTIONS.key, ENCODE_FUNCTIONS);
+                parameters.put(HanaDataStoreFactory.DISABLE_SIMPLIFY.key, HanaDataStoreFactory.DISABLE_SIMPLIFY);
+                parameters.put(HanaDataStoreFactory.ESTIMATED_EXTENTS.key, HanaDataStoreFactory.ESTIMATED_EXTENTS);
+                parameters.put(HanaDataStoreFactory.SELECT_HINTS.key, HanaDataStoreFactory.SELECT_HINTS);
+            }
+        }
     }
 }

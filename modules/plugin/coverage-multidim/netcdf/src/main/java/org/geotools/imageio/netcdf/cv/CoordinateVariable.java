@@ -25,12 +25,12 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.imageio.netcdf.cv.CoordinateHandlerSpi.CoordinateHandler;
 import org.geotools.imageio.netcdf.utilities.NetCDFCRSUtilities;
 import org.geotools.imageio.netcdf.utilities.NetCDFUtilities;
 import org.geotools.util.Utilities;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import ucar.ma2.Array;
 import ucar.ma2.ArrayChar;
 import ucar.ma2.ArrayChar.StringIterator;
@@ -81,17 +81,23 @@ public abstract class CoordinateVariable<T> {
         }
 
         @Override
-        public T getMinimum() {
+        public synchronized T getMinimum() {
+            // Made it synchronized since axis1D values retrieval
+            // does cached read on its underlying
             return convertValue(axis1D.getMinValue());
         }
 
         @Override
-        public T getMaximum() {
+        public synchronized T getMaximum() {
+            // Made it synchronized since axis1D values retrieval
+            // does cached read on its underlying
             return convertValue(axis1D.getMaxValue());
         }
 
         @Override
-        public List<T> getAll() {
+        public synchronized List<T> getAll() {
+            // Made it synchronized since axis1D values retrieval
+            // does cached read on its underlying
             return new AbstractList<T>() {
                 @Override
                 public T get(int index) {
@@ -106,13 +112,10 @@ public abstract class CoordinateVariable<T> {
         }
     }
 
-    /**
-     * To use in case that (1) coordinate axis is not one-dimensional (2) coordinate axis is not
-     * numerical
-     */
+    /** To use in case that (1) coordinate axis is not one-dimensional (2) coordinate axis is not numerical */
     protected class CoordinateAxisGeneralHelper implements AxisHelper<T> {
-        private List<T> convertedData = new ArrayList<T>();
-        private SortedSet<T> orderedSet = new TreeSet<T>();
+        private List<T> convertedData = new ArrayList<>();
+        private SortedSet<T> orderedSet = new TreeSet<>();
 
         public CoordinateAxisGeneralHelper() {
             Array data;
@@ -153,12 +156,12 @@ public abstract class CoordinateVariable<T> {
         }
 
         @Override
+        @SuppressWarnings("deprecation") // no Alternative for Dimension.getFullName
         public synchronized T get(Map<String, Integer> indexMap) {
             int i = indexMap.get(coordinateAxis.getFullName());
-            int j =
-                    coordinateAxis instanceof CoordinateAxis2D
-                            ? indexMap.get(coordinateAxis.getDimension(0).getFullName())
-                            : 0;
+            int j = coordinateAxis instanceof CoordinateAxis2D
+                    ? indexMap.get(coordinateAxis.getDimension(0).getFullName())
+                    : 0;
             // j will be zero for 1D axis
             return convertedData.get(
                     i + (j != 0 ? (j * coordinateAxis.getDimension(1).getLength()) : 0));
@@ -181,7 +184,7 @@ public abstract class CoordinateVariable<T> {
 
         @Override
         public List<T> getAll() {
-            return new ArrayList<T>(orderedSet);
+            return new ArrayList<>(orderedSet);
         }
     }
 
@@ -240,7 +243,7 @@ public abstract class CoordinateVariable<T> {
         return null;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings("unchecked")
     public static CoordinateVariable<?> create(CoordinateAxis coordinateAxis) {
         Utilities.ensureNonNull("coordinateAxis", coordinateAxis);
 
@@ -257,17 +260,15 @@ public abstract class CoordinateVariable<T> {
                 case Lon:
                 case Pressure:
                 case Spectral:
-                    return new NumericCoordinateVariable(
-                            suggestBinding(coordinateAxis), coordinateAxis);
+                    return new NumericCoordinateVariable(suggestBinding(coordinateAxis), coordinateAxis);
                 case RunTime:
                 case Time:
                     return new TimeCoordinateVariable(coordinateAxis);
                 default:
-                    throw new IllegalArgumentException(
-                            "Unsupported axis type: "
-                                    + axisType
-                                    + " for coordinate variable: "
-                                    + coordinateAxis.toStringDebug());
+                    throw new IllegalArgumentException("Unsupported axis type: "
+                            + axisType
+                            + " for coordinate variable: "
+                            + coordinateAxis.toStringDebug());
             }
         }
         if (NetCDFUtilities.isCheckCoordinatePlugins()) {
@@ -296,10 +297,7 @@ public abstract class CoordinateVariable<T> {
 
     private AxisHelper<T> axisHelper;
 
-    /**
-     * @param binding
-     * @param coordinateAxis
-     */
+    /** */
     public CoordinateVariable(Class<T> binding, CoordinateAxis coordinateAxis) {
         Utilities.ensureNonNull("coordinateAxis", coordinateAxis);
         Utilities.ensureNonNull("binding", binding);
@@ -319,8 +317,7 @@ public abstract class CoordinateVariable<T> {
     protected void init() {
         if (!coordinateAxis.isNumeric()
                 || !(coordinateAxis instanceof CoordinateAxis1D)
-                || (coordinateAxis.hasMissing()
-                        && !AxisType.Time.equals(coordinateAxis.getAxisType()))) {
+                || (coordinateAxis.hasMissing() && !AxisType.Time.equals(coordinateAxis.getAxisType()))) {
             // Not sure time variable can have actual NoData values in the array.
             // Let's exclude it from GeneralHelper case.
             // We may revisit it if we find some data with FillValues in the array.
@@ -363,8 +360,7 @@ public abstract class CoordinateVariable<T> {
     }
 
     public boolean isRegular() {
-        return coordinateAxis instanceof CoordinateAxis1D
-                && ((CoordinateAxis1D) coordinateAxis).isRegular();
+        return coordinateAxis instanceof CoordinateAxis1D && ((CoordinateAxis1D) coordinateAxis).isRegular();
     }
 
     public double getIncrement() {

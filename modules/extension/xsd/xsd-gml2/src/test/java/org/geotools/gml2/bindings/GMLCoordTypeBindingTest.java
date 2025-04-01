@@ -16,11 +16,16 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.math.BigDecimal;
 import org.geotools.gml2.GML;
 import org.geotools.xs.XS;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.impl.CoordinateArraySequenceFactory;
 import org.picocontainer.MutablePicoContainer;
@@ -33,7 +38,9 @@ public class GMLCoordTypeBindingTest extends AbstractGMLBindingTest {
     ElementInstance coordinate;
     MutablePicoContainer container;
 
-    protected void setUp() throws Exception {
+    @Override
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
         x = createElement(GML.NAMESPACE, "X", XS.DECIMAL, "12.34");
@@ -46,36 +53,30 @@ public class GMLCoordTypeBindingTest extends AbstractGMLBindingTest {
         container.registerComponentImplementation(GMLCoordTypeBinding.class);
     }
 
+    @Test
     public void testParse1D() throws Exception {
         Node node =
-                createNode(
-                        coordinate,
-                        new ElementInstance[] {x},
-                        new Object[] {new BigDecimal(12.34)},
-                        null,
-                        null);
+                createNode(coordinate, new ElementInstance[] {x}, new Object[] {BigDecimal.valueOf(12.34)}, null, null);
 
         GMLCoordTypeBinding strategy =
-                (GMLCoordTypeBinding)
-                        container.getComponentInstanceOfType(GMLCoordTypeBinding.class);
+                (GMLCoordTypeBinding) container.getComponentInstanceOfType(GMLCoordTypeBinding.class);
 
         Coordinate c = (Coordinate) strategy.parse(coordinate, node, null);
         assertNotNull(c);
         assertEquals(c.x, 12.34, 0d);
     }
 
+    @Test
     public void testParse2D() throws Exception {
-        Node node =
-                createNode(
-                        coordinate,
-                        new ElementInstance[] {x, y},
-                        new Object[] {new BigDecimal(12.34), new BigDecimal(56.78)},
-                        null,
-                        null);
+        Node node = createNode(
+                coordinate,
+                new ElementInstance[] {x, y},
+                new Object[] {BigDecimal.valueOf(12.34), BigDecimal.valueOf(56.78)},
+                null,
+                null);
 
         GMLCoordTypeBinding strategy =
-                (GMLCoordTypeBinding)
-                        container.getComponentInstanceOfType(GMLCoordTypeBinding.class);
+                (GMLCoordTypeBinding) container.getComponentInstanceOfType(GMLCoordTypeBinding.class);
 
         Coordinate c = (Coordinate) strategy.parse(coordinate, node, null);
         assertNotNull(c);
@@ -83,19 +84,16 @@ public class GMLCoordTypeBindingTest extends AbstractGMLBindingTest {
         assertEquals(c.y, 56.78, 0d);
     }
 
+    @Test
     public void testParse3D() throws Exception {
-        Node node =
-                createNode(
-                        coordinate,
-                        new ElementInstance[] {x, y, z},
-                        new Object[] {
-                            new BigDecimal(12.34), new BigDecimal(56.78), new BigDecimal(910.11)
-                        },
-                        null,
-                        null);
+        Node node = createNode(
+                coordinate,
+                new ElementInstance[] {x, y, z},
+                new Object[] {BigDecimal.valueOf(12.34), BigDecimal.valueOf(56.78), BigDecimal.valueOf(910.11)},
+                null,
+                null);
         GMLCoordTypeBinding strategy =
-                (GMLCoordTypeBinding)
-                        container.getComponentInstanceOfType(GMLCoordTypeBinding.class);
+                (GMLCoordTypeBinding) container.getComponentInstanceOfType(GMLCoordTypeBinding.class);
 
         Coordinate c = (Coordinate) strategy.parse(coordinate, node, null);
         assertNotNull(c);

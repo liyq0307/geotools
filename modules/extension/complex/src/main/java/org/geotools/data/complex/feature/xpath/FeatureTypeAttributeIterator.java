@@ -19,9 +19,9 @@ package org.geotools.data.complex.feature.xpath;
 import java.util.List;
 import org.apache.commons.jxpath.ri.model.NodeIterator;
 import org.apache.commons.jxpath.ri.model.NodePointer;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.PropertyDescriptor;
 import org.geotools.feature.type.Types;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.PropertyDescriptor;
 
 /**
  * A special iterator for iterating over the attributes of a feature type.
@@ -50,16 +50,19 @@ public class FeatureTypeAttributeIterator implements NodeIterator {
         position = 1;
     }
 
+    @Override
     public int getPosition() {
         return position;
     }
 
+    @Override
     public boolean setPosition(int position) {
         this.position = position;
 
         return position <= children.size();
     }
 
+    @Override
     public NodePointer getNodePointer() {
         return new FeatureTypeAttributePointer(
                 pointer, featureType, children.get(position).getName());

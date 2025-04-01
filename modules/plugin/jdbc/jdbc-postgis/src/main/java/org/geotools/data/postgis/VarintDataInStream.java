@@ -24,8 +24,7 @@ import org.locationtech.jts.io.InStream;
 /**
  * Wrapper around a {@link InStream} that can read bytes and <a
  * href="https://developers.google.com/protocol-buffers/docs/encoding#varints">varints</a> and a <a
- * href="https://developers.google.com/protocol-buffers/docs/encoding#signed-integers">signed
- * varint</a>
+ * href="https://developers.google.com/protocol-buffers/docs/encoding#signed-integers">signed varint</a>
  */
 public class VarintDataInStream {
 
@@ -40,11 +39,7 @@ public class VarintDataInStream {
         this.stream = stream;
     }
 
-    /**
-     * Sets a new InStream to delegate reads to
-     *
-     * @param stream
-     */
+    /** Sets a new InStream to delegate reads to */
     public void setInStream(InStream stream) {
         this.stream = stream;
     }
@@ -94,6 +89,30 @@ public class VarintDataInStream {
     }
 
     private int unzigzag(int n) {
+        return n >>> 1 ^ -(n & 1);
+    }
+
+    /** Reads an un-signed 64-bit varinteger */
+    long readUnsignedLong() throws IOException {
+        long result = 0;
+        for (int shift = 0; shift < 64; shift += 7) {
+            stream.read(buf1);
+            byte b = buf1[0];
+            result |= (long) (b & 0x7F) << shift;
+            if ((b & 0x80) == 0) {
+                return result;
+            }
+        }
+        throw new IllegalArgumentException("Invalid varint found, used more than 64 bits");
+    }
+
+    /** Reads an signed 64-bit varinteger */
+    public long readSignedLong() throws IOException {
+        long val = readUnsignedLong();
+        return unzigzagLong(val);
+    }
+
+    private long unzigzagLong(long n) {
         return n >>> 1 ^ -(n & 1);
     }
 }

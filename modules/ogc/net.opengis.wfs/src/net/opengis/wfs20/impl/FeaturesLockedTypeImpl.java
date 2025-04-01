@@ -26,7 +26,7 @@ import org.eclipse.emf.ecore.util.BasicFeatureMap;
 import org.eclipse.emf.ecore.util.EDataTypeUniqueEList;
 import org.eclipse.emf.ecore.util.FeatureMap;
 import org.eclipse.emf.ecore.util.InternalEList;
-import org.opengis.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.FeatureId;
 
 /**
  * <!-- begin-user-doc -->
@@ -87,6 +87,7 @@ public class FeaturesLockedTypeImpl extends EObjectImpl implements FeaturesLocke
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public FeatureMap getGroup() {
     if (group == null) {
       group = new BasicFeatureMap(this, Wfs20Package.FEATURES_LOCKED_TYPE__GROUP);
@@ -99,9 +100,10 @@ public class FeaturesLockedTypeImpl extends EObjectImpl implements FeaturesLocke
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<FeatureId> getResourceId() {
     if (resourceId == null) {
-      resourceId = new EDataTypeUniqueEList<FeatureId>(FeatureId.class, this, Wfs20Package.FEATURES_LOCKED_TYPE__RESOURCE_ID);
+      resourceId = new EDataTypeUniqueEList<>(FeatureId.class, this, Wfs20Package.FEATURES_LOCKED_TYPE__RESOURCE_ID);
     }
     return resourceId;
   }

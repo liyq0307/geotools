@@ -17,10 +17,9 @@
 package org.geotools.se.v1_1.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.se.v1_1.SE;
 import org.geotools.sld.bindings.SLDDisplacementBinding;
-import org.geotools.styling.StyleFactory;
-import org.geotools.xml.*;
 
 /**
  * Binding object for the element http://www.opengis.net/se:Displacement.
@@ -50,6 +49,7 @@ public class DisplacementBinding extends SLDDisplacementBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.Displacement;
     }

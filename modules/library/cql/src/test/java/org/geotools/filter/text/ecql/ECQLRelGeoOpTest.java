@@ -17,21 +17,20 @@
 
 package org.geotools.filter.text.ecql;
 
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.function.FilterFunction_buffer;
 import org.geotools.filter.text.commons.CompilerUtil;
 import org.geotools.filter.text.commons.Language;
 import org.geotools.filter.text.cql2.CQLRelGeoOpTest;
-import org.geotools.util.factory.Hints;
 import org.junit.Assert;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.DistanceBufferOperator;
 
 /**
  * Relation geo operation
@@ -40,8 +39,7 @@ import org.opengis.filter.spatial.DistanceBufferOperator;
  * @since 2.6
  */
 public class ECQLRelGeoOpTest extends CQLRelGeoOpTest {
-    protected static final FilterFactory FILTER_FACTORY =
-            CommonFactoryFinder.getFilterFactory((Hints) null);
+    protected static final FilterFactory FILTER_FACTORY = CommonFactoryFinder.getFilterFactory(null);
 
     public ECQLRelGeoOpTest() {
         super(Language.ECQL);
@@ -49,12 +47,10 @@ public class ECQLRelGeoOpTest extends CQLRelGeoOpTest {
 
     @Test
     public void functionDwithinGeometry() throws Exception {
-        Filter resultFilter;
 
         // DWITHIN
-        resultFilter =
-                CompilerUtil.parseFilter(
-                        this.language, "DWITHIN(buffer(the_geom,5), POINT(1 2), 10, kilometers)");
+        Filter resultFilter =
+                CompilerUtil.parseFilter(this.language, "DWITHIN(buffer(the_geom,5), POINT(1 2), 10, kilometers)");
 
         Assert.assertTrue(resultFilter instanceof DistanceBufferOperator);
 
@@ -67,13 +63,10 @@ public class ECQLRelGeoOpTest extends CQLRelGeoOpTest {
 
     @Test
     public void functionDwithinFunction() throws Exception {
-        Filter filter;
 
         // DWITHIN
-        filter =
-                CompilerUtil.parseFilter(
-                        this.language,
-                        "DWITHIN(buffer(the_geom,5), buffer(the_geom,2), 10, kilometers)");
+        Filter filter = CompilerUtil.parseFilter(
+                this.language, "DWITHIN(buffer(the_geom,5), buffer(the_geom,2), 10, kilometers)");
 
         Assert.assertTrue(filter instanceof DistanceBufferOperator);
 
@@ -86,12 +79,10 @@ public class ECQLRelGeoOpTest extends CQLRelGeoOpTest {
 
     @Test
     public void geometryDwithinGeometry() throws Exception {
-        Filter resultFilter;
 
         // DWITHIN
-        resultFilter =
-                CompilerUtil.parseFilter(
-                        this.language, "DWITHIN(POINT(5 7), POINT(1 2), 10, kilometers)");
+        Filter resultFilter =
+                CompilerUtil.parseFilter(this.language, "DWITHIN(POINT(5 7), POINT(1 2), 10, kilometers)");
 
         Assert.assertTrue(resultFilter instanceof DistanceBufferOperator);
     }
@@ -100,8 +91,7 @@ public class ECQLRelGeoOpTest extends CQLRelGeoOpTest {
     public void geometryBeyondGeometry() throws Exception {
 
         Filter resultFilter =
-                CompilerUtil.parseFilter(
-                        language, "BEYOND(POINT(5.0 7.0), POINT(1.0 2.0), 10.0, kilometers)");
+                CompilerUtil.parseFilter(language, "BEYOND(POINT(5.0 7.0), POINT(1.0 2.0), 10.0, kilometers)");
 
         Assert.assertTrue(resultFilter instanceof Beyond);
         Beyond beyondFilter = (Beyond) resultFilter;
@@ -117,8 +107,7 @@ public class ECQLRelGeoOpTest extends CQLRelGeoOpTest {
     public void functionBeyondFunction() throws Exception {
 
         Filter resultFilter =
-                CompilerUtil.parseFilter(
-                        language, "BEYOND(buffer(geom1,3), buffer(geom2, 4), 10.0, kilometers)");
+                CompilerUtil.parseFilter(language, "BEYOND(buffer(geom1,3), buffer(geom2, 4), 10.0, kilometers)");
 
         Assert.assertTrue(resultFilter instanceof Beyond);
         Beyond beyondFilter = (Beyond) resultFilter;

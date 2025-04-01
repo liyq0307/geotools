@@ -19,6 +19,7 @@ package org.geotools.wfs.v1_1;
 import java.util.Set;
 import javax.xml.namespace.QName;
 import org.geotools.filter.v1_1.OGC;
+import org.geotools.xsd.XSD;
 import org.geotools.xsd.ows.OWS;
 
 /**
@@ -29,8 +30,7 @@ import org.geotools.xsd.ows.OWS;
 public final class WFS extends org.geotools.wfs.WFS {
 
     /** @generated */
-    public static final QName InsertResultsType =
-            new QName("http://www.opengis.net/wfs", "InsertResultsType");
+    public static final QName InsertResultsType = new QName("http://www.opengis.net/wfs", "InsertResultsType");
 
     /** @generated */
     public static final QName LockFeatureResponseType =
@@ -41,12 +41,10 @@ public final class WFS extends org.geotools.wfs.WFS {
             new QName("http://www.opengis.net/wfs", "TransactionResponseType");
 
     /** @generated */
-    public static final QName LockFeatureResponse =
-            new QName("http://www.opengis.net/wfs", "LockFeatureResponse");
+    public static final QName LockFeatureResponse = new QName("http://www.opengis.net/wfs", "LockFeatureResponse");
 
     /** @generated */
-    public static final QName TransactionResponse =
-            new QName("http://www.opengis.net/wfs", "TransactionResponse");
+    public static final QName TransactionResponse = new QName("http://www.opengis.net/wfs", "TransactionResponse");
 
     /** singleton instance */
     private static final WFS instance = new WFS();
@@ -57,12 +55,13 @@ public final class WFS extends org.geotools.wfs.WFS {
     }
 
     @Override
-    protected void addDependencies(Set dependencies) {
+    protected void addDependencies(Set<XSD> dependencies) {
         dependencies.add(OWS.getInstance());
         dependencies.add(OGC.getInstance());
     }
 
     /** Returns the location of 'wfs.xsd.'. */
+    @Override
     public String getSchemaLocation() {
         return getClass().getResource("wfs.xsd").toString();
     }

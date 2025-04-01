@@ -66,9 +66,10 @@ public class RingTypeImpl extends AbstractRingTypeImpl implements RingType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<CurvePropertyType> getCurveMember() {
         if (curveMember == null) {
-            curveMember = new EObjectContainmentEList<CurvePropertyType>(CurvePropertyType.class, this, Gml311Package.RING_TYPE__CURVE_MEMBER);
+            curveMember = new EObjectContainmentEList<>(CurvePropertyType.class, this, Gml311Package.RING_TYPE__CURVE_MEMBER);
         }
         return curveMember;
     }

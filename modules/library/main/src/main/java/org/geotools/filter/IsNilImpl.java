@@ -16,14 +16,14 @@
  */
 package org.geotools.filter;
 
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.expression.Expression;
 
 /**
- * JD: PropertyIsNil requires us to return true if a property is "nil" in the xml schema sense. But
- * we don't really have notion of schema in our filters. So for now we just make it an alias of
- * PropertyIsNull. When someone (app-schema) has a need for this we can revisit.
+ * JD: PropertyIsNil requires us to return true if a property is "nil" in the xml schema sense. But we don't really have
+ * notion of schema in our filters. So for now we just make it an alias of PropertyIsNull. When someone (app-schema) has
+ * a need for this we can revisit.
  */
 public class IsNilImpl extends CompareFilterImpl implements PropertyIsNil {
 
@@ -36,6 +36,7 @@ public class IsNilImpl extends CompareFilterImpl implements PropertyIsNil {
         this.delegate = new IsNullImpl(e1);
     }
 
+    @Override
     public boolean evaluate(Object object) {
         return delegate.evaluate(object);
         //        Expression expr = getExpression();
@@ -48,10 +49,12 @@ public class IsNilImpl extends CompareFilterImpl implements PropertyIsNil {
         //        return nilReason.equals(Converters.convert(value, nilReason.getClass()));
     }
 
+    @Override
     public Expression getExpression() {
         return getExpression1();
     }
 
+    @Override
     public Object getNilReason() {
         return nilReason;
     }

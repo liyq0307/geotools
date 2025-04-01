@@ -17,6 +17,7 @@
 package org.geotools.coverage.processing;
 
 import it.geosolutions.jaiext.JAIExt;
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,23 +25,22 @@ import java.util.Set;
 import java.util.logging.Logger;
 import javax.media.jai.OperationDescriptor;
 import javax.media.jai.registry.RenderedRegistryMode;
+import org.geotools.api.parameter.InvalidParameterValueException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.parameter.DefaultParameterDescriptor;
 import org.geotools.parameter.ImagingParameterDescriptors;
 import org.geotools.parameter.ImagingParameters;
 import org.geotools.util.Utilities;
 import org.geotools.util.logging.Logging;
-import org.opengis.parameter.InvalidParameterValueException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
- * This class is the root class for the Maths operations. It provides basic capabilities for
- * management of geospatial parameters like {@link javax.media.jai.ROI}s and subsampling factors.
+ * This class is the root class for the Maths operations. It provides basic capabilities for management of geospatial
+ * parameters like {@link javax.media.jai.ROI}s and subsampling factors.
  *
  * @author Nicola Lagomarsini, GeoSolutions SAS
  * @since 14.x
@@ -56,22 +56,21 @@ public abstract class BaseMathOperationJAI extends OperationJAI {
     public static final String SOURCES_NAME = "Sources";
 
     /** The parameter descriptor for the Sources. */
-    public static final ParameterDescriptor SOURCES =
-            new DefaultParameterDescriptor(
-                    Citations.JAI,
-                    SOURCES_NAME,
-                    Collection.class, // Value class (mandatory)
-                    null, // Array of valid values
-                    null, // Default value
-                    null, // Minimal value
-                    null, // Maximal value
-                    null, // Unit of measure
-                    true);
+    public static final ParameterDescriptor<Collection> SOURCES = new DefaultParameterDescriptor<>(
+            Citations.JAI,
+            SOURCES_NAME,
+            Collection.class, // Value class (mandatory)
+            null, // Array of valid values
+            null, // Default value
+            null, // Minimal value
+            null, // Maximal value
+            null, // Unit of measure
+            true);
 
     private static Set<ParameterDescriptor> REPLACED_DESCRIPTORS;
 
     static {
-        final Set<ParameterDescriptor> replacedDescriptors = new HashSet<ParameterDescriptor>();
+        final Set<ParameterDescriptor> replacedDescriptors = new HashSet<>();
         replacedDescriptors.add(SOURCES);
         REPLACED_DESCRIPTORS = Collections.unmodifiableSet(replacedDescriptors);
     }
@@ -85,8 +84,7 @@ public abstract class BaseMathOperationJAI extends OperationJAI {
         super(
                 operationDescriptor,
                 new ImagingParameterDescriptors(
-                        getOperationDescriptor(operationDescriptor.getName()),
-                        REPLACED_DESCRIPTORS));
+                        getOperationDescriptor(operationDescriptor.getName()), REPLACED_DESCRIPTORS));
     }
 
     /**
@@ -96,8 +94,7 @@ public abstract class BaseMathOperationJAI extends OperationJAI {
      * @param replacements {@link ImagingParameterDescriptors} that should replace the correspondent
      *     {@link ImagingParameters} in order to change the default behavior they have inside JAI.
      */
-    public BaseMathOperationJAI(
-            OperationDescriptor operationDescriptor, ImagingParameterDescriptors replacements) {
+    public BaseMathOperationJAI(OperationDescriptor operationDescriptor, ImagingParameterDescriptors replacements) {
         super(
                 operationDescriptor,
                 new ImagingParameterDescriptors(
@@ -117,9 +114,7 @@ public abstract class BaseMathOperationJAI extends OperationJAI {
         super(
                 getOperationDescriptor(JAIExt.getOperationName(name)),
                 new ExtendedImagingParameterDescriptors(
-                        name,
-                        operationDescriptor,
-                        new HashSet<ParameterDescriptor>(REPLACED_DESCRIPTORS)));
+                        name, operationDescriptor, new HashSet<>(REPLACED_DESCRIPTORS)));
     }
 
     /**
@@ -130,15 +125,12 @@ public abstract class BaseMathOperationJAI extends OperationJAI {
     public BaseMathOperationJAI(String name) {
         super(
                 getOperationDescriptor(name),
-                new ImagingParameterDescriptors(
-                        getOperationDescriptor(name),
-                        new HashSet<ParameterDescriptor>(REPLACED_DESCRIPTORS)));
+                new ImagingParameterDescriptors(getOperationDescriptor(name), new HashSet<>(REPLACED_DESCRIPTORS)));
     }
 
+    @Override
     protected void extractSources(
-            final ParameterValueGroup parameters,
-            final Collection<GridCoverage2D> sources,
-            final String[] sourceNames)
+            final ParameterValueGroup parameters, final Collection<GridCoverage2D> sources, final String[] sourceNames)
             throws ParameterNotFoundException, InvalidParameterValueException {
         if (!JAIExt.isJAIExtOperation(JAIExt.getOperationName(getName()))) {
             super.extractSources(parameters, sources, sourceNames);
@@ -153,11 +145,10 @@ public abstract class BaseMathOperationJAI extends OperationJAI {
                     || ((Collection) srcCoverages).isEmpty()
                     || !(((Collection) srcCoverages).iterator().next() instanceof GridCoverage2D)) {
                 throw new InvalidParameterValueException(
-                        Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$1, "sources"),
-                        "sources",
-                        srcCoverages);
+                        MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$1, "sources"), "sources", srcCoverages);
             }
             // Collection of the sources to use
+            @SuppressWarnings("unchecked")
             Collection<GridCoverage2D> sourceCoverages = (Collection<GridCoverage2D>) srcCoverages;
             sources.addAll(sourceCoverages);
         }

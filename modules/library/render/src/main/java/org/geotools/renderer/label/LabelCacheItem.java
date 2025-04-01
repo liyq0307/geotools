@@ -21,10 +21,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.geometry.jts.LiteShape2;
 import org.geotools.renderer.style.TextStyle2D;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.TextSymbolizer.PolygonAlignOptions;
 import org.locationtech.jts.geom.Geometry;
 
 /**
@@ -45,7 +44,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
 
     TextStyle2D textStyle;
 
-    List<Geometry> geoms = new ArrayList<Geometry>();
+    List<Geometry> geoms = new ArrayList<>();
 
     double priority = 0.0;
 
@@ -53,7 +52,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
 
     String label;
 
-    private Set<String> layerIds = new HashSet<String>();
+    private Set<String> layerIds = new HashSet<>();
 
     int maxDisplacement = 0;
 
@@ -81,7 +80,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
 
     double goodnessOfFit = 0;
 
-    PolygonAlignOptions polygonAlign = PolygonAlignOptions.NONE;
+    TextSymbolizer.PolygonAlignOptions polygonAlign = org.geotools.api.style.TextSymbolizer.PolygonAlignOptions.NONE;
 
     GraphicResize graphicsResize = GraphicResize.NONE;
 
@@ -95,17 +94,19 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
 
     TextSymbolizer symbolizer;
 
+    int fontShrinkSizeMin;
+
     public double getGoodnessOfFit() {
         return goodnessOfFit;
     }
 
     boolean partialsEnabled = false;
 
+    TextSymbolizer.GraphicPlacement graphicPlacement;
+
     /**
-     * A value between 0 and 1 representing the portion of the label that overlaps with the geometry
-     * (atm used only for polygons)
-     *
-     * @param goodnessOfFit
+     * A value between 0 and 1 representing the portion of the label that overlaps with the geometry (atm used only for
+     * polygons)
      */
     public void setGoodnessOfFit(double goodnessOfFit) {
         this.goodnessOfFit = goodnessOfFit;
@@ -139,11 +140,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
 
     /** Construct <code>LabelCacheItem</code>. */
     public LabelCacheItem(
-            String layerId,
-            TextStyle2D textStyle,
-            LiteShape2 shape,
-            String label,
-            TextSymbolizer symbolizer) {
+            String layerId, TextStyle2D textStyle, LiteShape2 shape, String label, TextSymbolizer symbolizer) {
         this.textStyle = textStyle;
         this.geoms.add(shape.getGeometry());
         this.label = label;
@@ -179,13 +176,10 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         this.graphicMargin = other.graphicMargin;
         this.textUnderlined = other.textUnderlined;
         this.symbolizer = other.symbolizer;
+        this.fontShrinkSizeMin = other.fontShrinkSizeMin;
     }
 
-    /**
-     * Return a modifiable set of ids
-     *
-     * @return
-     */
+    /** Return a modifiable set of ids */
     public Set<String> getLayerIds() {
         return Collections.synchronizedSet(layerIds);
     }
@@ -200,18 +194,20 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         return textStyle;
     }
 
+    void setTextStyle(TextStyle2D textStyle) {
+        this.textStyle = textStyle;
+    }
+
     /** @see java.lang.Object#hashCode() */
 
     /** Returns an example geometry from the list of geometries. */
     public Geometry getGeometry() {
-        return (Geometry) geoms.get(0);
+        return geoms.get(0);
     }
 
     /**
-     * Max amount of pixels the label will be moved around trying to find a non conflicting location
-     * (how and if the moving will be done is geometry type dependent)
-     *
-     * @return
+     * Max amount of pixels the label will be moved around trying to find a non conflicting location (how and if the
+     * moving will be done is geometry type dependent)
      */
     public int getMaxDisplacement() {
         return maxDisplacement;
@@ -222,10 +218,8 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
     }
 
     /**
-     * defines the actual angle towards which displacement of label will take place (applies only in
-     * polygon or point features)
-     *
-     * @return
+     * defines the actual angle towards which displacement of label will take place (applies only in polygon or point
+     * features)
      */
     public int[] getDisplacementAngles() {
         return displacementAngles;
@@ -235,11 +229,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         this.displacementAngles = displacementAngles;
     }
 
-    /**
-     * When enabled, repeats labels every "repeat" pixels (works on lines only atm)
-     *
-     * @return
-     */
+    /** When enabled, repeats labels every "repeat" pixels (works on lines only atm) */
     public int getRepeat() {
         return repeat;
     }
@@ -248,11 +238,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         this.repeat = repeat;
     }
 
-    /**
-     * When grouping, wheter we should label only the biggest geometry, or the others as well
-     *
-     * @return
-     */
+    /** When grouping, wheter we should label only the biggest geometry, or the others as well */
     public boolean labelAllGroup() {
         return labelAllGroup;
     }
@@ -269,11 +255,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         this.removeGroupOverlaps = removeGroupOverlaps;
     }
 
-    /**
-     * Wheter labels are allowed to go past the start/end of the line
-     *
-     * @return
-     */
+    /** Wheter labels are allowed to go past the start/end of the line */
     public boolean allowOverruns() {
         return allowOverruns;
     }
@@ -286,20 +268,12 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         return minGroupDistance;
     }
 
-    /**
-     * Minimum cartesian distance between two labels in the same group, in pixels
-     *
-     * @param minGroupDistance
-     */
+    /** Minimum cartesian distance between two labels in the same group, in pixels */
     public void setMinGroupDistance(int minGroupDistance) {
         this.minGroupDistance = minGroupDistance;
     }
 
-    /**
-     * Enables curved labels on linear features
-     *
-     * @return
-     */
+    /** Enables curved labels on linear features */
     public boolean isFollowLineEnabled() {
         return followLineEnabled;
     }
@@ -309,10 +283,8 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
     }
 
     /**
-     * Max angle between two subsequence characters in a curved label, in degrees. Good visual
-     * results are obtained with an angle of less than 25 degrees.
-     *
-     * @return
+     * Max angle between two subsequence characters in a curved label, in degrees. Good visual results are obtained with
+     * an angle of less than 25 degrees.
      */
     public double getMaxAngleDelta() {
         return maxAngleDelta;
@@ -322,11 +294,7 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         this.maxAngleDelta = maxAngleDelta;
     }
 
-    /**
-     * Automatically wraps long labels when the label width, in pixels, exceeds the autowrap length
-     *
-     * @return
-     */
+    /** Automatically wraps long labels when the label width, in pixels, exceeds the autowrap length */
     public int getAutoWrap() {
         return autoWrap;
     }
@@ -340,15 +308,14 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
      *
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
+    @Override
     public int compareTo(LabelCacheItem other) {
         return Double.compare(this.getPriority(), other.getPriority());
     }
 
     /**
-     * If enabled, text will be forced to follow a left to right alignement (that makes it readable)
-     * no matter what the natural orientation of the line is
-     *
-     * @return
+     * If enabled, text will be forced to follow a left to right alignement (that makes it readable) no matter what the
+     * natural orientation of the line is
      */
     public boolean isForceLeftToRightEnabled() {
         return forceLeftToRightEnabled;
@@ -358,20 +325,14 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         this.forceLeftToRightEnabled = forceLeftToRight;
     }
 
-    /**
-     * Checks if conflict resolution has been enabled for this label
-     *
-     * @return
-     */
+    /** Checks if conflict resolution has been enabled for this label */
     public boolean isConflictResolutionEnabled() {
         return conflictResolutionEnabled;
     }
 
     /**
-     * Sets conflict resolution for this label. When on, this label outline/bbox will be stored in
-     * the conflict resolution map and will prevent every other label to be drawn in the same area
-     *
-     * @param conflictResolutionEnabled
+     * Sets conflict resolution for this label. When on, this label outline/bbox will be stored in the conflict
+     * resolution map and will prevent every other label to be drawn in the same area
      */
     public void setConflictResolutionEnabled(boolean conflictResolutionEnabled) {
         this.conflictResolutionEnabled = conflictResolutionEnabled;
@@ -393,11 +354,11 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
         this.graphicMargin = graphicMargin;
     }
 
-    void setPolygonAlign(PolygonAlignOptions polygonAlign) {
+    void setPolygonAlign(TextSymbolizer.PolygonAlignOptions polygonAlign) {
         this.polygonAlign = polygonAlign;
     }
 
-    PolygonAlignOptions getPolygonAlign() {
+    TextSymbolizer.PolygonAlignOptions getPolygonAlign() {
         return polygonAlign;
     }
 
@@ -431,6 +392,24 @@ public class LabelCacheItem implements Comparable<LabelCacheItem> {
 
     public void setWordSpacing(double wordSpacing) {
         this.wordSpacing = wordSpacing;
+    }
+
+    public int getFontShrinkSizeMin() {
+        return fontShrinkSizeMin;
+    }
+
+    public void setFontShrinkSizeMin(int fontShrinkSize) {
+        this.fontShrinkSizeMin = fontShrinkSize;
+    }
+
+    public TextSymbolizer.GraphicPlacement getGraphicPlacement() {
+        return graphicPlacement == null
+                ? org.geotools.api.style.TextSymbolizer.GraphicPlacement.LABEL
+                : graphicPlacement;
+    }
+
+    public void setGraphicPlacement(TextSymbolizer.GraphicPlacement graphicPlacement) {
+        this.graphicPlacement = graphicPlacement;
     }
 
     @Override

@@ -17,8 +17,8 @@
 package org.geotools.data.ogr;
 
 import java.io.IOException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Encapsulates calls to the OGR library.
@@ -48,7 +48,6 @@ public interface OGR {
      * Checks the ogr error status code and throws java exceptions accordingly.
      *
      * @param code The ogr error code.
-     * @throws IOException
      */
     void CheckError(int code) throws IOException;
 
@@ -78,8 +77,7 @@ public interface OGR {
 
     void DataSourceRelease(Object dataSource);
 
-    Object DataSourceCreateLayer(
-            Object dataSource, String name, Object spatialReference, long geomType, String[] opts);
+    Object DataSourceCreateLayer(Object dataSource, String name, Object spatialReference, long geomType, String[] opts);
 
     Object DataSourceExecuteSQL(Object dataSource, String sql, Object spatialFilter);
 
@@ -208,15 +206,7 @@ public interface OGR {
     void FeatureSetFieldBinary(Object feature, int field, int length, byte[] value);
 
     void FeatureSetFieldDateTime(
-            Object feature,
-            int field,
-            int year,
-            int month,
-            int day,
-            int hour,
-            int minute,
-            int second,
-            int tz);
+            Object feature, int field, int year, int month, int day, int hour, int minute, int second, int tz);
 
     void FeatureSetFieldString(Object feature, int field, String str);
 

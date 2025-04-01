@@ -19,19 +19,18 @@ package org.geotools.data.store;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
 import org.geotools.data.collection.DelegateFeatureReader;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.collection.DecoratingFeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * SimpleFeatureCollection wrapper which limits the number of features returned.
@@ -51,55 +50,61 @@ public class MaxFeaturesFeatureCollection<T extends FeatureType, F extends Featu
     }
 
     public FeatureReader<T, F> reader() throws IOException {
-        return new DelegateFeatureReader<T, F>(getSchema(), features());
+        return new DelegateFeatureReader<>(getSchema(), features());
     }
 
+    @Override
     public FeatureIterator<F> features() {
-        return new MaxFeaturesIterator<F>(delegate.features(), max);
+        return new MaxFeaturesIterator<>(delegate.features(), max);
     }
 
+    @Override
     public FeatureCollection<T, F> subCollection(Filter filter) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public FeatureCollection<T, F> sort(SortBy order) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public int size() {
         return (int) Math.min(delegate.size(), max);
     }
 
+    @Override
     public boolean isEmpty() {
         return delegate.isEmpty() || max == 0;
     }
 
+    @Override
     public Object[] toArray() {
         return toArray(new Object[size()]);
     }
 
+    @Override
     public <O> O[] toArray(O[] a) {
-        List<F> list = new ArrayList<F>();
-        FeatureIterator<F> i = features();
-        try {
+        List<F> list = new ArrayList<>();
+        try (FeatureIterator<F> i = features()) {
             while (i.hasNext()) {
                 list.add(i.next());
             }
             return list.toArray(a);
-        } finally {
-            i.close();
         }
     }
 
+    @Override
     public boolean containsAll(Collection<?> c) {
-        for (Iterator<?> i = c.iterator(); i.hasNext(); ) {
-            if (!contains(i.next())) {
+        for (Object o : c) {
+            if (!contains(o)) {
                 return false;
             }
         }
         return true;
     }
 
+    @Override
     public ReferencedEnvelope getBounds() {
         // calculate manually
         return DataUtilities.bounds(this);

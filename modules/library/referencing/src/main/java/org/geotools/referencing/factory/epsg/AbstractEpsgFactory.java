@@ -16,8 +16,24 @@
  */
 package org.geotools.referencing.factory.epsg;
 
-import java.awt.*;
+import static org.geotools.measure.Units.DEGREE_ANGLE;
+import static org.geotools.measure.Units.DEGREE_MINUTE_SECOND;
+import static org.geotools.measure.Units.FOOT;
+import static org.geotools.measure.Units.GRADE;
+import static org.geotools.measure.Units.KILOMETER;
+import static org.geotools.measure.Units.METRE;
+import static org.geotools.measure.Units.MICRORADIAN;
+import static org.geotools.measure.Units.MINUTE_ANGLE;
+import static org.geotools.measure.Units.NAUTICAL_MILE;
+import static org.geotools.measure.Units.ONE;
+import static org.geotools.measure.Units.PPM;
+import static org.geotools.measure.Units.RADIAN;
+import static org.geotools.measure.Units.SECOND_ANGLE;
+import static org.geotools.measure.Units.SEXAGESIMAL_DMS;
+
+import java.awt.RenderingHints;
 import java.io.File;
+import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.net.URI;
@@ -30,6 +46,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.MessageFormat;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.ArrayList;
@@ -46,11 +63,59 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import javax.measure.Unit;
+import javax.measure.quantity.Angle;
+import javax.measure.quantity.Length;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.metadata.extent.Extent;
+import org.geotools.api.metadata.quality.EvaluationMethodType;
+import org.geotools.api.metadata.quality.PositionalAccuracy;
+import org.geotools.api.parameter.InvalidParameterValueException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.NoSuchIdentifierException;
+import org.geotools.api.referencing.crs.CRSFactory;
+import org.geotools.api.referencing.crs.CompoundCRS;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeneralDerivedCRS;
+import org.geotools.api.referencing.crs.GeocentricCRS;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.referencing.crs.SingleCRS;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CSFactory;
+import org.geotools.api.referencing.cs.CartesianCS;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.cs.EllipsoidalCS;
+import org.geotools.api.referencing.cs.SphericalCS;
+import org.geotools.api.referencing.cs.VerticalCS;
+import org.geotools.api.referencing.datum.Datum;
+import org.geotools.api.referencing.datum.DatumFactory;
+import org.geotools.api.referencing.datum.Ellipsoid;
+import org.geotools.api.referencing.datum.EngineeringDatum;
+import org.geotools.api.referencing.datum.GeodeticDatum;
+import org.geotools.api.referencing.datum.PrimeMeridian;
+import org.geotools.api.referencing.datum.VerticalDatum;
+import org.geotools.api.referencing.datum.VerticalDatumType;
+import org.geotools.api.referencing.operation.ConcatenatedOperation;
+import org.geotools.api.referencing.operation.Conversion;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.OperationMethod;
+import org.geotools.api.referencing.operation.Projection;
+import org.geotools.api.referencing.operation.Transformation;
+import org.geotools.api.util.GenericName;
+import org.geotools.api.util.InternationalString;
 import org.geotools.measure.Units;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.metadata.i18n.LoggingKeys;
 import org.geotools.metadata.i18n.Loggings;
 import org.geotools.metadata.i18n.Vocabulary;
@@ -86,68 +151,17 @@ import org.geotools.util.Version;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.metadata.extent.Extent;
-import org.opengis.metadata.quality.EvaluationMethodType;
-import org.opengis.metadata.quality.PositionalAccuracy;
-import org.opengis.parameter.InvalidParameterValueException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.NoSuchIdentifierException;
-import org.opengis.referencing.crs.CRSFactory;
-import org.opengis.referencing.crs.CompoundCRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeneralDerivedCRS;
-import org.opengis.referencing.crs.GeocentricCRS;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.referencing.crs.SingleCRS;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CSFactory;
-import org.opengis.referencing.cs.CartesianCS;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.referencing.cs.EllipsoidalCS;
-import org.opengis.referencing.cs.SphericalCS;
-import org.opengis.referencing.cs.VerticalCS;
-import org.opengis.referencing.datum.Datum;
-import org.opengis.referencing.datum.DatumFactory;
-import org.opengis.referencing.datum.Ellipsoid;
-import org.opengis.referencing.datum.EngineeringDatum;
-import org.opengis.referencing.datum.GeodeticDatum;
-import org.opengis.referencing.datum.PrimeMeridian;
-import org.opengis.referencing.datum.VerticalDatum;
-import org.opengis.referencing.datum.VerticalDatumType;
-import org.opengis.referencing.operation.ConcatenatedOperation;
-import org.opengis.referencing.operation.Conversion;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.OperationMethod;
-import org.opengis.referencing.operation.Projection;
-import org.opengis.referencing.operation.Transformation;
-import org.opengis.util.GenericName;
-import org.opengis.util.InternationalString;
 import si.uom.NonSI;
 import si.uom.SI;
-import systems.uom.common.USCustomary;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.unit.MetricPrefix;
 
 /**
  * A coordinate reference system factory backed by the EPSG database tables.
  *
- * <p>The EPSG database is freely available at <A
- * HREF="http://www.epsg.org">http://www.epsg.org</a>. Current version of this class requires EPSG
- * database version 6.6 or above.
+ * <p>The EPSG database is freely available at <A HREF="http://www.epsg.org">http://www.epsg.org</a>. Current version of
+ * this class requires EPSG database version 6.6 or above.
  *
- * <p>This factory makes use of a provided {@link ObjectCache}, and may be deployed in stand aline
- * fashion; or as a worker for a {@link MultiEpsgFactory}.
+ * <p>This factory makes use of a provided {@link ObjectCache}, and may be deployed in stand aline fashion; or as a
+ * worker for a {@link MultiEpsgFactory}.
  *
  * <p>This class is abstract - please see the subclasses for dialect specific implementations:
  *
@@ -157,11 +171,10 @@ import tec.uom.se.unit.MetricPrefix;
  *   <li>{@link OracleDialectEpsgFactory}
  * </ul>
  *
- * These factories accepts names as well as numerical identifiers. For example "<cite>NTF (Paris) /
- * France I</cite>" and {@code "27581"} both fetchs the same object. However, names may be ambiguous
- * since the same name may be used for more than one object. This is the case of "WGS 84" for
- * example. If such an ambiguity is found, an exception will be thrown. If names are not wanted as a
- * legal EPSG code, subclasses can override the {@link #isPrimaryKey} method.
+ * These factories accepts names as well as numerical identifiers. For example "<cite>NTF (Paris) / France I</cite>" and
+ * {@code "27581"} both fetchs the same object. However, names may be ambiguous since the same name may be used for more
+ * than one object. This is the case of "WGS 84" for example. If such an ambiguity is found, an exception will be
+ * thrown. If names are not wanted as a legal EPSG code, subclasses can override the {@link #isPrimaryKey} method.
  *
  * @since 2.4
  * @version $Id$
@@ -171,6 +184,7 @@ import tec.uom.se.unit.MetricPrefix;
  * @author Matthias Basler
  * @author Andrea Aime
  */
+@SuppressWarnings("PMD.CloseResource") // class implements its own PreparedStatement pooling
 public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory {
     /// Datum shift operation methods
     /** First Bursa-Wolf method. */
@@ -189,10 +203,15 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     private static final InternationalString TRANSFORMATION_ACCURACY =
             Vocabulary.formatInternational(VocabularyKeys.TRANSFORMATION_ACCURACY);
 
+    private static final Set<String> ENSEMBLE_SET = Set.of(
+            "World Geodetic System 1984",
+            "European Terrestrial Reference System 1989",
+            "Dansk Vertikal Reference 1990");
+
     /**
-     * The authority for this database. Will be created only when first needed. This authority will
-     * contains the database version in the {@linkplain Citation#getEdition edition} attribute,
-     * together with the {@linkplain Citation#getEditionDate edition date}.
+     * The authority for this database. Will be created only when first needed. This authority will contains the
+     * database version in the {@linkplain Citation#getEdition edition} attribute, together with the
+     * {@linkplain Citation#getEditionDate edition date}.
      */
     private transient Citation authority; // FIXME: always EPSG
 
@@ -207,71 +226,62 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     private Connection connection;
 
     /**
-     * A pool of prepared statements. Key are {@link String} object related to their originating
-     * method name (for example "Ellipsoid" for {@link #createEllipsoid}, while values are {@link
-     * PreparedStatement} objects.
+     * A pool of prepared statements. Key are {@link String} object related to their originating method name (for
+     * example "Ellipsoid" for {@link #createEllipsoid}, while values are {@link PreparedStatement} objects.
      *
-     * <p><strong>Note:</strong> It is okay to use {@link IdentityHashMap} instead of {@link
-     * HashMap} because the keys will always be the exact same object, namely the hard-coded
-     * argument given to calls to {@link #prepareStatement} in this class.
+     * <p><strong>Note:</strong> It is okay to use {@link IdentityHashMap} instead of {@link HashMap} because the keys
+     * will always be the exact same object, namely the hard-coded argument given to calls to {@link #prepareStatement}
+     * in this class.
      *
      * <p>This field is managed as part of our connection lifecycle.
      */
-    private final Map<String, PreparedStatement> statements =
-            new IdentityHashMap<String, PreparedStatement>();
+    private final Map<String, PreparedStatement> statements = new IdentityHashMap<>();
 
     /**
-     * Last object type returned by {@link #createObject}, or -1 if none. This type is an index in
-     * the {@link #TABLES_INFO} array and is strictly for {@link #createObject} internal use.
+     * Last object type returned by {@link #createObject}, or -1 if none. This type is an index in the
+     * {@link #TABLES_INFO} array and is strictly for {@link #createObject} internal use.
      */
     private int lastObjectType = -1;
 
-    /**
-     * The last table in which object name were looked for. This is for internal use by {@link
-     * #toPrimaryKey} only.
-     */
+    /** The last table in which object name were looked for. This is for internal use by {@link #toPrimaryKey} only. */
     private transient String lastTableForName;
 
     /**
-     * Cache for axis names. This service is not provided by {@link BufferedAuthorityFactory} since
-     * {@link AxisName} object are particular to the EPSG database.
+     * Cache for axis names. This service is not provided by {@link BufferedAuthorityFactory} since {@link AxisName}
+     * object are particular to the EPSG database.
      *
      * @see #getAxisName
      */
-    private final Map<String, AxisName> axisNames = new HashMap<String, AxisName>();
+    private final Map<String, AxisName> axisNames = new HashMap<>();
 
     /**
-     * Cache for axis numbers. This service is not provided by {@link BufferedAuthorityFactory}
-     * since the number of axis is used internally in this class.
+     * Cache for axis numbers. This service is not provided by {@link BufferedAuthorityFactory} since the number of axis
+     * is used internally in this class.
      *
      * @see #getDimensionForCRS
      */
-    private final Map<String, Short> axisCounts = new HashMap<String, Short>();
+    private final Map<String, Short> axisCounts = new HashMap<>();
 
     /**
-     * Cache for projection checks. This service is not provided by {@link BufferedAuthorityFactory}
-     * since the check that a transformation is a projection is used internally in this class.
+     * Cache for projection checks. This service is not provided by {@link BufferedAuthorityFactory} since the check
+     * that a transformation is a projection is used internally in this class.
      *
      * @see #isProjection
      */
-    private final Map<String, Boolean> codeProjection = new HashMap<String, Boolean>();
+    private final Map<String, Boolean> codeProjection = new HashMap<>();
 
     /** Pool of naming systems, used for caching. There is usually few of them (about 15). */
-    private final Map<String, LocalName> scopes = new HashMap<String, LocalName>();
+    private final Map<String, LocalName> scopes = new HashMap<>();
+
+    /** The properties to be given the objects to construct. Reused every time {@link #createProperties} is invoked. */
+    private final Map<String, Object> properties = new HashMap<>();
 
     /**
-     * The properties to be given the objects to construct. Reused every time {@link
-     * #createProperties} is invoked.
+     * A safety guard for preventing never-ending loops in recursive calls to {@link #createDatum}. This is used by
+     * {@link #createBursaWolfParameters}, which need to create a target datum. The target datum could have its own
+     * Bursa-Wolf parameters, with one of them pointing again to the source datum.
      */
-    private final Map<String, Object> properties = new HashMap<String, Object>();
-
-    /**
-     * A safety guard for preventing never-ending loops in recursive calls to {@link #createDatum}.
-     * This is used by {@link #createBursaWolfParameters}, which need to create a target datum. The
-     * target datum could have its own Bursa-Wolf parameters, with one of them pointing again to the
-     * source datum.
-     */
-    private final Set<String> safetyGuard = new HashSet<String>();
+    private final Set<String> safetyGuard = new HashSet<>();
 
     public AbstractEpsgFactory(final Hints userHints) throws FactoryException {
         super(MAXIMUM_PRIORITY - 20);
@@ -288,7 +298,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
             if (hint instanceof String) {
                 String name = (String) hint;
                 try {
-                    dataSource = (DataSource) GeoTools.getInitialContext(userHints).lookup(name);
+                    dataSource = (DataSource) GeoTools.jndiLookup(name);
                 } catch (NamingException e) {
                     throw new FactoryException("A EPSG_DATA_SOURCE hint is required:" + e);
                 }
@@ -333,17 +343,16 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Returns the authority for this EPSG database. This authority will contains the database
-     * version in the {@linkplain Citation#getEdition edition} attribute, together with the
-     * {@linkplain Citation#getEditionDate edition date}.
+     * Returns the authority for this EPSG database. This authority will contains the database version in the
+     * {@linkplain Citation#getEdition edition} attribute, together with the {@linkplain Citation#getEditionDate edition
+     * date}.
      */
+    @Override
     public synchronized Citation getAuthority() {
         if (authority == null)
             try {
-                final String query =
-                        adaptSQL(
-                                "SELECT VERSION_NUMBER, VERSION_DATE FROM [Version History]"
-                                        + " ORDER BY VERSION_DATE DESC");
+                final String query = adaptSQL(
+                        "SELECT VERSION_NUMBER, VERSION_DATE FROM [Version History]" + " ORDER BY VERSION_DATE DESC");
                 final DatabaseMetaData metadata = getConnection().getMetaData();
                 try (Statement statement = getConnection().createStatement();
                         ResultSet result = statement.executeQuery(query)) {
@@ -353,25 +362,18 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                         final String engine = metadata.getDatabaseProductName();
                         final CitationImpl c = new CitationImpl(Citations.EPSG);
                         c.getAlternateTitles()
-                                .add(
-                                        Vocabulary.formatInternational(
-                                                VocabularyKeys.DATA_BASE_$3,
-                                                "EPSG",
-                                                version,
-                                                engine));
+                                .add(Vocabulary.formatInternational(
+                                        VocabularyKeys.DATA_BASE_$3, "EPSG", version, engine));
                         c.setEdition(new SimpleInternationalString(version));
                         c.setEditionDate(date);
                         authority = (Citation) c.unmodifiable();
-                        hints.put(
-                                Hints.VERSION,
-                                new Version(version)); // For getImplementationHints()
+                        hints.put(Hints.VERSION, new Version(version)); // For getImplementationHints()
                     } else {
                         authority = Citations.EPSG;
                     }
                 }
             } catch (SQLException exception) {
-                Logging.unexpectedException(
-                        LOGGER, AbstractEpsgFactory.class, "getAuthority", exception);
+                Logging.unexpectedException(LOGGER, AbstractEpsgFactory.class, "getAuthority", exception);
                 return Citations.EPSG;
             }
         return authority;
@@ -385,45 +387,48 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     @Override
     public synchronized String getBackingStoreDescription() throws FactoryException {
         final Citation authority = getAuthority();
-        final TableWriter table = new TableWriter(null, " ");
-        final Vocabulary resources = Vocabulary.getResources(null);
-        CharSequence cs;
-        if ((cs = authority.getEdition()) != null) {
-            table.write(resources.getString(VocabularyKeys.VERSION_OF_$1, "EPSG"));
-            table.write(':');
-            table.nextColumn();
-            table.write(cs.toString());
-            table.nextLine();
-        }
-        try {
-            String s;
-            final DatabaseMetaData metadata = getConnection().getMetaData();
-            if ((s = metadata.getDatabaseProductName()) != null) {
-                table.write(resources.getLabel(VocabularyKeys.DATABASE_ENGINE));
+        try (TableWriter table = new TableWriter(null, " ")) {
+            final Vocabulary resources = Vocabulary.getResources(null);
+            CharSequence cs;
+            if ((cs = authority.getEdition()) != null) {
+                table.write(resources.getString(VocabularyKeys.VERSION_OF_$1, "EPSG"));
+                table.write(':');
                 table.nextColumn();
-                table.write(s);
-                if ((s = metadata.getDatabaseProductVersion()) != null) {
-                    table.write(' ');
-                    table.write(resources.getString(VocabularyKeys.VERSION_$1, s));
+                table.write(cs.toString());
+                table.nextLine();
+            }
+            try {
+                String s;
+                final DatabaseMetaData metadata = getConnection().getMetaData();
+                if ((s = metadata.getDatabaseProductName()) != null) {
+                    table.write(resources.getLabel(VocabularyKeys.DATABASE_ENGINE));
+                    table.nextColumn();
+                    table.write(s);
+                    if ((s = metadata.getDatabaseProductVersion()) != null) {
+                        table.write(' ');
+                        table.write(resources.getString(VocabularyKeys.VERSION_$1, s));
+                    }
+                    table.nextLine();
                 }
-                table.nextLine();
+                if ((s = metadata.getURL()) != null) {
+                    table.write(resources.getLabel(VocabularyKeys.DATABASE_URL));
+                    table.nextColumn();
+                    table.write(s);
+                    table.nextLine();
+                }
+            } catch (SQLException exception) {
+                throw new FactoryException(exception);
             }
-            if ((s = metadata.getURL()) != null) {
-                table.write(resources.getLabel(VocabularyKeys.DATABASE_URL));
-                table.nextColumn();
-                table.write(s);
-                table.nextLine();
-            }
-        } catch (SQLException exception) {
-            throw new FactoryException(exception);
+            return table.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return table.toString();
     }
 
     /**
-     * Returns the implementation hints for this factory. The returned map contains all the values
-     * specified in {@linkplain DirectAuthorityFactory#getImplementationHints subclass}, with the
-     * addition of {@link Hints#VERSION VERSION}.
+     * Returns the implementation hints for this factory. The returned map contains all the values specified in
+     * {@linkplain DirectAuthorityFactory#getImplementationHints subclass}, with the addition of {@link Hints#VERSION
+     * VERSION}.
      */
     @Override
     public Map<RenderingHints.Key, ?> getImplementationHints() {
@@ -438,18 +443,16 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * Returns the set of authority codes of the given type.
      *
      * @param type The spatial reference objects type (may be {@code Object.class}).
-     * @return The set of authority codes for spatial reference objects of the given type. If this
-     *     factory doesn't contains any object of the given type, then this method returns an empty
-     *     set.
+     * @return The set of authority codes for spatial reference objects of the given type. If this factory doesn't
+     *     contains any object of the given type, then this method returns an empty set.
      * @throws FactoryException if access to the underlying database failed.
      */
-    protected synchronized Set<String> generateAuthorityCodes(final Class type)
-            throws FactoryException {
-        Set<String> result = new HashSet<String>();
-        for (int i = 0; i < TABLES_INFO.length; i++) {
-            final TableInfo table = TABLES_INFO[i];
+    @Override
+    protected synchronized Set<String> generateAuthorityCodes(final Class type) throws FactoryException {
+        Set<String> result = new HashSet<>();
+        for (final TableInfo table : TABLES_INFO) {
             if (table.isTypeOf(type)) {
-                final AuthorityCodeSet codes = new AuthorityCodeSet(TABLES_INFO[i], type);
+                final AuthorityCodeSet codes = new AuthorityCodeSet(table, type);
                 result.addAll(codes);
             }
         }
@@ -460,11 +463,12 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * Gets a description of the object corresponding to a code.
      *
      * @param code Value allocated by authority.
-     * @return A description of the object, or {@code null} if the object corresponding to the
-     *     specified {@code code} has no description.
+     * @return A description of the object, or {@code null} if the object corresponding to the specified {@code code}
+     *     has no description.
      * @throws NoSuchAuthorityCodeException if the specified {@code code} was not found.
      * @throws FactoryException if the query failed for some other reason.
      */
+    @Override
     public InternationalString getDescriptionText(final String code) throws FactoryException {
         IdentifiedObject identifiedObject = createObject(code);
         final Identifier identifier = identifiedObject.getName();
@@ -475,19 +479,16 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Returns a prepared statement for the specified name. Most {@link PreparedStatement} creations
-     * are performed through this method, except {@link #getNumericalIdentifier} and {@link
-     * #createObject}.
+     * Returns a prepared statement for the specified name. Most {@link PreparedStatement} creations are performed
+     * through this method, except {@link #getNumericalIdentifier} and {@link #createObject}.
      *
-     * @param key A key uniquely identifying the caller (e.g. {@code "Ellipsoid"} for {@link
-     *     #createEllipsoid}).
-     * @param sql The SQL statement to use if for creating the {@link PreparedStatement} object.
-     *     Will be used only if no prepared statement was already created for the specified key.
+     * @param key A key uniquely identifying the caller (e.g. {@code "Ellipsoid"} for {@link #createEllipsoid}).
+     * @param sql The SQL statement to use if for creating the {@link PreparedStatement} object. Will be used only if no
+     *     prepared statement was already created for the specified key.
      * @return The prepared statement.
      * @throws SQLException if the prepared statement can't be created.
      */
-    private PreparedStatement prepareStatement(final String key, final String sql)
-            throws SQLException {
+    private PreparedStatement prepareStatement(final String key, final String sql) throws SQLException {
         assert Thread.holdsLock(this);
         PreparedStatement stmt = statements.get(key);
         if (stmt == null) {
@@ -498,8 +499,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Gets the string from the specified {@link ResultSet}. The string is required to be non-null.
-     * A null string will throw an exception.
+     * Gets the string from the specified {@link ResultSet}. The string is required to be non-null. A null string will
+     * throw an exception.
      *
      * @param result The result set to fetch value from.
      * @param columnIndex The column index (1-based).
@@ -508,8 +509,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @throws SQLException if a SQL error occured.
      * @throws FactoryException If a null value was found.
      */
-    private static String getString(
-            final ResultSet result, final int columnIndex, final String code)
+    private static String getString(final ResultSet result, final int columnIndex, final String code)
             throws SQLException, FactoryException {
         final String value = result.getString(columnIndex);
         ensureNonNull(result, columnIndex, code);
@@ -517,8 +517,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Same as {@link #getString(ResultSet,int,String)}, but report the fault on an alternative
-     * column if the value is null.
+     * Same as {@link #getString(ResultSet,int,String)}, but report the fault on an alternative column if the value is
+     * null.
      */
     private static String getString(
             final ResultSet result, final int columnIndex, final String code, final int columnFault)
@@ -529,15 +529,14 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
             final String column = metadata.getColumnName(columnFault);
             final String table = metadata.getTableName(columnFault);
             result.close();
-            throw new FactoryException(
-                    Errors.format(ErrorKeys.NULL_VALUE_IN_TABLE_$3, code, column, table));
+            throw new FactoryException(MessageFormat.format(ErrorKeys.NULL_VALUE_IN_TABLE_$3, code, column, table));
         }
         return str.trim();
     }
 
     /**
-     * Gets the value from the specified {@link ResultSet}. The value is required to be non-null. A
-     * null value (i.e. blank) will throw an exception.
+     * Gets the value from the specified {@link ResultSet}. The value is required to be non-null. A null value (i.e.
+     * blank) will throw an exception.
      *
      * @param result The result set to fetch value from.
      * @param columnIndex The column index (1-based).
@@ -546,8 +545,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @throws SQLException if a SQL error occured.
      * @throws FactoryException If a null value was found.
      */
-    private static double getDouble(
-            final ResultSet result, final int columnIndex, final String code)
+    private static double getDouble(final ResultSet result, final int columnIndex, final String code)
             throws SQLException, FactoryException {
         final double value = result.getDouble(columnIndex);
         ensureNonNull(result, columnIndex, code);
@@ -555,8 +553,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Gets the value from the specified {@link ResultSet}. The value is required to be non-null. A
-     * null value (i.e. blank) will throw an exception.
+     * Gets the value from the specified {@link ResultSet}. The value is required to be non-null. A null value (i.e.
+     * blank) will throw an exception.
      *
      * @param result The result set to fetch value from.
      * @param columnIndex The column index (1-based).
@@ -573,31 +571,28 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Make sure that the last result was non-null. Used for {@code getString}, {@code getDouble}
-     * and {@code getInt} methods only.
+     * Make sure that the last result was non-null. Used for {@code getString}, {@code getDouble} and {@code getInt}
+     * methods only.
      */
-    private static void ensureNonNull(
-            final ResultSet result, final int columnIndex, final String code)
+    private static void ensureNonNull(final ResultSet result, final int columnIndex, final String code)
             throws SQLException, FactoryException {
         if (result.wasNull()) {
             final ResultSetMetaData metadata = result.getMetaData();
             final String column = metadata.getColumnName(columnIndex);
             final String table = metadata.getTableName(columnIndex);
             result.close();
-            throw new FactoryException(
-                    Errors.format(ErrorKeys.NULL_VALUE_IN_TABLE_$3, code, column, table));
+            throw new FactoryException(MessageFormat.format(ErrorKeys.NULL_VALUE_IN_TABLE_$3, code, column, table));
         }
     }
 
     /**
-     * Converts a code from an arbitrary name to the numerical identifier (the primary key). If the
-     * supplied code is already a numerical value, then it is returned unchanged. If the code is not
-     * found in the name column, it is returned unchanged as well so that the caller will produces
-     * an appropriate "Code not found" error message. If the code is found more than once, then an
-     * exception is thrown.
+     * Converts a code from an arbitrary name to the numerical identifier (the primary key). If the supplied code is
+     * already a numerical value, then it is returned unchanged. If the code is not found in the name column, it is
+     * returned unchanged as well so that the caller will produces an appropriate "Code not found" error message. If the
+     * code is found more than once, then an exception is thrown.
      *
-     * <p>Note that this method includes a call to {@link #trimAuthority}, so there is no need to
-     * call it before or after this method.
+     * <p>Note that this method includes a call to {@link #trimAuthority}, so there is no need to call it before or
+     * after this method.
      *
      * @param type The type of object to create.
      * @param code The code to check.
@@ -608,11 +603,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @throws SQLException if an error occured while reading the database.
      */
     private String toPrimaryKey(
-            final Class type,
-            final String code,
-            final String table,
-            final String codeColumn,
-            final String nameColumn)
+            final Class type, final String code, final String table, final String codeColumn, final String nameColumn)
             throws SQLException, FactoryException {
         assert Thread.holdsLock(this);
         String identifier = trimAuthority(code);
@@ -633,11 +624,11 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                 }
             }
             if (statement == null) {
-                final String query =
-                        "SELECT " + codeColumn + " FROM " + table + " WHERE " + nameColumn + " = ?";
+                final String query = "SELECT " + codeColumn + " FROM " + table + " WHERE " + nameColumn + " = ?";
                 statement = getConnection().prepareStatement(adaptSQL(query));
                 statements.put(KEY, statement);
             }
+            identifier = remapToEnsemble(table, identifier);
             statement.setString(1, identifier);
             identifier = null;
             try (ResultSet result = statement.executeQuery()) {
@@ -652,13 +643,19 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         return identifier;
     }
 
+    private String remapToEnsemble(String table, String identifier) {
+        if ("[Datum]".equals(table) && ENSEMBLE_SET.contains(identifier)) {
+            return identifier + " ensemble";
+        }
+        return identifier;
+    }
+
     /**
-     * Make sure that an object constructed from the database is not incoherent. If the code
-     * supplied to a {@code createFoo} method exists in the database, then we should find only one
-     * record. However, we will do a paranoiac check and verify if there is more records, using a
-     * {@code while (results.next())} loop instead of {@code if (results.next())}. This method is
-     * invoked in the loop for making sure that, if there is more than one record (which should
-     * never happen), at least they have identical contents.
+     * Make sure that an object constructed from the database is not incoherent. If the code supplied to a
+     * {@code createFoo} method exists in the database, then we should find only one record. However, we will do a
+     * paranoiac check and verify if there is more records, using a {@code while (results.next())} loop instead of
+     * {@code if (results.next())}. This method is invoked in the loop for making sure that, if there is more than one
+     * record (which should never happen), at least they have identical contents.
      *
      * @param newValue The newly constructed object.
      * @param oldValue The object previously constructed, or {@code null} if none.
@@ -674,20 +671,18 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         if (oldValue.equals(newValue)) {
             return oldValue;
         }
-        throw new FactoryException(Errors.format(ErrorKeys.DUPLICATED_VALUES_$1, code));
+        throw new FactoryException(MessageFormat.format(ErrorKeys.DUPLICATED_VALUES_$1, code));
     }
 
     /**
-     * Returns the name for the {@link IdentifiedObject} to construct. This method also search for
-     * alias.
+     * Returns the name for the {@link IdentifiedObject} to construct. This method also search for alias.
      *
      * @param name The name for the {@link IndentifiedObject} to construct.
      * @param code The EPSG code of the object to construct.
      * @param remarks Remarks, or {@code null} if none.
      * @return The name together with a set of properties.
      */
-    private Map<String, Object> generateProperties(
-            final String name, final String code, String remarks)
+    private Map<String, Object> generateProperties(final String name, final String code, String remarks)
             throws SQLException, FactoryException {
         properties.clear();
         final Citation authority = getAuthority();
@@ -697,9 +692,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         if (code != null) {
             final InternationalString edition = authority.getEdition();
             final String version = (edition != null) ? edition.toString() : null;
-            properties.put(
-                    IdentifiedObject.IDENTIFIERS_KEY,
-                    new NamedIdentifier(authority, code.trim(), version));
+            properties.put(IdentifiedObject.IDENTIFIERS_KEY, new NamedIdentifier(authority, code.trim(), version));
         }
         if (remarks != null && (remarks = remarks.trim()).length() != 0) {
             properties.put(IdentifiedObject.REMARKS_KEY, remarks);
@@ -708,15 +701,13 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
          * Search for alias.
          */
         List<GenericName> alias = null;
-        final PreparedStatement stmt;
-        stmt =
-                prepareStatement(
-                        "Alias",
-                        "SELECT NAMING_SYSTEM_NAME, ALIAS"
-                                + " FROM [Alias] INNER JOIN [Naming System]"
-                                + " ON [Alias].NAMING_SYSTEM_CODE ="
-                                + " [Naming System].NAMING_SYSTEM_CODE"
-                                + " WHERE OBJECT_CODE = ?");
+        final PreparedStatement stmt = prepareStatement(
+                "Alias",
+                "SELECT NAMING_SYSTEM_NAME, ALIAS"
+                        + " FROM [Alias] INNER JOIN [Naming System]"
+                        + " ON [Alias].NAMING_SYSTEM_CODE ="
+                        + " [Naming System].NAMING_SYSTEM_CODE"
+                        + " WHERE OBJECT_CODE = ?");
         stmt.setString(1, code);
         try (ResultSet result = stmt.executeQuery()) {
             while (result.next()) {
@@ -734,21 +725,19 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     generic = new ScopedName(cached, local);
                 }
                 if (alias == null) {
-                    alias = new ArrayList<GenericName>();
+                    alias = new ArrayList<>();
                 }
                 alias.add(generic);
             }
         }
         if (alias != null) {
-            properties.put(
-                    IdentifiedObject.ALIAS_KEY, alias.toArray(new GenericName[alias.size()]));
+            properties.put(IdentifiedObject.ALIAS_KEY, alias.toArray(new GenericName[alias.size()]));
         }
         return properties;
     }
 
     /**
-     * Returns the name for the {@link IdentifiedObject} to construct. This method also search for
-     * alias.
+     * Returns the name for the {@link IdentifiedObject} to construct. This method also search for alias.
      *
      * @param name The name for the {@link IndentifiedObject} to construct.
      * @param code The EPSG code of the object to construct.
@@ -772,16 +761,17 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Returns an arbitrary object from a code. The default implementation invokes one of {@link
-     * #createCoordinateReferenceSystem}, {@link #createCoordinateSystem}, {@link #createDatum},
+     * Returns an arbitrary object from a code. The default implementation invokes one of
+     * {@link #createCoordinateReferenceSystem}, {@link #createCoordinateSystem}, {@link #createDatum},
      * {@link #createEllipsoid}, or {@link #createUnit} methods according the object type.
      *
      * @param code The EPSG value.
      * @return The object.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
      */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public synchronized IdentifiedObject generateObject(final String code) throws FactoryException {
         ensureNonNull("code", code);
@@ -843,8 +833,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     final boolean present = result.next();
                     if (present) {
                         if (index >= 0) {
-                            throw new FactoryException(
-                                    Errors.format(ErrorKeys.DUPLICATED_VALUES_$1, code));
+                            throw new FactoryException(MessageFormat.format(ErrorKeys.DUPLICATED_VALUES_$1, code));
                         }
                         index = (i < 0) ? lastObjectType : i;
                         if (isPrimaryKey) {
@@ -905,26 +894,24 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @param code Value allocated by authority.
      * @return The unit object.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
      */
+    @Override
     public synchronized Unit<?> generateUnit(final String code) throws FactoryException {
         ensureNonNull("code", code);
         Unit<?> returnValue = null;
         try {
             final String primaryKey =
-                    toPrimaryKey(
-                            Unit.class, code, "[Unit of Measure]", "UOM_CODE", "UNIT_OF_MEAS_NAME");
-            final PreparedStatement stmt;
-            stmt =
-                    prepareStatement(
-                            "Unit",
-                            "SELECT UOM_CODE,"
-                                    + " FACTOR_B,"
-                                    + " FACTOR_C,"
-                                    + " TARGET_UOM_CODE"
-                                    + " FROM [Unit of Measure]"
-                                    + " WHERE UOM_CODE = ?");
+                    toPrimaryKey(Unit.class, code, "[Unit of Measure]", "UOM_CODE", "UNIT_OF_MEAS_NAME");
+            final PreparedStatement stmt = prepareStatement(
+                    "Unit",
+                    "SELECT UOM_CODE,"
+                            + " FACTOR_B,"
+                            + " FACTOR_C,"
+                            + " TARGET_UOM_CODE"
+                            + " FROM [Unit of Measure]"
+                            + " WHERE UOM_CODE = ?");
             stmt.setString(1, primaryKey);
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()) {
@@ -964,33 +951,27 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @param code The EPSG value.
      * @return The ellipsoid object.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
      */
+    @Override
     public synchronized Ellipsoid generateEllipsoid(final String code) throws FactoryException {
         ensureNonNull("code", code);
         Ellipsoid returnValue = null;
         try {
             final String primaryKey =
-                    toPrimaryKey(
-                            Ellipsoid.class,
-                            code,
-                            "[Ellipsoid]",
-                            "ELLIPSOID_CODE",
-                            "ELLIPSOID_NAME");
-            final PreparedStatement stmt;
-            stmt =
-                    prepareStatement(
-                            "Ellipsoid",
-                            "SELECT ELLIPSOID_CODE,"
-                                    + " ELLIPSOID_NAME,"
-                                    + " SEMI_MAJOR_AXIS,"
-                                    + " INV_FLATTENING,"
-                                    + " SEMI_MINOR_AXIS,"
-                                    + " UOM_CODE,"
-                                    + " REMARKS"
-                                    + " FROM [Ellipsoid]"
-                                    + " WHERE ELLIPSOID_CODE = ?");
+                    toPrimaryKey(Ellipsoid.class, code, "[Ellipsoid]", "ELLIPSOID_CODE", "ELLIPSOID_NAME");
+            final PreparedStatement stmt = prepareStatement(
+                    "Ellipsoid",
+                    "SELECT ELLIPSOID_CODE,"
+                            + " ELLIPSOID_NAME,"
+                            + " SEMI_MAJOR_AXIS,"
+                            + " INV_FLATTENING,"
+                            + " SEMI_MINOR_AXIS,"
+                            + " UOM_CODE,"
+                            + " REMARKS"
+                            + " FROM [Ellipsoid]"
+                            + " WHERE ELLIPSOID_CODE = ?");
             stmt.setString(1, primaryKey);
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()) {
@@ -1006,7 +987,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     final double semiMinorAxis = result.getDouble(5);
                     final String unitCode = getString(result, 6, code);
                     final String remarks = result.getString(7);
-                    final Unit unit = createUnit(unitCode);
+                    @SuppressWarnings("unchecked")
+                    final Unit<Length> unit = (Unit<Length>) createUnit(unitCode);
                     final Map<String, Object> properties = generateProperties(name, epsg, remarks);
                     final Ellipsoid ellipsoid;
                     if (inverseFlattening == 0) {
@@ -1015,30 +997,25 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                             final String column = result.getMetaData().getColumnName(3);
                             result.close();
                             throw new FactoryException(
-                                    Errors.format(ErrorKeys.NULL_VALUE_IN_TABLE_$3, code, column));
+                                    MessageFormat.format(ErrorKeys.NULL_VALUE_IN_TABLE_$3, code, column));
                         } else {
                             // We only have semiMinorAxis defined -> it's OK
-                            ellipsoid =
-                                    factories
-                                            .getDatumFactory()
-                                            .createEllipsoid(
-                                                    properties, semiMajorAxis, semiMinorAxis, unit);
+                            ellipsoid = factories
+                                    .getDatumFactory()
+                                    .createEllipsoid(properties, semiMajorAxis, semiMinorAxis, unit);
                         }
                     } else {
                         if (semiMinorAxis != 0) {
                             // Both 'inverseFlattening' and 'semiMinorAxis' are defined.
                             // Log a warning and create the ellipsoid using the inverse flattening.
                             final LogRecord record =
-                                    Loggings.format(
-                                            Level.WARNING, LoggingKeys.AMBIGUOUS_ELLIPSOID, code);
+                                    Loggings.format(Level.WARNING, LoggingKeys.AMBIGUOUS_ELLIPSOID, code);
                             record.setLoggerName(LOGGER.getName());
                             LOGGER.log(record);
                         }
-                        ellipsoid =
-                                factories
-                                        .getDatumFactory()
-                                        .createFlattenedSphere(
-                                                properties, semiMajorAxis, inverseFlattening, unit);
+                        ellipsoid = factories
+                                .getDatumFactory()
+                                .createFlattenedSphere(properties, semiMajorAxis, inverseFlattening, unit);
                     }
                     /*
                      * Now that we have built an ellipsoid, compare
@@ -1062,32 +1039,25 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @param code Value allocated by authority.
      * @return The prime meridian object.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
      */
-    public synchronized PrimeMeridian generatePrimeMeridian(final String code)
-            throws FactoryException {
+    @Override
+    public synchronized PrimeMeridian generatePrimeMeridian(final String code) throws FactoryException {
         ensureNonNull("code", code);
         PrimeMeridian returnValue = null;
         try {
-            final String primaryKey =
-                    toPrimaryKey(
-                            PrimeMeridian.class,
-                            code,
-                            "[Prime Meridian]",
-                            "PRIME_MERIDIAN_CODE",
-                            "PRIME_MERIDIAN_NAME");
-            final PreparedStatement stmt;
-            stmt =
-                    prepareStatement(
-                            "PrimeMeridian",
-                            "SELECT PRIME_MERIDIAN_CODE,"
-                                    + " PRIME_MERIDIAN_NAME,"
-                                    + " GREENWICH_LONGITUDE,"
-                                    + " UOM_CODE,"
-                                    + " REMARKS"
-                                    + " FROM [Prime Meridian]"
-                                    + " WHERE PRIME_MERIDIAN_CODE = ?");
+            final String primaryKey = toPrimaryKey(
+                    PrimeMeridian.class, code, "[Prime Meridian]", "PRIME_MERIDIAN_CODE", "PRIME_MERIDIAN_NAME");
+            final PreparedStatement stmt = prepareStatement(
+                    "PrimeMeridian",
+                    "SELECT PRIME_MERIDIAN_CODE,"
+                            + " PRIME_MERIDIAN_NAME,"
+                            + " GREENWICH_LONGITUDE,"
+                            + " UOM_CODE,"
+                            + " REMARKS"
+                            + " FROM [Prime Meridian]"
+                            + " WHERE PRIME_MERIDIAN_CODE = ?");
             stmt.setString(1, primaryKey);
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()) {
@@ -1096,12 +1066,11 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     final double longitude = getDouble(result, 3, code);
                     final String unit_code = getString(result, 4, code);
                     final String remarks = result.getString(5);
-                    final Unit unit = createUnit(unit_code);
+                    @SuppressWarnings("unchecked")
+                    final Unit<javax.measure.quantity.Angle> unit = (Unit<Angle>) createUnit(unit_code);
                     final Map<String, Object> properties = generateProperties(name, epsg, remarks);
                     PrimeMeridian primeMeridian =
-                            factories
-                                    .getDatumFactory()
-                                    .createPrimeMeridian(properties, longitude, unit);
+                            factories.getDatumFactory().createPrimeMeridian(properties, longitude, unit);
                     returnValue = ensureSingleton(primeMeridian, returnValue, code);
                 }
             }
@@ -1120,26 +1089,23 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @param code Value allocated by authority.
      * @return The area of use.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
      */
     public synchronized Extent generateExtent(final String code) throws FactoryException {
         ensureNonNull("code", code);
         Extent returnValue = null;
         try {
-            final String primaryKey =
-                    toPrimaryKey(Extent.class, code, "[Area]", "AREA_CODE", "AREA_NAME");
-            final PreparedStatement stmt;
-            stmt =
-                    prepareStatement(
-                            "Area",
-                            "SELECT AREA_OF_USE,"
-                                    + " AREA_SOUTH_BOUND_LAT,"
-                                    + " AREA_NORTH_BOUND_LAT,"
-                                    + " AREA_WEST_BOUND_LON,"
-                                    + " AREA_EAST_BOUND_LON"
-                                    + " FROM [Area]"
-                                    + " WHERE AREA_CODE = ?");
+            final String primaryKey = toPrimaryKey(Extent.class, code, "[Extent]", "EXTENT_CODE", "EXTENT_NAME");
+            final PreparedStatement stmt = prepareStatement(
+                    "Extent",
+                    "SELECT EXTENT_DESCRIPTION,"
+                            + " BBOX_SOUTH_BOUND_LAT,"
+                            + " BBOX_NORTH_BOUND_LAT,"
+                            + " BBOX_WEST_BOUND_LON,"
+                            + " BBOX_EAST_BOUND_LON"
+                            + " FROM [Extent]"
+                            + " WHERE EXTENT_CODE = ?");
             stmt.setString(1, primaryKey);
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()) {
@@ -1160,17 +1126,14 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                                     if (extent == null) {
                                         extent = new ExtentImpl();
                                     }
-                                    extent.setGeographicElements(
-                                            Collections.singleton(
-                                                    new GeographicBoundingBoxImpl(
-                                                            xmin, xmax, ymin, ymax)));
+                                    extent.setGeographicElements(Collections.singleton(
+                                            new GeographicBoundingBoxImpl(xmin, xmax, ymin, ymax)));
                                 }
                             }
                         }
                     }
                     if (extent != null) {
-                        returnValue =
-                                (Extent) ensureSingleton(extent.unmodifiable(), returnValue, code);
+                        returnValue = (Extent) ensureSingleton(extent.unmodifiable(), returnValue, code);
                     }
                 }
             }
@@ -1184,19 +1147,18 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Returns Bursa-Wolf parameters for a geodetic datum. If the specified datum has no conversion
-     * informations, then this method will returns {@code null}.
+     * Returns Bursa-Wolf parameters for a geodetic datum. If the specified datum has no conversion informations, then
+     * this method will returns {@code null}.
      *
      * @param code The EPSG code of the {@link GeodeticDatum}.
-     * @param toClose The result set to close if this method is going to invokes {@link
-     *     #createDatum} recursively. This hack is necessary because many JDBC drivers do not
-     *     support multiple result sets for the same statement. The result set is closed if an only
-     *     if this method returns a non-null value.
-     * @return an array of Bursa-Wolf parameters (in which case {@code toClose} has been closed), or
-     *     {@code null} (in which case {@code toClose} has <strong>not</strong> been closed).
+     * @param toClose The result set to close if this method is going to invokes {@link #createDatum} recursively. This
+     *     hack is necessary because many JDBC drivers do not support multiple result sets for the same statement. The
+     *     result set is closed if an only if this method returns a non-null value.
+     * @return an array of Bursa-Wolf parameters (in which case {@code toClose} has been closed), or {@code null} (in
+     *     which case {@code toClose} has <strong>not</strong> been closed).
      */
-    private BursaWolfParameters[] generateBursaWolfParameters(
-            final String code, final ResultSet toClose) throws SQLException, FactoryException {
+    private BursaWolfParameters[] generateBursaWolfParameters(final String code, final ResultSet toClose)
+            throws SQLException, FactoryException {
         if (safetyGuard.contains(code)) {
             /*
              * Do not try to create Bursa-Wolf parameters if the datum is already
@@ -1205,29 +1167,35 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
              */
             return null;
         }
-        PreparedStatement stmt;
-        stmt =
-                prepareStatement(
-                        "BursaWolfParametersSet",
-                        "SELECT CO.COORD_OP_CODE,"
-                                + " CO.COORD_OP_METHOD_CODE,"
-                                + " CRS2.DATUM_CODE"
-                                + " FROM [Coordinate_Operation] AS CO"
-                                + " INNER JOIN [Coordinate Reference System] AS CRS2"
-                                + " ON CO.TARGET_CRS_CODE = CRS2.COORD_REF_SYS_CODE"
-                                + " WHERE CO.COORD_OP_METHOD_CODE >= "
-                                + BURSA_WOLF_MIN_CODE
-                                + " AND CO.COORD_OP_METHOD_CODE <= "
-                                + BURSA_WOLF_MAX_CODE
-                                + " AND CO.COORD_OP_CODE <> "
-                                + DUMMY_OPERATION // GEOT-1008
-                                + " AND CO.SOURCE_CRS_CODE IN ("
-                                + " SELECT CRS1.COORD_REF_SYS_CODE " // GEOT-1129
-                                + " FROM [Coordinate Reference System] AS CRS1 "
-                                + " WHERE CRS1.DATUM_CODE = ?)"
-                                + " ORDER BY CRS2.DATUM_CODE,"
-                                + " ABS(CO.DEPRECATED), CO.COORD_OP_ACCURACY,"
-                                + " CO.COORD_OP_CODE DESC"); // GEOT-846 fix
+        PreparedStatement stmt = prepareStatement(
+                "BursaWolfParametersSet",
+                "SELECT CO.COORD_OP_CODE,"
+                        + " CO.COORD_OP_METHOD_CODE,"
+                        + " CRS2.DATUM_CODE"
+                        + " FROM [Coordinate_Operation] AS CO"
+                        + " INNER JOIN [Coordinate Reference System] AS CRS2"
+                        + " ON CO.TARGET_CRS_CODE = CRS2.COORD_REF_SYS_CODE"
+                        + " JOIN EPSG_USAGE U"
+                        + " ON U.OBJECT_TABLE_NAME = '[Coordinate_Operation]'"
+                        + " AND U.OBJECT_CODE = CO.COORD_OP_CODE"
+                        + " LEFT JOIN [Extent] E on U.EXTENT_CODE = E.EXTENT_CODE"
+                        + " WHERE CO.COORD_OP_METHOD_CODE >= "
+                        + BURSA_WOLF_MIN_CODE
+                        + " AND CO.COORD_OP_METHOD_CODE <= "
+                        + BURSA_WOLF_MAX_CODE
+                        + " AND CO.COORD_OP_CODE <> "
+                        + DUMMY_OPERATION // GEOT-1008
+                        + " AND CO.SOURCE_CRS_CODE IN ("
+                        + " SELECT CRS1.COORD_REF_SYS_CODE " // GEOT-1129
+                        + " FROM [Coordinate Reference System] AS CRS1 "
+                        + " WHERE CRS1.DATUM_CODE = ?)"
+                        + " ORDER BY CRS2.DATUM_CODE,"
+                        + " ABS(CO.DEPRECATED), CO.COORD_OP_ACCURACY,"
+                        + " (BBOX_NORTH_BOUND_LAT - BBOX_SOUTH_BOUND_LAT) * "
+                        + "(CASE WHEN BBOX_EAST_BOUND_LON > BBOX_WEST_BOUND_LON "
+                        + "     THEN (BBOX_EAST_BOUND_LON - BBOX_WEST_BOUND_LON) "
+                        + "     ELSE (360 - BBOX_WEST_BOUND_LON - BBOX_EAST_BOUND_LON) END) DESC,"
+                        + " CO.COORD_OP_CODE DESC"); // GEOT-846 fix
         stmt.setString(1, code);
         List<Object> bwInfos = null;
         try (ResultSet result = stmt.executeQuery()) {
@@ -1236,7 +1204,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                 final int method = getInt(result, 2, code);
                 final String datum = getString(result, 3, code);
                 if (bwInfos == null) {
-                    bwInfos = new ArrayList<Object>();
+                    bwInfos = new ArrayList<>();
                 }
                 bwInfos.add(new BursaWolfInfo(operation, method, datum));
             }
@@ -1256,9 +1224,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
             final BursaWolfInfo[] codes = bwInfos.toArray(new BursaWolfInfo[size]);
             sort(codes);
             bwInfos.clear();
-            final Set<String> added = new HashSet<String>();
-            for (int i = 0; i < codes.length; i++) {
-                final BursaWolfInfo candidate = codes[i];
+            final Set<String> added = new HashSet<>();
+            for (final BursaWolfInfo candidate : codes) {
                 if (added.add(candidate.target)) {
                     bwInfos.add(candidate);
                 }
@@ -1271,15 +1238,14 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
          * and not all JDBC drivers supported multi-result set for the same statement. Now, iterate
          * throw the results and fetch the parameter values for each BursaWolfParameters object.
          */
-        stmt =
-                prepareStatement(
-                        "BursaWolfParameters",
-                        "SELECT PARAMETER_CODE,"
-                                + " PARAMETER_VALUE,"
-                                + " UOM_CODE"
-                                + " FROM [Coordinate_Operation Parameter Value]"
-                                + " WHERE COORD_OP_CODE = ?"
-                                + " AND COORD_OP_METHOD_CODE = ?");
+        stmt = prepareStatement(
+                "BursaWolfParameters",
+                "SELECT PARAMETER_CODE,"
+                        + " PARAMETER_VALUE,"
+                        + " UOM_CODE"
+                        + " FROM [Coordinate_Operation Parameter Value]"
+                        + " WHERE COORD_OP_CODE = ?"
+                        + " AND COORD_OP_METHOD_CODE = ?");
         for (int i = 0; i < size; i++) {
             final BursaWolfInfo info = (BursaWolfInfo) bwInfos.get(i);
             final GeodeticDatum datum;
@@ -1319,33 +1285,34 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @param code Value allocated by authority.
      * @return The datum object.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
-     * @todo Current implementation maps all "vertical" datum to {@link VerticalDatumType#GEOIDAL}.
-     *     We don't know yet how to maps the exact vertical datum type from the EPSG database.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
+     * @todo Current implementation maps all "vertical" datum to {@link VerticalDatumType#GEOIDAL}. We don't know yet
+     *     how to maps the exact vertical datum type from the EPSG database.
      */
+    @Override
     public synchronized Datum generateDatum(final String code) throws FactoryException {
         ensureNonNull("code", code);
         Datum returnValue = null;
         try {
-            final String primaryKey =
-                    toPrimaryKey(Datum.class, code, "[Datum]", "DATUM_CODE", "DATUM_NAME");
-            final PreparedStatement stmt;
-            stmt =
-                    prepareStatement(
-                            "Datum",
-                            "SELECT DATUM_CODE,"
-                                    + " DATUM_NAME,"
-                                    + " DATUM_TYPE,"
-                                    + " ORIGIN_DESCRIPTION,"
-                                    + " REALIZATION_EPOCH,"
-                                    + " AREA_OF_USE_CODE,"
-                                    + " DATUM_SCOPE,"
-                                    + " REMARKS,"
-                                    + " ELLIPSOID_CODE," // Only for geodetic type
-                                    + " PRIME_MERIDIAN_CODE" // Only for geodetic type
-                                    + " FROM [Datum]"
-                                    + " WHERE DATUM_CODE = ?");
+            final String primaryKey = toPrimaryKey(Datum.class, code, "[Datum]", "DATUM_CODE", "DATUM_NAME");
+            final PreparedStatement stmt = prepareStatement(
+                    "Datum",
+                    "SELECT d.DATUM_CODE,"
+                            + " d.DATUM_NAME,"
+                            + " d.DATUM_TYPE,"
+                            + " d.ORIGIN_DESCRIPTION,"
+                            + " d.REALIZATION_EPOCH,"
+                            + " u.EXTENT_CODE,"
+                            + " d.DATUM_SCOPE,"
+                            + " d.REMARKS,"
+                            + " d.ELLIPSOID_CODE," // Only for geodetic type
+                            + " d.PRIME_MERIDIAN_CODE" // Only for geodetic type
+                            + " FROM [Datum] d "
+                            + " JOIN EPSG_USAGE u"
+                            + " ON u.OBJECT_TABLE_NAME = '[Datum]'"
+                            + " AND u.OBJECT_CODE = d.DATUM_CODE"
+                            + " WHERE d.DATUM_CODE = ?");
             stmt.setString(1, primaryKey);
             try (ResultSet result = stmt.executeQuery()) {
                 boolean exit = false;
@@ -1358,8 +1325,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     final String area = result.getString(6);
                     final String scope = result.getString(7);
                     final String remarks = result.getString(8);
-                    Map<String, Object> properties =
-                            generateProperties(name, epsg, area, scope, remarks);
+                    Map<String, Object> properties = generateProperties(name, epsg, area, scope, remarks);
                     if (anchor != null) {
                         properties.put(Datum.ANCHOR_POINT_KEY, anchor);
                     }
@@ -1368,8 +1334,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                             properties.put(Datum.REALIZATION_EPOCH_KEY, epoch);
                         } catch (NumberFormatException exception) {
                             // Not a fatal error...
-                            Logging.unexpectedException(
-                                    LOGGER, AbstractEpsgFactory.class, "createDatum", exception);
+                            Logging.unexpectedException(LOGGER, AbstractEpsgFactory.class, "createDatum", exception);
                         }
                     final DatumFactory factory = factories.getDatumFactory();
                     final Datum datum;
@@ -1385,14 +1350,11 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                      *     we must close the result set if Bursa-Wolf parameters are found. In this
                      *     case, we lost our paranoiac check for duplication.
                      */
-                    if (type.equals("geodetic")) {
-                        properties =
-                                new HashMap<String, Object>(properties); // Protect from changes
+                    if (type.equals("geodetic") || type.equals("dynamic geodetic")) {
+                        properties = new HashMap<>(properties); // Protect from changes
                         final Ellipsoid ellipsoid = createEllipsoid(getString(result, 9, code));
-                        final PrimeMeridian meridian =
-                                createPrimeMeridian(getString(result, 10, code));
-                        final BursaWolfParameters[] param =
-                                generateBursaWolfParameters(primaryKey, result);
+                        final PrimeMeridian meridian = createPrimeMeridian(getString(result, 10, code));
+                        final BursaWolfParameters[] param = generateBursaWolfParameters(primaryKey, result);
 
                         if (param != null) {
                             exit = true;
@@ -1404,9 +1366,36 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                         datum = factory.createVerticalDatum(properties, VerticalDatumType.GEOIDAL);
                     } else if (type.equals("engineering")) {
                         datum = factory.createEngineeringDatum(properties);
+                    } else if (type.equals("ensemble")) {
+                        properties = new HashMap<>(properties);
+                        Ellipsoid ellipsoid;
+                        PrimeMeridian meridian;
+                        EnsembleDefinition def = EnsembleDefinition.getEnsemble(epsg);
+                        if (def != null) {
+                            properties.put("name", def.getName());
+                            if (!def.isVertical()) {
+                                ellipsoid = createEllipsoid(def.getEllipsoidCode());
+                                meridian = createPrimeMeridian(def.getPrimeMeridianCode());
+                                final BursaWolfParameters[] param =
+                                        generateBursaWolfParameters(def.getDatumCode(), result);
+                                if (param != null) {
+                                    exit = true;
+                                    properties.put(DefaultGeodeticDatum.BURSA_WOLF_KEY, param);
+                                }
+                                datum = factory.createGeodeticDatum(properties, ellipsoid, meridian);
+                            } else {
+                                properties.put(
+                                        "identifiers",
+                                        new NamedIdentifier(Citations.EPSG, def.getIdentifierAuthority()));
+                                datum = factory.createVerticalDatum(properties, VerticalDatumType.GEOIDAL);
+                            }
+
+                        } else {
+                            datum = null;
+                        }
                     } else {
                         result.close();
-                        throw new FactoryException(Errors.format(ErrorKeys.UNKNOW_TYPE_$1, type));
+                        throw new FactoryException(MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, type));
                     }
                     returnValue = ensureSingleton(datum, returnValue, code);
                     if (exit) {
@@ -1426,22 +1415,19 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Returns the name and description for the specified {@linkplain CoordinateSystemAxis
-     * coordinate system axis} code. Many axis share the same name and description, so it is worth
-     * to cache them.
+     * Returns the name and description for the specified {@linkplain CoordinateSystemAxis coordinate system axis} code.
+     * Many axis share the same name and description, so it is worth to cache them.
      */
     private AxisName getAxisName(final String code) throws FactoryException {
         assert Thread.holdsLock(this);
         AxisName returnValue = axisNames.get(code);
         if (returnValue == null)
             try {
-                final PreparedStatement stmt;
-                stmt =
-                        prepareStatement(
-                                "AxisName",
-                                "SELECT COORD_AXIS_NAME, DESCRIPTION, REMARKS"
-                                        + " FROM [Coordinate Axis Name]"
-                                        + " WHERE COORD_AXIS_NAME_CODE = ?");
+                final PreparedStatement stmt = prepareStatement(
+                        "AxisName",
+                        "SELECT COORD_AXIS_NAME, DESCRIPTION, REMARKS"
+                                + " FROM [Coordinate Axis Name]"
+                                + " WHERE COORD_AXIS_NAME_CODE = ?");
                 stmt.setString(1, code);
                 try (ResultSet result = stmt.executeQuery()) {
                     while (result.next()) {
@@ -1474,22 +1460,20 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @throws NoSuchAuthorityCodeException if the specified {@code code} was not found.
      * @throws FactoryException if the object creation failed for some other reason.
      */
-    public synchronized CoordinateSystemAxis generateCoordinateSystemAxis(final String code)
-            throws FactoryException {
+    @Override
+    public synchronized CoordinateSystemAxis generateCoordinateSystemAxis(final String code) throws FactoryException {
         ensureNonNull("code", code);
         CoordinateSystemAxis returnValue = null;
         try {
-            final PreparedStatement stmt;
-            stmt =
-                    prepareStatement(
-                            "Axis",
-                            "SELECT COORD_AXIS_CODE,"
-                                    + " COORD_AXIS_NAME_CODE,"
-                                    + " COORD_AXIS_ORIENTATION,"
-                                    + " COORD_AXIS_ABBREVIATION,"
-                                    + " UOM_CODE"
-                                    + " FROM [Coordinate Axis]"
-                                    + " WHERE COORD_AXIS_CODE = ?");
+            final PreparedStatement stmt = prepareStatement(
+                    "Axis",
+                    "SELECT COORD_AXIS_CODE,"
+                            + " COORD_AXIS_NAME_CODE,"
+                            + " COORD_AXIS_ORIENTATION,"
+                            + " COORD_AXIS_ABBREVIATION,"
+                            + " UOM_CODE"
+                            + " FROM [Coordinate Axis]"
+                            + " WHERE COORD_AXIS_CODE = ?");
             stmt.setString(1, code);
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()) {
@@ -1514,12 +1498,10 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                         }
                     }
                     final AxisName an = getAxisName(nameCode);
-                    final Map<String, Object> properties =
-                            generateProperties(an.name, epsg, an.description);
+                    final Map<String, Object> properties = generateProperties(an.name, epsg, an.description);
                     final CSFactory factory = factories.getCSFactory();
                     final CoordinateSystemAxis axis =
-                            factory.createCoordinateSystemAxis(
-                                    properties, abbreviation, direction, createUnit(unit));
+                            factory.createCoordinateSystemAxis(properties, abbreviation, direction, createUnit(unit));
                     returnValue = ensureSingleton(axis, returnValue, code);
                 }
             }
@@ -1535,8 +1517,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     /**
      * Returns the coordinate system axis from an EPSG code for a {@link CoordinateSystem}.
      *
-     * <p><strong>WARNING:</strong> The EPSG database uses "{@code ORDER}" as a column name. This is
-     * tolerated by Access, but MySQL doesn't accept this name.
+     * <p><strong>WARNING:</strong> The EPSG database uses "{@code ORDER}" as a column name. This is tolerated by
+     * Access, but MySQL doesn't accept this name.
      *
      * @param code the EPSG code for coordinate system owner.
      * @param dimension of the coordinate system, which is also the size of the returned array.
@@ -1544,18 +1526,16 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @throws SQLException if an error occured during database access.
      * @throws FactoryException if the code has not been found.
      */
-    private CoordinateSystemAxis[] generateAxisForCoordinateSystem(
-            final String code, final int dimension) throws SQLException, FactoryException {
+    private CoordinateSystemAxis[] generateAxisForCoordinateSystem(final String code, final int dimension)
+            throws SQLException, FactoryException {
         assert Thread.holdsLock(this);
         final CoordinateSystemAxis[] axis = new CoordinateSystemAxis[dimension];
-        final PreparedStatement stmt;
-        stmt =
-                prepareStatement(
-                        "AxisOrder",
-                        "SELECT COORD_AXIS_CODE"
-                                + " FROM [Coordinate Axis]"
-                                + " WHERE COORD_SYS_CODE = ?"
-                                + " ORDER BY [ORDER]");
+        final PreparedStatement stmt = prepareStatement(
+                "AxisOrder",
+                "SELECT COORD_AXIS_CODE"
+                        + " FROM [Coordinate Axis]"
+                        + " WHERE COORD_SYS_CODE = ?"
+                        + " ORDER BY [ORDER]");
         // WARNING: Be careful about the column name :
         //          MySQL rejects ORDER as a column name !!!
         stmt.setString(1, code);
@@ -1572,8 +1552,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
             }
         }
         if (i != axis.length) {
-            throw new FactoryException(
-                    Errors.format(ErrorKeys.MISMATCHED_DIMENSION_$2, axis.length, i));
+            throw new FactoryException(MessageFormat.format(ErrorKeys.MISMATCHED_DIMENSION_$2, axis.length, i));
         }
         return axis;
     }
@@ -1584,32 +1563,26 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @param code Value allocated by authority.
      * @return The coordinate system object.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
      */
-    public synchronized CoordinateSystem generateCoordinateSystem(final String code)
-            throws FactoryException {
+    @Override
+    public synchronized CoordinateSystem generateCoordinateSystem(final String code) throws FactoryException {
         ensureNonNull("code", code);
         CoordinateSystem returnValue = null;
         final PreparedStatement stmt;
         try {
-            final String primaryKey =
-                    toPrimaryKey(
-                            CoordinateSystem.class,
-                            code,
-                            "[Coordinate System]",
-                            "COORD_SYS_CODE",
-                            "COORD_SYS_NAME");
-            stmt =
-                    prepareStatement(
-                            "CoordinateSystem",
-                            "SELECT COORD_SYS_CODE,"
-                                    + " COORD_SYS_NAME,"
-                                    + " COORD_SYS_TYPE,"
-                                    + " DIMENSION,"
-                                    + " REMARKS"
-                                    + " FROM [Coordinate System]"
-                                    + " WHERE COORD_SYS_CODE = ?");
+            final String primaryKey = toPrimaryKey(
+                    CoordinateSystem.class, code, "[Coordinate System]", "COORD_SYS_CODE", "COORD_SYS_NAME");
+            stmt = prepareStatement(
+                    "CoordinateSystem",
+                    "SELECT COORD_SYS_CODE,"
+                            + " COORD_SYS_NAME,"
+                            + " COORD_SYS_TYPE,"
+                            + " DIMENSION,"
+                            + " REMARKS"
+                            + " FROM [Coordinate System]"
+                            + " WHERE COORD_SYS_CODE = ?");
             stmt.setString(1, primaryKey);
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()) {
@@ -1618,8 +1591,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     final String type = getString(result, 3, code).trim().toLowerCase();
                     final int dimension = getInt(result, 4, code);
                     final String remarks = result.getString(5);
-                    final CoordinateSystemAxis[] axis =
-                            generateAxisForCoordinateSystem(primaryKey, dimension);
+                    final CoordinateSystemAxis[] axis = generateAxisForCoordinateSystem(primaryKey, dimension);
                     final Map<String, Object> properties =
                             generateProperties(name, epsg, remarks); // Must be after axis
                     final CSFactory factory = factories.getCSFactory();
@@ -1630,9 +1602,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                                 cs = factory.createEllipsoidalCS(properties, axis[0], axis[1]);
                                 break;
                             case 3:
-                                cs =
-                                        factory.createEllipsoidalCS(
-                                                properties, axis[0], axis[1], axis[2]);
+                                cs = factory.createEllipsoidalCS(properties, axis[0], axis[1], axis[2]);
                                 break;
                         }
                     } else if (type.equals("cartesian")) {
@@ -1641,17 +1611,13 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                                 cs = factory.createCartesianCS(properties, axis[0], axis[1]);
                                 break;
                             case 3:
-                                cs =
-                                        factory.createCartesianCS(
-                                                properties, axis[0], axis[1], axis[2]);
+                                cs = factory.createCartesianCS(properties, axis[0], axis[1], axis[2]);
                                 break;
                         }
                     } else if (type.equals("spherical")) {
                         switch (dimension) {
                             case 3:
-                                cs =
-                                        factory.createSphericalCS(
-                                                properties, axis[0], axis[1], axis[2]);
+                                cs = factory.createSphericalCS(properties, axis[0], axis[1], axis[2]);
                                 break;
                         }
                     } else if (type.equals("vertical") || type.equals("gravity-related")) {
@@ -1675,9 +1641,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     } else if (type.equals("cylindrical")) {
                         switch (dimension) {
                             case 3:
-                                cs =
-                                        factory.createCylindricalCS(
-                                                properties, axis[0], axis[1], axis[2]);
+                                cs = factory.createCylindricalCS(properties, axis[0], axis[1], axis[2]);
                                 break;
                         }
                     } else if (type.equals("affine")) {
@@ -1691,12 +1655,12 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                         }
                     } else {
                         result.close();
-                        throw new FactoryException(Errors.format(ErrorKeys.UNKNOW_TYPE_$1, type));
+                        throw new FactoryException(MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, type));
                     }
                     if (cs == null) {
                         result.close();
                         throw new FactoryException(
-                                Errors.format(ErrorKeys.UNEXPECTED_DIMENSION_FOR_CS_$1, type));
+                                MessageFormat.format(ErrorKeys.UNEXPECTED_DIMENSION_FOR_CS_$1, type));
                     }
                     returnValue = ensureSingleton(cs, returnValue, code);
                 }
@@ -1712,8 +1676,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
 
     /**
      * Returns the primary key for a coordinate reference system name. This method is used both by
-     * {@link #createCoordinateReferenceSystem} and {@link
-     * #createFromCoordinateReferenceSystemCodes}
+     * {@link #createCoordinateReferenceSystem} and {@link #createFromCoordinateReferenceSystemCodes}
      */
     private String toPrimaryKeyCRS(final String code) throws SQLException, FactoryException {
         return toPrimaryKey(
@@ -1730,33 +1693,35 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @param code Value allocated by authority.
      * @return The coordinate reference system object.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
      */
-    public synchronized CoordinateReferenceSystem generateCoordinateReferenceSystem(
-            final String code) throws FactoryException {
+    @Override
+    public synchronized CoordinateReferenceSystem generateCoordinateReferenceSystem(final String code)
+            throws FactoryException {
         ensureNonNull("code", code);
         CoordinateReferenceSystem returnValue = null;
         try {
             final String primaryKey = toPrimaryKeyCRS(code);
-            final PreparedStatement stmt;
-            stmt =
-                    prepareStatement(
-                            "CoordinateReferenceSystem",
-                            "SELECT COORD_REF_SYS_CODE,"
-                                    + " COORD_REF_SYS_NAME,"
-                                    + " AREA_OF_USE_CODE,"
-                                    + " CRS_SCOPE,"
-                                    + " REMARKS,"
-                                    + " COORD_REF_SYS_KIND,"
-                                    + " COORD_SYS_CODE," // Null for CompoundCRS
-                                    + " DATUM_CODE," // Null for ProjectedCRS
-                                    + " SOURCE_GEOGCRS_CODE," // For ProjectedCRS
-                                    + " PROJECTION_CONV_CODE," // For ProjectedCRS
-                                    + " CMPD_HORIZCRS_CODE," // For CompoundCRS only
-                                    + " CMPD_VERTCRS_CODE" // For CompoundCRS only
-                                    + " FROM [Coordinate Reference System]"
-                                    + " WHERE COORD_REF_SYS_CODE = ?");
+            final PreparedStatement stmt = prepareStatement(
+                    "CoordinateReferenceSystem",
+                    "SELECT c.COORD_REF_SYS_CODE,"
+                            + " c.COORD_REF_SYS_NAME,"
+                            + " u.EXTENT_CODE,"
+                            + " c.CRS_SCOPE,"
+                            + " c.REMARKS,"
+                            + " c.COORD_REF_SYS_KIND,"
+                            + " c.COORD_SYS_CODE," // Null for CompoundCRS
+                            + " c.DATUM_CODE," // Null for ProjectedCRS
+                            + " c.BASE_CRS_CODE," // For ProjectedCRS
+                            + " c.PROJECTION_CONV_CODE," // For ProjectedCRS
+                            + " c.CMPD_HORIZCRS_CODE," // For CompoundCRS only
+                            + " c.CMPD_VERTCRS_CODE" // For CompoundCRS only
+                            + " FROM [Coordinate Reference System] c "
+                            + " JOIN EPSG_USAGE u "
+                            + " ON u.OBJECT_TABLE_NAME = '[Coordinate Reference System]'"
+                            + " AND u.OBJECT_CODE = c.COORD_REF_SYS_CODE"
+                            + " WHERE COORD_REF_SYS_CODE = ?");
             stmt.setString(1, primaryKey);
             boolean exit = false;
             try (ResultSet result = stmt.executeQuery()) {
@@ -1778,8 +1743,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                      *   NOTE: 'generateProperties' MUST be invoked after any call to an other
                      *         'createFoo' method. Consequently, do not factor out.
                      * ---------------------------------------------------------------------- */
-                    if (type.equalsIgnoreCase("geographic 2D")
-                            || type.equalsIgnoreCase("geographic 3D")) {
+                    if (type.equalsIgnoreCase("geographic 2D") || type.equalsIgnoreCase("geographic 3D")) {
                         final String csCode = getString(result, 7, code);
                         final String dmCode = result.getString(8);
                         final EllipsoidalCS cs = createEllipsoidalCS(csCode);
@@ -1793,8 +1757,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                             final GeographicCRS baseCRS = createGeographicCRS(geoCode);
                             datum = baseCRS.getDatum();
                         }
-                        final Map<String, Object> properties =
-                                generateProperties(name, epsg, area, scope, remarks);
+                        final Map<String, Object> properties = generateProperties(name, epsg, area, scope, remarks);
                         crs = factory.createGeographicCRS(properties, datum, cs);
                     }
                     /* ----------------------------------------------------------------------
@@ -1813,11 +1776,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                         final GeographicCRS baseCRS = createGeographicCRS(geoCode);
                         final CoordinateOperation op = createCoordinateOperation(opCode);
                         if (op instanceof Conversion) {
-                            final Map<String, Object> properties =
-                                    generateProperties(name, epsg, area, scope, remarks);
-                            crs =
-                                    factory.createProjectedCRS(
-                                            properties, baseCRS, (Conversion) op, cs);
+                            final Map<String, Object> properties = generateProperties(name, epsg, area, scope, remarks);
+                            crs = factory.createProjectedCRS(properties, baseCRS, (Conversion) op, cs);
                         } else {
                             throw noSuchAuthorityCode(Projection.class, opCode);
                         }
@@ -1830,8 +1790,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                         final String dmCode = getString(result, 8, code);
                         final VerticalCS cs = createVerticalCS(csCode);
                         final VerticalDatum datum = createVerticalDatum(dmCode);
-                        final Map<String, Object> properties =
-                                generateProperties(name, epsg, area, scope, remarks);
+                        final Map<String, Object> properties = generateProperties(name, epsg, area, scope, remarks);
                         crs = factory.createVerticalCRS(properties, datum, cs);
                     }
                     /* ----------------------------------------------------------------------
@@ -1856,11 +1815,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                             safetyGuard.remove(epsg);
                         }
                         // Note: Don't invoke 'generateProperties' sooner.
-                        final Map<String, Object> properties =
-                                generateProperties(name, epsg, area, scope, remarks);
-                        crs =
-                                factory.createCompoundCRS(
-                                        properties, new CoordinateReferenceSystem[] {crs1, crs2});
+                        final Map<String, Object> properties = generateProperties(name, epsg, area, scope, remarks);
+                        crs = factory.createCompoundCRS(properties, crs1, crs2);
                     }
                     /* ----------------------------------------------------------------------
                      *   GEOCENTRIC CRS
@@ -1870,19 +1826,17 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                         final String dmCode = getString(result, 8, code);
                         final CoordinateSystem cs = createCoordinateSystem(csCode);
                         final GeodeticDatum datum = createGeodeticDatum(dmCode);
-                        final Map<String, Object> properties =
-                                generateProperties(name, epsg, area, scope, remarks);
+                        final Map<String, Object> properties = generateProperties(name, epsg, area, scope, remarks);
                         if (cs instanceof CartesianCS) {
                             crs = factory.createGeocentricCRS(properties, datum, (CartesianCS) cs);
                         } else if (cs instanceof SphericalCS) {
                             crs = factory.createGeocentricCRS(properties, datum, (SphericalCS) cs);
                         } else {
                             result.close();
-                            throw new FactoryException(
-                                    Errors.format(
-                                            ErrorKeys.ILLEGAL_COORDINATE_SYSTEM_FOR_CRS_$2,
-                                            cs.getClass(),
-                                            GeocentricCRS.class));
+                            throw new FactoryException(MessageFormat.format(
+                                    ErrorKeys.ILLEGAL_COORDINATE_SYSTEM_FOR_CRS_$2,
+                                    cs.getClass(),
+                                    GeocentricCRS.class));
                         }
                     }
                     /* ----------------------------------------------------------------------
@@ -1893,8 +1847,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                         final String dmCode = getString(result, 8, code);
                         final CoordinateSystem cs = createCoordinateSystem(csCode);
                         final EngineeringDatum datum = createEngineeringDatum(dmCode);
-                        final Map<String, Object> properties =
-                                generateProperties(name, epsg, area, scope, remarks);
+                        final Map<String, Object> properties = generateProperties(name, epsg, area, scope, remarks);
                         crs = factory.createEngineeringCRS(properties, datum, cs);
                     }
                     /* ----------------------------------------------------------------------
@@ -1902,7 +1855,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                      * ---------------------------------------------------------------------- */
                     else {
                         result.close();
-                        throw new FactoryException(Errors.format(ErrorKeys.UNKNOW_TYPE_$1, type));
+                        throw new FactoryException(MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, type));
                     }
                     returnValue = ensureSingleton(crs, returnValue, code);
                     if (exit) {
@@ -1926,63 +1879,56 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      *
      * @param code The parameter descriptor code allocated by EPSG authority.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
      */
-    public synchronized ParameterDescriptor generateParameterDescriptor(final String code)
-            throws FactoryException {
+    public synchronized ParameterDescriptor<?> generateParameterDescriptor(final String code) throws FactoryException {
         ensureNonNull("code", code);
-        ParameterDescriptor returnValue = null;
+        ParameterDescriptor<?> returnValue = null;
         final PreparedStatement stmt;
         try {
-            final String primaryKey =
-                    toPrimaryKey(
-                            ParameterDescriptor.class,
-                            code,
-                            "[Coordinate_Operation Parameter]",
-                            "PARAMETER_CODE",
-                            "PARAMETER_NAME");
-            stmt =
-                    prepareStatement(
-                            "ParameterDescriptor", // Must be singular form.
-                            "SELECT PARAMETER_CODE,"
-                                    + " PARAMETER_NAME,"
-                                    + " DESCRIPTION"
-                                    + " FROM [Coordinate_Operation Parameter]"
-                                    + " WHERE PARAMETER_CODE = ?");
+            final String primaryKey = toPrimaryKey(
+                    ParameterDescriptor.class,
+                    code,
+                    "[Coordinate_Operation Parameter]",
+                    "PARAMETER_CODE",
+                    "PARAMETER_NAME");
+            stmt = prepareStatement(
+                    "ParameterDescriptor", // Must be singular form.
+                    "SELECT PARAMETER_CODE,"
+                            + " PARAMETER_NAME,"
+                            + " DESCRIPTION"
+                            + " FROM [Coordinate_Operation Parameter]"
+                            + " WHERE PARAMETER_CODE = ?");
             stmt.setString(1, primaryKey);
             try (ResultSet result = stmt.executeQuery()) {
                 while (result.next()) {
                     final String epsg = getString(result, 1, code);
                     final String name = getString(result, 2, code);
                     final String remarks = result.getString(3);
-                    final Unit unit;
-                    final Class type;
+                    final Unit<?> unit;
+                    final Class<?> type;
                     /*
                      * Search for units. We will choose the most commonly used one in parameter values.
                      * If the parameter appears to have at least one non-null value in the "Parameter
                      * File Name" column, then the type is assumed to be URI. Otherwise, the type is a
                      * floating point number.
                      */
-                    final PreparedStatement units =
-                            prepareStatement(
-                                    "ParameterUnit",
-                                    "SELECT MIN(UOM_CODE) AS UOM,"
-                                            + " MIN(PARAM_VALUE_FILE_REF) AS FILEREF"
-                                            + " FROM [Coordinate_Operation Parameter Value]"
-                                            + " WHERE (PARAMETER_CODE = ?)"
-                                            + " GROUP BY UOM_CODE"
-                                            + " ORDER BY COUNT(UOM_CODE) DESC");
+                    final PreparedStatement units = prepareStatement(
+                            "ParameterUnit",
+                            "SELECT MIN(UOM_CODE) AS UOM,"
+                                    + " MIN(PARAM_VALUE_FILE_REF) AS FILEREF"
+                                    + " FROM [Coordinate_Operation Parameter Value]"
+                                    + " WHERE (PARAMETER_CODE = ?)"
+                                    + " GROUP BY UOM_CODE"
+                                    + " ORDER BY COUNT(UOM_CODE) DESC");
                     units.setString(1, epsg);
                     try (final ResultSet resultUnits = units.executeQuery()) {
                         if (resultUnits.next()) {
                             String element = resultUnits.getString(1);
                             unit = (element != null) ? createUnit(element) : null;
                             element = resultUnits.getString(2);
-                            type =
-                                    (element != null && element.trim().length() != 0)
-                                            ? URI.class
-                                            : double.class;
+                            type = (element != null && element.trim().length() != 0) ? URI.class : double.class;
                         } else {
                             unit = null;
                             type = double.class;
@@ -1991,11 +1937,10 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     /*
                      * Now creates the parameter descriptor.
                      */
-                    final ParameterDescriptor descriptor;
                     final Map<String, Object> properties = generateProperties(name, epsg, remarks);
-                    descriptor =
-                            new DefaultParameterDescriptor(
-                                    properties, type, null, null, null, null, unit, true);
+                    @SuppressWarnings("unchecked")
+                    final ParameterDescriptor<?> descriptor =
+                            new DefaultParameterDescriptor(properties, type, null, null, null, null, unit, true);
                     returnValue = ensureSingleton(descriptor, returnValue, code);
                 }
             }
@@ -2017,17 +1962,15 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      */
     private ParameterDescriptor[] generateParameterDescriptors(final String method)
             throws FactoryException, SQLException {
-        final PreparedStatement stmt;
-        stmt =
-                prepareStatement(
-                        "ParameterDescriptors", // Must be plural form.
-                        "SELECT PARAMETER_CODE"
-                                + " FROM [Coordinate_Operation Parameter Usage]"
-                                + " WHERE COORD_OP_METHOD_CODE = ?"
-                                + " ORDER BY SORT_ORDER");
+        final PreparedStatement stmt = prepareStatement(
+                "ParameterDescriptors", // Must be plural form.
+                "SELECT PARAMETER_CODE"
+                        + " FROM [Coordinate_Operation Parameter Usage]"
+                        + " WHERE COORD_OP_METHOD_CODE = ?"
+                        + " ORDER BY SORT_ORDER");
         stmt.setString(1, method);
         try (ResultSet results = stmt.executeQuery()) {
-            final List<ParameterDescriptor> descriptors = new ArrayList<ParameterDescriptor>();
+            final List<ParameterDescriptor<? extends Object>> descriptors = new ArrayList<>();
             while (results.next()) {
                 final String param = getString(results, 1, method);
                 descriptors.add(generateParameterDescriptor(param));
@@ -2044,33 +1987,30 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      * @param parameters The parameter values to fill.
      * @throws SQLException if a SQL statement failed.
      */
-    private void fillParameterValues(
-            final String method, final String operation, final ParameterValueGroup parameters)
+    private void fillParameterValues(final String method, final String operation, final ParameterValueGroup parameters)
             throws FactoryException, SQLException {
-        final PreparedStatement stmt;
-        stmt =
-                prepareStatement(
-                        "ParameterValues",
-                        "SELECT CP.PARAMETER_NAME,"
-                                + " CV.PARAMETER_VALUE,"
-                                + " CV.PARAM_VALUE_FILE_REF,"
-                                + " CV.UOM_CODE"
-                                + " FROM ([Coordinate_Operation Parameter Value] AS CV"
-                                + " INNER JOIN [Coordinate_Operation Parameter] AS CP"
-                                + " ON CV.PARAMETER_CODE = CP.PARAMETER_CODE)"
-                                + " INNER JOIN [Coordinate_Operation Parameter Usage] AS CU"
-                                + " ON (CP.PARAMETER_CODE = CU.PARAMETER_CODE)"
-                                + " AND (CV.COORD_OP_METHOD_CODE = CU.COORD_OP_METHOD_CODE)"
-                                + " WHERE CV.COORD_OP_METHOD_CODE = ?"
-                                + " AND CV.COORD_OP_CODE = ?"
-                                + " ORDER BY CU.SORT_ORDER");
+        final PreparedStatement stmt = prepareStatement(
+                "ParameterValues",
+                "SELECT CP.PARAMETER_NAME,"
+                        + " CV.PARAMETER_VALUE,"
+                        + " CV.PARAM_VALUE_FILE_REF,"
+                        + " CV.UOM_CODE"
+                        + " FROM ([Coordinate_Operation Parameter Value] AS CV"
+                        + " INNER JOIN [Coordinate_Operation Parameter] AS CP"
+                        + " ON CV.PARAMETER_CODE = CP.PARAMETER_CODE)"
+                        + " INNER JOIN [Coordinate_Operation Parameter Usage] AS CU"
+                        + " ON (CP.PARAMETER_CODE = CU.PARAMETER_CODE)"
+                        + " AND (CV.COORD_OP_METHOD_CODE = CU.COORD_OP_METHOD_CODE)"
+                        + " WHERE CV.COORD_OP_METHOD_CODE = ?"
+                        + " AND CV.COORD_OP_CODE = ?"
+                        + " ORDER BY CU.SORT_ORDER");
         stmt.setString(1, method);
         stmt.setString(2, operation);
         try (ResultSet result = stmt.executeQuery()) {
             while (result.next()) {
                 final String name = getString(result, 1, operation);
                 final double value = result.getDouble(2);
-                final Unit unit;
+                final Unit<?> unit;
                 Object reference;
                 if (result.wasNull()) {
                     /*
@@ -2090,7 +2030,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     final String unitCode = result.getString(4);
                     unit = (unitCode != null) ? createUnit(unitCode) : null;
                 }
-                final ParameterValue param;
+                final ParameterValue<?> param;
                 try {
                     param = parameters.parameter(name);
                 } catch (ParameterNotFoundException exception) {
@@ -2106,10 +2046,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                      * CoordinateOperationSet uses this information in order to determine if it
                      * should try the next coordinate operation or propagate the exception.
                      */
-                    final NoSuchIdentifierException e =
-                            new NoSuchIdentifierException(
-                                    Errors.format(ErrorKeys.CANT_SET_PARAMETER_VALUE_$1, name),
-                                    name);
+                    final NoSuchIdentifierException e = new NoSuchIdentifierException(
+                            MessageFormat.format(ErrorKeys.CANT_SET_PARAMETER_VALUE_$1, name), name);
                     e.initCause(exception);
                     throw e;
                 }
@@ -2123,7 +2061,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     }
                 } catch (InvalidParameterValueException exception) {
                     throw new FactoryException(
-                            Errors.format(ErrorKeys.CANT_SET_PARAMETER_VALUE_$1, name), exception);
+                            MessageFormat.format(ErrorKeys.CANT_SET_PARAMETER_VALUE_$1, name), exception);
                 }
             }
         }
@@ -2134,31 +2072,28 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
      *
      * @param code The operation method code allocated by EPSG authority.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
      */
-    public synchronized OperationMethod generateOperationMethod(final String code)
-            throws FactoryException {
+    public synchronized OperationMethod generateOperationMethod(final String code) throws FactoryException {
         ensureNonNull("code", code);
         OperationMethod returnValue = null;
         final PreparedStatement stmt;
         try {
-            final String primaryKey =
-                    toPrimaryKey(
-                            OperationMethod.class,
-                            code,
-                            "[Coordinate_Operation Method]",
-                            "COORD_OP_METHOD_CODE",
-                            "COORD_OP_METHOD_NAME");
-            stmt =
-                    prepareStatement(
-                            "OperationMethod",
-                            "SELECT COORD_OP_METHOD_CODE,"
-                                    + " COORD_OP_METHOD_NAME,"
-                                    + " FORMULA,"
-                                    + " REMARKS"
-                                    + " FROM [Coordinate_Operation Method]"
-                                    + " WHERE COORD_OP_METHOD_CODE = ?");
+            final String primaryKey = toPrimaryKey(
+                    OperationMethod.class,
+                    code,
+                    "[Coordinate_Operation Method]",
+                    "COORD_OP_METHOD_CODE",
+                    "COORD_OP_METHOD_NAME");
+            stmt = prepareStatement(
+                    "OperationMethod",
+                    "SELECT COORD_OP_METHOD_CODE,"
+                            + " COORD_OP_METHOD_NAME,"
+                            + " FORMULA,"
+                            + " REMARKS"
+                            + " FROM [Coordinate_Operation Method]"
+                            + " WHERE COORD_OP_METHOD_CODE = ?");
             stmt.setString(1, primaryKey);
             try (ResultSet result = stmt.executeQuery()) {
                 OperationMethod method = null;
@@ -2175,12 +2110,11 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     if (formula != null) {
                         properties.put(OperationMethod.FORMULA_KEY, formula);
                     }
-                    method =
-                            new DefaultOperationMethod(
-                                    properties,
-                                    sourceDimensions,
-                                    targetDimensions,
-                                    new DefaultParameterDescriptorGroup(properties, descriptors));
+                    method = new DefaultOperationMethod(
+                            properties,
+                            sourceDimensions,
+                            targetDimensions,
+                            new DefaultParameterDescriptorGroup(properties, descriptors));
                     returnValue = ensureSingleton(method, returnValue, code);
                 }
             }
@@ -2194,25 +2128,22 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Returns the must common source and target dimensions for the specified method. Source
-     * dimension is encoded in the 16 highest bits and target dimension is encoded in the 16 lowest
-     * bits. If this method can't infers the dimensions from the "Coordinate Operation" table, then
-     * the operation method is probably a projection, which always have (2,2) dimensions in the EPSG
-     * database.
+     * Returns the must common source and target dimensions for the specified method. Source dimension is encoded in the
+     * 16 highest bits and target dimension is encoded in the 16 lowest bits. If this method can't infers the dimensions
+     * from the "Coordinate Operation" table, then the operation method is probably a projection, which always have
+     * (2,2) dimensions in the EPSG database.
      */
     private int getDimensionsForMethod(final String code) throws SQLException {
-        final PreparedStatement stmt;
-        stmt =
-                prepareStatement(
-                        "MethodDimensions",
-                        "SELECT SOURCE_CRS_CODE,"
-                                + " TARGET_CRS_CODE"
-                                + " FROM [Coordinate_Operation]"
-                                + " WHERE COORD_OP_METHOD_CODE = ?"
-                                + " AND SOURCE_CRS_CODE IS NOT NULL"
-                                + " AND TARGET_CRS_CODE IS NOT NULL");
+        final PreparedStatement stmt = prepareStatement(
+                "MethodDimensions",
+                "SELECT SOURCE_CRS_CODE,"
+                        + " TARGET_CRS_CODE"
+                        + " FROM [Coordinate_Operation]"
+                        + " WHERE COORD_OP_METHOD_CODE = ?"
+                        + " AND SOURCE_CRS_CODE IS NOT NULL"
+                        + " AND TARGET_CRS_CODE IS NOT NULL");
         stmt.setString(1, code);
-        final Map<Dimensions, Dimensions> dimensions = new HashMap<Dimensions, Dimensions>();
+        final Map<Dimensions, Dimensions> dimensions = new HashMap<>();
         final Dimensions temp = new Dimensions((2 << 16) | 2); // Default to (2,2) dimensions.
         Dimensions max = temp;
         try (ResultSet result = stmt.executeQuery()) {
@@ -2256,33 +2187,26 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
 
         @Override
         public String toString() {
-            return "[("
-                    + (encoded >>> 16)
-                    + ','
-                    + (encoded & 0xFFFF)
-                    + ")\u00D7"
-                    + occurences
-                    + ']';
+            return "[(" + (encoded >>> 16) + ',' + (encoded & 0xFFFF) + ")\u00D7" + occurences + ']';
         }
     }
 
     /**
-     * Returns the dimension of the specified CRS. If the CRS is not found (which should not happen,
-     * but we don't need to be strict here), then this method assumes a two-dimensional CRS.
+     * Returns the dimension of the specified CRS. If the CRS is not found (which should not happen, but we don't need
+     * to be strict here), then this method assumes a two-dimensional CRS.
      */
     private short getDimensionForCRS(final String code) throws SQLException {
         final PreparedStatement stmt;
         final Short cached = axisCounts.get(code);
         final short dimension;
         if (cached == null) {
-            stmt =
-                    prepareStatement(
-                            "Dimension",
-                            "  SELECT COUNT(COORD_AXIS_CODE)"
-                                    + " FROM [Coordinate Axis]"
-                                    + " WHERE COORD_SYS_CODE = (SELECT COORD_SYS_CODE "
-                                    + " FROM [Coordinate Reference System]"
-                                    + " WHERE COORD_REF_SYS_CODE = ?)");
+            stmt = prepareStatement(
+                    "Dimension",
+                    "  SELECT COUNT(COORD_AXIS_CODE)"
+                            + " FROM [Coordinate Axis]"
+                            + " WHERE COORD_SYS_CODE = (SELECT COORD_SYS_CODE "
+                            + " FROM [Coordinate Reference System]"
+                            + " WHERE COORD_REF_SYS_CODE = ?)");
             stmt.setString(1, code);
             try (ResultSet result = stmt.executeQuery()) {
                 dimension = result.next() ? result.getShort(1) : 2;
@@ -2295,21 +2219,20 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Returns {@code true} if the {@linkplain CoordinateOperation coordinate operation} for the
-     * specified code is a {@linkplain Projection projection}. The caller must have ensured that the
-     * designed operation is a {@linkplain Conversion conversion} before to invoke this method.
+     * Returns {@code true} if the {@linkplain CoordinateOperation coordinate operation} for the specified code is a
+     * {@linkplain Projection projection}. The caller must have ensured that the designed operation is a
+     * {@linkplain Conversion conversion} before to invoke this method.
      */
     final synchronized boolean isProjection(final String code) throws SQLException {
         final PreparedStatement stmt;
-        Boolean projection = (Boolean) codeProjection.get(code);
+        Boolean projection = codeProjection.get(code);
         if (projection == null) {
-            stmt =
-                    prepareStatement(
-                            "isProjection",
-                            "SELECT COORD_REF_SYS_CODE"
-                                    + " FROM [Coordinate Reference System]"
-                                    + " WHERE PROJECTION_CONV_CODE = ?"
-                                    + " AND COORD_REF_SYS_KIND LIKE 'projected%'");
+            stmt = prepareStatement(
+                    "isProjection",
+                    "SELECT COORD_REF_SYS_CODE"
+                            + " FROM [Coordinate Reference System]"
+                            + " WHERE PROJECTION_CONV_CODE = ?"
+                            + " AND COORD_REF_SYS_KIND LIKE 'projected%'");
             stmt.setString(1, code);
             try (ResultSet result = stmt.executeQuery()) {
                 final boolean found = result.next();
@@ -2321,45 +2244,49 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Returns a coordinate operation from a code. The returned object will either be a {@linkplain
-     * Conversion conversion} or a {@linkplain Transformation transformation}, depending on the
-     * code.
+     * Returns a coordinate operation from a code. The returned object will either be a {@linkplain Conversion
+     * conversion} or a {@linkplain Transformation transformation}, depending on the code.
      *
      * @param code Value allocated by authority.
      * @return The coordinate operation object.
      * @throws NoSuchAuthorityCodeException if this method can't find the requested code.
-     * @throws FactoryException if some other kind of failure occured in the backing store. This
-     *     exception usually have {@link SQLException} as its cause.
+     * @throws FactoryException if some other kind of failure occured in the backing store. This exception usually have
+     *     {@link SQLException} as its cause.
      */
-    public synchronized CoordinateOperation generateCoordinateOperation(final String code)
-            throws FactoryException {
+    @Override
+    public synchronized CoordinateOperation generateCoordinateOperation(final String code) throws FactoryException {
         ensureNonNull("code", code);
         CoordinateOperation returnValue = null;
         try {
-            final String primaryKey =
-                    toPrimaryKey(
-                            CoordinateOperation.class,
-                            code,
-                            "[Coordinate_Operation]",
-                            "COORD_OP_CODE",
-                            "COORD_OP_NAME");
-            final PreparedStatement stmt;
-            stmt =
-                    prepareStatement(
-                            "CoordinateOperation",
-                            "SELECT COORD_OP_CODE,"
-                                    + " COORD_OP_NAME,"
-                                    + " COORD_OP_TYPE,"
-                                    + " SOURCE_CRS_CODE,"
-                                    + " TARGET_CRS_CODE,"
-                                    + " COORD_OP_METHOD_CODE,"
-                                    + " COORD_TFM_VERSION,"
-                                    + " COORD_OP_ACCURACY,"
-                                    + " AREA_OF_USE_CODE,"
-                                    + " COORD_OP_SCOPE,"
-                                    + " REMARKS"
-                                    + " FROM [Coordinate_Operation]"
-                                    + " WHERE COORD_OP_CODE = ?");
+            final String primaryKey = toPrimaryKey(
+                    CoordinateOperation.class, code, "[Coordinate_Operation]", "COORD_OP_CODE", "COORD_OP_NAME");
+            final PreparedStatement stmt = prepareStatement(
+                    "CoordinateOperation",
+                    "SELECT CO.COORD_OP_CODE,"
+                            + " CO.COORD_OP_NAME,"
+                            + " CO.COORD_OP_TYPE,"
+                            + " CO.SOURCE_CRS_CODE,"
+                            + " CO.TARGET_CRS_CODE,"
+                            + " CO.COORD_OP_METHOD_CODE,"
+                            + " CO.COORD_TFM_VERSION,"
+                            + " CO.COORD_OP_ACCURACY,"
+                            + " U.EXTENT_CODE,"
+                            + " CO.COORD_OP_SCOPE,"
+                            + " CO.REMARKS"
+                            + " FROM [Coordinate_Operation] CO "
+                            + " JOIN EPSG_USAGE u"
+                            + " ON u.OBJECT_TABLE_NAME = '[Coordinate_Operation]'"
+                            + " AND u.OBJECT_CODE = CO.COORD_OP_CODE"
+                            + " LEFT JOIN [Extent] E on U.extent_code = E.extent_code"
+                            + " WHERE COORD_OP_CODE = ?"
+                            + " ORDER BY ABS(CO.DEPRECATED), CO.COORD_OP_ACCURACY,"
+                            + " (BBOX_NORTH_BOUND_LAT - BBOX_SOUTH_BOUND_LAT) * "
+                            + "(CASE WHEN BBOX_EAST_BOUND_LON > BBOX_WEST_BOUND_LON "
+                            + "     THEN (BBOX_EAST_BOUND_LON - BBOX_WEST_BOUND_LON) "
+                            + "     ELSE (360 - BBOX_WEST_BOUND_LON - BBOX_EAST_BOUND_LON) END) DESC,"
+                            + " CO.COORD_OP_CODE DESC LIMIT 1");
+            // In previous DB there was only 1 area for COORDINATE OPERATION.
+            // With EPSG 11.0.31 they can more. Let's limit o the one with bigger area
             stmt.setString(1, primaryKey);
             boolean exit = false;
             try (ResultSet result = stmt.executeQuery()) {
@@ -2442,9 +2369,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                         method = generateOperationMethod(methodCode);
                         if (method.getSourceDimensions() != sourceDimensions
                                 || method.getTargetDimensions() != targetDimensions) {
-                            method =
-                                    new DefaultOperationMethod(
-                                            method, sourceDimensions, targetDimensions);
+                            method = new DefaultOperationMethod(method, sourceDimensions, targetDimensions);
                         }
                         /*
                          * Note that some parameters required for MathTransform creation are implicit in
@@ -2454,8 +2379,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                          * required parameter descriptors, including implicit ones.
                          */
                         final String classe = method.getName().getCode();
-                        parameters =
-                                factories.getMathTransformFactory().getDefaultParameters(classe);
+                        parameters = factories.getMathTransformFactory().getDefaultParameters(classe);
                         fillParameterValues(methodCode, epsg, parameters);
                     }
                     /*
@@ -2467,30 +2391,24 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                      *       methods like createCoordinateReferenceSystem and createOperationMethod
                      *       overwrite the properties map.
                      */
-                    final Map<String, Object> properties =
-                            generateProperties(name, epsg, area, scope, remarks);
+                    final Map<String, Object> properties = generateProperties(name, epsg, area, scope, remarks);
                     if (version != null && (version = version.trim()).length() != 0) {
                         properties.put(CoordinateOperation.OPERATION_VERSION_KEY, version);
                     }
                     if (!Double.isNaN(accuracy)) {
-                        final QuantitativeResultImpl accuracyResult;
-                        final AbsoluteExternalPositionalAccuracyImpl accuracyElement;
-                        accuracyResult = new QuantitativeResultImpl(new double[] {accuracy});
+                        final QuantitativeResultImpl accuracyResult =
+                                new QuantitativeResultImpl(new double[] {accuracy});
                         // TODO: Need to invoke something equivalent to:
                         // accuracyResult.setValueType(Float.class);
                         // This is the type declared in the MS-Access database.
-                        accuracyResult.setValueUnit(
-                                SI.METRE); // In meters by definition in the EPSG database.
-                        accuracyElement =
+                        accuracyResult.setValueUnit(SI.METRE); // In meters by definition in the EPSG database.
+                        final AbsoluteExternalPositionalAccuracyImpl accuracyElement =
                                 new AbsoluteExternalPositionalAccuracyImpl(accuracyResult);
                         accuracyElement.setMeasureDescription(TRANSFORMATION_ACCURACY);
-                        accuracyElement.setEvaluationMethodType(
-                                EvaluationMethodType.DIRECT_EXTERNAL);
+                        accuracyElement.setEvaluationMethodType(EvaluationMethodType.DIRECT_EXTERNAL);
                         properties.put(
                                 CoordinateOperation.COORDINATE_OPERATION_ACCURACY_KEY,
-                                new PositionalAccuracy[] {
-                                    (PositionalAccuracy) accuracyElement.unmodifiable()
-                                });
+                                new PositionalAccuracy[] {(PositionalAccuracy) accuracyElement.unmodifiable()});
                     }
                     /*
                      * Creates the operation. Conversions should be the only operations allowed to
@@ -2517,22 +2435,20 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                          */
                         result.close();
                         exit = true;
-                        final PreparedStatement cstmt =
-                                prepareStatement(
-                                        "ConcatenatedOperation",
-                                        "SELECT SINGLE_OPERATION_CODE"
-                                                + " FROM [Coordinate_Operation Path]"
-                                                + " WHERE (CONCAT_OPERATION_CODE = ?)"
-                                                + " ORDER BY OP_PATH_STEP");
+                        final PreparedStatement cstmt = prepareStatement(
+                                "ConcatenatedOperation",
+                                "SELECT SINGLE_OPERATION_CODE"
+                                        + " FROM [Coordinate_Operation Path]"
+                                        + " WHERE (CONCAT_OPERATION_CODE = ?)"
+                                        + " ORDER BY OP_PATH_STEP");
                         cstmt.setString(1, epsg);
-                        final List<String> codes = new ArrayList<String>();
+                        final List<String> codes = new ArrayList<>();
                         try (ResultSet cr = cstmt.executeQuery()) {
                             while (cr.next()) {
                                 codes.add(cr.getString(1));
                             }
                         }
-                        final CoordinateOperation[] operations =
-                                new CoordinateOperation[codes.size()];
+                        final CoordinateOperation[] operations = new CoordinateOperation[codes.size()];
                         if (!safetyGuard.add(epsg)) {
                             throw recursiveCall(ConcatenatedOperation.class, epsg);
                         }
@@ -2561,7 +2477,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                             try {
                                 Ellipsoid ellipsoid = CRSUtilities.getHeadGeoEllipsoid(sourceCRS);
                                 if (ellipsoid != null) {
-                                    final Unit axisUnit = ellipsoid.getAxisUnit();
+                                    final Unit<Length> axisUnit = ellipsoid.getAxisUnit();
                                     parameters
                                             .parameter("src_semi_major")
                                             .setValue(ellipsoid.getSemiMajorAxis(), axisUnit);
@@ -2570,8 +2486,9 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                                             .setValue(ellipsoid.getSemiMinorAxis(), axisUnit);
                                     parameters
                                             .parameter("src_dim")
-                                            .setValue(
-                                                    sourceCRS.getCoordinateSystem().getDimension());
+                                            .setValue(sourceCRS
+                                                    .getCoordinateSystem()
+                                                    .getDimension());
                                 }
                                 ellipsoid = CRSUtilities.getHeadGeoEllipsoid(targetCRS);
                                 if (ellipsoid != null) {
@@ -2584,42 +2501,34 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                                             .setValue(ellipsoid.getSemiMinorAxis(), axisUnit);
                                     parameters
                                             .parameter("tgt_dim")
-                                            .setValue(
-                                                    targetCRS.getCoordinateSystem().getDimension());
+                                            .setValue(targetCRS
+                                                    .getCoordinateSystem()
+                                                    .getDimension());
                                 }
                             } catch (ParameterNotFoundException exception) {
                                 result.close();
-                                throw new FactoryException(
-                                        Errors.format(
-                                                ErrorKeys.GEOTOOLS_EXTENSION_REQUIRED_$1,
-                                                method.getName().getCode(),
-                                                exception));
+                                final Object arg0 = method.getName().getCode();
+                                throw new FactoryException(MessageFormat.format(
+                                        ErrorKeys.GEOTOOLS_EXTENSION_REQUIRED_$1, arg0, exception));
                             }
                         /*
                          * At this stage, the parameters are ready for use. Creates the math transform
                          * and wraps it in the final operation (a Conversion or a Transformation).
                          */
-                        final Class expected;
+                        final Class<? extends CoordinateOperation> expected;
                         if (isTransformation) {
                             expected = Transformation.class;
                         } else if (isConversion) {
                             expected = Conversion.class;
                         } else {
                             result.close();
-                            throw new FactoryException(
-                                    Errors.format(ErrorKeys.UNKNOW_TYPE_$1, type));
+                            throw new FactoryException(MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, type));
                         }
-                        final MathTransform mt =
-                                factories
-                                        .getMathTransformFactory()
-                                        .createBaseToDerived(
-                                                sourceCRS,
-                                                parameters,
-                                                targetCRS.getCoordinateSystem());
+                        final MathTransform mt = factories
+                                .getMathTransformFactory()
+                                .createBaseToDerived(sourceCRS, parameters, targetCRS.getCoordinateSystem());
                         // TODO: uses GeoAPI factory method once available.
-                        operation =
-                                DefaultOperation.create(
-                                        properties, sourceCRS, targetCRS, mt, method, expected);
+                        operation = DefaultOperation.create(properties, sourceCRS, targetCRS, mt, method, expected);
                     }
                     returnValue = ensureSingleton(operation, returnValue, code);
                     if (exit) {
@@ -2639,21 +2548,21 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Creates operations from coordinate reference system codes. The returned set is ordered with
-     * the most accurate operations first.
+     * Creates operations from coordinate reference system codes. The returned set is ordered with the most accurate
+     * operations first.
      *
      * @param sourceCode Coded value of source coordinate reference system.
      * @param targetCode Coded value of target coordinate reference system.
      * @throws FactoryException if the object creation failed.
-     * @todo The ordering is not consistent among all database software, because the "accuracy"
-     *     column may contains null values. When used in an "ORDER BY" clause, PostgreSQL put null
-     *     values last, while Access and HSQL put them first. The PostgreSQL's behavior is better
-     *     for what we want (put operations with unknow accuracy last). Unfortunatly, I don't know
-     *     yet how to instruct Access to put null values last using standard SQL ("IIF" is not
-     *     standard, and Access doesn't seem to understand "CASE ... THEN" clauses).
+     * @todo The ordering is not consistent among all database software, because the "accuracy" column may contains null
+     *     values. When used in an "ORDER BY" clause, PostgreSQL put null values last, while Access and HSQL put them
+     *     first. The PostgreSQL's behavior is better for what we want (put operations with unknow accuracy last).
+     *     Unfortunatly, I don't know yet how to instruct Access to put null values last using standard SQL ("IIF" is
+     *     not standard, and Access doesn't seem to understand "CASE ... THEN" clauses).
      */
-    public synchronized Set generateFromCoordinateReferenceSystemCodes(
-            final String sourceCode, final String targetCode) throws FactoryException {
+    @Override
+    public synchronized Set generateFromCoordinateReferenceSystemCodes(final String sourceCode, final String targetCode)
+            throws FactoryException {
         ensureNonNull("sourceCode", sourceCode);
         ensureNonNull("targetCode", targetCode);
         final String pair = sourceCode + " \u21E8 " + targetCode;
@@ -2672,19 +2581,26 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                 final String key, sql;
                 if (searchTransformations) {
                     key = "TransformationFromCRS";
-                    sql =
-                            "SELECT COORD_OP_CODE"
-                                    + " FROM [Coordinate_Operation]"
-                                    + " WHERE SOURCE_CRS_CODE = ?"
-                                    + " AND TARGET_CRS_CODE = ?"
-                                    + " ORDER BY ABS(DEPRECATED), COORD_OP_ACCURACY";
+                    sql = "SELECT CO.COORD_OP_CODE"
+                            + " FROM [Coordinate_Operation] CO"
+                            + " JOIN EPSG_USAGE U"
+                            + " ON U.OBJECT_TABLE_NAME = '[Coordinate_Operation]'"
+                            + " AND U.OBJECT_CODE = CO.COORD_OP_CODE"
+                            + " LEFT JOIN [Extent] E on U.extent_code = E.extent_code"
+                            + " WHERE SOURCE_CRS_CODE = ?"
+                            + " AND TARGET_CRS_CODE = ?"
+                            + " ORDER BY ABS(CO.DEPRECATED), CO.COORD_OP_ACCURACY,"
+                            + "	(BBOX_NORTH_BOUND_LAT - BBOX_SOUTH_BOUND_LAT) * "
+                            + " (CASE WHEN BBOX_EAST_BOUND_LON > BBOX_WEST_BOUND_LON "
+                            + "     THEN (BBOX_EAST_BOUND_LON - BBOX_WEST_BOUND_LON) "
+                            + "     ELSE (360 - BBOX_WEST_BOUND_LON - BBOX_EAST_BOUND_LON) END) DESC,"
+                            + " COORD_OP_CODE DESC";
                 } else {
                     key = "ConversionFromCRS";
-                    sql =
-                            "SELECT PROJECTION_CONV_CODE"
-                                    + " FROM [Coordinate Reference System]"
-                                    + " WHERE SOURCE_GEOGCRS_CODE = ?"
-                                    + " AND COORD_REF_SYS_CODE = ?";
+                    sql = "SELECT PROJECTION_CONV_CODE"
+                            + " FROM [Coordinate Reference System]"
+                            + " WHERE BASE_CRS_CODE = ?"
+                            + " AND COORD_REF_SYS_CODE = ?";
                 }
                 final PreparedStatement stmt = prepareStatement(key, sql);
                 stmt.setString(1, sourceKey);
@@ -2717,30 +2633,26 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Sorts an array of codes in preference order. This method orders pairwise the codes according
-     * the information provided in the supersession table. If the same object is superseded by more
-     * than one object, then the most recent one is inserted first. Except for the codes moved as a
-     * result of pairwise ordering, this method try to preserve the old ordering of the supplied
-     * codes (since deprecated operations should already be last). The ordering is performed in
-     * place.
+     * Sorts an array of codes in preference order. This method orders pairwise the codes according the information
+     * provided in the supersession table. If the same object is superseded by more than one object, then the most
+     * recent one is inserted first. Except for the codes moved as a result of pairwise ordering, this method try to
+     * preserve the old ordering of the supplied codes (since deprecated operations should already be last). The
+     * ordering is performed in place.
      *
-     * @param codes The codes, usually as an array of {@link String}. If the array do not contains
-     *     string objects, then the {@link Object#toString} method must returns the code for each
-     *     element.
+     * @param codes The codes, usually as an array of {@link String}. If the array do not contains string objects, then
+     *     the {@link Object#toString} method must returns the code for each element.
      */
     // TODO: Use generic type for "Object[] codes" with J2SE 1.5.
-    private void sort(final Object[] codes) throws SQLException, FactoryException {
+    private void sort(final Object... codes) throws SQLException, FactoryException {
         if (codes.length <= 1) {
             return; // Nothing to sort.
         }
-        final PreparedStatement stmt;
-        stmt =
-                prepareStatement(
-                        "Supersession",
-                        "SELECT SUPERSEDED_BY"
-                                + " FROM [Supersession]"
-                                + " WHERE OBJECT_CODE = ?"
-                                + " ORDER BY SUPERSESSION_YEAR DESC");
+        final PreparedStatement stmt = prepareStatement(
+                "Supersession",
+                "SELECT SUPERSEDED_BY"
+                        + " FROM [Supersession]"
+                        + " WHERE OBJECT_CODE = ?"
+                        + " ORDER BY SUPERSESSION_YEAR DESC");
         int maxIterations = 15; // For avoiding never-ending loop.
         do {
             boolean changed = false;
@@ -2772,25 +2684,24 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * An implementation of {@link IdentifiedObjectFinder} which scans over a smaller set of
-     * authority codes.
+     * An implementation of {@link IdentifiedObjectFinder} which scans over a smaller set of authority codes.
      *
-     * <p><b>Implementation note:</b> Since this method may be invoked indirectly by {@link
-     * LongitudeFirstFactory}, it must be insensitive to axis order.
+     * <p><b>Implementation note:</b> Since this method may be invoked indirectly by {@link LongitudeFirstFactory}, it
+     * must be insensitive to axis order.
      */
     private final class Finder extends IdentifiedObjectFinder {
         /** Creates a new finder backed by the specified <em>buffered</em> authority factory. */
-        Finder(final Class /*<? extends IdentifiedObject>*/ type) {
+        Finder(final Class<? extends IdentifiedObject> type) {
             super(AbstractEpsgFactory.this, type);
         }
 
         /**
-         * Returns a set of authority codes that <strong>may</strong> identify the same object than
-         * the specified one. This implementation tries to get a smaller set than what {@link
-         * AbstractEpsgFactory#getAuthorityCodes} would produce.
+         * Returns a set of authority codes that <strong>may</strong> identify the same object than the specified one.
+         * This implementation tries to get a smaller set than what {@link AbstractEpsgFactory#getAuthorityCodes} would
+         * produce.
          */
         @Override
-        protected Set getCodeCandidates(final IdentifiedObject object) throws FactoryException {
+        protected Set<String> getCodeCandidates(final IdentifiedObject object) throws FactoryException {
             String select = "COORD_REF_SYS_CODE";
             String from = "[Coordinate Reference System]";
             String where, code;
@@ -2803,7 +2714,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                 IdentifiedObject dependency;
                 if (object instanceof GeneralDerivedCRS) {
                     dependency = ((GeneralDerivedCRS) object).getBaseCRS();
-                    where = "SOURCE_GEOGCRS_CODE";
+                    where = "BASE_CRS_CODE";
                 } else if (object instanceof SingleCRS) {
                     dependency = ((SingleCRS) object).getDatum();
                     where = "DATUM_CODE";
@@ -2821,10 +2732,9 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                     return super.getCodeCandidates(object);
                 }
             }
-            String sql =
-                    "SELECT " + select + " FROM " + from + " WHERE " + where + "='" + code + '\'';
+            String sql = "SELECT " + select + " FROM " + from + " WHERE " + where + "='" + code + '\'';
             sql = adaptSQL(sql);
-            final Set<String> result = new LinkedHashSet<String>();
+            final Set<String> result = new LinkedHashSet<>();
             try (Statement s = getConnection().createStatement();
                     ResultSet r = s.executeQuery(sql)) {
                 while (r.next()) {
@@ -2838,27 +2748,25 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /** Constructs an exception for recursive calls. */
-    private static FactoryException recursiveCall(final Class type, final String code) {
-        return new FactoryException(Errors.format(ErrorKeys.RECURSIVE_CALL_$2, type, code));
+    private static FactoryException recursiveCall(final Class<? extends IdentifiedObject> type, final String code) {
+        return new FactoryException(MessageFormat.format(ErrorKeys.RECURSIVE_CALL_$2, type, code));
     }
 
     /** Constructs an exception for a database failure. */
     private static FactoryException databaseFailure(
-            final Class type, final String code, final SQLException cause) {
-        return new FactoryException(
-                Errors.format(ErrorKeys.DATABASE_FAILURE_$2, type, code), cause);
+            final Class<? extends Object> type, final String code, final SQLException cause) {
+        return new FactoryException(MessageFormat.format(ErrorKeys.DATABASE_FAILURE_$2, type, code), cause);
     }
 
     /**
-     * Invoked when a new {@link PreparedStatement} is about to be created from a SQL string. Since
-     * the <A HREF="http://www.epsg.org">EPSG database</A> is available mainly in MS-Access format,
-     * SQL statements are formatted using some syntax specific to this particular database software
-     * (for example "<code>SELECT * FROM [Coordinate Reference System]</code>"). When prociding
-     * subclass targeting another database vendor, then this method should be overridden in order to
-     * adapt the local SQL syntax.
+     * Invoked when a new {@link PreparedStatement} is about to be created from a SQL string. Since the <A
+     * HREF="http://www.epsg.org">EPSG database</A> is available mainly in MS-Access format, SQL statements are
+     * formatted using some syntax specific to this particular database software (for example "<code>
+     * SELECT * FROM [Coordinate Reference System]</code>"). When prociding subclass targeting another database vendor,
+     * then this method should be overridden in order to adapt the local SQL syntax.
      *
-     * <p>For example a subclass connecting to a <cite>PostgreSQL</cite> database could replace all
-     * spaces ("&nbsp;") between watching braces ("[" and "]") by underscore ("_").
+     * <p>For example a subclass connecting to a <cite>PostgreSQL</cite> database could replace all spaces ("&nbsp;")
+     * between watching braces ("[" and "]") by underscore ("_").
      *
      * @param statement The statement in MS-Access syntax.
      * @return The SQL statement to use. The default implementation returns the string unchanged.
@@ -2866,20 +2774,18 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     protected abstract String adaptSQL(final String statement);
 
     /**
-     * Returns {@code true} if the specified code may be a primary key in some table. This method do
-     * not needs to checks any entry in the database. It should just checks from the syntax if the
-     * code looks like a valid EPSG identifier. The default implementation returns {@code true} if
-     * all non-space characters are {@linkplain Character#isDigit(char) digits}.
+     * Returns {@code true} if the specified code may be a primary key in some table. This method do not needs to checks
+     * any entry in the database. It should just checks from the syntax if the code looks like a valid EPSG identifier.
+     * The default implementation returns {@code true} if all non-space characters are
+     * {@linkplain Character#isDigit(char) digits}.
      *
-     * <p>When this method returns {@code false}, some {@code createFoo(...)} methods look for the
-     * code in the name column instead of the primary key column. This allows to accept the
-     * "<cite>NTF (Paris) / France I</cite>" string (for example) in addition to the {@code "27581"}
-     * primary key. Both should fetch the same object.
+     * <p>When this method returns {@code false}, some {@code createFoo(...)} methods look for the code in the name
+     * column instead of the primary key column. This allows to accept the "<cite>NTF (Paris) / France I</cite>" string
+     * (for example) in addition to the {@code "27581"} primary key. Both should fetch the same object.
      *
-     * <p>If this method returns {@code true} in all cases, then this factory never search for
-     * matching names. In such case, an appropriate exception will be thrown in {@code
-     * createFoo(...)} methods if the code is not found in the primary key column. Subclasses can
-     * overrides this method that way if this is the intended behavior.
+     * <p>If this method returns {@code true} in all cases, then this factory never search for matching names. In such
+     * case, an appropriate exception will be thrown in {@code createFoo(...)} methods if the code is not found in the
+     * primary key column. Subclasses can overrides this method that way if this is the intended behavior.
      *
      * @param code The code the inspect.
      * @return {@code true} if the code is probably a primary key.
@@ -2897,10 +2803,9 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     }
 
     /**
-     * Returns {@code true} if it is safe to dispose this factory. This method is invoked indirectly
-     * by {@link ThreadedEpsgFactory} after some timeout in order to release resources. This method
-     * will block the disposal if some {@linkplain #getAuthorityCodes set of authority codes} are
-     * still in use.
+     * Returns {@code true} if it is safe to dispose this factory. This method is invoked indirectly by
+     * {@link ThreadedEpsgFactory} after some timeout in order to release resources. This method will block the disposal
+     * if some {@linkplain #getAuthorityCodes set of authority codes} are still in use.
      */
     final synchronized boolean canDispose() {
         return true;
@@ -2917,11 +2822,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         super.dispose();
     }
 
-    /**
-     * Connect to the database in anticipation of of use.
-     *
-     * @throws FactoryException
-     */
+    /** Connect to the database in anticipation of of use. */
     public void connect() throws FactoryException {
         try {
             getConnection();
@@ -2930,19 +2831,16 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         }
     }
     /**
-     * Disconnect from the database, and remain idle. We will still keep our internal data
-     * structures, we are not going to hold onto a database connection unless we are going to be
-     * used.
-     *
-     * @throws FactoryException
+     * Disconnect from the database, and remain idle. We will still keep our internal data structures, we are not going
+     * to hold onto a database connection unless we are going to be used.
      */
     public void disconnect() throws FactoryException {
         if (connection != null) {
             final boolean isClosed;
             try {
                 isClosed = connection.isClosed();
-                for (final Iterator it = statements.values().iterator(); it.hasNext(); ) {
-                    ((PreparedStatement) it.next()).close();
+                for (final Iterator<PreparedStatement> it = statements.values().iterator(); it.hasNext(); ) {
+                    (it.next()).close();
                     it.remove();
                 }
                 connection.close();
@@ -2955,8 +2853,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                  * was already closed. However we will log a message only if we actually closed
                  * the connection, otherwise the log records are a little bit misleading.
                  */
-                final LogRecord record =
-                        Loggings.format(Level.FINE, LoggingKeys.CLOSED_EPSG_DATABASE);
+                final LogRecord record = Loggings.format(Level.FINE, LoggingKeys.CLOSED_EPSG_DATABASE);
                 record.setLoggerName(LOGGER.getName());
                 LOGGER.log(record);
             }
@@ -2976,28 +2873,27 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         return connection;
     }
     /**
-     * Shutdown the database engine. This method is invoked twice by {@link ThreadedEpsgFactory} at
-     * JVM shutdown: one time before the {@linkplain #connection} is closed, and a second time
-     * after. This shutdown hook is useful for <cite>embedded</cite> database engine starting a
-     * server process in addition to the client process. Just closing the connection is not enough
-     * for them. Example:
+     * Shutdown the database engine. This method is invoked twice by {@link ThreadedEpsgFactory} at JVM shutdown: one
+     * time before the {@linkplain #connection} is closed, and a second time after. This shutdown hook is useful for
+     * <cite>embedded</cite> database engine starting a server process in addition to the client process. Just closing
+     * the connection is not enough for them. Example:
      *
      * <p>
      *
      * <UL>
-     *   <LI>HSQL database engine needs to execute a {@code "SHUTDOWN"} statement using the
-     *       {@linkplain #connection} before it is closed.
-     *   <LI>Derby database engine needs to instruct the {@linkplain java.sql.DriverManager driver
-     *       manager} after all connections have been closed.
+     *   <LI>HSQL database engine needs to execute a {@code "SHUTDOWN"} statement using the {@linkplain #connection}
+     *       before it is closed.
+     *   <LI>Derby database engine needs to instruct the {@linkplain java.sql.DriverManager driver manager} after all
+     *       connections have been closed.
      * </UL>
      *
-     * <p>The default implementation does nothing, which is sufficient for implementations
-     * connecting to a distant server (i.e. non-embedded database engine), for example {@linkplain
-     * AccessDataSource MS-Access} or {@linkplain PostgreDataSource PostgreSQL}.
+     * <p>The default implementation does nothing, which is sufficient for implementations connecting to a distant
+     * server (i.e. non-embedded database engine), for example {@linkplain AccessDataSource MS-Access} or
+     * {@linkplain PostgreDataSource PostgreSQL}.
      *
-     * @param active {@code true} if the {@linkplain #connection} is alive, or {@code false}
-     *     otherwise. This method is invoked first with {@code active} set to {@code true}, then a
-     *     second time with {@code active} set to {@code false}.
+     * @param active {@code true} if the {@linkplain #connection} is alive, or {@code false} otherwise. This method is
+     *     invoked first with {@code active} set to {@code true}, then a second time with {@code active} set to
+     *     {@code false}.
      * @throws SQLException if this method failed to shutdown the database engine.
      */
     protected void shutdown(final boolean active) throws SQLException {}
@@ -3020,9 +2916,9 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     //////                                                                                 ///////
     //////////////////////////////////////////////////////////////////////////////////////////////
     /**
-     * Returns a hard-coded unit from an EPSG code. We do not need to provide all units here, but we
-     * must at least provide all base units declared in the [TARGET_UOM_CODE] column of table [Unit
-     * of Measure]. Other units will be derived automatically if they are not listed here.
+     * Returns a hard-coded unit from an EPSG code. We do not need to provide all units here, but we must at least
+     * provide all base units declared in the [TARGET_UOM_CODE] column of table [Unit of Measure]. Other units will be
+     * derived automatically if they are not listed here.
      *
      * @param code The code.
      * @return The unit, or {@code null} if the code is unrecognized.
@@ -3030,38 +2926,38 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     private static Unit<?> getUnit(final int code) {
         switch (code) {
             case 9001:
-                return SI.METRE;
+                return METRE;
             case 9002:
-                return USCustomary.FOOT;
+                return FOOT;
             case 9030:
-                return USCustomary.NAUTICAL_MILE;
+                return NAUTICAL_MILE;
             case 9036:
-                return MetricPrefix.KILO(SI.METRE);
+                return KILOMETER;
             case 9101:
-                return SI.RADIAN;
+                return RADIAN;
             case 9122: // Fall through
             case 9102:
-                return NonSI.DEGREE_ANGLE;
+                return DEGREE_ANGLE;
             case 9103:
-                return NonSI.MINUTE_ANGLE;
+                return MINUTE_ANGLE;
             case 9104:
-                return NonSI.SECOND_ANGLE;
+                return SECOND_ANGLE;
             case 9105:
-                return USCustomary.GRADE;
+                return GRADE;
             case 9107:
-                return Units.DEGREE_MINUTE_SECOND;
+                return DEGREE_MINUTE_SECOND;
             case 9108:
-                return Units.DEGREE_MINUTE_SECOND;
+                return DEGREE_MINUTE_SECOND;
             case 9109:
-                return MetricPrefix.MICRO(SI.RADIAN);
+                return MICRORADIAN;
             case 9110:
-                return Units.SEXAGESIMAL_DMS;
+                return SEXAGESIMAL_DMS;
                 // TODO case 9111: return NonSI.SEXAGESIMAL_DM;
             case 9203: // Fall through
             case 9201:
-                return AbstractUnit.ONE;
+                return ONE;
             case 9202:
-                return Units.PPM;
+                return PPM;
             default:
                 return null;
         }
@@ -3112,17 +3008,16 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                 parameters.ppm = value;
                 break;
             default:
-                throw new FactoryException(Errors.format(ErrorKeys.UNEXPECTED_PARAMETER_$1, code));
+                throw new FactoryException(MessageFormat.format(ErrorKeys.UNEXPECTED_PARAMETER_$1, code));
         }
     }
 
     /**
-     * List of tables and columns to test for codes values. This table is used by the {@link
-     * #createObject} method in order to detect which of the following methods should be invoked for
-     * a given code:
+     * List of tables and columns to test for codes values. This table is used by the {@link #createObject} method in
+     * order to detect which of the following methods should be invoked for a given code:
      *
-     * <p>{@link #createCoordinateReferenceSystem} {@link #createCoordinateSystem} {@link
-     * #createDatum} {@link #createEllipsoid} {@link #createUnit}
+     * <p>{@link #createCoordinateReferenceSystem} {@link #createCoordinateSystem} {@link #createDatum}
+     * {@link #createEllipsoid} {@link #createUnit}
      *
      * <p>The order is significant: it is the key for a {@code switch} statement.
      *
@@ -3144,9 +3039,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                 "COORD_SYS_CODE",
                 "COORD_SYS_NAME",
                 "COORD_SYS_TYPE",
-                new Class[] {
-                    CartesianCS.class, EllipsoidalCS.class, SphericalCS.class, VerticalCS.class
-                },
+                new Class[] {CartesianCS.class, EllipsoidalCS.class, SphericalCS.class, VerticalCS.class},
                 new String[] {"Cartesian", "ellipsoidal", "spherical", "vertical"}),
         new TableInfo(
                 CoordinateSystemAxis.class,
@@ -3163,11 +3056,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
                 new Class[] {GeodeticDatum.class, VerticalDatum.class, EngineeringDatum.class},
                 new String[] {"geodetic", "vertical", "engineering"}),
         new TableInfo(Ellipsoid.class, "[Ellipsoid]", "ELLIPSOID_CODE", "ELLIPSOID_NAME"),
-        new TableInfo(
-                PrimeMeridian.class,
-                "[Prime Meridian]",
-                "PRIME_MERIDIAN_CODE",
-                "PRIME_MERIDIAN_NAME"),
+        new TableInfo(PrimeMeridian.class, "[Prime Meridian]", "PRIME_MERIDIAN_CODE", "PRIME_MERIDIAN_NAME"),
         new TableInfo(
                 CoordinateOperation.class,
                 "[Coordinate_Operation]",
@@ -3179,15 +3068,9 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         // Note: Projection is handle in a special way.
 
         new TableInfo(
-                OperationMethod.class,
-                "[Coordinate_Operation Method]",
-                "COORD_OP_METHOD_CODE",
-                "COORD_OP_METHOD_NAME"),
+                OperationMethod.class, "[Coordinate_Operation Method]", "COORD_OP_METHOD_CODE", "COORD_OP_METHOD_NAME"),
         new TableInfo(
-                ParameterDescriptor.class,
-                "[Coordinate_Operation Parameter]",
-                "PARAMETER_CODE",
-                "PARAMETER_NAME"),
+                ParameterDescriptor.class, "[Coordinate_Operation Parameter]", "PARAMETER_CODE", "PARAMETER_NAME"),
         new TableInfo(Unit.class, "[Unit of Measure]", "UOM_CODE", "UNIT_OF_MEAS_NAME")
     };
 
@@ -3200,12 +3083,12 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
     ////////    expressions.                                               ////////
     ///////////////////////////////////////////////////////////////////////////////
     /**
-     * A set of EPSG authority codes. This set makes use of our connection to the EPSG database. All
-     * {@link #iterator} method call creates a new {@link ResultSet} holding the codes. However,
-     * call to {@link #contains} map directly to a SQL call.
+     * A set of EPSG authority codes. This set makes use of our connection to the EPSG database. All {@link #iterator}
+     * method call creates a new {@link ResultSet} holding the codes. However, call to {@link #contains} map directly to
+     * a SQL call.
      *
-     * <p>Serialization of this class store a copy of all authority codes. The serialization do not
-     * preserve any connection to the database.
+     * <p>Serialization of this class store a copy of all authority codes. The serialization do not preserve any
+     * connection to the database.
      *
      * @since 2.2
      * @version $Id$
@@ -3216,8 +3099,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         private static final long serialVersionUID = 7105664579449680562L;
 
         /**
-         * The type for this code set. This is translated to the most appropriate interface type
-         * even if the user supplied an implementation type.
+         * The type for this code set. This is translated to the most appropriate interface type even if the user
+         * supplied an implementation type.
          */
         public final Class<?> type;
 
@@ -3225,35 +3108,30 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         private final boolean isProjection;
 
         /**
-         * A view of this set as a map with object's name as values, or {@code null} if none. Will
-         * be created only when first needed.
+         * A view of this set as a map with object's name as values, or {@code null} if none. Will be created only when
+         * first needed.
          */
         private transient java.util.Map<String, String> asMap;
 
-        /**
-         * The SQL command to use for creating the {@code queryAll} statement. Used for iteration
-         * over all codes.
-         */
+        /** The SQL command to use for creating the {@code queryAll} statement. Used for iteration over all codes. */
         final String sqlAll;
 
         /**
-         * The SQL command to use for creating the {@code querySingle} statement. Used for fetching
-         * the description from a code.
+         * The SQL command to use for creating the {@code querySingle} statement. Used for fetching the description from
+         * a code.
          */
         private final String sqlSingle;
 
         /** The statement to use for querying all codes. Will be created only when first needed. */
         private transient PreparedStatement queryAll;
 
-        /**
-         * The statement to use for querying a single code. Will be created only when first needed.
-         */
+        /** The statement to use for querying a single code. Will be created only when first needed. */
         private transient PreparedStatement querySingle;
 
         /**
-         * The collection's size, or a negative value if not yet computed. The records will be
-         * counted only when first needed. The special value -2 if set by {@link #isEmpty} if the
-         * size has not yet been computed, but we know that the set is not empty.
+         * The collection's size, or a negative value if not yet computed. The records will be counted only when first
+         * needed. The special value -2 if set by {@link #isEmpty} if the size has not yet been computed, but we know
+         * that the set is not empty.
          */
         private int size = -1;
 
@@ -3296,7 +3174,9 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
             buffer.append(" ORDER BY ").append(table.codeColumn);
             sqlAll = adaptSQL(buffer.toString());
             buffer.setLength(length);
-            buffer.append(hasWhere ? " AND " : " WHERE ").append(table.codeColumn).append(" = ?");
+            buffer.append(hasWhere ? " AND " : " WHERE ")
+                    .append(table.codeColumn)
+                    .append(" = ?");
             sqlSingle = adaptSQL(buffer.toString());
         }
 
@@ -3335,8 +3215,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         }
 
         /**
-         * Returns {@code true} if the code in the specified result set is acceptable. This method
-         * handle projections in a special way.
+         * Returns {@code true} if the code in the specified result set is acceptable. This method handle projections in
+         * a special way.
          */
         private boolean isAcceptable(final ResultSet results) throws SQLException {
             if (!isProjection) {
@@ -3347,8 +3227,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         }
 
         /**
-         * Returns {@code true} if the code in the specified code is acceptable. This method handle
-         * projections in a special way.
+         * Returns {@code true} if the code in the specified code is acceptable. This method handle projections in a
+         * special way.
          */
         private boolean isAcceptable(final String code) throws SQLException {
             if (!isProjection) {
@@ -3358,8 +3238,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         }
 
         /**
-         * Returns {@code true} if this collection contains no elements. This method fetch at most
-         * one row instead of counting all rows.
+         * Returns {@code true} if this collection contains no elements. This method fetch at most one row instead of
+         * counting all rows.
          */
         @Override
         public synchronized boolean isEmpty() {
@@ -3384,6 +3264,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         }
 
         /** Count the number of elements in the underlying result set. */
+        @Override
         public synchronized int size() {
             if (size >= 0) {
                 return size;
@@ -3425,9 +3306,10 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         }
 
         /**
-         * Returns an iterator over the codes. The iterator is backed by a living {@link ResultSet},
-         * which will be closed as soon as the iterator reach the last element.
+         * Returns an iterator over the codes. The iterator is backed by a living {@link ResultSet}, which will be
+         * closed as soon as the iterator reach the last element.
          */
+        @Override
         public synchronized java.util.Iterator<String> iterator() {
             try {
                 final Iterator iterator = new Iterator(getAll());
@@ -3446,18 +3328,17 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         }
 
         /**
-         * Returns a serializable copy of this set. This method is invoked automatically during
-         * serialization. The serialised set of authority code is disconnected from the underlying
-         * database.
+         * Returns a serializable copy of this set. This method is invoked automatically during serialization. The
+         * serialised set of authority code is disconnected from the underlying database.
          */
-        protected Object writeReplace() throws ObjectStreamException {
-            return new LinkedHashSet<String>(this);
+        protected LinkedHashSet<String> writeReplace() throws ObjectStreamException {
+            return new LinkedHashSet<>(this);
         }
 
         /**
-         * Closes the underlying statements. Note: this method is also invoked directly by {@link
-         * DirectEpsgFactory#dispose}, which is okay in this particular case since the
-         * implementation of this method can be executed an arbitrary amount of times.
+         * Closes the underlying statements. Note: this method is also invoked directly by
+         * {@link DirectEpsgFactory#dispose}, which is okay in this particular case since the implementation of this
+         * method can be executed an arbitrary amount of times.
          */
         @Override
         @SuppressWarnings("deprecation") // finalize is deprecated in Java 9
@@ -3478,8 +3359,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
         }
 
         /** Invoked when an exception occured. This method just log a warning. */
-        void unexpectedException(
-                final Class classe, final String method, final SQLException exception) {
+        void unexpectedException(final Class classe, final String method, final SQLException exception) {
             Logging.unexpectedException(LOGGER, classe, method, exception);
         }
 
@@ -3496,8 +3376,8 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
 
         /**
          * The iterator over the codes. This inner class must kept a reference toward the enclosing
-         * {@link AuthorityCodes} in order to prevent a call to {@link AuthorityCodes#finalize}
-         * before the iteration is finished.
+         * {@link AuthorityCodes} in order to prevent a call to {@link AuthorityCodes#finalize} before the iteration is
+         * finished.
          */
         private final class Iterator implements java.util.Iterator<String> {
             /** The result set, or {@code null} if there is no more elements. */
@@ -3525,11 +3405,13 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
             }
 
             /** Returns {@code true} if there is more elements. */
+            @Override
             public boolean hasNext() {
                 return results != null;
             }
 
             /** Returns the next element. */
+            @Override
             public String next() {
                 if (results == null) {
                     throw new NoSuchElementException();
@@ -3545,6 +3427,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
             }
 
             /** Always throws an exception, since this iterator is read-only. */
+            @Override
             public void remove() {
                 throw new UnsupportedOperationException();
             }
@@ -3576,9 +3459,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
             }
         }
 
-        /**
-         * Returns a view of this set as a map with object's name as value, or {@code null} if none.
-         */
+        /** Returns a view of this set as a map with object's name as value, or {@code null} if none. */
         final java.util.Map<String, String> asMap() {
             if (asMap == null) {
                 asMap = new Map();
@@ -3586,10 +3467,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
             return asMap;
         }
 
-        /**
-         * A view of {@link AuthorityCodes} as a map, with authority codes as key and object names
-         * as values.
-         */
+        /** A view of {@link AuthorityCodes} as a map, with authority codes as key and object names as values. */
         private final class Map extends AbstractMap<String, String> {
             /** Returns the number of key-value mappings in this map. */
             @Override
@@ -3642,6 +3520,7 @@ public abstract class AbstractEpsgFactory extends AbstractCachedAuthorityFactory
              *
              * @todo Not yet implemented.
              */
+            @Override
             public Set<Map.Entry<String, String>> entrySet() {
                 throw new UnsupportedOperationException();
             }

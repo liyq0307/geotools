@@ -75,12 +75,13 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
         // childHandlers = new ArrayList();
     }
 
+    @Override
     public void startElement(QName qName, Attributes attributes) throws SAXException {
         // clear handler list
         // childHandlers.clear();
 
         // create the attributes
-        List atts = new ArrayList();
+        List<AttributeInstance> atts = new ArrayList<>();
 
         for (int i = 0; i < attributes.getLength(); i++) {
             String rawAttQName = attributes.getQName(i);
@@ -121,7 +122,7 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
             XSDAttributeDeclaration decl = Schemas.getAttributeDeclaration(content, attQName);
 
             if (decl == null) {
-                // check wether unknown attributes should be parsed
+                // check whether unknown attributes should be parsed
                 if (!parser.isStrict()) {
                     if (parser.getLogger().isLoggable(Level.FINE)) {
                         parser.getLogger().fine("Parsing unknown attribute: " + attQName);
@@ -133,11 +134,9 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
                     decl.setTargetNamespace(attQName.getNamespaceURI());
 
                     // set the type to be of string
-                    XSDSimpleTypeDefinition type =
-                            (XSDSimpleTypeDefinition)
-                                    XSDUtil.getSchemaForSchema(XSDUtil.SCHEMA_FOR_SCHEMA_URI_2001)
-                                            .getSimpleTypeIdMap()
-                                            .get("string");
+                    XSDSimpleTypeDefinition type = XSDUtil.getSchemaForSchema(XSDUtil.SCHEMA_FOR_SCHEMA_URI_2001)
+                            .getSimpleTypeIdMap()
+                            .get("string");
 
                     decl.setTypeDefinition(type);
                 }
@@ -165,8 +164,7 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
         element = new ElementImpl(content);
         element.setNamespace(qName.getNamespaceURI());
         element.setName(qName.getLocalPart());
-        element.setAttributes(
-                (AttributeInstance[]) atts.toArray(new AttributeInstance[atts.size()]));
+        element.setAttributes(atts.toArray(new AttributeInstance[atts.size()]));
 
         // create the parse tree for the node
         node = new NodeImpl(element);
@@ -174,11 +172,9 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
         // parse the attributes
         for (int i = 0; i < element.getAttributes().length; i++) {
             AttributeInstance attribute = element.getAttributes()[i];
-            ParseExecutor executor =
-                    new ParseExecutor(attribute, null, parent.getContext(), parser);
+            ParseExecutor executor = new ParseExecutor(attribute, null, parent.getContext(), parser);
 
-            parser.getBindingWalker()
-                    .walk(attribute.getAttributeDeclaration(), executor, parent.getContext());
+            parser.getBindingWalker().walk(attribute.getAttributeDeclaration(), executor, parent.getContext());
 
             Object parsed = executor.getValue();
             node.addAttribute(new NodeImpl(attribute, parsed));
@@ -186,8 +182,7 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
 
         // trigger the leading edge initialize callback
         ElementInitializer initer = new ElementInitializer(element, node, parent.getContext());
-        parser.getBindingWalker()
-                .walk(element.getElementDeclaration(), initer, container(), parent.getContext());
+        parser.getBindingWalker().walk(element.getElementDeclaration(), initer, container(), parent.getContext());
 
         // create context for children
         // TODO: this should only be done if the element is complex, this class
@@ -206,6 +201,7 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
         // getContext() );
     }
 
+    @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
 
         // simply add the text to the element
@@ -217,9 +213,10 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
         }
     }
 
+    @Override
     public void endElement(QName qName) throws SAXException {
         if (isMixed()) {
-            ((NodeImpl) node).collapseWhitespace();
+            node.collapseWhitespace();
         }
 
         if (isNil(element)) {
@@ -258,16 +255,10 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
         parent.getContext().removeChildContainer(getContext());
     }
 
-    /**
-     * Checks if a certain attribute is nil
-     *
-     * @param element
-     * @return
-     */
+    /** Checks if a certain attribute is nil */
     private boolean isNil(ElementImpl element) {
         for (AttributeInstance att : element.getAttributes()) {
-            if ("nil".equals(att.getName())
-                    && "http://www.w3.org/2001/XMLSchema-instance".equals(att.getNamespace())) {
+            if ("nil".equals(att.getName()) && "http://www.w3.org/2001/XMLSchema-instance".equals(att.getNamespace())) {
                 return "true".equals(att.getText());
             }
         }
@@ -275,6 +266,7 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
         return false;
     }
 
+    @Override
     public Handler createChildHandler(QName qName) {
         return getChildHandlerInternal(qName);
     }
@@ -285,15 +277,14 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
         XSDElementDeclaration element = index.getChildElement(content, qName);
 
         if (element != null) {
-            // TODO: determine wether the element is complex or simple, and create
-            ElementHandler handler =
-                    parser.getHandlerFactory().createElementHandler(element, this, parser);
+            // TODO: determine whether the element is complex or simple, and create
+            ElementHandler handler = parser.getHandlerFactory().createElementHandler(element, this, parser);
 
             return handler;
         }
 
         // could not find the element as a direct child of the parent, check
-        // for a global element, and then check its substituation group
+        // for a global element, and then check its substitution group
         element = index.getElementDeclaration(qName);
 
         if (element != null) {
@@ -304,14 +295,12 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
                 Handler handler = getChildHandlerInternal(subQName);
 
                 if (handler != null) {
-                    // this means that hte element is substituatable for an
-                    // actual child. now we have have choice, do we return
+                    // this means that the element is substitutable for an
+                    // actual child. Now we have a choice, do we return
                     // a handler for the actual element, or the element it
-                    // substituable for - the answer is to check the bindings
+                    // substitutable for - the answer is to check the bindings
                     // TODO: ask the binding
-                    handler =
-                            parser.getHandlerFactory().createElementHandler(element, this, parser);
-
+                    handler = parser.getHandlerFactory().createElementHandler(element, this, parser);
                     return handler;
                 }
             }
@@ -333,6 +322,7 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
     //    public List getChildHandlers() {
     //        return childHandlers;
     //    }
+    @Override
     public void startChildHandler(Handler child) {
         // childHandlers.add(child);
         node.addChild(child.getParseNode());
@@ -341,34 +331,38 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
         if (child instanceof ElementHandler) {
             // get the containing type (we do this for anonymous complex types)
             ElementInstance childInstance = (ElementInstance) child.getComponent();
-            ContextInitializer initer =
-                    new ContextInitializer(childInstance, node, child.getContext());
-            parser.getBindingWalker()
-                    .walk(element.getElementDeclaration(), initer, container(), getContext());
+            ContextInitializer initer = new ContextInitializer(childInstance, node, child.getContext());
+            parser.getBindingWalker().walk(element.getElementDeclaration(), initer, container(), getContext());
         }
     }
 
+    @Override
     public void endChildHandler(Handler child) {
         // add the node to the parse tree
         // childHandlers.remove(child);
     }
 
+    @Override
     public Handler getParentHandler() {
         return parent;
     }
 
+    @Override
     public XSDSchemaContent getSchemaContent() {
         return content;
     }
 
+    @Override
     public Node getParseNode() {
         return node;
     }
 
+    @Override
     public XSDElementDeclaration getElementDeclaration() {
         return content;
     }
 
+    @Override
     public InstanceComponent getComponent() {
         return element;
     }
@@ -391,6 +385,7 @@ public class ElementHandlerImpl extends HandlerImpl implements ElementHandler {
                 && ((XSDComplexTypeDefinition) content.getType()).isMixed();
     }
 
+    @Override
     public String toString() {
         return (node != null) ? node.toString() : "";
     }

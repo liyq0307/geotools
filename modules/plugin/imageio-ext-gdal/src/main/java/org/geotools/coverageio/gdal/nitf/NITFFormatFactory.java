@@ -19,9 +19,9 @@ package org.geotools.coverageio.gdal.nitf;
 import it.geosolutions.imageio.plugins.nitf.NITFImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverageio.BaseGridFormatFactorySPI;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for NITF files.
@@ -30,17 +30,16 @@ import org.opengis.coverage.grid.Format;
  * @author Simone Giannecchini (simboss), GeoSolutions
  * @since 2.5.x
  */
-public final class NITFFormatFactory extends BaseGridFormatFactorySPI
-        implements GridFormatFactorySpi {
+public final class NITFFormatFactory extends BaseGridFormatFactorySPI implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(NITFFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(NITFFormatFactory.class);
 
     /**
      * Tells me if the coverage plugin to access Erdas imagine is available or not.
      *
      * @return <code>true</code> if the plugin is available, <code>false</code> otherwise.
      */
+    @Override
     public boolean isAvailable() {
         boolean available = true;
 
@@ -73,6 +72,7 @@ public final class NITFFormatFactory extends BaseGridFormatFactorySPI
      *
      * @return A {@link NITFFormat}
      */
+    @Override
     public NITFFormat createFormat() {
         return new NITFFormat();
     }

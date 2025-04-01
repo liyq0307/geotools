@@ -20,11 +20,11 @@ package org.geotools.data.complex.feature.xpath;
 import java.util.Map;
 import org.apache.commons.jxpath.ri.QName;
 import org.apache.commons.jxpath.ri.model.NodePointer;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.identity.Identifier;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.identity.Identifier;
 import org.xml.sax.Attributes;
 
 /**
@@ -49,26 +49,32 @@ public class XmlAttributeNodePointer extends NodePointer {
         this.feature = feature;
     }
 
+    @Override
     public boolean isLeaf() {
         return true;
     }
 
+    @Override
     public boolean isCollection() {
         return false;
     }
 
+    @Override
     public boolean isAttribute() {
         return true;
     }
 
+    @Override
     public QName getName() {
         return new QName(name.getURI(), name.getLocalPart());
     }
 
+    @Override
     public Object getBaseValue() {
         return null;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Object getImmediateNode() {
 
@@ -96,6 +102,7 @@ public class XmlAttributeNodePointer extends NodePointer {
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void setValue(Object value) {
         if (!name.getLocalPart().equals("id")) {

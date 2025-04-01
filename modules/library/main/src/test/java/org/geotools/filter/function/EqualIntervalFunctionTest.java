@@ -16,54 +16,53 @@
  */
 package org.geotools.filter.function;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.data.DataUtilities;
+import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
+import org.geotools.feature.FeatureCollection;
+import org.geotools.feature.SchemaException;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.junit.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 
 /** @author James */
 public class EqualIntervalFunctionTest extends FunctionTestSupport {
 
-    private static final org.opengis.filter.FilterFactory ff =
-            CommonFactoryFinder.getFilterFactory(null);
-
-    public EqualIntervalFunctionTest(String testName) {
-        super(testName);
-    }
-
-    protected void tearDown() throws java.lang.Exception {}
-
-    public static junit.framework.Test suite() {
-        junit.framework.TestSuite suite =
-                new junit.framework.TestSuite(EqualIntervalFunctionTest.class);
-        return suite;
-    }
+    private static final org.geotools.api.filter.FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     /** Test of getName method, of class org.geotools.filter.functions.EqualIntervalFunction. */
+    @Test
     public void testInstance() {
-        Function equInt =
-                ff.function("EqualInterval", org.opengis.filter.expression.Expression.NIL);
+        Function equInt = ff.function("EqualInterval", org.geotools.api.filter.expression.Expression.NIL);
         assertNotNull(equInt);
         assertEquals("test get name", "EqualInterval", equInt.getName());
     }
 
-    /**
-     * Test of setNumberOfClasses method, of class
-     * org.geotools.filter.functions.EqualIntervalFunction.
-     */
+    /** Test of setNumberOfClasses method, of class org.geotools.filter.functions.EqualIntervalFunction. */
+    @Test
     public void testSetClasses() throws Exception {
         PropertyName property = ff.property("foo");
         Literal literal = ff.literal(3);
 
-        EqualIntervalFunction func =
-                (EqualIntervalFunction) ff.function("EqualInterval", property, literal);
+        EqualIntervalFunction func = (EqualIntervalFunction) ff.function("EqualInterval", property, literal);
         assertEquals(3, func.getClasses());
 
         func.getParameters().set(1, ff.literal(12));
         assertEquals(12, func.getClasses());
     }
 
+    @Test
     public void testEvaluateWithExpressions() throws Exception {
         Literal classes = ff.literal(3);
         PropertyName name = ff.property("foo");
@@ -95,20 +94,21 @@ public class EqualIntervalFunctionTest extends FunctionTestSupport {
     }
 
     /** FIXME: Please for the love on binpop */
+    @Test
     public void testEvaulateWithStrings() throws Exception {
-        org.opengis.filter.expression.Expression function =
+        org.geotools.api.filter.expression.Expression function =
                 ff.function("EqualInterval", ff.property("group"), ff.literal(5));
         Classifier classifier = (Classifier) function.evaluate(featureCollection);
         assertNotNull(classifier);
 
-        Classifier classifier2 =
-                (Classifier) function.evaluate(featureCollection, Classifier.class);
+        Classifier classifier2 = function.evaluate(featureCollection, Classifier.class);
         assertNotNull(classifier2);
 
-        Integer number = (Integer) function.evaluate(featureCollection, Integer.class);
+        Integer number = function.evaluate(featureCollection, Integer.class);
         assertNull(number);
     }
 
+    @Test
     public void testUpgradeExample() {
         Function function = ff.function("equalInterval", ff.property("foo"), ff.literal(12));
         Object value = function.evaluate(featureCollection);
@@ -118,10 +118,10 @@ public class EqualIntervalFunctionTest extends FunctionTestSupport {
         Function classify = ff.function("classify", ff.property("foo"), ff.literal(split));
 
         SimpleFeature victim = testFeatures[2]; // foo = 20
-        assertEquals(
-                "Feature was placed in wrong bin", Integer.valueOf(2), classify.evaluate(victim));
+        assertEquals("Feature was placed in wrong bin", Integer.valueOf(2), classify.evaluate(victim));
     }
 
+    @Test
     public void testConstantValuesNumeric() {
         Function function = ff.function("equalInterval", ff.property("v"), ff.literal(12));
         RangedClassifier classifier = (RangedClassifier) function.evaluate(constantCollection);
@@ -131,6 +131,7 @@ public class EqualIntervalFunctionTest extends FunctionTestSupport {
         assertEquals(123.123, (Double) classifier.getMax(0), 0d);
     }
 
+    @Test
     public void testConstantValuesString() {
         Function function = ff.function("equalInterval", ff.property("s"), ff.literal(12));
         RangedClassifier classifier = (RangedClassifier) function.evaluate(constantCollection);
@@ -138,5 +139,70 @@ public class EqualIntervalFunctionTest extends FunctionTestSupport {
         assertEquals(1, classifier.getSize());
         assertEquals("abc", classifier.getMin(0));
         assertEquals("abc", classifier.getMax(0));
+    }
+
+    @Test
+    public void testEvaluateNumericalWithPercentages() {
+        Literal classes = ff.literal(3);
+        PropertyName name = ff.property("foo");
+        Function func = ff.function("EqualInterval", name, classes, ff.literal(true));
+
+        Object classifier = func.evaluate(featureCollection);
+        assertTrue(classifier instanceof RangedClassifier);
+        RangedClassifier ranged = (RangedClassifier) classifier;
+        double[] percentages = ranged.getPercentages();
+        assertEquals(3, percentages.length);
+        assertEquals(62.5, percentages[0], 0d);
+        assertEquals(25.0, percentages[1], 0d);
+        assertEquals(12.5, percentages[2], 0d);
+    }
+
+    @Test
+    public void testEvaluateNumericalWithPercentagesAndOutlier() throws SchemaException {
+        SimpleFeatureType dataType = DataUtilities.createType("classification.test1", "id:0,foo:int,geom:Point");
+
+        int[] iVal = {1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+        FeatureCollection featureCollection = new ListFeatureCollection(dataType);
+        GeometryFactory fac = new GeometryFactory();
+        featureCollection = new ListFeatureCollection(dataType);
+        for (int i = 0; i < iVal.length; i++) {
+            SimpleFeature feature = SimpleFeatureBuilder.build(
+                    dataType,
+                    new Object[] {
+                        Integer.valueOf(i + 1),
+                        Integer.valueOf(iVal[i]),
+                        fac.createPoint(new Coordinate(iVal[i], iVal[i]))
+                    },
+                    "classification.t" + (i + 1));
+            ((ListFeatureCollection) featureCollection).add(feature);
+        }
+        Literal classes = ff.literal(3);
+        PropertyName name = ff.property("foo");
+        Function func = ff.function("EqualInterval", name, classes, ff.literal(true));
+
+        Object classifier = func.evaluate(featureCollection);
+        assertTrue(classifier instanceof RangedClassifier);
+        RangedClassifier ranged = (RangedClassifier) classifier;
+        double[] percentages = ranged.getPercentages();
+        assertEquals(3, percentages.length);
+        assertEquals(33.0, Math.floor(percentages[0]), 0d);
+        assertEquals(26.0, Math.floor(percentages[1]), 0d);
+        assertEquals(39.0, Math.floor(percentages[2]), 0d);
+    }
+
+    @Test
+    public void testEvaluateNonNumericalWithPercentages() {
+        Literal classes = ff.literal(3);
+        PropertyName name = ff.property("foo");
+        Function func = ff.function("EqualInterval", name, classes, ff.literal(true));
+
+        Object classifier = func.evaluate(featureCollection);
+        assertTrue(classifier instanceof RangedClassifier);
+        RangedClassifier ranged = (RangedClassifier) classifier;
+        double[] percentages = ranged.getPercentages();
+        assertEquals(3, percentages.length);
+        assertEquals(62.5, percentages[0], 0d);
+        assertEquals(25.0, percentages[1], 0d);
+        assertEquals(12.5, percentages[2], 0d);
     }
 }

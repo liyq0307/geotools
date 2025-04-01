@@ -18,13 +18,13 @@ package org.geotools.brewer.styling.builder;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.styling.Font;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Font;
 
 public class FontBuilder extends AbstractStyleBuilder<Font> {
     boolean familiesSet = false;
 
-    private List<Expression> families = new ArrayList<Expression>();
+    private List<Expression> families = new ArrayList<>();
 
     private Expression style;
 
@@ -41,6 +41,7 @@ public class FontBuilder extends AbstractStyleBuilder<Font> {
         reset();
     }
 
+    @Override
     public Font build() {
         if (unset) {
             return null;
@@ -107,20 +108,22 @@ public class FontBuilder extends AbstractStyleBuilder<Font> {
         return size(cqlExpression(cqlExpression));
     }
 
+    @Override
     public FontBuilder reset() {
         Font df = sf.getDefaultFont();
-        this.families = new ArrayList<Expression>();
+        this.families = new ArrayList<>();
         this.size = df.getSize();
         this.style = df.getStyle();
         this.weight = df.getWeight();
         return this;
     }
 
+    @Override
     public FontBuilder reset(Font font) {
         if (font == null) {
             return reset();
         }
-        this.families = font.getFamily() != null ? font.getFamily() : new ArrayList<Expression>();
+        this.families = font.getFamily() != null ? font.getFamily() : new ArrayList<>();
         this.size = font.getSize();
         this.style = font.getStyle();
         this.weight = font.getWeight();
@@ -128,6 +131,7 @@ public class FontBuilder extends AbstractStyleBuilder<Font> {
         return this;
     }
 
+    @Override
     public FontBuilder unset() {
         return (FontBuilder) super.unset();
     }

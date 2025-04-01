@@ -16,13 +16,15 @@
  */
 package org.geotools.styling;
 
-import org.opengis.style.StyleVisitor;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.NamedStyle;
+import org.geotools.api.style.TraversingStyleVisitor;
 
 /**
  * A NamedStyle is used to refer to a style that has a name in a WMS.
  *
- * <p>A NamedStyle is a Style that has only Name, so all setters other than setName will throw an
- * <code>UnsupportedOperationException</code>
+ * <p>A NamedStyle is a Style that has only Name, so all setters other than setName will throw an <code>
+ * UnsupportedOperationException</code>
  *
  * @author jamesm
  */
@@ -35,6 +37,7 @@ public class NamedStyleImpl extends StyleImpl implements NamedStyle {
      *
      * @return style name
      */
+    @Override
     public String getName() {
         return this.name;
     }
@@ -44,6 +47,7 @@ public class NamedStyleImpl extends StyleImpl implements NamedStyle {
      *
      * @param name style name
      */
+    @Override
     public void setName(String name) {
         this.name = name;
     }
@@ -78,32 +82,38 @@ public class NamedStyleImpl extends StyleImpl implements NamedStyle {
     }
 
     /** */
+    @Override
     public boolean isDefault() {
         return false;
     }
 
     /** */
+    @Override
     public void setDefault(boolean isDefault) {
         throw new UnsupportedOperationException();
     }
 
     /** */
-    public org.geotools.styling.FeatureTypeStyle[] getFeatureTypeStyles() {
-        return new org.geotools.styling.FeatureTypeStyle[0];
+    @Override
+    public FeatureTypeStyle[] getFeatureTypeStyles() {
+        return new FeatureTypeStyle[0];
     }
 
     /** */
-    public void setFeatureTypeStyles(org.geotools.styling.FeatureTypeStyle[] types) {
+    @Override
+    public void setFeatureTypeStyles(FeatureTypeStyle[] types) {
         throw new UnsupportedOperationException();
     }
 
     /** */
-    public void addFeatureTypeStyle(org.geotools.styling.FeatureTypeStyle type) {
+    @Override
+    public void addFeatureTypeStyle(FeatureTypeStyle type) {
         throw new UnsupportedOperationException();
     }
 
     /** */
-    public Object accept(StyleVisitor visitor, Object data) {
+    @Override
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 }

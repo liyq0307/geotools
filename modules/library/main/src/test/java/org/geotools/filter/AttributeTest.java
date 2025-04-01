@@ -18,26 +18,23 @@
  */
 package org.geotools.filter;
 
-import junit.framework.TestCase;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.junit.Assert;
+import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Tests for Attribute Expressions
  *
  * @author James Macgill
  */
-public class AttributeTest extends TestCase {
+public class AttributeTest {
     SimpleFeatureType schema = null;
-
-    public AttributeTest(java.lang.String testName) {
-        super(testName);
-    }
 
     public SimpleFeature[] sampleFeatures() throws Exception {
         SimpleFeatureTypeBuilder ftb = new SimpleFeatureTypeBuilder();
@@ -49,31 +46,17 @@ public class AttributeTest extends TestCase {
 
         GeometryFactory gf = new GeometryFactory(new PrecisionModel());
         SimpleFeature[] f = new SimpleFeature[3];
-        f[0] =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {
-                            Integer.valueOf(12), gf.createGeometryCollection(null), "first"
-                        },
-                        null);
-        f[1] =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {
-                            Integer.valueOf(3), gf.createGeometryCollection(null), "second"
-                        },
-                        null);
-        f[2] =
-                SimpleFeatureBuilder.build(
-                        schema,
-                        new Object[] {
-                            Integer.valueOf(15), gf.createGeometryCollection(null), "third"
-                        },
-                        null);
+        f[0] = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(12), gf.createGeometryCollection(null), "first"}, null);
+        f[1] = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(3), gf.createGeometryCollection(null), "second"}, null);
+        f[2] = SimpleFeatureBuilder.build(
+                schema, new Object[] {Integer.valueOf(15), gf.createGeometryCollection(null), "third"}, null);
 
         return f;
     }
 
+    @Test
     public void testTypeMissmatch() throws Exception {
         SimpleFeature[] f = sampleFeatures();
 
@@ -81,14 +64,13 @@ public class AttributeTest extends TestCase {
         AttributeExpressionImpl e1 = new AttributeExpressionImpl(schema, "value");
         AttributeExpressionImpl e2 = new AttributeExpressionImpl(schema, "name");
         boolean pass = false;
-        Object value = null;
-        value = e1.evaluate(f[0]);
+        Object value = e1.evaluate(f[0]);
 
         if (value instanceof Integer) {
             pass = true;
         }
 
-        assertTrue("String expresion returned an Integer", pass);
+        Assert.assertTrue("String expresion returned an Integer", pass);
         pass = false;
 
         value = e2.evaluate(f[0]);
@@ -97,9 +79,10 @@ public class AttributeTest extends TestCase {
             pass = true;
         }
 
-        assertTrue("Integer expresion returned a String", pass);
+        Assert.assertTrue("Integer expresion returned a String", pass);
     }
 
+    @Test
     public void testSetupAndExtraction() throws Exception {
         // this should move out to a more configurable system run from scripts
         // but we can start with a set of hard coded tests
@@ -108,10 +91,10 @@ public class AttributeTest extends TestCase {
         AttributeExpressionImpl e1 = new AttributeExpressionImpl(schema, "value");
         AttributeExpressionImpl e2 = new AttributeExpressionImpl(schema, "name");
 
-        assertEquals(12d, ((Integer) e1.evaluate(f[0])).doubleValue(), 0);
-        assertEquals(3d, ((Integer) e1.evaluate(f[1])).doubleValue(), 0);
-        assertEquals(15d, ((Integer) e1.evaluate(f[2])).doubleValue(), 0);
-        assertEquals("first", (String) e2.evaluate(f[0]));
-        assertEquals("second", (String) e2.evaluate(f[1]));
+        Assert.assertEquals(12d, ((Integer) e1.evaluate(f[0])).doubleValue(), 0);
+        Assert.assertEquals(3d, ((Integer) e1.evaluate(f[1])).doubleValue(), 0);
+        Assert.assertEquals(15d, ((Integer) e1.evaluate(f[2])).doubleValue(), 0);
+        Assert.assertEquals("first", (String) e2.evaluate(f[0]));
+        Assert.assertEquals("second", (String) e2.evaluate(f[1]));
     }
 }

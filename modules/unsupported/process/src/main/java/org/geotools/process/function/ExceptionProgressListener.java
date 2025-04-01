@@ -18,8 +18,8 @@ package org.geotools.process.function;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.opengis.util.InternationalString;
-import org.opengis.util.ProgressListener;
+import org.geotools.api.util.InternationalString;
+import org.geotools.api.util.ProgressListener;
 
 /**
  * A listener that will just keep track of exceptions
@@ -28,8 +28,9 @@ import org.opengis.util.ProgressListener;
  */
 class ExceptionProgressListener implements ProgressListener {
 
-    List<Throwable> exceptions = new ArrayList<Throwable>();
+    List<Throwable> exceptions = new ArrayList<>();
 
+    @Override
     public void exceptionOccurred(Throwable exception) {
         exceptions.add(exception);
     }
@@ -38,16 +39,19 @@ class ExceptionProgressListener implements ProgressListener {
         return exceptions;
     }
 
+    @Override
     public boolean isCanceled() {
-        return exceptions.size() > 0;
+        return !exceptions.isEmpty();
     }
 
     // all other methods we don't care about
 
+    @Override
     public void complete() {
         // nothing to do here
     }
 
+    @Override
     public void dispose() {
         // nothing to do here
     }
@@ -56,18 +60,22 @@ class ExceptionProgressListener implements ProgressListener {
         return null;
     }
 
+    @Override
     public float getProgress() {
         return 0;
     }
 
+    @Override
     public InternationalString getTask() {
         return null;
     }
 
+    @Override
     public void progress(float percent) {
         // nothing to do here
     }
 
+    @Override
     public void setCanceled(boolean cancel) {
         // nothing to do here
     }
@@ -76,14 +84,17 @@ class ExceptionProgressListener implements ProgressListener {
         // nothing to do here
     }
 
+    @Override
     public void setTask(InternationalString task) {
         // nothing to do here
     }
 
+    @Override
     public void started() {
         // nothing to do here
     }
 
+    @Override
     public void warningOccurred(String source, String location, String warning) {
         // nothing to do here
     }

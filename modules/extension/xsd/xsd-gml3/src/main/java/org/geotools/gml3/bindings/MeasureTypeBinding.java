@@ -25,7 +25,7 @@ import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import tec.uom.se.unit.BaseUnit;
+import tech.units.indriya.unit.BaseUnit;
 
 /**
  * Binding object for the type http://www.opengis.net/gml:MeasureType.
@@ -53,6 +53,7 @@ import tec.uom.se.unit.BaseUnit;
  */
 public class MeasureTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MeasureType;
     }
@@ -64,7 +65,8 @@ public class MeasureTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
-    public Class getType() {
+    @Override
+    public Class<?> getType() {
         return Measure.class;
     }
 
@@ -75,17 +77,19 @@ public class MeasureTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        Double d = Double.valueOf(node.getComponent().getText());
+        double d = Double.parseDouble(node.getComponent().getText());
         URI uom = (URI) node.getAttributeValue(URI.class);
 
         if (uom != null) {
-            return new Measure(d.doubleValue(), new BaseUnit(uom.toString()));
+            return new Measure(d, new BaseUnit<>(uom.toString()));
         }
 
-        return new Measure(d.doubleValue(), null);
+        return new Measure(d, null);
     }
 
+    @Override
     public Element encode(Object object, Document document, Element value) throws Exception {
         Measure measure = (Measure) object;
         value.appendChild(document.createTextNode("" + measure.doubleValue()));
@@ -93,12 +97,13 @@ public class MeasureTypeBinding extends AbstractComplexBinding {
         return value;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("uom".equals(name.getLocalPart())) {
             Measure measure = (Measure) object;
 
             if (measure.getUnit() != null) {
-                return new URI(((BaseUnit) measure.getUnit()).getSymbol());
+                return new URI(measure.getUnit().getSymbol());
             }
         }
 

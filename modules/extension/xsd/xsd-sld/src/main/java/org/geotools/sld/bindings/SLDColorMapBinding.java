@@ -16,12 +16,11 @@
  */
 package org.geotools.sld.bindings;
 
-import java.util.Iterator;
 import java.util.List;
 import javax.xml.namespace.QName;
-import org.geotools.styling.ColorMap;
-import org.geotools.styling.ColorMapEntry;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.style.ColorMap;
+import org.geotools.api.style.ColorMapEntry;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -60,6 +59,7 @@ public class SLDColorMapBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.COLORMAP;
     }
@@ -71,6 +71,7 @@ public class SLDColorMapBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -82,6 +83,7 @@ public class SLDColorMapBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return ColorMap.class;
     }
@@ -93,6 +95,7 @@ public class SLDColorMapBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -102,12 +105,13 @@ public class SLDColorMapBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         ColorMap colorMap = styleFactory.createColorMap();
-        List entries = (List) node.getChildValues("ColorMapEntry");
+        List entries = node.getChildValues("ColorMapEntry");
 
-        for (Iterator itr = entries.iterator(); itr.hasNext(); ) {
-            colorMap.addColorMapEntry((ColorMapEntry) itr.next());
+        for (Object entry : entries) {
+            colorMap.addColorMapEntry((ColorMapEntry) entry);
         }
 
         return colorMap;

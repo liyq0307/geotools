@@ -17,19 +17,19 @@
 package org.geotools.data.postgis;
 
 import java.io.IOException;
-import org.geotools.data.postgis.filter.FilterFunction_pgNearest;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.jdbc.PreparedFilterToSQL;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.DistanceBufferOperator;
+import org.geotools.util.Version;
 
 public class PostgisPSFilterToSql extends PreparedFilterToSQL {
 
@@ -39,6 +39,11 @@ public class PostgisPSFilterToSql extends PreparedFilterToSQL {
     public PostgisPSFilterToSql(PostGISPSDialect dialect) {
         super(dialect);
         helper = new FilterToSqlHelper(this);
+    }
+
+    public PostgisPSFilterToSql(PostGISPSDialect dialect, Version pgVersion) {
+        super(dialect);
+        helper = new FilterToSqlHelper(this, pgVersion);
     }
 
     public boolean isLooseBBOXEnabled() {
@@ -64,15 +69,12 @@ public class PostgisPSFilterToSql extends PreparedFilterToSQL {
 
     @Override
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
         helper.out = out;
         return helper.visitBinarySpatialOperator(filter, property, geometry, swapped, extraData);
     }
 
+    @Override
     protected Object visitBinarySpatialOperator(
             BinarySpatialOperator filter, Expression e1, Expression e2, Object extraData) {
         helper.out = out;
@@ -90,11 +92,6 @@ public class PostgisPSFilterToSql extends PreparedFilterToSQL {
     @Override
     protected String getFunctionName(Function function) {
         return helper.getFunctionName(function);
-    }
-
-    @Override
-    public double getDistanceInMeters(DistanceBufferOperator operator) {
-        return super.getDistanceInMeters(operator);
     }
 
     @Override
@@ -124,9 +121,8 @@ public class PostgisPSFilterToSql extends PreparedFilterToSQL {
      * Overrides base behavior to handler arrays
      *
      * @param filter the comparison to be turned into SQL.
-     * @param extraData
-     * @throws RuntimeException
      */
+    @Override
     protected void visitBinaryComparisonOperator(BinaryComparisonOperator filter, Object extraData)
             throws RuntimeException {
         Expression left = filter.getExpression1();
@@ -152,6 +148,7 @@ public class PostgisPSFilterToSql extends PreparedFilterToSQL {
      * @param filter the Filter to be visited.
      * @throws RuntimeException for io exception with writer
      */
+    @Override
     public Object visit(PropertyIsBetween filter, Object extraData) throws RuntimeException {
         LOGGER.finer("exporting PropertyIsBetween");
 
@@ -166,29 +163,27 @@ public class PostgisPSFilterToSql extends PreparedFilterToSQL {
         }
     }
 
+    @Override
     public Object visit(PropertyIsEqualTo filter, Object extraData) {
         helper.out = out;
-        FilterFunction_pgNearest nearest = helper.getNearestFilter(filter);
-        if (nearest != null) {
-            return helper.visit(
-                    nearest,
-                    extraData,
-                    new FilterToSqlHelper.NearestHelperContext(
-                            dialect,
-                            (a, b) -> {
-                                try {
-                                    ((PostGISPSDialect) dialect)
-                                            .encodeGeometryValue(
-                                                    a,
-                                                    helper.getFeatureTypeGeometryDimension(),
-                                                    helper.getFeatureTypeGeometrySRID(),
-                                                    b);
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }));
-        } else {
-            return super.visit(filter, extraData);
+        if (helper.isSupportedEqualFunction(filter)) {
+            return helper.visitSupportedEqualFunction(
+                    filter,
+                    dialect,
+                    (a, b) -> {
+                        try {
+                            ((PostGISPSDialect) dialect)
+                                    .encodeGeometryValue(
+                                            a,
+                                            helper.getFeatureTypeGeometryDimension(),
+                                            helper.getFeatureTypeGeometrySRID(),
+                                            b);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    },
+                    extraData);
         }
+        return super.visit(filter, extraData);
     }
 }

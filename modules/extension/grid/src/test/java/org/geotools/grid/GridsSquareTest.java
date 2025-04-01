@@ -19,20 +19,21 @@ package org.geotools.grid;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Test;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Unit tests for the Grids class.
@@ -56,28 +57,21 @@ public class GridsSquareTest extends TestBase {
         SimpleFeatureSource gridSource = Grids.createSquareGrid(bounds, sideLen);
         assertGridSizeAndIds(gridSource);
 
-        SimpleFeatureIterator iter = gridSource.getFeatures().features();
-        try {
+        try (SimpleFeatureIterator iter = gridSource.getFeatures().features()) {
             Polygon poly = (Polygon) iter.next().getAttribute("element");
             assertEquals(5, poly.getCoordinates().length);
-        } finally {
-            iter.close();
         }
     }
 
     @Test
     public void createDensifiedGrid() throws Exception {
         final int vertexDensity = 10;
-        SimpleFeatureSource gridSource =
-                Grids.createSquareGrid(bounds, sideLen, sideLen / vertexDensity);
+        SimpleFeatureSource gridSource = Grids.createSquareGrid(bounds, sideLen, sideLen / vertexDensity);
         assertGridSizeAndIds(gridSource);
 
-        SimpleFeatureIterator iter = gridSource.getFeatures().features();
-        try {
+        try (SimpleFeatureIterator iter = gridSource.getFeatures().features()) {
             Polygon poly = (Polygon) iter.next().getAttribute("element");
             assertTrue(poly.getCoordinates().length - 1 >= 4 * vertexDensity);
-        } finally {
-            iter.close();
         }
     }
 
@@ -106,16 +100,14 @@ public class GridsSquareTest extends TestBase {
             throw new IllegalStateException("Error in test code");
         }
 
-        GridFeatureBuilder builder =
-                new GridFeatureBuilder(createFeatureType(builderCRS)) {
-                    @Override
-                    public void setAttributes(GridElement el, Map<String, Object> attributes) {
-                        throw new UnsupportedOperationException("Should not be called");
-                    }
-                };
+        GridFeatureBuilder builder = new GridFeatureBuilder(createFeatureType(builderCRS)) {
+            @Override
+            public void setAttributes(GridElement el, Map<String, Object> attributes) {
+                throw new UnsupportedOperationException("Should not be called");
+            }
+        };
 
-        Grids.createSquareGrid(
-                new ReferencedEnvelope(150, 151, -33, -34, boundsCRS), sideLen, sideLen, builder);
+        Grids.createSquareGrid(new ReferencedEnvelope(150, 151, -33, -34, boundsCRS), sideLen, sideLen, builder);
     }
 
     private void assertGridSizeAndIds(SimpleFeatureSource gridSource) throws Exception {
@@ -126,19 +118,15 @@ public class GridsSquareTest extends TestBase {
         boolean[] flag = new boolean[expectedNumElements + 1];
         int count = 0;
 
-        SimpleFeatureIterator iter = grid.features();
-        try {
+        try (SimpleFeatureIterator iter = grid.features()) {
             while (iter.hasNext()) {
                 SimpleFeature f = iter.next();
                 int id = (Integer) f.getAttribute("id");
-                assertFalse(id == 0);
+                assertNotEquals(0, id);
                 assertFalse(flag[id]);
                 flag[id] = true;
                 count++;
             }
-
-        } finally {
-            iter.close();
         }
 
         assertEquals(expectedNumElements, count);

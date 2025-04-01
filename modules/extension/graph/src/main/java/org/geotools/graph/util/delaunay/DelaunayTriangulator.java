@@ -18,9 +18,11 @@ package org.geotools.graph.util.delaunay;
 
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.List;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.graph.structure.Edge;
@@ -31,16 +33,14 @@ import org.geotools.metadata.math.Line;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** @author jfc173 */
 public class DelaunayTriangulator {
 
     public DelaunayNode temp1, temp2, temp3;
     private DelaunayNode[] nodes;
-    private Vector triangleList;
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(DelaunayTriangulator.class);
+    private List<Triangle> triangleList;
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(DelaunayTriangulator.class);
 
     /** Creates a new instance of delaunayTriangulator */
     public DelaunayTriangulator() {}
@@ -57,30 +57,31 @@ public class DelaunayTriangulator {
         nodes = featuresToNodes(data);
     }
 
-    public Vector getTriangles() {
+    public List<Triangle> getTriangles() {
         return triangleList;
     }
 
     public DelaunayNode[] featuresToNodes(SimpleFeatureCollection fc) {
-        SimpleFeatureIterator iter = fc.features();
         int size = fc.size();
         DelaunayNode[] nodes = new DelaunayNode[size];
         int index = 0;
-        while (iter.hasNext()) {
-            SimpleFeature next = iter.next();
-            Geometry geom = (Geometry) next.getDefaultGeometry();
-            Point centroid;
-            if (geom instanceof Point) {
-                centroid = (Point) geom;
-            } else {
-                centroid = geom.getCentroid();
-            }
-            DelaunayNode node = new DelaunayNode();
-            node.setCoordinate(centroid.getCoordinate());
-            node.setFeature(next);
-            if (!(arrayContains(node, nodes, index))) {
-                nodes[index] = node;
-                index++;
+        try (SimpleFeatureIterator iter = fc.features()) {
+            while (iter.hasNext()) {
+                SimpleFeature next = iter.next();
+                Geometry geom = (Geometry) next.getDefaultGeometry();
+                Point centroid;
+                if (geom instanceof Point) {
+                    centroid = (Point) geom;
+                } else {
+                    centroid = geom.getCentroid();
+                }
+                DelaunayNode node = new DelaunayNode();
+                node.setCoordinate(centroid.getCoordinate());
+                node.setFeature(next);
+                if (!(arrayContains(node, nodes, index))) {
+                    nodes[index] = node;
+                    index++;
+                }
             }
         }
 
@@ -134,11 +135,10 @@ public class DelaunayTriangulator {
         temp3 = tempNodes[nodes.length + 2];
 
         // initialize triangulation to the bounding triangle
-        triangleList = new Vector();
+        triangleList = new ArrayList<>();
         DelaunayEdge e1 = new DelaunayEdge(tempNodes[nodes.length], tempNodes[nodes.length + 1]);
         DelaunayEdge e2 = new DelaunayEdge(tempNodes[nodes.length], tempNodes[nodes.length + 2]);
-        DelaunayEdge e3 =
-                new DelaunayEdge(tempNodes[nodes.length + 1], tempNodes[nodes.length + 2]);
+        DelaunayEdge e3 = new DelaunayEdge(tempNodes[nodes.length + 1], tempNodes[nodes.length + 2]);
         Triangle first = new Triangle(e1, e2, e3);
         e1.setFaceA(first);
         e2.setFaceA(first);
@@ -150,11 +150,7 @@ public class DelaunayTriangulator {
         U2.setCoordinate(new Coordinate(0, Double.POSITIVE_INFINITY));
         DelaunayNode U3 = new DelaunayNode();
         U3.setCoordinate(new Coordinate(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
-        Triangle UNBOUNDED =
-                new Triangle(
-                        new DelaunayEdge(U1, U2),
-                        new DelaunayEdge(U1, U3),
-                        new DelaunayEdge(U2, U3));
+        Triangle UNBOUNDED = new Triangle(new DelaunayEdge(U1, U2), new DelaunayEdge(U1, U3), new DelaunayEdge(U2, U3));
 
         e1.setFaceB(UNBOUNDED);
         e2.setFaceB(UNBOUNDED);
@@ -173,14 +169,14 @@ public class DelaunayTriangulator {
         return g;
     }
 
-    public Graph triangleListToGraph(Vector tList) {
+    public Graph triangleListToGraph(List<Triangle> tList) {
         // turn what I've got into a proper GeoTools2 Graph!
         // But don't include the three temporary nodes and all incident edges.
-        Vector edgeList = new Vector();
-        Vector nodeList = new Vector();
-        Iterator triangleIterator = tList.iterator();
+        List<Edge> edgeList = new ArrayList<>();
+        List<Node> nodeList = new ArrayList<>();
+        Iterator<Triangle> triangleIterator = tList.iterator();
         while (triangleIterator.hasNext()) {
-            Triangle next = (Triangle) triangleIterator.next();
+            Triangle next = triangleIterator.next();
             Edge[] edges = next.getEdges();
             for (int i = 0; i < 3; i++) {
                 if (!(((DelaunayEdge) edges[i]).hasEndPoint(temp1)
@@ -206,20 +202,19 @@ public class DelaunayTriangulator {
         return new BasicGraph(nodeList, edgeList);
     }
 
-    public Vector insertNode(DelaunayNode newNode, Vector tList) {
+    public List<Triangle> insertNode(DelaunayNode newNode, List<Triangle> tList) {
         // find triangle containing node or if node is on an edge, the two triangles bordering that
         // edge.
         // this finding-the-triangle section can be given better efficiency using the method on pp.
         // 192-193 of book mentioned above.
-        Iterator triangleIterator = tList.iterator();
+        Iterator<Triangle> triangleIterator = tList.iterator();
         Triangle contains = null;
         Triangle borderA = null;
-        Triangle borderB =
-                null; // Note: assuming it's on the border of two triangles rather than at the
+        Triangle borderB = null; // Note: assuming it's on the border of two triangles rather than at the
         // intersection of 3 or more.
         boolean notDone = true;
         while ((triangleIterator.hasNext()) && (notDone)) {
-            Triangle next = (Triangle) triangleIterator.next();
+            Triangle next = triangleIterator.next();
             int relation = next.relate(newNode);
             switch (relation) {
                 case Triangle.INSIDE:
@@ -240,8 +235,7 @@ public class DelaunayTriangulator {
                     break;
 
                 default:
-                    throw new RuntimeException(
-                            "So the point isn't inside, outside, or on the edge of this triangle?!");
+                    throw new RuntimeException("So the point isn't inside, outside, or on the edge of this triangle?!");
             } // end switch
         }
 
@@ -259,10 +253,8 @@ public class DelaunayTriangulator {
             DelaunayEdge oldEdge0_2 = null;
             DelaunayEdge oldEdge1_2 = null;
             for (int i = 0; i < 3; i++) {
-                if (((DelaunayEdge) triangleEdges[i])
-                        .hasEndPoint((DelaunayNode) triangleNodes[0])) {
-                    if (((DelaunayEdge) triangleEdges[i])
-                            .hasEndPoint((DelaunayNode) triangleNodes[1])) {
+                if (((DelaunayEdge) triangleEdges[i]).hasEndPoint((DelaunayNode) triangleNodes[0])) {
+                    if (((DelaunayEdge) triangleEdges[i]).hasEndPoint((DelaunayNode) triangleNodes[1])) {
                         oldEdge0_1 = (DelaunayEdge) triangleEdges[i];
                     } else {
                         oldEdge0_2 = (DelaunayEdge) triangleEdges[i];
@@ -377,7 +369,7 @@ public class DelaunayTriangulator {
         return tList;
     }
 
-    private void legalizeEdge(Triangle t, DelaunayEdge e, DelaunayNode p, Vector triangleList) {
+    private void legalizeEdge(Triangle t, DelaunayEdge e, DelaunayNode p, List<Triangle> triangleList) {
         LOGGER.fine("legalizing " + t + " and " + e.getOtherFace(t));
         if (isIllegal(t, e, p)) {
             Triangle otherFace = e.getOtherFace(t);
@@ -480,8 +472,7 @@ public class DelaunayTriangulator {
 
         if (numTemporary == 0) {
             Ellipse2D.Double circum = constructCircle(p, eNodeA, eNodeB);
-            Point2D.Double point =
-                    new Point2D.Double(farNode.getCoordinate().x, farNode.getCoordinate().y);
+            Point2D.Double point = new Point2D.Double(farNode.getCoordinate().x, farNode.getCoordinate().y);
             if (circum.contains(point)) {
                 LOGGER.finer("Illegal by case 2");
                 //                System.out.println("Illegal by case 2");
@@ -508,8 +499,7 @@ public class DelaunayTriangulator {
                 return true;
             }
         } else {
-            throw new RuntimeException(
-                    "Problem in DelaunayTriangulator.isIllegal--This shouldn't've happened!");
+            throw new RuntimeException("Problem in DelaunayTriangulator.isIllegal--This shouldn't've happened!");
         }
     }
 
@@ -521,35 +511,25 @@ public class DelaunayTriangulator {
         } else if ((a.equals(temp3)) || (b.equals(temp3))) {
             return 3;
         } else {
-            throw new RuntimeException(
-                    "I shouldn't be here.  Either node a or node b should be temporary.");
+            throw new RuntimeException("I shouldn't be here.  Either node a or node b should be temporary.");
         }
     }
 
-    private static Ellipse2D.Double constructCircle(
-            DelaunayNode a, DelaunayNode b, DelaunayNode c) {
+    private static Ellipse2D.Double constructCircle(DelaunayNode a, DelaunayNode b, DelaunayNode c) {
         // center of this circle is the intersection of the perpendicular bisectors of the triangle
 
-        Point2D.Double midPointA_B =
-                new Point2D.Double(
-                        (a.getCoordinate().x + b.getCoordinate().x) / 2,
-                        (a.getCoordinate().y + b.getCoordinate().y) / 2);
+        Point2D.Double midPointA_B = new Point2D.Double(
+                (a.getCoordinate().x + b.getCoordinate().x) / 2, (a.getCoordinate().y + b.getCoordinate().y) / 2);
         double deltaXA_B = a.getCoordinate().x - midPointA_B.getX();
         double deltaYA_B = a.getCoordinate().y - midPointA_B.getY();
 
         Line bisectorA_B = new Line();
         bisectorA_B.setLine(
-                new Point2D.Double(
-                        (midPointA_B.getX() + 100 * deltaYA_B),
-                        (midPointA_B.getY() - 100 * deltaXA_B)),
-                new Point2D.Double(
-                        (midPointA_B.getX() - 100 * deltaYA_B),
-                        (midPointA_B.getY() + 100 * deltaXA_B)));
+                new Point2D.Double((midPointA_B.getX() + 100 * deltaYA_B), (midPointA_B.getY() - 100 * deltaXA_B)),
+                new Point2D.Double((midPointA_B.getX() - 100 * deltaYA_B), (midPointA_B.getY() + 100 * deltaXA_B)));
 
-        Point2D.Double midPointA_C =
-                new Point2D.Double(
-                        (a.getCoordinate().x + c.getCoordinate().x) / 2,
-                        (a.getCoordinate().y + c.getCoordinate().y) / 2);
+        Point2D.Double midPointA_C = new Point2D.Double(
+                (a.getCoordinate().x + c.getCoordinate().x) / 2, (a.getCoordinate().y + c.getCoordinate().y) / 2);
         double deltaXA_C = a.getCoordinate().x - midPointA_C.getX();
         double deltaYA_C = a.getCoordinate().y - midPointA_C.getY();
 
@@ -573,18 +553,13 @@ public class DelaunayTriangulator {
         double radius = intersection.distance(a.getCoordinate().x, a.getCoordinate().y);
 
         // convert from center-radius to the java format
-        Ellipse2D.Double circle =
-                new Ellipse2D.Double(
-                        intersection.getX() - radius,
-                        intersection.getY() - radius,
-                        2 * radius,
-                        2 * radius);
+        Ellipse2D.Double circle = new Ellipse2D.Double(
+                intersection.getX() - radius, intersection.getY() - radius, 2 * radius, 2 * radius);
 
         return circle;
     }
 
-    private boolean rejectSwap(
-            Triangle oldFirst, Triangle oldSecond, Triangle newFirst, Triangle newSecond) {
+    private boolean rejectSwap(Triangle oldFirst, Triangle oldSecond, Triangle newFirst, Triangle newSecond) {
         // I want to reject the swap if the new edge intersects any other edges in the graph, which
         // can happen in
         // the case where A or B (i or j in the book) is one of the bounding triangle points.  This

@@ -49,12 +49,7 @@ public class SimpleLayer {
         this.style = style;
     }
 
-    /**
-     * SimpleLayer creation.
-     *
-     * @param name
-     * @param validStyles
-     */
+    /** SimpleLayer creation. */
     public SimpleLayer(String name, Set validStyles) {
         super();
         this.name = name;
@@ -78,8 +73,7 @@ public class SimpleLayer {
     }
 
     /**
-     * Returns a Set of type <code>String</code> containing the names of all the styles that are
-     * valid for this layer.
+     * Returns a Set of type <code>String</code> containing the names of all the styles that are valid for this layer.
      */
     public Set getValidStyles() {
         return validStyles;

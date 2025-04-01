@@ -1,21 +1,14 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2019, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
-
 package org.geotools.tutorial.process;
 
 import static org.junit.Assert.assertEquals;
@@ -23,7 +16,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.FeatureCollection;
@@ -40,11 +36,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory2;
 
 public class ProcessExample {
 
@@ -93,7 +85,7 @@ public class ProcessExample {
 
         WKTReader reader = new WKTReader(new GeometryFactory());
 
-        Geometry geom1 = (Polygon) reader.read("POLYGON((20 10, 30 0, 40 10, 30 20, 20 10))");
+        Geometry geom1 = reader.read("POLYGON((20 10, 30 0, 40 10, 30 20, 20 10))");
         Double buffer = Double.valueOf(213.78);
 
         Map<String, Object> map = new HashMap<>();
@@ -108,7 +100,7 @@ public class ProcessExample {
     }
 
     public static void example3() {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName("featureType");
         tb.add("geometry", Point.class);
@@ -124,7 +116,7 @@ public class ProcessExample {
             features.add(b.buildFeature(i + ""));
         }
 
-        Map<String, Object> input = new HashMap();
+        Map<String, Object> input = new HashMap<>();
         input.put(BufferFeatureCollectionFactory.FEATURES.key, features);
         input.put(BufferFeatureCollectionFactory.BUFFER.key, 10d);
 
@@ -132,14 +124,12 @@ public class ProcessExample {
         BufferFeatureCollectionProcess process = factory.create();
         Map<String, Object> output = process.execute(input, null);
 
-        FeatureCollection buffered =
-                (FeatureCollection) output.get(BufferFeatureCollectionFactory.RESULT.key);
+        FeatureCollection buffered = (FeatureCollection) output.get(BufferFeatureCollectionFactory.RESULT.key);
 
         assertEquals(2, buffered.size());
         for (int i = 0; i < 2; i++) {
             Geometry expected = gf.createPoint(new Coordinate(i, i)).buffer(10d);
-            FeatureCollection sub =
-                    buffered.subCollection(ff.equals(ff.property("integer"), ff.literal(i)));
+            FeatureCollection sub = buffered.subCollection(ff.equals(ff.property("integer"), ff.literal(i)));
             assertEquals(1, sub.size());
             FeatureIterator iterator = sub.features();
             SimpleFeature sf = (SimpleFeature) iterator.next();

@@ -20,14 +20,14 @@ package org.geotools.kml.v22;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 public class SchemaRegistry {
 
     private Map<String, SimpleFeatureType> featureTypes;
 
     public SchemaRegistry() {
-        this.featureTypes = new HashMap<String, SimpleFeatureType>();
+        this.featureTypes = new HashMap<>();
     }
 
     public void add(String featureTypeName, SimpleFeatureType featureType) {

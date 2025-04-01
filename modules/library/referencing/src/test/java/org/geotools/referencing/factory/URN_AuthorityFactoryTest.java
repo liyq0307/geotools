@@ -16,20 +16,26 @@
  */
 package org.geotools.referencing.factory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.factory.FactoryNotFoundException;
 import org.geotools.util.factory.Hints;
-import org.junit.*;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
+import org.junit.Test;
 
 /**
  * Tests the {@link URN_AuthorityFactory} class backed by WMS or AUTO factories.
@@ -42,8 +48,7 @@ public final class URN_AuthorityFactoryTest {
     @Test
     public void testRegistration() {
         String authority = "URN:OGC:DEF";
-        final AuthorityFactory factory =
-                ReferencingFactoryFinder.getCRSAuthorityFactory(authority, null);
+        final AuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory(authority, null);
         assertSame(factory, ReferencingFactoryFinder.getCRSAuthorityFactory(authority, null));
         assertSame(factory, ReferencingFactoryFinder.getCSAuthorityFactory(authority, null));
         assertSame(factory, ReferencingFactoryFinder.getDatumAuthorityFactory(authority, null));
@@ -59,8 +64,7 @@ public final class URN_AuthorityFactoryTest {
     /** Tests the CRS factory. */
     @Test
     public void testCRS() throws FactoryException {
-        CRSAuthorityFactory factory =
-                ReferencingFactoryFinder.getCRSAuthorityFactory("URN:OGC:DEF", null);
+        CRSAuthorityFactory factory = ReferencingFactoryFinder.getCRSAuthorityFactory("URN:OGC:DEF", null);
         GeographicCRS crs;
         try {
             crs = factory.createGeographicCRS("CRS:84");
@@ -77,7 +81,7 @@ public final class URN_AuthorityFactoryTest {
         assertSame(crs, CRS.decode("urn:ogc:def:crs:CRS:1.3:84"));
         assertSame(crs, CRS.decode("CRS:84"));
         assertNotSame(crs, DefaultGeographicCRS.WGS84);
-        assertFalse(DefaultGeographicCRS.WGS84.equals(crs));
+        assertNotEquals(DefaultGeographicCRS.WGS84, crs);
         assertTrue(CRS.equalsIgnoreMetadata(DefaultGeographicCRS.WGS84, crs));
 
         // Test CRS:83

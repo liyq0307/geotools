@@ -19,8 +19,9 @@ package org.geotools.data;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Default implementation of ResourceInfo; a simple java bean.
@@ -43,7 +44,7 @@ public class DefaultResourceInfo implements ResourceInfo {
         this.title = copy.getTitle();
         this.schema = copy.getSchema();
         this.name = copy.getName();
-        this.keywords = new HashSet<String>();
+        this.keywords = new HashSet<>();
         if (copy.getKeywords() != null) {
             this.keywords.addAll(copy.getKeywords());
         }
@@ -52,36 +53,43 @@ public class DefaultResourceInfo implements ResourceInfo {
         this.bounds = copy.getBounds();
     }
     /** @return the title */
+    @Override
     public String getTitle() {
         return title;
     }
 
     /** @return the schema */
+    @Override
     public URI getSchema() {
         return schema;
     }
 
     /** @return the name */
+    @Override
     public String getName() {
         return name;
     }
 
     /** @return the keywords */
+    @Override
     public Set<String> getKeywords() {
         return keywords;
     }
 
     /** @return the description */
+    @Override
     public String getDescription() {
         return description;
     }
 
     /** @return the bounds */
+    @Override
     public ReferencedEnvelope getBounds() {
         return bounds;
     }
 
     /** @return the crs */
+    @Override
     public CoordinateReferenceSystem getCRS() {
         return crs;
     }

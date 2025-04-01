@@ -20,20 +20,20 @@ package org.geotools.brewer.styling.filter;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.brewer.styling.builder.Builder;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.Identifier;
 
 /** FilterBuilder acting as a simple wrapper around an Expression. */
 public class AndBuilder<P> implements Builder<And> {
-    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory2(null);
+    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
     protected P parent;
     protected List<FilterBuilder> list;
 
-    private List<Identifier> ids = new ArrayList<Identifier>();
+    private List<Identifier> ids = new ArrayList<>();
 
     public AndBuilder() {
         reset();
@@ -45,11 +45,12 @@ public class AndBuilder<P> implements Builder<And> {
     }
 
     /** Build an And filter */
+    @Override
     public And build() {
         if (list == null) {
             return null;
         }
-        List<Filter> filters = new ArrayList<Filter>(list.size());
+        List<Filter> filters = new ArrayList<>(list.size());
         for (FilterBuilder build : list) {
             Filter filter = build.build();
             if (filter != null) {
@@ -83,16 +84,18 @@ public class AndBuilder<P> implements Builder<And> {
         return parent;
     }
 
+    @Override
     public AndBuilder<P> reset() {
-        this.list = new ArrayList<FilterBuilder>();
+        this.list = new ArrayList<>();
         return this;
     }
 
+    @Override
     public AndBuilder<P> reset(And filter) {
         if (filter == null) {
             return unset();
         }
-        this.list = new ArrayList<FilterBuilder>();
+        this.list = new ArrayList<>();
         if (filter.getChildren() != null) {
             for (Filter child : filter.getChildren()) {
                 list.add(new FilterBuilder().reset(child));
@@ -101,6 +104,7 @@ public class AndBuilder<P> implements Builder<And> {
         return this;
     }
 
+    @Override
     public AndBuilder<P> unset() {
         this.list = null;
         return this;

@@ -22,15 +22,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.util.ParameterParser;
-import org.geotools.data.ows.HTTPResponse;
-import org.geotools.ows.MockHttpClient;
-import org.geotools.ows.MockHttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPResponse;
+import org.geotools.http.MockHttpClient;
+import org.geotools.http.MockHttpResponse;
 import org.geotools.ows.wms.Layer;
 import org.geotools.ows.wms.StyleImpl;
 import org.geotools.ows.wms.WMSUtils;
@@ -46,15 +47,16 @@ public class WMSLayerTest {
     private WebMapServer server;
 
     Map<String, String> parseParams(String query) {
-        ParameterParser pp = new ParameterParser();
-        List params = pp.parse(query, '&');
-        Map<String, String> result = new HashMap<String, String>();
-        for (Iterator it = params.iterator(); it.hasNext(); ) {
-            NameValuePair pair = (NameValuePair) it.next();
+
+        List<org.apache.http.NameValuePair> params = URLEncodedUtils.parse(query, StandardCharsets.UTF_8);
+        Map<String, String> result = new HashMap<>();
+        for (Object param : params) {
+            NameValuePair pair = (NameValuePair) param;
             result.put(pair.getName().toUpperCase(), pair.getValue());
         }
         return result;
-    };
+    }
+    ;
     /** @throws java.lang.Exception */
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {}
@@ -66,26 +68,25 @@ public class WMSLayerTest {
     /** @throws java.lang.Exception */
     @Before
     public void setUp() throws Exception {
-        MockHttpClient client =
-                new MockHttpClient() {
+        HTTPClient client = new MockHttpClient() {
 
-                    public HTTPResponse get(URL url) throws IOException {
-                        if (url.getQuery().contains("GetCapabilities")) {
-                            Map<String, String> params = parseParams(url.getQuery());
-                            URL caps = null;
-                            if ("1.3.0".equals(params.get("VERSION"))) {
-                                caps = WMSCoverageReaderTest.class.getResource("caps130.xml");
-                            } else if ("1.1.0".equals(params.get("VERSION"))) {
-                                caps = WMSCoverageReaderTest.class.getResource("caps110.xml");
-                            }
-                            return new MockHttpResponse(caps, "text/xml");
-                        } else {
-                            throw new IllegalArgumentException(
-                                    "Don't know how to handle a get request over "
-                                            + url.toExternalForm());
-                        }
+            @Override
+            public HTTPResponse get(URL url) throws IOException {
+                if (url.getQuery().contains("GetCapabilities")) {
+                    Map<String, String> params = parseParams(url.getQuery());
+                    URL caps = null;
+                    if ("1.3.0".equals(params.get("VERSION"))) {
+                        caps = WMSCoverageReaderTest.class.getResource("caps130.xml");
+                    } else if ("1.1.0".equals(params.get("VERSION"))) {
+                        caps = WMSCoverageReaderTest.class.getResource("caps110.xml");
                     }
-                };
+                    return new MockHttpResponse(caps, "text/xml");
+                } else {
+                    throw new IllegalArgumentException(
+                            "Don't know how to handle a get request over " + url.toExternalForm());
+                }
+            }
+        };
         // setup the reader
         server = new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
     }
@@ -121,5 +122,41 @@ public class WMSLayerTest {
         WMSLayer l2 = new WMSLayer(server, wmsLayers[0], "", "image/unknown");
         // verify backward compatability
         assertTrue(l2.getReader().format.equalsIgnoreCase("image/png"));
+    }
+
+    /**
+     * Test method for {@link WMSLayer#WMSLayer(WebMapServer, Layer)}. Test the sceanrio where remote WMS server only
+     * supports one format which is not any of the PNG variants
+     */
+    @Test
+    public void testPreferedFormatWMSLayerJPEGOnly() throws Exception {
+        MockHttpClient client = new MockHttpClient() {
+
+            @Override
+            public HTTPResponse get(URL url) throws IOException {
+                if (url.getQuery().contains("GetCapabilities")) {
+                    Map<String, String> params = parseParams(url.getQuery());
+                    URL caps = null;
+                    if ("1.3.0".equals(params.get("VERSION"))) {
+                        caps = WMSCoverageReaderTest.class.getResource("caps130_jpeg_only.xml");
+                    }
+                    return new MockHttpResponse(caps, "text/xml");
+                } else {
+                    throw new IllegalArgumentException(
+                            "Don't know how to handle a get request over " + url.toExternalForm());
+                }
+            }
+        };
+        // setup the reader
+        WebMapServer jpegOnlyWMSserver = new WebMapServer(new URL("http://jpeg.geoserver.org/geoserver/wms"), client);
+        Layer[] wmsLayers = WMSUtils.getNamedLayers(jpegOnlyWMSserver.getCapabilities());
+
+        WMSLayer l = new WMSLayer(jpegOnlyWMSserver, wmsLayers[0], "", "image/png");
+        // verify reader is using correct
+        assertTrue(l.getReader().format.equalsIgnoreCase("image/jpeg"));
+
+        WMSLayer l2 = new WMSLayer(jpegOnlyWMSserver, wmsLayers[0], "", "image/unknown");
+        // verify backward compatability
+        assertTrue(l2.getReader().format.equalsIgnoreCase("image/jpeg"));
     }
 }

@@ -17,8 +17,8 @@
 package org.geotools.feature.collection;
 
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.Feature;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.Feature;
 
 /**
  * A feature iterator that completely delegates to another FeatureIterator.
@@ -37,15 +37,18 @@ public class DecoratingFeatureIterator<F extends Feature> implements FeatureIter
         delegate = iterator;
     }
 
+    @Override
     public boolean hasNext() {
         return delegate != null && delegate.hasNext();
     }
 
+    @Override
     public F next() throws NoSuchElementException {
         if (delegate == null) throw new NoSuchElementException();
         return delegate.next();
     }
 
+    @Override
     public void close() {
         if (delegate != null) {
             delegate.close();

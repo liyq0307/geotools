@@ -22,6 +22,10 @@ import java.util.Iterator;
 import java.util.List;
 import javax.xml.namespace.QName;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -31,8 +35,6 @@ import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Binding object for the type http://earth.google.com/kml/2.1:DocumentType.
@@ -74,6 +76,7 @@ public class DocumentTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.DocumentType;
     }
@@ -85,10 +88,12 @@ public class DocumentTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return FeatureCollection.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return Binding.AFTER;
     }
@@ -100,6 +105,7 @@ public class DocumentTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(FeatureType);
 
@@ -115,13 +121,15 @@ public class DocumentTypeBinding extends AbstractComplexBinding {
         return b.buildFeature(feature.getID());
     }
 
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    @Override
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         Object[] prop = new Object[2];
         prop[0] = getPlacemarkName();
         if (object instanceof FeatureCollection) {
-            FeatureCollection fc = (FeatureCollection) object;
+            @SuppressWarnings("unchecked")
+            FeatureCollection<FeatureType, Feature> fc = (FeatureCollection) object;
             // TODO: this does not close the iterator!!
-            Iterator iterator = DataUtilities.iterator(fc.features());
+            Iterator<Feature> iterator = DataUtilities.iterator(fc.features());
 
             prop[1] = iterator;
         } else if (object instanceof Collection) {
@@ -130,7 +138,7 @@ public class DocumentTypeBinding extends AbstractComplexBinding {
             SimpleFeature feature = (SimpleFeature) object;
             prop[1] = feature.getAttribute("Feature");
         }
-        ArrayList l = new ArrayList();
+        List<Object[]> l = new ArrayList<>();
         l.add(prop);
         return l;
     }

@@ -19,20 +19,19 @@ package org.geotools.data.store;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.OperationNotFoundException;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.GeometryCoordinateSequenceTransformer;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.util.factory.FactoryRegistryException;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.OperationNotFoundException;
-import org.opengis.referencing.operation.TransformException;
 
 public class ReprojectingIterator implements Iterator<SimpleFeature> {
 
@@ -58,7 +57,7 @@ public class ReprojectingIterator implements Iterator<SimpleFeature> {
         this.schema = schema;
 
         tx = transformer;
-        tx.setMathTransform((MathTransform2D) transform);
+        tx.setMathTransform(transform);
     }
 
     public ReprojectingIterator(
@@ -73,10 +72,9 @@ public class ReprojectingIterator implements Iterator<SimpleFeature> {
         this.schema = schema;
         tx = transformer;
 
-        MathTransform transform =
-                ReferencingFactoryFinder.getCoordinateOperationFactory(null)
-                        .createOperation(source, target)
-                        .getMathTransform();
+        MathTransform transform = ReferencingFactoryFinder.getCoordinateOperationFactory(null)
+                .createOperation(source, target)
+                .getMathTransform();
         tx.setMathTransform(transform);
     }
 
@@ -84,16 +82,19 @@ public class ReprojectingIterator implements Iterator<SimpleFeature> {
         return delegate;
     }
 
+    @Override
     public void remove() {
         delegate.remove();
     }
 
+    @Override
     public boolean hasNext() {
         return delegate.hasNext();
     }
 
+    @Override
     public SimpleFeature next() {
-        SimpleFeature feature = (SimpleFeature) delegate.next();
+        SimpleFeature feature = delegate.next();
         try {
             return reproject(feature);
         } catch (IOException e) {

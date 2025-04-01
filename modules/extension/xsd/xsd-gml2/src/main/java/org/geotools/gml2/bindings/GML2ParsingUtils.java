@@ -20,15 +20,23 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 import javax.xml.namespace.QName;
 import org.eclipse.xsd.XSDElementDeclaration;
 import org.eclipse.xsd.XSDParticle;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.gml2.FeatureTypeCache;
 import org.geotools.gml2.GML;
@@ -51,14 +59,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Utility methods used by gml2 bindings when parsing.
@@ -70,8 +70,8 @@ public class GML2ParsingUtils {
     static Logger LOGGER = Logging.getLogger(GML2ParsingUtils.class);
 
     /**
-     * Metadata key used to indicate if a feature type has been parsed from a XML schema, or
-     * reflected out of a sample feature
+     * Metadata key used to indicate if a feature type has been parsed from a XML schema, or reflected out of a sample
+     * feature
      */
     public static String PARSED_FROM_SCHEMA_KEY;
 
@@ -86,11 +86,7 @@ public class GML2ParsingUtils {
      * @return A feature type.
      */
     public static SimpleFeature parseFeature(
-            ElementInstance instance,
-            Node node,
-            Object value,
-            FeatureTypeCache ftCache,
-            BindingWalkerFactory bwFactory)
+            ElementInstance instance, Node node, Object value, FeatureTypeCache ftCache, BindingWalkerFactory bwFactory)
             throws Exception {
         // get the definition of the element
         XSDElementDeclaration decl = instance.getElementDeclaration();
@@ -110,8 +106,7 @@ public class GML2ParsingUtils {
                 sfType = (SimpleFeatureType) fType;
             } else {
                 // TODO: support parsing of non-simple GML features
-                throw new UnsupportedOperationException(
-                        "Parsing of non-simple GML features not yet supported.");
+                throw new UnsupportedOperationException("Parsing of non-simple GML features not yet supported.");
             }
 
             if (sfType == null) {
@@ -130,18 +125,14 @@ public class GML2ParsingUtils {
             }
         } else {
             // first look in cache
-            fType =
-                    ftCache.get(
-                            new NameImpl(
-                                    node.getComponent().getNamespace(),
-                                    node.getComponent().getName()));
+            fType = ftCache.get(new NameImpl(
+                    node.getComponent().getNamespace(), node.getComponent().getName()));
 
             if (fType == null || fType instanceof SimpleFeatureType) {
                 sfType = (SimpleFeatureType) fType;
             } else {
                 // TODO: support parsing of non-simple GML features
-                throw new UnsupportedOperationException(
-                        "Parsing of non-simple GML features not yet supported.");
+                throw new UnsupportedOperationException("Parsing of non-simple GML features not yet supported.");
             }
 
             if (sfType == null) {
@@ -166,12 +157,12 @@ public class GML2ParsingUtils {
     /**
      * Turns a parse node instance into a geotools feature type.
      *
-     * <p>For each child element and attribute of the node a geotools attribute type is created.
-     * AttributeType#getName() is derived from the name of the child element / attribute.
-     * Attribute#getType() is derived from the class of the value of the child element / attribute.
+     * <p>For each child element and attribute of the node a geotools attribute type is created. AttributeType#getName()
+     * is derived from the name of the child element / attribute. Attribute#getType() is derived from the class of the
+     * value of the child element / attribute.
      *
-     * <p>Attribute types for the mandatory properties of any gml feature type
-     * (description,name,boundedBy) are also created.
+     * <p>Attribute types for the mandatory properties of any gml feature type (description,name,boundedBy) are also
+     * created.
      *
      * @param node The parse node / tree for the feature.
      * @return A geotools feature type
@@ -204,8 +195,7 @@ public class GML2ParsingUtils {
         }
 
         // application schema defined attributes
-        for (Iterator c = node.getChildren().iterator(); c.hasNext(); ) {
-            Node child = (Node) c.next();
+        for (Node child : node.getChildren()) {
             String name = child.getComponent().getName();
             Object value = child.getValue();
 
@@ -228,8 +218,8 @@ public class GML2ParsingUtils {
      * @param bwFactory The binding walker factory.
      * @return The corresponding geotools feature type.
      */
-    public static SimpleFeatureType featureType(
-            XSDElementDeclaration element, BindingWalkerFactory bwFactory) throws Exception {
+    public static SimpleFeatureType featureType(XSDElementDeclaration element, BindingWalkerFactory bwFactory)
+            throws Exception {
         return featureType(element, bwFactory, null);
     }
 
@@ -242,9 +232,7 @@ public class GML2ParsingUtils {
      * @return The corresponding geotools feature type.
      */
     public static SimpleFeatureType featureType(
-            XSDElementDeclaration element,
-            BindingWalkerFactory bwFactory,
-            CoordinateReferenceSystem crs)
+            XSDElementDeclaration element, BindingWalkerFactory bwFactory, CoordinateReferenceSystem crs)
             throws Exception {
         SimpleFeatureTypeBuilder ftBuilder = new SimpleFeatureTypeBuilder();
         ftBuilder.setName(element.getName());
@@ -254,35 +242,27 @@ public class GML2ParsingUtils {
         // actual xml schema type
         List children = Schemas.getChildElementParticles(element.getType(), true);
 
-        for (Iterator itr = children.iterator(); itr.hasNext(); ) {
-            XSDParticle particle = (XSDParticle) itr.next();
+        for (Object child : children) {
+            XSDParticle particle = (XSDParticle) child;
             XSDElementDeclaration property = (XSDElementDeclaration) particle.getContent();
 
             if (property.isElementDeclarationReference()) {
                 property = property.getResolvedElementDeclaration();
             }
 
-            final ArrayList bindings = new ArrayList();
-            BindingWalker.Visitor visitor =
-                    new BindingWalker.Visitor() {
-                        public void visit(Binding binding) {
-                            bindings.add(binding);
-                        }
-                    };
+            final List<Binding> bindings = new ArrayList<>();
+            BindingWalker.Visitor visitor = binding -> bindings.add(binding);
 
             bwFactory.walk(property, visitor);
 
             if (bindings.isEmpty()) {
                 // could not find a binding, use the defaults
-                LOGGER.fine(
-                        "Could not find binding for "
-                                + property.getQName()
-                                + ", using XSAnyTypeBinding.");
+                LOGGER.fine("Could not find binding for " + property.getQName() + ", using XSAnyTypeBinding.");
                 bindings.add(new XSAnyTypeBinding());
             }
 
             // get the last binding in the chain to execute
-            Binding last = ((Binding) bindings.get(bindings.size() - 1));
+            Binding last = bindings.get(bindings.size() - 1);
             Class theClass = last.getType();
 
             if (theClass == null) {
@@ -328,8 +308,7 @@ public class GML2ParsingUtils {
         return ftBuilder.buildFeatureType();
     }
 
-    public static SimpleFeature feature(SimpleFeatureType fType, String fid, Node node)
-            throws Exception {
+    public static SimpleFeature feature(SimpleFeatureType fType, String fid, Node node) throws Exception {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(fType);
 
         int attributeCount = fType.getAttributeCount();
@@ -412,8 +391,8 @@ public class GML2ParsingUtils {
     }
 
     /** Wraps the elements of a geometry collection in a normal collection. */
-    public static Collection asCollection(GeometryCollection gc) {
-        ArrayList members = new ArrayList();
+    public static Collection<Geometry> asCollection(GeometryCollection gc) {
+        List<Geometry> members = new ArrayList<>();
 
         for (int i = 0; i < gc.getNumGeometries(); i++) {
             members.add(gc.getGeometryN(i));
@@ -422,34 +401,27 @@ public class GML2ParsingUtils {
         return members;
     }
 
-    static GeometryCollection GeometryCollectionType_parse(
-            Node node, Class clazz, GeometryFactory gFactory) {
+    static GeometryCollection GeometryCollectionType_parse(Node node, Class clazz, GeometryFactory gFactory) {
         // round up children that are geometries, since this type is often
         // extended by multi geometries, dont reference members by element name
-        List geoms = new ArrayList();
+        List<Geometry> geoms = new ArrayList<>();
 
-        for (Iterator itr = node.getChildren().iterator(); itr.hasNext(); ) {
-            Node cnode = (Node) itr.next();
-
+        for (Node cnode : node.getChildren()) {
             if (cnode.getValue() instanceof Geometry) {
-                geoms.add(cnode.getValue());
+                geoms.add((Geometry) cnode.getValue());
             }
         }
 
         GeometryCollection gc = null;
 
         if (MultiPoint.class.isAssignableFrom(clazz)) {
-            gc = gFactory.createMultiPoint((Point[]) geoms.toArray(new Point[geoms.size()]));
+            gc = gFactory.createMultiPoint(geoms.toArray(new Point[geoms.size()]));
         } else if (MultiLineString.class.isAssignableFrom(clazz)) {
-            gc =
-                    gFactory.createMultiLineString(
-                            (LineString[]) geoms.toArray(new LineString[geoms.size()]));
+            gc = gFactory.createMultiLineString(geoms.toArray(new LineString[geoms.size()]));
         } else if (MultiPolygon.class.isAssignableFrom(clazz)) {
-            gc = gFactory.createMultiPolygon((Polygon[]) geoms.toArray(new Polygon[geoms.size()]));
+            gc = gFactory.createMultiPolygon(geoms.toArray(new Polygon[geoms.size()]));
         } else {
-            gc =
-                    gFactory.createGeometryCollection(
-                            (Geometry[]) geoms.toArray(new Geometry[geoms.size()]));
+            gc = gFactory.createGeometryCollection(geoms.toArray(new Geometry[geoms.size()]));
         }
 
         // set an srs if there is one
@@ -473,7 +445,7 @@ public class GML2ParsingUtils {
 
     static Object GeometryCollectionType_getProperty(Object object, QName name) {
         if ("srsName".equals(name.getLocalPart())) {
-            CoordinateReferenceSystem crs = GML2EncodingUtils.getCRS((GeometryCollection) object);
+            CoordinateReferenceSystem crs = JTS.getCRS((GeometryCollection) object);
             if (crs != null) {
                 return GML2EncodingUtils.toURI(crs, true);
             }

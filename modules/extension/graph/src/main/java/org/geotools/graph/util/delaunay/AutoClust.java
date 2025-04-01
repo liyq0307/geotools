@@ -16,11 +16,11 @@
  */
 package org.geotools.graph.util.delaunay;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 import java.util.logging.Logger;
 import org.geotools.graph.structure.Edge;
 import org.geotools.graph.structure.Graph;
@@ -28,16 +28,15 @@ import org.geotools.graph.structure.Node;
 import org.geotools.graph.structure.basic.BasicGraph;
 
 /**
- * This class implements the AUTOCLUST algorithm of Estivill-Castro and Lee (2002) "Argument free
- * clustering for large spatial point-data sets via boundary extraction from Delaunay Diagram" in
- * Computers, Environment and Urban Systems, 26:315-334.
+ * This class implements the AUTOCLUST algorithm of Estivill-Castro and Lee (2002) "Argument free clustering for large
+ * spatial point-data sets via boundary extraction from Delaunay Diagram" in Computers, Environment and Urban Systems,
+ * 26:315-334.
  *
  * @author jfc173
  */
 public class AutoClust {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(AutoClust.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(AutoClust.class);
 
     /** Creates a new instance of AutoClust */
     public AutoClust() {}
@@ -47,11 +46,11 @@ public class AutoClust {
         // Such a diagram can be obtained through
         // org.geotools.graph.util.delaunay.DelaunayTriangulator.
 
-        HashMap map = new HashMap();
-        Collection nodes = d.getNodes();
-        Collection edges = d.getEdges();
+        HashMap<DelaunayNode, AutoClustData> map = new HashMap<>();
+        Collection<Node> nodes = d.getNodes();
+        Collection<Edge> edges = d.getEdges();
         showGraph(nodes, edges, 0);
-        Iterator nodeIt = nodes.iterator();
+        Iterator<Node> nodeIt = nodes.iterator();
         double[] localDevs = new double[nodes.size()];
         int index = 0;
         while (nodeIt.hasNext()) {
@@ -69,9 +68,7 @@ public class AutoClust {
             Iterator anotherEdgeIt = localEdges.iterator();
             while (anotherEdgeIt.hasNext()) {
                 DelaunayEdge nextEdge = (DelaunayEdge) anotherEdgeIt.next();
-                sumOfSquaredDiffs =
-                        sumOfSquaredDiffs
-                                + Math.pow((nextEdge.getEuclideanDistance() - meanLength), 2);
+                sumOfSquaredDiffs = sumOfSquaredDiffs + Math.pow((nextEdge.getEuclideanDistance() - meanLength), 2);
             }
             double variance = sumOfSquaredDiffs / (localEdges.size());
             double stDev = Math.sqrt(variance);
@@ -82,25 +79,25 @@ public class AutoClust {
             map.put(next, acd);
         }
         double total = 0;
-        for (int i = 0; i < localDevs.length; i++) {
-            total = total + localDevs[i];
+        for (double localDev : localDevs) {
+            total = total + localDev;
         }
         double meanStDev = total / localDevs.length;
 
         // these three are for coloring the graph in the poster, not for algorithmic purposes
-        Vector allShortEdges = new Vector();
-        Vector allLongEdges = new Vector();
-        Vector allOtherEdges = new Vector();
+        List<Edge> allShortEdges = new ArrayList<>();
+        List<Edge> allLongEdges = new ArrayList<>();
+        List<Edge> allOtherEdges = new ArrayList<>();
 
         Iterator anotherNodeIt = nodes.iterator();
         while (anotherNodeIt.hasNext()) {
             DelaunayNode next = (DelaunayNode) anotherNodeIt.next();
             List localEdges = AutoClustUtils.findAdjacentEdges(next, edges);
-            AutoClustData acd = (AutoClustData) map.get(next);
+            AutoClustData acd = map.get(next);
             Iterator edgeIt = localEdges.iterator();
-            Vector shortEdges = new Vector();
-            Vector longEdges = new Vector();
-            Vector otherEdges = new Vector();
+            List<Edge> shortEdges = new ArrayList<>();
+            List<Edge> longEdges = new ArrayList<>();
+            List<Edge> otherEdges = new ArrayList<>();
             LOGGER.fine("local mean is " + acd.getLocalMean());
             LOGGER.fine("mean st dev is " + meanStDev);
             while (edgeIt.hasNext()) {
@@ -108,19 +105,13 @@ public class AutoClust {
                 double length = nextEdge.getEuclideanDistance();
                 if (length < acd.getLocalMean() - meanStDev) {
                     shortEdges.add(nextEdge);
-                    LOGGER.finer(
-                            nextEdge + ": length " + nextEdge.getEuclideanDistance() + " is short");
+                    LOGGER.finer(nextEdge + ": length " + nextEdge.getEuclideanDistance() + " is short");
                 } else if (length > acd.getLocalMean() + meanStDev) {
                     longEdges.add(nextEdge);
-                    LOGGER.finer(
-                            nextEdge + ": length " + nextEdge.getEuclideanDistance() + " is long");
+                    LOGGER.finer(nextEdge + ": length " + nextEdge.getEuclideanDistance() + " is long");
                 } else {
                     otherEdges.add(nextEdge);
-                    LOGGER.finer(
-                            nextEdge
-                                    + ": length "
-                                    + nextEdge.getEuclideanDistance()
-                                    + " is medium");
+                    LOGGER.finer(nextEdge + ": length " + nextEdge.getEuclideanDistance() + " is medium");
                 }
             }
             acd.setShortEdges(shortEdges);
@@ -151,7 +142,7 @@ public class AutoClust {
         Iterator nodeIt3 = nodes.iterator();
         while (nodeIt3.hasNext()) {
             DelaunayNode next = (DelaunayNode) nodeIt3.next();
-            AutoClustData acd = (AutoClustData) map.get(next);
+            AutoClustData acd = map.get(next);
             List shortEdges = acd.getShortEdges();
             List longEdges = acd.getLongEdges();
             edges.removeAll(shortEdges);
@@ -164,16 +155,16 @@ public class AutoClust {
         LOGGER.fine("Nodes are " + nodes);
         LOGGER.fine("Edges are " + edges);
         showGraph(nodes, edges, 1);
-        Vector connectedComponents = AutoClustUtils.findConnectedComponents(nodes, edges);
+        List<Graph> connectedComponents = AutoClustUtils.findConnectedComponents(nodes, edges);
 
         // Phase II
         Iterator nodeIt4 = nodes.iterator();
         while (nodeIt4.hasNext()) {
             DelaunayNode next = (DelaunayNode) nodeIt4.next();
-            AutoClustData acd = (AutoClustData) map.get(next);
-            List shortEdges = acd.getShortEdges();
+            AutoClustData acd = map.get(next);
+            List<Edge> shortEdges = acd.getShortEdges();
             if (!(shortEdges.isEmpty())) {
-                Vector shortlyConnectedComponents = new Vector();
+                List<Graph> shortlyConnectedComponents = new ArrayList<>();
                 Iterator shortIt = shortEdges.iterator();
                 while (shortIt.hasNext()) {
                     Edge nextEdge = (Edge) shortIt.next();
@@ -196,7 +187,7 @@ public class AutoClust {
                         }
                     }
                 } else {
-                    cv = (Graph) shortlyConnectedComponents.get(0);
+                    cv = shortlyConnectedComponents.get(0);
                 }
                 Iterator shortIt2 = shortEdges.iterator();
                 while (shortIt2.hasNext()) {
@@ -209,10 +200,10 @@ public class AutoClust {
             } // end if shortEdges isn't empty
             Graph gr = getMyComponent(next, connectedComponents);
             if (gr.getNodes().size() == 1) {
-                Vector shortlyConnectedComponents = new Vector();
-                Iterator shortIt = shortEdges.iterator();
+                List<Graph> shortlyConnectedComponents = new ArrayList<>();
+                Iterator<Edge> shortIt = shortEdges.iterator();
                 while (shortIt.hasNext()) {
-                    Edge nextEdge = (Edge) shortIt.next();
+                    Edge nextEdge = shortIt.next();
                     Node other = nextEdge.getOtherNode(next);
                     Graph g = getMyComponent(other, connectedComponents);
                     if (!(shortlyConnectedComponents.contains(g))) {
@@ -235,20 +226,17 @@ public class AutoClust {
         Iterator nodeIt5 = nodes.iterator();
         while (nodeIt5.hasNext()) {
             DelaunayNode next = (DelaunayNode) nodeIt5.next();
-            Vector edgesWithinTwo = new Vector();
-            List adjacentEdges =
-                    AutoClustUtils.findAdjacentEdges(
-                            next,
-                            edges); // yes, next.getEdges() could work, but there's no guarantee
+            List<Edge> edgesWithinTwo = new ArrayList<>();
+            List<Edge> adjacentEdges = AutoClustUtils.findAdjacentEdges(
+                    next, edges); // yes, next.getEdges() could work, but there's no guarantee
             // that next's edge list is current anymore
             edgesWithinTwo.addAll(adjacentEdges);
             Iterator adjacentIt = adjacentEdges.iterator();
             while (adjacentIt.hasNext()) {
                 Edge nextEdge = (Edge) adjacentIt.next();
                 Node other = nextEdge.getOtherNode(next);
-                List adjacentToOther =
-                        AutoClustUtils.findAdjacentEdges(
-                                other, edges); // yes, other.getEdges() could work, but there's no
+                List adjacentToOther = AutoClustUtils.findAdjacentEdges(
+                        other, edges); // yes, other.getEdges() could work, but there's no
                 // guarantee that other's edge list is current anymore
                 Iterator atoIt = adjacentToOther.iterator();
                 while (atoIt.hasNext()) {
@@ -283,7 +271,7 @@ public class AutoClust {
         return new BasicGraph(nodes, edges);
     }
 
-    private static Graph getMyComponent(Node node, Vector components) {
+    private static Graph getMyComponent(Node node, List components) {
         Iterator it = components.iterator();
         Graph ret = null;
         boolean found = false;
@@ -295,13 +283,12 @@ public class AutoClust {
             }
         }
         if (ret == null) {
-            throw new RuntimeException(
-                    "Couldn't find the graph component containing node: " + node);
+            throw new RuntimeException("Couldn't find the graph component containing node: " + node);
         }
         return ret;
     }
 
-    private static void showGraph(Collection nodes, Collection edges, int phase) {
+    private static void showGraph(Collection<Node> nodes, Collection<Edge> edges, int phase) {
         Graph g = new BasicGraph(nodes, edges);
         javax.swing.JFrame frame = new javax.swing.JFrame();
         GraphViewer viewer = new GraphViewer();

@@ -79,18 +79,19 @@ public class _XlinkPropertyNameBinding extends AbstractComplexEMFBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WFS._XlinkPropertyName;
     }
 
     /**
-     * Explicit implementation of {@link ComplexBinding#encode(Object, Document, Element)} as {@link
-     * AbstractComplexEMFBinding#encode(Object, Document, Element)} does not set the value.
+     * Explicit implementation of {@link ComplexBinding#encode(Object, Document, Element)} as
+     * {@link AbstractComplexEMFBinding#encode(Object, Document, Element)} does not set the value.
      *
      * @see ComplexBinding#encode(Object, Document, Element).
      */
-    public Element encode(final Object object, final Document document, Element value)
-            throws Exception {
+    @Override
+    public Element encode(final Object object, final Document document, Element value) throws Exception {
         final XlinkPropertyNameType xlink = (XlinkPropertyNameType) object;
         final String textValue = xlink.getValue();
         final Text textNode = document.createTextNode(textValue);

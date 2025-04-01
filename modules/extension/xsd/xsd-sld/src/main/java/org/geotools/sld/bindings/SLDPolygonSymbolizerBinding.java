@@ -16,18 +16,17 @@
  */
 package org.geotools.sld.bindings;
 
-import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.sld.CssParameter;
-import org.geotools.styling.Fill;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -69,6 +68,7 @@ public class SLDPolygonSymbolizerBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.POLYGONSYMBOLIZER;
     }
@@ -80,6 +80,7 @@ public class SLDPolygonSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -91,6 +92,7 @@ public class SLDPolygonSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return PolygonSymbolizer.class;
     }
@@ -102,6 +104,7 @@ public class SLDPolygonSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -111,6 +114,7 @@ public class SLDPolygonSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         PolygonSymbolizer ps = styleFactory.createPolygonSymbolizer();
 
@@ -127,18 +131,17 @@ public class SLDPolygonSymbolizerBinding extends AbstractComplexBinding {
 
         // &lt;xsd:element ref="sld:Fill" minOccurs="0"/&gt;
         if (node.hasChild(Fill.class)) {
-            ps.setFill((Fill) node.getChildValue(Fill.class));
+            ps.setFill(node.getChildValue(Fill.class));
         }
 
         // &lt;xsd:element ref="sld:Stroke" minOccurs="0"/&gt;
         if (node.hasChild(Stroke.class)) {
-            ps.setStroke((Stroke) node.getChildValue(Stroke.class));
+            ps.setStroke(node.getChildValue(Stroke.class));
         }
 
         // &lt;xsd:element ref="sld:VendorOption" minOccurs="0" maxOccurs="unbounded"/&gt;
-        for (CssParameter param : (List<CssParameter>) node.getChildValues(CssParameter.class)) {
-            ps.getOptions()
-                    .put(param.getName(), param.getExpression().evaluate(null, String.class));
+        for (CssParameter param : node.getChildValues(CssParameter.class)) {
+            ps.getOptions().put(param.getName(), param.getExpression().evaluate(null, String.class));
         }
 
         return ps;

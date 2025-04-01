@@ -30,17 +30,16 @@ import net.opengis.wps10.InputDescriptionType;
 import net.opengis.wps10.ProcessDescriptionType;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.wps.request.ExecuteProcessRequest;
 import org.geotools.data.wps.response.ExecuteProcessResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.process.ProcessFactory;
 import org.geotools.process.impl.AbstractProcess;
-import org.opengis.util.ProgressListener;
 
 /**
- * This is a representation of a process built from the WPSFactory class. It is not a real process,
- * but a representation of a process that can be executed on the server, as described in the
- * process' describeprocess.
+ * This is a representation of a process built from the WPSFactory class. It is not a real process, but a representation
+ * of a process that can be executed on the server, as described in the process' describeprocess.
  *
  * @author GDavis
  */
@@ -51,17 +50,16 @@ public class WPSProcess extends AbstractProcess {
     }
 
     /**
-     * Since this is not a real process, but a representation of one, this method doesn't actually
-     * execute the process. Instead it builds a request to send to the server to execute the
-     * process. The response is parsed and returned as a map just like a process would return
-     * locally. The inputs are not validated, they are just built and sent to the server in a
-     * request. If they result in a bad request, the request system will handle the returned error.
+     * Since this is not a real process, but a representation of one, this method doesn't actually execute the process.
+     * Instead it builds a request to send to the server to execute the process. The response is parsed and returned as
+     * a map just like a process would return locally. The inputs are not validated, they are just built and sent to the
+     * server in a request. If they result in a bad request, the request system will handle the returned error.
      *
      * @param input the map of inputs to process
-     * @param monitor currently this is not used for this process reprensentation but it could be
-     *     implemented in some form in the future.
+     * @param monitor currently this is not used for this process reprensentation but it could be implemented in some
+     *     form in the future.
      */
-    @SuppressWarnings("unchecked")
+    @Override
     public Map<String, Object> execute(Map<String, Object> input, ProgressListener monitor) {
 
         // Get the describeprocess object so we can use it to build up a request and
@@ -72,9 +70,7 @@ public class WPSProcess extends AbstractProcess {
         WebProcessingService wps;
         try {
             wps = new WebProcessingService(url);
-        } catch (ServiceException e) {
-            return null;
-        } catch (IOException e) {
+        } catch (ServiceException | IOException e) {
             return null;
         }
 
@@ -93,7 +89,7 @@ public class WPSProcess extends AbstractProcess {
             if (inputValue != null) {
                 // if our value is some sort of collection, then created multiple
                 // dataTypes for this inputdescriptiontype.
-                List<EObject> list = new ArrayList<EObject>();
+                List<EObject> list = new ArrayList<>();
                 if (inputValue instanceof Map) {
                     for (Object inVal : ((Map) inputValue).values()) {
                         DataType createdInput = WPSUtils.createInputDataType(inVal, idt);
@@ -118,9 +114,7 @@ public class WPSProcess extends AbstractProcess {
         ExecuteProcessResponse response;
         try {
             response = wps.issueRequest(exeRequest);
-        } catch (ServiceException e) {
-            return null;
-        } catch (IOException e) {
+        } catch (ServiceException | IOException e) {
             return null;
         }
 
@@ -134,7 +128,7 @@ public class WPSProcess extends AbstractProcess {
         ExecuteResponseType executeResponse = response.getExecuteResponse();
 
         // create the result map of outputs
-        Map<String, Object> results = new TreeMap<String, Object>();
+        Map<String, Object> results = new TreeMap<>();
         results = WPSUtils.createResultMap(executeResponse, results);
 
         return results;

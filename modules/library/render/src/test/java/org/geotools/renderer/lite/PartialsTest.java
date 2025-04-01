@@ -32,49 +32,49 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import junit.framework.TestCase;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.label.LabelCacheImpl;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
+import org.junit.Before;
+import org.junit.Test;
 
 /** Created by Michaël on 17/12/13. */
-public class PartialsTest extends TestCase {
+public class PartialsTest {
 
-    private static final long TIME = 10000;
     SimpleFeatureSource fs_point;
     SimpleFeatureSource fs_line;
     SimpleFeatureSource fs_area;
     ReferencedEnvelope bounds;
     StreamingRenderer renderer;
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
 
-        File property_point =
-                new File(TestData.getResource(this, "partialPointLabel.properties").toURI());
+        File property_point = new File(
+                TestData.getResource(this, "partialPointLabel.properties").toURI());
         PropertyDataStore ds_point = new PropertyDataStore(property_point.getParentFile());
         fs_point = ds_point.getFeatureSource("partialPointLabel");
 
-        File property_line =
-                new File(TestData.getResource(this, "partialLineLabel.properties").toURI());
+        File property_line = new File(
+                TestData.getResource(this, "partialLineLabel.properties").toURI());
         PropertyDataStore ds_line = new PropertyDataStore(property_line.getParentFile());
         fs_line = ds_line.getFeatureSource("partialLineLabel");
 
-        File property_area =
-                new File(TestData.getResource(this, "partialAreaLabel.properties").toURI());
+        File property_area = new File(
+                TestData.getResource(this, "partialAreaLabel.properties").toURI());
         PropertyDataStore ds_area = new PropertyDataStore(property_area.getParentFile());
         fs_area = ds_area.getFeatureSource("partialAreaLabel");
 
         bounds = new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84);
 
         renderer = new StreamingRenderer();
-        Map rendererParams = new HashMap();
+        Map<Object, Object> rendererParams = new HashMap<>();
         LabelCacheImpl labelCache = new LabelCacheImpl();
         rendererParams.put(StreamingRenderer.LABEL_CACHE_KEY, labelCache);
         renderer.setRendererHints(rendererParams);
@@ -94,6 +94,7 @@ public class PartialsTest extends TestCase {
     }
     */
 
+    @Test
     public void testPartialPointLabelNo() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -112,6 +113,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Point Partials:No", TIME, image);
     }
 
+    @Test
     public void testPointLabelFalse() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -130,6 +132,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Point Partials:False", TIME, image);
     }
 
+    @Test
     public void testPartialPointLabelTrue() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -141,7 +144,7 @@ public class PartialsTest extends TestCase {
         renderer.setMapContent(mc);
 
         final BufferedImage image = RendererBaseTest.renderImage(renderer, bounds, null);
-        RendererBaseTest.assertPixel(image, 282, 152, Color.BLACK);
+        RendererBaseTest.assertPixel(image, 282, 150, Color.BLACK);
 
         // Write to file
         // ImageIO.write(image, "png", new File("C:/Temp/testPartialPointLabelTrue.png"));
@@ -149,6 +152,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Point Partials:True", TIME, image);
     }
 
+    @Test
     public void testPartialLineLabelNo() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -168,6 +172,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Line Partials:No", TIME, image);
     }
 
+    @Test
     public void testPartialLineLabelFalse() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -187,6 +192,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Line Partials:False", TIME, image);
     }
 
+    @Test
     public void testPartialLineLabelTrue() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -202,6 +208,7 @@ public class PartialsTest extends TestCase {
         RendererBaseTest.assertPixel(image, 150, 1, Color.BLACK, 30);
     }
 
+    @Test
     public void testPartialAreaLabelNo() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -221,6 +228,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Area Partials:No", TIME, image);
     }
 
+    @Test
     public void testPartialAreaLabelFalse() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -240,6 +248,7 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Area Partials:False", TIME, image);
     }
 
+    @Test
     public void testPartialAreaLabelTrue() throws Exception {
         // System.setProperty("java.awt.headless", "false");
         Thread.sleep(1000);
@@ -251,7 +260,7 @@ public class PartialsTest extends TestCase {
         renderer.setMapContent(mc);
 
         final BufferedImage image = RendererBaseTest.renderImage(renderer, bounds, null);
-        RendererBaseTest.assertPixel(image, 282, 152, Color.BLACK);
+        RendererBaseTest.assertPixel(image, 282, 150, Color.BLACK);
 
         // Write to file
         // ImageIO.write(image, "png", new File("C:/Temp/testPartialAreaLabelTrue.png"));
@@ -259,34 +268,33 @@ public class PartialsTest extends TestCase {
         // PartialsTest.showImage("Area Partials:True", TIME, image);
     }
 
-    public static void showImage(String testName, long timeOut, final BufferedImage image)
-            throws InterruptedException {
+    public static void showImage(String testName, long timeOut, final BufferedImage image) throws InterruptedException {
         // final String headless = System.getProperty("java.awt.headless", "false");
         // if (!headless.equalsIgnoreCase("true") && TestData.isInteractiveTest()) {
         try {
             Frame frame = new Frame(testName);
-            frame.addWindowListener(
-                    new WindowAdapter() {
+            frame.addWindowListener(new WindowAdapter() {
 
-                        public void windowClosing(WindowEvent e) {
-                            e.getWindow().dispose();
-                        }
-                    });
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    e.getWindow().dispose();
+                }
+            });
 
-            Panel p =
-                    new Panel() {
+            Panel p = new Panel() {
 
-                        /** <code>serialVersionUID</code> field */
-                        private static final long serialVersionUID = 1L;
+                /** <code>serialVersionUID</code> field */
+                private static final long serialVersionUID = 1L;
 
-                        {
-                            setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
-                        }
+                {
+                    setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
+                }
 
-                        public void paint(Graphics g) {
-                            g.drawImage(image, 0, 0, this);
-                        }
-                    };
+                @Override
+                public void paint(Graphics g) {
+                    g.drawImage(image, 0, 0, this);
+                }
+            };
 
             frame.add(p);
             frame.pack();

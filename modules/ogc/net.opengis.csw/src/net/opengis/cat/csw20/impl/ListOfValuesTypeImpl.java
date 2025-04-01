@@ -72,9 +72,10 @@ public class ListOfValuesTypeImpl extends EObjectImpl implements ListOfValuesTyp
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<EObject> getValue() {
         if (value == null) {
-            value = new EObjectContainmentEList<EObject>(EObject.class, this, Csw20Package.LIST_OF_VALUES_TYPE__VALUE);
+            value = new EObjectContainmentEList<>(EObject.class, this, Csw20Package.LIST_OF_VALUES_TYPE__VALUE);
         }
         return value;
     }

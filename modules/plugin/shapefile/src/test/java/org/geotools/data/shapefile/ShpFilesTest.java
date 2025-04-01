@@ -19,8 +19,11 @@ package org.geotools.data.shapefile;
 import static org.geotools.data.shapefile.files.ShpFileType.DBF;
 import static org.geotools.data.shapefile.files.ShpFileType.PRJ;
 import static org.geotools.data.shapefile.files.ShpFileType.SHP;
+import static org.geotools.data.shapefile.files.ShpFileType.SHP_XML;
 import static org.geotools.data.shapefile.files.ShpFileType.SHX;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -97,14 +100,46 @@ public class ShpFilesTest {
     }
 
     @Test
+    public void testCaseFileSkipScan() throws Exception {
+        Map<ShpFileType, File> files = createFiles("TEST", ShpFileType.values(), true);
+
+        String fileName = files.get(SHP).getPath();
+        fileName = fileName.substring(0, fileName.length() - 4) + ".shp";
+        File file = new File(fileName);
+
+        String shpXml = files.get(SHP_XML).getPath();
+        File shpxmlFile = new File(shpXml);
+        shpxmlFile.delete();
+
+        File shpXMLFile = new File(shpXml.replace(".shp.xml", ".shp.XML"));
+        shpXMLFile.createNewFile();
+        shpXMLFile.deleteOnExit();
+
+        // skipScan isn't set. The Lookup will find .shp.XML and update the mapping
+        // by associating it to the SHP_XML type.
+        ShpFiles shpFiles = new ShpFiles(file);
+        assertTrue(shpFiles.exists(SHP_XML));
+
+        // skipScan is set. When testing on a Linux environment, the .shp.XML
+        // won't be found since the mapping wasn't updated
+        shpFiles = new ShpFiles(file, true);
+        File caseSensitiveFile = new File("TEST.TXT");
+        caseSensitiveFile.createNewFile();
+        caseSensitiveFile.deleteOnExit();
+        File checkCaseFile = new File("test.txt");
+        boolean isCaseSensitive = !checkCaseFile.exists();
+        assertEquals(shpFiles.exists(SHP_XML), !isCaseSensitive);
+    }
+
+    @Test
     public void testGetTypeName() throws Exception {
         assertEquals("shape", new ShpFiles("dir/shape.shp").getTypeName());
         assertEquals(".shape", new ShpFiles("dir/.shape.shp").getTypeName());
     }
 
-    public static Map<ShpFileType, File> createFiles(
-            String string, ShpFileType[] values, boolean uppercase) throws IOException {
-        Map<ShpFileType, File> files = new HashMap<ShpFileType, File>();
+    public static Map<ShpFileType, File> createFiles(String string, ShpFileType[] values, boolean uppercase)
+            throws IOException {
+        Map<ShpFileType, File> files = new HashMap<>();
 
         String extensionWithPeriod = values[0].extensionWithPeriod;
         File baseFile = File.createTempFile(string, extensionWithPeriod);
@@ -129,8 +164,7 @@ public class ShpFilesTest {
 
     @Test
     public void testShapefileFilesAll() throws Exception {
-        Map<ShpFileType, File> expected =
-                createFiles("testShapefileFilesAll", ShpFileType.values(), false);
+        Map<ShpFileType, File> expected = createFiles("testShapefileFilesAll", ShpFileType.values(), false);
 
         File file = expected.values().iterator().next();
         ShpFiles shapefiles = new ShpFiles(file);
@@ -140,8 +174,7 @@ public class ShpFilesTest {
 
     @Test
     public void testURLStringConstructor() throws Exception {
-        Map<ShpFileType, File> expected =
-                createFiles("testURLStringConstructor", ShpFileType.values(), false);
+        Map<ShpFileType, File> expected = createFiles("testURLStringConstructor", ShpFileType.values(), false);
 
         File file = expected.values().iterator().next();
         ShpFiles shapefiles = new ShpFiles(file.toURI().toURL().toExternalForm());
@@ -151,8 +184,7 @@ public class ShpFilesTest {
 
     @Test
     public void testFileStringConstructor() throws Exception {
-        Map<ShpFileType, File> expected =
-                createFiles("testFileStringConstructor", ShpFileType.values(), false);
+        Map<ShpFileType, File> expected = createFiles("testFileStringConstructor", ShpFileType.values(), false);
 
         File file = expected.values().iterator().next();
         ShpFiles shapefiles = new ShpFiles(file.getPath());
@@ -163,8 +195,7 @@ public class ShpFilesTest {
     @Test
     public void testShapefileFilesSome() throws Exception {
         Map<ShpFileType, File> expected =
-                createFiles(
-                        "testShapefileFilesSome", new ShpFileType[] {SHP, DBF, SHX, PRJ}, false);
+                createFiles("testShapefileFilesSome", new ShpFileType[] {SHP, DBF, SHX, PRJ}, false);
 
         File prj = expected.remove(PRJ);
 
@@ -196,7 +227,7 @@ public class ShpFilesTest {
 
     @Test
     public void testNonFileURLs() throws IOException {
-        Map<ShpFileType, URL> expected = new HashMap<ShpFileType, URL>();
+        Map<ShpFileType, URL> expected = new HashMap<>();
         String base = "http://www.geotools.org/testFile";
         ShpFileType[] types = ShpFileType.values();
         for (ShpFileType type : types) {
@@ -215,8 +246,7 @@ public class ShpFilesTest {
 
     @Test
     public void testFileURLs() throws Exception {
-        Map<ShpFileType, File> expected =
-                createFiles("testShapefileFilesAll", ShpFileType.values(), false);
+        Map<ShpFileType, File> expected = createFiles("testShapefileFilesAll", ShpFileType.values(), false);
 
         File file = expected.values().iterator().next();
         ShpFiles shapefiles = new ShpFiles(file.toURI().toURL());
@@ -224,13 +254,17 @@ public class ShpFilesTest {
         assertEqualMaps(expected, shapefiles.getFileNames());
     }
 
+    @Test
+    public void testGetTypeNameSpecialCharacters() throws Exception {
+        assertEquals("Åéìòù", new ShpFiles("shapefile/test-data/special-characters/Åéìòù.shp").getTypeName());
+    }
+
     private void assertEqualMaps(Map<ShpFileType, File> expected, Map<ShpFileType, String> files)
             throws MalformedURLException {
 
         Set<Entry<ShpFileType, File>> expectedEntries = expected.entrySet();
         for (Entry<ShpFileType, File> entry : expectedEntries) {
-            assertEquals(
-                    entry.getValue().toURI().toURL().toExternalForm(), files.get(entry.getKey()));
+            assertEquals(entry.getValue().toURI().toURL().toExternalForm(), files.get(entry.getKey()));
         }
     }
 }

@@ -28,7 +28,7 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
  */
 public class TileEntry extends Entry {
 
-    List<TileMatrix> tileMatricies = new ArrayList();
+    List<TileMatrix> tileMatricies = new ArrayList<>();
 
     ReferencedEnvelope tileMatrixSetBounds;
 
@@ -47,18 +47,12 @@ public class TileEntry extends Entry {
     void init(TileEntry e) {
         super.init(e);
         setTileMatricies(e.getTileMatricies());
-        this.tileMatrixSetBounds =
-                e.tileMatrixSetBounds == null
-                        ? null
-                        : new ReferencedEnvelope(e.tileMatrixSetBounds);
+        this.tileMatrixSetBounds = e.tileMatrixSetBounds == null ? null : new ReferencedEnvelope(e.tileMatrixSetBounds);
     }
 
     /**
-     * Returns the tile matrix set bounds. The bounds are expressed in the same CRS as the entry,
-     * but they might differ in extent (if null, then the tile matrix bounds are supposed to be the
-     * same as the entry)
-     *
-     * @return
+     * Returns the tile matrix set bounds. The bounds are expressed in the same CRS as the entry, but they might differ
+     * in extent (if null, then the tile matrix bounds are supposed to be the same as the entry)
      */
     public ReferencedEnvelope getTileMatrixSetBounds() {
         return tileMatrixSetBounds != null ? tileMatrixSetBounds : bounds;

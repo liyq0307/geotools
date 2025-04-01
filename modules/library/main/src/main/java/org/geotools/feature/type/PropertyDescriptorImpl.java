@@ -18,11 +18,11 @@ package org.geotools.feature.type;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.feature.type.PropertyType;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.feature.type.PropertyType;
 
 public class PropertyDescriptorImpl implements PropertyDescriptor {
 
@@ -33,14 +33,13 @@ public class PropertyDescriptorImpl implements PropertyDescriptor {
     protected final boolean isNillable;
     final Map<Object, Object> userData;
 
-    protected PropertyDescriptorImpl(
-            PropertyType type, Name name, int min, int max, boolean isNillable) {
+    protected PropertyDescriptorImpl(PropertyType type, Name name, int min, int max, boolean isNillable) {
         this.type = type;
         this.name = name;
         this.minOccurs = min;
         this.maxOccurs = max;
         this.isNillable = isNillable;
-        userData = new HashMap();
+        userData = new HashMap<>();
 
         if (type == null) {
             throw new NullPointerException("type");
@@ -55,30 +54,37 @@ public class PropertyDescriptorImpl implements PropertyDescriptor {
         }
     }
 
+    @Override
     public PropertyType getType() {
         return type;
     }
 
+    @Override
     public Name getName() {
         return name;
     }
 
+    @Override
     public int getMinOccurs() {
         return minOccurs;
     }
 
+    @Override
     public int getMaxOccurs() {
         return maxOccurs;
     }
 
+    @Override
     public boolean isNillable() {
         return isNillable;
     }
 
+    @Override
     public Map<Object, Object> getUserData() {
         return userData;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof PropertyDescriptorImpl)) {
             return false;
@@ -92,10 +98,12 @@ public class PropertyDescriptorImpl implements PropertyDescriptor {
                 && (isNillable == other.isNillable);
     }
 
+    @Override
     public int hashCode() {
         return (37 * minOccurs + 37 * maxOccurs) ^ type.hashCode() ^ name.hashCode();
     }
 
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer(Classes.getShortClassName(this));
         sb.append(" ");

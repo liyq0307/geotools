@@ -18,7 +18,13 @@ package org.geotools.renderer.crs;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryComponentFilter;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 
 /** Collects component of a given geometry that have the desired dimension */
 public class GeometryDimensionCollector implements GeometryComponentFilter {
@@ -32,9 +38,7 @@ public class GeometryDimensionCollector implements GeometryComponentFilter {
 
     @Override
     public void filter(Geometry geom) {
-        if (!(geom instanceof GeometryCollection)
-                && geom.getDimension() == targetDimension
-                && !geom.isEmpty()) {
+        if (!(geom instanceof GeometryCollection) && geom.getDimension() == targetDimension && !geom.isEmpty()) {
             geometries.add(geom);
         }
     }
@@ -47,8 +51,6 @@ public class GeometryDimensionCollector implements GeometryComponentFilter {
      *   <li>single geometry: in case there is a single item
      *   <li>multi-geometry: in all other cases
      * </ul>
-     *
-     * @return
      */
     public Geometry collect() {
         if (geometries.isEmpty()) {
@@ -60,11 +62,9 @@ public class GeometryDimensionCollector implements GeometryComponentFilter {
             if (targetDimension == 0) {
                 return factory.createMultiPoint(geometries.toArray(new Point[geometries.size()]));
             } else if (targetDimension == 1) {
-                return factory.createMultiLineString(
-                        geometries.toArray(new LineString[geometries.size()]));
+                return factory.createMultiLineString(geometries.toArray(new LineString[geometries.size()]));
             } else if (targetDimension == 2) {
-                return factory.createMultiPolygon(
-                        geometries.toArray(new Polygon[geometries.size()]));
+                return factory.createMultiPolygon(geometries.toArray(new Polygon[geometries.size()]));
             }
         }
 

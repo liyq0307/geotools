@@ -19,6 +19,7 @@ package org.geotools.image.palette;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
+import java.util.Vector;
 import javax.media.jai.ImageLayout;
 import javax.media.jai.PointOpImage;
 
@@ -27,24 +28,19 @@ import javax.media.jai.PointOpImage;
  *
  * @author Simone Giannecchini, GeoSolutions
  */
-@SuppressWarnings("unchecked")
 public class ColorInversion extends PointOpImage {
 
     private InverseColorMapRasterOp op;
 
-    public ColorInversion(
-            RenderedImage image, IndexColorModel icm, int quantizationColors, int alpaThreshold) {
+    public ColorInversion(RenderedImage image, IndexColorModel icm, int quantizationColors, int alpaThreshold) {
         super(image, new ImageLayout(image), null, false);
         this.setSource(image, 0);
         this.op = new InverseColorMapRasterOp(icm, quantizationColors, alpaThreshold);
 
         // setlayout;
-        setImageLayout(
-                new ImageLayout(image)
-                        .setColorModel(icm)
-                        .setSampleModel(
-                                icm.createCompatibleSampleModel(
-                                        image.getWidth(), image.getHeight())));
+        setImageLayout(new ImageLayout(image)
+                .setColorModel(icm)
+                .setSampleModel(icm.createCompatibleSampleModel(image.getWidth(), image.getHeight())));
     }
 
     @Override
@@ -52,5 +48,12 @@ public class ColorInversion extends PointOpImage {
         final RenderedImage sourceImage = getSourceImage(0);
         final Raster sourceRaster = sourceImage.getTile(tx, ty);
         return op.filter(sourceRaster, null);
+    }
+
+    @Override
+    // PlanarImage does not have generics, overrides this method
+    @SuppressWarnings({"unchecked", "PMD.ReplaceVectorWithList"})
+    public Vector<RenderedImage> getSources() {
+        return super.getSources();
     }
 }

@@ -1,32 +1,34 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2006-2008, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This file is hereby placed into the Public Domain. This means anyone is
- *    free to do whatever they wish with this file. Use it well and enjoy!
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.main;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
-import org.geotools.data.Query;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.swing.data.JFileDataStoreChooser;
 import org.geotools.util.SuppressFBWarnings;
 import org.geotools.util.factory.GeoTools;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
 
 /**
  * This class shows how to "join" two feature sources.
@@ -71,8 +73,7 @@ public class JoinExample {
     }
 
     // joinExample start
-    private static void joinExample(SimpleFeatureSource shapes, SimpleFeatureSource shapes2)
-            throws Exception {
+    private static void joinExample(SimpleFeatureSource shapes, SimpleFeatureSource shapes2) throws Exception {
         SimpleFeatureType schema = shapes.getSchema();
         String typeName = schema.getTypeName();
         String geomName = schema.getGeometryDescriptor().getLocalName();
@@ -80,7 +81,7 @@ public class JoinExample {
         SimpleFeatureType schema2 = shapes2.getSchema();
         String typeName2 = schema2.getTypeName();
         String geomName2 = schema2.getGeometryDescriptor().getLocalName();
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
         Query outerGeometry = new Query(typeName, Filter.INCLUDE, new String[] {geomName});
         SimpleFeatureCollection outerFeatures = shapes.getFeatures(outerGeometry);
@@ -95,8 +96,7 @@ public class JoinExample {
                         // skip bad data
                         continue;
                     }
-                    Filter innerFilter =
-                            ff.intersects(ff.property(geomName2), ff.literal(geometry));
+                    Filter innerFilter = ff.intersects(ff.property(geomName2), ff.literal(geometry));
                     Query innerQuery = new Query(typeName2, innerFilter, Query.NO_NAMES);
                     SimpleFeatureCollection join = shapes2.getFeatures(innerQuery);
                     int size = join.size();
@@ -107,14 +107,7 @@ public class JoinExample {
         } finally {
             iterator.close();
         }
-        System.out.println(
-                "At most "
-                        + max
-                        + " "
-                        + typeName2
-                        + " features in a single "
-                        + typeName
-                        + " feature");
+        System.out.println("At most " + max + " " + typeName2 + " features in a single " + typeName + " feature");
     }
     // joinExample end
 

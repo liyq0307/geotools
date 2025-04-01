@@ -21,11 +21,11 @@ import javax.xml.namespace.QName;
 import net.opengis.wfs.PropertyType;
 import net.opengis.wfs.UpdateElementType;
 import net.opengis.wfs.WfsFactory;
+import org.geotools.api.filter.Filter;
 import org.geotools.wfs.WFS;
 import org.geotools.xsd.AbstractComplexEMFBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.Filter;
 
 /**
  * Binding object for the type http://www.opengis.net/wfs:UpdateElementType.
@@ -129,6 +129,7 @@ public class UpdateElementTypeBinding extends AbstractComplexEMFBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WFS.UpdateElementType;
     }
@@ -140,6 +141,7 @@ public class UpdateElementTypeBinding extends AbstractComplexEMFBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return null;
     }
@@ -151,6 +153,8 @@ public class UpdateElementTypeBinding extends AbstractComplexEMFBinding {
      *
      * @generated modifiable
      */
+    @Override
+    @SuppressWarnings("unchecked")
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         UpdateElementType updateElement = wfsfactory.createUpdateElementType();
 
@@ -158,7 +162,7 @@ public class UpdateElementTypeBinding extends AbstractComplexEMFBinding {
         updateElement.getProperty().addAll(node.getChildValues(PropertyType.class));
 
         // &lt;xsd:element maxOccurs="1" minOccurs="0" ref="ogc:Filter"&gt;
-        updateElement.setFilter((Filter) node.getChildValue(Filter.class));
+        updateElement.setFilter(node.getChildValue(Filter.class));
 
         // &lt;xsd:attribute name="handle" type="xsd:string" use="optional"&gt;
         if (node.hasAttribute("handle")) {
@@ -182,6 +186,7 @@ public class UpdateElementTypeBinding extends AbstractComplexEMFBinding {
         return updateElement;
     }
 
+    @Override
     public Object getProperty(Object arg0, QName arg1) throws Exception {
         Object result = super.getProperty(arg0, arg1);
 

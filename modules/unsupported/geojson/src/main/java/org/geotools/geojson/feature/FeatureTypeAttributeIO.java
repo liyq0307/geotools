@@ -20,13 +20,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.geojson.GeoJSONUtil;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 public class FeatureTypeAttributeIO implements AttributeIO {
 
-    HashMap<String, AttributeIO> ios = new HashMap();
+    HashMap<String, AttributeIO> ios = new HashMap<>();
 
     public FeatureTypeAttributeIO(SimpleFeatureType featureType) {
         for (AttributeDescriptor ad : featureType.getAttributeDescriptors()) {
@@ -40,20 +40,24 @@ public class FeatureTypeAttributeIO implements AttributeIO {
         }
     }
 
+    @Override
     public String encode(String att, Object value) {
         return ios.get(att).encode(att, value);
     }
 
+    @Override
     public Object parse(String att, String value) {
         return ios.get(att).parse(att, value);
     }
 
     static class DateAttributeIO implements AttributeIO {
 
+        @Override
         public String encode(String att, Object value) {
             return GeoJSONUtil.dateFormatter.format((Date) value);
         }
 
+        @Override
         public Object parse(String att, String value) {
             try {
                 final SimpleDateFormat sdf = new SimpleDateFormat(GeoJSONUtil.DATE_FORMAT);

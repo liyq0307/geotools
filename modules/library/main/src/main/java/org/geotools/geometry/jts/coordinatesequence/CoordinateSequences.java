@@ -21,6 +21,7 @@ package org.geotools.geometry.jts.coordinatesequence;
 import java.util.ArrayList;
 import java.util.List;
 import org.geotools.geometry.jts.CurvedGeometry;
+import org.geotools.geometry.jts.LiteCoordinateSequence;
 import org.locationtech.jts.algorithm.RobustDeterminant;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateSequence;
@@ -41,16 +42,15 @@ import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 public class CoordinateSequences extends org.locationtech.jts.geom.CoordinateSequences {
 
     /**
-     * Computes whether a ring defined by an array of {@link Coordinate}s is oriented
-     * counter-clockwise.
+     * Computes whether a ring defined by an array of {@link Coordinate}s is oriented counter-clockwise.
      *
      * <ul>
      *   <li>The list of points is assumed to have the first and last points equal.
      *   <li>This will handle coordinate lists which contain repeated points.
      * </ul>
      *
-     * This algorithm is <b>only</b> guaranteed to work with valid rings. If the ring is invalid
-     * (e.g. self-crosses or touches), the computed result may not be correct.
+     * This algorithm is <b>only</b> guaranteed to work with valid rings. If the ring is invalid (e.g. self-crosses or
+     * touches), the computed result may not be correct.
      *
      * @param ring an array of Coordinates forming a ring
      * @return true if the ring is oriented counter-clockwise.
@@ -83,22 +83,21 @@ public class CoordinateSequences extends org.locationtech.jts.geom.CoordinateSeq
         } while (equals2D(ring, iNext, hiIndex) && iNext != hiIndex);
 
         /**
-         * This check catches cases where the ring contains an A-B-A configuration of points. This
-         * can happen if the ring does not contain 3 distinct points (including the case where the
-         * input array has fewer than 4 elements), or it contains coincident line segments.
+         * This check catches cases where the ring contains an A-B-A configuration of points. This can happen if the
+         * ring does not contain 3 distinct points (including the case where the input array has fewer than 4 elements),
+         * or it contains coincident line segments.
          */
-        if (equals2D(ring, iPrev, hiIndex)
-                || equals2D(ring, iNext, hiIndex)
-                || equals2D(ring, iPrev, iNext)) return false;
+        if (equals2D(ring, iPrev, hiIndex) || equals2D(ring, iNext, hiIndex) || equals2D(ring, iPrev, iNext))
+            return false;
 
         int disc = computeOrientation(ring, iPrev, hiIndex, iNext);
 
         /**
-         * If disc is exactly 0, lines are collinear. There are two possible cases: (1) the lines
-         * lie along the x axis in opposite directions (2) the lines lie on top of one another
+         * If disc is exactly 0, lines are collinear. There are two possible cases: (1) the lines lie along the x axis
+         * in opposite directions (2) the lines lie on top of one another
          *
-         * <p>(1) is handled by checking if next is left of prev ==> CCW (2) will never happen if
-         * the ring is valid, so don't check for it (Might want to assert this)
+         * <p>(1) is handled by checking if next is left of prev ==> CCW (2) will never happen if the ring is valid, so
+         * don't check for it (Might want to assert this)
          */
         boolean isCCW = false;
         if (disc == 0) {
@@ -112,8 +111,7 @@ public class CoordinateSequences extends org.locationtech.jts.geom.CoordinateSeq
     }
 
     private static boolean equals2D(CoordinateSequence cs, int i, int j) {
-        return cs.getOrdinate(i, 0) == cs.getOrdinate(j, 0)
-                && cs.getOrdinate(i, 1) == cs.getOrdinate(j, 1);
+        return cs.getOrdinate(i, 0) == cs.getOrdinate(j, 0) && cs.getOrdinate(i, 1) == cs.getOrdinate(j, 1);
     }
 
     public static int computeOrientation(CoordinateSequence cs, int p1, int p2, int q) {
@@ -146,8 +144,7 @@ public class CoordinateSequences extends org.locationtech.jts.geom.CoordinateSeq
             return ((CurvedGeometry<?>) g).getCoordinatesDimension();
         }
         if (g instanceof Point) return coordinateDimension(((Point) g).getCoordinateSequence());
-        if (g instanceof LineString)
-            return coordinateDimension(((LineString) g).getCoordinateSequence());
+        if (g instanceof LineString) return coordinateDimension(((LineString) g).getCoordinateSequence());
         if (g instanceof Polygon)
             return coordinateDimension(((Polygon) g).getExteriorRing().getCoordinateSequence());
 
@@ -158,12 +155,11 @@ public class CoordinateSequences extends org.locationtech.jts.geom.CoordinateSeq
 
     /**
      * Gets the effective dimension of a CoordinateSequence. This is a workaround for the issue that
-     * CoordinateArraySequence does not keep an accurate dimension - it always reports dim=3, even
-     * if there is no Z ordinate (ie they are NaN). This method checks for that case and reports
-     * dim=2. Only the first coordinate is checked.
+     * CoordinateArraySequence does not keep an accurate dimension - it always reports dim=3, even if there is no Z
+     * ordinate (ie they are NaN). This method checks for that case and reports dim=2. Only the first coordinate is
+     * checked.
      *
-     * <p>There is one small hole: if a CoordinateArraySequence is empty, the dimension will be
-     * reported as 3.
+     * <p>There is one small hole: if a CoordinateArraySequence is empty, the dimension will be reported as 3.
      *
      * @param seq a CoordinateSequence
      * @return the effective dimension of the coordinate sequence
@@ -172,28 +168,28 @@ public class CoordinateSequences extends org.locationtech.jts.geom.CoordinateSeq
         if (seq == null) return 3;
 
         int dim = seq.getDimension();
-        if (dim != 3) return dim;
+        if (dim < 3) return dim;
 
         // hack to handle issue that CoordinateArraySequence always reports
         // dimension = 3
         // check if a Z value is NaN - if so, assume dim is 2
-        if (seq instanceof CoordinateArraySequence) {
+        if (seq instanceof CoordinateArraySequence || seq instanceof LiteCoordinateSequence) {
             if (seq.size() > 0) {
                 if (Double.isNaN(seq.getOrdinate(0, CoordinateSequence.Y))) return 1;
                 if (Double.isNaN(seq.getOrdinate(0, CoordinateSequence.Z))) return 2;
+                if (dim == 4) {
+                    if (Double.isNaN(seq.getM(0))) {
+                        return 3;
+                    } else {
+                        return 4;
+                    }
+                }
             }
         }
         return 3;
     }
 
-    /**
-     * Returns true if the two geometries are equal in N dimensions (normal geometry equality is
-     * only 2D)
-     *
-     * @param g1
-     * @param g2
-     * @return
-     */
+    /** Returns true if the two geometries are equal in N dimensions (normal geometry equality is only 2D) */
     public static boolean equalsND(Geometry g1, Geometry g2) {
         // if not even in 2d, they are not equal
         if (!g1.equals(g2)) {
@@ -208,7 +204,8 @@ public class CoordinateSequences extends org.locationtech.jts.geom.CoordinateSeq
             return true;
         }
 
-        // ok, 2d equal, it means they have the same list of geometries and coordinate sequences, in
+        // ok, 2d equal, it means they have the same list of geometries and
+        // coordinate sequences, in
         // the same order
         List<CoordinateSequence> sequences1 = CoordinateSequenceCollector.find(g1);
         List<CoordinateSequence> sequences2 = CoordinateSequenceCollector.find(g2);
@@ -246,14 +243,17 @@ public class CoordinateSequences extends org.locationtech.jts.geom.CoordinateSeq
             return firstSeqFound;
         }
 
+        @Override
         public void filter(CoordinateSequence seq, int i) {
             if (firstSeqFound == null) firstSeqFound = seq;
         }
 
+        @Override
         public boolean isDone() {
             return firstSeqFound != null;
         }
 
+        @Override
         public boolean isGeometryChanged() {
             return false;
         }
@@ -273,14 +273,17 @@ public class CoordinateSequences extends org.locationtech.jts.geom.CoordinateSeq
             return sequences;
         }
 
+        @Override
         public void filter(CoordinateSequence seq, int i) {
             sequences.add(seq);
         }
 
+        @Override
         public boolean isDone() {
             return false;
         }
 
+        @Override
         public boolean isGeometryChanged() {
             return false;
         }

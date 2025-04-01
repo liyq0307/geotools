@@ -28,18 +28,20 @@ import org.geotools.util.URLs;
  */
 public class ShapefileDirectoryFactory extends ShapefileDataStoreFactory {
     /** The directory to be scanned for file data stores */
-    public static final Param URLP =
-            new Param("url", URL.class, "Directory containing geospatial files", true);
+    public static final Param URLP = new Param("url", URL.class, "Directory containing geospatial files", true);
 
+    @Override
     public String getDisplayName() {
         return "Directory of spatial files (shapefiles)";
     }
 
+    @Override
     public String getDescription() {
         return "Takes a directory of shapefiles and exposes it as a data store";
     }
 
-    public boolean canProcess(Map params) {
+    @Override
+    public boolean canProcess(Map<String, ?> params) {
         // we don't try to steal single shapefiles away from the main factory
         if (super.canProcess(params)) {
             try {

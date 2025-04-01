@@ -17,22 +17,27 @@
  */
 package org.geotools.ysld.validate;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
+import org.geotools.styling.zoom.ZoomContext;
+import org.geotools.styling.zoom.ZoomContextFinder;
+import org.geotools.util.logging.Logging;
 import org.geotools.ysld.UomMapper;
 import org.geotools.ysld.Ysld;
-import org.geotools.ysld.parse.ZoomContext;
-import org.geotools.ysld.parse.ZoomContextFinder;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.Test;
@@ -40,6 +45,8 @@ import org.yaml.snakeyaml.error.Mark;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 
 public class YsldValidateTest {
+
+    static final Logger LOGGER = Logging.getLogger(YsldValidateTest.class);
 
     @Test
     public void testMalformed() throws Exception {
@@ -95,9 +102,7 @@ public class YsldValidateTest {
     Matcher<Mark> problemAt(int line, int column) {
         return Matchers.describedAs(
                 "Problem at Line %0 Column %1",
-                allOf(
-                        Matchers.<Mark>hasProperty("line", is(line - 1)),
-                        Matchers.<Mark>hasProperty("column", is(column - 1))),
+                allOf(Matchers.hasProperty("line", is(line - 1)), Matchers.hasProperty("column", is(column - 1))),
                 line,
                 column);
     }
@@ -105,8 +110,7 @@ public class YsldValidateTest {
     @SuppressWarnings("unchecked")
     Matcher<Mark> problemOn(int line) {
         return Matchers.describedAs(
-                "Problem somewhere on Line %0",
-                allOf(Matchers.<Mark>hasProperty("line", is(line - 1))), line);
+                "Problem somewhere on Line %0", allOf(Matchers.hasProperty("line", is(line - 1))), line);
     }
 
     static final String[] EXPRESSION_KEYS = {
@@ -189,8 +193,7 @@ public class YsldValidateTest {
 
         replay(finder, zctxt);
 
-        List<MarkedYAMLException> errors =
-                validate(builder.toString(), Collections.singletonList(finder));
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.singletonList(finder));
         assertThat(errors.size(), is(0));
 
         verify(finder, zctxt);
@@ -208,8 +211,7 @@ public class YsldValidateTest {
 
         replay(finder, zctxt);
 
-        List<MarkedYAMLException> errors =
-                validate(builder.toString(), Collections.singletonList(finder));
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.singletonList(finder));
         assertThat(errors.size(), is(1));
 
         assertThat(errors.get(0).getProblemMark(), problemOn(2));
@@ -217,33 +219,25 @@ public class YsldValidateTest {
         verify(finder, zctxt);
     }
 
-    List<MarkedYAMLException> dump(List<MarkedYAMLException> errors) {
-        for (MarkedYAMLException e : errors) {
-            // System.out.println(e.toString());
-        }
-        return errors;
-    }
-
     @SuppressWarnings("unchecked")
     @Test
     public void testZoomWithDefaultGridValidateOrder() throws Exception {
         StringBuilder builder = new StringBuilder();
-        builder.append(
-                "rules:\n"
-                        + // 1
-                        "- zoom: [0,1]\n"
-                        + // 2 OK
-                        "- zoom: [1,2]\n"
-                        + // 3 OK
-                        "- zoom: [-1,2]\n"
-                        + // 4 OK
-                        "- zoom: [1, 0]\n"
-                        + // 5 Bad
-                        "- zoom: [100, 10]\n"
-                        + // 6 Bad
-                        "- zoom: [-2, -10]\n"
-                        + // 7 Bad
-                        "- zoom: [2, -2]\n"); // 8 Bad
+        builder.append("rules:\n"
+                + // 1
+                "- zoom: [0,1]\n"
+                + // 2 OK
+                "- zoom: [1,2]\n"
+                + // 3 OK
+                "- zoom: [-1,2]\n"
+                + // 4 OK
+                "- zoom: [1, 0]\n"
+                + // 5 Bad
+                "- zoom: [100, 10]\n"
+                + // 6 Bad
+                "- zoom: [-2, -10]\n"
+                + // 7 Bad
+                "- zoom: [2, -2]\n"); // 8 Bad
 
         List<MarkedYAMLException> errors = validate(builder.toString());
         assertThat(
@@ -259,16 +253,15 @@ public class YsldValidateTest {
     @Test
     public void testZoomWithDefaultGridTupleSize() throws Exception {
         StringBuilder builder = new StringBuilder();
-        builder.append(
-                "rules:\n"
-                        + // 1
-                        "- zoom: [0,0]\n"
-                        + // 2 OK
-                        "- zoom: []\n"
-                        + // 3 Bad
-                        "- zoom: [0]\n"
-                        + // 4 Bad
-                        "- zoom: [0,0,0]\n"); // 5 Bad
+        builder.append("rules:\n"
+                + // 1
+                "- zoom: [0,0]\n"
+                + // 2 OK
+                "- zoom: []\n"
+                + // 3 Bad
+                "- zoom: [0]\n"
+                + // 4 Bad
+                "- zoom: [0,0,0]\n"); // 5 Bad
 
         List<MarkedYAMLException> errors = validate(builder.toString());
         assertThat(
@@ -283,28 +276,27 @@ public class YsldValidateTest {
     @Test
     public void testZoomWithDefaultGridValidateRange() throws Exception {
         StringBuilder builder = new StringBuilder();
-        builder.append(
-                "rules:\n"
-                        + // 1
-                        "- zoom: [0,max]\n"
-                        + // 2 OK
-                        "- zoom: [min,0]\n"
-                        + // 3 OK
-                        "- zoom: [19,max]\n"
-                        + // 4 OK
-                        "- zoom: [min,19]\n"
-                        + // 5 OK
-                        "- zoom: [-1, max]\n"
-                        + // 6 OK, RatioZoomContext allows negative
-                        "- zoom: [min, -1]\n"
-                        + // 7 OK, RatioZoomContext allows negative
-                        "- zoom: [min, foo]\n"
-                        + // 8 Bad
-                        "- zoom: [foo, max]\n"
-                        + // 9 Bad
-                        "- zoom: [0.5, max]\n"
-                        + // 10 Bad
-                        "- zoom: [min, 0.5]\n"); // 11 Bad
+        builder.append("rules:\n"
+                + // 1
+                "- zoom: [0,max]\n"
+                + // 2 OK
+                "- zoom: [min,0]\n"
+                + // 3 OK
+                "- zoom: [19,max]\n"
+                + // 4 OK
+                "- zoom: [min,19]\n"
+                + // 5 OK
+                "- zoom: [-1, max]\n"
+                + // 6 OK, RatioZoomContext allows negative
+                "- zoom: [min, -1]\n"
+                + // 7 OK, RatioZoomContext allows negative
+                "- zoom: [min, foo]\n"
+                + // 8 Bad
+                "- zoom: [foo, max]\n"
+                + // 9 Bad
+                "- zoom: [0.5, max]\n"
+                + // 10 Bad
+                "- zoom: [min, 0.5]\n"); // 11 Bad
 
         List<MarkedYAMLException> errors = validate(builder.toString());
         assertThat(
@@ -320,16 +312,15 @@ public class YsldValidateTest {
     @Test
     public void testScaleTupleSize() throws Exception {
         StringBuilder builder = new StringBuilder();
-        builder.append(
-                "rules:\n"
-                        + // 1
-                        "- scale: [0.0,0.0]\n"
-                        + // 2 OK
-                        "- scale: []\n"
-                        + // 3 Bad
-                        "- scale: [0.0]\n"
-                        + // 4 Bad
-                        "- scale: [0.0,0.0,0.0]\n"); // 5 Bad
+        builder.append("rules:\n"
+                + // 1
+                "- scale: [0.0,0.0]\n"
+                + // 2 OK
+                "- scale: []\n"
+                + // 3 Bad
+                "- scale: [0.0]\n"
+                + // 4 Bad
+                "- scale: [0.0,0.0,0.0]\n"); // 5 Bad
 
         List<MarkedYAMLException> errors = validate(builder.toString());
         assertThat(
@@ -344,28 +335,27 @@ public class YsldValidateTest {
     @Test
     public void testScaleValidateRange() throws Exception {
         StringBuilder builder = new StringBuilder();
-        builder.append(
-                "rules:\n"
-                        + // 1
-                        "- scale: [100000,max]\n"
-                        + // 2 OK
-                        "- scale: [min,100000]\n"
-                        + // 3 OK
-                        "- scale: [10000000,max]\n"
-                        + // 4 OK
-                        "- scale: [min,10000000]\n"
-                        + // 5 OK
-                        "- scale: [-1, max]\n"
-                        + // 6 Bad
-                        "- scale: [min, -1]\n"
-                        + // 7 Bad
-                        "- scale: [min, foo]\n"
-                        + // 8 Bad
-                        "- scale: [foo, max]\n"
-                        + // 9 Bad
-                        "- scale: [100000.1, max]\n"
-                        + // 10 OK
-                        "- scale: [min, 100000.1]\n"); // 11 OK
+        builder.append("rules:\n"
+                + // 1
+                "- scale: [100000,max]\n"
+                + // 2 OK
+                "- scale: [min,100000]\n"
+                + // 3 OK
+                "- scale: [10000000,max]\n"
+                + // 4 OK
+                "- scale: [min,10000000]\n"
+                + // 5 OK
+                "- scale: [-1, max]\n"
+                + // 6 Bad
+                "- scale: [min, -1]\n"
+                + // 7 Bad
+                "- scale: [min, foo]\n"
+                + // 8 Bad
+                "- scale: [foo, max]\n"
+                + // 9 Bad
+                "- scale: [100000.1, max]\n"
+                + // 10 OK
+                "- scale: [min, 100000.1]\n"); // 11 OK
 
         List<MarkedYAMLException> errors = validate(builder.toString());
         assertThat(
@@ -381,40 +371,39 @@ public class YsldValidateTest {
     @Test
     public void testZoomWithExtendedGridValidateRange() throws Exception {
         StringBuilder builder = new StringBuilder();
-        builder.append(
-                "grid:\n"
-                        + // 1
-                        "  name: SIGMA:957\n"
-                        + // 2
-                        "rules:\n"
-                        + // 3
-                        "- zoom: [0,max]\n"
-                        + // 4 OK
-                        "- zoom: [min,0]\n"
-                        + // 5 OK
-                        "- zoom: [2,max]\n"
-                        + // 6 OK
-                        "- zoom: [min,2]\n"
-                        + // 7 OK
-                        "- zoom: [5,max]\n"
-                        + // 8 OK
-                        "- zoom: [min,5]\n"
-                        + // 9 OK
-                        "- zoom: [6, max]\n"
-                        + // 10 Bad, Out of Range
-                        "- zoom: [min, 6]\n"
-                        + // 11 Bad, Out of Range
-                        "- zoom: [-1, max]\n"
-                        + // 12 Bad, Out of Range
-                        "- zoom: [min, -1]\n"
-                        + // 13 Bad, Out of Range
-                        "- zoom: [min, foo]\n"
-                        + // 14 Bad
-                        "- zoom: [foo, max]\n"
-                        + // 15 Bad
-                        "- zoom: [0.5, max]\n"
-                        + // 16 Bad
-                        "- zoom: [min, 0.5]\n"); // 17 Bad
+        builder.append("grid:\n"
+                + // 1
+                "  name: SIGMA:957\n"
+                + // 2
+                "rules:\n"
+                + // 3
+                "- zoom: [0,max]\n"
+                + // 4 OK
+                "- zoom: [min,0]\n"
+                + // 5 OK
+                "- zoom: [2,max]\n"
+                + // 6 OK
+                "- zoom: [min,2]\n"
+                + // 7 OK
+                "- zoom: [5,max]\n"
+                + // 8 OK
+                "- zoom: [min,5]\n"
+                + // 9 OK
+                "- zoom: [6, max]\n"
+                + // 10 Bad, Out of Range
+                "- zoom: [min, 6]\n"
+                + // 11 Bad, Out of Range
+                "- zoom: [-1, max]\n"
+                + // 12 Bad, Out of Range
+                "- zoom: [min, -1]\n"
+                + // 13 Bad, Out of Range
+                "- zoom: [min, foo]\n"
+                + // 14 Bad
+                "- zoom: [foo, max]\n"
+                + // 15 Bad
+                "- zoom: [0.5, max]\n"
+                + // 16 Bad
+                "- zoom: [min, 0.5]\n"); // 17 Bad
 
         ZoomContextFinder finder = createMock("finder", ZoomContextFinder.class);
         ZoomContext zctxt = createMock("zctxt", ZoomContext.class);
@@ -429,8 +418,7 @@ public class YsldValidateTest {
 
         replay(finder, zctxt);
 
-        List<MarkedYAMLException> errors =
-                validate(builder.toString(), Collections.singletonList(finder));
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.singletonList(finder));
         assertThat(
                 errors,
                 contains(
@@ -501,10 +489,7 @@ public class YsldValidateTest {
 
         List<MarkedYAMLException> errors = validate(builder.toString());
         assertThat(
-                errors,
-                contains(
-                        hasProperty("problemMark", problemOn(11)),
-                        hasProperty("problemMark", problemOn(13))));
+                errors, contains(hasProperty("problemMark", problemOn(11)), hasProperty("problemMark", problemOn(13))));
     }
 
     @SuppressWarnings("unchecked")
@@ -552,22 +537,17 @@ public class YsldValidateTest {
                 "- point: \n" + "    displacement: [0, \"${round([len]/1000)}\"]\n" // 9 OK
                 );
         builder.append(
-                "- point: \n"
-                        + "    displacement: [\"${round([len] 1000)}\", 0]\n" // 11 Bad, invalid
+                "- point: \n" + "    displacement: [\"${round([len] 1000)}\", 0]\n" // 11 Bad, invalid
                 // expression
                 );
         builder.append(
-                "- point: \n"
-                        + "    displacement: [0, \"${round([len] 1000)}\"]\n" // 13 Bad invalid
+                "- point: \n" + "    displacement: [0, \"${round([len] 1000)}\"]\n" // 13 Bad invalid
                 // expression
                 );
 
         List<MarkedYAMLException> errors = validate(builder.toString());
         assertThat(
-                errors,
-                contains(
-                        hasProperty("problemMark", problemOn(11)),
-                        hasProperty("problemMark", problemOn(13))));
+                errors, contains(hasProperty("problemMark", problemOn(11)), hasProperty("problemMark", problemOn(13))));
     }
 
     @SuppressWarnings("unchecked")
@@ -579,21 +559,16 @@ public class YsldValidateTest {
         builder.append("    - [red, 1, 0, \"blah\"]\n"); // 6 OK
         builder.append("    - [\"rgb(0,0,0)\", null, 0, \"start\"]\n"); // 7 OK
         builder.append("    - [\"#ff0000\", '', 0, null]\n"); // 8 OK
-        builder.append(
-                "    - [\"${[something]}\", \"${[something]}\", \"${[something]}\", null]\n"); // 9
+        builder.append("    - [\"${[something]}\", \"${[something]}\", \"${[something]}\", null]\n"); // 9
         // OK
 
-        builder.append(
-                "    - [\"#ff0000\", \"${round([len] 1000)}\", 0, \"start\"]\n"); // 10 Bad opacity
+        builder.append("    - [\"#ff0000\", \"${round([len] 1000)}\", 0, \"start\"]\n"); // 10 Bad opacity
         builder.append("    - [\"#ff0000\", 1.0, \"${round([len] 1000)}\", \"start\"]\n"); // 11 Bad
         // quantity
 
         List<MarkedYAMLException> errors = validate(builder.toString());
         assertThat(
-                errors,
-                contains(
-                        hasProperty("problemMark", problemOn(10)),
-                        hasProperty("problemMark", problemOn(11))));
+                errors, contains(hasProperty("problemMark", problemOn(10)), hasProperty("problemMark", problemOn(11))));
     }
 
     @Test
@@ -610,17 +585,13 @@ public class YsldValidateTest {
     }
 
     List<MarkedYAMLException> validate(String ysld) throws IOException {
-        // return dump(Ysld.validate(ysld));
-        return this.validate(ysld, Collections.<ZoomContextFinder>emptyList());
+        return this.validate(ysld, Collections.emptyList());
     }
 
-    List<MarkedYAMLException> validate(String ysld, List<ZoomContextFinder> ctxts)
-            throws IOException {
-        // return dump(Ysld.validate(ysld));
+    List<MarkedYAMLException> validate(String ysld, List<ZoomContextFinder> ctxts) throws IOException {
         return Ysld.validate(ysld, ctxts, new UomMapper());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testRenderingTransform() throws Exception {
         StringBuilder builder = new StringBuilder();
@@ -648,11 +619,10 @@ public class YsldValidateTest {
                 .append("\n")
                 .append("");
 
-        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.emptyList());
         assertThat(errors, empty());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testNestedRenderingTransform() throws Exception {
         StringBuilder builder = new StringBuilder();
@@ -704,11 +674,10 @@ public class YsldValidateTest {
                 .append("\n")
                 .append("");
 
-        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.emptyList());
         assertThat(errors, empty());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testErrorAfterNestedRenderingTransform() throws Exception {
         StringBuilder builder = new StringBuilder();
@@ -766,41 +735,36 @@ public class YsldValidateTest {
                 .append("\n") // Empty displacement on line 26
                 .append("");
 
-        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.emptyList());
         assertThat(errors, contains(hasProperty("problemMark", problemOn(26))));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testTupleInVariable() throws Exception {
-        String yaml =
-                "define: &s [400000,max]\n"
-                        + "\n"
-                        + "feature-styles:\n"
-                        + "- rules:\n"
-                        + "  - scale: *s\n"
-                        + "    filter: ${x = true}\n";
+        String yaml = "define: &s [400000,max]\n"
+                + "\n"
+                + "feature-styles:\n"
+                + "- rules:\n"
+                + "  - scale: *s\n"
+                + "    filter: ${x = true}\n";
 
-        List<MarkedYAMLException> errors = validate(yaml, Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(yaml, Collections.emptyList());
         assertThat(errors, empty());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testVariableInTuple() throws Exception {
-        String yaml =
-                "define: &s 400000\n"
-                        + "\n"
-                        + "feature-styles:\n"
-                        + "- rules:\n"
-                        + "  - scale: [*s, max]\n"
-                        + "    filter: ${x = true}\n";
+        String yaml = "define: &s 400000\n"
+                + "\n"
+                + "feature-styles:\n"
+                + "- rules:\n"
+                + "  - scale: [*s, max]\n"
+                + "    filter: ${x = true}\n";
 
-        List<MarkedYAMLException> errors = validate(yaml, Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(yaml, Collections.emptyList());
         assertThat(errors, empty());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testVariableInPermissive() throws Exception {
         StringBuilder builder = new StringBuilder();
@@ -829,11 +793,10 @@ public class YsldValidateTest {
                 .append("\n")
                 .append("");
 
-        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.emptyList());
         assertThat(errors, empty());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testPermissiveInVariable() throws Exception {
         StringBuilder builder = new StringBuilder();
@@ -862,11 +825,10 @@ public class YsldValidateTest {
                 .append("\n")
                 .append("");
 
-        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.EMPTY_LIST);
+        List<MarkedYAMLException> errors = validate(builder.toString(), Collections.emptyList());
         assertThat(errors, empty());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testColourMapEntryAsVariable() throws Exception {
         StringBuilder builder = new StringBuilder();
@@ -881,7 +843,6 @@ public class YsldValidateTest {
         assertThat(errors, empty());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testColourMapAsVariable() throws Exception {
         StringBuilder builder = new StringBuilder();
@@ -889,15 +850,13 @@ public class YsldValidateTest {
         builder.append("  - [\"#ff0000\", 1.0, 0, \"start\"]\n");
         builder.append("  - [red, 1, 0, \"blah\"]\n");
         builder.append("  - [\"rgb(0,0,0)\", null, 0, \"start\"]\n");
-        builder.append(
-                "raster: \n" + "  color-map:\n" + "    type: values\n" + "    entries: *c\n");
+        builder.append("raster: \n" + "  color-map:\n" + "    type: values\n" + "    entries: *c\n");
         builder.append("  filter: ${foo = true}\n");
 
         List<MarkedYAMLException> errors = validate(builder.toString());
         assertThat(errors, empty());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testColourAsVariable() throws Exception {
         // GEOT-5445 - Try each permutation of variables with fill-color and stroke-color.

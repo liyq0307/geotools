@@ -19,13 +19,13 @@ package org.geotools.filter.v1_1;
 import java.util.HashSet;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.geotools.xsd.filter.FilterParsingUtils;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.Identifier;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:FilterType.
@@ -56,6 +56,7 @@ public class FilterTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.FilterType;
     }
@@ -67,6 +68,7 @@ public class FilterTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Filter.class;
     }
@@ -78,6 +80,7 @@ public class FilterTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // &lt;xsd:element ref="ogc:spatialOps"/&gt;
         // &lt;xsd:element ref="ogc:comparisonOps"/&gt;
@@ -88,9 +91,9 @@ public class FilterTypeBinding extends AbstractComplexBinding {
 
         // no direct child filter, check for ids
         // &lt;xsd:element maxOccurs="unbounded" ref="ogc:_Id"/&gt;
-        List ids = node.getChildValues(Identifier.class);
+        List<Identifier> ids = node.getChildValues(Identifier.class);
         if (!ids.isEmpty()) {
-            return filterFactory.id(new HashSet(ids));
+            return filterFactory.id(new HashSet<>(ids));
         }
 
         // try an extended operator (part of filter/fes 2.0)
@@ -101,6 +104,7 @@ public class FilterTypeBinding extends AbstractComplexBinding {
         return null;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         return FilterParsingUtils.Filter_getProperty(object, name);
     }

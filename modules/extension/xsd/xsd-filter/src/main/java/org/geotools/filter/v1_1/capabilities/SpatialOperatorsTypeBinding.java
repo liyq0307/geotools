@@ -18,13 +18,13 @@ package org.geotools.filter.v1_1.capabilities;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.SpatialOperators;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.SpatialOperator;
-import org.opengis.filter.capability.SpatialOperators;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:SpatialOperatorsType.
@@ -52,6 +52,7 @@ public class SpatialOperatorsTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.SpatialOperatorsType;
     }
@@ -63,7 +64,8 @@ public class SpatialOperatorsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
-    public Class getType() {
+    @Override
+    public Class<?> getType() {
         return SpatialOperators.class;
     }
 
@@ -74,13 +76,14 @@ public class SpatialOperatorsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List sops = node.getChildValues(SpatialOperator.class);
+        List<SpatialOperator> sops = node.getChildValues(SpatialOperator.class);
 
-        return factory.spatialOperators(
-                (SpatialOperator[]) sops.toArray(new SpatialOperator[sops.size()]));
+        return factory.spatialOperators(sops.toArray(new SpatialOperator[sops.size()]));
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         SpatialOperators sops = (SpatialOperators) object;
 

@@ -26,13 +26,21 @@ import org.geotools.ysld.Tuple;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.emitter.Emitable;
 import org.yaml.snakeyaml.emitter.Emitter;
-import org.yaml.snakeyaml.events.*;
+import org.yaml.snakeyaml.events.DocumentEndEvent;
+import org.yaml.snakeyaml.events.DocumentStartEvent;
+import org.yaml.snakeyaml.events.ImplicitTuple;
+import org.yaml.snakeyaml.events.MappingEndEvent;
+import org.yaml.snakeyaml.events.MappingStartEvent;
+import org.yaml.snakeyaml.events.ScalarEvent;
+import org.yaml.snakeyaml.events.SequenceEndEvent;
+import org.yaml.snakeyaml.events.SequenceStartEvent;
+import org.yaml.snakeyaml.events.StreamEndEvent;
+import org.yaml.snakeyaml.events.StreamStartEvent;
 
 /**
  * Context for {@link SldTransformer}
  *
- * <p>Handles the Yaml Stack during transformation and applies {@link SldTransformHandler}s. Tracks
- * SLD version.
+ * <p>Handles the Yaml Stack during transformation and applies {@link SldTransformHandler}s. Tracks SLD version.
  */
 class SldTransformContext {
 
@@ -62,7 +70,7 @@ class SldTransformContext {
 
         yaml = new Emitter(output, dumpOpts);
 
-        handlers = new ArrayDeque<SldTransformHandler>();
+        handlers = new ArrayDeque<>();
     }
 
     public void trace() {
@@ -118,28 +126,18 @@ class SldTransformContext {
     }
 
     public SldTransformContext mapping() throws IOException {
-        yaml.emit(
-                new MappingStartEvent(null, null, true, null, null, DumperOptions.FlowStyle.BLOCK));
+        yaml.emit(new MappingStartEvent(null, null, true, null, null, DumperOptions.FlowStyle.BLOCK));
         return this;
     }
 
     public SldTransformContext scalar(String value) throws IOException {
-        yaml.emit(
-                new ScalarEvent(
-                        null,
-                        null,
-                        new ImplicitTuple(true, false),
-                        value,
-                        null,
-                        null,
-                        DumperOptions.ScalarStyle.PLAIN));
+        yaml.emit(new ScalarEvent(
+                null, null, new ImplicitTuple(true, false), value, null, null, DumperOptions.ScalarStyle.PLAIN));
         return this;
     }
 
     public SldTransformContext sequence() throws IOException {
-        yaml.emit(
-                new SequenceStartEvent(
-                        null, null, true, null, null, DumperOptions.FlowStyle.BLOCK));
+        yaml.emit(new SequenceStartEvent(null, null, true, null, null, DumperOptions.FlowStyle.BLOCK));
         return this;
     }
 

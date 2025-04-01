@@ -30,9 +30,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.namespace.QName;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.data.Transaction.State;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.data.Diff;
-import org.geotools.data.Transaction;
-import org.geotools.data.Transaction.State;
 import org.geotools.data.wfs.WFSDiff.BatchUpdate;
 import org.geotools.data.wfs.internal.TransactionRequest;
 import org.geotools.data.wfs.internal.TransactionRequest.Delete;
@@ -41,14 +49,7 @@ import org.geotools.data.wfs.internal.TransactionRequest.Update;
 import org.geotools.data.wfs.internal.TransactionResponse;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.identity.Identifier;
+import org.geotools.util.factory.Hints;
 
 class WFSRemoteTransactionState implements State {
 
@@ -58,7 +59,7 @@ class WFSRemoteTransactionState implements State {
 
     public WFSRemoteTransactionState(WFSDataStore dataStore) {
         this.dataStore = dataStore;
-        this.localStates = new HashMap<Name, WFSContentState>();
+        this.localStates = new HashMap<>();
     }
 
     public synchronized WFSDiff getDiff(final Name typeName) {
@@ -109,7 +110,7 @@ class WFSRemoteTransactionState implements State {
         WFSClient wfs = dataStore.getWfsClient();
         TransactionRequest transactionRequest = wfs.createTransaction();
 
-        List<MutableFeatureId> requestedInsertFids = new ArrayList<MutableFeatureId>();
+        List<MutableFeatureId> requestedInsertFids = new ArrayList<>();
 
         for (Name typeName : localStates.keySet()) {
             List<MutableFeatureId> addedFids = applyDiff(typeName, transactionRequest);
@@ -117,44 +118,46 @@ class WFSRemoteTransactionState implements State {
         }
 
         TransactionResponse transactionResponse = wfs.issueTransaction(transactionRequest);
-        List<FeatureId> insertedFids = transactionResponse.getInsertedFids();
-        int deleteCount = transactionResponse.getDeleteCount();
-        int updatedCount = transactionResponse.getUpdatedCount();
-        trace(
-                getClass().getSimpleName(),
-                "::commit(): Updated: ",
-                updatedCount,
-                ", Deleted: ",
-                deleteCount,
-                ", Inserted: ",
-                insertedFids);
+        try {
+            List<FeatureId> insertedFids = transactionResponse.getInsertedFids();
+            int deleteCount = transactionResponse.getDeleteCount();
+            int updatedCount = transactionResponse.getUpdatedCount();
+            trace(
+                    getClass().getSimpleName(),
+                    "::commit(): Updated: ",
+                    updatedCount,
+                    ", Deleted: ",
+                    deleteCount,
+                    ", Inserted: ",
+                    insertedFids);
 
-        if (requestedInsertFids.size() != insertedFids.size()) {
-            throw new IllegalStateException(
-                    "Asked to add "
-                            + requestedInsertFids.size()
-                            + " Features but got "
-                            + insertedFids.size()
-                            + " insert results");
-        }
+            if (requestedInsertFids.size() != insertedFids.size()) {
+                throw new IllegalStateException("Asked to add "
+                        + requestedInsertFids.size()
+                        + " Features but got "
+                        + insertedFids.size()
+                        + " insert results");
+            }
 
-        for (int i = 0; i < requestedInsertFids.size(); i++) {
-            MutableFeatureId local = requestedInsertFids.get(i);
-            FeatureId inserted = insertedFids.get(i);
-            local.setID(inserted.getID());
-            local.setFeatureVersion(inserted.getFeatureVersion());
+            for (int i = 0; i < requestedInsertFids.size(); i++) {
+                MutableFeatureId local = requestedInsertFids.get(i);
+                FeatureId inserted = insertedFids.get(i);
+                local.setID(inserted.getID());
+                local.setFeatureVersion(inserted.getFeatureVersion());
+            }
+        } finally {
+            transactionResponse.dispose();
         }
     }
 
-    private List<MutableFeatureId> applyDiff(
-            final Name localTypeName, TransactionRequest transactionRequest) throws IOException {
+    private List<MutableFeatureId> applyDiff(final Name localTypeName, TransactionRequest transactionRequest)
+            throws IOException {
 
         final WFSContentState localState = localStates.get(localTypeName);
-        final WFSLocalTransactionState localTransactionState =
-                localState.getLocalTransactionState();
+        final WFSLocalTransactionState localTransactionState = localState.getLocalTransactionState();
         final WFSDiff diff = localTransactionState.getDiff();
 
-        List<MutableFeatureId> addedFeatureIds = new LinkedList<MutableFeatureId>();
+        List<MutableFeatureId> addedFeatureIds = new LinkedList<>();
 
         final QName remoteTypeName = dataStore.getRemoteTypeName(localTypeName);
 
@@ -166,7 +169,7 @@ class WFSRemoteTransactionState implements State {
 
         // Create a single insert element with all the inserts for this type
         final Map<String, SimpleFeature> added = diff.getAdded();
-        if (added.size() > 0) {
+        if (!added.isEmpty()) {
             Insert insert = transactionRequest.createInsert(remoteTypeName);
 
             SimpleFeatureBuilder builder = new SimpleFeatureBuilder(remoteType);
@@ -180,6 +183,10 @@ class WFSRemoteTransactionState implements State {
 
                 SimpleFeature remoteFeature = SimpleFeatureBuilder.retype(localFeature, builder);
 
+                if (Boolean.TRUE.equals(localFeature.getUserData().get(Hints.USE_PROVIDED_FID))) {
+                    remoteFeature.getUserData().put(Hints.USE_PROVIDED_FID, true);
+                }
+
                 insert.add(remoteFeature);
             }
             transactionRequest.add(insert);
@@ -188,7 +195,7 @@ class WFSRemoteTransactionState implements State {
         final Map<String, SimpleFeature> modified = diff.getModified();
 
         // Create a single delete element with all the deletes for this type
-        Set<Identifier> ids = new LinkedHashSet<Identifier>();
+        Set<Identifier> ids = new LinkedHashSet<>();
         for (Map.Entry<String, SimpleFeature> entry : modified.entrySet()) {
             if (!(Diff.NULL == entry.getValue())) {
                 continue; // not a delete
@@ -224,8 +231,7 @@ class WFSRemoteTransactionState implements State {
         return addedFeatureIds;
     }
 
-    private void applySingleUpdate(
-            QName remoteTypeName, SimpleFeature feature, TransactionRequest transactionRequest)
+    private void applySingleUpdate(QName remoteTypeName, SimpleFeature feature, TransactionRequest transactionRequest)
             throws IOException {
 
         // so bad, this is going to update a lot of unnecessary properties. We'd need to make
@@ -234,43 +240,37 @@ class WFSRemoteTransactionState implements State {
 
         Collection<Property> properties = feature.getProperties();
 
-        List<QName> propertyNames = new ArrayList<QName>();
-        List<Object> newValues = new ArrayList<Object>();
+        List<QName> propertyNames = new ArrayList<>();
+        List<Object> newValues = new ArrayList<>();
 
         for (Property p : properties) {
-            QName attName = new QName(remoteTypeName.getNamespaceURI(), p.getName().getLocalPart());
+            QName attName =
+                    new QName(remoteTypeName.getNamespaceURI(), p.getName().getLocalPart());
             Object attValue = p.getValue();
             propertyNames.add(attName);
             newValues.add(attValue);
         }
 
-        Filter updateFilter =
-                dataStore.getFilterFactory().id(Collections.singleton(feature.getIdentifier()));
+        Filter updateFilter = dataStore.getFilterFactory().id(Collections.singleton(feature.getIdentifier()));
 
-        Update update =
-                transactionRequest.createUpdate(
-                        remoteTypeName, propertyNames, newValues, updateFilter);
+        Update update = transactionRequest.createUpdate(remoteTypeName, propertyNames, newValues, updateFilter);
         transactionRequest.add(update);
     }
 
-    private void applyBatchUpdates(
-            QName remoteTypeName, WFSDiff diff, TransactionRequest transactionRequest) {
+    private void applyBatchUpdates(QName remoteTypeName, WFSDiff diff, TransactionRequest transactionRequest) {
 
         List<BatchUpdate> batchUpdates = diff.getBatchUpdates();
 
         for (BatchUpdate batch : batchUpdates) {
 
-            List<QName> propertyNames = new ArrayList<QName>(batch.properties.length);
+            List<QName> propertyNames = new ArrayList<>(batch.properties.length);
             for (Name attName : batch.properties) {
-                propertyNames.add(
-                        new QName(remoteTypeName.getNamespaceURI(), attName.getLocalPart()));
+                propertyNames.add(new QName(remoteTypeName.getNamespaceURI(), attName.getLocalPart()));
             }
             List<Object> newValues = Arrays.asList(batch.values);
             Filter updateFilter = batch.filter;
 
-            Update update =
-                    transactionRequest.createUpdate(
-                            remoteTypeName, propertyNames, newValues, updateFilter);
+            Update update = transactionRequest.createUpdate(remoteTypeName, propertyNames, newValues, updateFilter);
 
             transactionRequest.add(update);
         }

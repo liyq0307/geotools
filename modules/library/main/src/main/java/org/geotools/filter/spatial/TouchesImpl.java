@@ -16,11 +16,11 @@
  */
 package org.geotools.filter.spatial;
 
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.spatial.Touches;
 import org.geotools.filter.GeometryFilterImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.spatial.Touches;
 
 public class TouchesImpl extends GeometryFilterImpl implements Touches {
 
@@ -32,10 +32,12 @@ public class TouchesImpl extends GeometryFilterImpl implements Touches {
         super(e1, e2, matchAction);
     }
 
+    @Override
     public boolean evaluateInternal(Geometry left, Geometry right) {
         return left.touches(right);
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }

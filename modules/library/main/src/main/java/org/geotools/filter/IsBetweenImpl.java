@@ -18,10 +18,10 @@ package org.geotools.filter;
 
 import java.util.Collection;
 import java.util.Collections;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.util.Converters;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Straight implementation of GeoAPI interface.
@@ -34,8 +34,7 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
 
     protected MatchAction matchAction;
 
-    protected IsBetweenImpl(
-            Expression lower, Expression expression, Expression upper, MatchAction matchAction) {
+    protected IsBetweenImpl(Expression lower, Expression expression, Expression upper, MatchAction matchAction) {
         super(lower, upper);
         this.expression = expression;
         this.matchAction = matchAction;
@@ -45,6 +44,7 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
         this(lower, expression, upper, MatchAction.ANY);
     }
 
+    @Override
     public Expression getExpression() {
         return expression;
     }
@@ -53,11 +53,13 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
         this.expression = expression;
     }
 
+    @Override
     public MatchAction getMatchAction() {
         return matchAction;
     }
 
     // @Override
+    @Override
     public boolean evaluate(Object feature) {
         // NC - support for multiple values
         final Object object0 = eval(expression, feature);
@@ -68,24 +70,19 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
             return false;
         }
 
-        if (!(object0 instanceof Collection)
-                && !(object1 instanceof Collection)
-                && !(object2 instanceof Collection)) {
+        if (!(object0 instanceof Collection) && !(object1 instanceof Collection) && !(object2 instanceof Collection)) {
             return evaluateInternal(object0, object1, object2);
         }
 
+        @SuppressWarnings("unchecked")
         Collection<Object> oValues =
-                object0 instanceof Collection
-                        ? (Collection<Object>) object0
-                        : Collections.<Object>singletonList(object0);
+                object0 instanceof Collection ? (Collection<Object>) object0 : Collections.singletonList(object0);
+        @SuppressWarnings("unchecked")
         Collection<Object> leftValues =
-                object1 instanceof Collection
-                        ? (Collection<Object>) object1
-                        : Collections.<Object>singletonList(object1);
+                object1 instanceof Collection ? (Collection<Object>) object1 : Collections.singletonList(object1);
+        @SuppressWarnings("unchecked")
         Collection<Object> rightValues =
-                object2 instanceof Collection
-                        ? (Collection<Object>) object2
-                        : Collections.<Object>singletonList(object2);
+                object2 instanceof Collection ? (Collection<Object>) object2 : Collections.singletonList(object2);
 
         int count = 0;
 
@@ -152,16 +149,23 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
             }
         }
 
-        Comparable lc = comparable(l);
-        Comparable uc = comparable(u);
-
-        return lc.compareTo(o) <= 0 && uc.compareTo(o) >= 0;
+        return betweenCompare(o, l, u);
     }
 
+    @SuppressWarnings("unchecked")
+    private boolean betweenCompare(Object ojbect, Object low, Object up) {
+        Comparable lc = comparable(low);
+        Comparable uc = comparable(up);
+
+        return lc.compareTo(ojbect) <= 0 && uc.compareTo(ojbect) >= 0;
+    }
+
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public Expression getLowerBoundary() {
         return getExpression1();
     }
@@ -170,6 +174,7 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
         setExpression1(lowerBoundary);
     }
 
+    @Override
     public Expression getUpperBoundary() {
         return getExpression2();
     }
@@ -178,6 +183,7 @@ public class IsBetweenImpl extends CompareFilterImpl implements PropertyIsBetwee
         setExpression2(upperBoundary);
     }
 
+    @Override
     public String toString() {
         return "[ " + expression + " BETWEEN " + expression1 + " AND " + expression2 + " ]";
     }

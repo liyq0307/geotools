@@ -17,15 +17,15 @@
 package org.geotools.parameter;
 
 import java.net.URI;
+import java.text.MessageFormat;
 import javax.measure.Unit;
 import javax.media.jai.ParameterList;
+import org.geotools.api.parameter.InvalidParameterTypeException;
+import org.geotools.api.parameter.InvalidParameterValueException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterValue;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.util.Utilities;
-import org.opengis.parameter.InvalidParameterTypeException;
-import org.opengis.parameter.InvalidParameterValueException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterValue;
 
 /**
  * A particular parameter in a JAI's {@link ParameterList}.
@@ -56,17 +56,16 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
 
     /** Returns the exception to be throws for an operation on a wrong parameter type. */
     private InvalidParameterTypeException invalidType(final ClassCastException cause) {
-        final InvalidParameterTypeException exception =
-                new InvalidParameterTypeException(
-                        Errors.format(ErrorKeys.ILLEGAL_OPERATION_FOR_VALUE_CLASS_$1, getType()),
-                        getName(descriptor));
+        final Object arg0 = getType();
+        final InvalidParameterTypeException exception = new InvalidParameterTypeException(
+                MessageFormat.format(ErrorKeys.ILLEGAL_OPERATION_FOR_VALUE_CLASS_$1, arg0), getName(descriptor));
         exception.initCause(cause);
         return exception;
     }
 
     /**
-     * Returns the unlocalized operation name. This is different from {@link
-     * AbstractParameter#getName}, which may returns a localized name.
+     * Returns the unlocalized operation name. This is different from {@link AbstractParameter#getName}, which may
+     * returns a localized name.
      */
     private String getName() {
         return descriptor.getName().getCode();
@@ -78,16 +77,19 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /** Returns {@code null} since JAI's parameters have no units. */
+    @Override
     public Unit<?> getUnit() {
         return null;
     }
 
     /** Always throws an exception, since this parameter has no unit. */
+    @Override
     public double doubleValue(final Unit<?> unit) throws InvalidParameterTypeException {
         throw unitlessParameter(descriptor);
     }
 
     /** Returns the numeric value of the coordinate operation parameter. */
+    @Override
     public double doubleValue() throws InvalidParameterTypeException {
         final String name = getName();
         final Class type = getType();
@@ -104,6 +106,7 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /** Returns the positive integer value of an operation parameter. */
+    @Override
     public int intValue() throws InvalidParameterTypeException {
         final String name = getName();
         final Class type = getType();
@@ -117,6 +120,7 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /** Returns the boolean value of an operation parameter. */
+    @Override
     public boolean booleanValue() throws InvalidParameterTypeException {
         final String name = getName();
         try {
@@ -127,6 +131,7 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /** Returns the string value of an operation parameter. */
+    @Override
     public String stringValue() throws InvalidParameterTypeException {
         final String name = getName();
         try {
@@ -139,11 +144,13 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /** Always throws an exception, since this parameter has no unit. */
+    @Override
     public double[] doubleValueList(Unit<?> unit) throws InvalidParameterTypeException {
         throw unitlessParameter(descriptor);
     }
 
     /** Returns an ordered sequence of two or more numeric values of an operation parameter list. */
+    @Override
     public double[] doubleValueList() throws InvalidParameterTypeException {
         final String name = getName();
         try {
@@ -154,6 +161,7 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /** Returns an ordered sequence of two or more integer values of an operation parameter list. */
+    @Override
     public int[] intValueList() throws InvalidParameterTypeException {
         final String name = getName();
         try {
@@ -168,6 +176,7 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
      *
      * @todo Add automatic conversions, if it appears usefull for JAI parameters.
      */
+    @Override
     public URI valueFile() throws InvalidParameterTypeException {
         final String name = getName();
         try {
@@ -178,10 +187,10 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /**
-     * Returns the parameter value as an object. The object type is typically a {@link Double},
-     * {@link Integer}, {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code
-     * int[]}.
+     * Returns the parameter value as an object. The object type is typically a {@link Double}, {@link Integer},
+     * {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code int[]}.
      */
+    @Override
     public T getValue() {
         final String name = getName();
         final Object value;
@@ -198,11 +207,13 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /** Always throws an exception, since this parameter has no unit. */
+    @Override
     public void setValue(final double value, Unit<?> unit) throws InvalidParameterValueException {
         throw unitlessParameter(descriptor);
     }
 
     /** Set the parameter value as a floating point. */
+    @Override
     public void setValue(final double value) throws InvalidParameterValueException {
         final String name = getName();
         final Class type = getType();
@@ -234,6 +245,7 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /** Set the parameter value as an integer. */
+    @Override
     public void setValue(final int value) throws InvalidParameterValueException {
         final String name = getName();
         final Class type = getType();
@@ -253,6 +265,7 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /** Set the parameter value as a boolean. */
+    @Override
     public void setValue(final boolean value) throws InvalidParameterValueException {
         final String name = getName();
         try {
@@ -263,9 +276,10 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /**
-     * Set the parameter value as an object. The object type is typically a {@link Double}, {@link
-     * Integer}, {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code int[]}.
+     * Set the parameter value as an object. The object type is typically a {@link Double}, {@link Integer},
+     * {@link Boolean}, {@link String}, {@link URI}, {@code double[]} or {@code int[]}.
      */
+    @Override
     public void setValue(final Object value) throws InvalidParameterValueException {
         final String name = getName();
         try {
@@ -276,6 +290,7 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /** Always throws an exception, since this parameter has no unit. */
+    @Override
     public void setValue(double[] values, Unit<?> unit) throws InvalidParameterValueException {
         throw unitlessParameter(descriptor);
     }
@@ -306,12 +321,12 @@ final class ImagingParameter<T> extends AbstractParameter implements ParameterVa
     }
 
     /**
-     * Returns a clone of this parameter. Actually returns a different classes, since this parameter
-     * is not really cloneable (it would requires a clone of {@link #parameters} first).
+     * Returns a clone of this parameter. Actually returns a different classes, since this parameter is not really
+     * cloneable (it would requires a clone of {@link #parameters} first).
      */
     @Override
     public Parameter<T> clone() {
-        final Parameter<T> parameter = new Parameter<T>(getDescriptor());
+        final Parameter<T> parameter = new Parameter<>(getDescriptor());
         parameter.setValue(getValue());
         return parameter;
     }

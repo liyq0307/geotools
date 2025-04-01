@@ -23,7 +23,7 @@ import org.eclipse.emf.ecore.impl.EObjectImpl;
 
 import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.InternalEList;
-import org.opengis.filter.capability.TemporalOperator;
+import org.geotools.api.filter.capability.TemporalOperator;
 
 /**
  * <!-- begin-user-doc -->
@@ -73,9 +73,10 @@ public class TemporalOperatorsTypeImpl extends EObjectImpl implements TemporalOp
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<TemporalOperator> getOperators() {
         if (temporalOperator == null) {
-            temporalOperator = new EObjectContainmentEList<TemporalOperator>(TemporalOperatorType.class, this, Fes20Package.TEMPORAL_OPERATORS_TYPE__TEMPORAL_OPERATOR);
+            temporalOperator = new EObjectContainmentEList<>(TemporalOperatorType.class, this, Fes20Package.TEMPORAL_OPERATORS_TYPE__TEMPORAL_OPERATOR);
         }
         return temporalOperator;
     }

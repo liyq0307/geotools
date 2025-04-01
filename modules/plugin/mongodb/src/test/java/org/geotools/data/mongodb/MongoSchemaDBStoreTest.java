@@ -22,7 +22,7 @@ import static org.geotools.data.mongodb.MongoSchemaDBStore.DEFAULT_databaseName;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assume.assumeThat;
 
 import com.mongodb.MongoClient;
@@ -46,8 +46,7 @@ public class MongoSchemaDBStoreTest extends MongoSchemaStoreTest<MongoSchemaDBSt
 
     static final Logger LOGGER = Logging.getLogger(MongoSchemaDBStore.class);
 
-    Map<MongoSchemaDBStore, MongoClientURI> clientURIs =
-            new HashMap<MongoSchemaDBStore, MongoClientURI>();
+    Map<MongoSchemaDBStore, MongoClientURI> clientURIs = new HashMap<>();
 
     static String host;
     static int port;
@@ -67,45 +66,35 @@ public class MongoSchemaDBStoreTest extends MongoSchemaStoreTest<MongoSchemaDBSt
             hostAsString = "localhost";
         }
         if (hostAsString != null) {
-            port =
-                    portAsString == null || portAsString.isEmpty()
-                            ? 27017
-                            : Integer.parseInt(portAsString);
+            port = portAsString == null || portAsString.isEmpty() ? 27017 : Integer.parseInt(portAsString);
             MongoClientURI clientURI = generateURI("localhost", port, null, null);
             try {
                 client = new MongoClient(clientURI);
                 // perform an operation to determine if we're actually connected
-                defaultDBExists =
-                        StreamSupport.stream(client.listDatabaseNames().spliterator(), false)
-                                .anyMatch(n -> DEFAULT_databaseName.equalsIgnoreCase(n));
+                defaultDBExists = StreamSupport.stream(
+                                client.listDatabaseNames().spliterator(), false)
+                        .anyMatch(n -> DEFAULT_databaseName.equalsIgnoreCase(n));
                 if (defaultDBExists) {
                     defaultCollectionExists =
-                            client.getDB(DEFAULT_databaseName)
-                                    .collectionExists(DEFAULT_collectionName);
+                            client.getDB(DEFAULT_databaseName).collectionExists(DEFAULT_collectionName);
                 }
-                LOGGER.info(
-                        "Performing "
-                                + MongoSchemaDBStoreTest.class.getSimpleName()
-                                + " tests with "
-                                + clientURI);
+                LOGGER.info("Performing " + MongoSchemaDBStoreTest.class.getSimpleName() + " tests with " + clientURI);
             } catch (Exception e) {
                 client = null;
-                LOGGER.warning(
-                        "Exception initializing "
-                                + MongoSchemaDBStoreTest.class.getSimpleName()
-                                + " tests with "
-                                + clientURI
-                                + ": "
-                                + e);
+                LOGGER.warning("Exception initializing "
+                        + MongoSchemaDBStoreTest.class.getSimpleName()
+                        + " tests with "
+                        + clientURI
+                        + ": "
+                        + e);
             } catch (Error e) {
                 client = null;
-                LOGGER.warning(
-                        "Error initializing "
-                                + MongoSchemaDBStoreTest.class.getSimpleName()
-                                + " tests with "
-                                + clientURI
-                                + ": "
-                                + e);
+                LOGGER.warning("Error initializing "
+                        + MongoSchemaDBStoreTest.class.getSimpleName()
+                        + " tests with "
+                        + clientURI
+                        + ": "
+                        + e);
             }
         }
     }
@@ -116,7 +105,9 @@ public class MongoSchemaDBStoreTest extends MongoSchemaStoreTest<MongoSchemaDBSt
             if (!defaultDBExists) {
                 client.dropDatabase(DEFAULT_databaseName);
             } else if (!defaultCollectionExists) {
-                client.getDB(DEFAULT_databaseName).getCollection(DEFAULT_collectionName).drop();
+                client.getDB(DEFAULT_databaseName)
+                        .getCollection(DEFAULT_collectionName)
+                        .drop();
             }
             client.close();
         }
@@ -178,8 +169,7 @@ public class MongoSchemaDBStoreTest extends MongoSchemaStoreTest<MongoSchemaDBSt
     }
 
     @Test
-    public void test_Constructor_String_DefaultDatabaseAndCollection()
-            throws URISyntaxException, IOException {
+    public void test_Constructor_String_DefaultDatabaseAndCollection() throws URISyntaxException, IOException {
         MongoClientURI clientURI = generateURI(host, port);
         MongoSchemaDBStore store = new MongoSchemaDBStore(clientURI.toString());
         try {
@@ -220,8 +210,7 @@ public class MongoSchemaDBStoreTest extends MongoSchemaStoreTest<MongoSchemaDBSt
     }
 
     @Test
-    public void test_Constructor_URI_DefaultDatabaseAndCollection()
-            throws URISyntaxException, IOException {
+    public void test_Constructor_URI_DefaultDatabaseAndCollection() throws URISyntaxException, IOException {
         MongoClientURI clientURI = generateURI(host, port);
         MongoSchemaDBStore store = new MongoSchemaDBStore(clientURI);
         try {

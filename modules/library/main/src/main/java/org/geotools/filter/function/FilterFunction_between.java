@@ -20,35 +20,31 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_between extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "between",
-                    parameter(
-                            "between",
-                            Boolean.class,
-                            "Between",
-                            "Returns true if between min and max."),
-                    parameter("value", Object.class, "Value", "Number or string value"),
-                    parameter("min", Object.class, "Min", "Minimum number or string"),
-                    parameter("max", Object.class, "Max", "Maximum number or string"));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "between",
+            parameter("between", Boolean.class, "Between", "Returns true if between min and max."),
+            parameter("value", Object.class, "Value", "Number or string value"),
+            parameter("min", Object.class, "Min", "Minimum number or string"),
+            parameter("max", Object.class, "Max", "Maximum number or string"));
 
     public FilterFunction_between() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
         Object value;
         Object low;
         Object high;
 
         try { // attempt to get value and perform conversion
-            value = (Object) getExpression(0).evaluate(feature);
+            value = getExpression(0).evaluate(feature);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(
@@ -56,7 +52,7 @@ public class FilterFunction_between extends FunctionExpressionImpl {
         }
 
         try { // attempt to get value and perform conversion
-            low = (Object) getExpression(1).evaluate(feature);
+            low = getExpression(1).evaluate(feature);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(
@@ -64,7 +60,7 @@ public class FilterFunction_between extends FunctionExpressionImpl {
         }
 
         try { // attempt to get value and perform conversion
-            high = (Object) getExpression(2).evaluate(feature);
+            high = getExpression(2).evaluate(feature);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

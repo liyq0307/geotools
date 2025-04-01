@@ -31,24 +31,16 @@ import org.geotools.ysld.parse.Util;
 /** Ysld Tuple implementation. */
 public class Tuple {
     static Logger LOG = Logging.getLogger(Tuple.class);
-    static final Map<Integer, Pattern> PATTERNS = new HashMap<Integer, Pattern>();
+    static final Map<Integer, Pattern> PATTERNS = new HashMap<>();
 
-    /**
-     * Return a tuple comprised of the passed values
-     *
-     * @param values
-     */
+    /** Return a tuple comprised of the passed values */
     public static Tuple of(Object... values) {
         Tuple t = of(values.length);
         t.values = values;
         return t;
     }
 
-    /**
-     * Returns an empty tuple of length n.
-     *
-     * @param n
-     */
+    /** Returns an empty tuple of length n. */
     public static Tuple of(int n) {
         if (n < 1) {
             throw new IllegalArgumentException("n must be greater than zero");
@@ -77,10 +69,9 @@ public class Tuple {
     }
 
     private Tuple parse(String str) throws IllegalArgumentException {
-        LOG.warning(
-                "The tuple syntax "
-                        + str
-                        + " is deprecated. Please update your style to use '[' and ']' instead of '(' and ')' for tuples");
+        LOG.warning("The tuple syntax "
+                + str
+                + " is deprecated. Please update your style to use '[' and ']' instead of '(' and ')' for tuples");
         Matcher m = pattern.matcher(str);
         if (!m.matches()) {
             throw new IllegalArgumentException();
@@ -98,7 +89,6 @@ public class Tuple {
     /**
      * Parse the values of seq and write them to this Tuple
      *
-     * @param seq
      * @throws IllegalArgumentException if seq and this differ in length
      */
     public Tuple parse(List<?> seq) throws IllegalArgumentException {
@@ -119,7 +109,6 @@ public class Tuple {
     /**
      * Parse an object to this Tuple
      *
-     * @param obj
      * @throws IllegalArgumentException if obj cannot be parsed to a Tuple
      */
     public Tuple parse(Object obj) throws IllegalArgumentException {
@@ -133,28 +122,22 @@ public class Tuple {
         throw new IllegalArgumentException();
     }
 
-    /**
-     * @param i
-     * @return the ith value of the tuple
-     */
+    /** @return the ith value of the tuple */
     public Object at(int i) {
         return values[i];
     }
 
-    /**
-     * @param i
-     * @return the ith value of the tuple, as a String.
-     */
+    /** @return the ith value of the tuple, as a String. */
     public String strAt(int i) {
         Object obj = at(i);
         return obj != null ? obj.toString() : null;
     }
 
     /** @return A String representation of the tuple, of the form "(a, b)". */
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("(");
-        for (int i = 0; i < values.length; i++) {
-            Object v = values[i];
+        for (Object v : values) {
             if (v != null) {
                 if (v instanceof Color) {
                     sb.append('\'');
@@ -177,8 +160,8 @@ public class Tuple {
 
     /** @return true if all values of the tuple are null, false otherwise. */
     public boolean isNull() {
-        for (int i = 0; i < values.length; i++) {
-            if (values[i] != null) {
+        for (Object value : values) {
+            if (value != null) {
                 return false;
             }
         }

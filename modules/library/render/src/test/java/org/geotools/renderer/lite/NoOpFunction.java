@@ -16,22 +16,22 @@
  */
 package org.geotools.renderer.lite;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /** A very simple NoOp function for testing purposes */
 public class NoOpFunction extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "NoOp", FunctionNameImpl.parameter("coverage", GridCoverage2D.class));
+            new FunctionNameImpl("NoOp", FunctionNameImpl.parameter("coverage", GridCoverage2D.class));
 
     public NoOpFunction() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object gc) {
         return gc;
     }

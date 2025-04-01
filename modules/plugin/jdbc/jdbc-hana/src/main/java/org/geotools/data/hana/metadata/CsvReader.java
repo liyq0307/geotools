@@ -20,7 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,11 +32,7 @@ import java.util.List;
 class CsvReader {
 
     public CsvReader(InputStream is) {
-        try {
-            reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            throw new AssertionError(e);
-        }
+        reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
     }
 
     private BufferedReader reader;
@@ -48,7 +44,7 @@ class CsvReader {
         }
 
         Scanner scanner = new Scanner(line);
-        ArrayList<String> ret = new ArrayList<String>();
+        ArrayList<String> ret = new ArrayList<>();
         while (true) {
             String entry = scanner.getNextEntry();
             if (entry == null) {

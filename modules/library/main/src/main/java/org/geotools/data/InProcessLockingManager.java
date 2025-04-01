@@ -16,37 +16,42 @@
  */
 package org.geotools.data;
 
+import java.io.Flushable;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.Transaction.State;
+import org.geotools.api.data.DelegatingFeatureWriter;
+import org.geotools.api.data.FeatureLock;
+import org.geotools.api.data.FeatureLockException;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.LockingManager;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.data.Transaction.State;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.util.SuppressFBWarnings;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Provides In-Process FeatureLocking support for DataStore implementations.
  *
- * <p>If at all possible DataStore implementations should provide a real Feature Locking support
- * that is persisted to disk or database and resepected by other processes.
+ * <p>If at all possible DataStore implementations should provide a real Feature Locking support that is persisted to
+ * disk or database and resepected by other processes.
  *
- * <p>This class provides a stop gap solution that implementations may use for GeoServer
- * compatability.
+ * <p>This class provides a stop gap solution that implementations may use for GeoServer compatability.
  *
  * @author Jody Garnett, Refractions Research
  * @author Chris Holmes, TOPP
- * @task REVISIT: I'm not sure that the map within a map is a good idea, it makes things perhaps too
- *     complicated. A nasty bug came about with releasing, as allLocks put locks into a new
- *     collection, and the iterator just removed them from that set instead of from the storage.
- *     This is now fixed, but the loop to do it is really damn complex. I'm not sure of the
- *     solution, but there should be something that is less confusing.
+ * @task REVISIT: I'm not sure that the map within a map is a good idea, it makes things perhaps too complicated. A
+ *     nasty bug came about with releasing, as allLocks put locks into a new collection, and the iterator just removed
+ *     them from that set instead of from the storage. This is now fixed, but the loop to do it is really damn complex.
+ *     I'm not sure of the solution, but there should be something that is less confusing.
  */
 public class InProcessLockingManager implements LockingManager {
     /** lockTable access by typeName stores Transactions or MemoryLocks */
-    protected Map lockTables = new HashMap();
+    protected Map<String, Map<String, Lock>> lockTables = new HashMap<>();
 
     /**
      * Aquire lock on featureID.
@@ -59,6 +64,7 @@ public class InProcessLockingManager implements LockingManager {
      * @param featureLock FeatureLock describing lock request
      * @throws FeatureLockException Indicates a problem with the lock request
      */
+    @Override
     @SuppressFBWarnings("UW_UNCOND_WAIT")
     public synchronized void lockFeatureID(
             String typeName, String featureID, Transaction transaction, FeatureLock featureLock)
@@ -76,8 +82,7 @@ public class InProcessLockingManager implements LockingManager {
                     // lock already held by this transacstion
                     // we could just consider returning here
                     //
-                    throw new FeatureLockException(
-                            "Transaction Lock is already held by this Transaction", featureID);
+                    throw new FeatureLockException("Transaction Lock is already held by this Transaction", featureID);
                 } else {
                     // we should wait till it is available and then grab
                     // the lock
@@ -89,15 +94,12 @@ public class InProcessLockingManager implements LockingManager {
                         lock = getLock(typeName, featureID);
                     } catch (InterruptedException interupted) {
                         throw new FeatureLockException(
-                                "Interupted while waiting for Transaction Lock",
-                                featureID,
-                                interupted);
+                                "Interupted while waiting for Transaction Lock", featureID, interupted);
                     }
                 }
             } else if (lock instanceof MemoryLock) {
                 MemoryLock mlock = (MemoryLock) lock;
-                throw new FeatureLockException(
-                        "Feature Lock is held by Authorization " + mlock.authID, featureID);
+                throw new FeatureLockException("Feature Lock is held by Authorization " + mlock.authID, featureID);
             } else {
                 throw new FeatureLockException("Lock is already held " + lock, featureID);
             }
@@ -114,18 +116,16 @@ public class InProcessLockingManager implements LockingManager {
      *
      * <p>This method will not return expired locks.
      *
-     * @param typeName
-     * @param featureID
      * @return Lock if exists, or null
      */
     protected Lock getLock(String typeName, String featureID) {
-        Map locks = locks(typeName);
+        Map<String, Lock> locks = locks(typeName);
         // LOGGER.info("checking for lock " + typeName + ", " + featureID
         //    + " in locks " + locks);
 
         synchronized (locks) {
             if (locks.containsKey(featureID)) {
-                Lock lock = (Lock) locks.get(featureID);
+                Lock lock = locks.get(featureID);
 
                 if (lock.isExpired()) {
                     locks.remove(featureID);
@@ -149,19 +149,15 @@ public class InProcessLockingManager implements LockingManager {
     /**
      * Creates the right sort of In-Process Lock.
      *
-     * @param transaction
-     * @param featureLock
      * @return In-Process Lock
-     * @throws FeatureLockException When a Transaction lock is requested against
-     *     Transaction.AUTO_COMMIT
+     * @throws FeatureLockException When a Transaction lock is requested against Transaction.AUTO_COMMIT
      */
     protected synchronized Lock createLock(Transaction transaction, FeatureLock featureLock)
             throws FeatureLockException {
         if (featureLock == FeatureLock.TRANSACTION) {
             // we need a Transacstion Lock
             if (transaction == Transaction.AUTO_COMMIT) {
-                throw new FeatureLockException(
-                        "We cannot issue a Transaction lock against AUTO_COMMIT");
+                throw new FeatureLockException("We cannot issue a Transaction lock against AUTO_COMMIT");
             }
 
             TransactionLock lock = (TransactionLock) transaction.getState(this);
@@ -185,12 +181,12 @@ public class InProcessLockingManager implements LockingManager {
      * @param typeName typeName
      * @return Map of Transaction or MemoryLock by featureID
      */
-    public Map locks(String typeName) {
+    public Map<String, Lock> locks(String typeName) {
         synchronized (lockTables) {
             if (lockTables.containsKey(typeName)) {
-                return (Map) lockTables.get(typeName);
+                return lockTables.get(typeName);
             } else {
-                Map locks = new HashMap();
+                Map<String, Lock> locks = new HashMap<>();
                 lockTables.put(typeName, locks);
 
                 return locks;
@@ -203,13 +199,13 @@ public class InProcessLockingManager implements LockingManager {
      *
      * @return Set of all locks
      */
-    public Set allLocks() {
+    public Set<Lock> allLocks() {
         synchronized (lockTables) {
-            Set set = new HashSet();
-            Map fidLocks;
+            Set<Lock> set = new HashSet<>();
+            Map<String, Lock> fidLocks;
 
-            for (Iterator i = lockTables.values().iterator(); i.hasNext(); ) {
-                fidLocks = (Map) i.next();
+            for (Map<String, Lock> stringLockMap : lockTables.values()) {
+                fidLocks = stringLockMap;
                 set.addAll(fidLocks.values());
             }
 
@@ -224,13 +220,12 @@ public class InProcessLockingManager implements LockingManager {
      *
      * <ul>
      *   <li>TransactionLock (Blocking): lock held by a Transaction<br>
-     *       Authorization is granted to the Transaction holding the Lock. Conflict will result in a
-     *       block until the Transaction holding the lock completes. (This behavior is equivalent to
-     *       a Database row-lock, or a java synchronized statement)
+     *       Authorization is granted to the Transaction holding the Lock. Conflict will result in a block until the
+     *       Transaction holding the lock completes. (This behavior is equivalent to a Database row-lock, or a java
+     *       synchronized statement)
      *   <li>FeatureLock (Error): lock held by a FeatureLock<br>
-     *       Authorization is based on the set of Authorization IDs held by the provided
-     *       Transaction. Conflict will result in an error. (This behavior is equivalent to the WFS
-     *       locking specification)
+     *       Authorization is based on the set of Authorization IDs held by the provided Transaction. Conflict will
+     *       result in an error. (This behavior is equivalent to the WFS locking specification)
      * </ul>
      *
      * <p>Right now we are just going to error out with an exception
@@ -240,16 +235,14 @@ public class InProcessLockingManager implements LockingManager {
      * @param transaction Provides Authorization
      * @throws FeatureLockException If transaction does not have sufficient authroization
      */
-    public void assertAccess(String typeName, String featureID, Transaction transaction)
-            throws FeatureLockException {
+    public void assertAccess(String typeName, String featureID, Transaction transaction) throws FeatureLockException {
         Lock lock = getLock(typeName, featureID);
 
         // LOGGER.info("asserting access on lock for " + typeName + ", fid: "
         //  + featureID + ", transaction: " + transaction + ", lock " + lock);
 
         if ((lock != null) && !lock.isAuthorized(transaction)) {
-            throw new FeatureLockException(
-                    "Transaction does not have authorization for " + typeName + ":" + featureID);
+            throw new FeatureLockException("Transaction does not have authorization for " + typeName + ":" + featureID);
         }
     }
 
@@ -261,71 +254,22 @@ public class InProcessLockingManager implements LockingManager {
      * @return FeatureWriter with lock checking
      */
     public FeatureWriter<SimpleFeatureType, SimpleFeature> checkedWriter(
-            final FeatureWriter<SimpleFeatureType, SimpleFeature> writer,
-            final Transaction transaction) {
-        SimpleFeatureType featureType = writer.getFeatureType();
-        final String typeName = featureType.getTypeName();
-
-        return new DelegatingFeatureWriter<SimpleFeatureType, SimpleFeature>() {
-            SimpleFeature live = null;
-
-            public FeatureWriter<SimpleFeatureType, SimpleFeature> getDelegate() {
-                return writer;
-            }
-
-            public SimpleFeatureType getFeatureType() {
-                return writer.getFeatureType();
-            }
-
-            public SimpleFeature next() throws IOException {
-                live = writer.next();
-
-                return live;
-            }
-
-            public void remove() throws IOException {
-                if (live != null) {
-                    assertAccess(typeName, live.getID(), transaction);
-                }
-
-                writer.remove();
-                live = null;
-            }
-
-            public void write() throws IOException {
-                if (live != null) {
-                    assertAccess(typeName, live.getID(), transaction);
-                }
-
-                writer.write();
-                live = null;
-            }
-
-            public boolean hasNext() throws IOException {
-                live = null;
-
-                return writer.hasNext();
-            }
-
-            public void close() throws IOException {
-                live = null;
-                if (writer != null) writer.close();
-            }
-        };
+            final FeatureWriter<SimpleFeatureType, SimpleFeature> writer, final Transaction transaction) {
+        if (writer instanceof Flushable) {
+            return new LockingFlushingFeatureWriter(writer, transaction);
+        } else {
+            return new LockingFeatureWriter(writer, transaction);
+        }
     }
 
     /**
      * Release indicated featureID, must have correct authroization.
      *
-     * @param typeName
-     * @param featureID
-     * @param transaction
-     * @param featureLock
      * @throws IOException If lock could not be released
      */
+    @Override
     public synchronized void unLockFeatureID(
-            String typeName, String featureID, Transaction transaction, FeatureLock featureLock)
-            throws IOException {
+            String typeName, String featureID, Transaction transaction, FeatureLock featureLock) throws IOException {
         assertAccess(typeName, featureID, transaction);
         locks(typeName).remove(featureID);
     }
@@ -341,21 +285,21 @@ public class InProcessLockingManager implements LockingManager {
      * @throws IOException If transaction not authorized to refresh authID
      * @throws IllegalArgumentException If authID or transaction not provided
      */
+    @Override
     public synchronized boolean refresh(String authID, Transaction transaction) throws IOException {
         if (authID == null) {
             throw new IllegalArgumentException("lockID required");
         }
 
         if ((transaction == null) || (transaction == Transaction.AUTO_COMMIT)) {
-            throw new IllegalArgumentException(
-                    "Tansaction required (with authorization for " + authID + ")");
+            throw new IllegalArgumentException("Tansaction required (with authorization for " + authID + ")");
         }
 
         Lock lock;
         boolean refresh = false;
 
-        for (Iterator i = allLocks().iterator(); i.hasNext(); ) {
-            lock = (Lock) i.next();
+        for (Iterator<Lock> i = allLocks().iterator(); i.hasNext(); ) {
+            lock = i.next();
 
             if (lock.isExpired()) {
                 i.remove();
@@ -383,6 +327,7 @@ public class InProcessLockingManager implements LockingManager {
      * @throws IOException If transaction not authorized to release authID
      * @throws IllegalArgumentException If authID or transaction not provided
      */
+    @Override
     public boolean release(String authID, Transaction transaction) throws IOException {
         // LOGGER.info("release called on lock: " + authID + ", trans: "
         //  + transaction);
@@ -392,8 +337,7 @@ public class InProcessLockingManager implements LockingManager {
         }
 
         if ((transaction == null) || (transaction == Transaction.AUTO_COMMIT)) {
-            throw new IllegalArgumentException(
-                    "Tansaction required (with authorization for " + authID + ")");
+            throw new IllegalArgumentException("Tansaction required (with authorization for " + authID + ")");
         }
 
         Lock lock;
@@ -405,13 +349,11 @@ public class InProcessLockingManager implements LockingManager {
         // was only iterating through the values of a map, which I believe
         // java just copies, so it's immutable.  Or perhaps we just moved
         // through too many iterator layers...
-        for (Iterator i = lockTables.values().iterator(); i.hasNext(); ) {
-            Map fidMap = (Map) i.next();
-            Set unLockedFids = new HashSet();
+        for (Map<String, Lock> fidMap : lockTables.values()) {
+            Set<String> unLockedFids = new HashSet<>();
 
-            for (Iterator j = fidMap.keySet().iterator(); j.hasNext(); ) {
-                String fid = (String) j.next();
-                lock = (Lock) fidMap.get(fid);
+            for (String fid : fidMap.keySet()) {
+                lock = fidMap.get(fid);
                 // LOGGER.info("checking lock " + lock + ", is match "
                 //    + lock.isMatch(authID));
 
@@ -434,8 +376,8 @@ public class InProcessLockingManager implements LockingManager {
                 }
             }
 
-            for (Iterator k = unLockedFids.iterator(); k.hasNext(); ) {
-                fidMap.remove(k.next());
+            for (String unLockedFid : unLockedFids) {
+                fidMap.remove(unLockedFid);
             }
         }
 
@@ -447,10 +389,10 @@ public class InProcessLockingManager implements LockingManager {
      *
      * <p>Remeber lock may have expired.
      *
-     * @param authID
      * @return true if lock exists for authID
-     * @see org.geotools.data.LockingManager#lockExists(java.lang.String)
+     * @see LockingManager#lockExists(java.lang.String)
      */
+    @Override
     public boolean exists(String authID) {
         // LOGGER.info("checking existence of lock: " + authID + " in "
         //    + allLocks());
@@ -461,8 +403,8 @@ public class InProcessLockingManager implements LockingManager {
 
         Lock lock;
 
-        for (Iterator i = allLocks().iterator(); i.hasNext(); ) {
-            lock = (Lock) i.next();
+        for (Iterator<Lock> i = allLocks().iterator(); i.hasNext(); ) {
+            lock = i.next();
 
             if (lock.isExpired()) {
                 i.remove();
@@ -477,8 +419,6 @@ public class InProcessLockingManager implements LockingManager {
     /**
      * Used by test cases
      *
-     * @param typeName
-     * @param featureID
      * @return Return if feature is currently locked
      */
     public boolean isLocked(String typeName, String featureID) {
@@ -522,11 +462,10 @@ public class InProcessLockingManager implements LockingManager {
     /**
      * Class representing TransactionDuration locks.
      *
-     * <p>Implements Transasction.State so it can remomve itself when commit() or rollback() is
-     * called.
+     * <p>Implements Transasction.State so it can remomve itself when commit() or rollback() is called.
      *
-     * <p>Threads may wait on this object, it will notify when it releases the lock due to a commit
-     * or rollback opperation
+     * <p>Threads may wait on this object, it will notify when it releases the lock due to a commit or rollback
+     * opperation
      *
      * @author Jody Garnett, Refractions Research
      */
@@ -547,6 +486,7 @@ public class InProcessLockingManager implements LockingManager {
          * @param authID Authorization ID being checked
          * @return <code>false</code>
          */
+        @Override
         public boolean isMatch(String authID) {
             return false;
         }
@@ -556,17 +496,20 @@ public class InProcessLockingManager implements LockingManager {
          *
          * @return <code>true</code> if lock is stale
          */
+        @Override
         public boolean isExpired() {
             return transaction != null;
         }
 
         /** Release lock - notify those who are waiting */
+        @Override
         public void release() {
             transaction = null;
             notifyAll();
         }
 
         /** TransactionLocks do not need to be refreshed */
+        @Override
         public void refresh() {
             // do not need to implement
         }
@@ -577,6 +520,7 @@ public class InProcessLockingManager implements LockingManager {
          * @param transaction Transaction to check authorization against
          * @return true if transaction is authorized
          */
+        @Override
         public boolean isAuthorized(Transaction transaction) {
             return this.transaction == transaction;
         }
@@ -587,6 +531,7 @@ public class InProcessLockingManager implements LockingManager {
          * @param AuthID AuthoID being added to transaction
          * @throws IOException Not used
          */
+        @Override
         public void addAuthorization(String AuthID) throws IOException {
             // we don't need this callback
         }
@@ -596,6 +541,7 @@ public class InProcessLockingManager implements LockingManager {
          *
          * @throws IOException If anything goes wrong
          */
+        @Override
         public void commit() throws IOException {
             release();
         }
@@ -605,6 +551,7 @@ public class InProcessLockingManager implements LockingManager {
          *
          * @throws IOException If anything goes wrong
          */
+        @Override
         public void rollback() throws IOException {
             release();
         }
@@ -614,6 +561,7 @@ public class InProcessLockingManager implements LockingManager {
          *
          * @param transaction Transaction on putState, or null on removeState
          */
+        @Override
         public void setTransaction(Transaction transaction) {
             if (transaction == null) {
                 release();
@@ -622,6 +570,7 @@ public class InProcessLockingManager implements LockingManager {
             this.transaction = transaction;
         }
 
+        @Override
         public String toString() {
             return "TranasctionLock(" + !isExpired() + ")";
         }
@@ -649,16 +598,20 @@ public class InProcessLockingManager implements LockingManager {
             expiry = System.currentTimeMillis() + length;
         }
 
+        @Override
         public boolean isMatch(String id) {
             return authID.equals(id);
         }
 
+        @Override
         public void refresh() {
             expiry = System.currentTimeMillis() + duration;
         }
 
+        @Override
         public void release() {}
 
+        @Override
         public boolean isExpired() {
             if (duration == 0) {
                 return false; // perma lock
@@ -669,6 +622,7 @@ public class InProcessLockingManager implements LockingManager {
             return now >= expiry;
         }
 
+        @Override
         public boolean isAuthorized(Transaction transaction) {
             // LOGGER.info("checking authorization on " + this.toString() + ", "
             //  + ((transaction != Transaction.AUTO_COMMIT)
@@ -678,6 +632,7 @@ public class InProcessLockingManager implements LockingManager {
                     && transaction.getAuthorizations().contains(authID);
         }
 
+        @Override
         public String toString() {
             if (duration == 0) {
                 return "MemoryLock(" + authID + "|PermaLock)";
@@ -688,6 +643,90 @@ public class InProcessLockingManager implements LockingManager {
             long dur = duration;
 
             return "MemoryLock(" + authID + "|" + delta + "ms|" + dur + "ms)";
+        }
+    }
+
+    class LockingFeatureWriter implements DelegatingFeatureWriter<SimpleFeatureType, SimpleFeature> {
+
+        private final FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
+        private final Transaction transaction;
+        private final String typeName;
+
+        protected SimpleFeature live = null;
+
+        public LockingFeatureWriter(FeatureWriter<SimpleFeatureType, SimpleFeature> writer, Transaction transaction) {
+            this.writer = writer;
+            this.transaction = transaction;
+            this.typeName = writer.getFeatureType().getTypeName();
+        }
+
+        @Override
+        public FeatureWriter<SimpleFeatureType, SimpleFeature> getDelegate() {
+            return writer;
+        }
+
+        @Override
+        public SimpleFeatureType getFeatureType() {
+            return writer.getFeatureType();
+        }
+
+        @Override
+        public SimpleFeature next() throws IOException {
+            live = writer.next();
+            return live;
+        }
+
+        @Override
+        public void remove() throws IOException {
+            if (live != null) {
+                assertAccess(typeName, live.getID(), transaction);
+            }
+
+            writer.remove();
+            live = null;
+        }
+
+        @Override
+        public void write() throws IOException {
+            if (live != null) {
+                assertAccess(typeName, live.getID(), transaction);
+            }
+
+            writer.write();
+            live = null;
+        }
+
+        @Override
+        public boolean hasNext() throws IOException {
+            live = null;
+            return writer.hasNext();
+        }
+
+        @Override
+        public void close() throws IOException {
+            live = null;
+            if (writer != null) {
+                writer.close();
+            }
+        }
+    }
+
+    class LockingFlushingFeatureWriter extends LockingFeatureWriter implements Flushable {
+
+        private final Flushable flushable;
+
+        public LockingFlushingFeatureWriter(
+                FeatureWriter<SimpleFeatureType, SimpleFeature> writer, Transaction transaction) {
+            super(writer, transaction);
+            this.flushable = (Flushable) writer;
+        }
+
+        @Override
+        public void flush() throws IOException {
+            live = null;
+            if (flushable != null) {
+                flushable.flush();
+            }
         }
     }
 }

@@ -18,17 +18,17 @@
 package org.geotools.appschema.feature;
 
 import java.util.logging.Logger;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.FeatureFactory;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.complex.config.NonFeatureTypeProxy;
 import org.geotools.data.complex.feature.type.Types;
 import org.geotools.feature.AttributeBuilder;
 import org.geotools.feature.type.AttributeDescriptorImpl;
 import org.geotools.feature.type.GeometryDescriptorImpl;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.FeatureFactory;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
 
 /**
  * Builder for attributes.
@@ -37,31 +37,29 @@ import org.opengis.feature.type.Name;
  */
 public class AppSchemaAttributeBuilder extends AttributeBuilder {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(AppSchemaAttributeBuilder.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(AppSchemaAttributeBuilder.class);
 
     public AppSchemaAttributeBuilder(FeatureFactory attributeFactory) {
         super(attributeFactory);
     }
 
     /**
-     * Adds an attribute to the complex attribute being built overriding the type of the declared
-     * attribute descriptor by a subtype of it. <br>
+     * Adds an attribute to the complex attribute being built overriding the type of the declared attribute descriptor
+     * by a subtype of it. <br>
      *
-     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to
-     * determine the attribute type.
+     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to determine the attribute
+     * type.
      *
      * @param id the attribtue id
      * @param value The value of the attribute.
      * @param name The name of the attribute.
-     * @param type the actual type of the attribute, which might be the same as the declared type
-     *     for the given AttributeDescriptor or a derived type.
+     * @param type the actual type of the attribute, which might be the same as the declared type for the given
+     *     AttributeDescriptor or a derived type.
      */
-    public Attribute add(
-            final String id, final Object value, final Name name, final AttributeType type) {
+    public Attribute add(final String id, final Object value, final Name name, final AttributeType type) {
         // existence check
         AttributeDescriptor descriptor = attributeDescriptor(name);
-        AttributeType declaredType = (AttributeType) descriptor.getType();
+        AttributeType declaredType = descriptor.getType();
         if (!declaredType.equals(type)) {
             boolean argIsSubType = Types.isSuperType(type, declaredType);
             if (!argIsSubType) {
@@ -71,13 +69,12 @@ public class AppSchemaAttributeBuilder extends AttributeBuilder {
                  * IllegalArgumentException(type.getName() + " is not a subtype of " +
                  * declaredType.getName());
                  */
-                LOGGER.fine(
-                        "Adding attribute "
-                                + name
-                                + " of type "
-                                + type.getName()
-                                + " which is not a subtype of "
-                                + declaredType.getName());
+                LOGGER.fine("Adding attribute "
+                        + name
+                        + " of type "
+                        + type.getName()
+                        + " which is not a subtype of "
+                        + declaredType.getName());
             }
             int minOccurs = descriptor.getMinOccurs();
             int maxOccurs = descriptor.getMaxOccurs();
@@ -85,18 +82,10 @@ public class AppSchemaAttributeBuilder extends AttributeBuilder {
             // TODO: handle default value
             Object defaultValue = null;
             if (type instanceof GeometryType) {
-                descriptor =
-                        new GeometryDescriptorImpl(
-                                (GeometryType) type,
-                                name,
-                                minOccurs,
-                                maxOccurs,
-                                nillable,
-                                defaultValue);
+                descriptor = new GeometryDescriptorImpl(
+                        (GeometryType) type, name, minOccurs, maxOccurs, nillable, defaultValue);
             } else {
-                descriptor =
-                        new AttributeDescriptorImpl(
-                                type, name, minOccurs, maxOccurs, nillable, defaultValue);
+                descriptor = new AttributeDescriptorImpl(type, name, minOccurs, maxOccurs, nillable, defaultValue);
             }
         }
         Attribute attribute;

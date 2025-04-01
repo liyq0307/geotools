@@ -18,8 +18,8 @@ package org.geotools.kml.bindings;
 
 import java.awt.Color;
 import javax.xml.namespace.QName;
+import org.geotools.api.style.LineSymbolizer;
 import org.geotools.kml.KML;
-import org.geotools.styling.LineSymbolizer;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.Binding;
@@ -56,6 +56,7 @@ public class LineStyleTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.LineStyleType;
     }
@@ -67,10 +68,12 @@ public class LineStyleTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return LineSymbolizer.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return Binding.AFTER;
     }
@@ -82,6 +85,7 @@ public class LineStyleTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Color color = (Color) value;
         Float width = (Float) node.getChildValue("width", Float.valueOf(1f));

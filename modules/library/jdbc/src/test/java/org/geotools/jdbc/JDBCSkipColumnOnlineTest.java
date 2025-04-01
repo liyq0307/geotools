@@ -16,12 +16,16 @@
  */
 package org.geotools.jdbc;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.junit.Test;
 
 /**
  * Checks the datastore can work against unknown columns
@@ -37,37 +41,40 @@ public abstract class JDBCSkipColumnOnlineTest extends JDBCTestSupport {
 
     protected SimpleFeatureType schema;
 
+    @Override
     protected abstract JDBCSkipColumnTestSetup createTestSetup();
 
     @Override
     protected void connect() throws Exception {
         super.connect();
-        schema =
-                DataUtilities.createType(
-                        dataStore.getNamespaceURI() + "." + SKIPCOLUMN,
-                        ID + ":0," + GEOM + ":Point," + NAME + ":String");
+        schema = DataUtilities.createType(
+                dataStore.getNamespaceURI() + "." + SKIPCOLUMN, ID + ":0," + GEOM + ":Point," + NAME + ":String");
     }
 
+    @Test
     public void testSkippedColumn() throws Exception {
         SimpleFeatureType ft = dataStore.getSchema(tname(SKIPCOLUMN));
         assertFeatureTypesEqual(schema, ft);
     }
 
+    @Test
     public void testReadFeatures() throws Exception {
-        SimpleFeatureCollection fc = dataStore.getFeatureSource(tname(SKIPCOLUMN)).getFeatures();
+        SimpleFeatureCollection fc =
+                dataStore.getFeatureSource(tname(SKIPCOLUMN)).getFeatures();
         assertEquals(1, fc.size());
         try (SimpleFeatureIterator fr = fc.features()) {
             assertTrue(fr.hasNext());
-            SimpleFeature f = fr.next();
+            fr.next();
             assertFalse(fr.hasNext());
         }
     }
 
+    @Test
     public void testGetBounds() throws Exception {
         ReferencedEnvelope env = dataStore.getFeatureSource(tname(SKIPCOLUMN)).getBounds();
-        assertEquals(0.0, env.getMinX());
-        assertEquals(0.0, env.getMinY());
-        assertEquals(0.0, env.getMaxX());
-        assertEquals(0.0, env.getMaxY());
+        assertEquals(0.0, env.getMinX(), 0.0);
+        assertEquals(0.0, env.getMinY(), 0.0);
+        assertEquals(0.0, env.getMaxX(), 0.0);
+        assertEquals(0.0, env.getMaxY(), 0.0);
     }
 }

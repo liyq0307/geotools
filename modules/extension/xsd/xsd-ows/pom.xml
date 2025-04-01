@@ -7,18 +7,15 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-  <project xmlns="http://maven.apache.org/POM/4.0.0" 
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-           xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                               http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools.xsd</groupId>
     <artifactId>xsd</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
-  
+
   <!-- =========================================================== -->
   <!--     Module Description                                      -->
   <!-- =========================================================== -->
@@ -26,12 +23,8 @@
   <artifactId>gt-xsd-ows</artifactId>
   <packaging>jar</packaging>
   <name>OWS XML Support</name>
-  
 
-
-  <description>
-    Filter XML support for Geotools.
-  </description>
+  <description>Filter XML support for Geotools.</description>
 
   <licenses>
     <license>
@@ -41,14 +34,13 @@
     </license>
   </licenses>
 
-
   <!-- =========================================================== -->
   <!--     Developers and Contributors                             -->
   <!-- =========================================================== -->
   <developers>
     <developer>
-      <name>Justin Deoliveira</name>
       <id>jdeolive</id>
+      <name>Justin Deoliveira</name>
       <email>jdeolive@openplans.org</email>
       <organization>The Open Planning Project</organization>
       <roles>
@@ -57,7 +49,6 @@
     </developer>
   </developers>
 
-
   <!-- =========================================================== -->
   <!--     Dependency Management                                   -->
   <!-- =========================================================== -->
@@ -65,7 +56,11 @@
     <dependency>
       <groupId>org.geotools.ogc</groupId>
       <artifactId>net.opengis.ows</artifactId>
-      <version>23-SNAPSHOT</version>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.measure</groupId>
+      <artifactId>unit-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.geotools.xsd</groupId>
@@ -73,10 +68,16 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-sample-data</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.geotools.xsd</groupId>
       <artifactId>gt-xsd-core</artifactId>
-      <classifier>tests</classifier>
       <version>${project.version}</version>
+      <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -97,6 +98,15 @@
           <schemaSourceDirectory>${basedir}/src/main/resources/org/geotools/ows/v2_0</schemaSourceDirectory>
           <destinationPackage>org.geotools.ows.v2_0</destinationPackage>
           <complexBindingBaseClass>org.geotools.xsd.AbstractComplexEMFBinding</complexBindingBaseClass>
+          <simpleBindingBaseClass>org.geotools.xsd.AbstractSimpleBinding</simpleBindingBaseClass>
+          <generateConfiguration>true</generateConfiguration>
+          <generateAttributeBindings>true</generateAttributeBindings>
+          <generateElementBindings>true</generateElementBindings>
+          <generateTests>true</generateTests>
+          <generateTypeBindings>true</generateTypeBindings>
+          <generateXsd>true</generateXsd>
+          <targetPrefix>ows</targetPrefix>
+          <includeComplexTypes>true</includeComplexTypes>
           <bindingConstructorArguments>
             <bindingConstructorArgument>
               <name>factory</name>
@@ -104,13 +114,9 @@
               <mode>parent</mode>
             </bindingConstructorArgument>
           </bindingConstructorArguments>
-          <includes>
-            <include>LanguageStringType</include>
-          </includes>
-          </configuration>
+        </configuration>
       </plugin>
     </plugins>
   </build>
 
 </project>
-

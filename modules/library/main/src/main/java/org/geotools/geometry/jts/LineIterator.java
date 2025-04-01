@@ -96,8 +96,8 @@ public final class LineIterator extends AbstractLiteIterator {
      * @param ls The line string the iterator will use
      * @param at The affine transform applied to coordinates during iteration
      * @param generalize if true apply simple distance based generalization
-     * @param maxDistance during iteration, a point will be skipped if it's distance from the
-     *     previous is less than maxDistance
+     * @param maxDistance during iteration, a point will be skipped if it's distance from the previous is less than
+     *     maxDistance
      */
     //    public LineIterator(
     //        LineString ls, AffineTransform at, boolean generalize,
@@ -106,55 +106,25 @@ public final class LineIterator extends AbstractLiteIterator {
     //
     //    }
 
-    /**
-     * @param ls a LineString
-     * @param at
-     * @param generalize
-     * @param maxDistance
-     * @param xScale
-     * @param yScale
-     */
+    /** @param ls a LineString */
     public void init(
-            LineString ls,
-            AffineTransform at,
-            boolean generalize,
-            float maxDistance,
-            float xScale,
-            float yScale) {
+            LineString ls, AffineTransform at, boolean generalize, float maxDistance, float xScale, float yScale) {
         this.xScale = xScale;
         this.yScale = yScale;
 
         _init(ls, at, generalize, maxDistance);
     }
 
-    /**
-     * @param ls
-     * @param at
-     * @param generalize
-     * @param maxDistance
-     */
+    /** */
     public void init(LineString ls, AffineTransform at, boolean generalize, float maxDistance) {
         if (at == null) at = new AffineTransform();
         _init(ls, at, generalize, maxDistance);
 
-        xScale =
-                (float)
-                        Math.sqrt(
-                                (at.getScaleX() * at.getScaleX())
-                                        + (at.getShearX() * at.getShearX()));
-        yScale =
-                (float)
-                        Math.sqrt(
-                                (at.getScaleY() * at.getScaleY())
-                                        + (at.getShearY() * at.getShearY()));
+        xScale = (float) Math.sqrt((at.getScaleX() * at.getScaleX()) + (at.getShearX() * at.getShearX()));
+        yScale = (float) Math.sqrt((at.getScaleY() * at.getScaleY()) + (at.getShearY() * at.getShearY()));
     }
 
-    /**
-     * @param ls
-     * @param at
-     * @param generalize
-     * @param maxDistance
-     */
+    /** */
     private void _init(LineString ls, AffineTransform at, boolean generalize, float maxDistance) {
         if (at == null) {
             at = NO_TRANSFORM;
@@ -266,6 +236,7 @@ public final class LineIterator extends AbstractLiteIterator {
      * @see #WIND_EVEN_ODD
      * @see #WIND_NON_ZERO
      */
+    @Override
     public int getWindingRule() {
         return WIND_NON_ZERO;
     }
@@ -275,17 +246,18 @@ public final class LineIterator extends AbstractLiteIterator {
      *
      * @return <code>true</code> if all the segments have been read; <code>false</code> otherwise.
      */
+    @Override
     public boolean isDone() {
         return done;
     }
 
     /**
-     * Moves the iterator to the next segment of the path forwards along the primary direction of
-     * traversal as long as there are more points in that direction.
+     * Moves the iterator to the next segment of the path forwards along the primary direction of traversal as long as
+     * there are more points in that direction.
      */
+    @Override
     public void next() {
-        if (((currentCoord == (coordinateCount - 1)) && !isClosed)
-                || ((currentCoord == coordinateCount) && isClosed)) {
+        if (((currentCoord == (coordinateCount - 1)) && !isClosed) || ((currentCoord == coordinateCount) && isClosed)) {
             done = true;
         } else {
             if (generalize) {
@@ -323,10 +295,11 @@ public final class LineIterator extends AbstractLiteIterator {
     }
 
     /** @see java.awt.geom.PathIterator#currentSegment(double[]) */
+    @Override
     public int currentSegment(double[] coords) {
         if (currentCoord == 0) {
-            coords[0] = (double) coordinates.getX(0);
-            coords[1] = (double) coordinates.getY(0);
+            coords[0] = coordinates.getX(0);
+            coords[1] = coordinates.getY(0);
             at.transform(coords, 0, coords, 0, 1);
             return SEG_MOVETO;
         } else if ((currentCoord == coordinateCount) && isClosed) {

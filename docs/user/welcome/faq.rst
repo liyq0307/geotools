@@ -54,13 +54,11 @@ GeoTools supports additional formats through the use of plug-ins. You can contro
 by your application by only including the plug-ins you require.
 
 * ``arcgrid`` 
-* ``arcsde`` 
 * ``db2`` 
 * raster formats
   
   * ``geotiff`` 
   * ``grassraster`` 
-  * ``gtopo30`` 
   * ``image``  - world plus image files using common image formats such as JPEG, TIFF, GIF and PNG
   * ``imageio-ext-gdal`` (allows access to additional GDAL formats thanks to the ImageIO project)
   * ``imagemoasaic`` 
@@ -69,14 +67,16 @@ by your application by only including the plug-ins you require.
   
 * Database ``gt-jdbc-ng`` `` support
   
-  * ``h2`` 
-  * ``mysql`` 
-  * ``oracle`` 
-  * ``postgis`` 
-  * ``spatialite`` 
-  * ``sqlserver`` 
+  + ``db2``
+  + ``geopackage``
+  + ``hana``  
+  + ``h2``  
+  + ``mysql``  
+  + ``oracle``  
+  + ``postgis``
+  + ``sqlserver``
+  + ``teradata``
 
-* ``postgis`` 
 * ``property``  - simple text file format often used for testing
 * ``shapefile`` 
 
@@ -93,8 +93,8 @@ There are also some "unsupported" formats that are either popular or under devel
 
 The current authoritative list of plugins is of course the source code: 
 
-* https://github.com/geotools/geotools/tree/master/modules/plugin
-* https://github.com/geotools/geotools/tree/master/modules/unsupported
+* https://github.com/geotools/geotools/tree/main/modules/plugin
+* https://github.com/geotools/geotools/tree/main/modules/unsupported
 
 GeoTools versions
 ^^^^^^^^^^^^^^^^^
@@ -105,7 +105,7 @@ Q. How are GeoTools versions organized?
 Like many open source projects, GeoTools has a *development* version and one or more *stable* versions active at any
 given time. By active, we mean that the project developers are working on new features, improvements and bug fixes.
 
-The development version is the master branch in the GitHub repository (https://github.com/geotools/geotools).
+The development version is the main branch in the GitHub repository (https://github.com/geotools/geotools).
 This is the 'bleeding edge' code where the latest features are being worked on. Eventually this code will become
 the next stable branch. 
 
@@ -134,29 +134,39 @@ patch
 Q. What is a SNAPSHOT version and how do I use it?
 ''''''''''''''''''''''''''''''''''''''''''''''''''
 
-A snapshot is the GeoTools code that the developers are actively working on. Usually there will be two active snapshots:
-one associated with the most recent formal release (e.g GeoTools 14-SNAPSHOT) and a second for the development version
-(e.g. GeoTools 15-SNAPSHOT). At times there will also be snapshot releases for an earlier stable branch that is still
-being maintained (e.g. GeoTools 13-SNAPSHOT).
+A snapshot is the GeoTools code that the developers are actively working on.
+
+Usually there will be three active snapshots:
+
+* one associated with the stable branch (e.g GeoTools 23-SNAPSHOT);
+* a second associated with the maintenance branch (e.g. 22-SNAPSHOT);
+* and a third for main branch (e.g. 24-SNAPSHOT).
+
+At times there will also be snapshot releases for an earlier branch that is having a bug fixe
+applied (e.g. GeoTools 19-SNAPSHOT).
 
 New snapshot jars are built nightly and deployed to a repository separate from the one used for formal releases. If you
-are using Maven as your build tool you can work with a snapshot release by adding the following to your ``pom.xml`` ::
+are using Maven as your build tool you can work with a snapshot release by adding the following to your ``pom.xml`` :
 
-    <repository>
-        <id>boundless</id>
-        <name>Boundless Maven Repository</name>
-        <url>http://repo.boundlessgeo.com/main</url>
-        <snapshots>
-            <enabled>true</enabled>
-        </snapshots>
-    </repository>
+.. code-block:: xml
 
-You can now build your project against a snapshot release by setting it as the your version property as shown here::
+   <repository>
+       <id>osgeo-snapshot</id>
+       <name>OSGeo Snapshot Repository</name>
+       <url>https://repo.osgeo.org/repository/snapshot/</url>
+       <snapshots><enabled>true</enabled></snapshots>
+       <releases><enabled>false</enabled></releases>
+   </repository>
 
-    <properties>
-        <geotools.version>8-SNAPSHOT</geotools.version>
-    </properties>
+You can now build your project against a snapshot release by setting it as the your version property as shown here:
 
+.. code-block:: xml
+
+   <properties>
+       <geotools.version>24-SNAPSHOT</geotools.version>
+   </properties>
+
+This is a great approach when to use when actively testing a fix in your application.
 
 Common License Questions
 ^^^^^^^^^^^^^^^^^^^^^^^^

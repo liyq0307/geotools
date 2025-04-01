@@ -16,17 +16,19 @@
  */
 package org.geotools.xml.filter;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import junit.framework.Protectable;
-import junit.framework.Test;
-import junit.framework.TestResult;
-import junit.framework.TestSuite;
+import junit.framework.Test; // NOPMD
+import junit.framework.TestResult; // NOPMD
+import junit.framework.TestSuite; // NOPMD
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -35,20 +37,16 @@ import org.geotools.test.TestData;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+@SuppressWarnings("PMD.DisallowJUnit3") // weird stuff going on here
 public class DOMParserTestSuite extends TestSuite {
 
     /** Standard logging instance */
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(DOMParserTestSuite.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(DOMParserTestSuite.class);
 
     /** Schema on which to preform tests */
     protected static SimpleFeatureType testSchema = null;
@@ -93,7 +91,7 @@ public class DOMParserTestSuite extends TestSuite {
         // Builds the test feature
         Object[] attributes = new Object[11];
         attributes[0] = geomFac.createLineString(coords);
-        attributes[1] = Boolean.valueOf(true);
+        attributes[1] = Boolean.TRUE;
         attributes[2] = Character.valueOf('t');
         attributes[3] = Byte.valueOf("10");
         attributes[4] = Short.valueOf("101");
@@ -115,6 +113,7 @@ public class DOMParserTestSuite extends TestSuite {
      *
      * @return Test
      */
+    @SuppressWarnings("PMD.DisallowJunit3")
     public static Test suite() {
         DOMParserTestSuite suite = new DOMParserTestSuite();
 
@@ -123,15 +122,8 @@ public class DOMParserTestSuite extends TestSuite {
 
             File dir = TestData.file(DOMParserTestSuite.class, "test9.xml").getParentFile();
 
-            File tests[] =
-                    dir.listFiles(
-                            new FileFilter() {
-                                public boolean accept(File pathname) {
-                                    return pathname.toString().endsWith("test20.xml");
-                                }
-                            });
-            for (int i = 0; i < tests.length; i++) {
-                File test = tests[i];
+            File[] tests = dir.listFiles(pathname -> pathname.toString().endsWith("test20.xml"));
+            for (File test : tests) {
                 suite.addTest(suite.new DomTestXml(test.getName()));
             }
             // .. etc..
@@ -143,6 +135,7 @@ public class DOMParserTestSuite extends TestSuite {
     }
 
     /** Quick test of a single xml document */
+    @SuppressWarnings("PMD.DisallowJunit3")
     class DomTestXml implements Test {
         String document;
 
@@ -150,24 +143,21 @@ public class DOMParserTestSuite extends TestSuite {
             this.document = document;
         }
 
+        @Override
         public String toString() {
             return document;
         }
 
+        @Override
         public int countTestCases() {
             return 1;
         }
 
+        @Override
         public void run(TestResult result) {
             // System.out.println(document);
             result.startTest(this);
-            Protectable p =
-                    new Protectable() {
-                        public void protect() throws Throwable {
-                            DomTestXml.this.runBare();
-                        }
-                    };
-            result.runProtected(this, p);
+            result.runProtected(this, () -> runBare());
             result.endTest(this);
         }
 

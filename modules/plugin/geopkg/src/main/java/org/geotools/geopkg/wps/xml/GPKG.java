@@ -40,16 +40,19 @@ public final class GPKG extends XSD {
     /** private constructor */
     private GPKG() {}
 
-    protected void addDependencies(Set dependencies) {
+    @Override
+    protected void addDependencies(Set<XSD> dependencies) {
         dependencies.add(FES.getInstance());
     }
 
     /** Returns 'http://www.opengis.net/gpkg'. */
+    @Override
     public String getNamespaceURI() {
         return NAMESPACE;
     }
 
     /** Returns the location of 'gpkg.xsd.'. */
+    @Override
     public String getSchemaLocation() {
         return getClass().getResource("gpkg.xsd").toString();
     }
@@ -59,8 +62,7 @@ public final class GPKG extends XSD {
 
     /* Type Definitions */
     /** @generated */
-    public static final QName coveragetype =
-            new QName("http://www.opengis.net/gpkg", "coveragetype");
+    public static final QName coveragetype = new QName("http://www.opengis.net/gpkg", "coveragetype");
     /** @generated */
     public static final QName geopkgtype = new QName("http://www.opengis.net/gpkg", "geopkgtype");
     /** @generated */
@@ -70,20 +72,21 @@ public final class GPKG extends XSD {
     /** @generated */
     public static final QName layertype = new QName("http://www.opengis.net/gpkg", "layertype");
     /** @generated */
-    public static final QName geopkgtype_features =
-            new QName("http://www.opengis.net/gpkg", "geopkgtype_features");
+    public static final QName geopkgtype_features = new QName("http://www.opengis.net/gpkg", "geopkgtype_features");
     /** @generated */
-    public static final QName geopkgtype_tiles =
-            new QName("http://www.opengis.net/gpkg", "geopkgtype_tiles");
+    public static final QName geopkgtype_tiles = new QName("http://www.opengis.net/gpkg", "geopkgtype_tiles");
     /** @generated */
-    public static final QName gridsettype_grids =
-            new QName("http://www.opengis.net/gpkg", "gridsettype_grids");
+    public static final QName gridsettype_grids = new QName("http://www.opengis.net/gpkg", "gridsettype_grids");
     /** @generated */
     public static final QName bboxtype = new QName("http://www.opengis.net/gpkg", "bboxtype");
 
     /* Elements */
     /** @generated */
     public static final QName geopackage = new QName("http://www.opengis.net/gpkg", "geopackage");
+
+    public static final QName overview = new QName("http://www.opengis.net/gpkg", "overview");
+
+    public static final QName parametertype = new QName("http://www.opengis.net/gpkg", "parametertype");
 
     /* Attributes */
 

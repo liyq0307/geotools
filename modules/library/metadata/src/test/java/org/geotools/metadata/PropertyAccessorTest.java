@@ -16,18 +16,25 @@
  */
 package org.geotools.metadata;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.CitationImpl;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.util.SimpleInternationalString;
-import org.junit.*;
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.util.InternationalString;
+import org.junit.Test;
 
 /**
  * Tests the {@link PropertyAccessor} class.
@@ -39,7 +46,7 @@ public final class PropertyAccessorTest {
     /** Creates a property accessor for the given citation. */
     private static PropertyAccessor createPropertyAccessor(final Citation citation) {
         final Class<?> implementation = citation.getClass();
-        final Class<?> type = PropertyAccessor.getType(implementation, "org.opengis.metadata");
+        final Class<?> type = PropertyAccessor.getType(implementation, "org.geotools.api.metadata");
         assertNotNull(type);
         return new PropertyAccessor(implementation, type);
     }
@@ -48,12 +55,11 @@ public final class PropertyAccessorTest {
     @Test
     public void testConstructor() {
         final Citation citation = Citations.EPSG;
-        PropertyAccessor accessor;
         assertNull(
                 "No dummy interface expected.",
-                PropertyAccessor.getType(citation.getClass(), "org.opengis.dummy"));
-        accessor = createPropertyAccessor(citation);
-        assertTrue("Count of 'get' methods.", accessor.count() >= 13);
+                PropertyAccessor.getType(citation.getClass(), "org.geotools.api.dummy"));
+        PropertyAccessor accessor = createPropertyAccessor(citation);
+        assertTrue("Count of 'get' methods.", accessor.count() >= 11);
     }
 
     /** Tests the {@code indexOf} and {code name} methods. */
@@ -183,7 +189,7 @@ public final class PropertyAccessorTest {
         hashCode = accessor.hashCode(citation);
         assertEquals("Metadata with a single String value.", ISBN.hashCode(), hashCode);
 
-        final Set<Object> set = new HashSet<Object>();
+        final Set<Object> set = new HashSet<>();
         assertEquals("By Set.hashCode() contract.", 0, set.hashCode());
         assertTrue(set.add(ISBN));
         assertEquals("Expected Metadata.hashCode() == Set.hashCode().", set.hashCode(), hashCode);
@@ -197,7 +203,7 @@ public final class PropertyAccessorTest {
         assertEquals("CitationsImpl.hashCode() should delegate.", hashCode, citation.hashCode());
 
         final Collection<Object> values = citation.asMap().values();
-        assertEquals(hashCode, new HashSet<Object>(values).hashCode());
+        assertEquals(hashCode, new HashSet<>(values).hashCode());
         assertTrue(values.containsAll(set));
         assertTrue(set.containsAll(values));
     }

@@ -1,6 +1,7 @@
 package org.geotools.referencing.operation.matrix;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
@@ -67,7 +68,7 @@ public class MatrixTest {
         a.mul(2, m);
         assertEquals(2, a.m00, 0);
 
-        double array[] = new double[2];
+        double[] array = new double[2];
         m.getColumn(0, array);
         assertArrayEquals(array, new double[] {1, 3}, 0);
         m.getRow(1, array);
@@ -104,7 +105,7 @@ public class MatrixTest {
         a.mul(2, m);
         assertEquals(2, a.mat.a11, 0);
 
-        double array[] = new double[3];
+        double[] array = new double[3];
         m.getColumn(0, array);
         assertArrayEquals(array, new double[] {1, 4, 7}, 0);
         m.getRow(1, array);

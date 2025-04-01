@@ -19,8 +19,8 @@ package org.geotools.filter.capability;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import org.opengis.filter.capability.GeometryOperand;
-import org.opengis.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.GeometryOperand;
+import org.geotools.api.filter.capability.SpatialOperator;
 
 /**
  * Implementation of the SpatialOperator interface.
@@ -33,17 +33,17 @@ public class SpatialOperatorImpl extends OperatorImpl implements SpatialOperator
 
     public SpatialOperatorImpl(String name) {
         super(name);
-        geometryOperands = new HashSet<GeometryOperand>();
+        geometryOperands = new HashSet<>();
     }
 
     public SpatialOperatorImpl(String name, Collection<GeometryOperand> geometryOperands) {
         super(name);
-        this.geometryOperands = new HashSet<GeometryOperand>(geometryOperands);
+        this.geometryOperands = new HashSet<>(geometryOperands);
     }
 
-    public SpatialOperatorImpl(String name, GeometryOperand[] geometryOperands) {
+    public SpatialOperatorImpl(String name, GeometryOperand... geometryOperands) {
         super(name);
-        this.geometryOperands = new HashSet<GeometryOperand>();
+        this.geometryOperands = new HashSet<>();
         if (geometryOperands != null) {
             this.geometryOperands.addAll(Arrays.asList(geometryOperands));
         }
@@ -51,16 +51,17 @@ public class SpatialOperatorImpl extends OperatorImpl implements SpatialOperator
 
     public SpatialOperatorImpl(SpatialOperator copy) {
         this(copy.getName());
-        this.geometryOperands = new HashSet<GeometryOperand>();
+        this.geometryOperands = new HashSet<>();
         if (copy.getGeometryOperands() != null) {
             this.geometryOperands.addAll(copy.getGeometryOperands());
         }
     }
 
     public void setGeometryOperands(Collection<GeometryOperand> geometryOperands) {
-        this.geometryOperands = new HashSet<GeometryOperand>(geometryOperands);
+        this.geometryOperands = new HashSet<>(geometryOperands);
     }
 
+    @Override
     public Collection<GeometryOperand> getGeometryOperands() {
         return geometryOperands;
     }

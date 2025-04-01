@@ -16,18 +16,17 @@
  */
 package org.geotools.sld.bindings;
 
-import java.util.Iterator;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.filter.Filters;
 import org.geotools.sld.CssParameter;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -74,6 +73,7 @@ public class SLDStrokeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.STROKE;
     }
@@ -85,6 +85,7 @@ public class SLDStrokeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -96,6 +97,7 @@ public class SLDStrokeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Stroke.class;
     }
@@ -107,6 +109,7 @@ public class SLDStrokeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -116,6 +119,7 @@ public class SLDStrokeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // The following CssParameters may be used:
         // &quot;stroke&quot; (color),
@@ -160,8 +164,7 @@ public class SLDStrokeBinding extends AbstractComplexBinding {
         Expression dashArray = null;
         Expression dashOffset = null;
 
-        for (Iterator i = node.getChildValues(CssParameter.class).iterator(); i.hasNext(); ) {
-            CssParameter css = (CssParameter) i.next();
+        for (CssParameter css : node.getChildValues(CssParameter.class)) {
             Expression exp = css.getExpression();
             if (exp == null) {
                 continue;
@@ -203,14 +206,6 @@ public class SLDStrokeBinding extends AbstractComplexBinding {
         Graphic graphicStroke = (Graphic) node.getChildValue("GraphicStroke");
 
         return styleFactory.createStroke(
-                color,
-                width,
-                opacity,
-                lineJoin,
-                lineCap,
-                dash,
-                dashOffset,
-                graphicFill,
-                graphicStroke);
+                color, width, opacity, lineJoin, lineCap, dash, dashOffset, graphicFill, graphicStroke);
     }
 }

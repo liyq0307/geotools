@@ -17,12 +17,10 @@
 package org.geotools.coverage.grid.io.footprint;
 
 import java.io.IOException;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
 
-/**
- * A {@link MultiLevelROIProvider} implementation used for returning {@link MultiLevelROIGeometry}s
- */
+/** A {@link MultiLevelROIProvider} implementation used for returning {@link MultiLevelROIGeometry}s */
 public class MultiLevelROIGeometryProvider implements MultiLevelROIProvider {
 
     private final FootprintGeometryProvider geometryProvider;
@@ -33,19 +31,12 @@ public class MultiLevelROIGeometryProvider implements MultiLevelROIProvider {
     private final FootprintInsetPolicy insetPolicy;
 
     /**
-     * The optional granuleBounds to be used as a default value when there is no need to do ROI
-     * lookup against specific features. Specify that when dealing with single granules store
+     * The optional granuleBounds to be used as a default value when there is no need to do ROI lookup against specific
+     * features. Specify that when dealing with single granules store
      */
     private final Geometry defaultGranuleBounds;
 
-    /**
-     * Geometry provider constructor based on a fixed granuleBounds
-     *
-     * @param geometryProvider
-     * @param inset
-     * @param insetPolicy
-     * @param defaultGranuleBounds
-     */
+    /** Geometry provider constructor based on a fixed granuleBounds */
     public MultiLevelROIGeometryProvider(
             FootprintGeometryProvider geometryProvider,
             double inset,
@@ -57,17 +48,9 @@ public class MultiLevelROIGeometryProvider implements MultiLevelROIProvider {
         this.defaultGranuleBounds = defaultGranuleBounds;
     }
 
-    /**
-     * Geometry provider constructor based on per feature granuleBounds
-     *
-     * @param geometryProvider
-     * @param inset
-     * @param insetPolicy
-     */
+    /** Geometry provider constructor based on per feature granuleBounds */
     public MultiLevelROIGeometryProvider(
-            FootprintGeometryProvider geometryProvider,
-            double inset,
-            FootprintInsetPolicy insetPolicy) {
+            FootprintGeometryProvider geometryProvider, double inset, FootprintInsetPolicy insetPolicy) {
         this(geometryProvider, inset, insetPolicy, null);
     }
 
@@ -78,13 +61,12 @@ public class MultiLevelROIGeometryProvider implements MultiLevelROIProvider {
             return null;
         } else {
             Geometry granuleBounds =
-                    defaultGranuleBounds != null
-                            ? defaultGranuleBounds
-                            : (Geometry) sf.getDefaultGeometry();
+                    defaultGranuleBounds != null ? defaultGranuleBounds : (Geometry) sf.getDefaultGeometry();
             return new MultiLevelROIGeometry(footprint, granuleBounds, inset, insetPolicy);
         }
     }
 
+    @Override
     public void dispose() {
         geometryProvider.dispose();
     }

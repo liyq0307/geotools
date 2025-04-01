@@ -18,24 +18,26 @@ package org.geotools.jdbc;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureSource;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** Tests that measurements coordinates (M) are correctly handled. */
 public abstract class JDBCMeasuredGeometriesOnlineTest extends JDBCTestSupport {
 
+    @Test
     public void testRetrievingPointM() {
         // get all the points
         List<SimpleFeature> features = getFeatures("points_m", Query.ALL);
@@ -46,6 +48,7 @@ public abstract class JDBCMeasuredGeometriesOnlineTest extends JDBCTestSupport {
         checkPointCoordinates(findOne(features, "description", "point_m_d"), 3, 1, -2, 5, -3.5);
     }
 
+    @Test
     public void testRetrievingPointZM() {
         // get all the points
         List<SimpleFeature> features = getFeatures("points_zm", Query.ALL);
@@ -53,33 +56,32 @@ public abstract class JDBCMeasuredGeometriesOnlineTest extends JDBCTestSupport {
         checkPointCoordinates(findOne(features, "description", "point_zm_a"), 4, 1, -2, 1, 10, 0.5);
         checkPointCoordinates(findOne(features, "description", "point_zm_b"), 4, 1, 3, 1, 15, -1);
         checkPointCoordinates(findOne(features, "description", "point_zm_c"), 4, 1, 3, 5, 20, 2);
-        checkPointCoordinates(
-                findOne(features, "description", "point_zm_d"), 4, 1, -2, 5, 25, -3.5);
+        checkPointCoordinates(findOne(features, "description", "point_zm_d"), 4, 1, -2, 5, 25, -3.5);
     }
 
+    @Test
     public void testRetrievingLineM() {
         // get all the lines
         List<SimpleFeature> features = getFeatures("lines_m", Query.ALL);
         // each line coordinate should have dimension 3 and measures 1
-        double[] ordinates = new double[] {-2, 1, 0.5, 3, 1, -1, 3, 5, 2, -2, 5, 3.5};
+        double[] ordinates = {-2, 1, 0.5, 3, 1, -1, 3, 5, 2, -2, 5, 3.5};
         checkLineCoordinates(findOne(features, "description", "line_m_a"), 3, 1, ordinates);
     }
 
+    @Test
     public void testRetrievingLineZM() {
         // get all the lines
         List<SimpleFeature> features = getFeatures("lines_zm", Query.ALL);
         // each line coordinate should should have dimension 4, elevation 1 and measures 1
-        double[] ordinates =
-                new double[] {-2, 1, 10, 0.5, 3, 1, 15, -1, 3, 5, 20, 2, -2, 5, 25, 3.5};
+        double[] ordinates = {-2, 1, 10, 0.5, 3, 1, 15, -1, 3, 5, 20, 2, -2, 5, 25, 3.5};
         checkLineCoordinates(findOne(features, "description", "line_zm_a"), 4, 1, ordinates);
     }
 
     /**
-     * Checks that the provided feature default geometry is a linestring and has the expected
-     * dimension, measures and ordinates.
+     * Checks that the provided feature default geometry is a linestring and has the expected dimension, measures and
+     * ordinates.
      */
-    private void checkLineCoordinates(
-            SimpleFeature feature, int dimension, int measures, double... ordinates) {
+    private void checkLineCoordinates(SimpleFeature feature, int dimension, int measures, double... ordinates) {
         // get the feature point geometry
         Object candidate = feature.getDefaultGeometry();
         assertThat(candidate, instanceOf(LineString.class));
@@ -97,11 +99,10 @@ public abstract class JDBCMeasuredGeometriesOnlineTest extends JDBCTestSupport {
     }
 
     /**
-     * Checks that the provided feature default geometry is a point and has the expected dimension,
-     * measures and ordinates.
+     * Checks that the provided feature default geometry is a point and has the expected dimension, measures and
+     * ordinates.
      */
-    private void checkPointCoordinates(
-            SimpleFeature feature, int dimension, int measures, double... ordinates) {
+    private void checkPointCoordinates(SimpleFeature feature, int dimension, int measures, double... ordinates) {
         // get the feature point geometry
         Object candidate = feature.getDefaultGeometry();
         assertThat(candidate, instanceOf(Point.class));
@@ -140,8 +141,7 @@ public abstract class JDBCMeasuredGeometriesOnlineTest extends JDBCTestSupport {
             // something bad happen, let's abort
             throw new RuntimeException(
                     String.format(
-                            "Error reading features from table '%s' using query '%s'.",
-                            tableName, query.toString()),
+                            "Error reading features from table '%s' using query '%s'.", tableName, query.toString()),
                     exception);
         }
     }
@@ -157,10 +157,7 @@ public abstract class JDBCMeasuredGeometriesOnlineTest extends JDBCTestSupport {
         return features;
     }
 
-    /**
-     * Gets the features that match the provided attributes values and checks that only one feature
-     * was found.
-     */
+    /** Gets the features that match the provided attributes values and checks that only one feature was found. */
     private SimpleFeature findOne(List<SimpleFeature> features, Object... attributesValues) {
         List<SimpleFeature> found = find(features, attributesValues);
         assertThat(found.size(), is(1));

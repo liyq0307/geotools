@@ -18,9 +18,9 @@ package org.geotools.brewer.styling.builder;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.styling.ContrastEnhancement;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.ContrastMethod;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.ContrastMethod;
 
 public class ContrastEnhancementBuilder extends AbstractStyleBuilder<ContrastEnhancement> {
     private Expression gamma = null;
@@ -64,8 +64,7 @@ public class ContrastEnhancementBuilder extends AbstractStyleBuilder<ContrastEnh
         return contrastMethod("logarithm", constrastParameters);
     }
 
-    private ContrastEnhancementBuilder contrastMethod(
-            String name, Map<String, Expression> constrastParameters) {
+    private ContrastEnhancementBuilder contrastMethod(String name, Map<String, Expression> constrastParameters) {
         /*if ("histogram".equals(name)) {
             this.method = ContrastMethod.HISTOGRAM;
         } else if ("normalize".equals(name)) {
@@ -89,6 +88,7 @@ public class ContrastEnhancementBuilder extends AbstractStyleBuilder<ContrastEnh
         return gamma(cqlExpression(cqlExpression));
     }
 
+    @Override
     public ContrastEnhancement build() {
         if (unset) {
             return null;
@@ -99,6 +99,7 @@ public class ContrastEnhancementBuilder extends AbstractStyleBuilder<ContrastEnh
         return contrastEnhancement;
     }
 
+    @Override
     public ContrastEnhancementBuilder reset() {
         gamma = null;
         method = null;
@@ -106,6 +107,7 @@ public class ContrastEnhancementBuilder extends AbstractStyleBuilder<ContrastEnh
         return this;
     }
 
+    @Override
     public ContrastEnhancementBuilder reset(ContrastEnhancement contrastEnhancement) {
         if (contrastEnhancement == null) {
             return reset();
@@ -117,14 +119,14 @@ public class ContrastEnhancementBuilder extends AbstractStyleBuilder<ContrastEnh
         return this;
     }
 
+    @Override
     public ContrastEnhancementBuilder unset() {
         return (ContrastEnhancementBuilder) super.unset();
     }
 
     @Override
     protected void buildStyleInternal(StyleBuilder sb) {
-        throw new UnsupportedOperationException(
-                "Cannot build a meaningful style out of a contrast enhancement alone");
+        throw new UnsupportedOperationException("Cannot build a meaningful style out of a contrast enhancement alone");
     }
 
     /** @return */

@@ -55,6 +55,7 @@ import org.locationtech.jts.geom.Polygon;
  */
 public class GMLPolygonPropertyTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.PolygonPropertyType;
     }
@@ -66,6 +67,7 @@ public class GMLPolygonPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Polygon.class;
     }
@@ -78,6 +80,7 @@ public class GMLPolygonPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return node.getChildValue(Polygon.class);
     }
@@ -88,7 +91,7 @@ public class GMLPolygonPropertyTypeBinding extends AbstractComplexBinding {
     }
 
     @Override
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         return GML2EncodingUtils.GeometryPropertyType_getProperties((Polygon) object);
     }
 }

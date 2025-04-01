@@ -53,9 +53,8 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(
-    name = "parametersType",
-    propOrder = {"parameter"}
-)
+        name = "parametersType",
+        propOrder = {"parameter"})
 public class ParametersType {
 
     protected List<ParametersType.Parameter> parameter;
@@ -63,9 +62,9 @@ public class ParametersType {
     /**
      * Gets the value of the parameter property.
      *
-     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any
-     * modification you make to the returned list will be present inside the JAXB object. This is
-     * why there is not a <CODE>set</CODE> method for the parameter property.
+     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any modification you make
+     * to the returned list will be present inside the JAXB object. This is why there is not a <CODE>set</CODE> method
+     * for the parameter property.
      *
      * <p>For example, to add a new item, do as follows:
      *
@@ -77,7 +76,7 @@ public class ParametersType {
      */
     public List<ParametersType.Parameter> getParameter() {
         if (parameter == null) {
-            parameter = new ArrayList<ParametersType.Parameter>();
+            parameter = new ArrayList<>();
         }
         return this.parameter;
     }
@@ -155,7 +154,7 @@ public class ParametersType {
          */
         @Override
         public String toString() {
-            return "Parameter [value=" + value + ", name=" + name + "]";
+            return "Parameter [name=" + name + ", value=" + value + "]";
         }
     }
 

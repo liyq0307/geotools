@@ -57,9 +57,8 @@ import javax.xml.datatype.XMLGregorianCalendar;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(
-    name = "",
-    propOrder = {"versionNumber", "lastModified", "institution", "contact", "entry", "alias"}
-)
+        name = "",
+        propOrder = {"versionNumber", "lastModified", "institution", "contact", "entry", "alias"})
 @XmlRootElement(name = "standard_name_table")
 public class StandardNameTable {
 
@@ -156,9 +155,9 @@ public class StandardNameTable {
     /**
      * Gets the value of the entry property.
      *
-     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any
-     * modification you make to the returned list will be present inside the JAXB object. This is
-     * why there is not a <CODE>set</CODE> method for the entry property.
+     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any modification you make
+     * to the returned list will be present inside the JAXB object. This is why there is not a <CODE>set</CODE> method
+     * for the entry property.
      *
      * <p>For example, to add a new item, do as follows:
      *
@@ -170,7 +169,7 @@ public class StandardNameTable {
      */
     public List<Entry> getEntry() {
         if (entry == null) {
-            entry = new ArrayList<Entry>();
+            entry = new ArrayList<>();
         }
         return this.entry;
     }
@@ -178,9 +177,9 @@ public class StandardNameTable {
     /**
      * Gets the value of the alias property.
      *
-     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any
-     * modification you make to the returned list will be present inside the JAXB object. This is
-     * why there is not a <CODE>set</CODE> method for the alias property.
+     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any modification you make
+     * to the returned list will be present inside the JAXB object. This is why there is not a <CODE>set</CODE> method
+     * for the alias property.
      *
      * <p>For example, to add a new item, do as follows:
      *
@@ -192,7 +191,7 @@ public class StandardNameTable {
      */
     public List<Alias> getAlias() {
         if (alias == null) {
-            alias = new ArrayList<Alias>();
+            alias = new ArrayList<>();
         }
         return this.alias;
     }

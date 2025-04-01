@@ -16,12 +16,11 @@
  */
 package org.geotools.feature.collection;
 
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
- * SimpleFeatureIterator wrapper which can use a start and end bounds to cap the number of returned
- * features.
+ * SimpleFeatureIterator wrapper which can use a start and end bounds to cap the number of returned features.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -48,6 +47,7 @@ public class MaxFeaturesSimpleFeatureIterator implements SimpleFeatureIterator {
         return delegate;
     }
 
+    @Override
     public boolean hasNext() {
         if (counter < start) {
             // skip to just before start if needed
@@ -56,6 +56,7 @@ public class MaxFeaturesSimpleFeatureIterator implements SimpleFeatureIterator {
         return delegate.hasNext() && counter < end;
     }
 
+    @Override
     public SimpleFeature next() {
         if (counter < start) {
             // skip to just before start if needed

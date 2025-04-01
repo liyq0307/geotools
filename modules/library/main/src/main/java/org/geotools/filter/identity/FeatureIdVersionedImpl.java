@@ -16,13 +16,13 @@
  */
 package org.geotools.filter.identity;
 
-import org.opengis.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.FeatureId;
 
 /**
- * Implementation of {@link org.opengis.filter.identity.FeatureId}
+ * Implementation of {@link org.geotools.api.filter.identity.FeatureId}
  *
- * <p>This class is mutable under one condition only; during a commit a datastore can update the
- * internal fid to reflect the real identify assigned by the database or wfs.
+ * <p>This class is mutable under one condition only; during a commit a datastore can update the internal fid to reflect
+ * the real identify assigned by the database or wfs.
  *
  * <p>
  *
@@ -45,10 +45,12 @@ public class FeatureIdVersionedImpl extends FeatureIdImpl {
         this.previousRid = previousRid;
     }
 
+    @Override
     public String toString() {
         return fid;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof FeatureId) {
             return fid.equals(((FeatureId) obj).getID());
@@ -56,6 +58,7 @@ public class FeatureIdVersionedImpl extends FeatureIdImpl {
         return false;
     }
 
+    @Override
     public int hashCode() {
         return fid.hashCode();
     }

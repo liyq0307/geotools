@@ -113,9 +113,10 @@ public class AbstractGriddedSurfaceTypeImpl extends AbstractParametricCurveSurfa
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<RowType> getRow() {
         if (row == null) {
-            row = new EObjectContainmentEList<RowType>(RowType.class, this, Gml311Package.ABSTRACT_GRIDDED_SURFACE_TYPE__ROW);
+            row = new EObjectContainmentEList<>(RowType.class, this, Gml311Package.ABSTRACT_GRIDDED_SURFACE_TYPE__ROW);
         }
         return row;
     }
@@ -125,6 +126,7 @@ public class AbstractGriddedSurfaceTypeImpl extends AbstractParametricCurveSurfa
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public BigInteger getRows() {
         return rows;
     }
@@ -134,6 +136,7 @@ public class AbstractGriddedSurfaceTypeImpl extends AbstractParametricCurveSurfa
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setRows(BigInteger newRows) {
         BigInteger oldRows = rows;
         rows = newRows;
@@ -146,6 +149,7 @@ public class AbstractGriddedSurfaceTypeImpl extends AbstractParametricCurveSurfa
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public BigInteger getColumns() {
         return columns;
     }
@@ -155,6 +159,7 @@ public class AbstractGriddedSurfaceTypeImpl extends AbstractParametricCurveSurfa
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setColumns(BigInteger newColumns) {
         BigInteger oldColumns = columns;
         columns = newColumns;

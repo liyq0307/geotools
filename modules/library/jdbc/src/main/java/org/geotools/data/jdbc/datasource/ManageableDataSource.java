@@ -19,10 +19,11 @@ package org.geotools.data.jdbc.datasource;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 
-public interface ManageableDataSource extends DataSource {
+public interface ManageableDataSource extends DataSource, AutoCloseable {
     /**
-     * Closes up the datasource, frees all of its resources. No other connection can be gathered
-     * from this DataSource once close() has been called
+     * Closes up the datasource, frees all of its resources. No other connection can be gathered from this DataSource
+     * once close() has been called
      */
+    @Override
     public void close() throws SQLException;
 }

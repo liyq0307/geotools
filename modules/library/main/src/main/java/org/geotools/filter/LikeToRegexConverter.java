@@ -18,8 +18,8 @@ package org.geotools.filter;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.filter.PropertyIsLike;
 import org.geotools.util.logging.Logging;
-import org.opengis.filter.PropertyIsLike;
 
 /**
  * Helper class that takes a LikeFilter and generates the equivalent Java Pattern syntax
@@ -72,8 +72,7 @@ public class LikeToRegexConverter {
                 chr = pattern.charAt(i);
             }
 
-            if (pattern.regionMatches(
-                    false, i, wildcardMulti, 0, wildcardMulti.length())) { // replace
+            if (pattern.regionMatches(false, i, wildcardMulti, 0, wildcardMulti.length())) { // replace
                 // with
                 // java
                 // wildcard
@@ -149,8 +148,7 @@ public class LikeToRegexConverter {
                 || (chr == '(')
                 || (chr == ')')
                 || (chr == '|')
-                || (chr == '\\')
-                || (chr == '&'));
+                || (chr == '\\'));
     }
 
     /**
@@ -176,11 +174,7 @@ public class LikeToRegexConverter {
         return tmp.toString();
     }
 
-    /**
-     * Returns the equivalent Java pattern
-     *
-     * @return
-     */
+    /** Returns the equivalent Java pattern */
     public String getPattern() {
         return pattern;
     }

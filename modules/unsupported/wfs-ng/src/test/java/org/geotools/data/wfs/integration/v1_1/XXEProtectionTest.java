@@ -16,20 +16,26 @@
  */
 package org.geotools.data.wfs.integration.v1_1;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.net.URL;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.ows.HTTPResponse;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.data.ows.Response;
 import org.geotools.data.wfs.TestHttpResponse;
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSTestData;
 import org.geotools.data.wfs.integration.IntegrationTestWFSClient;
+import org.geotools.data.wfs.internal.TransactionRequest;
 import org.geotools.data.wfs.internal.WFSConfig;
+import org.geotools.http.HTTPResponse;
+import org.geotools.ows.ServiceException;
 import org.junit.Test;
-import org.opengis.filter.Filter;
 import org.xml.sax.SAXException;
 
 public class XXEProtectionTest {
@@ -66,11 +72,7 @@ public class XXEProtectionTest {
         }
     }
 
-    /**
-     * The pull parser we use has entity resolution disabled, make sure it stays that way
-     *
-     * @throws Exception
-     */
+    /** The pull parser we use has entity resolution disabled, make sure it stays that way */
     @Test
     public void testGetFeatureProtection() throws Exception {
         WFSConfig config = WFSTestData.getGmlCompatibleConfig();
@@ -81,12 +83,10 @@ public class XXEProtectionTest {
         try {
             DataUtilities.first(fs.getFeatures());
         } catch (Exception e) {
-            // custom check as MXParser does not use the EntityResolver, does not offer a way to
-            // configure it
+            // custom check, the XMLInputFactory shall have external entities disabled
             final String msg = e.getMessage();
             assertNotNull(msg);
-            assertTrue(msg.contains("could not resolve entity"));
-            assertTrue(msg.contains("xxe"));
+            assertTrue(msg.contains("\"xxe\""));
         }
     }
 
@@ -94,23 +94,18 @@ public class XXEProtectionTest {
     public void testTransactionProtection() throws Exception {
         WFSConfig config = WFSTestData.getGmlCompatibleConfig();
         String baseDirectory = "GeoServer_2.0/1.1.0_XXE_Transaction/";
-        IntegrationTestWFSClient client =
-                new IntegrationTestWFSClient(baseDirectory, config) {
-                    @Override
-                    protected org.geotools.data.ows.Response mockTransactionSuccess(
-                            org.geotools.data.wfs.internal.TransactionRequest request)
-                            throws java.io.IOException {
-                        String resource = "Transaction.xml";
-                        URL contentUrl = new URL(baseDirectory, resource);
+        IntegrationTestWFSClient client = new IntegrationTestWFSClient(baseDirectory, config) {
+            @Override
+            protected Response mockTransactionSuccess(TransactionRequest request) throws ServiceException, IOException {
+                String resource = "Transaction.xml";
+                URL contentUrl = new URL(baseDirectory, resource);
 
-                        HTTPResponse httpResp =
-                                new TestHttpResponse("text/xml", "UTF-8", contentUrl);
-                        return request.createResponse(httpResp);
-                    };
-                };
+                HTTPResponse httpResp = new TestHttpResponse("text/xml", "UTF-8", contentUrl);
+                return request.createResponse(httpResp);
+            }
+        };
         WFSDataStore store = new WFSDataStore(client);
-        SimpleFeatureStore fs =
-                (SimpleFeatureStore) store.getFeatureSource(store.getTypeNames()[0]);
+        SimpleFeatureStore fs = (SimpleFeatureStore) store.getFeatureSource(store.getTypeNames()[0]);
         try {
             fs.removeFeatures(Filter.INCLUDE);
         } catch (Exception e) {

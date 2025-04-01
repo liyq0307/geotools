@@ -16,33 +16,22 @@
  */
 package org.geotools.feature.collection;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import static org.junit.Assert.assertNotNull;
+
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterVisitor;
 import org.geotools.data.DataTestCase;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterVisitor;
+import org.junit.Test;
 
 public class SubFeatureCollectionTest extends DataTestCase {
     DefaultFeatureCollection features = new DefaultFeatureCollection(null, null);
 
-    public SubFeatureCollectionTest(String testName) {
-        super(testName);
-    }
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(suite());
-    }
-
-    public static Test suite() {
-        TestSuite suite = new TestSuite(SubFeatureCollectionTest.class);
-        return suite;
-    }
-
-    protected void setUp() throws Exception {
+    @Override
+    public void init() throws Exception {
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName("Dummy");
 
@@ -53,19 +42,20 @@ public class SubFeatureCollectionTest extends DataTestCase {
         }
     }
 
+    @Test
     public void testBounds() {
-        SimpleFeatureCollection subCollection =
-                features.subCollection(
-                        new Filter() {
+        SimpleFeatureCollection subCollection = features.subCollection(new Filter() {
 
-                            public Object accept(FilterVisitor arg0, Object arg1) {
-                                return null;
-                            }
+            @Override
+            public Object accept(FilterVisitor arg0, Object arg1) {
+                return null;
+            }
 
-                            public boolean evaluate(Object arg0) {
-                                return true;
-                            }
-                        });
+            @Override
+            public boolean evaluate(Object arg0) {
+                return true;
+            }
+        });
 
         // Should not throw an UnsupportedOperationException
         // TODO Not semantically testing the bounds

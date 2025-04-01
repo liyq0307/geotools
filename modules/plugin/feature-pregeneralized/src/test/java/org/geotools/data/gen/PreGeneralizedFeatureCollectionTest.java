@@ -18,33 +18,32 @@
 package org.geotools.data.gen;
 
 import java.io.IOException;
-import junit.framework.TestCase;
 import org.geotools.data.gen.info.GeneralizationInfos;
 import org.geotools.data.gen.info.GeneralizationInfosProvider;
 import org.geotools.data.gen.info.GeneralizationInfosProviderImpl;
-import org.geotools.data.simple.SimpleFeatureCollection;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-public class PreGeneralizedFeatureCollectionTest extends TestCase {
+public class PreGeneralizedFeatureCollectionTest {
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         TestSetup.initialize();
     }
 
+    @Test
     public void testNotSupportedFeatures() {
 
         GeneralizationInfosProvider provider = new GeneralizationInfosProviderImpl();
         GeneralizationInfos ginfos = null;
         PreGeneralizedDataStore ds = null;
-        SimpleFeatureCollection fCollection = null;
         String typeName = null;
         try {
             ginfos = provider.getGeneralizationInfos("src/test/resources/geninfo_only_base.xml");
             ds = new PreGeneralizedDataStore(ginfos, TestSetup.REPOSITORY);
             typeName = ds.getTypeNames()[0];
-            fCollection = ds.getFeatureSource(typeName).getFeatures();
+            ds.getFeatureSource(typeName).getFeatures();
         } catch (IOException ex) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", ex);
             Assert.fail();

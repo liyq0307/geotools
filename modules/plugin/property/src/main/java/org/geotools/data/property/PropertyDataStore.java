@@ -20,16 +20,17 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultServiceInfo;
-import org.geotools.data.Query;
-import org.geotools.data.ServiceInfo;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
@@ -38,8 +39,6 @@ import org.geotools.feature.FeatureTypes;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * Sample DataStore implementation, please see formal tutorial included with users docs.
@@ -79,14 +78,13 @@ public class PropertyDataStore extends ContentDataStore {
         String typeName = featureType.getTypeName();
         File file = new File(dir, typeName + ".properties");
         if (file.exists()) {
-            throw new FileNotFoundException(
-                    "Unable to create a new property file: file exists " + file);
+            throw new FileNotFoundException("Unable to create a new property file: file exists " + file);
         }
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        writer.write("_=");
-        writer.write(DataUtilities.encodeType(featureType));
-        writer.flush();
-        writer.close();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            writer.write("_=");
+            writer.write(DataUtilities.encodeType(featureType));
+            writer.flush();
+        }
     }
     // createSchema end
 
@@ -112,17 +110,11 @@ public class PropertyDataStore extends ContentDataStore {
 
     @Override
     protected java.util.List<Name> createTypeNames() throws IOException {
-        String list[] =
-                dir.list(
-                        new FilenameFilter() {
-                            public boolean accept(File dir, String name) {
-                                return name.endsWith(".properties");
-                            }
-                        });
-        List<Name> typeNames = new ArrayList<Name>();
+        String[] list = dir.list((dir, name) -> name.endsWith(".properties"));
+        List<Name> typeNames = new ArrayList<>();
         if (list != null) {
-            for (int i = 0; i < list.length; i++) {
-                String typeName = list[i].substring(0, list[i].lastIndexOf('.'));
+            for (String s : list) {
+                String typeName = s.substring(0, s.lastIndexOf('.'));
                 typeNames.add(new NameImpl(namespaceURI, typeName));
             }
         }
@@ -132,7 +124,7 @@ public class PropertyDataStore extends ContentDataStore {
     @Override
     public List<Name> getNames() throws IOException {
         String[] typeNames = getTypeNames();
-        List<Name> names = new ArrayList<Name>(typeNames.length);
+        List<Name> names = new ArrayList<>(typeNames.length);
         for (String typeName : typeNames) {
             names.add(new NameImpl(namespaceURI, typeName));
         }
@@ -165,8 +157,7 @@ public class PropertyDataStore extends ContentDataStore {
         }
         File file = new File(dir, typeName);
         if (!file.exists()) {
-            throw new IOException(
-                    "Can't delete " + file.getAbsolutePath() + " because it doesn't exist!");
+            throw new IOException("Can't delete " + file.getAbsolutePath() + " because it doesn't exist!");
         }
         file.delete();
     }

@@ -17,14 +17,25 @@
 
 package org.geotools.data.complex;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
+import java.io.Serializable;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.appschema.filter.FilterFactoryImplNamespaceAware;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
 import org.geotools.data.complex.feature.type.Types;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
@@ -32,12 +43,6 @@ import org.geotools.test.AppSchemaTestSupport;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.locationtech.jts.util.Stopwatch;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /** @author Eric Sword */
@@ -46,7 +51,7 @@ public class PolymorphicChainingTest extends AppSchemaTestSupport {
 
     static final Name ARTIFACT = Types.typeName(EX_NS, "Artifact");
 
-    static FilterFactory2 ff;
+    static FilterFactory ff;
 
     private static final String schemaBase = "/test-data/";
 
@@ -68,17 +73,12 @@ public class PolymorphicChainingTest extends AppSchemaTestSupport {
         // System.out.println("Set up time: " + sw.getTimeString());
     }
 
-    /**
-     * Basic test to make sure everything got loaded correctly
-     *
-     * @throws Exception
-     */
+    /** Basic test to make sure everything got loaded correctly */
     @Test
     public void testSimpleFilter() throws Exception {
         Expression property = ff.property("ex:seqId");
         Filter filter = ff.equals(property, ff.literal(101));
-        FeatureCollection<FeatureType, Feature> filteredResults =
-                artifactSource.getFeatures(filter);
+        FeatureCollection<FeatureType, Feature> filteredResults = artifactSource.getFeatures(filter);
         List<Feature> retVal = getFeatures(filteredResults);
         assertEquals(1, retVal.size());
 
@@ -86,17 +86,12 @@ public class PolymorphicChainingTest extends AppSchemaTestSupport {
         assertId("a.101", feature);
     }
 
-    /**
-     * Test filtering attributes on nested features.
-     *
-     * @throws Exception
-     */
+    /** Test filtering attributes on nested features. */
     @Test
     public void testMultiMappedFilter() throws Exception {
         Expression property = ff.property("ex:attributes/ex:Attribute/ex:key", namespaces);
         Filter filter = ff.equals(property, ff.literal("stringKey1"));
-        FeatureCollection<FeatureType, Feature> filteredResults =
-                artifactSource.getFeatures(filter);
+        FeatureCollection<FeatureType, Feature> filteredResults = artifactSource.getFeatures(filter);
         List<Feature> retVal = getFeatures(filteredResults);
         assertEquals(0, retVal.size());
 
@@ -129,15 +124,10 @@ public class PolymorphicChainingTest extends AppSchemaTestSupport {
         assertEquals("Incorrect id: " + actual, expected, actual);
     }
 
-    /**
-     * Load all the data accesses.
-     *
-     * @return
-     * @throws Exception
-     */
+    /** Load all the data accesses. */
     private static void loadDataAccesses() throws Exception {
         /** Load mapped feature data access */
-        Map dsParams = new HashMap();
+        Map<String, Serializable> dsParams = new HashMap<>();
         URL url = PolymorphicChainingTest.class.getResource(schemaBase + "artifact_mapping.xml");
         assertNotNull(url);
 
@@ -149,16 +139,16 @@ public class PolymorphicChainingTest extends AppSchemaTestSupport {
         FeatureType mappedFeatureType = mfDataAccess.getSchema(ARTIFACT);
         assertNotNull(mappedFeatureType);
 
-        artifactSource = (FeatureSource) mfDataAccess.getFeatureSource(ARTIFACT);
+        artifactSource = mfDataAccess.getFeatureSource(ARTIFACT);
     }
 
     protected List<Feature> getFeatures(FeatureCollection<FeatureType, Feature> features) {
-        FeatureIterator<Feature> iterator = features.features();
-        List<Feature> retVal = new ArrayList<Feature>();
-        while (iterator.hasNext()) {
-            retVal.add(iterator.next());
+        try (FeatureIterator<Feature> iterator = features.features()) {
+            List<Feature> retVal = new ArrayList<>();
+            while (iterator.hasNext()) {
+                retVal.add(iterator.next());
+            }
+            return retVal;
         }
-        iterator.close();
-        return retVal;
     }
 }

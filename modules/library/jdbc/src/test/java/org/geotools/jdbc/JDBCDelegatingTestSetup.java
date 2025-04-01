@@ -16,19 +16,22 @@
  */
 package org.geotools.jdbc;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
+import javax.sql.DataSource;
 import org.apache.commons.dbcp.BasicDataSource;
 
 /**
  * Allows reuse of JDBCTestSetup for a different set of tests.
  *
- * <p>For example see JDBC3DTestSetup which provides a different test dataset, while still using the
- * provided delegate to access a test fixture and establish a connection.
+ * <p>For example see JDBC3DTestSetup which provides a different test dataset, while still using the provided delegate
+ * to access a test fixture and establish a connection.
  *
  * @see JDBC3DTestSetup
  */
+@SuppressWarnings({"PMD.JUnit4TestShouldUseAfterAnnotation", "PMD.JUnit4TestShouldUseBeforeAnnotation"})
 public class JDBCDelegatingTestSetup extends JDBCTestSetup {
 
     protected JDBCTestSetup delegate;
@@ -49,6 +52,11 @@ public class JDBCDelegatingTestSetup extends JDBCTestSetup {
     }
 
     @Override
+    public DataSource getDataSource() throws IOException {
+        return delegate.useDelegateDataSource() ? delegate.getDataSource() : super.getDataSource();
+    }
+
+    @Override
     protected Properties createOfflineFixture() {
         return delegate.createOfflineFixture();
     }
@@ -58,6 +66,7 @@ public class JDBCDelegatingTestSetup extends JDBCTestSetup {
         return delegate.createExampleFixture();
     }
 
+    @Override
     public void setUp() throws Exception {
         // make sure we don't forget to run eventual extra stuff
         delegate.setUp();
@@ -74,10 +83,12 @@ public class JDBCDelegatingTestSetup extends JDBCTestSetup {
         delegate.setUpData();
     }
 
+    @Override
     protected final void initializeDatabase() throws Exception {
         delegate.initializeDatabase();
     }
 
+    @Override
     protected void initializeDataSource(BasicDataSource ds, Properties db) {
         delegate.initializeDataSource(ds, db);
     }

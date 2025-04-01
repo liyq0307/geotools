@@ -17,6 +17,7 @@
 package org.geotools.xs.bindings;
 
 import javax.xml.namespace.QName;
+import org.apache.commons.lang3.StringUtils;
 import org.geotools.xs.XS;
 import org.geotools.xsd.InstanceComponent;
 import org.geotools.xsd.SimpleBinding;
@@ -57,6 +58,7 @@ import org.geotools.xsd.SimpleBinding;
  */
 public class XSFloatBinding implements SimpleBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.FLOAT;
     }
@@ -68,6 +70,7 @@ public class XSFloatBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -80,6 +83,7 @@ public class XSFloatBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Float.class;
     }
@@ -92,6 +96,7 @@ public class XSFloatBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         String text = (String) value;
 
@@ -99,7 +104,7 @@ public class XSFloatBinding implements SimpleBinding {
             return Float.valueOf(Float.POSITIVE_INFINITY);
         }
 
-        return Float.valueOf((String) text);
+        return StringUtils.isBlank(text) ? null : Float.valueOf(text);
     }
 
     /**
@@ -109,6 +114,7 @@ public class XSFloatBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public String encode(Object object, String value) {
         Float f = (Float) object;
 

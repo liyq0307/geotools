@@ -18,8 +18,14 @@
 package org.geotools.filter.text.cql2;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.filter.function.FilterFunction_relatePattern;
 import org.geotools.filter.text.commons.CompilerUtil;
 import org.geotools.filter.text.commons.Language;
@@ -29,12 +35,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Literal parser test
@@ -76,24 +76,19 @@ public class CQLLiteralTest {
      */
     @Test
     public void geometryLiterals() throws Exception {
-        BinarySpatialOperator result;
-        Literal geom;
 
         // Point":" <time-second> "Z"
-        result =
-                (BinarySpatialOperator)
-                        CompilerUtil.parseFilter(this.language, "WITHIN(ATTR1, POINT(1 2))");
+        BinarySpatialOperator result =
+                (BinarySpatialOperator) CompilerUtil.parseFilter(this.language, "WITHIN(ATTR1, POINT(1 2))");
 
-        geom = (Literal) result.getExpression2();
+        Literal geom = (Literal) result.getExpression2();
 
         Assert.assertNotNull(geom.getValue());
         Assert.assertTrue(geom.getValue() instanceof org.locationtech.jts.geom.Point);
 
         // LineString
-        result =
-                (BinarySpatialOperator)
-                        CompilerUtil.parseFilter(
-                                this.language, "WITHIN(ATTR1, LINESTRING(1 2, 10 15))");
+        result = (BinarySpatialOperator)
+                CompilerUtil.parseFilter(this.language, "WITHIN(ATTR1, LINESTRING(1 2, 10 15))");
 
         geom = (Literal) result.getExpression2();
 
@@ -101,11 +96,8 @@ public class CQLLiteralTest {
         Assert.assertTrue(geom.getValue() instanceof org.locationtech.jts.geom.LineString);
 
         // Polygon
-        result =
-                (BinarySpatialOperator)
-                        CompilerUtil.parseFilter(
-                                this.language,
-                                "WITHIN(ATTR1, POLYGON((1 2, 15 2, 15 20, 15 21, 1 2)))");
+        result = (BinarySpatialOperator)
+                CompilerUtil.parseFilter(this.language, "WITHIN(ATTR1, POLYGON((1 2, 15 2, 15 20, 15 21, 1 2)))");
 
         geom = (Literal) result.getExpression2();
 
@@ -113,11 +105,8 @@ public class CQLLiteralTest {
         Assert.assertTrue(geom.getValue() instanceof org.locationtech.jts.geom.Polygon);
 
         // MultiPoint
-        result =
-                (BinarySpatialOperator)
-                        CompilerUtil.parseFilter(
-                                this.language,
-                                "WITHIN(ATTR1, MULTIPOINT( (1 2), (15 2), (15 20), (15 21), (1 2) ))");
+        result = (BinarySpatialOperator) CompilerUtil.parseFilter(
+                this.language, "WITHIN(ATTR1, MULTIPOINT( (1 2), (15 2), (15 20), (15 21), (1 2) ))");
 
         geom = (Literal) result.getExpression2();
 
@@ -125,11 +114,8 @@ public class CQLLiteralTest {
         Assert.assertTrue(geom.getValue() instanceof org.locationtech.jts.geom.MultiPoint);
 
         // MultiLineString
-        result =
-                (BinarySpatialOperator)
-                        CompilerUtil.parseFilter(
-                                this.language,
-                                "WITHIN(ATTR1, MULTILINESTRING((10 10, 20 20),(15 15,30 15)) )");
+        result = (BinarySpatialOperator) CompilerUtil.parseFilter(
+                this.language, "WITHIN(ATTR1, MULTILINESTRING((10 10, 20 20),(15 15,30 15)) )");
 
         geom = (Literal) result.getExpression2();
 
@@ -137,11 +123,10 @@ public class CQLLiteralTest {
         Assert.assertTrue(geom.getValue() instanceof org.locationtech.jts.geom.MultiLineString);
 
         // MultiPolygon
-        result =
-                (BinarySpatialOperator)
-                        CompilerUtil.parseFilter(
-                                this.language,
-                                "WITHIN(ATTR1, MULTIPOLYGON( ((10 10, 10 20, 20 20, 20 15, 10 10)),((60 60, 70 70, 80 60, 60 60 )) ) )");
+        result = (BinarySpatialOperator)
+                CompilerUtil.parseFilter(
+                        this.language,
+                        "WITHIN(ATTR1, MULTIPOLYGON( ((10 10, 10 20, 20 20, 20 15, 10 10)),((60 60, 70 70, 80 60, 60 60 )) ) )");
 
         geom = (Literal) result.getExpression2();
 
@@ -149,10 +134,8 @@ public class CQLLiteralTest {
         Assert.assertTrue(geom.getValue() instanceof org.locationtech.jts.geom.MultiPolygon);
 
         // ENVELOPE
-        result =
-                (BinarySpatialOperator)
-                        CompilerUtil.parseFilter(
-                                this.language, "WITHIN(ATTR1, ENVELOPE( 10, 20, 30, 40) )");
+        result = (BinarySpatialOperator)
+                CompilerUtil.parseFilter(this.language, "WITHIN(ATTR1, ENVELOPE( 10, 20, 30, 40) )");
 
         geom = (Literal) result.getExpression2();
 
@@ -160,11 +143,7 @@ public class CQLLiteralTest {
         Assert.assertTrue(geom.getValue() instanceof org.locationtech.jts.geom.Polygon);
     }
 
-    /**
-     * Test error at geometry literal
-     *
-     * @throws CQLException
-     */
+    /** Test error at geometry literal */
     @Test(expected = CQLException.class)
     public void geometryLiteralsError() throws CQLException {
 
@@ -186,16 +165,13 @@ public class CQLLiteralTest {
     @Test
     public void characterStringLiteral() throws Exception {
 
-        PropertyIsEqualTo eqFilter;
-
         // space check
         final String strWithSpace = "ALL PRACTICES";
-        Filter filterWithSpace =
-                CompilerUtil.parseFilter(language, "practice='" + strWithSpace + "'");
+        Filter filterWithSpace = CompilerUtil.parseFilter(language, "practice='" + strWithSpace + "'");
         Assert.assertNotNull(filterWithSpace);
         Assert.assertTrue(filterWithSpace instanceof PropertyIsEqualTo);
 
-        eqFilter = (PropertyIsEqualTo) filterWithSpace;
+        PropertyIsEqualTo eqFilter = (PropertyIsEqualTo) filterWithSpace;
         Expression spacesLiteral = eqFilter.getExpression2();
         Assert.assertEquals(strWithSpace, spacesLiteral.toString());
 
@@ -213,8 +189,7 @@ public class CQLLiteralTest {
         final String expectedWithout = "ab";
 
         Filter filterWithoutQuote =
-                CompilerUtil.parseFilter(
-                        language, "MAJOR_WATERSHED_SYSTEM = '" + expectedWithout + "'");
+                CompilerUtil.parseFilter(language, "MAJOR_WATERSHED_SYSTEM = '" + expectedWithout + "'");
 
         Assert.assertNotNull(filterWithoutQuote);
         Assert.assertTrue(filterWithoutQuote instanceof PropertyIsEqualTo);
@@ -238,9 +213,7 @@ public class CQLLiteralTest {
         // special characters
         final String otherChars = "üä";
 
-        filter =
-                (PropertyIsEqualTo)
-                        CompilerUtil.parseFilter(language, "NAME = '" + otherChars + "'");
+        filter = CompilerUtil.parseFilter(language, "NAME = '" + otherChars + "'");
 
         Assert.assertNotNull(filter);
         Assert.assertTrue(filter instanceof PropertyIsEqualTo);
@@ -259,11 +232,7 @@ public class CQLLiteralTest {
         testCharacterString("среды");
     }
 
-    /**
-     * Japan charset
-     *
-     * @throws Exception
-     */
+    /** Japan charset */
     @Test
     public void japanCharacterStringLiteral() throws Exception {
 
@@ -274,8 +243,7 @@ public class CQLLiteralTest {
 
     private void testCharacterString(final String str) throws Exception {
 
-        Filter filter =
-                (PropertyIsEqualTo) CompilerUtil.parseFilter(language, "NAME = '" + str + "'");
+        Filter filter = CompilerUtil.parseFilter(language, "NAME = '" + str + "'");
 
         Assert.assertNotNull(filter);
         Assert.assertTrue(filter instanceof PropertyIsEqualTo);
@@ -324,11 +292,7 @@ public class CQLLiteralTest {
         }
     }
 
-    /**
-     * Tests that the ambiguous syntax between Integer and relate pattern is solved by the parser.
-     *
-     * @throws Exception
-     */
+    /** Tests that the ambiguous syntax between Integer and relate pattern is solved by the parser. */
     @Test
     public void clashLongLiteralandDE9IM() throws Exception {
 
@@ -343,13 +307,9 @@ public class CQLLiteralTest {
             Assert.assertEquals(Long.parseLong(expected), actual.longValue());
         }
         {
-            PropertyIsEqualTo resultFilter;
-
-            resultFilter =
-                    (PropertyIsEqualTo)
-                            CompilerUtil.parseFilter(
-                                    language,
-                                    "RELATE(the_geom, LINESTRING (-134.921387 58.687767, -135.303391 59.092838), 201000002)");
+            PropertyIsEqualTo resultFilter = (PropertyIsEqualTo) CompilerUtil.parseFilter(
+                    language,
+                    "RELATE(the_geom, LINESTRING (-134.921387 58.687767, -135.303391 59" + ".092838), 201000002)");
 
             Expression relateFunction = resultFilter.getExpression1();
             Assert.assertTrue(relateFunction instanceof FilterFunction_relatePattern);
@@ -359,12 +319,7 @@ public class CQLLiteralTest {
         }
     }
 
-    /**
-     * Test the pattern that represent the intersection matrix that is required by the Relate
-     * predicate.
-     *
-     * @throws CQLException
-     */
+    /** Test the pattern that represent the intersection matrix that is required by the Relate predicate. */
     @Test
     public void relatePatterns() throws CQLException {
 
@@ -379,15 +334,9 @@ public class CQLLiteralTest {
 
     private void testRelatePatten(final String pattern) throws CQLException {
 
-        PropertyIsEqualTo resultFilter;
-
-        resultFilter =
-                (PropertyIsEqualTo)
-                        CompilerUtil.parseFilter(
-                                language,
-                                "RELATE(the_geom, LINESTRING (-134.921387 58.687767, -135.303391 59.092838), "
-                                        + pattern
-                                        + ")");
+        PropertyIsEqualTo resultFilter = (PropertyIsEqualTo) CompilerUtil.parseFilter(
+                language,
+                "RELATE(the_geom, LINESTRING (-134.921387 58.687767, -135.303391 59" + ".092838), " + pattern + ")");
 
         Expression relateFunction = resultFilter.getExpression1();
         Assert.assertTrue(relateFunction instanceof FilterFunction_relatePattern);
@@ -451,32 +400,20 @@ public class CQLLiteralTest {
         Assert.assertEquals(expectedDateTime, actualDateTime.toString());
     }
 
-    /**
-     * Asserts that the geometries are equals
-     *
-     * @param strGeomExpected
-     * @param actualGeometry
-     */
+    /** Asserts that the geometries are equals */
     protected void assertEqualsReferencedGeometries(
-            final String strGeomExpected, final Geometry actualGeometry, final int expectedSrid)
-            throws Exception {
+            final String strGeomExpected, final Geometry actualGeometry, final int expectedSrid) throws Exception {
         CoordinateReferenceSystem expectedCRS = CRS.decode("EPSG:" + expectedSrid);
         assertThat(actualGeometry.getUserData(), equalTo(expectedCRS));
         assertEqualsGeometries(strGeomExpected, actualGeometry);
     }
 
-    /**
-     * Asserts that the geometries are equals
-     *
-     * @param strGeomExpected
-     * @param actualGeometry
-     */
-    protected void assertEqualsGeometries(
-            final String strGeomExpected, final Geometry actualGeometry) throws Exception {
+    /** Asserts that the geometries are equals */
+    protected void assertEqualsGeometries(final String strGeomExpected, final Geometry actualGeometry)
+            throws Exception {
 
         WKTReader reader = new WKTReader();
-        Geometry expectedGeometry;
-        expectedGeometry = reader.read(strGeomExpected);
+        Geometry expectedGeometry = reader.read(strGeomExpected);
 
         if (expectedGeometry instanceof GeometryCollection) {
             Assert.assertTrue(expectedGeometry.equalsExact(actualGeometry));

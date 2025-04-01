@@ -17,13 +17,15 @@
 package org.geotools.styling;
 
 import java.util.logging.Logger;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.GeoTools;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
 
 /**
  * Default implementation of LinePlacement.
@@ -34,8 +36,7 @@ import org.opengis.util.Cloneable;
  */
 public class LinePlacementImpl implements LinePlacement, Cloneable {
     /** The logger for the default core module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(LinePlacementImpl.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(LinePlacementImpl.class);
 
     private FilterFactory filterFactory;
 
@@ -50,7 +51,7 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
         this(CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints()));
     }
 
-    public LinePlacementImpl(org.opengis.style.LinePlacement placement) {
+    public LinePlacementImpl(org.geotools.api.style.LinePlacement placement) {
         this.gap = placement.getGap();
         this.initialGap = placement.getInitialGap();
         this.generalized = placement.isGeneralizeLine();
@@ -93,6 +94,7 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
      *
      * @return Value of property perpendicularOffset.
      */
+    @Override
     public Expression getPerpendicularOffset() {
         return perpendicularOffset;
     }
@@ -102,41 +104,50 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
      *
      * @param perpendicularOffset New value of property perpendicularOffset.
      */
+    @Override
     public void setPerpendicularOffset(Expression perpendicularOffset) {
         this.perpendicularOffset = perpendicularOffset;
     }
 
+    @Override
     public Expression getInitialGap() {
         return initialGap;
     }
 
+    @Override
     public Expression getGap() {
         return gap;
     }
 
+    @Override
     public boolean isRepeated() {
         return repeated;
     }
 
+    @Override
     public boolean isAligned() {
         return aligned;
     }
 
+    @Override
     public boolean isGeneralizeLine() {
         return generalized;
     }
 
-    public Object accept(StyleVisitor visitor, Object data) {
+    @Override
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    @Override
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
     /* (non-Javadoc)
      * @see Cloneable#clone()
      */
+    @Override
     public Object clone() {
         try {
             return super.clone();
@@ -148,6 +159,7 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -170,6 +182,7 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode() {
         final int PRIME = 37;
         int result = 17;
@@ -193,7 +206,7 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
         return result;
     }
 
-    static LinePlacementImpl cast(org.opengis.style.LabelPlacement placement) {
+    static LinePlacementImpl cast(org.geotools.api.style.LabelPlacement placement) {
         if (placement == null) {
             return null;
         } else if (placement instanceof LinePlacementImpl) {
@@ -205,22 +218,27 @@ public class LinePlacementImpl implements LinePlacement, Cloneable {
         return null;
     }
 
+    @Override
     public void setRepeated(boolean repeated) {
         this.repeated = repeated;
     }
 
+    @Override
     public void setGeneralized(boolean generalized) {
         this.generalized = generalized;
     }
 
+    @Override
     public void setAligned(boolean aligned) {
         this.aligned = aligned;
     }
 
+    @Override
     public void setGap(Expression gap) {
         this.gap = gap;
     }
 
+    @Override
     public void setInitialGap(Expression initialGap) {
         this.initialGap = initialGap;
     }

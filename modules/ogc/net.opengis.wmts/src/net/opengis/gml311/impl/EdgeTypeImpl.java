@@ -93,9 +93,10 @@ public class EdgeTypeImpl extends AbstractTopoPrimitiveTypeImpl implements EdgeT
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<DirectedNodePropertyType> getDirectedNode() {
         if (directedNode == null) {
-            directedNode = new EObjectContainmentEList<DirectedNodePropertyType>(DirectedNodePropertyType.class, this, Gml311Package.EDGE_TYPE__DIRECTED_NODE);
+            directedNode = new EObjectContainmentEList<>(DirectedNodePropertyType.class, this, Gml311Package.EDGE_TYPE__DIRECTED_NODE);
         }
         return directedNode;
     }
@@ -105,9 +106,10 @@ public class EdgeTypeImpl extends AbstractTopoPrimitiveTypeImpl implements EdgeT
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<DirectedFacePropertyType> getDirectedFace() {
         if (directedFace == null) {
-            directedFace = new EObjectContainmentEList<DirectedFacePropertyType>(DirectedFacePropertyType.class, this, Gml311Package.EDGE_TYPE__DIRECTED_FACE);
+            directedFace = new EObjectContainmentEList<>(DirectedFacePropertyType.class, this, Gml311Package.EDGE_TYPE__DIRECTED_FACE);
         }
         return directedFace;
     }
@@ -117,6 +119,7 @@ public class EdgeTypeImpl extends AbstractTopoPrimitiveTypeImpl implements EdgeT
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public CurvePropertyType getCurveProperty() {
         return curveProperty;
     }
@@ -141,6 +144,7 @@ public class EdgeTypeImpl extends AbstractTopoPrimitiveTypeImpl implements EdgeT
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setCurveProperty(CurvePropertyType newCurveProperty) {
         if (newCurveProperty != curveProperty) {
             NotificationChain msgs = null;

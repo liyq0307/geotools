@@ -16,13 +16,13 @@
  */
 package org.geotools.brewer.styling.filter.expression;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.brewer.styling.builder.Builder;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Literal;
 
 public class LiteralBuilder implements Builder<Literal> {
-    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory2(null);
+    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
     Object literal = null; // will result in Expression.NIL
     boolean unset = false;
 
@@ -40,6 +40,7 @@ public class LiteralBuilder implements Builder<Literal> {
         return this;
     }
 
+    @Override
     public Literal build() {
         if (unset) {
             return null;
@@ -47,18 +48,21 @@ public class LiteralBuilder implements Builder<Literal> {
         return ff.literal(literal);
     }
 
+    @Override
     public LiteralBuilder reset() {
         unset = false;
         literal = null;
         return this;
     }
 
+    @Override
     public LiteralBuilder reset(Literal original) {
         unset = false;
         literal = original.getValue();
         return this;
     }
 
+    @Override
     public LiteralBuilder unset() {
         unset = true;
         return this;

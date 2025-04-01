@@ -65,6 +65,7 @@ public class QueryExpressionTextTypeBinding extends AbstractComplexEMFBinding {
         this.namespaceContext = namespaceContext;
     }
     /** @generated */
+    @Override
     public QName getTarget() {
         return WFS.QueryExpressionTextType;
     }
@@ -76,6 +77,7 @@ public class QueryExpressionTextTypeBinding extends AbstractComplexEMFBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // parsing handled by QueryExpressionTextDelegate
         return null;
@@ -97,8 +99,7 @@ public class QueryExpressionTextTypeBinding extends AbstractComplexEMFBinding {
             dbf.setNamespaceAware(true);
 
             ConvertToDomHandler h =
-                    new ConvertToDomHandler(
-                            dbf.newDocumentBuilder().newDocument(), namespaceContext);
+                    new ConvertToDomHandler(dbf.newDocumentBuilder().newDocument(), namespaceContext);
 
             SAXParser saxp = SAXParserFactory.newInstance().newSAXParser();
             saxp.parse(new InputSource(new StringReader(qe.getValue())), h);

@@ -23,6 +23,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.GeometryAttributeImpl;
 import org.geotools.feature.type.AttributeDescriptorImpl;
 import org.geotools.filter.identity.FeatureIdImpl;
@@ -32,16 +42,6 @@ import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.Converters;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class MongoDBObjectFeature implements SimpleFeature {
 
@@ -51,8 +51,7 @@ public class MongoDBObjectFeature implements SimpleFeature {
 
     private Map<Object, Object> userData;
 
-    public MongoDBObjectFeature(
-            DBObject dbo, SimpleFeatureType featureType, CollectionMapper mapper) {
+    public MongoDBObjectFeature(DBObject dbo, SimpleFeatureType featureType, CollectionMapper mapper) {
         this.featureDBO = dbo;
         this.featureType = featureType;
         this.mapper = mapper;
@@ -106,8 +105,7 @@ public class MongoDBObjectFeature implements SimpleFeature {
 
     @Override
     public void setDefaultGeometry(Object geometry) {
-        MongoUtil.setDBOValue(
-                featureDBO, mapper.getGeometryPath(), mapper.toObject((Geometry) geometry));
+        MongoUtil.setDBOValue(featureDBO, mapper.getGeometryPath(), mapper.toObject((Geometry) geometry));
     }
 
     @Override
@@ -150,8 +148,7 @@ public class MongoDBObjectFeature implements SimpleFeature {
 
     private void doSetAttribute(AttributeDescriptor d, Object o) {
         if (d instanceof GeometryDescriptor) {
-            MongoUtil.setDBOValue(
-                    featureDBO, mapper.getGeometryPath(), mapper.toObject((Geometry) o));
+            MongoUtil.setDBOValue(featureDBO, mapper.getGeometryPath(), mapper.toObject((Geometry) o));
         } else {
             MongoUtil.setDBOValue(
                     featureDBO,
@@ -172,7 +169,7 @@ public class MongoDBObjectFeature implements SimpleFeature {
     @Override
     public List<Object> getAttributes() {
         int aCount = getAttributeCount();
-        List<Object> values = new ArrayList<Object>(aCount);
+        List<Object> values = new ArrayList<>(aCount);
         for (int aIndex = 0; aIndex < aCount; aIndex++) {
             values.add(getAttribute(aIndex));
         }
@@ -198,7 +195,7 @@ public class MongoDBObjectFeature implements SimpleFeature {
     @Override
     public Map<Object, Object> getUserData() {
         if (userData == null) {
-            userData = new HashMap<Object, Object>();
+            userData = new HashMap<>();
         }
         return userData;
     }
@@ -209,8 +206,7 @@ public class MongoDBObjectFeature implements SimpleFeature {
         GeometryAttribute geometryAttribute = null;
         if (geometryDescriptor != null) {
             Object defaultGeometry = getDefaultGeometry();
-            geometryAttribute =
-                    new GeometryAttributeImpl(defaultGeometry, geometryDescriptor, null);
+            geometryAttribute = new GeometryAttributeImpl(defaultGeometry, geometryDescriptor, null);
         }
         return geometryAttribute;
     }
@@ -258,8 +254,7 @@ public class MongoDBObjectFeature implements SimpleFeature {
 
     @Override
     public AttributeDescriptor getDescriptor() {
-        return new AttributeDescriptorImpl(
-                featureType, featureType.getName(), 0, Integer.MAX_VALUE, true, null);
+        return new AttributeDescriptorImpl(featureType, featureType.getName(), 0, Integer.MAX_VALUE, true, null);
     }
 
     @Override

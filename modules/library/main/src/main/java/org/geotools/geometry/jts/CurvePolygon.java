@@ -32,29 +32,29 @@ public class CurvePolygon extends Polygon implements CurvedGeometry<Polygon> {
     private static final long serialVersionUID = -6961191502473439328L;
     private double tolerance;
 
-    public CurvePolygon(
-            LinearRing shell, List<LinearRing> holes, GeometryFactory factory, double tolerance) {
+    public CurvePolygon(LinearRing shell, List<LinearRing> holes, GeometryFactory factory, double tolerance) {
         super(shell, holes.toArray(new LinearRing[holes.size()]), factory);
         this.tolerance = tolerance;
     }
 
-    public CurvePolygon(
-            LinearRing shell, LinearRing[] holes, GeometryFactory factory, double tolerance) {
+    public CurvePolygon(LinearRing shell, LinearRing[] holes, GeometryFactory factory, double tolerance) {
         super(shell, holes, factory);
         this.tolerance = tolerance;
     }
 
+    @Override
     public Polygon linearize() {
         return linearize(tolerance);
     }
 
+    @Override
     public Polygon linearize(double tolerance) {
 
         int numHoles = getNumInteriorRing();
-        LinearRing shell = linearize(tolerance, (LinearRing) getExteriorRing());
+        LinearRing shell = linearize(tolerance, getExteriorRing());
         LinearRing[] holes = new LinearRing[numHoles];
         for (int k = 0; k < numHoles; k++) {
-            LinearRing hole = (LinearRing) getInteriorRingN(k);
+            LinearRing hole = getInteriorRingN(k);
             hole = linearize(tolerance, hole);
             holes[k] = hole;
         }
@@ -70,6 +70,7 @@ public class CurvePolygon extends Polygon implements CurvedGeometry<Polygon> {
         return hole;
     }
 
+    @Override
     public String toCurvedText() {
         StringBuilder sb = new StringBuilder("CURVEPOLYGON ");
         if (isEmpty()) {
@@ -118,5 +119,10 @@ public class CurvePolygon extends Polygon implements CurvedGeometry<Polygon> {
     @Override
     public CurvePolygon copyInternal() {
         return new CurvePolygon(shell, holes, factory, tolerance);
+    }
+
+    @Override
+    public String toString() {
+        return toCurvedText();
     }
 }

@@ -17,6 +17,7 @@
 package org.geotools.process.factory;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -28,8 +29,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.Parameter;
-import org.geotools.data.Query;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.NameImpl;
@@ -52,10 +56,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequenceFactory;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /**
  * Tests some processes that do not require integration with the application context
@@ -89,23 +89,26 @@ public class BeanProcessFactoryTest {
 
         // check SPI will see the factory if we register it using an iterator
         // provider
-        GeoTools.addFactoryIteratorProvider(
-                new FactoryIteratorProvider() {
+        GeoTools.addFactoryIteratorProvider(new FactoryIteratorProvider() {
 
-                    public <T> Iterator<T> iterator(Class<T> category) {
-                        if (ProcessFactory.class.isAssignableFrom(category)) {
-                            return (Iterator<T>) Collections.singletonList(factory).iterator();
-                        } else {
-                            return null;
-                        }
-                    }
-                });
+            @Override
+            public <T> Iterator<T> iterator(Class<T> category) {
+                if (ProcessFactory.class.isAssignableFrom(category)) {
+                    @SuppressWarnings("unchecked")
+                    Iterator<T> result =
+                            (Iterator<T>) Collections.singletonList(factory).iterator();
+                    return result;
+                } else {
+                    return null;
+                }
+            }
+        });
     }
 
     @Test
     public void testNames() {
         Set<Name> names = factory.getNames();
-        assertTrue(names.size() > 0);
+        assertFalse(names.isEmpty());
         // System.out.println(names);
         // Identity
         assertTrue(names.contains(new NameImpl("bean", "Identity")));
@@ -114,13 +117,12 @@ public class BeanProcessFactoryTest {
     @Test
     public void testDescribeIdentity() {
         NameImpl name = new NameImpl("bean", "Identity");
-        DescribeProcess describeProcessAnno =
-                IdentityProcess.class.getAnnotation(DescribeProcess.class);
+        DescribeProcess describeProcessAnno = IdentityProcess.class.getAnnotation(DescribeProcess.class);
 
         InternationalString desc = factory.getDescription(name);
-        assertTrue(desc.toString().equals(describeProcessAnno.description()));
+        assertEquals(desc.toString(), describeProcessAnno.description());
         InternationalString title = factory.getTitle(name);
-        assertTrue(title.toString().equals(describeProcessAnno.title()));
+        assertEquals(title.toString(), describeProcessAnno.title());
 
         Map<String, Parameter<?>> params = factory.getParameterInfo(name);
         assertEquals(1, params.size());
@@ -143,7 +145,7 @@ public class BeanProcessFactoryTest {
         final ReferencedEnvelope re = new ReferencedEnvelope(-10, 10, -10, 10, null);
 
         org.geotools.process.Process p = factory.create(new NameImpl("bean", "Identity"));
-        Map<String, Object> inputs = new HashMap<String, Object>();
+        Map<String, Object> inputs = new HashMap<>();
         inputs.put("input", re);
         Map<String, Object> result = p.execute(inputs, null);
 
@@ -165,18 +167,19 @@ public class BeanProcessFactoryTest {
     }
 
     @Test
-    public void testInvertQuery() throws ProcessException {
+    public void testRenderingTransformation() throws ProcessException {
         // prepare a mock feature collection
         SimpleFeatureCollection data = buildTestFeatures();
 
-        org.geotools.process.Process transformation =
-                factory.create(new NameImpl("bean", "VectorIdentityRT"));
-        Map<String, Object> inputs = new HashMap<String, Object>();
+        org.geotools.process.Process transformation = factory.create(new NameImpl("bean", "VectorIdentityRT"));
+        Map<String, Object> inputs = new HashMap<>();
         inputs.put("data", data);
         inputs.put("value", 10);
 
         RenderingProcess tx = (RenderingProcess) transformation;
-        Query dummyQuery = tx.invertQuery(inputs, null, null);
+        // just making sure it does not explode?
+        tx.invertQuery(inputs, null, null);
+        assertTrue(tx.clipOnRenderingArea(inputs));
 
         Map<String, Object> result = transformation.execute(inputs, null);
 
@@ -192,7 +195,7 @@ public class BeanProcessFactoryTest {
     @Test
     public void testDefaultValues() throws Exception {
         Process defaults = factory.create(new NameImpl("bean", "Defaults"));
-        Map<String, Object> results = defaults.execute(Collections.EMPTY_MAP, null);
+        Map<String, Object> results = defaults.execute(Collections.emptyMap(), null);
 
         // double check all defaults have been applied
         assertEquals("default string", results.get("string"));
@@ -208,16 +211,15 @@ public class BeanProcessFactoryTest {
     @Test
     public void testMinMaxAcceptedValues() throws Exception {
         // test that the annotation is correctly generating the parameter metadata
-        Map<String, Parameter<?>> params =
-                factory.getParameterInfo(new NameImpl("bean", "Defaults"));
-        assertEquals(2.0, ((Parameter) params.get("int")).metadata.get(Parameter.MAX));
-        assertEquals(-1.0, ((Parameter) params.get("int")).metadata.get(Parameter.MIN));
-        assertEquals(2.5, ((Parameter) params.get("double")).metadata.get(Parameter.MAX));
-        assertEquals(-1.5, ((Parameter) params.get("double")).metadata.get(Parameter.MIN));
+        Map<String, Parameter<?>> params = factory.getParameterInfo(new NameImpl("bean", "Defaults"));
+        assertEquals(2.0, params.get("int").metadata.get(Parameter.MAX));
+        assertEquals(-1.0, params.get("int").metadata.get(Parameter.MIN));
+        assertEquals(2.5, params.get("double").metadata.get(Parameter.MAX));
+        assertEquals(-1.5, params.get("double").metadata.get(Parameter.MIN));
         // check the null values with a  parameter that does not have that annotation parameter
         // filled
-        assertNull(((Parameter) params.get("short")).metadata.get(Parameter.MAX));
-        assertNull(((Parameter) params.get("short")).metadata.get(Parameter.MIN));
+        assertNull(params.get("short").metadata.get(Parameter.MAX));
+        assertNull(params.get("short").metadata.get(Parameter.MIN));
     }
 
     @Test

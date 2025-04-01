@@ -16,10 +16,10 @@
  */
 package org.geotools.geopkg;
 
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.jdbc.JDBCDataStoreOnlineTest;
 import org.geotools.referencing.CRS;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class GeoPkgDataStoreOnlineTest extends JDBCDataStoreOnlineTest {
 
@@ -28,13 +28,13 @@ public class GeoPkgDataStoreOnlineTest extends JDBCDataStoreOnlineTest {
         return new GeoPkgTestSetup();
     }
 
-    // following tests disabled, see SpatiaLiteDataStoreTest for details
     @Override
-    public void testCreateSchema() throws Exception {}
+    public void testCreateSchemaWithConstraints() throws Exception {
+        // SQLite does not enforce length restrictions on strings
+        // See FAQ (9) from http://www.sqlite.org/faq.html
+    }
 
     @Override
-    public void testCreateSchemaWithConstraints() throws Exception {}
-
     protected CoordinateReferenceSystem getUTMCRS() throws FactoryException {
         return CRS.decode("EPSG:26713", true);
     }

@@ -21,6 +21,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptor;
 import org.geotools.coverage.io.netcdf.NetCDFFormat;
 import org.geotools.imageio.netcdf.utilities.NetCDFUtilities;
 import org.geotools.parameter.DefaultParameterDescriptor;
@@ -29,14 +32,11 @@ import org.geotools.parameter.ParameterGroup;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.filter.Filter;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptor;
 
 public class GRIBFormat extends NetCDFFormat {
 
     public static final ParameterDescriptor<Filter> FILTER =
-            new DefaultParameterDescriptor<Filter>("Filter", Filter.class, null, null);
+            new DefaultParameterDescriptor<>("Filter", Filter.class, null, null);
 
     private static final Logger LOGGER = Logging.getLogger(GRIBFormat.class);
 
@@ -47,7 +47,7 @@ public class GRIBFormat extends NetCDFFormat {
 
     /** Sets the metadata information. */
     private void setInfo() {
-        final HashMap<String, String> info = new HashMap<String, String>();
+        final HashMap<String, String> info = new HashMap<>();
         info.put("name", "GRIB");
         info.put("description", "GRIB store plugin");
         info.put("vendor", "Geotools");
@@ -57,12 +57,9 @@ public class GRIBFormat extends NetCDFFormat {
 
         // reading parameters
         readParameters =
-                new ParameterGroup(
-                        new DefaultParameterDescriptorGroup(
-                                mInfo,
-                                new GeneralParameterDescriptor[] {
-                                    READ_GRIDGEOMETRY2D, TIME, ELEVATION, FILTER,
-                                }));
+                new ParameterGroup(new DefaultParameterDescriptorGroup(mInfo, new GeneralParameterDescriptor[] {
+                    READ_GRIDGEOMETRY2D, TIME, ELEVATION, FILTER,
+                }));
 
         // reading parameters
         writeParameters = null;
@@ -84,8 +81,7 @@ public class GRIBFormat extends NetCDFFormat {
 
             // Check if it is a GRIB data and if the GRIB library is available
             boolean gribExtension =
-                    NetCDFUtilities.isGribAvailable()
-                            && (fileName.contains("grb") || fileName.contains("grib"));
+                    NetCDFUtilities.isGribAvailable() && (fileName.contains("grb") || fileName.contains("grib"));
 
             if (fileName.endsWith("ncml") || gribExtension) {
                 if (LOGGER.isLoggable(Level.FINEST)) {

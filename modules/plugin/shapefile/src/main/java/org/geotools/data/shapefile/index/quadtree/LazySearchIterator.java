@@ -21,17 +21,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import org.geotools.data.CloseableIterator;
+import org.geotools.api.data.CloseableIterator;
 import org.geotools.data.shapefile.index.Data;
 import org.geotools.data.shapefile.index.DataDefinition;
 import org.geotools.data.shapefile.shp.IndexFile;
 import org.locationtech.jts.geom.Envelope;
 
 /**
- * Iterator that search the quad tree depth first. 32000 indices are cached at a time and each time
- * a node is visited the indices are removed from the node so that the memory footprint is kept
- * small. Note that if other iterators operate on the same tree then they can interfere with each
- * other.
+ * Iterator that search the quad tree depth first. 32000 indices are cached at a time and each time a node is visited
+ * the indices are removed from the node so that the memory footprint is kept small. Note that if other iterators
+ * operate on the same tree then they can interfere with each other.
  *
  * @author Jesse
  */
@@ -58,11 +57,11 @@ public class LazySearchIterator implements CloseableIterator<Data> {
 
     private Envelope bounds;
 
-    Iterator data;
+    Iterator<Data> data;
 
     private IndexFile indexfile;
 
-    ArrayList<Node> parents = new ArrayList<Node>();
+    ArrayList<Node> parents = new ArrayList<>();
 
     Indices indices = new Indices();
 
@@ -79,22 +78,23 @@ public class LazySearchIterator implements CloseableIterator<Data> {
         this.next = null;
     }
 
+    @Override
     public boolean hasNext() {
         if (closed) throw new IllegalStateException("Iterator has been closed!");
         if (next != null) return true;
         if (data != null && data.hasNext()) {
-            next = (Data) data.next();
+            next = data.next();
         } else {
             data = null;
             fillCache();
-            if (data != null && data.hasNext()) next = (Data) data.next();
+            if (data != null && data.hasNext()) next = data.next();
         }
         return next != null;
     }
 
     private void fillCache() {
         indices.clear();
-        ArrayList dataList = null;
+        ArrayList<Data> dataList = null;
         try {
             while (indices.size() < MAX_INDICES && current != null) {
                 if (idIndex < current.getNumShapeIds()
@@ -132,7 +132,7 @@ public class LazySearchIterator implements CloseableIterator<Data> {
             // sort so offset lookup is faster
             indices.sort();
             int size = indices.size();
-            dataList = new ArrayList(size);
+            dataList = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
                 int recno = indices.get(i);
                 Data data = new Data(DATA_DEFINITION);
@@ -146,6 +146,7 @@ public class LazySearchIterator implements CloseableIterator<Data> {
         data = dataList.iterator();
     }
 
+    @Override
     public Data next() {
         if (!hasNext()) throw new NoSuchElementException("No more elements available");
         Data temp = next;
@@ -153,10 +154,12 @@ public class LazySearchIterator implements CloseableIterator<Data> {
         return temp;
     }
 
+    @Override
     public void remove() {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void close() throws IOException {
         tree.close(this);
         tree.close();
@@ -176,21 +179,12 @@ public class LazySearchIterator implements CloseableIterator<Data> {
             curr = -1;
         }
 
-        /**
-         * The number of coordinates
-         *
-         * @return
-         */
+        /** The number of coordinates */
         int size() {
             return curr + 1;
         }
 
-        /**
-         * Adds a coordinate to this list
-         *
-         * @param x
-         * @param y
-         */
+        /** Adds a coordinate to this list */
         void add(int index) {
             curr++;
             if ((curr * 2 + 1) >= indices.length) {

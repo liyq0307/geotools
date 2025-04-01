@@ -21,11 +21,13 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import org.geotools.geopkg.TileMatrix;
 import org.geotools.geopkg.wps.GeoPackageProcessRequest;
 import org.geotools.geopkg.wps.GeoPackageProcessRequest.Layer;
+import org.geotools.geopkg.wps.GeoPackageProcessRequest.Parameter;
 import org.geotools.xs.bindings.XSQNameBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -71,6 +73,7 @@ public class Geopkgtype_tilesBinding extends LayertypeBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GPKG.geopkgtype_tiles;
     }
@@ -80,14 +83,14 @@ public class Geopkgtype_tilesBinding extends LayertypeBinding {
         XSQNameBinding nameBinding = new XSQNameBinding(namespaceContext);
 
         GeoPackageProcessRequest.TilesLayer layer = new GeoPackageProcessRequest.TilesLayer();
-        List<QName> layers = new ArrayList<QName>();
+        List<QName> layers = new ArrayList<>();
         for (String layerName : Arrays.asList(((String) node.getChildValue("layers")).split(","))) {
             layers.add((QName) nameBinding.parse(null, layerName.trim()));
         }
         layer.setLayers(layers);
         String styleNames = (String) node.getChildValue("styles");
         if (styleNames != null) {
-            List<String> styles = new ArrayList<String>();
+            List<String> styles = new ArrayList<>();
             for (String styleName : Arrays.asList(styleNames.split(","))) {
                 styles.add(styleName.trim());
             }
@@ -104,14 +107,25 @@ public class Geopkgtype_tilesBinding extends LayertypeBinding {
         if (transparent != null) {
             layer.setTransparent(transparent);
         }
-        layer.setCoverage(
-                (GeoPackageProcessRequest.TilesLayer.TilesCoverage) node.getChildValue("coverage"));
+        layer.setCoverage((GeoPackageProcessRequest.TilesLayer.TilesCoverage) node.getChildValue("coverage"));
         Object gridSet = node.getChildValue("gridset");
         if (gridSet instanceof String) {
             layer.setGridSetName((String) gridSet);
         } else if (gridSet instanceof List<?>) {
-            layer.setGrids((List<TileMatrix>) gridSet);
+            @SuppressWarnings("unchecked")
+            List<TileMatrix> list = (List<TileMatrix>) gridSet;
+            layer.setGrids(list);
         }
+
+        Object parameters = node.getChildValue("parameters");
+        if (parameters instanceof Parameter) {
+            layer.setParameters(Arrays.asList((Parameter) parameters));
+        } else if (parameters instanceof Map) {
+            @SuppressWarnings("unchecked")
+            List<Parameter> parametersList = (List<Parameter>) ((Map<?, ?>) parameters).get("parameters");
+            layer.setParameters(parametersList);
+        }
+
         return layer;
     }
 }

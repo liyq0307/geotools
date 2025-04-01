@@ -17,10 +17,10 @@
 package org.geotools.renderer.style;
 
 /**
- * Base class for resolved styles. Styles are resolved according a particular rendering context. The
- * base class make no assumption about the output device (AWT, SWT, <i>etc.</i>). However, a
- * particular output device may need to be choosen for concrete subclasses, for example {@link
- * Style2D} for targeting <A HREF="http://java.sun.com/products/java-media/2D/">Java2D</A>.
+ * Base class for resolved styles. Styles are resolved according a particular rendering context. The base class make no
+ * assumption about the output device (AWT, SWT, <i>etc.</i>). However, a particular output device may need to be
+ * choosen for concrete subclasses, for example {@link Style2D} for targeting <A
+ * HREF="http://java.sun.com/products/java-media/2D/">Java2D</A>.
  *
  * @version $Id$
  */
@@ -52,9 +52,6 @@ public abstract class Style implements Cloneable {
     /**
      * Sets minimum and maximum scale, and performs integrity checks on these value (will throw and
      * IllegalArgumentException in minScale > maxScale)
-     *
-     * @param minScale
-     * @param maxScale
      */
     public void setMinMaxScale(double minScale, double maxScale) {
         if (minScale > maxScale) {

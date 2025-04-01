@@ -81,9 +81,10 @@ public class OperationParameterTypeImpl extends OperationParameterBaseTypeImpl i
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<IdentifierType> getParameterID() {
         if (parameterID == null) {
-            parameterID = new EObjectContainmentEList<IdentifierType>(IdentifierType.class, this, Gml311Package.OPERATION_PARAMETER_TYPE__PARAMETER_ID);
+            parameterID = new EObjectContainmentEList<>(IdentifierType.class, this, Gml311Package.OPERATION_PARAMETER_TYPE__PARAMETER_ID);
         }
         return parameterID;
     }
@@ -93,6 +94,7 @@ public class OperationParameterTypeImpl extends OperationParameterBaseTypeImpl i
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public StringOrRefType getRemarks() {
         return remarks;
     }
@@ -117,6 +119,7 @@ public class OperationParameterTypeImpl extends OperationParameterBaseTypeImpl i
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setRemarks(StringOrRefType newRemarks) {
         if (newRemarks != remarks) {
             NotificationChain msgs = null;

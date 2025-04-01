@@ -1,21 +1,14 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2019, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
-
 package org.geotools.data;
 
 import java.io.File;
@@ -23,18 +16,25 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFactorySpi;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.shapefile.ShapefileDumper;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.SchemaException;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
 
 public class ShapefileExample {
 
@@ -47,8 +47,7 @@ public class ShapefileExample {
         DataStore dataStore = DataStoreFinder.getDataStore(map);
         String typeName = dataStore.getTypeNames()[0];
 
-        FeatureSource<SimpleFeatureType, SimpleFeature> source =
-                dataStore.getFeatureSource(typeName);
+        FeatureSource<SimpleFeatureType, SimpleFeature> source = dataStore.getFeatureSource(typeName);
         Filter filter = Filter.INCLUDE; // ECQL.toFilter("BBOX(THE_GEOM, 10,20,30,40)")
 
         FeatureCollection<SimpleFeatureType, SimpleFeature> collection = source.getFeatures(filter);
@@ -63,23 +62,20 @@ public class ShapefileExample {
         // end use
     }
 
-    @SuppressWarnings("rawtypes")
     public void create() throws Exception {
         // start create
         FileDataStoreFactorySpi factory = new ShapefileDataStoreFactory();
 
         File file = new File("my.shp");
-        Map map = Collections.singletonMap("url", file.toURI().toURL());
+        Map<String, ?> map = Collections.singletonMap("url", file.toURI().toURL());
 
         DataStore myData = factory.createNewDataStore(map);
         SimpleFeatureType featureType =
-                DataUtilities.createType(
-                        "my", "geom:Point,name:String,age:Integer,description:String");
+                DataUtilities.createType("my", "geom:Point,name:String,age:Integer,description:String");
         myData.createSchema(featureType);
         // end create
     }
 
-    @SuppressWarnings("rawtypes")
     public void read() throws Exception {
         // start read
         File file = new File("my.shp");
@@ -120,8 +116,7 @@ public class ShapefileExample {
 
     private SimpleFeatureCollection getFeatureCollection() throws SchemaException {
         SimpleFeatureType featureType =
-                DataUtilities.createType(
-                        "my", "geom:Point,name:String,age:Integer,description:String");
+                DataUtilities.createType("my", "geom:Point,name:String,age:Integer,description:String");
         return new ListFeatureCollection(featureType);
     }
 }

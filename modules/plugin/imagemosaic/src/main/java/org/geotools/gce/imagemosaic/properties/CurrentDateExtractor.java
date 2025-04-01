@@ -17,10 +17,12 @@
 package org.geotools.gce.imagemosaic.properties;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URL;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 /** Simple {@link PropertiesCollector} */
 class CurrentDateExtractor extends PropertiesCollector {
@@ -33,6 +35,18 @@ class CurrentDateExtractor extends PropertiesCollector {
 
     @Override
     public PropertiesCollector collect(final File file) {
+        date = new Date();
+        return this;
+    }
+
+    @Override
+    public PropertiesCollector collect(final URL url) {
+        date = new Date();
+        return this;
+    }
+
+    @Override
+    public PropertiesCollector collect(final URI uri) {
         date = new Date();
         return this;
     }

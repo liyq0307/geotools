@@ -36,8 +36,8 @@ public final class Locales {
      * Returns available languages.
      *
      * @return Available languages.
-     * @todo Current implementation returns a hard-coded list. Future implementations may perform a
-     *     more intelligent work.
+     * @todo Current implementation returns a hard-coded list. Future implementations may perform a more intelligent
+     *     work.
      */
     public static Locale[] getAvailableLanguages() {
         return new Locale[] {Locale.ENGLISH, Locale.FRENCH, Locale.GERMAN
@@ -54,8 +54,7 @@ public final class Locales {
         final Locale[] languages = getAvailableLanguages();
         Locale[] locales = Locale.getAvailableLocales();
         int count = 0;
-        for (int i = 0; i < locales.length; i++) {
-            final Locale locale = locales[i];
+        for (Locale locale : locales) {
             if (containsLanguage(languages, locale)) {
                 locales[count++] = locale;
             }
@@ -65,13 +64,12 @@ public final class Locales {
     }
 
     /**
-     * Returns {@code true} if the specified array of locales contains at least one element with the
-     * specified language.
+     * Returns {@code true} if the specified array of locales contains at least one element with the specified language.
      */
     private static boolean containsLanguage(final Locale[] locales, final Locale language) {
         final String code = language.getLanguage();
-        for (int i = 0; i < locales.length; i++) {
-            if (code.equals(locales[i].getLanguage())) {
+        for (Locale locale : locales) {
+            if (code.equals(locale.getLanguage())) {
                 return true;
             }
         }
@@ -99,12 +97,12 @@ public final class Locales {
      *
      * @param args Command-lines arguments.
      */
-    public static void main(String[] args) {
+    public static void main(String... args) {
         final Arguments arguments = new Arguments(args);
         arguments.getRemainingArguments(0);
         final String[] locales = getAvailableLocales(arguments.locale);
-        for (int i = 0; i < locales.length; i++) {
-            arguments.out.println(locales[i]);
+        for (String locale : locales) {
+            arguments.out.println(locale);
         }
     }
 }

@@ -16,20 +16,33 @@
  */
 package org.geotools.data.mongodb.complex;
 
+import static org.geotools.data.mongodb.complex.MongoComplexUtilities.extractFeature;
+import static org.geotools.data.mongodb.complex.MongoComplexUtilities.getTransformer;
+import static org.geotools.data.mongodb.complex.MongoComplexUtilities.invalidFeature;
+
 import com.mongodb.DBObject;
-import java.awt.*;
+import java.awt.RenderingHints;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.DataAccess;
-import org.geotools.data.FeatureListener;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
+import java.util.function.Supplier;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.FeatureListener;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.complex.AppSchemaDataAccess;
 import org.geotools.data.complex.FeatureTypeMapping;
 import org.geotools.data.complex.MappingFeatureCollection;
@@ -40,15 +53,8 @@ import org.geotools.data.memory.MemoryFeatureCollection;
 import org.geotools.data.mongodb.MongoFeature;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.geometry.jts.GeometryCoordinateSequenceTransformer;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /** MongoDB custom nested attribute mapping for app-schema. */
@@ -88,11 +94,9 @@ public class MongoNestedMapping extends NestedAttributeMapping {
             Integer resolveTimeOut)
             throws IOException {
         if (!(foreignKeyValue instanceof CollectionLinkFunction.LinkCollection)) {
-            throw new RuntimeException(
-                    "MongoDB nesting only supports foreign keys of 'CollectionLink' type.");
+            throw new RuntimeException("MongoDB nesting only supports foreign keys of 'CollectionLink' type.");
         }
-        CollectionLinkFunction.LinkCollection linkCollection =
-                (CollectionLinkFunction.LinkCollection) foreignKeyValue;
+        CollectionLinkFunction.LinkCollection linkCollection = (CollectionLinkFunction.LinkCollection) foreignKeyValue;
         String collectionPath = linkCollection.getCollectionPath();
         if (feature instanceof MongoCollectionFeature) {
             String parentPath = ((MongoCollectionFeature) feature).getCollectionPath();
@@ -106,65 +110,79 @@ public class MongoNestedMapping extends NestedAttributeMapping {
         for (int i = 0; i < collection.size(); i++) {
             features.add(MongoCollectionFeature.build(feature, collectionPath, i));
         }
-        FeatureSource fSource = buildMappingFeatureSource(feature, features);
-        ArrayList<Feature> matchingFeatures = new ArrayList<Feature>();
+        MappingFeatureSource fSource = buildMappingFeatureSource(feature, features);
+        ArrayList<Feature> matchingFeatures = new ArrayList<>();
         // get all the mapped nested features based on the link values
         FeatureCollection<FeatureType, Feature> fCollection = fSource.getFeatures(Query.ALL);
         if (fCollection instanceof MappingFeatureCollection) {
-            FeatureIterator<Feature> iterator = fCollection.features();
-            while (iterator.hasNext()) {
-                Feature nestedFeature = iterator.next();
-                String parentPath =
-                        MongoComplexUtilities.resolvePath(
-                                (Feature) feature, linkCollection.getCollectionPath());
-                MongoComplexUtilities.setParentPath(nestedFeature, parentPath);
-                matchingFeatures.add(nestedFeature);
+            try (FeatureIterator<Feature> iterator = fCollection.features()) {
+                while (iterator.hasNext()) {
+                    Feature nestedFeature = iterator.next();
+                    String parentPath =
+                            MongoComplexUtilities.resolvePath((Feature) feature, linkCollection.getCollectionPath());
+                    MongoComplexUtilities.setParentPath(nestedFeature, parentPath);
+                    matchingFeatures.add(nestedFeature);
+                }
             }
-            iterator.close();
         }
         return matchingFeatures;
     }
 
-    private MappingFeatureSource buildMappingFeatureSource(
-            Object feature, List<SimpleFeature> features) throws IOException {
-        MappingFeatureSource originalFeatureSource =
-                (MappingFeatureSource) getMappingSource(feature);
+    private MappingFeatureSource buildMappingFeatureSource(Object feature, List<SimpleFeature> features)
+            throws IOException {
+        MappingFeatureSource originalFeatureSource = (MappingFeatureSource) getMappingSource(feature);
         FeatureTypeMapping mapping = originalFeatureSource.getMapping();
         AppSchemaDataAccess dataAccess = (AppSchemaDataAccess) originalFeatureSource.getDataStore();
         MemoryFeatureCollection collection = new MemoryFeatureCollection(null);
         collection.addAll(features);
-        MongoStaticFeatureSource staticSource =
-                new MongoStaticFeatureSource(collection, mapping.getSource());
-        FeatureTypeMapping staticMapping =
-                new FeatureTypeMapping(
-                        staticSource,
-                        mapping.getTargetFeature(),
-                        mapping.getDefaultGeometryXPath(),
-                        mapping.getAttributeMappings(),
-                        mapping.getNamespaces(),
-                        mapping.isDenormalised());
+        @SuppressWarnings("unchecked")
+        MongoStaticFeatureSource<?, ?> staticSource = new MongoStaticFeatureSource(collection, mapping.getSource());
+        FeatureTypeMapping staticMapping = new FeatureTypeMapping(
+                staticSource,
+                mapping.getTargetFeature(),
+                mapping.getDefaultGeometryXPath(),
+                mapping.getAttributeMappings(),
+                mapping.getNamespaces(),
+                mapping.isDenormalised());
         return new MappingFeatureSource(dataAccess, staticMapping);
     }
 
     private List getSubCollection(Object feature, String collectionPath) {
-        feature = MongoComplexUtilities.extractFeature(feature, collectionPath);
-        if (feature instanceof MongoFeature) {
-            DBObject mongoObject = ((MongoFeature) feature).getMongoObject();
-            return getSubCollection(mongoObject, collectionPath, Collections.emptyMap());
-        } else if (feature instanceof MongoCollectionFeature) {
-            MongoCollectionFeature collectionFeature = (MongoCollectionFeature) feature;
+        // let's make sure we have a feature
+        // we should have a feature
+        if (!(feature instanceof Feature)) {
+            // not a feature so nothing to do
+            throw invalidFeature(feature, collectionPath);
+        }
+        Feature f = (Feature) feature;
+        Feature extracted = extractFeature(feature, collectionPath);
+
+        if (extracted instanceof MongoFeature) {
+            MongoFeature mongoFeature = (MongoFeature) extracted;
+            DBObject mongoObject = mongoFeature.getMongoObject();
+            Supplier<GeometryCoordinateSequenceTransformer> transformer = getTransformer(f, mongoFeature);
+
+            return getSubCollection(mongoObject, collectionPath, Collections.emptyMap(), transformer);
+        } else if (extracted instanceof MongoCollectionFeature) {
+            MongoCollectionFeature collectionFeature = (MongoCollectionFeature) extracted;
+            MongoFeature mongoFeature = collectionFeature.getMongoFeature();
+            Supplier<GeometryCoordinateSequenceTransformer> transformer = getTransformer(f, mongoFeature);
+
             return getSubCollection(
-                    collectionFeature.getMongoFeature().getMongoObject(),
+                    mongoFeature.getMongoObject(),
                     collectionPath,
-                    collectionFeature.getCollectionsIndexes());
+                    collectionFeature.getCollectionsIndexes(),
+                    transformer);
         }
         throw new RuntimeException("MongoDB nesting only works with MongoDB features.");
     }
 
     private List getSubCollection(
-            DBObject mongoObject, String collectionPath, Map<String, Integer> collectionsIndexes) {
-        Object value =
-                MongoComplexUtilities.getValue(mongoObject, collectionsIndexes, collectionPath);
+            DBObject mongoObject,
+            String collectionPath,
+            Map<String, Integer> collectionsIndexes,
+            Supplier<GeometryCoordinateSequenceTransformer> transformer) {
+        Object value = MongoComplexUtilities.getValue(mongoObject, collectionsIndexes, collectionPath, transformer);
         if (value == null) {
             return Collections.emptyList();
         }
@@ -174,13 +192,13 @@ public class MongoNestedMapping extends NestedAttributeMapping {
         throw new RuntimeException("Could not extract collection from path.");
     }
 
-    private static final class MongoStaticFeatureSource implements FeatureSource {
+    private static final class MongoStaticFeatureSource<T extends FeatureType, F extends Feature>
+            implements FeatureSource<T, F> {
 
-        private final FeatureCollection features;
-        private final FeatureSource originalFeatureSource;
+        private final FeatureCollection<T, F> features;
+        private final FeatureSource<T, F> originalFeatureSource;
 
-        public MongoStaticFeatureSource(
-                FeatureCollection features, FeatureSource originalFeatureSource) {
+        public MongoStaticFeatureSource(FeatureCollection<T, F> features, FeatureSource<T, F> originalFeatureSource) {
             this.features = features;
             this.originalFeatureSource = originalFeatureSource;
         }
@@ -196,7 +214,7 @@ public class MongoNestedMapping extends NestedAttributeMapping {
         }
 
         @Override
-        public DataAccess getDataStore() {
+        public DataAccess<T, F> getDataStore() {
             return originalFeatureSource.getDataStore();
         }
 
@@ -212,22 +230,22 @@ public class MongoNestedMapping extends NestedAttributeMapping {
         public void removeFeatureListener(FeatureListener listener) {}
 
         @Override
-        public FeatureCollection getFeatures(Filter filter) throws IOException {
+        public FeatureCollection<T, F> getFeatures(Filter filter) throws IOException {
             return features;
         }
 
         @Override
-        public FeatureCollection getFeatures(Query query) throws IOException {
+        public FeatureCollection<T, F> getFeatures(Query query) throws IOException {
             return features;
         }
 
         @Override
-        public FeatureCollection getFeatures() throws IOException {
+        public FeatureCollection<T, F> getFeatures() throws IOException {
             return features;
         }
 
         @Override
-        public FeatureType getSchema() {
+        public T getSchema() {
             return originalFeatureSource.getSchema();
         }
 

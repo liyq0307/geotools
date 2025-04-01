@@ -21,8 +21,8 @@ import java.io.InputStream;
 import javax.xml.parsers.ParserConfigurationException;
 import net.opengis.ows11.ExceptionReportType;
 import net.opengis.wps10.ProcessDescriptionsType;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Response;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.wps.WPSConfiguration;
 import org.geotools.xsd.Configuration;
@@ -39,18 +39,11 @@ public class DescribeProcessResponse extends Response {
     private ProcessDescriptionsType processDescs;
     private ExceptionReportType excepResponse;
 
-    /**
-     * @param contentType
-     * @param inputStream
-     * @throws ServiceException
-     * @throws SAXException
-     */
+    /** */
     public DescribeProcessResponse(HTTPResponse httpResponse) throws IOException, ServiceException {
         super(httpResponse);
 
-        InputStream inputStream = null;
-        try {
-            inputStream = httpResponse.getResponseStream();
+        try (InputStream inputStream = httpResponse.getResponseStream()) {
 
             // Map hints = new HashMap();
             // hints.put(DocumentHandler.DEFAULT_NAMESPACE_HINT_KEY, WPSSchema.getInstance());
@@ -63,9 +56,7 @@ public class DescribeProcessResponse extends Response {
             try {
                 // object = DocumentFactory.getInstance(inputStream, hints, Level.WARNING);
                 object = parser.parse(inputStream);
-            } catch (SAXException e) {
-                throw (IOException) new IOException().initCause(e);
-            } catch (ParserConfigurationException e) {
+            } catch (SAXException | ParserConfigurationException e) {
                 throw (IOException) new IOException().initCause(e);
             }
 
@@ -76,11 +67,6 @@ public class DescribeProcessResponse extends Response {
             // exception caught on server and returned
             else if (object instanceof ExceptionReportType) {
                 excepResponse = (ExceptionReportType) object;
-            }
-
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
             }
         }
     }

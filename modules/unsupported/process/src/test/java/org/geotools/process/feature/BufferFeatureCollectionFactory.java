@@ -17,9 +17,9 @@
 package org.geotools.process.feature;
 
 import java.util.Map;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.text.Text;
-import org.opengis.util.InternationalString;
 
 /**
  * Factory for process which buffers an entire feature collection.
@@ -30,17 +30,15 @@ import org.opengis.util.InternationalString;
 public class BufferFeatureCollectionFactory extends FeatureToFeatureProcessFactory {
 
     /** Buffer amount */
-    public static final Parameter<Double> BUFFER =
-            new Parameter<Double>(
-                    "buffer",
-                    Double.class,
-                    Text.text("Buffer Amount"),
-                    Text.text("Amount to buffer each feature by"));
+    public static final Parameter<Double> BUFFER = new Parameter<>(
+            "buffer", Double.class, Text.text("Buffer Amount"), Text.text("Amount to buffer each feature by"));
 
+    @Override
     public InternationalString getTitle() {
         return Text.text("Buffer Features");
     }
 
+    @Override
     public InternationalString getDescription() {
         return Text.text("Buffer each Feature in a Feature Collection");
     }
@@ -50,6 +48,7 @@ public class BufferFeatureCollectionFactory extends FeatureToFeatureProcessFacto
         parameters.put(BUFFER.key, BUFFER);
     }
 
+    @Override
     public BufferFeatureCollectionProcess create() throws IllegalArgumentException {
         return new BufferFeatureCollectionProcess(this);
     }

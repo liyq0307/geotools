@@ -25,7 +25,7 @@ import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.EObjectImpl;
 
 import org.eclipse.emf.ecore.util.EDataTypeUniqueEList;
-import org.opengis.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.FeatureId;
 import org.eclipse.emf.ecore.util.BasicFeatureMap;
 import org.eclipse.emf.ecore.util.FeatureMap;
 import org.eclipse.emf.ecore.util.InternalEList;
@@ -99,9 +99,10 @@ public class CreatedOrModifiedFeatureTypeImpl extends EObjectImpl implements Cre
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<FeatureId> getResourceId() {
     if (resourceId == null) {
-      resourceId = new EDataTypeUniqueEList<FeatureId>(FeatureId.class, this, Wfs20Package.CREATED_OR_MODIFIED_FEATURE_TYPE__RESOURCE_ID);
+      resourceId = new EDataTypeUniqueEList<>(FeatureId.class, this, Wfs20Package.CREATED_OR_MODIFIED_FEATURE_TYPE__RESOURCE_ID);
     }
     return resourceId;
   }
@@ -111,6 +112,7 @@ public class CreatedOrModifiedFeatureTypeImpl extends EObjectImpl implements Cre
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public String getHandle() {
     return handle;
   }
@@ -120,6 +122,7 @@ public class CreatedOrModifiedFeatureTypeImpl extends EObjectImpl implements Cre
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setHandle(String newHandle) {
     String oldHandle = handle;
     handle = newHandle;

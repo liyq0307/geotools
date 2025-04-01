@@ -19,11 +19,11 @@ package org.geotools.coverageio.gdal.envihdr;
 import it.geosolutions.imageio.plugins.envihdr.ENVIHdrImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.geometry.MismatchedDimensionException;
 import org.geotools.coverageio.gdal.BaseGDALGridFormat;
-import org.geotools.data.DataSourceException;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.geometry.MismatchedDimensionException;
 
 /**
  * @author Mathew Wyatt, CSIRO Australia
@@ -32,13 +32,9 @@ import org.opengis.geometry.MismatchedDimensionException;
 public final class EnviHdrFormat extends BaseGDALGridFormat implements Format {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(EnviHdrFormat.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(EnviHdrFormat.class);
 
-    /**
-     * Constructor for the {@code BaseGDALGridFormat}. It is invoked by the underlying
-     * implementations.
-     */
+    /** Constructor for the {@code BaseGDALGridFormat}. It is invoked by the underlying implementations. */
     public EnviHdrFormat() {
         super(new ENVIHdrImageReaderSpi());
 
@@ -52,19 +48,17 @@ public final class EnviHdrFormat extends BaseGDALGridFormat implements Format {
     private static InfoWrapper INFO = new InfoWrapper("ENVIHdr Coverage Format", "ENVIHdr");
 
     /** Sets the metadata information. */
+    @Override
     protected void setInfo() {
         setInfo(INFO);
     }
 
     /** @see org.geotools.data.coverage.grid.AbstractGridFormat#getReader(Object, Hints) */
+    @Override
     public EnviHdrReader getReader(Object source, Hints hints) {
         try {
             return new EnviHdrReader(source, hints);
-        } catch (MismatchedDimensionException e) {
-            final RuntimeException re = new RuntimeException();
-            re.initCause(e);
-            throw re;
-        } catch (DataSourceException e) {
+        } catch (MismatchedDimensionException | DataSourceException e) {
             final RuntimeException re = new RuntimeException();
             re.initCause(e);
             throw re;

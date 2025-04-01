@@ -22,8 +22,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for IDRISI files.
@@ -34,22 +34,21 @@ import org.opengis.coverage.grid.Format;
  */
 public final class IDRISIFormatFactory implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(IDRISIFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(IDRISIFormatFactory.class);
 
     /**
      * Tells me if the coverage plugin to access EHdr is available or not.
      *
      * @return {@code true} if the plugin is available, {@code false} otherwise.
      */
+    @Override
     public boolean isAvailable() {
         boolean available = true;
 
         // if these classes are here, then the runtime environment has
         // access to JAI and the JAI ImageI/O toolbox.
         try {
-            Class.forName(
-                    "it.geosolutions.imageio.plugins.arcbinarygrid.ArcBinaryGridImageReaderSpi");
+            Class.forName("it.geosolutions.imageio.plugins.arcbinarygrid.ArcBinaryGridImageReaderSpi");
             available = new IDRISIImageReaderSpi().isAvailable();
 
             if (LOGGER.isLoggable(Level.FINE)) {
@@ -70,11 +69,13 @@ public final class IDRISIFormatFactory implements GridFormatFactorySpi {
      *
      * @return A {@link IDRISIFormat}
      */
+    @Override
     public IDRISIFormat createFormat() {
         return new IDRISIFormat();
     }
 
     /** Returns the implementation hints. The default implementation returns en empty map. */
+    @Override
     public Map<RenderingHints.Key, ?> getImplementationHints() {
         return Collections.emptyMap();
     }

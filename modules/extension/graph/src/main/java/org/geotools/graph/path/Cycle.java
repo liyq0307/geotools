@@ -23,14 +23,14 @@ import org.geotools.graph.structure.Edge;
 import org.geotools.graph.structure.Node;
 
 /**
- * Represents a cycle in a graph. A <B>cycle</B> C is defined as a closed walk of size n in which
- * nodes 1 through n-1 form a path.
+ * Represents a cycle in a graph. A <B>cycle</B> C is defined as a closed walk of size n in which nodes 1 through n-1
+ * form a path.
  *
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
  */
 public class Cycle extends Walk {
 
-    public Cycle(Collection nodes) {
+    public Cycle(Collection<Node> nodes) {
         super(nodes);
     }
 
@@ -38,34 +38,35 @@ public class Cycle extends Walk {
      * Tests if the cycle is valid. A valid cycle satisfies two conditions: <br>
      * <br>
      * 1. Each pair of adjacent nodes share an edge.<br>
-     * 2. The first and last nodes share an edge. 3. The only node repetition is the first and last
-     * nodes.
+     * 2. The first and last nodes share an edge. 3. The only node repetition is the first and last nodes.
      */
+    @Override
     public boolean isValid() {
         if (super.isValid()) {
 
             // ensure first and last nodes are same
             if (isClosed()) {
                 // ensure no node repetitions except for first and last
-                return (new HashSet(this).size() == size() - 1);
+                return (new HashSet<>(this).size() == size() - 1);
             }
         }
         return (false);
     }
 
-    protected List buildEdges() {
-        List edges = super.buildEdges();
+    @Override
+    protected List<Edge> buildEdges() {
+        List<Edge> edges = super.buildEdges();
 
         // get the edge between the first and last nodes
-        Node first = (Node) get(0);
-        Node last = (Node) get(size() - 1);
+        Node first = get(0);
+        Node last = get(size() - 1);
 
         Edge e = first.getEdge(last);
         if (e != null) {
             edges.add(e);
-            return (edges);
+            return edges;
         }
 
-        return (null);
+        return null;
     }
 }

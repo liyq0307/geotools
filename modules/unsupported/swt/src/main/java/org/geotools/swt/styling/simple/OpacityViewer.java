@@ -25,7 +25,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.geotools.styling.RasterSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
 import org.geotools.styling.SLD;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.swt.utils.Messages;
@@ -99,8 +99,6 @@ public class OpacityViewer {
     /**
      * TODO summary sentence for createControl ...
      *
-     * @param parent
-     * @param listener1
      * @return Generated composite
      */
     public Composite createControl(Composite parent, KeyListener listener1) {
@@ -127,39 +125,23 @@ public class OpacityViewer {
         }
     }
 
-    /**
-     * Accepts a listener that will be notified when content changes.
-     *
-     * @param listener1
-     */
+    /** Accepts a listener that will be notified when content changes. */
     public void addListener(SelectionListener listener1) {
         this.listener = listener1;
     }
 
-    /**
-     * Remove listener.
-     *
-     * @param listener1
-     */
+    /** Remove listener. */
     public void removeListener(SelectionListener listener1) {
         if (this.listener == listener1) this.listener = null;
     }
 
-    /**
-     * TODO summary sentence for fire ...
-     *
-     * @param event
-     */
+    /** TODO summary sentence for fire ... */
     protected void fire(SelectionEvent event) {
         if (this.listener == null) return;
         this.listener.widgetSelected(event);
     }
 
-    /**
-     * Called to set up this "viewer" based on the provided symbolizer
-     *
-     * @param sym
-     */
+    /** Called to set up this "viewer" based on the provided symbolizer */
     public void set(RasterSymbolizer sym2) {
         listen(false); // don't sync when setting up
         try {
@@ -182,7 +164,6 @@ public class OpacityViewer {
     /**
      * TODO summary sentence for getStroke ...
      *
-     * @param build
      * @return Stroke defined by this model
      */
     public RasterSymbolizer get(StyleBuilder build) {

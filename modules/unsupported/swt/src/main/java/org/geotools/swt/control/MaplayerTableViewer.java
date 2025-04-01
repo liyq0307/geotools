@@ -34,14 +34,18 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.Layer;
 import org.geotools.map.StyleLayer;
-import org.geotools.styling.Style;
+import org.geotools.api.style.Style;
 import org.geotools.swt.SwtMapPane;
 import org.geotools.swt.styling.SimpleStyleConfigurator;
 import org.geotools.swt.utils.ImageCache;
 import org.geotools.swt.utils.Utils;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
 
 /**
  * A {@link TableViewer table viewer} for {@link Layer map layers}.
@@ -49,10 +53,10 @@ import org.geotools.swt.utils.Utils;
  * @author Andrea Antonello (www.hydrologis.com)
  */
 public class MaplayerTableViewer extends TableViewer implements ISelectionChangedListener {
-    private List<Layer> layersList = new ArrayList<Layer>();
+    private List<Layer> layersList = new ArrayList<>();
     private Layer selectedMapLayer;
 
-    private String[] titles = {"Layer name", "Visible", "Style"};
+    private String[] titles = {"", "Layer name", "", ""};
     private SwtMapPane pane;
 
     /**
@@ -107,42 +111,10 @@ public class MaplayerTableViewer extends TableViewer implements ISelectionChange
 
     private void createColumns(final Composite parent, final TableViewer viewer) {
 
-        int[] bounds = {120, 50, 50};
+        int[] bounds = {40, 200, 40, 40};
 
-        TableViewerColumn col = createTableViewerColumn(titles[0], bounds[0], 0);
-        col.setLabelProvider(
-                new ColumnLabelProvider() {
-                    @Override
-                    public Image getImage(Object element) {
-                        if (element instanceof Layer) {
-                            Layer p = (Layer) element;
-                            if (Utils.isGridLayer(p)) {
-                                return ImageCache.getInstance().getImage(ImageCache.GRID);
-                            }
-                            return ImageCache.getInstance().getImage(ImageCache.FEATURE);
-                        }
-                        return null;
-                    }
-
-                    @Override
-                    public String getText(Object element) {
-                        if (element instanceof Layer) {
-                            Layer p = (Layer) element;
-                            String title = p.getTitle();
-                            if (title == null || title.length() == 0) {
-                                @SuppressWarnings("rawtypes")
-                                FeatureSource featureSource = p.getFeatureSource();
-                                if (featureSource != null) {
-                                    title = featureSource.getName().getLocalPart().toString();
-                                }
-                            }
-                            return title;
-                        }
-                        return null;
-                    }
-                });
-
-        col = createTableViewerColumn(titles[1], bounds[1], 1);
+        TableViewerColumn col;
+        col = createTableViewerColumn(titles[0], bounds[0], 0);
         col.setLabelProvider(
                 new ColumnLabelProvider() {
                     @Override
@@ -163,11 +135,56 @@ public class MaplayerTableViewer extends TableViewer implements ISelectionChange
                     }
                 });
 
+        col = createTableViewerColumn(titles[1], bounds[1], 1);
+        col.setLabelProvider(
+                new ColumnLabelProvider() {
+                    @Override
+                    public Image getImage(Object element) {
+                        if (element instanceof Layer) {
+                            Layer p = (Layer) element;
+                            if (Utils.isGridLayer(p)) {
+                                return ImageCache.getInstance().getImage(ImageCache.GRID);
+                            }
+                            return ImageCache.getInstance().getImage(ImageCache.FEATURE);
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public String getText(Object element) {
+                        if (element instanceof Layer) {
+                            Layer p = (Layer) element;
+                            String title = p.getTitle();
+                            if (title == null || title.length() == 0) {
+                                FeatureSource<?, ?> featureSource = p.getFeatureSource();
+                                if (featureSource != null) {
+                                    title = featureSource.getName().getLocalPart().toString();
+                                }
+                            }
+                            return title;
+                        }
+                        return null;
+                    }
+                });
+
         col = createTableViewerColumn(titles[2], bounds[2], 2);
         col.setLabelProvider(
                 new ColumnLabelProvider() {
                     public Image getImage(Object element) {
                         return ImageCache.getInstance().getImage(ImageCache.STYLE);
+                    }
+
+                    @Override
+                    public String getText(Object element) {
+                        return null;
+                    }
+                });
+
+        col = createTableViewerColumn(titles[3], bounds[3], 3);
+        col.setLabelProvider(
+                new ColumnLabelProvider() {
+                    public Image getImage(Object element) {
+                        return ImageCache.getInstance().getImage(ImageCache.IMAGE_FULLEXTENT);
                     }
 
                     @Override
@@ -205,7 +222,7 @@ public class MaplayerTableViewer extends TableViewer implements ISelectionChange
         super.triggerEditorActivationEvent(event);
         ViewerCell source = (ViewerCell) event.getSource();
         int columnIndex = source.getColumnIndex();
-        if (columnIndex == 1) {
+        if (columnIndex == 0) {
             Layer element = (Layer) source.getElement();
             element.setVisible(!element.isVisible());
             refresh();
@@ -218,6 +235,19 @@ public class MaplayerTableViewer extends TableViewer implements ISelectionChange
                 java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
             }
             pane.redraw();
+        } else if (columnIndex == 3) {
+            Layer element = (Layer) source.getElement();
+            ReferencedEnvelope bounds = element.getBounds();
+            if (bounds.getCoordinateReferenceSystem() != null) {
+                CoordinateReferenceSystem mapCrs =
+                        pane.getMapContent().getCoordinateReferenceSystem();
+                try {
+                    bounds = bounds.transform(mapCrs, true);
+                } catch (TransformException | FactoryException e) {
+                }
+            }
+
+            pane.setDisplayArea(bounds);
         }
     }
 
@@ -225,7 +255,6 @@ public class MaplayerTableViewer extends TableViewer implements ISelectionChange
      * Show a style dialog to create a new Style for the layer
      *
      * @param layer the layer to be styled
-     * @throws IOException
      */
     private void doSetStyle(Layer layer) throws IOException {
         if (layer instanceof StyleLayer) {

@@ -18,13 +18,13 @@ package org.geotools.data.complex.filter;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Or;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.visitor.DuplicatingFilterVisitor;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Or;
 
 /**
  * Duplicates Filter replacing mixed-indexed operator with combined ID IN clause + remaining filters
@@ -39,9 +39,7 @@ public class IndexCombinedFilterTransformerVisitor extends DuplicatingFilterVisi
     private Filter idInFilter;
 
     public IndexCombinedFilterTransformerVisitor(
-            BinaryLogicOperator indexedParentLogicOperator,
-            List<Filter> indexedFilters,
-            Filter idInFilter) {
+            BinaryLogicOperator indexedParentLogicOperator, List<Filter> indexedFilters, Filter idInFilter) {
         super();
         this.indexedParentLogicOperator = indexedParentLogicOperator;
         this.indexedFilters = indexedFilters;
@@ -70,9 +68,7 @@ public class IndexCombinedFilterTransformerVisitor extends DuplicatingFilterVisi
             // add ID IN () filter
             gfilters.add(idInFilter);
             // add non-indexed filters (duplicates):
-            indexedParentLogicOperator
-                    .getChildren()
-                    .stream()
+            indexedParentLogicOperator.getChildren().stream()
                     .filter(f -> indexedFilters.stream().noneMatch(i -> i.equals(f)))
                     .forEach(f -> gfilters.add(duplicateFilter(f)));
             // build replace operator filter

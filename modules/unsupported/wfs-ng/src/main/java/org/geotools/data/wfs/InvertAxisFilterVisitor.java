@@ -16,6 +16,11 @@
  */
 package org.geotools.data.wfs;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.filter.visitor.DuplicatingFilterVisitor;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Coordinate;
@@ -31,15 +36,9 @@ import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Returns a clone of the provided filter where all geometries and bboxes have inverted coordinates
- * (x, y) -> (y, x).
+ * Returns a clone of the provided filter where all geometries and bboxes have inverted coordinates (x, y) -&gt; (y, x).
  *
  * @author "Mauro Bartolomeoli - mauro.bartolomeoli@geo-solutions.it"
  */
@@ -47,11 +46,12 @@ public class InvertAxisFilterVisitor extends DuplicatingFilterVisitor {
 
     private GeometryFactory geometryFactory;
 
-    public InvertAxisFilterVisitor(FilterFactory2 factory, GeometryFactory geometryFactory) {
+    public InvertAxisFilterVisitor(FilterFactory factory, GeometryFactory geometryFactory) {
         super(factory);
         this.geometryFactory = geometryFactory;
     }
 
+    @Override
     public Object visit(BBOX filter, Object extraData) {
         if (filter.getExpression2() instanceof Literal) {
             Literal bboxLiteral = (Literal) filter.getExpression2();
@@ -86,6 +86,7 @@ public class InvertAxisFilterVisitor extends DuplicatingFilterVisitor {
         return filter;
     }
 
+    @Override
     public Object visit(Literal expression, Object extraData) {
         if (!(expression.getValue() instanceof Geometry)) return super.visit(expression, extraData);
 
@@ -94,10 +95,7 @@ public class InvertAxisFilterVisitor extends DuplicatingFilterVisitor {
         return ff.literal(invertGeometryCoordinates(geom));
     }
 
-    /**
-     * @param geom
-     * @return
-     */
+    /** */
     private Geometry invertGeometryCoordinates(Geometry geom) {
         if (geom instanceof Point) {
             Point point = (Point) geom;
@@ -109,13 +107,11 @@ public class InvertAxisFilterVisitor extends DuplicatingFilterVisitor {
         } else if (geom instanceof Polygon) {
             Polygon polygon = (Polygon) geom;
             Coordinate[] shellCoordinates = polygon.getExteriorRing().getCoordinates();
-            LinearRing invertedShell =
-                    geometryFactory.createLinearRing(invertCoordinates(shellCoordinates));
+            LinearRing invertedShell = geometryFactory.createLinearRing(invertCoordinates(shellCoordinates));
             LinearRing[] invertedHoles = new LinearRing[polygon.getNumInteriorRing()];
             for (int count = 0; count < polygon.getNumInteriorRing(); count++) {
                 Coordinate[] holeCoordinates = polygon.getInteriorRingN(count).getCoordinates();
-                invertedHoles[count] =
-                        geometryFactory.createLinearRing(invertCoordinates(holeCoordinates));
+                invertedHoles[count] = geometryFactory.createLinearRing(invertCoordinates(holeCoordinates));
             }
             return geometryFactory.createPolygon(invertedShell, invertedHoles);
         } else if (geom instanceof MultiPoint) {
@@ -125,16 +121,14 @@ public class InvertAxisFilterVisitor extends DuplicatingFilterVisitor {
             MultiLineString multiLineString = (MultiLineString) geom;
             LineString[] inverted = new LineString[multiLineString.getNumGeometries()];
             for (int count = 0; count < multiLineString.getNumGeometries(); count++) {
-                inverted[count] =
-                        (LineString) invertGeometryCoordinates(multiLineString.getGeometryN(count));
+                inverted[count] = (LineString) invertGeometryCoordinates(multiLineString.getGeometryN(count));
             }
             return geometryFactory.createMultiLineString(inverted);
         } else if (geom instanceof MultiPolygon) {
             MultiPolygon multiPolygon = (MultiPolygon) geom;
             Polygon[] inverted = new Polygon[multiPolygon.getNumGeometries()];
             for (int count = 0; count < multiPolygon.getNumGeometries(); count++) {
-                inverted[count] =
-                        (Polygon) invertGeometryCoordinates(multiPolygon.getGeometryN(count));
+                inverted[count] = (Polygon) invertGeometryCoordinates(multiPolygon.getGeometryN(count));
             }
             return geometryFactory.createMultiPolygon(inverted);
         } else if (geom instanceof GeometryCollection) {
@@ -148,10 +142,7 @@ public class InvertAxisFilterVisitor extends DuplicatingFilterVisitor {
         throw new IllegalArgumentException("Unknown geometry type: " + geom.getGeometryType());
     }
 
-    /**
-     * @param coordinates
-     * @return
-     */
+    /** */
     private Coordinate[] invertCoordinates(Coordinate[] coordinates) {
         Coordinate[] result = new Coordinate[coordinates.length];
         for (int count = 0; count < coordinates.length; count++) {
@@ -160,10 +151,7 @@ public class InvertAxisFilterVisitor extends DuplicatingFilterVisitor {
         return result;
     }
 
-    /**
-     * @param coordinate
-     * @return
-     */
+    /** */
     private Coordinate invertCoordinate(Coordinate coordinate) {
         return new Coordinate(coordinate.y, coordinate.x, coordinate.getZ());
     }

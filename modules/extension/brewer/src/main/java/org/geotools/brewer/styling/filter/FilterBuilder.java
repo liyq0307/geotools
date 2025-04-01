@@ -18,15 +18,15 @@
 
 package org.geotools.brewer.styling.filter;
 
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.brewer.styling.builder.Builder;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 
 /** FilterBuilder acting as a simple wrapper around an Expression. */
 public class FilterBuilder implements Builder<Filter> {
     protected Filter filter; // placeholder just to keep us going right now
-    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory2(null);
+    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
     protected boolean unset = false;
     protected Builder<? extends Filter> delegate = null;
 
@@ -39,6 +39,7 @@ public class FilterBuilder implements Builder<Filter> {
     }
 
     /** Build the expression. */
+    @Override
     public Filter build() {
         if (unset) {
             return null;
@@ -46,13 +47,15 @@ public class FilterBuilder implements Builder<Filter> {
         return filter;
     }
 
+    @Override
     public FilterBuilder reset() {
         this.delegate = null;
-        this.filter = org.opengis.filter.Filter.EXCLUDE;
+        this.filter = org.geotools.api.filter.Filter.EXCLUDE;
         this.unset = false;
         return this;
     }
 
+    @Override
     public FilterBuilder reset(Filter filter) {
         if (filter == null) {
             return unset();
@@ -62,6 +65,7 @@ public class FilterBuilder implements Builder<Filter> {
         return this;
     }
 
+    @Override
     public FilterBuilder unset() {
         this.unset = true;
         this.delegate = null;

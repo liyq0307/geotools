@@ -16,25 +16,24 @@
  */
 package org.geotools.data.crs;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.GeometryCoordinateSequenceTransformer;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * ReprojectFeatureReader provides a reprojection for FeatureTypes.
  *
  * <p>ReprojectFeatureReader is a wrapper used to reproject GeometryAttributes to a user supplied
- * CoordinateReferenceSystem from the original CoordinateReferenceSystem supplied by the original
- * FeatureReader.
+ * CoordinateReferenceSystem from the original CoordinateReferenceSystem supplied by the original FeatureReader.
  *
  * <p>Example Use:
  *
@@ -51,8 +50,8 @@ import org.opengis.referencing.operation.TransformException;
  * assertEquals( reprojectCS, newCS );
  * </code></pre>
  *
- * TODO: handle the case where there is more than one geometry and the other geometries have a
- * different CS than the default geometry
+ * TODO: handle the case where there is more than one geometry and the other geometries have a different CS than the
+ * default geometry
  *
  * @author jgarnett, Refractions Research, Inc.
  * @author aaime
@@ -65,9 +64,7 @@ public class ReprojectFeatureIterator implements Iterator<SimpleFeature>, Simple
     GeometryCoordinateSequenceTransformer transformer = new GeometryCoordinateSequenceTransformer();
 
     public ReprojectFeatureIterator(
-            FeatureIterator<SimpleFeature> reader,
-            SimpleFeatureType schema,
-            MathTransform transform) {
+            FeatureIterator<SimpleFeature> reader, SimpleFeatureType schema, MathTransform transform) {
         this.reader = reader;
         this.schema = schema;
         transformer.setMathTransform(transform);
@@ -81,7 +78,7 @@ public class ReprojectFeatureIterator implements Iterator<SimpleFeature>, Simple
      *
      * <p>Description ...
      *
-     * @see org.geotools.data.FeatureReader#getFeatureType()
+     * @see FeatureReader#getFeatureType()
      */
     public SimpleFeatureType getFeatureType() {
         if (schema == null) {
@@ -96,11 +93,9 @@ public class ReprojectFeatureIterator implements Iterator<SimpleFeature>, Simple
      *
      * <p>Description ...
      *
-     * @throws IOException
-     * @throws IllegalAttributeException
-     * @throws NoSuchElementException
-     * @see org.geotools.data.FeatureReader#next()
+     * @see FeatureReader#next()
      */
+    @Override
     public SimpleFeature next() throws NoSuchElementException {
         if (reader == null) {
             throw new IllegalStateException("Reader has already been closed");
@@ -119,14 +114,14 @@ public class ReprojectFeatureIterator implements Iterator<SimpleFeature>, Simple
             }
         } catch (TransformException e) {
             throw (IllegalStateException)
-                    new IllegalStateException(
-                                    "A transformation exception occurred while reprojecting data on the fly")
+                    new IllegalStateException("A transformation exception occurred while reprojecting data on the fly")
                             .initCause(e);
         }
 
         return SimpleFeatureBuilder.build(schema, attributes, next.getID());
     }
 
+    @Override
     public void remove() {
         throw new UnsupportedOperationException("On the fly reprojection disables remove");
     }
@@ -135,9 +130,9 @@ public class ReprojectFeatureIterator implements Iterator<SimpleFeature>, Simple
      *
      * <p>Description ...
      *
-     * @throws IOException
-     * @see org.geotools.data.FeatureReader#hasNext()
+     * @see FeatureReader#hasNext()
      */
+    @Override
     public boolean hasNext() {
         if (reader == null) {
             throw new IllegalStateException("Reader has already been closed");
@@ -151,9 +146,9 @@ public class ReprojectFeatureIterator implements Iterator<SimpleFeature>, Simple
      *
      * <p>Description ...
      *
-     * @throws IOException
-     * @see org.geotools.data.FeatureReader#close()
+     * @see FeatureReader#close()
      */
+    @Override
     public void close() {
         if (reader == null) {
             return;

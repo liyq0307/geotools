@@ -1,6 +1,6 @@
 package org.geotools.csw;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import javax.xml.namespace.QName;
 import net.opengis.cat.csw20.DescribeRecordType;
@@ -13,9 +13,7 @@ public class CSWDescribeRecordTest {
 
     @Test
     public void testParseDescribeRecord() throws Exception {
-        DescribeRecordType dr =
-                (DescribeRecordType)
-                        parser.parse(getClass().getResourceAsStream("DescribeRecord.xml"));
+        DescribeRecordType dr = (DescribeRecordType) parser.parse(getClass().getResourceAsStream("DescribeRecord.xml"));
         assertEquals("CSW", dr.getService());
         assertEquals("2.0.2", dr.getVersion());
         assertEquals(2, dr.getTypeName().size());

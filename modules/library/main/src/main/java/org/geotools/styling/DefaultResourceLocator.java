@@ -19,11 +19,11 @@ package org.geotools.styling;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import org.geotools.api.style.ResourceLocator;
 import org.geotools.util.URLs;
 
 /**
- * Default locator for online resources. Searches by absolute URL, relative path w.r.t. to SLD
- * document or classpath.
+ * Default locator for online resources. Searches by absolute URL, relative path w.r.t. to SLD document or classpath.
  *
  * @author Jan De Moerloose
  */
@@ -38,6 +38,7 @@ public class DefaultResourceLocator implements ResourceLocator {
         this.sourceUrl = sourceUrl;
     }
 
+    @Override
     public URL locateResource(String uri) {
         URL url = null;
         try {
@@ -64,20 +65,15 @@ public class DefaultResourceLocator implements ResourceLocator {
             }
             if (url == null) {
                 url = getClass().getResource(uri);
-                if (url == null)
-                    LOGGER.warning(
-                            "can't parse " + uri + " as a java resource present in the classpath");
+                if (url == null) LOGGER.warning("can't parse " + uri + " as a java resource present in the classpath");
             }
         }
         return url;
     }
 
     /**
-     * Variant to URL.getQuery() that won't balk at having # in the query (e.g., a color in a
-     * parametric SVG reference), e.g. <code>firestation.svg?fill=#FF0000</code>
-     *
-     * @param url
-     * @return
+     * Variant to URL.getQuery() that won't balk at having # in the query (e.g., a color in a parametric SVG reference),
+     * e.g. <code>firestation.svg?fill=#FF0000</code>
      */
     private String getQueryPart(URL url) {
         String external = url.toExternalForm();
@@ -90,8 +86,7 @@ public class DefaultResourceLocator implements ResourceLocator {
     }
 
     protected URL validateRelativeURL(URL relativeUrl) {
-        File f;
-        f = URLs.urlToFile(relativeUrl);
+        File f = URLs.urlToFile(relativeUrl);
         if (f != null && f.exists()) {
             // bingo!
             return relativeUrl;

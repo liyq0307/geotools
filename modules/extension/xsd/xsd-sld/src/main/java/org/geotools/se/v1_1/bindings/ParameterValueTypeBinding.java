@@ -17,10 +17,9 @@
 package org.geotools.se.v1_1.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.se.v1_1.SE;
 import org.geotools.sld.bindings.SLDParameterValueTypeBinding;
-import org.geotools.xml.*;
-import org.opengis.filter.FilterFactory;
 
 /**
  * Binding object for the type http://www.opengis.net/se:ParameterValueType.
@@ -54,6 +53,7 @@ public class ParameterValueTypeBinding extends SLDParameterValueTypeBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.ParameterValueType;
     }

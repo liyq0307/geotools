@@ -17,7 +17,8 @@
 package org.geotools.data;
 
 import java.io.IOException;
-import org.opengis.feature.type.AttributeDescriptor;
+import org.geotools.api.data.AttributeReader;
+import org.geotools.api.feature.type.AttributeDescriptor;
 
 /**
  * Attribute Reader that joins.
@@ -35,13 +36,13 @@ public class JoiningAttributeReader implements AttributeReader {
      *
      * @param readers Readers to join
      */
-    public JoiningAttributeReader(AttributeReader[] readers) {
+    public JoiningAttributeReader(AttributeReader... readers) {
         this.readers = readers;
 
         this.metaData = joinMetaData(readers);
     }
 
-    private AttributeDescriptor[] joinMetaData(AttributeReader[] readers) {
+    private AttributeDescriptor[] joinMetaData(AttributeReader... readers) {
         int total = 0;
         index = new int[readers.length];
 
@@ -53,9 +54,9 @@ public class JoiningAttributeReader implements AttributeReader {
         AttributeDescriptor[] md = new AttributeDescriptor[total];
         int idx = 0;
 
-        for (int i = 0, ii = readers.length; i < ii; i++) {
-            for (int j = 0, jj = readers[i].getAttributeCount(); j < jj; j++) {
-                md[idx] = readers[i].getAttributeType(j);
+        for (AttributeReader reader : readers) {
+            for (int j = 0, jj = reader.getAttributeCount(); j < jj; j++) {
+                md[idx] = reader.getAttributeType(j);
                 idx++;
             }
         }
@@ -63,12 +64,13 @@ public class JoiningAttributeReader implements AttributeReader {
         return md;
     }
 
+    @Override
     public void close() throws IOException {
         IOException dse = null;
 
-        for (int i = 0, ii = readers.length; i < ii; i++) {
+        for (AttributeReader reader : readers) {
             try {
-                readers[i].close();
+                reader.close();
             } catch (IOException e) {
                 dse = e;
             }
@@ -79,9 +81,10 @@ public class JoiningAttributeReader implements AttributeReader {
         }
     }
 
+    @Override
     public boolean hasNext() throws IOException {
-        for (int i = 0, ii = readers.length; i < ii; i++) {
-            if (readers[i].hasNext()) {
+        for (AttributeReader reader : readers) {
+            if (reader.hasNext()) {
                 return true;
             }
         }
@@ -89,14 +92,16 @@ public class JoiningAttributeReader implements AttributeReader {
         return false;
     }
 
+    @Override
     public void next() throws IOException {
-        for (int i = 0, ii = readers.length; i < ii; i++) {
-            if (readers[i].hasNext()) {
-                readers[i].next();
+        for (AttributeReader reader : readers) {
+            if (reader.hasNext()) {
+                reader.next();
             }
         }
     }
 
+    @Override
     public Object read(int idx) throws IOException {
         AttributeReader reader = null;
 
@@ -116,10 +121,12 @@ public class JoiningAttributeReader implements AttributeReader {
         return reader.read(idx);
     }
 
+    @Override
     public int getAttributeCount() {
         return metaData.length;
     }
 
+    @Override
     public AttributeDescriptor getAttributeType(int i) {
         return metaData[i];
     }

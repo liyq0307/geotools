@@ -22,8 +22,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import org.geotools.data.Base64;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.geometry.jts.WKBReader;
+import org.geotools.util.Base64;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.ByteArrayInStream;
@@ -69,14 +70,12 @@ public class WKBAttributeIO {
      * This method will convert a Well Known Binary representation to a JTS Geometry object.
      *
      * @param wkbBytes the wkb encoded byte array
-     * @return a JTS Geometry object that is equivalent to the WTB representation passed in by param
-     *     wkb
-     * @throws IOException if more than one geometry object was found in the WTB representation, or
-     *     if the parser could not parse the WKB representation.
+     * @return a JTS Geometry object that is equivalent to the WTB representation passed in by param wkb
+     * @throws IOException if more than one geometry object was found in the WTB representation, or if the parser could
+     *     not parse the WKB representation.
      */
     private Geometry wkb2Geometry(byte[] wkbBytes) throws IOException {
-        if (wkbBytes
-                == null) // DJB: null value from database --> null geometry (the same behavior as
+        if (wkbBytes == null) // DJB: null value from database --> null geometry (the same behavior as
             // WKT).  NOTE: sending back a GEOMETRYCOLLECTION(EMPTY) is also a
             // possibility, but this is not the same as NULL
             return null;
@@ -91,7 +90,7 @@ public class WKBAttributeIO {
     /** @see org.geotools.data.jdbc.attributeio.AttributeIO#read(java.sql.ResultSet, int) */
     public Object read(ResultSet rs, String columnName) throws IOException {
         try {
-            byte bytes[] = rs.getBytes(columnName);
+            byte[] bytes = rs.getBytes(columnName);
             if (bytes == null) // ie. its a null column -> return a null geometry!
             return null;
             if (base64EncodingEnabled) {
@@ -106,7 +105,7 @@ public class WKBAttributeIO {
     /** @see org.geotools.data.jdbc.attributeio.AttributeIO#read(java.sql.ResultSet, int) */
     public Object read(ResultSet rs, int columnIndex) throws IOException {
         try {
-            byte bytes[] = rs.getBytes(columnIndex);
+            byte[] bytes = rs.getBytes(columnIndex);
             if (bytes == null) // ie. its a null column -> return a null geometry!
             return null;
             if (base64EncodingEnabled) {
@@ -118,10 +117,7 @@ public class WKBAttributeIO {
         }
     }
 
-    /**
-     * @see org.geotools.data.jdbc.attributeio.AttributeIO#write(java.sql.PreparedStatement, int,
-     *     java.lang.Object)
-     */
+    /** @see org.geotools.data.jdbc.attributeio.AttributeIO#write(java.sql.PreparedStatement, int, java.lang.Object) */
     public void write(PreparedStatement ps, int position, Object value) throws IOException {
         try {
             if (value == null) {
@@ -134,11 +130,7 @@ public class WKBAttributeIO {
         }
     }
 
-    /**
-     * Turns a char that encodes four bits in hexadecimal notation into a byte
-     *
-     * @param c
-     */
+    /** Turns a char that encodes four bits in hexadecimal notation into a byte */
     public static byte getFromChar(char c) {
         if (c <= '9') {
             return (byte) (c - '0');

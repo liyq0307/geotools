@@ -17,13 +17,13 @@
 
 package org.geotools.filter.text.cql2;
 
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.text.commons.CompilerUtil;
 import org.geotools.filter.text.commons.Language;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Unit test for between predicate
@@ -74,21 +74,16 @@ public class CQLBetweenPredicateTest {
         testBetweenPredicate(FilterCQLSample.NOT_BETWEEN_FILTER, expected);
     }
 
-    /**
-     * test for between predicate with compound attribute
-     *
-     * @throws Exception
-     */
+    /** test for between predicate with compound attribute */
     @Test
     public void compoundAttributeInBetweenPredicate() throws Exception {
 
         // test compound attribute gmd:aa:bb.gmd:cc.gmd:dd
         final String prop = "gmd:aa:bb.gmd:cc.gmd:dd";
         final String propExpected = "gmd:aa:bb/gmd:cc/gmd:dd";
-        Filter resultFilter = CQL.toFilter(prop + " BETWEEN 100 AND 200 ");
+        Filter resultFilter = parseFilter(prop + " BETWEEN 100 AND 200 ");
 
-        Assert.assertTrue(
-                "PropertyIsBetween filter was expected", resultFilter instanceof PropertyIsBetween);
+        Assert.assertTrue("PropertyIsBetween filter was expected", resultFilter instanceof PropertyIsBetween);
 
         PropertyIsBetween filter = (PropertyIsBetween) resultFilter;
         Expression property = filter.getExpression();
@@ -96,19 +91,17 @@ public class CQLBetweenPredicateTest {
         Assert.assertEquals(propExpected, property.toString());
     }
 
-    /**
-     * Execute the test with the provided sample
-     *
-     * @param samplePredicate
-     * @throws Exception
-     */
-    protected void testBetweenPredicate(final String samplePredicate, Filter expected)
-            throws Exception {
+    /** Execute the test with the provided sample */
+    protected void testBetweenPredicate(final String samplePredicate, Filter expected) throws Exception {
 
-        Filter actual = CompilerUtil.parseFilter(this.language, samplePredicate);
+        Filter actual = parseFilter(samplePredicate);
 
         Assert.assertNotNull("expects a not null filter", actual);
 
         Assert.assertEquals("between filter error", expected, actual);
+    }
+
+    protected Filter parseFilter(String samplePredicate) throws CQLException {
+        return CompilerUtil.parseFilter(this.language, samplePredicate);
     }
 }

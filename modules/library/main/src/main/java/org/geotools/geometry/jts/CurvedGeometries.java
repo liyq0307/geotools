@@ -32,38 +32,23 @@ import org.locationtech.jts.geom.LineString;
  */
 public class CurvedGeometries {
 
-    /**
-     * Returns true if the geometry is curved, or contains elements that are curved
-     *
-     * @param geometry
-     * @return
-     */
+    /** Returns true if the geometry is curved, or contains elements that are curved */
     public static boolean isCurved(Geometry geometry) {
         if (geometry instanceof CurvedGeometry<?>) {
             return true;
         }
 
         final AtomicBoolean curveFound = new AtomicBoolean(false);
-        geometry.apply(
-                new GeometryComponentFilter() {
-
-                    @Override
-                    public void filter(Geometry geom) {
-                        if (geom instanceof CurvedGeometry<?>) {
-                            curveFound.set(true);
-                        }
-                    }
-                });
+        geometry.apply((GeometryComponentFilter) geom -> {
+            if (geom instanceof CurvedGeometry<?>) {
+                curveFound.set(true);
+            }
+        });
 
         return curveFound.get();
     }
 
-    /**
-     * Checks if the specified geometry is a circle
-     *
-     * @param geom
-     * @return
-     */
+    /** Checks if the specified geometry is a circle */
     public static boolean isCircle(Geometry geom) {
         if (geom.isEmpty()) {
             return false;
@@ -119,8 +104,7 @@ public class CurvedGeometries {
                             return false;
                         }
                         Coordinate cc = curr.getCenter();
-                        if (!CircularArc.equals(cc.x, center.x)
-                                || !CircularArc.equals(cc.y, center.y)) {
+                        if (!CircularArc.equals(cc.x, center.x) || !CircularArc.equals(cc.y, center.y)) {
                             return false;
                         }
                     }
@@ -131,23 +115,15 @@ public class CurvedGeometries {
         }
     }
 
-    /**
-     * Builds a circular arc out of the specified coordinate sequence
-     *
-     * @param cs
-     * @param startCoordinate
-     * @return
-     */
+    /** Builds a circular arc out of the specified coordinate sequence */
     public static CircularArc getArc(CoordinateSequence cs, int startCoordinate) {
         if (cs.size() < (startCoordinate + 3)) {
-            throw new IllegalArgumentException(
-                    "The coordinate sequence has "
-                            + cs.size()
-                            + " points, cannot extract a circular arc starting from coordinate "
-                            + startCoordinate);
+            throw new IllegalArgumentException("The coordinate sequence has "
+                    + cs.size()
+                    + " points, cannot extract a circular arc starting from coordinate "
+                    + startCoordinate);
         } else if (startCoordinate < 0) {
-            throw new IllegalArgumentException(
-                    "Start coordinate must be 0 or positive, not: " + startCoordinate);
+            throw new IllegalArgumentException("Start coordinate must be 0 or positive, not: " + startCoordinate);
         }
 
         return new CircularArc(
@@ -159,13 +135,8 @@ public class CurvedGeometries {
                 cs.getOrdinate(2, 1));
     }
 
-    /**
-     * Returns the circle containing this arc
-     *
-     * @return
-     */
-    public static CircularRing toCircle(
-            CircularArc arc, GeometryFactory geometryFactory, double tolerance) {
+    /** Returns the circle containing this arc */
+    public static CircularRing toCircle(CircularArc arc, GeometryFactory geometryFactory, double tolerance) {
         double radius = arc.getRadius();
         Coordinate center = arc.getCenter();
 
@@ -185,12 +156,8 @@ public class CurvedGeometries {
     }
 
     /**
-     * Extracts a {@link CurvedGeometryFactory} from the provided geometry, either by just returning
-     * the one that is held by the geometry, if consistent with its tolerance, or by creating a new
-     * one
-     *
-     * @param curved
-     * @return
+     * Extracts a {@link CurvedGeometryFactory} from the provided geometry, either by just returning the one that is
+     * held by the geometry, if consistent with its tolerance, or by creating a new one
      */
     public static CurvedGeometryFactory getFactory(CurvedGeometry<?> curved) {
         GeometryFactory factory = ((Geometry) curved).getFactory();

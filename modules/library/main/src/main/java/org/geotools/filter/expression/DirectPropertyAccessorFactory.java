@@ -16,9 +16,9 @@
  */
 package org.geotools.filter.expression;
 
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.Name;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.Name;
 
 /**
  * This class will *directly* access a Property with the name equal to xpath.
@@ -29,8 +29,8 @@ public class DirectPropertyAccessorFactory implements PropertyAccessorFactory {
 
     static PropertyAccessor DIRECT = new DirectPropertyAccessor();
 
-    public PropertyAccessor createPropertyAccessor(
-            Class type, String xpath, Class target, Hints hints) {
+    @Override
+    public PropertyAccessor createPropertyAccessor(Class type, String xpath, Class target, Hints hints) {
         return DIRECT;
     }
 
@@ -44,6 +44,7 @@ public class DirectPropertyAccessorFactory implements PropertyAccessorFactory {
     static class DirectPropertyAccessor implements PropertyAccessor {
 
         /** We can handle *one* case and one case only */
+        @Override
         public boolean canHandle(Object object, String xpath, Class target) {
             if (object instanceof Property) {
                 Property property = (Property) object;
@@ -59,13 +60,15 @@ public class DirectPropertyAccessorFactory implements PropertyAccessorFactory {
             return false;
         }
 
-        public Object get(Object object, String xpath, Class target)
-                throws IllegalArgumentException {
-            return ((Property) object).getValue();
+        @Override
+        public <T> T get(Object object, String xpath, Class<T> target) throws IllegalArgumentException {
+            @SuppressWarnings("unchecked")
+            T cast = (T) ((Property) object).getValue();
+            return cast;
         }
 
-        public void set(Object object, String xpath, Object value, Class target)
-                throws IllegalArgumentException {
+        @Override
+        public <T> void set(Object object, String xpath, T value, Class<T> target) throws IllegalArgumentException {
             ((Property) object).setValue(value);
         }
     }

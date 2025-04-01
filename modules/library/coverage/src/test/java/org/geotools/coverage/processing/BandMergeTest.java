@@ -19,30 +19,24 @@ package org.geotools.coverage.processing;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import it.geosolutions.jaiext.range.NoDataContainer;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.media.jai.PlanarImage;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.Viewer;
-import org.geotools.coverage.util.CoverageUtilities;
 import org.geotools.image.ImageWorker;
 import org.junit.Test;
-import org.opengis.geometry.Envelope;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.TransformException;
 
 /** Tests the BandMerge operation. */
 public final class BandMergeTest extends GridProcessingTestBase {
 
-    /**
-     * Tests the "BandMerge" operation
-     *
-     * @throws IOException
-     */
+    /** Tests the "BandMerge" operation */
     @Test
     public void testBandMerge() throws TransformException, IOException {
         final CoverageProcessor processor = CoverageProcessor.getInstance();
@@ -50,13 +44,11 @@ public final class BandMergeTest extends GridProcessingTestBase {
          * Get the source coverage and build the rgb version.
          */
         GridCoverage2D source = EXAMPLES.get(4);
-        Envelope originalEnvelope = source.getEnvelope();
-        final List<GridCoverage2D> coverages = new ArrayList<GridCoverage2D>();
+        Bounds originalEnvelope = source.getEnvelope();
+        final List<GridCoverage2D> coverages = new ArrayList<>();
         final RenderedImage byteImage =
                 new ImageWorker(source.getRenderedImage()).rescaleToBytes().getRenderedImage();
-        source =
-                CoverageFactoryFinder.getGridCoverageFactory(null)
-                        .create("sample", byteImage, source.getEnvelope());
+        source = CoverageFactoryFinder.getGridCoverageFactory(null).create("sample", byteImage, source.getEnvelope());
 
         coverages.add(source);
         coverages.add(source);
@@ -68,7 +60,6 @@ public final class BandMergeTest extends GridProcessingTestBase {
         ParameterValueGroup param = processor.getOperation("BandMerge").getParameters();
         param.parameter("sources").setValue(coverages);
         GridCoverage2D merged = (GridCoverage2D) processor.doOperation(param);
-        NoDataContainer noData = CoverageUtilities.getNoDataProperty(merged);
 
         if (SHOW) {
             Viewer.show(source);
@@ -76,7 +67,8 @@ public final class BandMergeTest extends GridProcessingTestBase {
 
         } else {
             // Force computation
-            assertNotNull(PlanarImage.wrapRenderedImage(merged.getRenderedImage()).getTiles());
+            assertNotNull(
+                    PlanarImage.wrapRenderedImage(merged.getRenderedImage()).getTiles());
         }
 
         RenderedImage raster = merged.getRenderedImage();

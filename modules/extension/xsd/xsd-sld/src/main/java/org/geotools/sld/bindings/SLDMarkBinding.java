@@ -20,16 +20,16 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.namespace.QName;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Mark;
-import org.geotools.styling.ResourceLocator;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.ResourceLocator;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.util.logging.Logging;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -65,16 +65,14 @@ public class SLDMarkBinding extends AbstractComplexBinding {
     protected StyleFactory styleFactory;
     ResourceLocator resourceLocator;
 
-    public SLDMarkBinding(
-            StyleFactory styleFactory,
-            FilterFactory filterFactory,
-            ResourceLocator resourceLocator) {
+    public SLDMarkBinding(StyleFactory styleFactory, FilterFactory filterFactory, ResourceLocator resourceLocator) {
         this.styleFactory = styleFactory;
         this.filterFactory = filterFactory;
         this.resourceLocator = resourceLocator;
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.MARK;
     }
@@ -86,6 +84,7 @@ public class SLDMarkBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -97,6 +96,7 @@ public class SLDMarkBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Mark.class;
     }
@@ -108,6 +108,7 @@ public class SLDMarkBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -117,6 +118,7 @@ public class SLDMarkBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         String wkName = (String) node.getChildValue("WellKnownName");
         Stroke stroke = (Stroke) node.getChildValue("Stroke");

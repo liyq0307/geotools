@@ -20,7 +20,10 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.DataFeatureCollection;
@@ -29,9 +32,6 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.index.strtree.STRtree;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * IndexedFeatureReader
@@ -44,17 +44,14 @@ public final class IndexedFeatureResults extends DataFeatureCollection {
     int count;
     private Envelope queryBounds;
 
-    public IndexedFeatureResults(SimpleFeatureCollection results)
-            throws IOException, IllegalAttributeException {
+    public IndexedFeatureResults(SimpleFeatureCollection results) throws IOException, IllegalAttributeException {
         // copy results attributes
         super(null, results.getSchema());
 
         // load features into the index
-        SimpleFeatureIterator reader = null;
         bounds = new Envelope();
         count = 0;
-        try {
-            reader = results.features();
+        try (SimpleFeatureIterator reader = results.features()) {
             SimpleFeature f;
             Envelope env;
             while (reader.hasNext()) {
@@ -64,45 +61,47 @@ public final class IndexedFeatureResults extends DataFeatureCollection {
                 count++;
                 index.insert(env, f);
             }
-        } finally {
-            if (reader != null) reader.close();
         }
     }
 
     /** @see org.geotools.data.FeatureResults#reader() */
-    public FeatureReader<SimpleFeatureType, SimpleFeature> reader(Envelope envelope)
-            throws IOException {
+    public FeatureReader<SimpleFeatureType, SimpleFeature> reader(Envelope envelope) throws IOException {
         List results = index.query(envelope);
         final Iterator resultsIterator = results.iterator();
 
         return new FeatureReader<SimpleFeatureType, SimpleFeature>() {
-            /** @see org.geotools.data.FeatureReader#getFeatureType() */
+            /** @see FeatureReader#getFeatureType() */
+            @Override
             public SimpleFeatureType getFeatureType() {
                 return getSchema();
             }
 
-            /** @see org.geotools.data.FeatureReader#next() */
-            public SimpleFeature next()
-                    throws IOException, IllegalAttributeException, NoSuchElementException {
+            /** @see FeatureReader#next() */
+            @Override
+            public SimpleFeature next() throws IOException, IllegalAttributeException, NoSuchElementException {
                 return (SimpleFeature) resultsIterator.next();
             }
 
-            /** @see org.geotools.data.FeatureReader#hasNext() */
+            /** @see FeatureReader#hasNext() */
+            @Override
             public boolean hasNext() throws IOException {
                 return resultsIterator.hasNext();
             }
 
-            /** @see org.geotools.data.FeatureReader#close() */
+            /** @see FeatureReader#close() */
+            @Override
             public void close() throws IOException {}
         };
     }
 
     /** @see org.geotools.data.FeatureResults#getBounds() */
+    @Override
     public ReferencedEnvelope getBounds() {
         return ReferencedEnvelope.reference(bounds);
     }
 
     /** @see org.geotools.data.FeatureResults#getCount() */
+    @Override
     public int getCount() throws IOException {
         return count;
     }
@@ -110,14 +109,16 @@ public final class IndexedFeatureResults extends DataFeatureCollection {
     /** @see org.geotools.data.FeatureResults#collection() */
     public SimpleFeatureCollection collection() throws IOException {
         DefaultFeatureCollection fc = new DefaultFeatureCollection();
+        @SuppressWarnings("unchecked")
         List<SimpleFeature> results = index.query(bounds);
-        for (Iterator<SimpleFeature> it = results.iterator(); it.hasNext(); ) {
-            fc.add(it.next());
+        for (SimpleFeature result : results) {
+            fc.add(result);
         }
         return fc;
     }
 
     /** @see org.geotools.data.FeatureResults#reader() */
+    @Override
     public FeatureReader<SimpleFeatureType, SimpleFeature> reader() throws IOException {
         if (queryBounds != null) return reader(queryBounds);
         else return reader(bounds);

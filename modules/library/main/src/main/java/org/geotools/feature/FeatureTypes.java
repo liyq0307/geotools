@@ -19,6 +19,7 @@ package org.geotools.feature;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -27,34 +28,44 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.feature.type.PropertyType;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeImpl;
+import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.LengthFunction;
 import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.FactoryRegistryException;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.feature.type.PropertyType;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Utility methods for working against the FeatureType interface.
@@ -95,9 +106,7 @@ public class FeatureTypes {
     static {
         SimpleFeatureType featureType = null;
         try {
-            featureType =
-                    FeatureTypes.newFeatureType(
-                            null, "Feature", new URI("http://www.opengis.net/gml"), true);
+            featureType = FeatureTypes.newFeatureType(null, "Feature", new URI("http://www.opengis.net/gml"), true);
         } catch (Exception e) {
             // shold not happen
         }
@@ -112,22 +121,41 @@ public class FeatureTypes {
     public static final int ANY_LENGTH = -1;
 
     /** An feature type with no attributes */
-    public static final SimpleFeatureType EMPTY =
-            new SimpleFeatureTypeImpl(
-                    new NameImpl("Empty"),
-                    Collections.EMPTY_LIST,
-                    null,
-                    false,
-                    Collections.EMPTY_LIST,
-                    null,
-                    null);
+    public static final SimpleFeatureType EMPTY = new SimpleFeatureTypeImpl(
+            new NameImpl("Empty"), Collections.emptyList(), null, false, Collections.emptyList(), null, null);
+
+    protected static FilterFactory FF = CommonFactoryFinder.getFilterFactory(null);
 
     /**
-     * This is a 'suitable replacement for extracting the expected field length of an attribute
-     * absed on its "facets" (ie Filter describing type restrictions);
+     * Creates a restriction based on the attribute value length
      *
-     * <p>This code is copied from the ShapefileDataStore where it was written (probably by
-     * dzwiers). Cholmes is providing documentation.
+     * @param length The maximum allowed length
+     * @return The restriction
+     */
+    public static Filter createLengthRestriction(int length) {
+        if (length < 0) {
+            return null;
+        }
+        LengthFunction lengthFunction =
+                (LengthFunction) FF.function("LengthFunction", new Expression[] {FF.property(".")});
+        if (lengthFunction == null) {
+            return null;
+        }
+        Filter cf = null;
+        try {
+            cf = FF.lessOrEqual(lengthFunction, FF.literal(length));
+        } catch (IllegalFilterException e) {
+            // TODO something
+        }
+        return cf == null ? Filter.EXCLUDE : cf;
+    }
+
+    /**
+     * This is a 'suitable replacement for extracting the expected field length of an attribute absed on its "facets"
+     * (ie Filter describing type restrictions);
+     *
+     * <p>This code is copied from the ShapefileDataStore where it was written (probably by dzwiers). Cholmes is
+     * providing documentation.
      *
      * @param descriptor the descriptor whose lenght is to be investigated
      * @return an int indicating the max length of field in characters, or ANY_LENGTH
@@ -183,15 +211,103 @@ public class FeatureTypes {
     }
 
     /**
+     * Returns the eventual list of possible values accepted by this
+     *
+     * @param descriptor
+     * @return
+     */
+    public static List<?> getFieldOptions(PropertyDescriptor descriptor) {
+        PropertyType type = descriptor.getType();
+        List<Object> options = null;
+        while (type != null) {
+            // TODO: We should really go through all the restrictions and find
+            // the minimum of all the length restrictions; for now we assume an
+            // override behavior.
+            for (Filter f : type.getRestrictions()) {
+                List<Object> currentOptions = null;
+                boolean foundOptionsPattern = true;
+                if (f == null) {
+                    continue;
+                }
+                if (f instanceof PropertyIsEqualTo) {
+                    Object value = getOption((PropertyIsEqualTo) f);
+                    if (value != null) {
+                        currentOptions = Collections.singletonList(value);
+                    } else {
+                        continue;
+                    }
+                } else if (f instanceof Or) {
+                    Or or = (Or) f;
+                    currentOptions = new ArrayList<>();
+                    for (Filter child : or.getChildren()) {
+                        if (child instanceof PropertyIsEqualTo) {
+                            Object value = getOption((PropertyIsEqualTo) child);
+                            if (value != null) {
+                                currentOptions.add(value);
+                            } else {
+                                foundOptionsPattern = false;
+                                continue;
+                            }
+                        } else {
+                            foundOptionsPattern = false;
+                        }
+                    }
+                }
+
+                if (foundOptionsPattern) {
+                    // intersect all options patterns
+                    if (options != null) {
+                        options.retainAll(currentOptions);
+                    } else {
+                        options = currentOptions;
+                    }
+                }
+            }
+            type = type.getSuper();
+        }
+
+        return options != null && !options.isEmpty() ? options : null;
+    }
+
+    private static Object getOption(PropertyIsEqualTo f) {
+        PropertyIsEqualTo equal = f;
+        Expression x1 = equal.getExpression1();
+        Expression x2 = equal.getExpression2();
+        if (x1 instanceof PropertyName && ".".equals(((PropertyName) x1).getPropertyName()) && x2 instanceof Literal) {
+            return x2.evaluate(null);
+        }
+        return null;
+    }
+
+    /**
+     * Creates a restriction limiting an attribute to a given list of values.
+     *
+     * @param options The list of all possible values
+     * @return A filter restricting the attribute to the given list of values
+     */
+    public static Filter createFieldOptions(Collection<?> options) {
+        if (options == null || options.isEmpty()) {
+            return null;
+        }
+        PropertyName thisProperty = FF.property(".");
+        List<Filter> filters = options.stream()
+                .map(o -> FF.equal(thisProperty, FF.literal(o), false))
+                .collect(Collectors.toList());
+        if (filters.size() == 1) {
+            return filters.get(0);
+        } else {
+            return FF.or(filters);
+        }
+    }
+
+    /**
      * Forces the specified CRS on all geometry attributes
      *
      * @param schema the original schema
      * @param crs the forced crs
-     * @return
-     * @throws SchemaException
      */
-    public static SimpleFeatureType transform(
-            SimpleFeatureType schema, CoordinateReferenceSystem crs) throws SchemaException {
+    public static SimpleFeatureType transform(SimpleFeatureType schema, CoordinateReferenceSystem crs)
+            throws SchemaException {
         return transform(schema, crs, false);
     }
 
@@ -200,13 +316,24 @@ public class FeatureTypes {
      *
      * @param schema the original schema
      * @param crs the forced crs
-     * @param forceOnlyMissing if true, will force the specified crs only on the attributes that do
-     *     miss one
-     * @return
-     * @throws SchemaException
+     * @param forceOnlyMissing if true, will force the specified crs only on the attributes that do miss one
      */
     public static SimpleFeatureType transform(
-            SimpleFeatureType schema, CoordinateReferenceSystem crs, boolean forceOnlyMissing)
+            SimpleFeatureType schema, CoordinateReferenceSystem crs, boolean forceOnlyMissing) throws SchemaException {
+        return transform(schema, crs, forceOnlyMissing, false);
+    }
+
+    /**
+     * Forces the specified CRS on geometry attributes (all or some, depends on the parameters).
+     *
+     * @param schema the original schema
+     * @param crs the forced crs
+     * @param forceOnlyMissing if true, will force the specified crs only on the attributes that do miss one
+     * @param onlyIfCompatible if true, will force the specified crs only if the original CRS is compatible with it.
+     *     This property is ignored if forceOnlyMissing is true.
+     */
+    public static SimpleFeatureType transform(
+            SimpleFeatureType schema, CoordinateReferenceSystem crs, boolean forceOnlyMissing, boolean onlyIfCompatible)
             throws SchemaException {
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName(schema.getTypeName());
@@ -219,7 +346,11 @@ public class FeatureTypes {
                 GeometryDescriptor geometryType = (GeometryDescriptor) attributeType;
 
                 tb.descriptor(geometryType);
-                if (!forceOnlyMissing || geometryType.getCoordinateReferenceSystem() == null) {
+
+                if (forceOnlyMissing
+                        ? geometryType.getCoordinateReferenceSystem() == null
+                        : !onlyIfCompatible
+                                || CRS.isCompatible(geometryType.getCoordinateReferenceSystem(), crs, false)) {
                     tb.crs(crs);
                 }
 
@@ -244,12 +375,8 @@ public class FeatureTypes {
      * @param schema Schema for target transformation - transform( schema, crs )
      * @param transform MathTransform used to transform coordinates - reproject( crs, crs )
      * @return transformed Feature of type schema
-     * @throws TransformException
-     * @throws MismatchedDimensionException
-     * @throws IllegalAttributeException
      */
-    public static SimpleFeature transform(
-            SimpleFeature feature, SimpleFeatureType schema, MathTransform transform)
+    public static SimpleFeature transform(SimpleFeature feature, SimpleFeatureType schema, MathTransform transform)
             throws MismatchedDimensionException, TransformException, IllegalAttributeException {
         feature = SimpleFeatureBuilder.copy(feature);
 
@@ -264,24 +391,40 @@ public class FeatureTypes {
     }
 
     /**
+     * Tells if there is any work to be done for reprojection, i.e. if there are any CRS that differ but are compatible.
+     *
+     * @param schema the schema to be reprojected
+     * @param crs the crs to reproject to
+     * @return answer as boolean
+     */
+    public static boolean shouldReproject(SimpleFeatureType schema, CoordinateReferenceSystem crs) {
+        for (int i = 0; i < schema.getDescriptors().size(); i++) {
+            if (schema.getDescriptor(i) instanceof GeometryDescriptor) {
+                GeometryDescriptor descr = (GeometryDescriptor) schema.getDescriptor(i);
+                if (!CRS.equalsIgnoreMetadata(crs, descr.getCoordinateReferenceSystem())
+                        && CRS.isCompatible(descr.getCoordinateReferenceSystem(), crs, false)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * The most specific way to create a new FeatureType.
      *
      * @param types The AttributeTypes to create the FeatureType with.
      * @param name The typeName of the FeatureType. Required, may not be null.
      * @param ns The namespace of the FeatureType. Optional, may be null.
      * @param isAbstract True if this created type should be abstract.
-     * @param superTypes A Collection of types the FeatureType will inherit from. Currently, all
-     *     types inherit from feature in the opengis namespace.
+     * @param superTypes A Collection of types the FeatureType will inherit from. Currently, all types inherit from
+     *     feature in the opengis namespace.
      * @return A new FeatureType created from the given arguments.
      * @throws FactoryRegistryException If there are problems creating a factory.
      * @throws SchemaException If the AttributeTypes provided are invalid in some way.
      */
     public static SimpleFeatureType newFeatureType(
-            AttributeDescriptor[] types,
-            String name,
-            URI ns,
-            boolean isAbstract,
-            SimpleFeatureType[] superTypes)
+            AttributeDescriptor[] types, String name, URI ns, boolean isAbstract, SimpleFeatureType[] superTypes)
             throws FactoryRegistryException, SchemaException {
         return newFeatureType(types, name, ns, isAbstract, superTypes, null);
     }
@@ -293,8 +436,8 @@ public class FeatureTypes {
      * @param name The typeName of the FeatureType. Required, may not be null.
      * @param ns The namespace of the FeatureType. Optional, may be null.
      * @param isAbstract True if this created type should be abstract.
-     * @param superTypes A Collection of types the FeatureType will inherit from. Currently, all
-     *     types inherit from feature in the opengis namespace.
+     * @param superTypes A Collection of types the FeatureType will inherit from. Currently, all types inherit from
+     *     feature in the opengis namespace.
      * @return A new FeatureType created from the given arguments.
      * @throws FactoryRegistryException If there are problems creating a factory.
      * @throws SchemaException If the AttributeTypes provided are invalid in some way.
@@ -319,8 +462,8 @@ public class FeatureTypes {
         if (defaultGeometry != null) {
             // make sure that the default geometry was one of the types specified
             boolean add = true;
-            for (int i = 0; i < types.length; i++) {
-                if (types[i] == defaultGeometry) {
+            for (AttributeDescriptor type : types) {
+                if (type == defaultGeometry) {
                     add = false;
                     break;
                 }
@@ -340,7 +483,7 @@ public class FeatureTypes {
             // use the default super type
             tb.setSuperType(ABSTRACT_FEATURE_TYPE);
         }
-        return (SimpleFeatureType) tb.buildFeatureType();
+        return tb.buildFeatureType();
     }
 
     /**
@@ -350,8 +493,8 @@ public class FeatureTypes {
      * @param name The typeName of the FeatureType. Required, may not be null.
      * @param ns The namespace of the FeatureType. Optional, may be null.
      * @param isAbstract True if this created type should be abstract.
-     * @param superTypes A Collection of types the FeatureType will inherit from. Currently, all
-     *     types inherit from feature in the opengis namespace.
+     * @param superTypes A Collection of types the FeatureType will inherit from. Currently, all types inherit from
+     *     feature in the opengis namespace.
      * @return A new FeatureType created from the given arguments.
      * @throws FactoryRegistryException If there are problems creating a factory.
      * @throws SchemaException If the AttributeTypes provided are invalid in some way.
@@ -364,8 +507,7 @@ public class FeatureTypes {
             SimpleFeatureType[] superTypes,
             GeometryDescriptor defaultGeometry)
             throws FactoryRegistryException, SchemaException {
-        return newFeatureType(
-                types, name, ns, isAbstract, superTypes, (AttributeDescriptor) defaultGeometry);
+        return newFeatureType(types, name, ns, isAbstract, superTypes, (AttributeDescriptor) defaultGeometry);
     }
 
     /**
@@ -380,8 +522,7 @@ public class FeatureTypes {
      * @throws FactoryRegistryException If there are problems creating a factory.
      * @throws SchemaException If the AttributeTypes provided are invalid in some way.
      */
-    public static SimpleFeatureType newFeatureType(
-            AttributeDescriptor[] types, String name, URI ns, boolean isAbstract)
+    public static SimpleFeatureType newFeatureType(AttributeDescriptor[] types, String name, URI ns, boolean isAbstract)
             throws FactoryRegistryException, SchemaException {
         return newFeatureType(types, name, ns, isAbstract, null);
     }
@@ -404,8 +545,8 @@ public class FeatureTypes {
 
     /**
      * Create a new FeatureType with the given AttributeTypes. A short cut for calling <code>
-     * newFeatureType(types,name,null,false,null)</code>. Useful for test cases or datasources which
-     * may not allow a namespace.
+     * newFeatureType(types,name,null,false,null)</code>. Useful for test cases or datasources which may not allow a
+     * namespace.
      *
      * @param types The AttributeTypes to create the FeatureType with.
      * @param name The typeName of the FeatureType. Required, may not be null.
@@ -419,12 +560,12 @@ public class FeatureTypes {
     }
 
     /**
-     * Walks up the type hierarchy of the feature returning all super types of the specified feature
-     * type. The search terminates when a non-FeatureType or null is found. The original featureType
-     * is not included as an ancestor, only its strict ancestors.
+     * Walks up the type hierarchy of the feature returning all super types of the specified feature type. The search
+     * terminates when a non-FeatureType or null is found. The original featureType is not included as an ancestor, only
+     * its strict ancestors.
      */
     public static List<FeatureType> getAncestors(FeatureType featureType) {
-        List<FeatureType> ancestors = new ArrayList<FeatureType>();
+        List<FeatureType> ancestors = new ArrayList<>();
         while (featureType.getSuper() instanceof FeatureType) {
             FeatureType superType = (FeatureType) featureType.getSuper();
             ancestors.add(superType);
@@ -443,10 +584,7 @@ public class FeatureTypes {
     public static boolean matches(FeatureType featureType, Name name) {
         if (featureType.getName().equals(name)
                 || (name.getNamespaceURI() == null
-                        && featureType
-                                .getName()
-                                .getLocalPart()
-                                .equalsIgnoreCase(name.getLocalPart()))) {
+                        && featureType.getName().getLocalPart().equalsIgnoreCase(name.getLocalPart()))) {
             return true;
         }
 
@@ -465,12 +603,11 @@ public class FeatureTypes {
      * A query of the the types ancestor information.
      *
      * <p>This utility method may be used as common implementation for <code>
-     * FeatureType.isDecendedFrom( namespace, typeName )</code>, however for specific uses, such as
-     * GML, an implementor may be able to provide a more efficient implemenation based on prior
-     * knolwege.
+     * FeatureType.isDecendedFrom( namespace, typeName )</code>, however for specific uses, such as GML, an implementor
+     * may be able to provide a more efficient implemenation based on prior knolwege.
      *
-     * <p>This is a proper check, if the provided FeatureType matches the given namespace and
-     * typename it is <b>not </b> considered to be decended from itself.
+     * <p>This is a proper check, if the provided FeatureType matches the given namespace and typename it is <b>not </b>
+     * considered to be decended from itself.
      *
      * @param featureType typeName with parentage in question
      * @param namespace namespace to match against, or null for a "wildcard"
@@ -512,17 +649,13 @@ public class FeatureTypes {
         return equals(typeA, typeB, false);
     }
 
-    /**
-     * Exact equality based on typeNames, namespace, attributes and ancestors, including the user
-     * maps contents
-     */
+    /** Exact equality based on typeNames, namespace, attributes and ancestors, including the user maps contents */
     public static boolean equalsExact(SimpleFeatureType typeA, SimpleFeatureType typeB) {
         return equals(typeA, typeB, true);
     }
 
     /** Exact equality based on typeNames, namespace, attributes and ancestors */
-    static boolean equals(
-            SimpleFeatureType typeA, SimpleFeatureType typeB, boolean compareUserMaps) {
+    static boolean equals(SimpleFeatureType typeA, SimpleFeatureType typeB, boolean compareUserMaps) {
         if (typeA == typeB) return true;
 
         if (typeA == null || typeB == null) {
@@ -538,44 +671,36 @@ public class FeatureTypes {
         }
 
         return equalsId(typeA, typeB)
-                && equals(
-                        typeA.getAttributeDescriptors(),
-                        typeB.getAttributeDescriptors(),
-                        compareUserMaps)
+                && equals(typeA.getAttributeDescriptors(), typeB.getAttributeDescriptors(), compareUserMaps)
                 && equalsAncestors(typeA, typeB);
     }
 
-    static boolean equals(List attributesA, List attributesB, boolean compareUserMaps) {
+    static boolean equals(
+            List<AttributeDescriptor> attributesA, List<AttributeDescriptor> attributesB, boolean compareUserMaps) {
         return equals(
-                (AttributeDescriptor[])
-                        attributesA.toArray(new AttributeDescriptor[attributesA.size()]),
-                (AttributeDescriptor[])
-                        attributesB.toArray(new AttributeDescriptor[attributesB.size()]),
+                attributesA.toArray(new AttributeDescriptor[attributesA.size()]),
+                attributesB.toArray(new AttributeDescriptor[attributesB.size()]),
                 compareUserMaps);
     }
 
-    public static boolean equals(List attributesA, List attributesB) {
+    public static boolean equals(List<AttributeDescriptor> attributesA, List<AttributeDescriptor> attributesB) {
         return equals(attributesA, attributesB, false);
     }
 
-    public static boolean equalsExact(List attributesA, List attributesB) {
+    public static boolean equalsExact(List<AttributeDescriptor> attributesA, List<AttributeDescriptor> attributesB) {
         return equals(attributesA, attributesB, true);
     }
 
-    public static boolean equals(
-            AttributeDescriptor attributesA[], AttributeDescriptor attributesB[]) {
+    public static boolean equals(AttributeDescriptor[] attributesA, AttributeDescriptor[] attributesB) {
         return equals(attributesA, attributesB, false);
     }
 
-    public static boolean equalsExact(
-            AttributeDescriptor attributesA[], AttributeDescriptor attributesB[]) {
+    public static boolean equalsExact(AttributeDescriptor[] attributesA, AttributeDescriptor[] attributesB) {
         return equals(attributesA, attributesB, true);
     }
 
     static boolean equals(
-            AttributeDescriptor attributesA[],
-            AttributeDescriptor attributesB[],
-            boolean compareUserMaps) {
+            AttributeDescriptor[] attributesA, AttributeDescriptor[] attributesB, boolean compareUserMaps) {
         if (attributesA.length != attributesB.length) return false;
 
         for (int i = 0, length = attributesA.length; i < length; i++) {
@@ -587,19 +712,16 @@ public class FeatureTypes {
      * This method depends on the correct implementation of FeatureType equals
      *
      * <p>We may need to write an implementation that can detect cycles,
-     *
-     * @param typeA
-     * @param typeB
      */
     public static boolean equalsAncestors(SimpleFeatureType typeA, SimpleFeatureType typeB) {
         return ancestors(typeA).equals(ancestors(typeB));
     }
 
-    public static Set ancestors(SimpleFeatureType featureType) {
+    public static Set<FeatureType> ancestors(SimpleFeatureType featureType) {
         if (featureType == null || getAncestors(featureType).isEmpty()) {
-            return Collections.EMPTY_SET;
+            return Collections.emptySet();
         }
-        return new HashSet(getAncestors(featureType));
+        return new HashSet<>(getAncestors(featureType));
     }
 
     public static boolean equals(AttributeDescriptor a, AttributeDescriptor b) {
@@ -626,18 +748,14 @@ public class FeatureTypes {
     }
 
     /**
-     * Tolerant map comparison. Two maps are considered to be equal if they express the same
-     * content. So for example two null maps are equal, but also a null and an empty one are
+     * Tolerant map comparison. Two maps are considered to be equal if they express the same content. So for example two
+     * null maps are equal, but also a null and an empty one are
      */
-    static boolean equals(Map a, Map b) {
+    static boolean equals(Map<?, ?> a, Map<?, ?> b) {
         if (a == b) return true;
 
         // null == null handled above
         if (a == null || b == null) return false;
-
-        if (a != null && a.size() == 0 && b == null) return true;
-
-        if (b != null && b.size() == 0 && a == null) return true;
 
         return a.equals(b);
     }

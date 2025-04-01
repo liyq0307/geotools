@@ -19,7 +19,7 @@ package org.geotools.data.sqlserver;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.jdbc.SQLDialect;
@@ -29,79 +29,71 @@ import org.geotools.jdbc.SQLDialect;
  *
  * @author Justin Deoliveira, OpenGEO
  */
+// temporary work around, the factory parameters map will be fixed separately
 public class SQLServerDataStoreFactory extends JDBCDataStoreFactory {
     /** parameter for database type */
-    public static final Param DBTYPE =
-            new Param(
-                    "dbtype",
-                    String.class,
-                    "Type",
-                    true,
-                    "sqlserver",
-                    Collections.singletonMap(Parameter.LEVEL, "program"));
+    public static final Param DBTYPE = new Param(
+            "dbtype", String.class, "Type", true, "sqlserver", Collections.singletonMap(Parameter.LEVEL, "program"));
 
     /**
-     * parameter for using integrated security, only works on windows, ignores the user and password
-     * parameters, the current windows user account is used for login
+     * parameter for using integrated security, only works on windows, ignores the user and password parameters, the
+     * current windows user account is used for login
      */
-    public static final Param INTSEC =
-            new Param(
-                    "Integrated Security",
-                    Boolean.class,
-                    "Login as current windows user account. Works only in windows. Ignores user and password settings.",
-                    false,
-                    Boolean.FALSE);
+    public static final Param INTSEC = new Param(
+            "Integrated Security",
+            Boolean.class,
+            "Login as current windows user account. Works only in windows. Ignores user and password settings.",
+            false,
+            Boolean.FALSE);
 
     /** parameter for using Native Paging */
-    public static final Param NATIVE_PAGING =
-            new Param(
-                    "Use Native Paging",
-                    Boolean.class,
-                    "Use native paging for sql queries. For some sets of data, native paging can have a performance impact.",
-                    false,
-                    Boolean.TRUE);
+    public static final Param NATIVE_PAGING = new Param(
+            "Use Native Paging",
+            Boolean.class,
+            "Use native paging for sql queries. For some sets of data, native paging can have a performance impact.",
+            false,
+            Boolean.TRUE);
 
     /** Metadata table providing information about primary keys * */
-    public static final Param GEOMETRY_METADATA_TABLE =
-            new Param(
-                    "Geometry metadata table",
-                    String.class,
-                    "The optional table containing geometry metadata (geometry type and srid). Can be expressed as 'schema.name' or just 'name'",
-                    false);
+    public static final Param GEOMETRY_METADATA_TABLE = new Param(
+            "Geometry metadata table",
+            String.class,
+            "The optional table containing geometry metadata (geometry type and srid). Can be expressed as 'schema.name' or just 'name'",
+            false);
 
     /** parameter for using WKB or Sql server binary directly. Setting to true will use WKB */
-    public static final Param NATIVE_SERIALIZATION =
-            new Param(
-                    "Use native geometry serialization",
-                    Boolean.class,
-                    "Use native SQL Server serialization, or WKB serialization.",
-                    false,
-                    Boolean.FALSE);
+    public static final Param NATIVE_SERIALIZATION = new Param(
+            "Use native geometry serialization",
+            Boolean.class,
+            "Use native SQL Server serialization, or WKB serialization.",
+            false,
+            Boolean.FALSE);
 
     /** parameter for forcing the usage of spatial indexes in queries via sql hints */
-    public static final Param FORCE_SPATIAL_INDEX =
-            new Param(
-                    "Force spatial index usage via hints",
-                    Boolean.class,
-                    "When enabled, spatial filters will be accompained by a WITH INDEX sql hint forcing the usage of the spatial index.",
-                    false,
-                    Boolean.FALSE);
+    public static final Param FORCE_SPATIAL_INDEX = new Param(
+            "Force spatial index usage via hints",
+            Boolean.class,
+            "When enabled, spatial filters will be accompanied by a WITH INDEX sql hint forcing the usage of the spatial index.",
+            false,
+            Boolean.FALSE);
+
+    /** parameter that enables estimated extends instead of exact ones */
+    public static final Param ESTIMATED_EXTENTS = new Param(
+            "Estimated extents",
+            Boolean.class,
+            "Use the spatial index information to quickly get an estimate of the data bounds",
+            false,
+            Boolean.FALSE);
 
     /** parameter for forcing the usage of spatial indexes in queries via sql hints */
     public static final Param TABLE_HINTS =
-            new Param(
-                    "Table hints",
-                    String.class,
-                    "These table hints will be added to every select query.",
-                    false,
-                    "");
+            new Param("Table hints", String.class, "These table hints will be added to every select query.", false, "");
 
     /** parameter for database port */
     public static final Param PORT = new Param("port", Integer.class, "Port", false);
 
     /** parameter for database instance */
-    public static final Param INSTANCE =
-            new Param("instance", String.class, "Instance Name", false);
+    public static final Param INSTANCE = new Param("instance", String.class, "Instance Name", false);
 
     @Override
     protected SQLDialect createSQLDialect(JDBCDataStore dataStore) {
@@ -128,9 +120,8 @@ public class SQLServerDataStoreFactory extends JDBCDataStoreFactory {
         return "select 1";
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    protected void setupParameters(Map parameters) {
+    protected void setupParameters(Map<String, Object> parameters) {
         super.setupParameters(parameters);
         parameters.put(PORT.key, PORT);
         parameters.put(DBTYPE.key, DBTYPE);
@@ -144,9 +135,8 @@ public class SQLServerDataStoreFactory extends JDBCDataStoreFactory {
     }
 
     /** Builds up the JDBC url in a jdbc:<database>://<host>:<port>;DatabaseName=<dbname> */
-    @SuppressWarnings("unchecked")
     @Override
-    protected String getJDBCUrl(Map params) throws IOException {
+    protected String getJDBCUrl(Map<String, ?> params) throws IOException {
         String host = (String) HOST.lookUp(params);
         Integer port = (Integer) PORT.lookUp(params);
         String db = (String) DATABASE.lookUp(params);
@@ -165,9 +155,7 @@ public class SQLServerDataStoreFactory extends JDBCDataStoreFactory {
 
         Boolean intsec = (Boolean) INTSEC.lookUp(params);
         if (db != null) {
-            url =
-                    url.substring(0, url.lastIndexOf("/"))
-                            + (db != null ? ";DatabaseName=" + db : "");
+            url = url.substring(0, url.lastIndexOf("/")) + (db != null ? ";DatabaseName=" + db : "");
         }
 
         if (intsec != null && intsec.booleanValue()) {
@@ -178,7 +166,7 @@ public class SQLServerDataStoreFactory extends JDBCDataStoreFactory {
     }
 
     @Override
-    public boolean canProcess(Map params) {
+    public boolean canProcess(Map<String, ?> params) {
 
         if (!super.canProcess(params)) {
             return false; // was not in agreement with getParametersInfo
@@ -197,8 +185,7 @@ public class SQLServerDataStoreFactory extends JDBCDataStoreFactory {
     }
 
     @Override
-    protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map params)
-            throws IOException {
+    protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map<String, ?> params) throws IOException {
         SQLServerDialect dialect = (SQLServerDialect) dataStore.getSQLDialect();
 
         // check the geometry metadata table
@@ -219,6 +206,11 @@ public class SQLServerDataStoreFactory extends JDBCDataStoreFactory {
         Boolean forceSpatialIndexes = (Boolean) FORCE_SPATIAL_INDEX.lookUp(params);
         if (forceSpatialIndexes != null) {
             dialect.setForceSpatialIndexes(forceSpatialIndexes);
+        }
+
+        Boolean estimatedExtentsEnabled = (Boolean) ESTIMATED_EXTENTS.lookUp(params);
+        if (estimatedExtentsEnabled != null) {
+            dialect.setEstimatedExtentsEnabled(estimatedExtentsEnabled);
         }
 
         String tableHints = (String) TABLE_HINTS.lookUp(params);

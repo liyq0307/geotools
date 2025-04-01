@@ -16,66 +16,78 @@
  */
 package org.geotools.xml.filter;
 
-import java.util.HashMap;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import junit.framework.TestCase;
-import org.custommonkey.xmlunit.SimpleNamespaceContext;
-import org.custommonkey.xmlunit.XMLAssert;
-import org.custommonkey.xmlunit.XMLUnit;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.referencing.CRS;
+import org.geotools.test.xml.XmlTestSupport;
+import org.junit.Assert;
+import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.w3c.dom.Document;
+import org.xmlunit.diff.Diff;
 
-public class FilterTransformerTest extends TestCase {
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+public class FilterTransformerTest extends XmlTestSupport {
+
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     FilterTransformer transform = new FilterTransformer();
 
     @Override
-    protected void setUp() throws Exception {
-        // init xmlunit
-        Map<String, String> namespaces = new HashMap<String, String>();
-        namespaces.put("ogc", "http://www.opengis.net/ogc");
-        namespaces.put("gml", "http://www.opengis.net/gml");
-        namespaces.put("xsi", "http://www.w3.org/2001/XMLSchema-instance");
-
-        XMLUnit.setXpathNamespaceContext(new SimpleNamespaceContext(namespaces));
+    protected Map<String, String> getNamespaces() {
+        return namespaces(
+                Namespace("ogc", "http://www.opengis.net/ogc"),
+                Namespace("gml", "http://www.opengis.net/gml"),
+                Namespace("xsi", "http://www.w3.org/2001/XMLSchema-instance"));
     }
 
+    @Test
     public void testIdEncode() throws Exception {
-        HashSet<FeatureId> set = new LinkedHashSet<FeatureId>();
+        String expected =
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?><features><ogc:FeatureId xmlns=\"http://www.opengis.net/ogc\" xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\" fid=\"FID.1\"/><ogc:FeatureId xmlns:ogc=\"http://www.opengis.net/ogc\" fid=\"FID.2\"/></features>";
+
+        HashSet<FeatureId> set = new LinkedHashSet<>();
         set.add(ff.featureId("FID.1"));
         set.add(ff.featureId("FID.2"));
         Filter filter = ff.id(set);
 
         String output = transform.transform(filter);
-        assertNotNull("got xml", output);
-        String xml =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ogc:FeatureId xmlns=\"http://www.opengis.net/ogc\" xmlns:ogc=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\" fid=\"FID.1\"/><ogc:FeatureId fid=\"FID.2\"/>";
-        assertEquals("expected id filters", xml, output);
+        Assert.assertNotNull("got xml", output);
+
+        String actual = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<features>"
+                + output.replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "")
+                + "</features>";
+
+        Diff diff = diffSimilar(expected, actual);
+        Assert.assertFalse(diff.toString(), diff.hasDifferences());
     }
 
+    @Test
     public void testEncodeLong() throws Exception {
+        String expected = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ogc:PropertyIsGreaterThan "
+                + "xmlns=\"http://www.opengis.net/ogc\" xmlns:ogc=\"http://www.opengis.net/ogc\" "
+                + "xmlns:gml=\"http://www.opengis.net/gml\">"
+                + "<ogc:PropertyName>MYATT</ogc:PropertyName>"
+                + "<ogc:Literal>50000000</ogc:Literal></ogc:PropertyIsGreaterThan>";
+
         Filter filter = ff.greater(ff.property("MYATT"), ff.literal(50000000l));
         String output = transform.transform(filter);
-        assertNotNull("got xml", output);
-        String xml =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ogc:PropertyIsGreaterThan "
-                        + "xmlns=\"http://www.opengis.net/ogc\" xmlns:ogc=\"http://www.opengis.net/ogc\" "
-                        + "xmlns:gml=\"http://www.opengis.net/gml\">"
-                        + "<ogc:PropertyName>MYATT</ogc:PropertyName>"
-                        + "<ogc:Literal>50000000</ogc:Literal></ogc:PropertyIsGreaterThan>";
-        assertEquals(xml, output);
+        Assert.assertNotNull("got xml", output);
+
+        Diff diff = diffSimilar(expected, output);
+        Assert.assertFalse(diff.toString(), diff.hasDifferences());
     }
 
+    @Test
     public void testEncodeSRSNameLonLat() throws Exception {
         // create a georeferenced geometry
         CoordinateReferenceSystem wgs84 = CRS.decode("EPSG:4326", true);
@@ -85,10 +97,10 @@ public class FilterTransformerTest extends TestCase {
         // a filter on top of it
         Filter filter = ff.overlaps(ff.property("geom"), ff.literal(point));
         String output = transform.transform(filter);
-        Document doc = XMLUnit.buildControlDocument(output);
-        XMLAssert.assertXpathEvaluatesTo("EPSG:4326", "//gml:Point/@srsName", doc);
+        assertThat(output, hasXPath("//gml:Point/@srsName", equalTo("EPSG:4326")));
     }
 
+    @Test
     public void testEncodeSRSNameLatLon() throws Exception {
         // create a georeferenced geometry
         CoordinateReferenceSystem wgs84 = CRS.decode("urn:ogc:def:crs:EPSG::4326");
@@ -98,21 +110,23 @@ public class FilterTransformerTest extends TestCase {
         // a filter on top of it
         Filter filter = ff.overlaps(ff.property("geom"), ff.literal(point));
         String output = transform.transform(filter);
-        Document doc = XMLUnit.buildControlDocument(output);
-        XMLAssert.assertXpathEvaluatesTo("urn:ogc:def:crs:EPSG::4326", "//gml:Point/@srsName", doc);
+        assertThat(output, hasXPath("//gml:Point/@srsName", equalTo("urn:ogc:def:crs:EPSG::4326")));
     }
 
+    @Test
     public void testEncodeBBox() throws Exception {
+        String expected = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ogc:BBOX "
+                + "xmlns=\"http://www.opengis.net/ogc\" xmlns:ogc=\"http://www.opengis.net/ogc\" "
+                + "xmlns:gml=\"http://www.opengis.net/gml\">"
+                + "<ogc:PropertyName>geom</ogc:PropertyName>"
+                + "<gml:Box><gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">-1,50 1,51</gml:coordinates></gml:Box>"
+                + "</ogc:BBOX>";
+
         Filter filter = ff.bbox("geom", -1.0, 50.0, 1.0, 51, "EPSG:4326");
-        String output = transform.transform(filter);
-        assertNotNull("got xml", output);
-        String xml =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?><ogc:BBOX "
-                        + "xmlns=\"http://www.opengis.net/ogc\" xmlns:ogc=\"http://www.opengis.net/ogc\" "
-                        + "xmlns:gml=\"http://www.opengis.net/gml\">"
-                        + "<ogc:PropertyName>geom</ogc:PropertyName>"
-                        + "<gml:Box><gml:coordinates xmlns:gml=\"http://www.opengis.net/gml\" decimal=\".\" cs=\",\" ts=\" \">-1,50 1,51</gml:coordinates></gml:Box>"
-                        + "</ogc:BBOX>";
-        assertEquals(xml, output);
+        String out = transform.transform(filter);
+        Assert.assertNotNull("got xml", out);
+
+        Diff diff = diffSimilar(expected, out);
+        Assert.assertFalse(diff.toString(), diff.hasDifferences());
     }
 }

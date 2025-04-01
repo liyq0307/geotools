@@ -24,9 +24,8 @@ package org.geotools.xml.schema;
  */
 public interface All extends ElementGrouping {
     /**
-     * The list of elements represented within this 'all' declaration. We should not that as per the
-     * Schema definition of the 'all' declaration, the return order in the array should not have an
-     * effect on the instance document.
+     * The list of elements represented within this 'all' declaration. We should not that as per the Schema definition
+     * of the 'all' declaration, the return order in the array should not have an effect on the instance document.
      */
     public Element[] getElements();
 
@@ -34,8 +33,10 @@ public interface All extends ElementGrouping {
     public String getId();
 
     /** @see org.geotools.xml.xsi.ElementGrouping#getMaxOccurs() */
+    @Override
     public int getMaxOccurs();
 
     /** @see org.geotools.xml.xsi.ElementGrouping#getMinOccurs() */
+    @Override
     public int getMinOccurs();
 }

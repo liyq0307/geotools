@@ -16,7 +16,9 @@
  */
 package org.geotools.renderer.style.svg;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.RenderingHints.Key;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
@@ -33,15 +35,16 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.swing.*;
+import javax.swing.Icon;
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.data.ows.URLCheckers;
 import org.geotools.renderer.style.ExternalGraphicFactory;
 import org.geotools.renderer.style.GraphicCache;
 import org.geotools.util.CanonicalSet;
 import org.geotools.util.factory.Factory;
-import org.opengis.feature.Feature;
-import org.opengis.filter.expression.Expression;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -50,9 +53,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
- * External graphic factory accepting an Expression that can be evaluated to a URL pointing to a SVG
- * file. The <code>format</code> must be <code>image/svg+xml</code>, thought for backwards
- * compatibility <code>image/svg-xml</code> and <code>image/svg</code> are accepted as well.
+ * External graphic factory accepting an Expression that can be evaluated to a URL pointing to a SVG file. The <code>
+ * format</code> must be <code>image/svg+xml</code>, thought for backwards compatibility <code>image/svg-xml</code> and
+ * <code>image/svg</code> are accepted as well.
  *
  * @author Andrea Aime - TOPP
  */
@@ -64,7 +67,7 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
     RenderableSVGCache glyphCache;
 
     /** The possible mime types for SVG */
-    static final Set<String> formats = new HashSet<String>();
+    static final Set<String> formats = new HashSet<>();
 
     static final CanonicalSet<String> CANONICAL_PATHS = CanonicalSet.newInstance(String.class);
 
@@ -90,6 +93,7 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
         return implementationHints;
     }
 
+    @Override
     public Icon getIcon(Feature feature, Expression url, String format, int size) throws Exception {
         // check we do support the declared format
         if (format == null || !formats.contains(format.toLowerCase())) return null;
@@ -99,9 +103,7 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
         return new SVGIcon(svg, size);
     }
 
-    protected RenderableSVG toRenderableSVG(String svgfile, URL svgUrl)
-            throws SAXException, IOException {
-        RenderableSVG svg;
+    protected RenderableSVG toRenderableSVG(String svgfile, URL svgUrl) throws SAXException, IOException {
         String parser = XMLResourceDescriptor.getXMLParserClassName();
         SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
         String svgUri = svgfile;
@@ -112,21 +114,21 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
                 svgUri = svgfile.substring(0, idx);
             }
         }
+
+        // validate the icon can actually be fetched, it may go to a random
+        // local filesystem location, or a remote server
+        URLCheckers.confirm(svgUri);
+
         Document doc = f.createDocument(svgUri);
         Map<String, String> parameters = getParametersFromUrl(svgfile);
         if (!parameters.isEmpty() || hasParameters(doc.getDocumentElement())) {
             replaceParameters(doc.getDocumentElement(), parameters);
         }
-        svg = new RenderableSVG(doc);
+        RenderableSVG svg = new RenderableSVG(doc);
         return svg;
     }
 
-    /**
-     * Splits the query string in
-     *
-     * @param url
-     * @return
-     */
+    /** Splits the query string in */
     Map<String, String> getParametersFromUrl(String url) {
         // url.getQuery won't work on file addresses
         int idx = url.indexOf("?");
@@ -258,10 +260,9 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
             double targetWidth = bounds.getWidth();
             double targetHeight = bounds.getHeight();
             if (size > 0) {
-                double shapeAspectRatio =
-                        (bounds.getHeight() > 0 && bounds.getWidth() > 0)
-                                ? bounds.getWidth() / bounds.getHeight()
-                                : 1.0;
+                double shapeAspectRatio = (bounds.getHeight() > 0 && bounds.getWidth() > 0)
+                        ? bounds.getWidth() / bounds.getHeight()
+                        : 1.0;
                 targetWidth = shapeAspectRatio * size;
                 targetHeight = size;
             }
@@ -269,14 +270,17 @@ public class SVGGraphicFactory implements Factory, ExternalGraphicFactory, Graph
             this.height = (int) Math.round(targetHeight);
         }
 
+        @Override
         public int getIconHeight() {
             return height;
         }
 
+        @Override
         public int getIconWidth() {
             return width;
         }
 
+        @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
             svg.paint((Graphics2D) g, width, height, x, y);
         }

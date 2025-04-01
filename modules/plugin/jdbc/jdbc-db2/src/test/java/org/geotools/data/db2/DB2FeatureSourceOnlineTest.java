@@ -16,15 +16,17 @@
  */
 package org.geotools.data.db2;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.jdbc.JDBCFeatureSourceOnlineTest;
 import org.geotools.jdbc.JDBCTestSetup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class DB2FeatureSourceOnlineTest extends JDBCFeatureSourceOnlineTest {
+    @Override
     protected JDBCTestSetup createTestSetup() {
         return new DB2TestSetup();
     }
 
+    @Override
     protected boolean areCRSEqual(CoordinateReferenceSystem crs1, CoordinateReferenceSystem crs2) {
         if (crs1 == null && crs2 == null) return true;
 
@@ -34,9 +36,6 @@ public class DB2FeatureSourceOnlineTest extends JDBCFeatureSourceOnlineTest {
         String name1 = crs1.getName().toString();
         String name2 = crs2.getName().toString();
 
-        return (name1.contains("WGS")
-                && name1.contains("84")
-                && name2.contains("WGS")
-                && name2.contains("84"));
+        return (name1.contains("WGS") && name1.contains("84") && name2.contains("WGS") && name2.contains("84"));
     }
 }

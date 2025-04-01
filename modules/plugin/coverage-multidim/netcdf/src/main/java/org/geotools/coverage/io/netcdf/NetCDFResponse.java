@@ -24,8 +24,14 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageReadParam;
@@ -37,6 +43,16 @@ import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.TileCache;
 import javax.media.jai.TileScheduler;
+import org.geotools.api.coverage.SampleDimension;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
@@ -52,12 +68,10 @@ import org.geotools.coverage.io.range.FieldType;
 import org.geotools.coverage.io.range.RangeType;
 import org.geotools.coverage.util.CoverageUtilities;
 import org.geotools.coverage.util.FeatureUtilities;
-import org.geotools.data.DataSourceException;
-import org.geotools.data.Query;
 import org.geotools.feature.visitor.FeatureCalc;
 import org.geotools.feature.visitor.MaxVisitor;
 import org.geotools.feature.visitor.MinVisitor;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.ImageWorker;
 import org.geotools.image.util.ImageUtilities;
@@ -70,32 +84,20 @@ import org.geotools.util.NumberRange;
 import org.geotools.util.Range;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.SampleDimension;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * A RasterLayerResponse. An instance of this class is produced everytime a requestCoverage is
- * called to a reader.
+ * A RasterLayerResponse. An instance of this class is produced everytime a requestCoverage is called to a reader.
  *
  * @author Simone Giannecchini, GeoSolutions
  * @author Daniele Romagnoli, GeoSolutions
- * @author Stefan Alfons Krueger (alfonx), Wikisquare.de : Support for
- *     jar:file:foo.jar/bar.properties URLs
+ * @author Stefan Alfons Krueger (alfonx), Wikisquare.de : Support for jar:file:foo.jar/bar.properties URLs
  */
-@SuppressWarnings("rawtypes")
 class NetCDFResponse extends CoverageResponse {
 
     private static final double EPS = 1E-6;
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(NetCDFResponse.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(NetCDFResponse.class);
 
     /** The {@link NetCDFRequest} originating this response */
     private NetCDFRequest request;
@@ -104,7 +106,7 @@ class NetCDFResponse extends CoverageResponse {
     private static final GridCoverageFactory COVERAGE_FACTORY = new GridCoverageFactory();
 
     /** The base envelope related to the input coverage */
-    private GeneralEnvelope coverageEnvelope;
+    private GeneralBounds coverageEnvelope;
 
     private ReferencedEnvelope targetBBox;
 
@@ -125,9 +127,9 @@ class NetCDFResponse extends CoverageResponse {
     private Hints hints;
 
     /**
-     * Construct a {@code RasterLayerResponse} given a specific {@link RasterLayerRequest}, a {@code
-     * GridCoverageFactory} to produce {@code GridCoverage}s and an {@code ImageReaderSpi} to be
-     * used for instantiating an Image Reader for a read operation,
+     * Construct a {@code RasterLayerResponse} given a specific {@link RasterLayerRequest}, a
+     * {@code GridCoverageFactory} to produce {@code GridCoverage}s and an {@code ImageReaderSpi} to be used for
+     * instantiating an Image Reader for a read operation,
      *
      * @param request a {@link RasterLayerRequest} originating this response.
      */
@@ -144,8 +146,8 @@ class NetCDFResponse extends CoverageResponse {
     }
 
     /**
-     * This method creates the GridCoverage2D from the underlying file given a specified envelope,
-     * and a requested dimension.
+     * This method creates the GridCoverage2D from the underlying file given a specified envelope, and a requested
+     * dimension.
      *
      * @throws java.io.IOException
      */
@@ -199,10 +201,9 @@ class NetCDFResponse extends CoverageResponse {
         }
 
         // when calculating the sample dimensions we need to take in account the bands parameter
-        GridSampleDimension[] sampleDimensions =
-                sampleDims != null
-                        ? sampleDims.toArray(new GridSampleDimension[sampleDims.size()])
-                        : new GridSampleDimension[0];
+        GridSampleDimension[] sampleDimensions = sampleDims != null
+                ? sampleDims.toArray(new GridSampleDimension[sampleDims.size()])
+                : new GridSampleDimension[0];
         int[] bands = readRequest.getBands();
         if (bands != null) {
             int maxBandIndex = Arrays.stream(bands).max().getAsInt();
@@ -221,7 +222,7 @@ class NetCDFResponse extends CoverageResponse {
         if (!temporalSubset.isEmpty()) {
             tempSubset = temporalSubset;
         } else {
-            tempSubset = new HashSet<DateRange>();
+            tempSubset = new HashSet<>();
             tempSubset.add(null);
         }
 
@@ -229,7 +230,7 @@ class NetCDFResponse extends CoverageResponse {
         if (!verticalSubset.isEmpty()) {
             vertSubset = verticalSubset;
         } else {
-            vertSubset = new HashSet<NumberRange<Double>>();
+            vertSubset = new HashSet<>();
             vertSubset.add(null);
         }
 
@@ -248,12 +249,7 @@ class NetCDFResponse extends CoverageResponse {
                 Query query = new Query();
                 // handle time and elevation
                 createTimeElevationQuery(
-                        timeRange,
-                        elevation,
-                        query,
-                        requestFilter,
-                        timeFilterAttribute,
-                        elevationFilterAttribute);
+                        timeRange, elevation, query, requestFilter, timeFilterAttribute, elevationFilterAttribute);
 
                 // handle additional params
                 additionalParamsManagement(query, domainsSubset, dimensionDescriptors);
@@ -271,13 +267,10 @@ class NetCDFResponse extends CoverageResponse {
                 defaultParamsManagement(query, domainsSubset, dimensionDescriptors);
 
                 // bbox
-                query.setFilter(
-                        FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
-                                query.getFilter(),
-                                FeatureUtilities.DEFAULT_FILTER_FACTORY.bbox(
-                                        FeatureUtilities.DEFAULT_FILTER_FACTORY.property(
-                                                "the_geom"),
-                                        targetBBox)));
+                query.setFilter(FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
+                        query.getFilter(),
+                        FeatureUtilities.DEFAULT_FILTER_FACTORY.bbox(
+                                FeatureUtilities.DEFAULT_FILTER_FACTORY.property("the_geom"), targetBBox)));
 
                 List<Integer> indexes = request.source.reader.getImageIndex(query);
                 if (indexes == null || indexes.isEmpty()) {
@@ -288,21 +281,14 @@ class NetCDFResponse extends CoverageResponse {
                 }
                 int imageIndex = indexes.get(0);
                 final RenderedImage image =
-                        loadRaster(
-                                baseReadParameters,
-                                imageIndex,
-                                targetBBox,
-                                finalWorldToGridCorner,
-                                hints,
-                                noData);
+                        loadRaster(baseReadParameters, imageIndex, targetBBox, finalWorldToGridCorner, hints, noData);
 
                 // create the coverage
                 GridCoverage2D gridCoverage = prepareCoverage(image, sampleDimensions, noData);
 
                 // Adding coverage domain
                 if (gridCoverage != null) {
-                    GridCoverage gcResponse =
-                            new DefaultGridCoverageResponse(gridCoverage, timeRange, elevation);
+                    GridCoverage gcResponse = new DefaultGridCoverageResponse(gridCoverage, timeRange, elevation);
                     addResult(gcResponse);
                 }
             }
@@ -312,14 +298,9 @@ class NetCDFResponse extends CoverageResponse {
         setStatus(Status.SUCCESS);
     }
 
-    /**
-     * @param query
-     * @param domainsSubset
-     */
+    /** */
     private void additionalParamsManagement(
-            Query query,
-            Map<String, Set<?>> domainsSubset,
-            List<DimensionDescriptor> dimensionDescriptors)
+            Query query, Map<String, Set<?>> domainsSubset, List<DimensionDescriptor> dimensionDescriptors)
             throws IOException {
         if (domainsSubset.isEmpty()) {
             return;
@@ -338,14 +319,11 @@ class NetCDFResponse extends CoverageResponse {
                 if (value instanceof Range) {
                     throw new UnsupportedOperationException();
                 } else {
-                    filter =
-                            FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
-                                    filter,
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.equals(
-                                            FeatureUtilities.DEFAULT_FILTER_FACTORY.property(
-                                                    attribute),
-                                            FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(
-                                                    value)));
+                    filter = FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
+                            filter,
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.equals(
+                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.property(attribute),
+                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(value)));
                 }
             }
         }
@@ -353,16 +331,8 @@ class NetCDFResponse extends CoverageResponse {
     }
 
     /**
-     * Create the query to retrive the imageIndex related to the specified time (if any) and the
-     * specified elevation (if any)
-     *
-     * @param time
-     * @param elevation
-     * @param query
-     * @param requestFilter
-     * @param elevationFilterAttribute
-     * @param timeFilterAttribute
-     * @return
+     * Create the query to retrive the imageIndex related to the specified time (if any) and the specified elevation (if
+     * any)
      */
     private void createTimeElevationQuery(
             DateRange time,
@@ -371,48 +341,38 @@ class NetCDFResponse extends CoverageResponse {
             Filter requestFilter,
             String timeFilterAttribute,
             String elevationFilterAttribute) {
-        final List<Filter> filters = new ArrayList<Filter>();
+        final List<Filter> filters = new ArrayList<>();
 
         // //
         // Setting up time filter
         // //
         if (time != null) {
-            final Range range = (Range) time;
+            final Range range = time;
             // schema with only one time attribute. Consider adding code for schema with begin,end
             // attributes
-            filters.add(
-                    FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
-                            FeatureUtilities.DEFAULT_FILTER_FACTORY.lessOrEqual(
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.property(
-                                            timeFilterAttribute),
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(
-                                            range.getMaxValue())),
-                            FeatureUtilities.DEFAULT_FILTER_FACTORY.greaterOrEqual(
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.property(
-                                            timeFilterAttribute),
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(
-                                            range.getMinValue()))));
+            filters.add(FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
+                    FeatureUtilities.DEFAULT_FILTER_FACTORY.lessOrEqual(
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.property(timeFilterAttribute),
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(range.getMaxValue())),
+                    FeatureUtilities.DEFAULT_FILTER_FACTORY.greaterOrEqual(
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.property(timeFilterAttribute),
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(range.getMinValue()))));
         }
 
         // //
         // Setting up elevation filter
         // //
         if (elevation != null) {
-            final Range range = (Range) elevation;
+            final Range range = elevation;
             // schema with only one elevation attribute. Consider adding code for schema with
             // begin,end attributes
-            filters.add(
-                    FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
-                            FeatureUtilities.DEFAULT_FILTER_FACTORY.lessOrEqual(
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.property(
-                                            elevationFilterAttribute),
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(
-                                            range.getMaxValue())),
-                            FeatureUtilities.DEFAULT_FILTER_FACTORY.greaterOrEqual(
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.property(
-                                            elevationFilterAttribute),
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(
-                                            range.getMinValue()))));
+            filters.add(FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
+                    FeatureUtilities.DEFAULT_FILTER_FACTORY.lessOrEqual(
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.property(elevationFilterAttribute),
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(range.getMaxValue())),
+                    FeatureUtilities.DEFAULT_FILTER_FACTORY.greaterOrEqual(
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.property(elevationFilterAttribute),
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(range.getMinValue()))));
         }
 
         if (requestFilter != null) {
@@ -448,21 +408,17 @@ class NetCDFResponse extends CoverageResponse {
         Object value = findDefaultValue(query, filterAttribute);
         if (value != null) {
             Filter filter = query.getFilter();
-            filter =
-                    FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
-                            filter,
-                            FeatureUtilities.DEFAULT_FILTER_FACTORY.equals(
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.property(
-                                            filterAttribute),
-                                    FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(value)));
+            filter = FeatureUtilities.DEFAULT_FILTER_FACTORY.and(
+                    filter,
+                    FeatureUtilities.DEFAULT_FILTER_FACTORY.equals(
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.property(filterAttribute),
+                            FeatureUtilities.DEFAULT_FILTER_FACTORY.literal(value)));
             query.setFilter(filter);
         }
     }
 
     private void defaultParamsManagement(
-            Query query,
-            Map<String, Set<?>> domainsSubset,
-            List<DimensionDescriptor> dimensionDescriptors) {
+            Query query, Map<String, Set<?>> domainsSubset, List<DimensionDescriptor> dimensionDescriptors) {
         for (DimensionDescriptor dim : dimensionDescriptors) {
             boolean notPresent = true;
             for (String key : domainsSubset.keySet()) {
@@ -502,7 +458,7 @@ class NetCDFResponse extends CoverageResponse {
      * @throws TransformException In case transformation fails during the process.
      */
     private void initRasterBounds() throws TransformException {
-        final GeneralEnvelope tempRasterBounds = CRS.transform(finalWorldToGridCorner, targetBBox);
+        final GeneralBounds tempRasterBounds = CRS.transform(finalWorldToGridCorner, targetBBox);
         rasterBounds = tempRasterBounds.toRectangle2D().getBounds();
 
         // SG using the above may lead to problems since the reason is that may be a little (1 px)
@@ -531,7 +487,6 @@ class NetCDFResponse extends CoverageResponse {
     private void initTransformations() throws Exception {
         // compute final world to grid
         // base grid to world for the center of pixels
-        final AffineTransform g2w;
         CoverageProperties properties = request.spatialRequestHelper.getCoverageProperties();
         baseGridToWorld = (AffineTransform) properties.getGridToWorld2D();
         double[] coverageFullResolution = properties.getFullResolution();
@@ -539,7 +494,7 @@ class NetCDFResponse extends CoverageResponse {
         final double resY = coverageFullResolution[1];
         final double[] requestRes = request.spatialRequestHelper.getRequestedResolution();
 
-        g2w = new AffineTransform((AffineTransform) baseGridToWorld);
+        final AffineTransform g2w = new AffineTransform(baseGridToWorld);
         g2w.concatenate(CoverageUtilities.CENTER_TO_CORNER);
 
         if ((requestRes[0] < resX || requestRes[1] < resY)) {
@@ -549,20 +504,15 @@ class NetCDFResponse extends CoverageResponse {
 
             // SG going back to working on a per level basis to do the composition
             // g2w = new AffineTransform(request.getRequestedGridToWorld());
-            g2w.concatenate(
-                    AffineTransform.getScaleInstance(
-                            baseReadParameters.getSourceXSubsampling(),
-                            baseReadParameters.getSourceYSubsampling()));
+            g2w.concatenate(AffineTransform.getScaleInstance(
+                    baseReadParameters.getSourceXSubsampling(), baseReadParameters.getSourceYSubsampling()));
         }
         // move it to the corner
         finalGridToWorldCorner = new AffineTransform2D(g2w);
         finalWorldToGridCorner = finalGridToWorldCorner.inverse(); // compute raster bounds
     }
 
-    /**
-     * This method is responsible for initializing the bbox for the mosaic produced by this
-     * response.
-     */
+    /** This method is responsible for initializing the bbox for the mosaic produced by this response. */
     private void initBBOX() {
         // ok we got something to return, let's load records from the index
         final BoundingBox cropBBOX = request.spatialRequestHelper.getCropBBox();
@@ -573,18 +523,10 @@ class NetCDFResponse extends CoverageResponse {
         }
     }
 
-    /**
-     * This method is responsible for creating a coverage from the supplied {@link RenderedImage}.
-     *
-     * @param image
-     * @param sampleDimensions
-     * @return
-     * @throws IOException
-     */
-    private GridCoverage2D prepareCoverage(
-            RenderedImage image, GridSampleDimension[] sampleDimensions, double[] noData)
+    /** This method is responsible for creating a coverage from the supplied {@link RenderedImage}. */
+    private GridCoverage2D prepareCoverage(RenderedImage image, GridSampleDimension[] sampleDimensions, double[] noData)
             throws IOException {
-        Map<String, Object> properties = new HashMap<String, Object>();
+        Map<String, Object> properties = new HashMap<>();
         if (noData != null && noData.length > 0) {
             CoverageUtilities.setNoDataProperty(properties, noData[0]);
         }
@@ -604,16 +546,14 @@ class NetCDFResponse extends CoverageResponse {
     }
 
     /**
-     * Load a specified a raster as a portion of the granule describe by this {@link
-     * DefaultGranuleDescriptor}.
+     * Load a specified a raster as a portion of the granule describe by this {@link DefaultGranuleDescriptor}.
      *
      * @param imageReadParameters the {@link ImageReadParam} to use for reading.
      * @param index the index to use for the {@link ImageReader}.
      * @param cropBBox the bbox to use for cropping.
      * @param mosaicWorldToGrid the cropping grid to world transform.
      * @param hints {@link Hints} to be used for creating this raster.
-     * @return a specified a raster as a portion of the granule describe by this {@link
-     *     DefaultGranuleDescriptor}.
+     * @return a specified a raster as a portion of the granule describe by this {@link DefaultGranuleDescriptor}.
      * @throws IOException in case an error occurs.
      */
     private RenderedImage loadRaster(
@@ -627,11 +567,7 @@ class NetCDFResponse extends CoverageResponse {
 
         if (LOGGER.isLoggable(java.util.logging.Level.FINER)) {
             final String name = Thread.currentThread().getName();
-            LOGGER.finer(
-                    "Thread:"
-                            + name
-                            + " Loading raster data for granuleDescriptor "
-                            + this.toString());
+            LOGGER.finer("Thread:" + name + " Loading raster data for granuleDescriptor " + this.toString());
         }
         ImageReadParam readParameters = null;
         int imageIndex;
@@ -640,17 +576,15 @@ class NetCDFResponse extends CoverageResponse {
 
         // intersection of this tile bound with the current crop bbox
         final ReferencedEnvelope intersection =
-                new ReferencedEnvelope(
-                        bbox.intersection(cropBBox), cropBBox.getCoordinateReferenceSystem());
+                new ReferencedEnvelope(bbox.intersection(cropBBox), cropBBox.getCoordinateReferenceSystem());
         if (intersection.isEmpty()) {
             if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
-                LOGGER.fine(
-                        new StringBuilder("Got empty intersection for granule ")
-                                .append(this.toString())
-                                .append(" with request ")
-                                .append(request.toString())
-                                .append(" Resulting in no granule loaded: Empty result")
-                                .toString());
+                LOGGER.fine(new StringBuilder("Got empty intersection for granule ")
+                        .append(this.toString())
+                        .append(" with request ")
+                        .append(request.toString())
+                        .append(" Resulting in no granule loaded: Empty result")
+                        .toString());
             }
             return null;
         }
@@ -680,38 +614,35 @@ class NetCDFResponse extends CoverageResponse {
                     CRS.transform(cropWorldToGrid, intersection).toRectangle2D().getBounds();
             // Selection of the source original area for cropping the computed source area
             // (may have negative values for the approximation)
-            final Rectangle initialArea =
-                    request.source
-                            .getSpatialDomain()
-                            .getRasterElements(true, null)
-                            .iterator()
-                            .next()
-                            .toRectangle();
+            final Rectangle initialArea = request.source
+                    .getSpatialDomain()
+                    .getRasterElements(true, null)
+                    .iterator()
+                    .next()
+                    .toRectangle();
             sourceArea = sourceArea.intersection(initialArea);
 
             if (sourceArea.isEmpty()) {
                 if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
-                    LOGGER.fine(
-                            "Got empty area for granuleDescriptor "
-                                    + this.toString()
-                                    + " with request "
-                                    + request.toString()
-                                    + " Resulting in no granule loaded: Empty result");
+                    LOGGER.fine("Got empty area for granuleDescriptor "
+                            + this.toString()
+                            + " with request "
+                            + request.toString()
+                            + " Resulting in no granule loaded: Empty result");
                 }
                 return null;
 
             } else if (LOGGER.isLoggable(java.util.logging.Level.FINER)) {
-                LOGGER.finer(
-                        "Loading level "
-                                + imageIndex
-                                + " with source region: "
-                                + sourceArea
-                                + " subsampling: "
-                                + readParameters.getSourceXSubsampling()
-                                + ","
-                                + readParameters.getSourceYSubsampling()
-                                + " for granule:"
-                                + datasetURL);
+                LOGGER.finer("Loading level "
+                        + imageIndex
+                        + " with source region: "
+                        + sourceArea
+                        + " subsampling: "
+                        + readParameters.getSourceXSubsampling()
+                        + ","
+                        + readParameters.getSourceYSubsampling()
+                        + " for granule:"
+                        + datasetURL);
             }
 
             // set the source region
@@ -719,17 +650,14 @@ class NetCDFResponse extends CoverageResponse {
             final RenderedImage raster;
             try {
                 // read
-                raster =
-                        request.readType.read(
-                                readParameters,
-                                imageIndex,
-                                datasetURL,
-                                request.spatialRequestHelper
-                                        .getCoverageProperties()
-                                        .getRasterArea(),
-                                request.source.reader,
-                                hints,
-                                false);
+                raster = request.readType.read(
+                        readParameters,
+                        imageIndex,
+                        datasetURL,
+                        request.spatialRequestHelper.getCoverageProperties().getRasterArea(),
+                        request.source.reader,
+                        hints,
+                        false);
 
             } catch (Throwable e) {
                 if (LOGGER.isLoggable(java.util.logging.Level.FINE)) {
@@ -787,29 +715,24 @@ class NetCDFResponse extends CoverageResponse {
             final Interpolation interpolation = request.getInterpolation();
             // paranoiac check to avoid that JAI freaks out when computing its internal layouT on
             // images that are too small
-            Rectangle2D finalLayout =
-                    ImageUtilities.layoutHelper(
-                            raster,
-                            (float) finalRaster2Model.getScaleX(),
-                            (float) finalRaster2Model.getScaleY(),
-                            (float) finalRaster2Model.getTranslateX(),
-                            (float) finalRaster2Model.getTranslateY(),
-                            interpolation);
+            Rectangle2D finalLayout = ImageUtilities.layoutHelper(
+                    raster,
+                    (float) finalRaster2Model.getScaleX(),
+                    (float) finalRaster2Model.getScaleY(),
+                    (float) finalRaster2Model.getTranslateX(),
+                    (float) finalRaster2Model.getTranslateY(),
+                    interpolation);
             if (finalLayout.isEmpty()) {
                 if (LOGGER.isLoggable(java.util.logging.Level.INFO))
-                    LOGGER.info(
-                            "Unable to create a granuleDescriptor "
-                                    + this.toString()
-                                    + " due to jai scale bug creating a null source area");
+                    LOGGER.info("Unable to create a granuleDescriptor "
+                            + this.toString()
+                            + " due to jai scale bug creating a null source area");
                 return null;
             }
             // apply the affine transform conserving indexed color model
-            final RenderingHints localHints =
-                    new RenderingHints(
-                            JAI.KEY_REPLACE_INDEX_COLOR_MODEL,
-                            interpolation instanceof InterpolationNearest
-                                    ? Boolean.FALSE
-                                    : Boolean.TRUE);
+            final RenderingHints localHints = new RenderingHints(
+                    JAI.KEY_REPLACE_INDEX_COLOR_MODEL,
+                    interpolation instanceof InterpolationNearest ? Boolean.FALSE : Boolean.TRUE);
             //
             // In case we are asked to use certain tile dimensions we tile
             // also at this stage in case the read type is Direct since
@@ -833,20 +756,18 @@ class NetCDFResponse extends CoverageResponse {
             if (hints != null && hints.containsKey(JAI.KEY_TILE_CACHE)) {
                 final Object cache = hints.get(JAI.KEY_TILE_CACHE);
                 if (cache != null && cache instanceof TileCache)
-                    localHints.add(new RenderingHints(JAI.KEY_TILE_CACHE, (TileCache) cache));
+                    localHints.add(new RenderingHints(JAI.KEY_TILE_CACHE, cache));
             }
             if (hints != null && hints.containsKey(JAI.KEY_TILE_SCHEDULER)) {
                 final Object scheduler = hints.get(JAI.KEY_TILE_SCHEDULER);
                 if (scheduler != null && scheduler instanceof TileScheduler)
-                    localHints.add(
-                            new RenderingHints(JAI.KEY_TILE_SCHEDULER, (TileScheduler) scheduler));
+                    localHints.add(new RenderingHints(JAI.KEY_TILE_SCHEDULER, scheduler));
             }
             boolean addBorderExtender = true;
             if (hints != null && hints.containsKey(JAI.KEY_BORDER_EXTENDER)) {
                 final Object extender = hints.get(JAI.KEY_BORDER_EXTENDER);
                 if (extender != null && extender instanceof BorderExtender) {
-                    localHints.add(
-                            new RenderingHints(JAI.KEY_BORDER_EXTENDER, (BorderExtender) extender));
+                    localHints.add(new RenderingHints(JAI.KEY_BORDER_EXTENDER, extender));
                     addBorderExtender = false;
                 }
             }
@@ -860,7 +781,7 @@ class NetCDFResponse extends CoverageResponse {
             iw.affine(finalRaster2Model, interpolation, noData);
             return iw.getRenderedImage();
 
-        } catch (IllegalStateException e) {
+        } catch (org.geotools.api.referencing.operation.NoninvertibleTransformException e) {
             if (LOGGER.isLoggable(java.util.logging.Level.WARNING)) {
                 LOGGER.log(
                         java.util.logging.Level.WARNING,
@@ -873,23 +794,10 @@ class NetCDFResponse extends CoverageResponse {
                         e);
             }
             return null;
-        } catch (org.opengis.referencing.operation.NoninvertibleTransformException e) {
-            if (LOGGER.isLoggable(java.util.logging.Level.WARNING)) {
+        } catch (IllegalStateException | TransformException e) {
+            if (LOGGER.isLoggable(Level.WARNING)) {
                 LOGGER.log(
-                        java.util.logging.Level.WARNING,
-                        new StringBuilder("Unable to load raster for granuleDescriptor ")
-                                .append(this.toString())
-                                .append(" with request ")
-                                .append(request.toString())
-                                .append(" Resulting in no granule loaded: Empty result")
-                                .toString(),
-                        e);
-            }
-            return null;
-        } catch (TransformException e) {
-            if (LOGGER.isLoggable(java.util.logging.Level.WARNING)) {
-                LOGGER.log(
-                        java.util.logging.Level.WARNING,
+                        Level.WARNING,
                         new StringBuilder("Unable to load raster for granuleDescriptor ")
                                 .append(this.toString())
                                 .append(" with request ")
@@ -903,16 +811,12 @@ class NetCDFResponse extends CoverageResponse {
     }
 
     /**
-     * This method is responsible for evaluating possible subsampling factors once the best
-     * resolution level has been found, in case we have support for overviews, or starting from the
-     * original coverage in case there are no overviews available.
+     * This method is responsible for evaluating possible subsampling factors once the best resolution level has been
+     * found, in case we have support for overviews, or starting from the original coverage in case there are no
+     * overviews available.
      *
-     * <p>Anyhow this method should not be called directly but subclasses should make use of the
-     * setReadParams method instead in order to transparently look for overviews.
-     *
-     * @param levelIndex
-     * @param readParameters
-     * @param requestedRes
+     * <p>Anyhow this method should not be called directly but subclasses should make use of the setReadParams method
+     * instead in order to transparently look for overviews.
      */
     private void performDecimation(ImageReadParam readParameters) {
 
@@ -932,32 +836,11 @@ class NetCDFResponse extends CoverageResponse {
             return;
         }
 
-        final int rasterWidth, rasterHeight;
         // highest resolution
-        rasterWidth = coverageRasterArea.width;
-        rasterHeight = coverageRasterArea.height;
+        final int rasterWidth = coverageRasterArea.width;
+        final int rasterHeight = coverageRasterArea.height;
 
-        // /////////////////////////////////////////////////////////////////////
-        // DECIMATION ON READING
-        // Setting subsampling factors with some checks
-        // 1) the subsampling factors cannot be zero
-        // 2) the subsampling factors cannot be such that the w or h are
-        // zero
-        // /////////////////////////////////////////////////////////////////////
-        int subSamplingFactorX = (int) Math.floor(requestedResolution[0] / fullResolution[0]);
-        subSamplingFactorX = subSamplingFactorX == 0 ? 1 : subSamplingFactorX;
-
-        while (rasterWidth / subSamplingFactorX <= 0 && subSamplingFactorX >= 0)
-            subSamplingFactorX--;
-        subSamplingFactorX = subSamplingFactorX <= 0 ? 1 : subSamplingFactorX;
-
-        int subSamplingFactorY = (int) Math.floor(requestedResolution[1] / fullResolution[1]);
-        subSamplingFactorY = subSamplingFactorY == 0 ? 1 : subSamplingFactorY;
-
-        while (rasterHeight / subSamplingFactorY <= 0 && subSamplingFactorY >= 0)
-            subSamplingFactorY--;
-        subSamplingFactorY = subSamplingFactorY <= 0 ? 1 : subSamplingFactorY;
-
-        readParameters.setSourceSubsampling(subSamplingFactorX, subSamplingFactorY, 0, 0);
+        ImageUtilities.setSubsamplingFactors(
+                readParameters, requestedResolution, fullResolution, rasterWidth, rasterHeight);
     }
 }

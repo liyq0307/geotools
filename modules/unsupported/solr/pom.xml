@@ -2,15 +2,13 @@
 <!-- ======================================================================= Maven 
   Project Configuration File The Geotools Project http://www.geotools.org/ Version: 
   $Id$ ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                               http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>unsupported</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
 
   <!-- =========================================================== -->
@@ -21,9 +19,7 @@
   <packaging>jar</packaging>
   <name>SOLR module</name>
 
-  <description>
-    	DataStore supporting the SOLR search platform from the Apache Lucene project
-  	</description>
+  <description>DataStore supporting the SOLR search platform from the Apache Lucene project</description>
 
   <licenses>
     <license>
@@ -38,8 +34,8 @@
   <!-- =========================================================== -->
   <developers>
     <developer>
-      <name>Andrea Aime</name>
       <id>aaime</id>
+      <name>Andrea Aime</name>
       <email>andrea.aime@gmail.com</email>
       <organization>GEOSOLUTION</organization>
       <roles>
@@ -56,7 +52,6 @@
     <dependency>
       <groupId>commons-beanutils</groupId>
       <artifactId>commons-beanutils</artifactId>
-      <classifier>noclassprop</classifier>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
@@ -90,7 +85,6 @@
     <dependency>
       <groupId>javax.activation</groupId>
       <artifactId>javax.activation-api</artifactId>
-      <version>1.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
@@ -107,53 +101,64 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>1.7.7</version>
       <scope>test</scope>
     </dependency>
-	<dependency>
-	    <groupId>org.geotools.jdbc</groupId>
-	    <artifactId>gt-jdbc-postgis</artifactId>
-	    <version>${project.version}</version>
-	    <scope>test</scope>
-	</dependency>
-	    
+    <dependency>
+      <groupId>org.geotools.jdbc</groupId>
+      <artifactId>gt-jdbc-postgis</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
-  
+
   <build>
 
-        <plugins>
+    <plugins>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-            </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+      </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+      </plugin>
 
-        </plugins>
-  	</build>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>${maven.pmd.plugin.version}</version>
+        <configuration>
+          <!-- Disable JUnit specific rules, this module tests extends JUnit3 based OnlineTest -->
+          <rulesets>
+            <ruleset>${geotoolsBaseDir}/build/qa/pmd-ruleset.xml</ruleset>
+          </rulesets>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
 </project>

@@ -17,6 +17,7 @@
 package org.geotools.gml3.bindings;
 
 import java.util.ArrayList;
+import java.util.List;
 import javax.xml.namespace.QName;
 import org.geotools.gml3.GML;
 import org.geotools.xsd.AbstractComplexBinding;
@@ -58,6 +59,7 @@ public class MultiGeometryTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MultiGeometryType;
     }
@@ -69,10 +71,12 @@ public class MultiGeometryTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return GeometryCollection.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return BEFORE;
     }
@@ -84,22 +88,22 @@ public class MultiGeometryTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
-        ArrayList geometries = new ArrayList();
+        List<Geometry> geometries = new ArrayList<>();
 
         if (node.hasChild(Geometry.class)) {
             geometries.addAll(node.getChildValues(Geometry.class));
         }
 
         if (node.hasChild(Geometry[].class)) {
-            Geometry[] g = (Geometry[]) node.getChildValue(Geometry[].class);
+            Geometry[] g = node.getChildValue(Geometry[].class);
 
-            for (int i = 0; i < g.length; i++) geometries.add(g[i]);
+            for (Geometry geometry : g) geometries.add(geometry);
         }
 
-        return factory.createGeometryCollection(
-                (Geometry[]) geometries.toArray(new Geometry[geometries.size()]));
+        return factory.createGeometryCollection(geometries.toArray(new Geometry[geometries.size()]));
     }
 
     @Override
@@ -109,7 +113,7 @@ public class MultiGeometryTypeBinding extends AbstractComplexBinding {
             Geometry[] members = new Geometry[multiGeometry.getNumGeometries()];
 
             for (int i = 0; i < members.length; i++) {
-                members[i] = (Geometry) multiGeometry.getGeometryN(i);
+                members[i] = multiGeometry.getGeometryN(i);
             }
 
             GML3EncodingUtils.setChildIDs(multiGeometry);

@@ -22,7 +22,8 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.image.BufferedImage;
-import org.geotools.styling.Rule;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.style.Rule;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.MultiLineString;
@@ -30,13 +31,11 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Renderers a small Glyph used to represent a Map Layer in a legend.
  *
- * <p>Because GeoTools is used both with Swing and SWT applications this class is set up to produce
- * BufferedImage.
+ * <p>Because GeoTools is used both with Swing and SWT applications this class is set up to produce BufferedImage.
  *
  * @author Johann Sorel (AlterSIG)
  */
@@ -51,11 +50,7 @@ public class Glyph {
     private static final Color DEFAULT_BORDER = new Color(0, 0, 0);
     private static final Color DEFAULT_FILL = new Color(27, 158, 119, 255);
 
-    /**
-     * Create a transparent image, this is a *real* resource against the provided display.
-     *
-     * @return
-     */
+    /** Create a transparent image, this is a *real* resource against the provided display. */
     public static BufferedImage image() {
         BufferedImage bi = new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_DEPTH);
         return bi;
@@ -66,7 +61,6 @@ public class Glyph {
      *
      * <p>Simple render of point in the center of the screen.
      *
-     * @param style
      * @return Icon representing style applyed to an image
      */
     public static BufferedImage point(final Rule rule) {
@@ -80,8 +74,6 @@ public class Glyph {
      *
      * <p>XXX: Suggest point( SLD style ) at a later time.
      *
-     * @param color
-     * @param fill
      * @return ImageDescriptor
      */
     public static BufferedImage point(final Color color, final Color fill) {
@@ -131,13 +123,11 @@ public class Glyph {
      * 15
      * </code><pre>
      * </p>
-     * @param style
      * @return Icon representing geometry style
      */
     public static BufferedImage line(final Rule rule) {
         BufferedImage bi = new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_DEPTH);
-        drawer.drawDirect(
-                bi, drawer.feature(drawer.line(new int[] {1, 14, 6, 0, 11, 14, 15, 1})), rule);
+        drawer.drawDirect(bi, drawer.feature(drawer.line(new int[] {1, 14, 6, 0, 11, 14, 15, 1})), rule);
         return bi;
     }
 
@@ -146,7 +136,6 @@ public class Glyph {
      *
      * <p>XXX: Suggest line( SLD style ) at a later time.
      *
-     * @param black
      * @return Icon
      */
     public static BufferedImage line(Color color, int width) {
@@ -198,18 +187,13 @@ public class Glyph {
      * 15
      * </code><pre>
      * </p>
-     * @param style
      * @return Icon representing geometry style
      */
     public static BufferedImage geometry(final Rule rule) {
         BufferedImage bi = new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_DEPTH);
         drawer.drawDirect(
-                bi,
-                drawer.feature(
-                        drawer.polygon(new int[] {1, 14, 3, 9, 4, 6, 6, 4, 9, 3, 14, 1, 14, 14})),
-                rule);
-        drawer.drawDirect(
-                bi, drawer.feature(drawer.line(new int[] {0, 12, 6, 3, 11, 12, 15, 3})), rule);
+                bi, drawer.feature(drawer.polygon(new int[] {1, 14, 3, 9, 4, 6, 6, 4, 9, 3, 14, 1, 14, 14})), rule);
+        drawer.drawDirect(bi, drawer.feature(drawer.line(new int[] {0, 12, 6, 3, 11, 12, 15, 3})), rule);
         drawer.drawDirect(bi, drawer.feature(drawer.point(4, 4)), rule);
         return bi;
     }
@@ -217,13 +201,10 @@ public class Glyph {
     /**
      * Icon for generic Geometry or Geometry Collection.
      *
-     * @param color
-     * @param fill
      * @return Icon
      */
     public static BufferedImage geometry(final Color color, final Color fill) {
-        BufferedImage bi =
-                new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage bi = new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D gc = (Graphics2D) bi.getGraphics();
         gc.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -269,30 +250,18 @@ public class Glyph {
      * 15
      * </code><pre>
      * </p>
-     * @param style
      * @return Icon representing geometry style
      */
     public static BufferedImage Polygon(final Rule rule) {
         BufferedImage bi = new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_DEPTH);
         drawer.drawDirect(
-                bi,
-                drawer.feature(
-                        drawer.polygon(new int[] {1, 14, 3, 9, 4, 6, 6, 4, 9, 3, 14, 1, 14, 14})),
-                rule);
+                bi, drawer.feature(drawer.polygon(new int[] {1, 14, 3, 9, 4, 6, 6, 4, 9, 3, 14, 1, 14, 14})), rule);
         return bi;
     }
 
-    /**
-     * Icon for polygon in provided border, fill and width
-     *
-     * @param black
-     * @param gray
-     * @param i
-     * @return
-     */
+    /** Icon for polygon in provided border, fill and width */
     public static BufferedImage polygon(final Color color, final Color fill, final int width) {
-        BufferedImage bi =
-                new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage bi = new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D gc = (Graphics2D) bi.getGraphics();
         gc.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -307,8 +276,8 @@ public class Glyph {
         Stroke stroke = new BasicStroke(w);
         gc.setStroke(stroke);
 
-        int[] xs = new int[] {1, 3, 4, 6, 9, 14, 14};
-        int[] ys = new int[] {14, 9, 6, 4, 3, 1, 14};
+        int[] xs = {1, 3, 4, 6, 9, 14, 14};
+        int[] ys = {14, 9, 6, 4, 3, 1, 14};
         int nb = 7;
 
         gc.setColor(c);
@@ -342,16 +311,11 @@ public class Glyph {
      * 15
      * </code><pre>
      * </p>
-     * @param a
-     * @param b
-     * @param c
-     * @param d1
      * @return Icon representing a grid
      *
      */
     public static BufferedImage grid(Color a, Color b, Color c, Color d) {
-        BufferedImage bi =
-                new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage bi = new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D gc = (Graphics2D) bi.getGraphics();
         gc.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -405,12 +369,10 @@ public class Glyph {
      * 15
      * </code><pre>
      * </p>
-     * @param style
      * @return Icon representing geometry style
      */
     public static BufferedImage swatch(Color c) {
-        BufferedImage bi =
-                new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage bi = new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D gc = (Graphics2D) bi.getGraphics();
         gc.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -454,9 +416,8 @@ public class Glyph {
      * @return Icon representing a palette
      *
      */
-    public static BufferedImage palette(Color c[]) {
-        BufferedImage bi =
-                new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    public static BufferedImage palette(Color[] c) {
+        BufferedImage bi = new BufferedImage(DEFAULT_WIDTH, DEFAULT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D gc = (Graphics2D) bi.getGraphics();
         gc.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -498,8 +459,7 @@ public class Glyph {
             return line(DEFAULT_BORDER, 1);
         }
 
-        if (Polygon.class.isAssignableFrom(binding)
-                || MultiPolygon.class.isAssignableFrom(binding)) {
+        if (Polygon.class.isAssignableFrom(binding) || MultiPolygon.class.isAssignableFrom(binding)) {
             return polygon(DEFAULT_BORDER, DEFAULT_FILL, 1);
         }
 

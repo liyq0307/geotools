@@ -25,7 +25,9 @@ import org.geotools.xsd.test.XMLTestSupport;
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
-public class GMLTestSupport extends XMLTestSupport {
+public abstract class GMLTestSupport extends XMLTestSupport {
+
+    @Override
     protected Configuration createConfiguration() {
         return new GMLConfiguration();
     }

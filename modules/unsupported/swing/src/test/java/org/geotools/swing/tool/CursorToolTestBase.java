@@ -17,7 +17,7 @@
 
 package org.geotools.swing.tool;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
@@ -60,25 +60,21 @@ public abstract class CursorToolTestBase extends GraphicsTestBase {
     protected WaitingMapPaneListener listener;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setupPaneAndTool() throws Exception {
         mapContent = new MockMapContent();
         mapContent.addLayer(getTestLayer());
-        JFrame frame =
-                GuiActionRunner.execute(
-                        new GuiQuery<JFrame>() {
+        JFrame frame = GuiActionRunner.execute(new GuiQuery<JFrame>() {
 
-                            @Override
-                            protected JFrame executeInEDT() throws Throwable {
-                                JFrame frame = new JFrame("Cursor tool test");
-                                mapPane = new JMapPane(mapContent);
-                                mapPane.setPreferredSize(
-                                        new Dimension(
-                                                ZoomInToolTest.SCREEN.width,
-                                                ZoomInToolTest.SCREEN.height));
-                                frame.add(mapPane);
-                                return frame;
-                            }
-                        });
+            @Override
+            protected JFrame executeInEDT() throws Throwable {
+                JFrame frame = new JFrame("Cursor tool test");
+                mapPane = new JMapPane(mapContent);
+                mapPane.setPreferredSize(new Dimension(ZoomInToolTest.SCREEN.width, ZoomInToolTest.SCREEN.height));
+                frame.add(mapPane);
+                return frame;
+            }
+        });
 
         listener = new WaitingMapPaneListener();
         mapPane.addMapPaneListener(listener);
@@ -86,9 +82,7 @@ public abstract class CursorToolTestBase extends GraphicsTestBase {
         mapPaneFixture = new JPanelFixture(windowFixture.robot(), mapPane);
         listener.setExpected(MapPaneEvent.Type.RENDERING_STOPPED);
         ((FrameFixture) windowFixture).show();
-        assertTrue(
-                listener.await(
-                        MapPaneEvent.Type.RENDERING_STOPPED, ZoomInToolTest.RENDERING_TIMEOUT));
+        assertTrue(listener.await(MapPaneEvent.Type.RENDERING_STOPPED, ZoomInToolTest.RENDERING_TIMEOUT));
     }
 
     protected abstract Layer getTestLayer() throws Exception;

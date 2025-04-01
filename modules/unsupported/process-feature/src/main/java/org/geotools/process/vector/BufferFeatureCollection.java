@@ -18,6 +18,9 @@
 package org.geotools.process.vector;
 
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -32,9 +35,6 @@ import org.geotools.process.factory.DescribeResult;
 import org.geotools.util.Converters;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 /**
  * Buffers a feature collection using a certain distance
@@ -45,25 +45,20 @@ import org.opengis.feature.type.AttributeDescriptor;
  * @author Andrea Aime - GeoSolutions
  */
 @DescribeProcess(
-    title = "Buffer",
-    description =
-            "Buffers features by a distance value supplied either as a parameter or by a feature attribute. Calculates buffers based on Cartesian distances."
-)
+        title = "Buffer",
+        description =
+                "Buffers features by a distance value supplied either as a parameter or by a feature attribute. Calculates buffers based on Cartesian distances.")
 public class BufferFeatureCollection implements VectorProcess {
     @DescribeResult(description = "Buffered feature collection")
     public SimpleFeatureCollection execute(
             @DescribeParameter(name = "features", description = "Input feature collection")
                     SimpleFeatureCollection features,
-            @DescribeParameter(
-                        name = "distance",
-                        description = "Fixed value to use for the buffer distance"
-                    )
+            @DescribeParameter(name = "distance", description = "Fixed value to use for the buffer distance")
                     Double distance,
             @DescribeParameter(
-                        name = "attributeName",
-                        description = "Attribute containing the buffer distance value",
-                        min = 0
-                    )
+                            name = "attributeName",
+                            description = "Attribute containing the buffer distance value",
+                            min = 0)
                     String attribute) {
 
         if (distance == null && (attribute == null || attribute == "")) {
@@ -101,8 +96,7 @@ public class BufferFeatureCollection implements VectorProcess {
 
         SimpleFeatureCollection delegate;
 
-        public BufferedFeatureCollection(
-                SimpleFeatureCollection delegate, String attribute, Double distance) {
+        public BufferedFeatureCollection(SimpleFeatureCollection delegate, String attribute, Double distance) {
             this.distance = distance;
             this.attribute = attribute;
             this.delegate = delegate;
@@ -110,8 +104,7 @@ public class BufferFeatureCollection implements VectorProcess {
 
         @Override
         public SimpleFeatureIterator features() {
-            return new BufferedFeatureIterator(
-                    delegate, this.attribute, this.distance, getSchema());
+            return new BufferedFeatureIterator(delegate, this.attribute, this.distance, getSchema());
         }
 
         @Override
@@ -175,10 +168,7 @@ public class BufferFeatureCollection implements VectorProcess {
         SimpleFeature next;
 
         public BufferedFeatureIterator(
-                SimpleFeatureCollection delegate,
-                String attribute,
-                Double distance,
-                SimpleFeatureType schema) {
+                SimpleFeatureCollection delegate, String attribute, Double distance, SimpleFeatureType schema) {
             this.delegate = delegate.features();
             this.distance = distance;
             this.collection = delegate;
@@ -186,10 +176,12 @@ public class BufferFeatureCollection implements VectorProcess {
             fb = new SimpleFeatureBuilder(schema);
         }
 
+        @Override
         public void close() {
             delegate.close();
         }
 
+        @Override
         public boolean hasNext() {
             while (next == null && delegate.hasNext()) {
                 SimpleFeature f = delegate.next();
@@ -197,9 +189,7 @@ public class BufferFeatureCollection implements VectorProcess {
                     if (value instanceof Geometry) {
                         Double fDistance = distance;
                         if (this.attribute != null) {
-                            fDistance =
-                                    Converters.convert(
-                                            f.getAttribute(this.attribute), Double.class);
+                            fDistance = Converters.convert(f.getAttribute(this.attribute), Double.class);
                         }
                         if (fDistance != null && fDistance != 0.0) {
                             value = ((Geometry) value).buffer(fDistance);
@@ -214,6 +204,7 @@ public class BufferFeatureCollection implements VectorProcess {
             return next != null;
         }
 
+        @Override
         public SimpleFeature next() throws NoSuchElementException {
             if (!hasNext()) {
                 throw new NoSuchElementException("hasNext() returned false!");

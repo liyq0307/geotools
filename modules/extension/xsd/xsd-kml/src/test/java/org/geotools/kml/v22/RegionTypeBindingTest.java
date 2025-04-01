@@ -16,33 +16,35 @@
  */
 package org.geotools.kml.v22;
 
+import static org.junit.Assert.assertEquals;
+
 import org.geotools.xsd.Binding;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
 
-/**
- * Test 2.2 Region/LanLonAltBox bindings (i.e. using v22 {@link KMLConfiguration} by extending v22
- * {@link KMLTestSupport})
- */
 public class RegionTypeBindingTest extends KMLTestSupport {
+
+    @Test
     public void testType() {
         assertEquals(LinearRing.class, binding(KML.RegionType).getType());
     }
 
+    @Test
     public void testExecutionMode() {
         assertEquals(Binding.OVERRIDE, binding(KML.RegionType).getExecutionMode());
     }
 
+    @Test
     public void testParse() throws Exception {
-        String xml =
-                "<Region>"
-                        + "<LatLonAltBox>"
-                        + "<north>1</north>"
-                        + "<south>-1</south>"
-                        + "<east>1</east>"
-                        + "<west>-1</west>"
-                        + "</LatLonAltBox>"
-                        + "</Region>";
+        String xml = "<Region>"
+                + "<LatLonAltBox>"
+                + "<north>1</north>"
+                + "<south>-1</south>"
+                + "<east>1</east>"
+                + "<west>-1</west>"
+                + "</LatLonAltBox>"
+                + "</Region>";
 
         buildDocument(xml);
 
@@ -56,19 +58,19 @@ public class RegionTypeBindingTest extends KMLTestSupport {
         assertEquals("Last and first coordinates should be equal", coordinates[0], coordinates[4]);
     }
 
+    @Test
     public void testParseWithUnparsedElements() throws Exception {
-        String xml =
-                "<Region>"
-                        + "<LatLonAltBox>"
-                        + "<north>1</north>"
-                        + "<south>-1</south>"
-                        + "<east>1</east>"
-                        + "<west>-1</west>"
-                        + "<minAltitude>-1.5</minAltitude>"
-                        + "<maxAltitude>1500</maxAltitude>"
-                        + "<altitudeMode>clampToGround</altitudeMode>"
-                        + "</LatLonAltBox>"
-                        + "</Region>";
+        String xml = "<Region>"
+                + "<LatLonAltBox>"
+                + "<north>1</north>"
+                + "<south>-1</south>"
+                + "<east>1</east>"
+                + "<west>-1</west>"
+                + "<minAltitude>-1.5</minAltitude>"
+                + "<maxAltitude>1500</maxAltitude>"
+                + "<altitudeMode>clampToGround</altitudeMode>"
+                + "</LatLonAltBox>"
+                + "</Region>";
 
         buildDocument(xml);
 

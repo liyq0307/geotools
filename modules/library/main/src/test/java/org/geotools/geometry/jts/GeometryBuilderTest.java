@@ -16,7 +16,8 @@
  */
 package org.geotools.geometry.jts;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import org.junit.Test;
@@ -44,24 +45,13 @@ public class GeometryBuilderTest {
 
     @Test
     public void box() throws Exception {
-        Polygon p =
-                builder.box(
-                        RECT_ENV.getMinX(),
-                        RECT_ENV.getMinY(),
-                        RECT_ENV.getMaxX(),
-                        RECT_ENV.getMaxY());
+        Polygon p = builder.box(RECT_ENV.getMinX(), RECT_ENV.getMinY(), RECT_ENV.getMaxX(), RECT_ENV.getMaxY());
         assertBounds(RECT_ENV, p.getEnvelopeInternal(), 1.0e-8);
     }
 
     @Test
     public void boxZ() throws Exception {
-        Polygon p =
-                builder.boxZ(
-                        RECT_ENV.getMinX(),
-                        RECT_ENV.getMinY(),
-                        RECT_ENV.getMaxX(),
-                        RECT_ENV.getMaxY(),
-                        42);
+        Polygon p = builder.boxZ(RECT_ENV.getMinX(), RECT_ENV.getMinY(), RECT_ENV.getMaxX(), RECT_ENV.getMaxY(), 42);
         assertBounds(RECT_ENV, p.getEnvelopeInternal(), 1.0e-8);
         assertEquals(42, (int) p.getCoordinate().getZ());
     }
@@ -70,25 +60,16 @@ public class GeometryBuilderTest {
     public void circle() throws Exception {
         double radius = SQUARE_ENV.getWidth() / 2;
 
-        Polygon p =
-                builder.circle(
-                        SQUARE_ENV.getMinX() + radius,
-                        SQUARE_ENV.getMinY() + radius,
-                        radius,
-                        getNumSides(SQUARE_ENV));
+        Polygon p = builder.circle(
+                SQUARE_ENV.getMinX() + radius, SQUARE_ENV.getMinY() + radius, radius, getNumSides(SQUARE_ENV));
 
         assertBounds(SQUARE_ENV, p.getEnvelopeInternal(), 0.01);
     }
 
     @Test
     public void ellipse() throws Exception {
-        Polygon p =
-                builder.ellipse(
-                        RECT_ENV.getMinX(),
-                        RECT_ENV.getMinY(),
-                        RECT_ENV.getMaxX(),
-                        RECT_ENV.getMaxY(),
-                        getNumSides(RECT_ENV));
+        Polygon p = builder.ellipse(
+                RECT_ENV.getMinX(), RECT_ENV.getMinY(), RECT_ENV.getMaxX(), RECT_ENV.getMaxY(), getNumSides(RECT_ENV));
 
         assertBounds(RECT_ENV, p.getEnvelopeInternal(), 0.01);
     }
@@ -108,7 +89,7 @@ public class GeometryBuilderTest {
 
     @Test
     public void lineStringFromOrdinates() throws Exception {
-        double[] ordinates = new double[] {1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 0};
+        double[] ordinates = {1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 0};
         LineString line = builder.lineString(ordinates);
 
         Coordinate[] coords = line.getCoordinates();
@@ -117,7 +98,7 @@ public class GeometryBuilderTest {
 
     @Test
     public void lineStringZFromOrdinates() throws Exception {
-        double[] ordinates = new double[] {1, 2, -3, 4, 5, -6, 7, 8, -9};
+        double[] ordinates = {1, 2, -3, 4, 5, -6, 7, 8, -9};
         LineString line = builder.lineStringZ(ordinates);
 
         Coordinate[] coords = line.getCoordinates();
@@ -140,7 +121,7 @@ public class GeometryBuilderTest {
 
     @Test
     public void linearRingFromOrdinates() throws Exception {
-        double[] closedOrdinates = new double[] {1, 1, 1, 2, 2, 2, 2, 1, 1, 1};
+        double[] closedOrdinates = {1, 1, 1, 2, 2, 2, 2, 1, 1, 1};
         double[] openOrdinates = Arrays.copyOf(closedOrdinates, closedOrdinates.length - 2);
 
         LinearRing ring = builder.linearRing(openOrdinates);
@@ -153,14 +134,13 @@ public class GeometryBuilderTest {
 
     @Test
     public void linearRingZFromOrdinates() throws Exception {
-        double[] closedOrdinates =
-                new double[] {
-                    1, 1, -1,
-                    1, 2, -2,
-                    2, 2, -2,
-                    2, 1, -1,
-                    1, 1, -1
-                };
+        double[] closedOrdinates = {
+            1, 1, -1,
+            1, 2, -2,
+            2, 2, -2,
+            2, 1, -1,
+            1, 1, -1
+        };
 
         double[] openOrdinates = Arrays.copyOf(closedOrdinates, closedOrdinates.length - 3);
 

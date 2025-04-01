@@ -30,8 +30,7 @@ import org.geotools.util.factory.Hints;
 /** ConverterFactory for handling {@link org.postgresql.jdbc.PgArray} conversions */
 public class SQLArrayConverterFactory implements ConverterFactory {
 
-    public static final SQLArrayToJavaConverter ARRAY_TO_JAVA_CONVERTER =
-            new SQLArrayToJavaConverter();
+    public static final SQLArrayToJavaConverter ARRAY_TO_JAVA_CONVERTER = new SQLArrayToJavaConverter();
 
     @Override
     public Converter createConverter(Class<?> source, Class<?> target, Hints hints) {
@@ -43,11 +42,12 @@ public class SQLArrayConverterFactory implements ConverterFactory {
 
     static class SQLArrayToJavaConverter implements Converter {
 
-        public Object convert(Object source, Class target) throws Exception {
+        @Override
+        public <T> T convert(Object source, Class<T> target) throws Exception {
             Array sqlArray = (Array) source;
             Object array = sqlArray.getArray();
             int length = getLength(array);
-            Class componentType = target.getComponentType();
+            Class<?> componentType = target.getComponentType();
             Object result = newInstance(componentType, length);
             for (int i = 0; i < length; i++) {
                 Object original = get(array, i);
@@ -56,14 +56,13 @@ public class SQLArrayConverterFactory implements ConverterFactory {
                 } else {
                     Object converted = Converters.convert(original, componentType);
                     if (converted == null) {
-                        throw new RuntimeException(
-                                "Failed to convert " + original + " to " + componentType);
+                        throw new RuntimeException("Failed to convert " + original + " to " + componentType);
                     }
                     set(result, i, converted);
                 }
             }
 
-            return result;
+            return target.cast(result);
         }
     }
 }

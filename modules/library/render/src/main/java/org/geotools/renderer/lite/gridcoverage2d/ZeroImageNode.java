@@ -25,12 +25,12 @@ import javax.media.jai.ImageLayout;
 import javax.media.jai.JAI;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.ConstantDescriptor;
+import org.geotools.api.coverage.grid.GridCoverage;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.util.CoverageUtilities;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.GridCoverage;
 
 /** Returns a constant image with the same data type, size and layout as the first source */
 public class ZeroImageNode extends BaseCoverageProcessingNode {
@@ -48,27 +48,22 @@ public class ZeroImageNode extends BaseCoverageProcessingNode {
         final CoverageProcessingNode source = getSource(0);
         final GridCoverage2D sourceCoverage = (GridCoverage2D) source.getOutput();
         final RenderedImage sourceImage = sourceCoverage.getRenderedImage();
-        final Number[] bandValues = new Byte[] {(byte) 0};
+        final Byte[] bandValues = {(byte) 0};
 
         Hints hints = new Hints(getHints());
         final ImageLayout layout = new ImageLayout(sourceImage);
         layout.unsetValid(ImageLayout.COLOR_MODEL_MASK).unsetValid(ImageLayout.SAMPLE_MODEL_MASK);
         hints.put(JAI.KEY_IMAGE_LAYOUT, layout);
-        final RenderedOp constant =
-                ConstantDescriptor.create(
-                        (float) sourceImage.getWidth(),
-                        (float) sourceImage.getHeight(),
-                        bandValues,
-                        hints);
+        final RenderedOp constant = ConstantDescriptor.create(
+                (float) sourceImage.getWidth(), (float) sourceImage.getHeight(), bandValues, hints);
 
         final GridCoverageFactory factory = getCoverageFactory();
-        Map properties = null;
+        Map<String, Object> properties = null;
         final NoDataContainer noDataProperty = CoverageUtilities.getNoDataProperty(sourceCoverage);
         if (noDataProperty != null) {
-            properties = new HashMap();
+            properties = new HashMap<>();
             properties.put(NoDataContainer.GC_NODATA, new NoDataContainer(255));
         }
-        return factory.create(
-                "zero", constant, sourceCoverage.getGridGeometry(), null, null, properties);
+        return factory.create("zero", constant, sourceCoverage.getGridGeometry(), null, null, properties);
     }
 }

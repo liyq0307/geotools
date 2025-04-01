@@ -25,14 +25,14 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.Mark;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.Mark;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Stroke;
+import org.geotools.api.style.Stroke;
 import org.geotools.styling.StyleBuilder;
 import org.geotools.swt.utils.Messages;
-import org.opengis.style.GraphicalSymbol;
+import org.geotools.api.style.GraphicalSymbol;
 
 /**
  * Allows editing/viewing of a Style Layer Descriptor "Graphic".
@@ -108,29 +108,17 @@ public class GraphicViewer {
     Listener sync = new Listener();
     private SelectionListener listener;
 
-    /**
-     * Accepts a listener that will be notified when content changes.
-     *
-     * @param listener1
-     */
+    /** Accepts a listener that will be notified when content changes. */
     public void addListener(SelectionListener listener1) {
         this.listener = listener1;
     }
 
-    /**
-     * Remove listener.
-     *
-     * @param listener1
-     */
+    /** Remove listener. */
     public void removeListener(SelectionListener listener1) {
         if (this.listener == listener1) this.listener = null;
     }
 
-    /**
-     * TODO summary sentence for fire ...
-     *
-     * @param event
-     */
+    /** TODO summary sentence for fire ... */
     protected void fire(SelectionEvent event) {
         if (this.listener == null) return;
         this.listener.widgetSelected(event);
@@ -139,9 +127,6 @@ public class GraphicViewer {
     /**
      * TODO summary sentence for createControl ...
      *
-     * @param parent
-     * @param klisten
-     * @param build
      * @return Generated composite
      */
     public Composite createControl(Composite parent, KeyListener klisten, StyleBuilder build) {
@@ -173,9 +158,6 @@ public class GraphicViewer {
     /**
      * TODO summary sentence for getGraphic ...
      *
-     * @param filll
-     * @param stroke
-     * @param build
      * @return Graphic defined by this model
      */
     public Graphic getGraphic(Fill filll, Stroke stroke, StyleBuilder build) {
@@ -194,13 +176,7 @@ public class GraphicViewer {
         return graphic;
     }
 
-    /**
-     * TODO summary sentence for setGraphic ...
-     *
-     * @param graphic
-     * @param mode
-     * @param enabled
-     */
+    /** TODO summary sentence for setGraphic ... */
     public void setGraphic(Graphic graphic, Mode mode, Color defaultColor) {
         boolean enabled = true;
         if (graphic == null) {

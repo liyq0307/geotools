@@ -24,6 +24,7 @@ import org.geotools.gce.imagemosaic.Utils;
 /** A Default {@link CoverageNameCollectorSPI} implementation */
 public class DefaultCoverageNameCollectorSPI implements CoverageNameCollectorSPI {
 
+    @Override
     public CoverageNameCollector create(Object object, Map<String, String> properties) {
         // Default collector ignores the properties
         if (object instanceof StructuredGridCoverage2DReader) {
@@ -35,8 +36,8 @@ public class DefaultCoverageNameCollectorSPI implements CoverageNameCollectorSPI
     }
 
     /**
-     * The Default {@link CoverageNameCollector} for StructuredGridCoverage readers simply returns
-     * the coverageName provided as input of the call (put into the properties map to be handled)
+     * The Default {@link CoverageNameCollector} for StructuredGridCoverage readers simply returns the coverageName
+     * provided as input of the call (put into the properties map to be handled)
      */
     static class DefaultStructuredCoverageNameCollector extends DefaultCoverageNameCollector {
 
@@ -46,8 +47,8 @@ public class DefaultCoverageNameCollectorSPI implements CoverageNameCollectorSPI
     }
 
     /**
-     * The Default {@link CoverageNameCollector} for classic GridCoverage readers simply returns the
-     * value of the properties map matching the required coverageNameMappingKey
+     * The Default {@link CoverageNameCollector} for classic GridCoverage readers simply returns the value of the
+     * properties map matching the required coverageNameMappingKey
      */
     static class DefaultCoverageNameCollector implements CoverageNameCollector {
 

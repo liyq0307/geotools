@@ -20,9 +20,8 @@ import org.geotools.data.vpf.ifc.DataTypesDefinition;
 import org.geotools.data.vpf.util.DataUtils;
 
 /**
- * This class contains definition of VPF standard table column definition according to specification
- * found in: "Interface Standard for Vector Product Format." Objects of this type are immutable.
- * Created: Thu Jan 02 23:11:27 2003
+ * This class contains definition of VPF standard table column definition according to specification found in:
+ * "Interface Standard for Vector Product Format." Objects of this type are immutable. Created: Thu Jan 02 23:11:27 2003
  *
  * @author <a href="mailto:kobit@users.fs.net">Artur Hefczyc</a>
  * @source $URL$
@@ -89,11 +88,11 @@ public class TableColumnDef implements DataTypesDefinition {
      *
      * @return a <code>String</code> value
      */
+    @Override
     public String toString() {
         String emptyStr = "";
         StringBuffer buff = new StringBuffer();
-        StringBuffer sb = null;
-        sb = new StringBuffer(emptyStr + name);
+        StringBuffer sb = new StringBuffer(emptyStr + name);
         sb.setLength(16);
         buff.append(sb);
         sb = new StringBuffer(emptyStr + type);

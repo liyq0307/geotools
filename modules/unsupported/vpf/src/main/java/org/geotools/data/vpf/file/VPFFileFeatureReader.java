@@ -18,10 +18,10 @@ package org.geotools.data.vpf.file;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.store.ContentState;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * A feature reader for the VPFFile object
@@ -50,15 +50,17 @@ public class VPFFileFeatureReader implements FeatureReader<SimpleFeatureType, Si
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.FeatureReader#getFeatureType()
+     * @see org.geotools.api.data.FeatureReader#getFeatureType()
      */
+    @Override
     public SimpleFeatureType getFeatureType() {
         return file != null ? file.getFeatureType() : null;
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.FeatureReader#next()
+     * @see org.geotools.api.data.FeatureReader#next()
      */
+    @Override
     public SimpleFeature next() throws IOException, NoSuchElementException {
         if (!hasNext()) {
             throw new NoSuchElementException();
@@ -69,19 +71,20 @@ public class VPFFileFeatureReader implements FeatureReader<SimpleFeatureType, Si
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.FeatureReader#hasNext()
+     * @see org.geotools.api.data.FeatureReader#hasNext()
      */
+    @Override
     public boolean hasNext() throws IOException {
-        boolean result = false;
 
         // Ask the stream if it has space for another object
-        result = file != null ? file.hasNext() : false;
+        boolean result = file != null ? file.hasNext() : false;
         return result;
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.FeatureReader#close()
+     * @see org.geotools.api.data.FeatureReader#close()
      */
+    @Override
     public void close() throws IOException {
         // TODO Auto-generated method stub
         if (this.file != null) this.file.close();

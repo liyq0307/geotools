@@ -66,29 +66,17 @@ public class Property {
         return true;
     }
 
-    /**
-     * True if the property has been used during the conversion
-     *
-     * @return
-     */
+    /** True if the property has been used during the conversion */
     boolean isUsed() {
         return used;
     }
 
-    /**
-     * The property name
-     *
-     * @return
-     */
+    /** The property name */
     public String getName() {
         return name;
     }
 
-    /**
-     * The list of property values
-     *
-     * @return
-     */
+    /** The list of property values */
     public List<Value> getValues() {
         return values;
     }
@@ -106,10 +94,8 @@ public class Property {
     }
 
     /**
-     * Returns true if any of the property values is other than null or None (will return true also
-     * if there is no value)
-     *
-     * @return
+     * Returns true if any of the property values is other than null or None (will return true also if there is no
+     * value)
      */
     public boolean hasValues() {
         return values.stream().anyMatch(v -> v != null && v != Value.NONE);

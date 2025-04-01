@@ -28,17 +28,19 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 
 /**
- * An abstract implementation for CalcResults. Each subclass should implement its own getValue(),
- * merge(), and constructor methods.
+ * An abstract implementation for CalcResults. Each subclass should implement its own getValue(), merge(), and
+ * constructor methods.
  *
  * @author Cory Horner, Refractions
  * @since 2.2.M2
  */
 public class AbstractCalcResult implements CalcResult {
+    @Override
     public boolean isCompatible(CalcResult targetResults) {
         return targetResults == CalcResult.NULL_RESULT;
     }
 
+    @Override
     public CalcResult merge(CalcResult resultsToAdd) {
         if (resultsToAdd == CalcResult.NULL_RESULT) {
             return this;
@@ -46,47 +48,51 @@ public class AbstractCalcResult implements CalcResult {
             if (!isCompatible(resultsToAdd)) {
                 throw new IllegalArgumentException("Parameter is not a compatible type");
             } else {
-                throw new IllegalArgumentException(
-                        "The CalcResults claim to be compatible, but the appropriate merge "
-                                + "method has not been implemented.");
+                throw new IllegalArgumentException("The CalcResults claim to be compatible, but the appropriate merge "
+                        + "method has not been implemented.");
             }
         }
     }
 
+    @Override
     public Object getValue() {
         return null;
     }
 
+    @Override
     public int toInt() {
         Object value = getValue();
         if (value instanceof Number) {
             Number number = (Number) value;
             return number.intValue();
         } else {
-            return (int) 0;
+            return 0;
         }
     }
 
+    @Override
     public double toDouble() {
         Object value = getValue();
         if (value instanceof Number) {
             Number number = (Number) value;
             return number.doubleValue();
         } else {
-            return (double) 0;
+            return 0;
         }
     }
 
+    @Override
     public long toLong() {
         Object value = getValue();
         if (value instanceof Number) {
             Number number = (Number) value;
             return number.longValue();
         } else {
-            return (long) 0;
+            return 0;
         }
     }
 
+    @Override
     public float toFloat() {
         Object value = getValue();
         if (value instanceof Number) {
@@ -97,23 +103,27 @@ public class AbstractCalcResult implements CalcResult {
         }
     }
 
+    @Override
     public Geometry toGeometry() {
         Object value = getValue();
         if (value instanceof Geometry) return (Geometry) getValue();
         else return null;
     }
 
+    @Override
     public Envelope toEnvelope() {
         Object value = getValue();
         if (value instanceof Envelope) return (Envelope) value;
         else return null;
     }
 
+    @Override
     public Point toPoint() {
         Geometry geometry = toGeometry();
         return geometry.getCentroid();
     }
 
+    @Override
     public Set toSet() {
         Object value = getValue();
 
@@ -128,13 +138,16 @@ public class AbstractCalcResult implements CalcResult {
         }
 
         if (value.getClass().isArray()) {
-            Set set = new HashSet(Arrays.asList((Object[]) value));
+            Object[] cast = (Object[]) value;
+            Set set = new HashSet<>(Arrays.asList(cast));
 
             return set;
         }
 
         if (value instanceof Collection) {
-            Set set = new HashSet((Collection) value);
+            @SuppressWarnings("unchecked")
+            Collection<Object> cast = (Collection<Object>) value;
+            Set set = new HashSet<>(cast);
 
             return set;
         }
@@ -142,6 +155,7 @@ public class AbstractCalcResult implements CalcResult {
         return null;
     }
 
+    @Override
     public List toList() {
         Object value = getValue();
 
@@ -170,12 +184,15 @@ public class AbstractCalcResult implements CalcResult {
         }
 
         if (value instanceof Collection) {
-            return new ArrayList((Collection) value);
+            @SuppressWarnings("unchecked")
+            Collection<Object> cast = (Collection<Object>) value;
+            return new ArrayList<>(cast);
         }
 
         return null;
     }
 
+    @Override
     public Object[] toArray() {
         List list = toList();
 
@@ -193,15 +210,17 @@ public class AbstractCalcResult implements CalcResult {
             return null;
         }
 
-        String[] strings = new String[list.size()];
-
-        return (String[]) list.toArray(strings);
+        @SuppressWarnings("unchecked")
+        String[] strings = (String[]) list.toArray(new String[list.size()]);
+        return strings;
     }
 
+    @Override
     public Map toMap() {
         return (Map) getValue();
     }
 
+    @Override
     public String toString() {
         return getValue().toString();
     }

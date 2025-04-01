@@ -37,10 +37,10 @@ public class RedefineHandler extends XSIElementHandler {
     private static int offset = 0;
     private String id;
     private String schemaLocation;
-    private List simpleTypes;
-    private List complexTypes;
-    private List groups;
-    private List attributeGroups;
+    private List<SimpleTypeHandler> simpleTypes;
+    private List<ComplexTypeHandler> complexTypes;
+    private List<GroupHandler> groups;
+    private List<AttributeGroupHandler> attributeGroups;
     private int hashCodeOffset = getOffset();
 
     /*
@@ -51,6 +51,7 @@ public class RedefineHandler extends XSIElementHandler {
     }
 
     /** @see java.lang.Object#hashCode() */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
         return (LOCALNAME.hashCode()
@@ -60,6 +61,7 @@ public class RedefineHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
+    @Override
     public XSIElementHandler getHandler(String namespaceURI, String localName) {
         if (SchemaHandler.namespaceURI.equalsIgnoreCase(namespaceURI)) {
             // child types
@@ -67,7 +69,7 @@ public class RedefineHandler extends XSIElementHandler {
             // simpleType
             if (SimpleTypeHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (simpleTypes == null) {
-                    simpleTypes = new LinkedList();
+                    simpleTypes = new LinkedList<>();
                 }
 
                 SimpleTypeHandler sth = new SimpleTypeHandler();
@@ -79,7 +81,7 @@ public class RedefineHandler extends XSIElementHandler {
             // complexType
             if (ComplexTypeHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (complexTypes == null) {
-                    complexTypes = new LinkedList();
+                    complexTypes = new LinkedList<>();
                 }
 
                 ComplexTypeHandler sth = new ComplexTypeHandler();
@@ -91,7 +93,7 @@ public class RedefineHandler extends XSIElementHandler {
             // group
             if (GroupHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (groups == null) {
-                    groups = new LinkedList();
+                    groups = new LinkedList<>();
                 }
 
                 GroupHandler sth = new GroupHandler();
@@ -103,7 +105,7 @@ public class RedefineHandler extends XSIElementHandler {
             // attributeGroup
             if (AttributeGroupHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (attributeGroups == null) {
-                    attributeGroups = new LinkedList();
+                    attributeGroups = new LinkedList<>();
                 }
 
                 AttributeGroupHandler sth = new AttributeGroupHandler();
@@ -117,9 +119,9 @@ public class RedefineHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
+    @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
         id = atts.getValue("", "id");
 
@@ -135,6 +137,7 @@ public class RedefineHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -170,11 +173,13 @@ public class RedefineHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandlerType() */
+    @Override
     public int getHandlerType() {
         return DEFAULT;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String) */
+    @Override
     public void endElement(String namespaceURI, String localName) {
         // do nothing
     }

@@ -21,6 +21,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.gml2.GML;
 import org.geotools.gml2.GMLConfiguration;
@@ -28,6 +30,7 @@ import org.geotools.gml2.bindings.GML2EncodingUtils;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.XSD;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
@@ -36,8 +39,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.xml.sax.helpers.AttributesImpl;
 
 /**
@@ -54,8 +55,7 @@ public class GML2FeatureCollectionEncoderDelegate extends FeatureCollectionEncod
 
     public static class GML2Delegate implements GMLDelegate {
 
-        static final QualifiedName FEATURE_MEMBER =
-                new QualifiedName(GML.NAMESPACE, "featureMember", "gml");
+        static final QualifiedName FEATURE_MEMBER = new QualifiedName(GML.NAMESPACE, "featureMember", "gml");
 
         QualifiedName featureMember;
 
@@ -115,36 +115,43 @@ public class GML2FeatureCollectionEncoderDelegate extends FeatureCollectionEncod
             return config;
         }
 
-        public List getFeatureProperties(
-                SimpleFeature f, XSDElementDeclaration element, Encoder e) {
+        @Override
+        public List getFeatureProperties(SimpleFeature f, XSDElementDeclaration element, Encoder e) {
             return GML2EncodingUtils.AbstractFeatureType_getProperties(
                     f,
                     element,
                     e.getSchemaIndex(),
-                    new HashSet<String>(Arrays.asList("name", "description", "boundedBy")),
+                    new HashSet<>(Arrays.asList("name", "description", "boundedBy")),
                     e.getConfiguration());
         }
 
+        @Override
         public EnvelopeEncoder createEnvelopeEncoder(Encoder e) {
             return new EnvelopeEncoder(e, gmlPrefix);
         }
 
+        @Override
         public void initFidAttribute(AttributesImpl atts) {
             atts.addAttribute(null, "fid", "fid", null, "");
         }
 
+        @Override
         public void startFeatures(GMLWriter handler) {}
 
+        @Override
         public void startFeature(GMLWriter handler) throws Exception {
             handler.startElement(FEATURE_MEMBER, null);
         }
 
+        @Override
         public void endFeature(GMLWriter handler) throws Exception {
             handler.endElement(FEATURE_MEMBER);
         }
 
+        @Override
         public void endFeatures(GMLWriter handler) {}
 
+        @Override
         public void setSrsNameAttribute(AttributesImpl atts, CoordinateReferenceSystem crs) {
             atts.addAttribute(null, "srsName", "srsName", null, GML2EncodingUtils.toURI(crs, true));
         }
@@ -156,7 +163,7 @@ public class GML2FeatureCollectionEncoderDelegate extends FeatureCollectionEncod
 
         @Override
         public void registerGeometryEncoders(
-                Map<Class, GeometryEncoder> encoders, Encoder encoder) {
+                Map<Class, GeometryEncoder<? extends Geometry>> encoders, Encoder encoder) {
             encoders.put(Point.class, new PointEncoder(encoder, gmlPrefix));
             encoders.put(MultiPoint.class, new MultiPointEncoder(encoder, gmlPrefix));
             encoders.put(LineString.class, new LineStringEncoder(encoder, gmlPrefix));
@@ -164,8 +171,7 @@ public class GML2FeatureCollectionEncoderDelegate extends FeatureCollectionEncod
             encoders.put(MultiLineString.class, new MultiLineStringEncoder(encoder, gmlPrefix));
             encoders.put(Polygon.class, new PolygonEncoder(encoder, gmlPrefix));
             encoders.put(MultiPolygon.class, new MultiPolygonEncoder(encoder, gmlPrefix));
-            encoders.put(
-                    GeometryCollection.class, new GeometryCollectionEncoder(encoder, gmlPrefix));
+            encoders.put(GeometryCollection.class, new GeometryCollectionEncoder(encoder, gmlPrefix));
         }
 
         @Override

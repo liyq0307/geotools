@@ -19,8 +19,8 @@
  */
 package org.geotools.metadata.iso;
 
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.metadata.citation.Citation;
 
 /**
  * Value uniquely identifying an object within a namespace.
@@ -38,17 +38,13 @@ public class IdentifierImpl extends MetadataEntity implements Identifier {
     private String code;
 
     /**
-     * Identifier of the version of the associated code space or code, as specified by the code
-     * space or code authority. This version is included only when the {@linkplain #getCode code}
-     * uses versions. When appropriate, the edition is identified by the effective date, coded using
-     * ISO 8601 date format.
+     * Identifier of the version of the associated code space or code, as specified by the code space or code authority.
+     * This version is included only when the {@linkplain #getCode code} uses versions. When appropriate, the edition is
+     * identified by the effective date, coded using ISO 8601 date format.
      */
     private String version;
 
-    /**
-     * Organization or party responsible for definition and maintenance of the {@linkplain #getCode
-     * code}.
-     */
+    /** Organization or party responsible for definition and maintenance of the {@linkplain #getCode code}. */
     private Citation authority;
 
     /** Construct an initially empty identifier. */
@@ -83,6 +79,7 @@ public class IdentifierImpl extends MetadataEntity implements Identifier {
      *
      * @return The code.
      */
+    @Override
     public String getCode() {
         return code;
     }
@@ -94,10 +91,9 @@ public class IdentifierImpl extends MetadataEntity implements Identifier {
     }
 
     /**
-     * Identifier of the version of the associated code, as specified by the code space or code
-     * authority. This version is included only when the {@linkplain #getCode code} uses versions.
-     * When appropriate, the edition is identified by the effective date, coded using ISO 8601 date
-     * format.
+     * Identifier of the version of the associated code, as specified by the code space or code authority. This version
+     * is included only when the {@linkplain #getCode code} uses versions. When appropriate, the edition is identified
+     * by the effective date, coded using ISO 8601 date format.
      *
      * @return The version, or {@code null} if not available.
      */
@@ -112,19 +108,16 @@ public class IdentifierImpl extends MetadataEntity implements Identifier {
     }
 
     /**
-     * Organization or party responsible for definition and maintenance of the {@linkplain #getCode
-     * code}.
+     * Organization or party responsible for definition and maintenance of the {@linkplain #getCode code}.
      *
      * @return The authority, or {@code null} if not available.
      */
+    @Override
     public Citation getAuthority() {
         return authority;
     }
 
-    /**
-     * Set the organization or party responsible for definition and maintenance of the {@linkplain
-     * #getCode code}.
-     */
+    /** Set the organization or party responsible for definition and maintenance of the {@linkplain #getCode code}. */
     public void setAuthority(final Citation newValue) {
         checkWritePermission();
         authority = newValue;

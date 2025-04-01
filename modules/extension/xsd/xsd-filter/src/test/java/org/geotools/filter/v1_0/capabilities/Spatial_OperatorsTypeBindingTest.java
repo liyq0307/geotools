@@ -16,20 +16,27 @@
  */
 package org.geotools.filter.v1_0.capabilities;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.SpatialOperators;
 import org.geotools.xsd.Binding;
-import org.opengis.filter.capability.SpatialOperators;
+import org.junit.Test;
 import org.w3c.dom.Document;
 
 public class Spatial_OperatorsTypeBindingTest extends FilterCapabilitiesTestSupport {
+    @Test
     public void testType() {
         assertEquals(SpatialOperators.class, binding(OGC.Spatial_OperatorsType).getType());
     }
 
+    @Test
     public void testExectionMode() {
         assertEquals(Binding.OVERRIDE, binding(OGC.Spatial_OperatorsType).getExecutionMode());
     }
 
+    @Test
     public void testParse() throws Exception {
         FilterMockData.spatial(document, document);
 
@@ -48,12 +55,10 @@ public class Spatial_OperatorsTypeBindingTest extends FilterCapabilitiesTestSupp
         assertNotNull(spatial.getOperator("DWithin"));
     }
 
+    @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.spatial(),
-                        new QName(OGC.NAMESPACE, "Spatial_Operators"),
-                        OGC.Spatial_OperatorsType);
+        Document dom = encode(
+                FilterMockData.spatial(), new QName(OGC.NAMESPACE, "Spatial_Operators"), OGC.Spatial_OperatorsType);
 
         assertNotNull(getElementByQName(dom, OGC.BBOX));
         assertNotNull(getElementByQName(dom, OGC.Equals));

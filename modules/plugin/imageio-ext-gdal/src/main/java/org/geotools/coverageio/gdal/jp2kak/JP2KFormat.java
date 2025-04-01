@@ -19,11 +19,11 @@ package org.geotools.coverageio.gdal.jp2kak;
 import it.geosolutions.imageio.plugins.jp2kakadu.JP2GDALKakaduImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.geometry.MismatchedDimensionException;
 import org.geotools.coverageio.gdal.BaseGDALGridFormat;
-import org.geotools.data.DataSourceException;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.geometry.MismatchedDimensionException;
 
 /**
  * An implementation of {@link Format} for the JP2K format.
@@ -34,8 +34,7 @@ import org.opengis.geometry.MismatchedDimensionException;
  */
 public final class JP2KFormat extends BaseGDALGridFormat implements Format {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(JP2KFormat.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(JP2KFormat.class);
 
     /** Creates an instance and sets the metadata. */
     public JP2KFormat() {
@@ -51,19 +50,17 @@ public final class JP2KFormat extends BaseGDALGridFormat implements Format {
     private static InfoWrapper INFO = new InfoWrapper("JP2K (Kakadu) Coverage Format", "JP2KAK");
 
     /** Sets the metadata information. */
+    @Override
     protected void setInfo() {
         setInfo(INFO);
     }
 
     /** @see org.geotools.data.coverage.grid.AbstractGridFormat#getReader(Object, Hints) */
+    @Override
     public JP2KReader getReader(Object source, Hints hints) {
         try {
             return new JP2KReader(source, hints);
-        } catch (MismatchedDimensionException e) {
-            final RuntimeException re = new RuntimeException();
-            re.initCause(e);
-            throw re;
-        } catch (DataSourceException e) {
+        } catch (MismatchedDimensionException | DataSourceException e) {
             final RuntimeException re = new RuntimeException();
             re.initCause(e);
             throw re;

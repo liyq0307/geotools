@@ -18,13 +18,13 @@
 package org.geotools.wcs.v1_1.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.temporal.Position;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.temporal.object.DefaultPosition;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.temporal.Position;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -63,6 +63,7 @@ import org.w3c.dom.Element;
 public class TimePositionTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.TimePositionType;
     }
@@ -74,6 +75,7 @@ public class TimePositionTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Position.class;
     }
@@ -85,6 +87,7 @@ public class TimePositionTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Position timePosition = new DefaultPosition(new SimpleInternationalString((String) value));
         return timePosition;
@@ -99,15 +102,14 @@ public class TimePositionTypeBinding extends AbstractComplexBinding {
         Position timePosition = (Position) object;
 
         if (timePosition == null) {
-            value.appendChild(
-                    document.createElementNS(
-                            GML.NAMESPACE, org.geotools.gml3.GML.Null.getLocalPart()));
+            value.appendChild(document.createElementNS(GML.NAMESPACE, org.geotools.gml3.GML.Null.getLocalPart()));
         } else {
             value.appendChild(document.createTextNode(timePosition.getDateTime().toString()));
         }
         return null;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) {
         if (name.getLocalPart().equals("frame")) {
             return "ISO-8601";

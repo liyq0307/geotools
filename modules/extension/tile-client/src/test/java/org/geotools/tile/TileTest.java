@@ -16,6 +16,7 @@
  */
 package org.geotools.tile;
 
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -51,13 +52,13 @@ public class TileTest {
     @Test
     public void testEquals() {
 
-        Assert.assertTrue(this.tile.equals(this.tile));
-        Assert.assertFalse(this.tile.equals(null));
-        Assert.assertFalse(this.tile.equals("Blah"));
+        Assert.assertEquals(this.tile, this.tile);
+        Assert.assertNotEquals(null, this.tile);
+        Assert.assertNotEquals("Blah", this.tile);
 
         Tile otherTile = createTestTile();
-        Assert.assertTrue(this.tile.equals(otherTile));
-        Assert.assertTrue(otherTile.equals(this.tile));
+        Assert.assertEquals(this.tile, otherTile);
+        Assert.assertEquals(otherTile, this.tile);
     }
 
     @Test
@@ -66,12 +67,31 @@ public class TileTest {
         Assert.assertNotNull(img);
         Assert.assertEquals(256, img.getHeight());
         Assert.assertEquals(256, img.getWidth());
+        int pix = img.getRGB(20, 10);
+        Assert.assertTrue(checkColor(Color.white.getRGB(), pix));
+        System.setProperty(Tile.DEBUG_FLAG, "no");
+        img = this.tile.createErrorImage("Failed:" + this.tile.getId());
+        Assert.assertNotNull(img);
+        Assert.assertEquals(256, img.getHeight());
+        Assert.assertEquals(256, img.getWidth());
+        pix = img.getRGB(20, 10);
+        Assert.assertFalse(checkColor(Color.white.getRGB(), pix));
+    }
+
+    private boolean checkColor(int expected, int observed) {
+        int blueExpected = expected & 0xff;
+        int greenExpected = (expected & 0xff00) >> 8;
+        int redExpected = (expected & 0xff0000) >> 16;
+
+        int blue = observed & 0xff;
+        int green = (observed & 0xff00) >> 8;
+        int red = (observed & 0xff0000) >> 16;
+        return (blue == blueExpected && red == redExpected && green == greenExpected);
     }
 
     @Test
     public void testGetExtent() {
-        ReferencedEnvelope env =
-                new ReferencedEnvelope(new Envelope(6, 15, 47, 55), DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope env = new ReferencedEnvelope(new Envelope(6, 15, 47, 55), DefaultGeographicCRS.WGS84);
         Assert.assertEquals(env, this.tile.getExtent());
     }
 
@@ -82,14 +102,10 @@ public class TileTest {
 
     protected Tile createTestTile() {
 
-        ReferencedEnvelope env =
-                new ReferencedEnvelope(new Envelope(6, 15, 47, 55), DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope env = new ReferencedEnvelope(new Envelope(6, 15, 47, 55), DefaultGeographicCRS.WGS84);
         ZoomLevel zoomLevel = new WebMercatorZoomLevel(5);
 
-        return new Tile(
-                TileIdentifierTest.createTileIdentifierPrototype(zoomLevel, 10, 12, "SomeService"),
-                env,
-                256) {
+        return new Tile(TileIdentifierTest.createTileIdentifierPrototype(zoomLevel, 10, 12, "SomeService"), env, 256) {
 
             @Override
             public URL getUrl() {

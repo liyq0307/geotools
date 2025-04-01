@@ -32,7 +32,14 @@ import java.sql.Types;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.MultiPoint;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTWriter;
 
 public class DB2Util {
@@ -51,14 +58,15 @@ public class DB2Util {
         String stmt = "call db2gse.ST_register_spatial_column(?,?,?,?,?,?)";
 
         String s = "{" + stmt + "}";
-        CallableStatement ps = con.prepareCall(s);
-        ps.setString(1, quote(schemaName));
-        ps.setString(2, quote(tableName));
-        ps.setString(3, quote(columnName));
-        ps.setString(4, srsName);
-        ps.registerOutParameter(5, Types.INTEGER);
-        ps.registerOutParameter(6, Types.CHAR);
-        ps.executeUpdate();
+        try (CallableStatement ps = con.prepareCall(s)) {
+            ps.setString(1, quote(schemaName));
+            ps.setString(2, quote(tableName));
+            ps.setString(3, quote(columnName));
+            ps.setString(4, srsName);
+            ps.registerOutParameter(5, Types.INTEGER);
+            ps.registerOutParameter(6, Types.CHAR);
+            ps.executeUpdate();
+        }
         // DB2TestSetup.LOGGER.log(Level.INFO,ps.getInt(5) + "|" + ps.getString(6));
     }
 
@@ -71,16 +79,17 @@ public class DB2Util {
             String stmt = "call db2gse.ST_register_spatial_column(?,?,?,?,?,?,?)";
 
             String s = "{" + stmt + "}";
-            CallableStatement ps = con.prepareCall(s);
-            ps.setString(1, quote(schemaName));
-            ps.setString(2, quote(tableName));
-            ps.setString(3, quote(columnName));
-            ps.setString(4, srsName);
-            ps.setInt(5, 1);
-            ps.registerOutParameter(6, Types.INTEGER);
-            ps.registerOutParameter(7, Types.CHAR);
-            ps.executeUpdate(); // DB2TestSetup.LOGGER.log(Level.INFO,ps.getInt(5) + "|" +
-            // ps.getString(6));
+            try (CallableStatement ps = con.prepareCall(s)) {
+                ps.setString(1, quote(schemaName));
+                ps.setString(2, quote(tableName));
+                ps.setString(3, quote(columnName));
+                ps.setString(4, srsName);
+                ps.setInt(5, 1);
+                ps.registerOutParameter(6, Types.INTEGER);
+                ps.registerOutParameter(7, Types.CHAR);
+                ps.executeUpdate(); // DB2TestSetup.LOGGER.log(Level.INFO,ps.getInt(5) + "|" +
+                // ps.getString(6));
+            }
 
         } catch (SQLException ex) { //
             // may happen for spatial extender versions < 10
@@ -89,39 +98,36 @@ public class DB2Util {
         }
     }
 
-    public static void executeUnRegister(
-            String schemaName, String tableName, String columnName, Connection con)
+    public static void executeUnRegister(String schemaName, String tableName, String columnName, Connection con)
             throws SQLException {
 
         String stmt = "call db2gse.ST_unregister_spatial_column(?,?,?,?,?)";
 
         String s = "{" + stmt + "}";
-        CallableStatement ps = con.prepareCall(s);
-        ps.setString(1, quote(schemaName));
-        ps.setString(2, quote(tableName));
-        ps.setString(3, quote(columnName));
-        ps.registerOutParameter(4, Types.INTEGER);
-        ps.registerOutParameter(5, Types.CHAR);
-        ps.executeUpdate();
+        try (CallableStatement ps = con.prepareCall(s)) {
+            ps.setString(1, quote(schemaName));
+            ps.setString(2, quote(tableName));
+            ps.setString(3, quote(columnName));
+            ps.registerOutParameter(4, Types.INTEGER);
+            ps.registerOutParameter(5, Types.CHAR);
+            ps.executeUpdate();
+        }
         // DB2TestSetup.LOGGER.log(Level.INFO,ps.getInt(4) + "|" + ps.getString(5));
 
     }
 
     static {
-        PARAMETER_MARKES = new HashMap<Class, String>();
+        PARAMETER_MARKES = new HashMap<>();
         PARAMETER_MARKES.put(Point.class, "DB2GSE.ST_PointFromWKB(cast (? as BLOB(2G)),{0})");
         PARAMETER_MARKES.put(LineString.class, "DB2GSE.ST_LineFromWKB(cast (? as BLOB(2G)),{0})");
         PARAMETER_MARKES.put(Polygon.class, "DB2GSE.ST_PolyFromWKB(cast (? as BLOB(2G)),{0})");
         PARAMETER_MARKES.put(MultiPoint.class, "DB2GSE.ST_MPointFromWKB(cast (? as BLOB(2G)),{0})");
-        PARAMETER_MARKES.put(
-                MultiLineString.class, "DB2GSE.ST_MLineFromWKB(cast (? as BLOB(2G)),{0})");
-        PARAMETER_MARKES.put(
-                MultiPolygon.class, "DB2GSE.ST_MPolyFromWKB(cast (? as BLOB(2G)),{0})");
+        PARAMETER_MARKES.put(MultiLineString.class, "DB2GSE.ST_MLineFromWKB(cast (? as BLOB(2G)),{0})");
+        PARAMETER_MARKES.put(MultiPolygon.class, "DB2GSE.ST_MPolyFromWKB(cast (? as BLOB(2G)),{0})");
         PARAMETER_MARKES.put(Geometry.class, "DB2GSE.ST_GeomFromWKB(cast (? as BLOB(2G)),{0})");
-        PARAMETER_MARKES.put(
-                GeometryCollection.class, "DB2GSE.ST_GeomCollFromWKB(cast (? as BLOB(2G)),{0})");
+        PARAMETER_MARKES.put(GeometryCollection.class, "DB2GSE.ST_GeomCollFromWKB(cast (? as BLOB(2G)),{0})");
 
-        PARAMETER_LITERALS = new HashMap<Class, String>();
+        PARAMETER_LITERALS = new HashMap<>();
         PARAMETER_LITERALS.put(Point.class, "DB2GSE.ST_PointFromText({0},{1})");
         PARAMETER_LITERALS.put(LineString.class, "DB2GSE.ST_LineFromText({0},{1})");
         PARAMETER_LITERALS.put(Polygon.class, "DB2GSE.ST_PolyFromText({0},{1})");
@@ -131,7 +137,7 @@ public class DB2Util {
         PARAMETER_LITERALS.put(Geometry.class, "DB2GSE.ST_GeomFromText({0},{1})");
         PARAMETER_LITERALS.put(GeometryCollection.class, "DB2GSE.ST_GeomCollFromText({0},{1})");
 
-        CAST_EPXPRESSIONS = new HashMap<Class, String>();
+        CAST_EPXPRESSIONS = new HashMap<>();
         CAST_EPXPRESSIONS.put(Short.class, "CAST (? as SMALLINT)");
         CAST_EPXPRESSIONS.put(Integer.class, "CAST (? as INTEGER)");
         CAST_EPXPRESSIONS.put(Long.class, "CAST (? as BIGINT)");
@@ -162,8 +168,7 @@ public class DB2Util {
         sql.append(MessageFormat.format(pattern, new Object[] {Integer.toString(srid)}));
     }
 
-    public static void encodeGeometryValue(Geometry value, int srid, StringBuffer sql)
-            throws IOException {
+    public static void encodeGeometryValue(Geometry value, int srid, StringBuffer sql) throws IOException {
 
         if (value == null || value.isEmpty()) {
             sql.append("null");
@@ -175,9 +180,6 @@ public class DB2Util {
             sql.append("null");
             return;
         }
-        sql.append(
-                MessageFormat.format(
-                        pattern,
-                        new Object[] {new WKTWriter().write(value), Integer.toString(srid)}));
+        sql.append(MessageFormat.format(pattern, new Object[] {new WKTWriter().write(value), Integer.toString(srid)}));
     }
 }

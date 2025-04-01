@@ -19,20 +19,17 @@ package org.geotools.jdbc;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import junit.framework.TestCase;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class KeysFetcherTest extends TestCase {
+public class KeysFetcherTest {
+    @Test
     public void testIncrement() throws IOException {
-        assertEquals(
-                Short.valueOf((short) 4), KeysFetcher.FromPreviousIntegral.increment((short) 3));
-        assertEquals(Integer.valueOf(11), KeysFetcher.FromPreviousIntegral.increment(10));
-        assertEquals(Long.valueOf(21), KeysFetcher.FromPreviousIntegral.increment(20L));
-        assertEquals(
-                BigInteger.valueOf(31),
-                KeysFetcher.FromPreviousIntegral.increment(BigInteger.valueOf(30)));
-        assertEquals(
-                BigDecimal.valueOf(41),
-                KeysFetcher.FromPreviousIntegral.increment(BigDecimal.valueOf(40)));
+        Assert.assertEquals(Short.valueOf((short) 4), KeysFetcher.FromPreviousIntegral.increment((short) 3));
+        Assert.assertEquals(Integer.valueOf(11), KeysFetcher.FromPreviousIntegral.increment(10));
+        Assert.assertEquals(Long.valueOf(21), KeysFetcher.FromPreviousIntegral.increment(20L));
+        Assert.assertEquals(BigInteger.valueOf(31), KeysFetcher.FromPreviousIntegral.increment(BigInteger.valueOf(30)));
+        Assert.assertEquals(BigDecimal.valueOf(41), KeysFetcher.FromPreviousIntegral.increment(BigDecimal.valueOf(40)));
 
         try {
             KeysFetcher.FromPreviousIntegral.increment("boom");

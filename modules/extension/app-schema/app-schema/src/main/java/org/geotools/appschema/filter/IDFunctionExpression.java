@@ -17,14 +17,15 @@
 
 package org.geotools.appschema.filter;
 
+import org.geotools.api.feature.Attribute;
 import org.geotools.filter.FunctionExpressionImpl;
-import org.opengis.feature.Attribute;
 
 public class IDFunctionExpression extends FunctionExpressionImpl {
     public IDFunctionExpression() {
         super("getID");
     }
 
+    @Override
     public Object evaluate(Object obj) {
         if (obj instanceof Attribute) {
             Attribute att = (Attribute) obj;

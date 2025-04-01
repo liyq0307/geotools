@@ -26,13 +26,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataAccessFinder;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.feature.type.Name;
 import org.geotools.feature.NameImpl;
 import org.geotools.test.AppSchemaTestSupport;
-import org.opengis.feature.type.Name;
 
 public class AbstractHiddenDataAccessDisposalTest extends AppSchemaTestSupport {
 
@@ -44,7 +45,7 @@ public class AbstractHiddenDataAccessDisposalTest extends AppSchemaTestSupport {
 
     void loadGeologicUnit() throws Exception {
         /** Load geologic unit data access */
-        Map dsParams = new HashMap();
+        Map<String, Serializable> dsParams = new HashMap<>();
         URL url = getClass().getResource(schemaBase + "GeologicUnit.xml");
         assertNotNull(url);
 
@@ -56,30 +57,26 @@ public class AbstractHiddenDataAccessDisposalTest extends AppSchemaTestSupport {
         assertFalse(guDataAccess.hidden);
 
         /**
-         * Non-feature types that are included in geologicUnit.xml should be loaded when geologic
-         * unit data access is created
+         * Non-feature types that are included in geologicUnit.xml should be loaded when geologic unit data access is
+         * created
          */
         // Composition Part
-        AppSchemaDataAccess cpDataAccess =
-                (AppSchemaDataAccess) DataAccessRegistry.getDataAccess(COMPOSITION_PART);
+        AppSchemaDataAccess cpDataAccess = (AppSchemaDataAccess) DataAccessRegistry.getDataAccess(COMPOSITION_PART);
         assertNotNull(cpDataAccess);
         assertNotNull(cpDataAccess.getFeatureSource(COMPOSITION_PART));
         assertTrue(cpDataAccess.hidden);
         // CGI TermValue
-        AppSchemaDataAccess cgiDataAccess =
-                (AppSchemaDataAccess) DataAccessRegistry.getDataAccess(CGI_TERM_VALUE);
+        AppSchemaDataAccess cgiDataAccess = (AppSchemaDataAccess) DataAccessRegistry.getDataAccess(CGI_TERM_VALUE);
         assertNotNull(cgiDataAccess);
         assertNotNull(cgiDataAccess.getFeatureSource(CGI_TERM_VALUE));
         assertTrue(cgiDataAccess.hidden);
         // exposureColor
-        AppSchemaDataAccess expDataAccess =
-                (AppSchemaDataAccess) DataAccessRegistry.getDataAccess(EXPOSURE_COLOR);
+        AppSchemaDataAccess expDataAccess = (AppSchemaDataAccess) DataAccessRegistry.getDataAccess(EXPOSURE_COLOR);
         assertNotNull(expDataAccess);
         assertNotNull(expDataAccess.getFeatureSource(EXPOSURE_COLOR));
         assertTrue(expDataAccess.hidden);
         // ControlledConcept
-        AppSchemaDataAccess ccDataAccess =
-                (AppSchemaDataAccess) DataAccessRegistry.getDataAccess(CONTROLLED_CONCEPT);
+        AppSchemaDataAccess ccDataAccess = (AppSchemaDataAccess) DataAccessRegistry.getDataAccess(CONTROLLED_CONCEPT);
         assertNotNull(ccDataAccess);
         assertNotNull(ccDataAccess.getFeatureSource(CONTROLLED_CONCEPT));
         assertTrue(expDataAccess.hidden);

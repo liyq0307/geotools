@@ -23,8 +23,8 @@ import org.apache.commons.jxpath.ri.compiler.NodeTest;
 import org.apache.commons.jxpath.ri.compiler.NodeTypeTest;
 import org.apache.commons.jxpath.ri.model.NodeIterator;
 import org.apache.commons.jxpath.ri.model.NodePointer;
+import org.geotools.api.feature.type.ComplexType;
 import org.geotools.feature.type.Types;
-import org.opengis.feature.type.ComplexType;
 
 /**
  * Special node pointer for {@link org.geotools.feature.FeatureType}.
@@ -48,38 +48,47 @@ public class FeatureTypePointer extends NodePointer {
         this.featureType = featureType;
     }
 
+    @Override
     public boolean isLeaf() {
         return false;
     }
 
+    @Override
     public boolean isCollection() {
         return false;
     }
 
+    @Override
     public int getLength() {
         return 1;
     }
 
+    @Override
     public QName getName() {
         return name;
     }
 
+    @Override
     public Object getBaseValue() {
         return null;
     }
 
+    @Override
     public Object getImmediateNode() {
         return featureType;
     }
 
+    @Override
     public void setValue(Object value) {
         throw new UnsupportedOperationException("Feature types are immutable");
     }
 
+    @Override
     public int compareChildNodePointers(NodePointer pointer1, NodePointer pointer2) {
         return 0;
     }
 
+    @Override
     public NodeIterator childIterator(NodeTest test, boolean reverse, NodePointer startWith) {
         if (test instanceof NodeNameTest) {
             NodeNameTest nodeNameTest = (NodeNameTest) test;
@@ -89,8 +98,7 @@ public class FeatureTypePointer extends NodePointer {
                 String nameSpace = nodeNameTest.getNamespaceURI();
                 if (nameSpace == null) nameSpace = getNamespaceResolver().getNamespaceURI("");
 
-                return new SingleFeatureTypeAttributeIterator(
-                        this, featureType, Types.typeName(nameSpace, localName));
+                return new SingleFeatureTypeAttributeIterator(this, featureType, Types.typeName(nameSpace, localName));
             } else {
                 return new FeatureTypeAttributeIterator(this, featureType);
             }

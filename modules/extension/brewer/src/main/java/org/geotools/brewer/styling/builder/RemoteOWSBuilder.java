@@ -16,7 +16,7 @@
  */
 package org.geotools.brewer.styling.builder;
 
-import org.geotools.styling.RemoteOWS;
+import org.geotools.api.style.RemoteOWS;
 
 public class RemoteOWSBuilder extends AbstractSLDBuilder<RemoteOWS> {
     private String service;
@@ -44,6 +44,7 @@ public class RemoteOWSBuilder extends AbstractSLDBuilder<RemoteOWS> {
         return this;
     }
 
+    @Override
     public RemoteOWS build() {
         if (unset) {
             return null;
@@ -52,6 +53,7 @@ public class RemoteOWSBuilder extends AbstractSLDBuilder<RemoteOWS> {
         return remote;
     }
 
+    @Override
     public RemoteOWSBuilder reset() {
         unset = true;
         this.onlineResource = null;
@@ -59,6 +61,7 @@ public class RemoteOWSBuilder extends AbstractSLDBuilder<RemoteOWS> {
         return this;
     }
 
+    @Override
     public RemoteOWSBuilder reset(RemoteOWS remote) {
         if (remote == null) {
             return unset();
@@ -69,13 +72,13 @@ public class RemoteOWSBuilder extends AbstractSLDBuilder<RemoteOWS> {
         return this;
     }
 
+    @Override
     public RemoteOWSBuilder unset() {
         return (RemoteOWSBuilder) super.unset();
     }
 
     @Override
     protected void buildSLDInternal(StyledLayerDescriptorBuilder sb) {
-        throw new UnsupportedOperationException(
-                "Cannot build a SLD out of a simple remote ows spec");
+        throw new UnsupportedOperationException("Cannot build a SLD out of a simple remote ows spec");
     }
 }

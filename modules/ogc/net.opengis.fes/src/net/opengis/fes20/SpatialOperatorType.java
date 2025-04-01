@@ -7,7 +7,7 @@
 package net.opengis.fes20;
 
 import org.eclipse.emf.ecore.EObject;
-import org.opengis.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.SpatialOperator;
 
 /**
  * <!-- begin-user-doc -->
@@ -69,6 +69,7 @@ public interface SpatialOperatorType extends EObject, SpatialOperator {
      *        extendedMetaData="kind='attribute' name='name'"
      * @generated
      */
+    @Override
     String getName();
 
     /**

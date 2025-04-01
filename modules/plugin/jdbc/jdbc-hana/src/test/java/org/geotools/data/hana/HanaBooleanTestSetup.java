@@ -32,10 +32,10 @@ public class HanaBooleanTestSetup extends JDBCBooleanTestSetup {
     @Override
     protected void createBooleanTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.createTestSchema();
 
-            String cols[][] = {{"id", "INT PRIMARY KEY"}, {"boolProperty", "BOOLEAN"}};
+            String[][] cols = {{"id", "INT PRIMARY KEY"}, {"boolProperty", "BOOLEAN"}};
             htu.createRegisteredTestTable(TABLE, cols);
 
             htu.insertIntoTestTable(TABLE, htu.nextTestSequenceValueForColumn(TABLE, "id"), false);
@@ -46,7 +46,7 @@ public class HanaBooleanTestSetup extends JDBCBooleanTestSetup {
     @Override
     protected void dropBooleanTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.dropTestTableCascade(TABLE);
         }
     }

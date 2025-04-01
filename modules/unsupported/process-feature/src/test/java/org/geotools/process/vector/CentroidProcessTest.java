@@ -1,7 +1,10 @@
 package org.geotools.process.vector;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -12,8 +15,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class CentroidProcessTest {
 
@@ -54,15 +55,16 @@ public class CentroidProcessTest {
         CentroidProcess cp = new CentroidProcess();
         SimpleFeatureCollection result = cp.execute(fc);
 
-        SimpleFeatureIterator it = result.features();
-        assertTrue(it.hasNext());
-        SimpleFeature f = it.next();
-        assertEquals(0, ((Point) f.getDefaultGeometry()).getX(), 1e-6);
-        assertEquals(0, ((Point) f.getDefaultGeometry()).getY(), 1e-6);
-        assertEquals("one", f.getAttribute("name"));
-        f = it.next();
-        assertEquals(10, ((Point) f.getDefaultGeometry()).getX(), 1e-6);
-        assertEquals(0, ((Point) f.getDefaultGeometry()).getY(), 1e-6);
-        assertEquals("two", f.getAttribute("name"));
+        try (SimpleFeatureIterator it = result.features()) {
+            assertTrue(it.hasNext());
+            SimpleFeature f = it.next();
+            assertEquals(0, ((Point) f.getDefaultGeometry()).getX(), 1e-6);
+            assertEquals(0, ((Point) f.getDefaultGeometry()).getY(), 1e-6);
+            assertEquals("one", f.getAttribute("name"));
+            f = it.next();
+            assertEquals(10, ((Point) f.getDefaultGeometry()).getX(), 1e-6);
+            assertEquals(0, ((Point) f.getDefaultGeometry()).getY(), 1e-6);
+            assertEquals("two", f.getAttribute("name"));
+        }
     }
 }

@@ -21,6 +21,12 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.Identifier;
 import org.geotools.feature.FeatureImpl;
 import org.geotools.feature.NameImpl;
 import org.geotools.gml3.GML;
@@ -30,12 +36,6 @@ import org.geotools.xlink.XLINK;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.identity.Identifier;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.Attributes;
@@ -62,8 +62,8 @@ import org.xml.sax.Attributes;
  */
 public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
     /**
-     * id set in the document, used to check against duplicate gml:id. If an gml:id is already
-     * encoded for an featureMember, the next occurrence will be encoded with xlink:href
+     * id set in the document, used to check against duplicate gml:id. If an gml:id is already encoded for an
+     * featureMember, the next occurrence will be encoded with xlink:href
      */
     private XSDIdRegistry idSet;
 
@@ -73,6 +73,7 @@ public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.FeaturePropertyType;
     }
@@ -84,6 +85,7 @@ public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Feature.class;
     }
@@ -95,6 +97,7 @@ public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return node.getChildValue(Feature.class);
     }
@@ -127,24 +130,19 @@ public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
         return null;
     }
 
-    /**
-     * @see AbstractComplexBinding#encode(java.lang.Object, org.w3c.dom.Document,
-     *     org.w3c.dom.Element)
-     */
+    /** @see AbstractComplexBinding#encode(java.lang.Object, org.w3c.dom.Document, org.w3c.dom.Element) */
     @Override
     public Element encode(Object object, Document document, Element value) throws Exception {
         if (object instanceof ComplexAttribute) {
             ComplexAttribute complex = (ComplexAttribute) object;
             checkXlinkHref(complex);
-            GML3EncodingUtils.encodeClientProperties(complex, value);
-            GML3EncodingUtils.encodeSimpleContent(complex, document, value);
         }
         return value;
     }
 
     /**
-     * Check if the complex attribute contains a feature which id is pre-existing in the document.
-     * If it's true, make sure it's only encoded as an xlink:href to the existing id.
+     * Check if the complex attribute contains a feature which id is pre-existing in the document. If it's true, make
+     * sure it's only encoded as an xlink:href to the existing id.
      *
      * @param att The complex attribute itself
      */
@@ -167,10 +165,12 @@ public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
             Object clientProperties = att.getUserData().get(Attributes.class);
             Map<Name, Object> map = null;
             if (clientProperties == null) {
-                map = new HashMap<Name, Object>();
+                map = new HashMap<>();
                 att.getUserData().put(Attributes.class, map);
             } else {
-                map = (Map<Name, Object>) clientProperties;
+                @SuppressWarnings("unchecked")
+                Map<Name, Object> cast = (Map<Name, Object>) clientProperties;
+                map = cast;
             }
             map.put(toTypeName(XLINK.HREF), "#" + id.toString());
             // make sure the value is not encoded
@@ -178,12 +178,7 @@ public class FeaturePropertyTypeBinding extends AbstractComplexBinding {
         }
     }
 
-    /**
-     * Convert a {@link QName} to a {@link Name}.
-     *
-     * @param name
-     * @return
-     */
+    /** Convert a {@link QName} to a {@link Name}. */
     private static Name toTypeName(QName name) {
         if (XMLConstants.NULL_NS_URI.equals(name.getNamespaceURI())) {
             return new NameImpl(name.getLocalPart());

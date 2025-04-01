@@ -19,6 +19,7 @@
 package org.geotools.wmts.bindings;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.xml.namespace.QName;
 import net.opengis.ows11.OnlineResourceType;
 import net.opengis.ows11.OperationsMetadataType;
@@ -26,10 +27,10 @@ import net.opengis.ows11.ServiceIdentificationType;
 import net.opengis.ows11.ServiceProviderType;
 import net.opengis.wmts.v_1.CapabilitiesType;
 import net.opengis.wmts.v_1.ContentsType;
-import net.opengis.wmts.v_1.ThemeType;
+import net.opengis.wmts.v_1.ThemesType;
 import net.opengis.wmts.v_1.wmtsv_1Factory;
 import org.geotools.wmts.WMTS;
-import org.geotools.xsd.AbstractComplexBinding;
+import org.geotools.xsd.AbstractComplexEMFBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
@@ -97,7 +98,7 @@ import org.geotools.xsd.Node;
  *
  * @generated
  */
-public class CapabilitiesBinding extends AbstractComplexBinding {
+public class CapabilitiesBinding extends AbstractComplexEMFBinding {
     wmtsv_1Factory factory;
 
     public CapabilitiesBinding(wmtsv_1Factory factory) {
@@ -106,6 +107,7 @@ public class CapabilitiesBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WMTS.Capabilities;
     }
@@ -117,6 +119,7 @@ public class CapabilitiesBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return net.opengis.wmts.v_1.CapabilitiesType.class;
     }
@@ -128,25 +131,31 @@ public class CapabilitiesBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         CapabilitiesType capabilities = factory.createCapabilitiesType();
 
-        capabilities.setContents((ContentsType) node.getChildValue(ContentsType.class));
-        capabilities.getThemes().addAll(node.getChildren(ThemeType.class));
-        capabilities.setOperationsMetadata(
-                (OperationsMetadataType) node.getChildValue(OperationsMetadataType.class));
-        capabilities.setServiceIdentification(
-                (ServiceIdentificationType) node.getChildValue(ServiceIdentificationType.class));
-        capabilities.setServiceProvider(
-                (ServiceProviderType) node.getChildValue(ServiceProviderType.class));
+        capabilities.setContents(node.getChildValue(ContentsType.class));
+        capabilities.setOperationsMetadata(node.getChildValue(OperationsMetadataType.class));
+        capabilities.setServiceIdentification(node.getChildValue(ServiceIdentificationType.class));
+        capabilities.setServiceProvider(node.getChildValue(ServiceProviderType.class));
         capabilities.setUpdateSequence((String) node.getChildValue("UpdateSequence"));
+
+        List<Node> themesChildren = node.getChildren(ThemesType.class);
+        for (Node c : themesChildren) {
+            capabilities.getThemes().add((ThemesType) c.getValue());
+        }
 
         List<Node> children = node.getChildren("ServiceMetadataURL");
         for (Node c : children) {
             capabilities.getServiceMetadataURL().add((OnlineResourceType) c.getValue());
         }
-        capabilities.getWSDL().addAll(node.getChildren("WSDL"));
+        capabilities
+                .getWSDL()
+                .addAll(node.getChildren("WSDL").stream()
+                        .map(n -> (OnlineResourceType) n.getValue())
+                        .collect(Collectors.toList()));
         return capabilities;
     }
 }

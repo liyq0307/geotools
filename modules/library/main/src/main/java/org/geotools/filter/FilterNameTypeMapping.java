@@ -19,72 +19,59 @@ package org.geotools.filter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.Function;
 
 /**
- * A utility class for {@link FilterCapabilities} that assists in mapping between a filter or
- * expression or function name to the object that represents it's type.
+ * A utility class for {@link FilterCapabilities} that assists in mapping between a filter or expression or function
+ * name to the object that represents it's type.
  *
  * @author Jesse
  */
 class FilterNameTypeMapping {
-    static Map spatialFiltersMap = loadSpatialFiltersMap();
-    static Map comparisonsMap = loadComparisonFilterMap();
-    static Map filterTypeToFilterCapabilitiesMap = loadFilterTypeToFilterCapabilitiesMap();
-    static Map functionNameMap = loadFunctionNameMap();
+    static Map<String, FilterCapabilities> spatialFiltersMap = loadSpatialFiltersMap();
+    static Map<String, FilterCapabilities> comparisonsMap = loadComparisonFilterMap();
+    static Map<Short, FilterCapabilities> filterTypeToFilterCapabilitiesMap = loadFilterTypeToFilterCapabilitiesMap();
+    static Map<String, FilterCapabilities> functionNameMap = loadFunctionNameMap();
 
-    public static Map loadSpatialFiltersMap() {
-        spatialFiltersMap = new HashMap();
+    public static Map<String, FilterCapabilities> loadSpatialFiltersMap() {
+        spatialFiltersMap = new HashMap<>();
         spatialFiltersMap.put("", NO_OP_CAPS);
         spatialFiltersMap.put("BBOX", new FilterCapabilities(FilterCapabilities.SPATIAL_BBOX));
         spatialFiltersMap.put("Equals", new FilterCapabilities(FilterCapabilities.SPATIAL_EQUALS));
-        spatialFiltersMap.put(
-                "Disjoint", new FilterCapabilities(FilterCapabilities.SPATIAL_DISJOINT));
-        spatialFiltersMap.put(
-                "Intersect", new FilterCapabilities(FilterCapabilities.SPATIAL_INTERSECT));
-        spatialFiltersMap.put(
-                "Touches", new FilterCapabilities(FilterCapabilities.SPATIAL_TOUCHES));
-        spatialFiltersMap.put(
-                "Crosses", new FilterCapabilities(FilterCapabilities.SPATIAL_CROSSES));
+        spatialFiltersMap.put("Disjoint", new FilterCapabilities(FilterCapabilities.SPATIAL_DISJOINT));
+        spatialFiltersMap.put("Intersect", new FilterCapabilities(FilterCapabilities.SPATIAL_INTERSECT));
+        spatialFiltersMap.put("Touches", new FilterCapabilities(FilterCapabilities.SPATIAL_TOUCHES));
+        spatialFiltersMap.put("Crosses", new FilterCapabilities(FilterCapabilities.SPATIAL_CROSSES));
         spatialFiltersMap.put("Within", new FilterCapabilities(FilterCapabilities.SPATIAL_WITHIN));
-        spatialFiltersMap.put(
-                "Contains", new FilterCapabilities(FilterCapabilities.SPATIAL_CONTAINS));
-        spatialFiltersMap.put(
-                "Overlaps", new FilterCapabilities(FilterCapabilities.SPATIAL_OVERLAPS));
+        spatialFiltersMap.put("Contains", new FilterCapabilities(FilterCapabilities.SPATIAL_CONTAINS));
+        spatialFiltersMap.put("Overlaps", new FilterCapabilities(FilterCapabilities.SPATIAL_OVERLAPS));
         spatialFiltersMap.put("Beyond", new FilterCapabilities(FilterCapabilities.SPATIAL_BEYOND));
-        spatialFiltersMap.put(
-                "DWithin", new FilterCapabilities(FilterCapabilities.SPATIAL_DWITHIN));
+        spatialFiltersMap.put("DWithin", new FilterCapabilities(FilterCapabilities.SPATIAL_DWITHIN));
 
         return spatialFiltersMap;
     }
 
-    public static Map loadComparisonFilterMap() {
-        comparisonsMap = new HashMap();
+    public static Map<String, FilterCapabilities> loadComparisonFilterMap() {
+        comparisonsMap = new HashMap<>();
         comparisonsMap.put("", NO_OP_CAPS);
         comparisonsMap.put("Logical", new FilterCapabilities(FilterCapabilities.LOGICAL));
-        comparisonsMap.put(
-                "Simple_Comparisons",
-                new FilterCapabilities(FilterCapabilities.SIMPLE_COMPARISONS));
+        comparisonsMap.put("Simple_Comparisons", new FilterCapabilities(FilterCapabilities.SIMPLE_COMPARISONS));
         comparisonsMap.put("Like", new FilterCapabilities(FilterCapabilities.LIKE));
         comparisonsMap.put("Between", new FilterCapabilities(FilterCapabilities.BETWEEN));
         comparisonsMap.put("NullCheck", new FilterCapabilities(FilterCapabilities.NULL_CHECK));
-        comparisonsMap.put(
-                "Simple_Arithmetic", new FilterCapabilities(FilterCapabilities.SIMPLE_ARITHMETIC));
+        comparisonsMap.put("Simple_Arithmetic", new FilterCapabilities(FilterCapabilities.SIMPLE_ARITHMETIC));
         comparisonsMap.put("Functions", new FilterCapabilities(FilterCapabilities.FUNCTIONS));
 
         return comparisonsMap;
     }
 
-    public static Map loadFilterTypeToFilterCapabilitiesMap() {
-        Map conversionMap = new HashMap();
+    public static Map<Short, FilterCapabilities> loadFilterTypeToFilterCapabilitiesMap() {
+        Map<Short, FilterCapabilities> conversionMap = new HashMap<>();
+        conversionMap.put(Short.valueOf(FilterType.BETWEEN), new FilterCapabilities(FilterCapabilities.BETWEEN));
         conversionMap.put(
-                Short.valueOf(FilterType.BETWEEN),
-                new FilterCapabilities(FilterCapabilities.BETWEEN));
-        conversionMap.put(
-                Short.valueOf(FilterType.COMPARE_EQUALS),
-                new FilterCapabilities(FilterCapabilities.COMPARE_EQUALS));
+                Short.valueOf(FilterType.COMPARE_EQUALS), new FilterCapabilities(FilterCapabilities.COMPARE_EQUALS));
         conversionMap.put(
                 Short.valueOf(FilterType.COMPARE_GREATER_THAN),
                 new FilterCapabilities(FilterCapabilities.COMPARE_GREATER_THAN));
@@ -100,29 +87,23 @@ class FilterNameTypeMapping {
         conversionMap.put(
                 Short.valueOf(FilterType.COMPARE_NOT_EQUALS),
                 new FilterCapabilities(FilterCapabilities.COMPARE_NOT_EQUALS));
+        conversionMap.put(Short.valueOf(FilterType.FID), new FilterCapabilities(FilterCapabilities.FID));
         conversionMap.put(
-                Short.valueOf(FilterType.FID), new FilterCapabilities(FilterCapabilities.FID));
+                Short.valueOf(FilterType.GEOMETRY_BBOX), new FilterCapabilities(FilterCapabilities.SPATIAL_BBOX));
         conversionMap.put(
-                Short.valueOf(FilterType.GEOMETRY_BBOX),
-                new FilterCapabilities(FilterCapabilities.SPATIAL_BBOX));
-        conversionMap.put(
-                Short.valueOf(FilterType.GEOMETRY_BEYOND),
-                new FilterCapabilities(FilterCapabilities.SPATIAL_BEYOND));
+                Short.valueOf(FilterType.GEOMETRY_BEYOND), new FilterCapabilities(FilterCapabilities.SPATIAL_BEYOND));
         conversionMap.put(
                 Short.valueOf(FilterType.GEOMETRY_CONTAINS),
                 new FilterCapabilities(FilterCapabilities.SPATIAL_CONTAINS));
         conversionMap.put(
-                Short.valueOf(FilterType.GEOMETRY_CROSSES),
-                new FilterCapabilities(FilterCapabilities.SPATIAL_CROSSES));
+                Short.valueOf(FilterType.GEOMETRY_CROSSES), new FilterCapabilities(FilterCapabilities.SPATIAL_CROSSES));
         conversionMap.put(
                 Short.valueOf(FilterType.GEOMETRY_DISJOINT),
                 new FilterCapabilities(FilterCapabilities.SPATIAL_DISJOINT));
         conversionMap.put(
-                Short.valueOf(FilterType.GEOMETRY_DWITHIN),
-                new FilterCapabilities(FilterCapabilities.SPATIAL_DWITHIN));
+                Short.valueOf(FilterType.GEOMETRY_DWITHIN), new FilterCapabilities(FilterCapabilities.SPATIAL_DWITHIN));
         conversionMap.put(
-                Short.valueOf(FilterType.GEOMETRY_EQUALS),
-                new FilterCapabilities(FilterCapabilities.SPATIAL_EQUALS));
+                Short.valueOf(FilterType.GEOMETRY_EQUALS), new FilterCapabilities(FilterCapabilities.SPATIAL_EQUALS));
         conversionMap.put(
                 Short.valueOf(FilterType.GEOMETRY_INTERSECTS),
                 new FilterCapabilities(FilterCapabilities.SPATIAL_INTERSECT));
@@ -130,42 +111,30 @@ class FilterNameTypeMapping {
                 Short.valueOf(FilterType.GEOMETRY_OVERLAPS),
                 new FilterCapabilities(FilterCapabilities.SPATIAL_OVERLAPS));
         conversionMap.put(
-                Short.valueOf(FilterType.GEOMETRY_TOUCHES),
-                new FilterCapabilities(FilterCapabilities.SPATIAL_TOUCHES));
+                Short.valueOf(FilterType.GEOMETRY_TOUCHES), new FilterCapabilities(FilterCapabilities.SPATIAL_TOUCHES));
         conversionMap.put(
-                Short.valueOf(FilterType.GEOMETRY_WITHIN),
-                new FilterCapabilities(FilterCapabilities.SPATIAL_WITHIN));
-        conversionMap.put(
-                Short.valueOf(FilterType.LIKE), new FilterCapabilities(FilterCapabilities.LIKE));
-        conversionMap.put(
-                Short.valueOf(FilterType.LOGIC_AND),
-                new FilterCapabilities(FilterCapabilities.LOGIC_AND));
-        conversionMap.put(
-                Short.valueOf(FilterType.LOGIC_NOT),
-                new FilterCapabilities(FilterCapabilities.LOGIC_NOT));
-        conversionMap.put(
-                Short.valueOf(FilterType.LOGIC_OR),
-                new FilterCapabilities(FilterCapabilities.LOGIC_OR));
-        conversionMap.put(
-                Short.valueOf(FilterType.NULL),
-                new FilterCapabilities(FilterCapabilities.NULL_CHECK));
+                Short.valueOf(FilterType.GEOMETRY_WITHIN), new FilterCapabilities(FilterCapabilities.SPATIAL_WITHIN));
+        conversionMap.put(Short.valueOf(FilterType.LIKE), new FilterCapabilities(FilterCapabilities.LIKE));
+        conversionMap.put(Short.valueOf(FilterType.LOGIC_AND), new FilterCapabilities(FilterCapabilities.LOGIC_AND));
+        conversionMap.put(Short.valueOf(FilterType.LOGIC_NOT), new FilterCapabilities(FilterCapabilities.LOGIC_NOT));
+        conversionMap.put(Short.valueOf(FilterType.LOGIC_OR), new FilterCapabilities(FilterCapabilities.LOGIC_OR));
+        conversionMap.put(Short.valueOf(FilterType.NULL), new FilterCapabilities(FilterCapabilities.NULL_CHECK));
         return conversionMap;
     }
 
-    public static Map loadFunctionNameMap() {
-        functionNameMap = new HashMap();
+    public static Map<String, FilterCapabilities> loadFunctionNameMap() {
+        functionNameMap = new HashMap<>();
         functionNameMap.put("", NO_OP_CAPS);
         Iterator<Function> functions = CommonFactoryFinder.getFunctions(null).iterator();
         while (functions.hasNext()) {
             Function exp = functions.next();
-            functionNameMap.put(
-                    exp.getName().toLowerCase(), new FilterCapabilities(exp.getClass()));
+            functionNameMap.put(exp.getName().toLowerCase(), new FilterCapabilities(exp.getClass()));
         }
         return functionNameMap;
     }
 
     public static FilterCapabilities findFunction(String name) {
-        FilterCapabilities filterCapabilities = (FilterCapabilities) functionNameMap.get(name);
+        FilterCapabilities filterCapabilities = functionNameMap.get(name);
         if (filterCapabilities != null) {
             return filterCapabilities;
         }
@@ -181,11 +150,11 @@ class FilterNameTypeMapping {
     public static FilterCapabilities findOperation(String s) {
 
         if (spatialFiltersMap.containsKey(s)) {
-            return (FilterCapabilities) spatialFiltersMap.get(s);
+            return spatialFiltersMap.get(s);
         }
 
         if (comparisonsMap.containsKey(s)) {
-            return (FilterCapabilities) comparisonsMap.get(s);
+            return comparisonsMap.get(s);
         }
 
         return FilterNameTypeMapping.NO_OP_CAPS;
@@ -262,23 +231,25 @@ class FilterNameTypeMapping {
     }
 
     static final FilterCapabilities NO_OP_CAPS = new FilterCapabilities(FilterCapabilities.NO_OP);
-    public static final FilterCapabilities ALL_CAPS =
-            new FilterCapabilities() {
-                public boolean supports(Class type) {
-                    // TODO Auto-generated method stub
-                    return super.supports(type);
-                }
+    public static final FilterCapabilities ALL_CAPS = new FilterCapabilities() {
+        @Override
+        public boolean supports(Class type) {
+            // TODO Auto-generated method stub
+            return super.supports(type);
+        }
 
-                public boolean supports(Filter filter) {
-                    return true;
-                }
+        @Override
+        public boolean supports(Filter filter) {
+            return true;
+        }
 
-                public boolean supports(FilterCapabilities type) {
-                    return true;
-                }
+        @Override
+        public boolean supports(FilterCapabilities type) {
+            return true;
+        }
 
-                public boolean supports(long type) {
-                    return true;
-                }
-            };
+        public boolean supports(long type) {
+            return true;
+        }
+    };
 }

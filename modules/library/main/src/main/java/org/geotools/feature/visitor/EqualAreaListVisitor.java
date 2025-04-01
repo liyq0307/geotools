@@ -19,13 +19,13 @@ package org.geotools.feature.visitor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.expression.Expression;
 
 /**
- * Obtains the data needed for a Equal Area operation (classification of features into classes each
- * roughly having the same area).
+ * Obtains the data needed for a Equal Area operation (classification of features into classes each roughly having the
+ * same area).
  *
  * <p>The result contains an array of lists with the expression values in each.
  *
@@ -34,18 +34,17 @@ import org.opengis.filter.expression.Expression;
 public class EqualAreaListVisitor implements FeatureCalc {
 
     /** Combination of value and its area */
-    private static class ValueArea implements Comparable {
-        Comparable value;
+    private static class ValueArea implements Comparable<ValueArea> {
+        Comparable<Object> value;
         double area;
 
-        public ValueArea(Comparable value, double area) {
+        public ValueArea(Comparable<Object> value, double area) {
             this.value = value;
             this.area = area;
         }
 
         @Override
-        public int compareTo(Object o) {
-            ValueArea other = (ValueArea) o;
+        public int compareTo(ValueArea other) {
             return value.compareTo(other.value);
         }
 
@@ -70,13 +69,14 @@ public class EqualAreaListVisitor implements FeatureCalc {
         this.expression = expression;
         this.areaExpression = areaExpression;
         this.binCount = bins;
-        this.bins = new ArrayList[bins];
+        this.bins = createBinsArray(bins);
     }
 
     public void init(SimpleFeatureCollection collection) {
         // do nothing
     }
 
+    @Override
     public CalcResult getResult() {
         if (binCount == 0 || count == 0) {
             return CalcResult.NULL_RESULT;
@@ -87,7 +87,7 @@ public class EqualAreaListVisitor implements FeatureCalc {
 
         if (binCount > count) { // resize
             binCount = count;
-            this.bins = new ArrayList[binCount];
+            this.bins = createBinsArray(binCount);
         }
 
         // algorithm based off "Greedy 2" version in
@@ -107,32 +107,40 @@ public class EqualAreaListVisitor implements FeatureCalc {
                 currentBin = new ArrayList<>();
             }
         }
-        if (currentBin.size() > 0) {
-            bins[binIndex] = currentBin;
-        } else {
+        if (currentBin.isEmpty()) {
             binIndex--;
+        } else {
+            bins[binIndex] = currentBin;
         }
 
         // it is possible that we have created less bin than requested
         // (happens when the number of classes is close to the number of features being classified)
         if (binIndex < binCount - 1) {
-            List[] reduced = new ArrayList[binIndex + 1];
+            List<Comparable>[] reduced = createBinsArray(binIndex + 1);
             System.arraycopy(bins, 0, reduced, 0, binIndex + 1);
             this.bins = reduced;
         }
 
         return new AbstractCalcResult() {
+            @Override
             public Object getValue() {
                 return bins;
             }
         };
     }
 
-    public void visit(SimpleFeature feature) {
-        visit((org.opengis.feature.Feature) feature);
+    private List<Comparable>[] createBinsArray(int binCount) {
+        @SuppressWarnings("unchecked")
+        List<Comparable>[] result = new ArrayList[binCount];
+        return result;
     }
 
-    public void visit(org.opengis.feature.Feature feature) {
+    public void visit(SimpleFeature feature) {
+        visit((org.geotools.api.feature.Feature) feature);
+    }
+
+    @Override
+    public void visit(org.geotools.api.feature.Feature feature) {
         Object value = expression.evaluate(feature);
 
         if (value == null) {
@@ -150,14 +158,16 @@ public class EqualAreaListVisitor implements FeatureCalc {
 
         count++;
         Double area = areaExpression.evaluate(feature, Double.class);
-        items.add(new ValueArea((Comparable) value, area));
+        @SuppressWarnings("unchecked")
+        Comparable<Object> cast = (Comparable<Object>) value;
+        items.add(new ValueArea(cast, area));
     }
 
     public void reset(int bins) {
         this.binCount = bins;
         this.count = 0;
         this.items = new ArrayList<>();
-        this.bins = new ArrayList[bins];
+        this.bins = createBinsArray(bins);
         this.countNull = 0;
         this.countNaN = 0;
     }

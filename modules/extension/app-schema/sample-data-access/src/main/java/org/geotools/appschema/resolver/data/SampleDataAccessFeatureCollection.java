@@ -19,16 +19,16 @@ package org.geotools.appschema.resolver.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.util.ProgressListener;
 
 /**
  * Collection of features from a {@link SampleDataAccess}.
@@ -42,9 +42,10 @@ public class SampleDataAccessFeatureCollection extends ArrayList<Feature>
         implements FeatureCollection<FeatureType, Feature> {
 
     /**
-     * @see org.geotools.feature.FeatureCollection#accepts(org.opengis.feature.FeatureVisitor,
-     *     org.opengis.util.ProgressListener)
+     * @see org.geotools.feature.FeatureCollection#accepts(org.geotools.api.feature.FeatureVisitor,
+     *     org.geotools.api.util.ProgressListener)
      */
+    @Override
     public void accepts(FeatureVisitor visitor, ProgressListener progress) throws IOException {
         DataUtilities.visit(this, visitor, progress);
     }
@@ -54,6 +55,7 @@ public class SampleDataAccessFeatureCollection extends ArrayList<Feature>
      *
      * @see org.geotools.feature.FeatureCollection#features()
      */
+    @Override
     public FeatureIterator<Feature> features() {
         return new SampleDataAccessFeatureIterator(iterator());
     }
@@ -63,6 +65,7 @@ public class SampleDataAccessFeatureCollection extends ArrayList<Feature>
      *
      * @see org.geotools.feature.FeatureCollection#getBounds()
      */
+    @Override
     public ReferencedEnvelope getBounds() {
         // FIXME implement this
         return null;
@@ -73,6 +76,7 @@ public class SampleDataAccessFeatureCollection extends ArrayList<Feature>
      *
      * @see org.geotools.feature.FeatureCollection#getID()
      */
+    @Override
     public String getID() {
         // FIXME implement this
         return null;
@@ -83,6 +87,7 @@ public class SampleDataAccessFeatureCollection extends ArrayList<Feature>
      *
      * @see org.geotools.feature.FeatureCollection#getSchema()
      */
+    @Override
     public FeatureType getSchema() {
         return SampleDataAccessData.MAPPEDFEATURE_TYPE;
     }
@@ -90,8 +95,9 @@ public class SampleDataAccessFeatureCollection extends ArrayList<Feature>
     /**
      * Unsupported operation.
      *
-     * @see org.geotools.feature.FeatureCollection#sort(org.opengis.filter.sort.SortBy)
+     * @see org.geotools.feature.FeatureCollection#sort(org.geotools.api.filter.sort.SortBy)
      */
+    @Override
     public FeatureCollection<FeatureType, Feature> sort(SortBy order) {
         throw new UnsupportedOperationException();
     }
@@ -99,8 +105,9 @@ public class SampleDataAccessFeatureCollection extends ArrayList<Feature>
     /**
      * Unsupported operation.
      *
-     * @see org.geotools.feature.FeatureCollection#subCollection(org.opengis.filter.Filter)
+     * @see org.geotools.feature.FeatureCollection#subCollection(org.geotools.api.filter.Filter)
      */
+    @Override
     public FeatureCollection<FeatureType, Feature> subCollection(Filter filter) {
         throw new UnsupportedOperationException();
     }

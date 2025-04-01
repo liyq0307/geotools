@@ -41,9 +41,8 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(
-    name = "domainsType",
-    propOrder = {"domain"}
-)
+        name = "domainsType",
+        propOrder = {"domain"})
 public class DomainsType {
 
     protected List<DomainType> domain;
@@ -51,9 +50,9 @@ public class DomainsType {
     /**
      * Gets the value of the domain property.
      *
-     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any
-     * modification you make to the returned list will be present inside the JAXB object. This is
-     * why there is not a <CODE>set</CODE> method for the domain property.
+     * <p>This accessor method returns a reference to the live list, not a snapshot. Therefore any modification you make
+     * to the returned list will be present inside the JAXB object. This is why there is not a <CODE>set</CODE> method
+     * for the domain property.
      *
      * <p>For example, to add a new item, do as follows:
      *
@@ -65,7 +64,7 @@ public class DomainsType {
      */
     public List<DomainType> getDomain() {
         if (domain == null) {
-            domain = new ArrayList<DomainType>();
+            domain = new ArrayList<>();
         }
         return this.domain;
     }

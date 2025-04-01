@@ -18,50 +18,47 @@ package org.geotools.referencing.operation.builder;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.util.HashMap;
-import java.util.Iterator;
-import org.geotools.geometry.DirectPosition2D;
+import java.util.Map;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.Position2D;
 import org.geotools.referencing.operation.transform.AbstractMathTransform;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * This provides the transformation method based on RubberSheeting (also known as Billinear
- * interpolated transformation) The class is accessed {@linkplain
- * org.geotools.referencing.operation.builder.RubberSheetBuilder RubberSheetBuilder}. More about
- * Rubber Sheet transformation can be seen <a href =
+ * This provides the transformation method based on RubberSheeting (also known as Billinear interpolated transformation)
+ * The class is accessed {@linkplain org.geotools.referencing.operation.builder.RubberSheetBuilder RubberSheetBuilder}.
+ * More about Rubber Sheet transformation can be seen <a href =
  * "http://planner.t.u-tokyo.ac.jp/member/fuse/rubber_sheeting.pdf">here</a>.
  *
  * @since 2.4
  * @version $Id$
  * @author Jan Jezek
- * @todo Consider moving this class to the {@linkplain org.geotools.referencing.operation.transform}
- *     package.
+ * @todo Consider moving this class to the {@linkplain org.geotools.referencing.operation.transform} package.
  */
 class RubberSheetTransform extends AbstractMathTransform implements MathTransform2D {
     /**
-     * Helper variable to hold triangle. It is use for optimalization of searching in TIN for
-     * triangle containing points that are transformed.
+     * Helper variable to hold triangle. It is use for optimalization of searching in TIN for triangle containing points
+     * that are transformed.
      */
     private TINTriangle previousTriangle = null;
 
     /**
-     * The HashMap where the keys are the original {@link Polygon} and values are {@link
-     * #org.opengis.referencing.operation.MathTransform}.
+     * The HashMap where the keys are the original {@link Polygon} and values are
+     * {@link #org.geotools.api.referencing.operation.MathTransform}.
      */
-    private HashMap trianglesToKeysMap;
+    private Map<TINTriangle, Object> trianglesToKeysMap;
 
     /**
      * Constructs the RubberSheetTransform.
      *
-     * @param trianglesToAffineTransform The HashMap where the keys are the original {@linkplain
-     *     org.geotools.referencing.operation.builder.algorithm.TINTriangle} and values are
-     *     {@linkplain org.opengis.referencing.operation.MathTransform}.
+     * @param trianglesToAffineTransform The HashMap where the keys are the original
+     *     {@linkplain org.geotools.referencing.operation.builder.algorithm.TINTriangle} and values are
+     *     {@linkplain org.geotools.api.referencing.operation.MathTransform}.
      */
-    public RubberSheetTransform(HashMap trianglesToAffineTransform) {
+    public RubberSheetTransform(Map<TINTriangle, Object> trianglesToAffineTransform) {
         this.trianglesToKeysMap = trianglesToAffineTransform;
     }
 
@@ -70,6 +67,7 @@ class RubberSheetTransform extends AbstractMathTransform implements MathTransfor
      *
      * @return dimension of input points
      */
+    @Override
     public final int getSourceDimensions() {
         return 2;
     }
@@ -79,6 +77,7 @@ class RubberSheetTransform extends AbstractMathTransform implements MathTransfor
      *
      * @return dimension of output points
      */
+    @Override
     public final int getTargetDimensions() {
         return 2;
     }
@@ -87,16 +86,15 @@ class RubberSheetTransform extends AbstractMathTransform implements MathTransfor
      * String representation.
      *
      * @return String expression of the triangle and its affine transform parameters
-     * @todo This method doesn't meet the {@link MathTransform#toString} constract, which should
-     *     uses Well Known Text (WKT) format as much as possible.
+     * @todo This method doesn't meet the {@link MathTransform#toString} constract, which should uses Well Known Text
+     *     (WKT) format as much as possible.
      */
     @Override
     public String toString() {
         final String lineSeparator = System.getProperty("line.separator", "\n");
         final StringBuilder buffer = new StringBuilder();
 
-        for (final Iterator i = trianglesToKeysMap.keySet().iterator(); i.hasNext(); ) {
-            TINTriangle trian = (TINTriangle) i.next();
+        for (TINTriangle trian : trianglesToKeysMap.keySet()) {
             MathTransform mt = (MathTransform) trianglesToKeysMap.get(trian);
             buffer.append(trian.toString());
             buffer.append(lineSeparator);
@@ -108,14 +106,15 @@ class RubberSheetTransform extends AbstractMathTransform implements MathTransfor
     }
 
     /* (non-Javadoc)
-     * @see org.opengis.referencing.operation.MathTransform#transform(double[], int, double[], int, int)
+     * @see org.geotools.api.referencing.operation.MathTransform#transform(double[], int, double[], int, int)
      */
+    @Override
     public void transform(double[] srcPts, int srcOff, final double[] dstPt, int dstOff, int numPts)
             throws TransformException {
         for (int i = srcOff; i < numPts; i++) {
-            Point2D pos = (Point2D) (new DirectPosition2D(srcPts[2 * i], srcPts[(2 * i) + 1]));
+            Point2D pos = new Position2D(srcPts[2 * i], srcPts[(2 * i) + 1]);
 
-            TINTriangle triangle = searchTriangle((DirectPosition) pos);
+            TINTriangle triangle = searchTriangle((Position) pos);
 
             AffineTransform AT = (AffineTransform) trianglesToKeysMap.get(triangle);
 
@@ -133,7 +132,7 @@ class RubberSheetTransform extends AbstractMathTransform implements MathTransfor
      * @return Triangle containing p
      * @throws TransformException if points are outside the area of TIN.
      */
-    private TINTriangle searchTriangle(DirectPosition p) throws TransformException {
+    private TINTriangle searchTriangle(Position p) throws TransformException {
         /* Optimization for finding triangles.
          * Assuming the point are close to each other -
          * so why not to check if next point is in the same triangle as previous one.
@@ -146,9 +145,7 @@ class RubberSheetTransform extends AbstractMathTransform implements MathTransfor
             return potentialTriangle;
         }
 
-        for (Iterator i = trianglesToKeysMap.keySet().iterator(); i.hasNext(); ) {
-            TINTriangle triangle = (TINTriangle) i.next();
-
+        for (TINTriangle triangle : trianglesToKeysMap.keySet()) {
             if (triangle.containsOrIsVertex(p)) {
                 previousTriangle = triangle;
 
@@ -158,11 +155,7 @@ class RubberSheetTransform extends AbstractMathTransform implements MathTransfor
         throw (new TransformException("Points are outside the scope"));
     }
 
-    /**
-     * Returns the inverse transform.
-     *
-     * @return
-     */
+    /** Returns the inverse transform. */
     @Override
     public MathTransform2D inverse() throws NoninvertibleTransformException {
         return (MathTransform2D) super.inverse();

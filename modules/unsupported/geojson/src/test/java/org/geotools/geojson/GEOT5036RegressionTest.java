@@ -24,18 +24,20 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import junit.framework.TestCase;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Exploit bug GEOT-5036, concurrent use of GeoJSONUtil.
  *
  * @author Guido Grazioli <guido.grazioli@gmail.com>
  */
-public class GEOT5036RegressionTest extends TestCase {
+public class GEOT5036RegressionTest {
 
     private final Random rand = new Random();
-    private final Map<Date, Future<String>> expectationMap = new HashMap<Date, Future<String>>();
+    private final Map<Date, Future<String>> expectationMap = new HashMap<>();
 
     public class Task implements Callable<String> {
         private final Date date;
@@ -52,16 +54,16 @@ public class GEOT5036RegressionTest extends TestCase {
         }
     }
 
-    @Override
-    public void setUp() throws java.lang.Exception {
+    @Before
+    public void setUp() throws Exception {
         // perform 50 conversions
         for (int i = 0; i < 50; i++) {
-            final Date date =
-                    new Date(System.currentTimeMillis() - rand.nextInt(100) * 1000 * 3600 * 24);
+            final Date date = new Date(System.currentTimeMillis() - rand.nextInt(100) * 1000 * 3600 * 24);
             expectationMap.put(date, null);
         }
     }
 
+    @Test
     public void testDateFormatterResults() throws Exception {
         final FastDateFormat sdf = GeoJSONUtil.dateFormatter;
 
@@ -77,7 +79,7 @@ public class GEOT5036RegressionTest extends TestCase {
 
         // look at the results
         for (final Map.Entry<Date, Future<String>> entry : expectationMap.entrySet()) {
-            assertEquals(
+            Assert.assertEquals(
                     "incorrect date string was returned: ",
                     entry.getValue().get(),
                     "\"" + sdf.format(entry.getKey()) + "\"");

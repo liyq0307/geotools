@@ -17,7 +17,6 @@
 package org.geotools.ml.bindings;
 
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.xml.namespace.QName;
@@ -52,10 +51,12 @@ import org.geotools.xsd.Node;
  */
 public class MLEnvelopeTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return ML.ENVELOPETYPE;
     }
 
+    @Override
     public Class getType() {
         return Envelope.class;
     }
@@ -67,6 +68,7 @@ public class MLEnvelopeTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         String from = (String) node.getChildValue("From");
         String to = (String) node.getChildValue("To");
@@ -78,10 +80,9 @@ public class MLEnvelopeTypeBinding extends AbstractComplexBinding {
 
         int i = 0;
 
-        for (Iterator itr = headerElements.iterator(); itr.hasNext(); ) {
-            Map headerObject = (Map) itr.next();
-            headers[i++] =
-                    new Header((String) headerObject.get("name"), (String) headerObject.get(null));
+        for (Object headerElement : headerElements) {
+            Map headerObject = (Map) headerElement;
+            headers[i++] = new Header((String) headerObject.get("name"), (String) headerObject.get(null));
         }
 
         return new Envelope(from, to, date, subject, headers);

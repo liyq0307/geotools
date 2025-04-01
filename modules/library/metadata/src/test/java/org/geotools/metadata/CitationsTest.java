@@ -16,16 +16,21 @@
  */
 package org.geotools.metadata;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Collection;
+import org.geotools.api.metadata.quality.ConformanceResult;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.metadata.iso.citation.CitationImpl;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.metadata.iso.quality.PositionalAccuracyImpl;
-import org.junit.*;
-import org.opengis.metadata.quality.ConformanceResult;
+import org.junit.Test;
 
 /**
  * Tests {@link Citations} and related constants.
@@ -37,12 +42,12 @@ public final class CitationsTest {
 
     @Test
     public void testErrors() {
-        String message = Errors.format(ErrorKeys.BAD_ENTRY);
+        String message = ErrorKeys.BAD_ENTRY;
         assertNotNull(message);
     }
     /**
-     * Tests the {@link AbstractMetadata#toString()} method first, since debugging will relying a
-     * lot on this method for the remaining of the test suite.
+     * Tests the {@link AbstractMetadata#toString()} method first, since debugging will relying a lot on this method for
+     * the remaining of the test suite.
      */
     @Test
     public void testToString() {
@@ -89,21 +94,19 @@ public final class CitationsTest {
                 PositionalAccuracyImpl.DATUM_SHIFT_OMITTED,
                 PositionalAccuracyImpl.DATUM_SHIFT_OMITTED);
 
-        assertNotSame(
-                PositionalAccuracyImpl.DATUM_SHIFT_APPLIED,
-                PositionalAccuracyImpl.DATUM_SHIFT_OMITTED);
+        assertNotSame(PositionalAccuracyImpl.DATUM_SHIFT_APPLIED, PositionalAccuracyImpl.DATUM_SHIFT_OMITTED);
 
         final Collection appliedResults = PositionalAccuracyImpl.DATUM_SHIFT_APPLIED.getResults();
         final Collection omittedResults = PositionalAccuracyImpl.DATUM_SHIFT_OMITTED.getResults();
-        final ConformanceResult applied = (ConformanceResult) appliedResults.iterator().next();
-        final ConformanceResult omitted = (ConformanceResult) omittedResults.iterator().next();
+        final ConformanceResult applied =
+                (ConformanceResult) appliedResults.iterator().next();
+        final ConformanceResult omitted =
+                (ConformanceResult) omittedResults.iterator().next();
         assertNotSame(applied, omitted);
         assertTrue(applied.pass());
         assertFalse(omitted.pass());
-        assertFalse(applied.equals(omitted));
-        assertFalse(appliedResults.equals(omittedResults));
-        assertFalse(
-                PositionalAccuracyImpl.DATUM_SHIFT_APPLIED.equals(
-                        PositionalAccuracyImpl.DATUM_SHIFT_OMITTED));
+        assertNotEquals(applied, omitted);
+        assertNotEquals(appliedResults, omittedResults);
+        assertNotEquals(PositionalAccuracyImpl.DATUM_SHIFT_APPLIED, PositionalAccuracyImpl.DATUM_SHIFT_OMITTED);
     }
 }

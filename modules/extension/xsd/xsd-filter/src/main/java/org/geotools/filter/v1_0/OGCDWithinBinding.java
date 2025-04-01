@@ -17,13 +17,13 @@
 package org.geotools.filter.v1_0;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.spatial.DWithin;
 
 /**
  * Binding object for the element http://www.opengis.net/ogc:DWithin.
@@ -40,15 +40,16 @@ import org.opengis.filter.spatial.DWithin;
  * @generated
  */
 public class OGCDWithinBinding extends AbstractComplexBinding {
-    FilterFactory2 filterFactory;
+    FilterFactory filterFactory;
     GeometryFactory geometryFactory;
 
-    public OGCDWithinBinding(FilterFactory2 filterFactory, GeometryFactory geometryFactory) {
+    public OGCDWithinBinding(FilterFactory filterFactory, GeometryFactory geometryFactory) {
         this.filterFactory = filterFactory;
         this.geometryFactory = geometryFactory;
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.DWithin;
     }
@@ -60,10 +61,12 @@ public class OGCDWithinBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return DWithin.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -75,12 +78,10 @@ public class OGCDWithinBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        // TODO: units
         Expression[] operands = OGCUtils.spatial(node, filterFactory, geometryFactory);
-        double distance = ((Double) node.getChildValue("Distance")).doubleValue();
-        Object units = node.getChild("Distance").getAttributeValue("units");
-        return filterFactory.dwithin(
-                operands[0], operands[1], distance, units == null ? null : units.toString());
+        DistanceUnits distance = node.getChildValue(DistanceUnits.class);
+        return filterFactory.dwithin(operands[0], operands[1], distance.getDistance(), distance.getUnits());
     }
 }

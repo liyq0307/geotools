@@ -16,19 +16,19 @@
  */
 package org.geotools.filter.function;
 
+import com.google.re2j.Matcher;
+import com.google.re2j.Pattern;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
  * StringTemplate function, applies a regular expression with capturing groups, and them uses the
@@ -68,7 +68,7 @@ public class StringTemplateFunction implements Function {
             new FunctionNameImpl("stringTemplate", "input", "pattern", "template", "defaultValue");
 
     public StringTemplateFunction() {
-        this.parameters = new ArrayList<Expression>();
+        this.parameters = new ArrayList<>();
         this.fallback = null;
     }
 
@@ -82,32 +82,36 @@ public class StringTemplateFunction implements Function {
                     "We need at least 3 input values, the input string, the regular expression, and the template");
         } else if (parameters.size() > 4) {
             throw new IllegalArgumentException(
-                    "We need at least 3 or 4 input values, "
-                            + parameters.size()
-                            + " were given instead");
+                    "We need at least 3 or 4 input values, " + parameters.size() + " were given instead");
         }
     }
 
+    @Override
     public String getName() {
         return NAME.getName();
     }
 
+    @Override
     public FunctionName getFunctionName() {
         return NAME;
     }
 
+    @Override
     public List<Expression> getParameters() {
         return Collections.unmodifiableList(parameters);
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public Object evaluate(Object object) {
         return evaluate(object, Object.class);
     }
 
+    @Override
     public <T> T evaluate(Object object, Class<T> context) {
 
         // get the default value
@@ -133,7 +137,9 @@ public class StringTemplateFunction implements Function {
         if (context != null) {
             return Converters.convert(result, context);
         } else {
-            return (T) result;
+            @SuppressWarnings("unchecked")
+            T converted = (T) result;
+            return converted;
         }
     }
 
@@ -174,23 +180,21 @@ public class StringTemplateFunction implements Function {
         }
     }
 
+    @Override
     public Literal getFallbackValue() {
         return fallback;
     }
 
-    /**
-     * Creates a String representation of this Function with the function name and the arguments.
-     */
+    /** Creates a String representation of this Function with the function name and the arguments. */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getName());
         sb.append("(");
-        List<org.opengis.filter.expression.Expression> params = getParameters();
+        List<org.geotools.api.filter.expression.Expression> params = getParameters();
         if (params != null) {
-            org.opengis.filter.expression.Expression exp;
-            for (Iterator<org.opengis.filter.expression.Expression> it = params.iterator();
-                    it.hasNext(); ) {
+            org.geotools.api.filter.expression.Expression exp;
+            for (Iterator<org.geotools.api.filter.expression.Expression> it = params.iterator(); it.hasNext(); ) {
                 exp = it.next();
                 sb.append("[");
                 sb.append(exp);

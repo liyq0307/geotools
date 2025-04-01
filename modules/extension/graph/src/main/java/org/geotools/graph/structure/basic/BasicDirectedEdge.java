@@ -88,9 +88,8 @@ public class BasicDirectedEdge extends BasicGraphable implements DirectedEdge {
     }
 
     /**
-     * Removes the edge from the out list of the in node and from the in list of the out node. Nodes
-     * are switched and then the edge is added to the in list of the new out node, and to the out
-     * list of the new in node.
+     * Removes the edge from the out list of the in node and from the in list of the out node. Nodes are switched and
+     * then the edge is added to the in list of the new out node, and to the out list of the new in node.
      *
      * @see Edge#reverse()
      */
@@ -172,8 +171,8 @@ public class BasicDirectedEdge extends BasicGraphable implements DirectedEdge {
     @Override
     public Iterator<DirectedEdge> getInRelated() {
         ArrayList<DirectedEdge> in = new ArrayList<>();
-        for (Iterator<? extends Edge> itr = m_in.getInEdges().iterator(); itr.hasNext(); ) {
-            DirectedEdge de = (DirectedEdge) itr.next();
+        for (Edge edge : m_in.getInEdges()) {
+            DirectedEdge de = (DirectedEdge) edge;
             // this check has to be because the edge could be a loop in which case
             // it is in related to itself
             if (!de.equals(this)) in.add(de);
@@ -189,8 +188,8 @@ public class BasicDirectedEdge extends BasicGraphable implements DirectedEdge {
     @Override
     public Iterator<DirectedEdge> getOutRelated() {
         ArrayList<DirectedEdge> out = new ArrayList<>();
-        for (Iterator<?> itr = m_out.getOutEdges().iterator(); itr.hasNext(); ) {
-            DirectedEdge de = (DirectedEdge) itr.next();
+        for (Edge edge : m_out.getOutEdges()) {
+            DirectedEdge de = (DirectedEdge) edge;
             // this check has to be because the edge could be a loop in which case
             // it is in related to itself
             if (!de.equals(this)) out.add(de);
@@ -203,10 +202,8 @@ public class BasicDirectedEdge extends BasicGraphable implements DirectedEdge {
     public int compareNodes(Edge other) {
         if (other instanceof DirectedEdge) {
             DirectedEdge de = (DirectedEdge) other;
-            if (de.getInNode().equals(m_in) && de.getOutNode().equals(m_out))
-                return (EQUAL_NODE_ORIENTATION);
-            if (de.getInNode().equals(m_out) && de.getOutNode().equals(m_in))
-                return (OPPOSITE_NODE_ORIENTATION);
+            if (de.getInNode().equals(m_in) && de.getOutNode().equals(m_out)) return (EQUAL_NODE_ORIENTATION);
+            if (de.getInNode().equals(m_out) && de.getOutNode().equals(m_in)) return (OPPOSITE_NODE_ORIENTATION);
         }
         return (UNEQUAL_NODE_ORIENTATION);
     }

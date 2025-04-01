@@ -19,6 +19,24 @@ package org.geotools.filter.text.cql2;
 import static org.junit.Assert.assertEquals;
 
 import java.util.List;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FilterFactoryImpl;
 import org.geotools.filter.IsNullImpl;
@@ -38,24 +56,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.temporal.Before;
-import org.opengis.referencing.FactoryException;
 
 /**
  * CQL Test
@@ -71,7 +71,6 @@ public class CQLTest {
      * Between predicate sample
      *
      * @see ECQLBetweenPredicateTest
-     * @throws CQLException
      */
     @Test
     public void betweenPredicate() throws CQLException {
@@ -85,14 +84,11 @@ public class CQLTest {
      * Equals predicate sample
      *
      * @see ECQLComparisonPredicateTest
-     * @throws Exception
      */
     @Test
     public void comparisonPredicate() throws Exception {
 
-        Filter filter;
-
-        filter = CQL.toFilter("POP_RANK > 6");
+        Filter filter = CQL.toFilter("POP_RANK > 6");
 
         Assert.assertTrue(filter instanceof PropertyIsGreaterThan);
     }
@@ -101,14 +97,11 @@ public class CQLTest {
      * GeoOperation predicate sample
      *
      * @see ECQLGeoOperationTest
-     * @throws CQLException
      */
     @Test
     public void geoOperationPredicate() throws CQLException {
 
-        Filter filter;
-
-        filter = CQL.toFilter("DISJOINT(the_geom, POINT(1 2))");
+        Filter filter = CQL.toFilter("DISJOINT(the_geom, POINT(1 2))");
 
         Assert.assertTrue("Disjoint was expected", filter instanceof Disjoint);
     }
@@ -116,10 +109,8 @@ public class CQLTest {
     @Test
     public void relateGeoOperation() throws CQLException {
 
-        PropertyIsEqualTo filter =
-                (PropertyIsEqualTo)
-                        CQL.toFilter(
-                                "RELATE(geometry, LINESTRING (-134.921387 58.687767, -135.303391 59.092838), T*****FF*)");
+        PropertyIsEqualTo filter = (PropertyIsEqualTo)
+                CQL.toFilter("RELATE(geometry, LINESTRING (-134.921387 58.687767, -135.303391 59.092838), T*****FF*)");
 
         Assert.assertTrue(
                 "Relate Pattern Function was expected",
@@ -130,10 +121,9 @@ public class CQLTest {
 
     @Test
     public void dwithinGeometry() throws Exception {
-        Filter resultFilter;
 
         // DWITHIN
-        resultFilter = CQL.toFilter("DWITHIN(the_geom, POINT(1 2), 10, kilometers)");
+        Filter resultFilter = CQL.toFilter("DWITHIN(the_geom, POINT(1 2), 10, kilometers)");
 
         Assert.assertTrue(resultFilter instanceof DistanceBufferOperator);
     }
@@ -142,7 +132,6 @@ public class CQLTest {
      * Temporal predicate sample
      *
      * @see ECQLTemporalPredicateTest
-     * @throws Exception
      */
     @Test
     public void temporalPredicate() throws Exception {
@@ -155,16 +144,13 @@ public class CQLTest {
     /**
      * And / Or / Not predicate
      *
-     * @throws Exception
      * @see ECQLBooleanValueExpressionTest
      */
     @Test
     public void booleanPredicate() throws Exception {
 
-        Filter filter;
-
         // and sample
-        filter = CQL.toFilter("QUANTITY < 10 AND QUANTITY < 2 ");
+        Filter filter = CQL.toFilter("QUANTITY < 10 AND QUANTITY < 2 ");
 
         Assert.assertTrue(filter instanceof And);
 
@@ -183,7 +169,6 @@ public class CQLTest {
      * Like predicate sample
      *
      * @see ECQLLikePredicateTest
-     * @throws Exception
      */
     @Test
     public void likePredicate() throws Exception {
@@ -197,7 +182,6 @@ public class CQLTest {
      * Null predicate sample
      *
      * @see ECQLNullPredicateTest
-     * @throws Exception
      */
     @Test
     public void isNullPredicate() throws Exception {
@@ -211,7 +195,6 @@ public class CQLTest {
      * Exist property predicate sample
      *
      * @see ECQLExistenceTest
-     * @throws Exception
      */
     @Test
     public void existProperty() throws Exception {
@@ -240,7 +223,7 @@ public class CQLTest {
 
         List<Filter> list = CQL.toFilterList("QUANTITY=1; YEAR<1963");
 
-        Assert.assertTrue(list.size() == 2);
+        assertEquals(2, list.size());
 
         Assert.assertTrue(list.get(0) instanceof PropertyIsEqualTo);
 
@@ -253,7 +236,7 @@ public class CQLTest {
         String expectedCQL = "QUANTITY = 1; YEAR < 1963";
         List<Filter> list = CQL.toFilterList(expectedCQL);
 
-        Assert.assertTrue(list.size() == 2);
+        assertEquals(2, list.size());
 
         String cqlResult = CQL.toCQL(list);
 
@@ -280,44 +263,36 @@ public class CQLTest {
         Assert.assertEquals(expectedCQL, cqlResult);
     }
 
-    /**
-     * Verify the parser uses the provided FilterFactory implementation
-     *
-     * @throws ParseException
-     */
+    /** Verify the parser uses the provided FilterFactory implementation */
     @Test
     public void toFilterUsesProvidedFilterFactory() throws Exception {
         final boolean[] called = {false};
 
-        FilterFactory ff =
-                new FilterFactoryImpl() {
-                    public PropertyName property(String propName) {
-                        called[0] = true;
+        FilterFactory ff = new FilterFactoryImpl() {
+            @Override
+            public PropertyName property(String propName) {
+                called[0] = true;
 
-                        return super.property(propName);
-                    }
-                };
+                return super.property(propName);
+            }
+        };
 
         CQL.toFilter("attName > 20", ff);
         Assert.assertTrue("Provided FilterFactory was not called", called[0]);
     }
-    /**
-     * Verify the parser uses the provided FilterFactory implementation
-     *
-     * @throws ParseException
-     */
+    /** Verify the parser uses the provided FilterFactory implementation */
     @Test
     public void toExpressionUsesProvidedFilterFactory() throws Exception {
         final boolean[] called = {false};
 
-        FilterFactory ff =
-                new FilterFactoryImpl() {
-                    public PropertyName property(String propName) {
-                        called[0] = true;
+        FilterFactory ff = new FilterFactoryImpl() {
+            @Override
+            public PropertyName property(String propName) {
+                called[0] = true;
 
-                        return super.property(propName);
-                    }
-                };
+                return super.property(propName);
+            }
+        };
 
         CQL.toExpression("attName", ff);
         Assert.assertTrue("Provided FilterFactory was not called", called[0]);
@@ -335,6 +310,6 @@ public class CQLTest {
     private Literal getWgs84PointLiteral() throws FactoryException {
         Point p = new GeometryFactory().createPoint(new Coordinate(1, 2));
         p.setUserData(CRS.decode("EPSG:4326", true));
-        return CommonFactoryFinder.getFilterFactory2().literal(p);
+        return CommonFactoryFinder.getFilterFactory().literal(p);
     }
 }

@@ -33,9 +33,12 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.FileUtils;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.complex.feature.type.Types;
 import org.geotools.data.solr.SolrTypeData.SolrTypes;
 import org.geotools.data.solr.StationData.Stations;
@@ -48,19 +51,15 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 /**
- * This class contains the integration tests (online tests) for the integration between App-Schema
- * and Apache Solr Create appschema.properties file in {{user-dir}}/.geotools folder Set solr_url
- * property URL config example: solr_url=http://localhost:8983/solr, and create "stations" core in
- * Solr
+ * This class contains the integration tests (online tests) for the integration between App-Schema and Apache Solr
+ * Create appschema.properties file in {{user-dir}}/.geotools folder Set solr_url property URL config example:
+ * solr_url=http://localhost:8983/solr, and create "stations" core in Solr
  */
 public final class AppSchemaIntegrationTest extends OnlineTestCase {
 
@@ -70,24 +69,18 @@ public final class AppSchemaIntegrationTest extends OnlineTestCase {
     private static final String xmlFileName = "mappings_solr.xml";
     private static final String ST_NAMESPACE = "http://www.stations.org/1.0";
     private static final Name mappedTypeName = Types.typeName("multi_stations_solr");
-    private static final String testDirStr =
-            "target/test/" + AppSchemaIntegrationTest.class.getSimpleName();
+    private static final String testDirStr = "target/test/" + AppSchemaIntegrationTest.class.getSimpleName();
     private static final File testDir = new File(testDirStr);
 
     private static final File appSchemaCacheDir =
-            new File(
-                    "target/test/"
-                            + AppSchemaIntegrationTest.class.getSimpleName()
-                            + "/app-schema-cache");
+            new File("target/test/" + AppSchemaIntegrationTest.class.getSimpleName() + "/app-schema-cache");
 
     private HttpSolrClient client;
     private static DataAccess<FeatureType, Feature> mappingDataStore;
 
     @Test
     public void testFeaturesData() throws Exception {
-        FeatureSource<FeatureType, Feature> fSource =
-                (FeatureSource<FeatureType, Feature>)
-                        mappingDataStore.getFeatureSource(mappedTypeName);
+        FeatureSource<FeatureType, Feature> fSource = mappingDataStore.getFeatureSource(mappedTypeName);
         List<Feature> features = toFeaturesList(fSource.getFeatures());
         // check features count
         assertEquals(2, features.size());
@@ -103,14 +96,15 @@ public final class AppSchemaIntegrationTest extends OnlineTestCase {
             Point point1;
             switch (id) {
                 case "7":
-                    assertEquals("Bologna", (String) afeature.getProperty(stationName).getValue());
+                    assertEquals("Bologna", (String)
+                            afeature.getProperty(stationName).getValue());
                     // check geom
                     point1 = gf.createPoint(new Coordinate(11.34, 44.5));
                     assertEquals(point1, theGeom);
                     break;
                 case "13":
-                    assertEquals(
-                            "Alessandria", (String) afeature.getProperty(stationName).getValue());
+                    assertEquals("Alessandria", (String)
+                            afeature.getProperty(stationName).getValue());
                     // check geom
                     point1 = gf.createPoint(new Coordinate(8.63, 44.92));
                     assertEquals(point1, theGeom);
@@ -121,28 +115,12 @@ public final class AppSchemaIntegrationTest extends OnlineTestCase {
 
     private List<Feature> toFeaturesList(FeatureCollection<FeatureType, Feature> features) {
         List<Feature> result = new ArrayList<>();
-        FeatureIterator<Feature> i = features.features();
-        try {
+        try (FeatureIterator<Feature> i = features.features()) {
             while (i.hasNext()) {
                 result.add(i.next());
             }
-        } finally {
-            i.close();
         }
         return result;
-    }
-
-    private int size(FeatureCollection<FeatureType, Feature> features) {
-        int size = 0;
-        FeatureIterator<Feature> i = features.features();
-        try {
-            for (; i.hasNext(); i.next()) {
-                size++;
-            }
-        } finally {
-            i.close();
-        }
-        return size;
     }
 
     @Override
@@ -154,7 +132,7 @@ public final class AppSchemaIntegrationTest extends OnlineTestCase {
     }
 
     protected void setupDataStore() throws Exception {
-        final Map dsParams = new HashMap();
+        final Map<String, Object> dsParams = new HashMap<>();
         dsParams.put("dbtype", "app-schema");
         final URL url = new URL(new URL("file:"), "./" + testDirStr + "/" + xmlFileName);
         dsParams.put("url", url.toExternalForm());
@@ -177,11 +155,9 @@ public final class AppSchemaIntegrationTest extends OnlineTestCase {
     }
 
     protected void fieldsSetup() throws Exception {
-        File inFile =
-                new File(
-                        AppSchemaIntegrationTest.class
-                                .getResource(testData + "solr_types.xml")
-                                .toURI());
+        File inFile = new File(AppSchemaIntegrationTest.class
+                .getResource(testData + "solr_types.xml")
+                .toURI());
         JAXBContext jcontext = JAXBContext.newInstance(SolrTypes.class);
         Unmarshaller um = jcontext.createUnmarshaller();
         SolrTypes types = (SolrTypes) um.unmarshal(inFile);
@@ -191,11 +167,9 @@ public final class AppSchemaIntegrationTest extends OnlineTestCase {
     }
 
     protected void indexSetup() throws Exception {
-        File inFile =
-                new File(
-                        AppSchemaIntegrationTest.class
-                                .getResource(testData + "stationsData.xml")
-                                .toURI());
+        File inFile = new File(AppSchemaIntegrationTest.class
+                .getResource(testData + "stationsData.xml")
+                .toURI());
         JAXBContext jcontext = JAXBContext.newInstance(Stations.class);
         Unmarshaller um = jcontext.createUnmarshaller();
         Stations stations = (Stations) um.unmarshal(inFile);
@@ -216,12 +190,10 @@ public final class AppSchemaIntegrationTest extends OnlineTestCase {
         copyTestData("stationsData.xml", testDir);
 
         // Modify datasource and copy xml
-        File xmlFile =
-                URLs.urlToFile(AppSchemaIntegrationTest.class.getResource(testData + xmlFileName));
-        Document doc =
-                DocumentBuilderFactory.newInstance()
-                        .newDocumentBuilder()
-                        .parse(new InputSource(new FileInputStream(xmlFile)));
+        File xmlFile = URLs.urlToFile(AppSchemaIntegrationTest.class.getResource(testData + xmlFileName));
+        Document doc = DocumentBuilderFactory.newInstance()
+                .newDocumentBuilder()
+                .parse(new InputSource(new FileInputStream(xmlFile)));
         Node solrDs = doc.getElementsByTagName("SolrDataStore").item(0);
         NodeList dsChilds = solrDs.getChildNodes();
         for (int i = 0; i < dsChilds.getLength(); i++) {
@@ -244,8 +216,7 @@ public final class AppSchemaIntegrationTest extends OnlineTestCase {
     private void copyTestData(String baseFileName, File destDir) throws IOException {
         destDir.mkdirs();
         FileUtils.copyFileToDirectory(
-                URLs.urlToFile(AppSchemaIntegrationTest.class.getResource(testData + baseFileName)),
-                destDir);
+                URLs.urlToFile(AppSchemaIntegrationTest.class.getResource(testData + baseFileName)), destDir);
     }
 
     /** appschema.properties file required */

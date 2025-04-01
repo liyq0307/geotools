@@ -22,17 +22,15 @@ package org.geotools.data.oracle.sdo;
 // import oracle.spatial.geometry.JGeometry;
 
 /**
- * Converts between JGeometry and JTS geometries. Is used by the SDO*Dialect classes, which have
- * proven not to deal performance gains, but I keep it here for historical purposes, so that anyone
- * willing to try this out won't have to re-code everything from scratch.
+ * Converts between JGeometry and JTS geometries. Is used by the SDO*Dialect classes, which have proven not to deal
+ * performance gains, but I keep it here for historical purposes, so that anyone willing to try this out won't have to
+ * re-code everything from scratch.
  *
  * @author Andrea Aime - OpenGeo
  */
 public class JGeometryConverter {
     //    /**
     //     * Converts a JGeometry into the equivalent JTS geometry
-    //     * @param geom
-    //     * @return
     //     */
     //    public static Geometry toJTS(GeometryFactory gf, JGeometry geom) {
     //        int dimensions = geom.getDimensions();
@@ -44,8 +42,6 @@ public class JGeometryConverter {
     //
     //    /**
     //     * Converts a JTS geometry in the equivalent JTS geometry
-    //     * @param geom
-    //     * @return
     //     */
     //    public static JGeometry toJGeometry(Geometry geom, int srid) {
     //        if( geom == null)

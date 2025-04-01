@@ -31,8 +31,8 @@ import org.geotools.util.logging.Logging;
 /**
  * A NetCDF CF (ClimateForecast) parser.
  *
- * <p>It can be used to load from a standard name table (XML) all the available CF compliant
- * standard names and the related information, such as canonical units, descriptions and alias.
+ * <p>It can be used to load from a standard name table (XML) all the available CF compliant standard names and the
+ * related information, such as canonical units, descriptions and alias.
  *
  * <p>See <a href="http://cfconventions.org/standard-names.html">CF Convention: Standard names</a>
  */
@@ -92,19 +92,13 @@ public class NetCDFCFParser {
         this.entriesMap = entriesMap;
         this.aliasMap = aliasMap;
         // Create the KeySet
-        keys = new TreeSet<String>();
+        keys = new TreeSet<>();
         // Populate the keySet
         keys.addAll(entriesMap.keySet());
         keys.addAll(aliasMap.keySet());
     }
 
-    /**
-     * Create a {@link NetCDFCFParser} instance for the specified file.
-     *
-     * @param file
-     * @return
-     * @throws JAXBException
-     */
+    /** Create a {@link NetCDFCFParser} instance for the specified file. */
     public static NetCDFCFParser unmarshallXml(File file) throws JAXBException {
 
         // We assume we have a single (or reduced number) of files to be unmarshalled
@@ -115,8 +109,8 @@ public class NetCDFCFParser {
         StandardNameTable table = (StandardNameTable) unmarshaller.unmarshal(file);
         List<Entry> entries = table.getEntry();
         List<Alias> aliases = table.getAlias();
-        Map<String, Entry> entriesMap = new HashMap<String, Entry>(entries.size());
-        Map<String, Alias> aliasMap = new HashMap<String, Alias>(aliases.size());
+        Map<String, Entry> entriesMap = new HashMap<>(entries.size());
+        Map<String, Alias> aliasMap = new HashMap<>(aliases.size());
         for (Entry entry : entries) {
             entriesMap.put(entry.getId(), entry);
         }

@@ -20,29 +20,29 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_strIndexOf extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "strIndexOf",
-                    parameter("index", Integer.class),
-                    parameter("String", String.class),
-                    parameter("lookup", String.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "strIndexOf",
+            parameter("index", Integer.class),
+            parameter("String", String.class),
+            parameter("lookup", String.class));
 
     public FilterFunction_strIndexOf() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
         String arg0;
         String arg1;
 
         try { // attempt to get value and perform conversion
-            arg0 = (String) getExpression(0).evaluate(feature, String.class); // extra
+            arg0 = getExpression(0).evaluate(feature, String.class); // extra
             // protection
             // for
             // strings
@@ -53,7 +53,7 @@ public class FilterFunction_strIndexOf extends FunctionExpressionImpl {
         }
 
         try { // attempt to get value and perform conversion
-            arg1 = (String) getExpression(1).evaluate(feature, String.class); // extra
+            arg1 = getExpression(1).evaluate(feature, String.class); // extra
             // protection
             // for
             // strings

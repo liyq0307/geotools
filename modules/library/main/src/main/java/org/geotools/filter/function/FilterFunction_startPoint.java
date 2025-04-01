@@ -20,29 +20,27 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_startPoint extends FunctionExpressionImpl {
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "startPoint",
-                    parameter("point", Point.class),
-                    parameter("linestring", LineString.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "startPoint", parameter("point", Point.class), parameter("linestring", LineString.class));
 
     public FilterFunction_startPoint() {
         super(NAME);
     }
 
+    @Override
     public Point evaluate(Object feature) {
         Geometry arg0;
 
         try { // attempt to get value and perform conversion
-            arg0 = (Geometry) getExpression(0).evaluate(feature, LineString.class);
+            arg0 = getExpression(0).evaluate(feature, LineString.class);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

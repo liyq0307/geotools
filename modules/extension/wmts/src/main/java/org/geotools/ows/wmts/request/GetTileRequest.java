@@ -19,12 +19,12 @@ package org.geotools.ows.wmts.request;
 
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.ows.Request;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wmts.model.WMTSLayer;
 import org.geotools.tile.Tile;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Construct a WMTS getTile request.
@@ -39,6 +39,16 @@ public interface GetTileRequest extends Request {
     void setLayer(WMTSLayer layer);
 
     void setStyle(String styleName);
+
+    void setFormat(String format);
+
+    void setTileMatrixSet(String tileMatrixSet);
+
+    void setTileMatrix(String tileMatrix);
+
+    void setTileRow(Integer tileRow);
+
+    void setTileCol(Integer tileCol);
 
     Set<Tile> getTiles() throws ServiceException;
 

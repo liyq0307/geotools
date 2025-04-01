@@ -18,9 +18,10 @@ package org.geotools.brewer.styling.builder;
 
 import java.awt.Color;
 import java.util.List;
-import org.geotools.styling.Stroke;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Stroke;
+import org.geotools.styling.StrokeImpl;
 import org.geotools.util.Converters;
-import org.opengis.filter.expression.Expression;
 
 public class StrokeBuilder extends AbstractStyleBuilder<Stroke> {
     Expression color;
@@ -39,9 +40,9 @@ public class StrokeBuilder extends AbstractStyleBuilder<Stroke> {
 
     Expression dashOffset;
 
-    GraphicBuilder graphicFill = new GraphicBuilder(this).unset();
+    GraphicBuilder graphicFill = (GraphicBuilder) new GraphicBuilder(this).unset();
 
-    GraphicBuilder graphicStroke = new GraphicBuilder(this).unset();
+    GraphicBuilder graphicStroke = (GraphicBuilder) new GraphicBuilder(this).unset();
 
     public StrokeBuilder() {
         this(null);
@@ -52,37 +53,31 @@ public class StrokeBuilder extends AbstractStyleBuilder<Stroke> {
         reset();
     }
 
+    @Override
     public StrokeBuilder unset() {
         return (StrokeBuilder) super.unset();
     }
 
     /** Reset stroke to default values. */
+    @Override
     public StrokeBuilder reset() {
-        color = Stroke.DEFAULT.getColor();
-        width = Stroke.DEFAULT.getWidth();
-        opacity = Stroke.DEFAULT.getOpacity();
-        lineCap = Stroke.DEFAULT.getLineCap();
-        lineJoin = Stroke.DEFAULT.getLineJoin();
-        dashArray = Stroke.DEFAULT.getDashArray();
-        dashArrayExpressions = Stroke.DEFAULT.dashArray();
-        dashOffset = Stroke.DEFAULT.getDashOffset();
+        color = StrokeImpl.DEFAULT.getColor();
+        width = StrokeImpl.DEFAULT.getWidth();
+        opacity = StrokeImpl.DEFAULT.getOpacity();
+        lineCap = StrokeImpl.DEFAULT.getLineCap();
+        lineJoin = StrokeImpl.DEFAULT.getLineJoin();
+        dashArray = StrokeImpl.DEFAULT.getDashArray();
+        dashArrayExpressions = StrokeImpl.DEFAULT.dashArray();
+        dashOffset = StrokeImpl.DEFAULT.getDashOffset();
         graphicFill.unset();
         graphicStroke.unset();
         unset = false;
         return this;
     }
 
+    /** Reset builder to provided original stroke. */
     @Override
-    public StrokeBuilder reset(Stroke original) {
-        return reset((org.opengis.style.Stroke) original);
-    }
-
-    /**
-     * Reset builder to provided original stroke.
-     *
-     * @param stroke
-     */
-    public StrokeBuilder reset(org.opengis.style.Stroke stroke) {
+    public StrokeBuilder reset(Stroke stroke) {
         if (stroke == null) {
             return unset();
         }
@@ -117,8 +112,7 @@ public class StrokeBuilder extends AbstractStyleBuilder<Stroke> {
     public StrokeBuilder colorHex(String hex) {
         Color color = Converters.convert(hex, Color.class);
         if (color == null) {
-            throw new IllegalArgumentException(
-                    "The provided expression could not be turned into a color: " + hex);
+            throw new IllegalArgumentException("The provided expression could not be turned into a color: " + hex);
         }
         return color(color);
     }
@@ -213,21 +207,21 @@ public class StrokeBuilder extends AbstractStyleBuilder<Stroke> {
         return graphicFill;
     }
 
+    @Override
     public Stroke build() {
         if (unset) {
             return null;
         }
-        Stroke stroke =
-                sf.createStroke(
-                        color,
-                        width,
-                        opacity,
-                        lineJoin,
-                        lineCap,
-                        dashArray,
-                        dashOffset,
-                        graphicFill.build(),
-                        this.graphicStroke.build());
+        Stroke stroke = sf.createStroke(
+                color,
+                width,
+                opacity,
+                lineJoin,
+                lineCap,
+                dashArray,
+                dashOffset,
+                graphicFill.build(),
+                this.graphicStroke.build());
         if (dashArrayExpressions != null && !dashArrayExpressions.isEmpty()) {
             stroke.setDashArray(dashArrayExpressions);
         }

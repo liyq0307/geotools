@@ -18,13 +18,17 @@ package org.geotools.styling;
 
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Description;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 
 /**
- * Provides a representation of a LineSymbolizer in an SLD Document. A LineSymbolizer defines how a
- * line geometry should be rendered.
+ * Provides a representation of a LineSymbolizer in an SLD Document. A LineSymbolizer defines how a line geometry should
+ * be rendered.
  *
  * @author James Macgill
  * @author Johann Sorel (Geomatys)
@@ -42,19 +46,16 @@ public class LineSymbolizerImpl extends AbstractSymbolizer implements LineSymbol
     }
 
     protected LineSymbolizerImpl(
-            Stroke stroke,
-            Expression offset,
-            Unit<Length> uom,
-            String geom,
-            String name,
-            Description desc) {
+            Stroke stroke, Expression offset, Unit<Length> uom, String geom, String name, Description desc) {
         super(name, desc, geom, uom);
     }
 
+    @Override
     public Expression getPerpendicularOffset() {
         return offset;
     }
 
+    @Override
     public void setPerpendicularOffset(Expression offset) {
         this.offset = offset;
     }
@@ -64,6 +65,7 @@ public class LineSymbolizerImpl extends AbstractSymbolizer implements LineSymbol
      *
      * @return The Stroke style to use when rendering lines.
      */
+    @Override
     public StrokeImpl getStroke() {
         return stroke;
     }
@@ -73,7 +75,8 @@ public class LineSymbolizerImpl extends AbstractSymbolizer implements LineSymbol
      *
      * @param stroke The Stroke style to use when rendering lines.
      */
-    public void setStroke(org.opengis.style.Stroke stroke) {
+    @Override
+    public void setStroke(org.geotools.api.style.Stroke stroke) {
         if (this.stroke == stroke) {
             return;
         }
@@ -85,11 +88,13 @@ public class LineSymbolizerImpl extends AbstractSymbolizer implements LineSymbol
      *
      * @param visitor The visitor to accept.
      */
-    public Object accept(StyleVisitor visitor, Object data) {
+    @Override
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    @Override
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -98,6 +103,7 @@ public class LineSymbolizerImpl extends AbstractSymbolizer implements LineSymbol
      *
      * @return The deep copy clone.
      */
+    @Override
     public Object clone() {
         LineSymbolizerImpl clone;
 
@@ -115,6 +121,7 @@ public class LineSymbolizerImpl extends AbstractSymbolizer implements LineSymbol
         return clone;
     }
 
+    @Override
     public String toString() {
         StringBuffer buf = new StringBuffer();
         buf.append("<LineSymbolizerImp property=");
@@ -151,15 +158,14 @@ public class LineSymbolizerImpl extends AbstractSymbolizer implements LineSymbol
         return true;
     }
 
-    static LineSymbolizerImpl cast(org.opengis.style.Symbolizer symbolizer) {
+    static LineSymbolizerImpl cast(org.geotools.api.style.Symbolizer symbolizer) {
         if (symbolizer == null) {
             return null;
         }
         if (symbolizer instanceof LineSymbolizerImpl) {
             return (LineSymbolizerImpl) symbolizer;
-        } else if (symbolizer instanceof org.opengis.style.LineSymbolizer) {
-            org.opengis.style.LineSymbolizer lineSymbolizer =
-                    (org.opengis.style.LineSymbolizer) symbolizer;
+        } else if (symbolizer instanceof org.geotools.api.style.LineSymbolizer) {
+            org.geotools.api.style.LineSymbolizer lineSymbolizer = (org.geotools.api.style.LineSymbolizer) symbolizer;
             LineSymbolizerImpl copy = new LineSymbolizerImpl();
             copy.setDescription(lineSymbolizer.getDescription());
             copy.setGeometryPropertyName(lineSymbolizer.getGeometryPropertyName());

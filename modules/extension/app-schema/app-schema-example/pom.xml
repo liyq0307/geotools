@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.geotools</groupId>
         <artifactId>app-schema</artifactId>
-        <version>23-SNAPSHOT</version>
+        <version>33-SNAPSHOT</version>
     </parent>
 
     <groupId>org.geotools</groupId>
@@ -18,12 +18,31 @@
 
     <developers>
         <developer>
+            <name>Nuno Oliveira</name>
+            <id>nmco</id>
+            <email>nuno.oliveira@geo-solutions.it</email>
+            <organization>GeoSolutions</organization>
+            <roles>
+                <role>Module Maintainer</role>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Fernando Mino</name>
+            <id>fernandor777</id>
+            <email>fernando.mino@geo-solutions.it</email>
+            <organization>GeoSolutions</organization>
+            <roles>
+                <role>Module Maintainer</role>
+                <role>Java Developer</role>
+            </roles>
+        </developer>
+        <developer>
             <name>Ben Caradoc-Davies</name>
             <id>bencaradocdavies</id>
             <email>ben@transient.nz</email>
             <organization>Transient Software Limited</organization>
             <roles>
-                <role>Module Maintainer</role>
                 <role>Java Developer</role>
             </roles>
             <timezone>Pacific/Auckland</timezone>
@@ -66,4 +85,3 @@
     </build>
 
 </project>
-

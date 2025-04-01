@@ -17,13 +17,13 @@
 package org.geotools.filter.v1_1;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:SortPropertyType.
@@ -52,6 +52,7 @@ public class SortPropertyTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.SortPropertyType;
     }
@@ -63,6 +64,7 @@ public class SortPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return SortBy.class;
     }
@@ -74,9 +76,10 @@ public class SortPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        PropertyName name = (PropertyName) node.getChildValue(PropertyName.class);
-        SortOrder order = (SortOrder) node.getChildValue(SortOrder.class);
+        PropertyName name = node.getChildValue(PropertyName.class);
+        SortOrder order = node.getChildValue(SortOrder.class);
 
         if (order == null) {
             order = SortOrder.ASCENDING;
@@ -85,6 +88,7 @@ public class SortPropertyTypeBinding extends AbstractComplexBinding {
         return filterfactory.sort(name.getPropertyName(), order);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         SortBy sortBy = (SortBy) object;
 

@@ -19,13 +19,13 @@ package org.geotools.gml3.bindings;
 import java.sql.Timestamp;
 import java.util.Date;
 import javax.xml.namespace.QName;
+import org.geotools.api.temporal.Position;
 import org.geotools.gml3.GML;
 import org.geotools.temporal.object.DefaultPosition;
 import org.geotools.xs.bindings.XSDateBinding;
 import org.geotools.xs.bindings.XSDateTimeBinding;
 import org.geotools.xsd.AbstractSimpleBinding;
 import org.geotools.xsd.InstanceComponent;
-import org.opengis.temporal.Position;
 
 /**
  * Binding object for the type http://www.opengis.net/gml:TimePositionUnion.
@@ -61,6 +61,7 @@ import org.opengis.temporal.Position;
 public class TimePositionUnionBinding extends AbstractSimpleBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.TimePositionUnion;
     }
@@ -72,6 +73,7 @@ public class TimePositionUnionBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Position.class;
     }
@@ -83,6 +85,7 @@ public class TimePositionUnionBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         // JD: for the moment we will just handle the easy ones of date and datetime
         Date date = null;
@@ -96,7 +99,7 @@ public class TimePositionUnionBinding extends AbstractSimpleBinding {
 
         if (date == null) {
             try {
-                date = (Date) new XSDateBinding().parse(instance, value);
+                date = new XSDateBinding().parse(instance, value);
             } catch (Exception e) {
                 java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
             }

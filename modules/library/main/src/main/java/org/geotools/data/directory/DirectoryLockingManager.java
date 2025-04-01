@@ -18,10 +18,10 @@ package org.geotools.data.directory;
 
 import java.io.IOException;
 import java.util.List;
-import org.geotools.data.DataStore;
-import org.geotools.data.FeatureLock;
-import org.geotools.data.LockingManager;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureLock;
+import org.geotools.api.data.LockingManager;
+import org.geotools.api.data.Transaction;
 
 /**
  * Locking manager that will delegate its work to the locking managers of the delegate data stores
@@ -36,6 +36,7 @@ public class DirectoryLockingManager implements LockingManager {
         this.cache = cache;
     }
 
+    @Override
     public boolean exists(String authID) {
         List<DataStore> stores = cache.getDataStores();
         for (DataStore store : stores) {
@@ -47,6 +48,7 @@ public class DirectoryLockingManager implements LockingManager {
         return false;
     }
 
+    @Override
     public boolean release(String authID, Transaction transaction) throws IOException {
         List<DataStore> stores = cache.getDataStores();
         for (DataStore store : stores) {
@@ -58,6 +60,7 @@ public class DirectoryLockingManager implements LockingManager {
         return false;
     }
 
+    @Override
     public boolean refresh(String authID, Transaction transaction) throws IOException {
         List<DataStore> stores = cache.getDataStores();
         for (DataStore store : stores) {
@@ -69,8 +72,8 @@ public class DirectoryLockingManager implements LockingManager {
         return false;
     }
 
-    public void unLockFeatureID(
-            String typeName, String authID, Transaction transaction, FeatureLock featureLock)
+    @Override
+    public void unLockFeatureID(String typeName, String authID, Transaction transaction, FeatureLock featureLock)
             throws IOException {
         DataStore store = cache.getDataStore(typeName, false);
 
@@ -79,8 +82,8 @@ public class DirectoryLockingManager implements LockingManager {
         }
     }
 
-    public void lockFeatureID(
-            String typeName, String authID, Transaction transaction, FeatureLock featureLock)
+    @Override
+    public void lockFeatureID(String typeName, String authID, Transaction transaction, FeatureLock featureLock)
             throws IOException {
         DataStore store = cache.getDataStore(typeName, false);
 

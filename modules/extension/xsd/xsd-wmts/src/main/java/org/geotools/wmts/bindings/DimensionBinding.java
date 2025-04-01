@@ -18,12 +18,16 @@
 
 package org.geotools.wmts.bindings;
 
+import java.util.List;
 import javax.xml.namespace.QName;
+import net.opengis.ows10.Ows10Factory;
 import net.opengis.ows11.CodeType;
+import net.opengis.ows11.DomainMetadataType;
+import net.opengis.ows11.Ows11Factory;
 import net.opengis.wmts.v_1.DimensionType;
 import net.opengis.wmts.v_1.wmtsv_1Factory;
+import org.geotools.ows.bindings.DescriptionTypeBinding;
 import org.geotools.wmts.WMTS;
-import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
@@ -93,16 +97,17 @@ import org.geotools.xsd.Node;
  *
  * @generated
  */
-public class DimensionBinding extends AbstractComplexBinding {
+public class DimensionBinding extends DescriptionTypeBinding {
 
-    wmtsv_1Factory factory;
+    wmtsv_1Factory wmtsv_1Factory;
 
     public DimensionBinding(wmtsv_1Factory factory) {
-        super();
-        this.factory = factory;
+        super(Ows10Factory.eINSTANCE);
+        this.wmtsv_1Factory = factory;
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WMTS.Dimension;
     }
@@ -114,7 +119,8 @@ public class DimensionBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
-    public Class getType() {
+    @Override
+    public Class<?> getType() {
         return DimensionType.class;
     }
 
@@ -125,15 +131,31 @@ public class DimensionBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        DimensionType dimension = factory.createDimensionType();
 
-        dimension.setCurrent((boolean) node.getChildValue("Current", false));
-        dimension.setDefault((String) node.getChildValue("Default"));
-        dimension.setIdentifier((CodeType) node.getChildValue("Identifier"));
-        dimension.setUnitSymbol((String) node.getChildValue("UnitSymbol", null));
-        // dimension.setUOM((DomainMetadataType) node.getChildValue("UOM"));
-        dimension.getValue().addAll(node.getChildValues("Value"));
-        return dimension;
+        if (!(value instanceof DimensionType)) {
+            value = wmtsv_1Factory.createDimensionType();
+        }
+
+        // Call DescriptionType parser to load the object with the DescriptionType values
+        value = super.parse(instance, node, value);
+
+        ((DimensionType) value).setCurrent((boolean) node.getChildValue("Current", false));
+        ((DimensionType) value).setDefault((String) node.getChildValue("Default"));
+        ((DimensionType) value).setIdentifier((CodeType) node.getChildValue("Identifier"));
+        ((DimensionType) value).setUnitSymbol((String) node.getChildValue("UnitSymbol", null));
+        @SuppressWarnings("unchecked")
+        List<String> values = node.getChildValues("Value");
+        ((DimensionType) value).getValue().addAll(values);
+
+        Object UomList = node.getChildValue("UOM");
+        if (UomList != null) {
+
+            DomainMetadataType uom = Ows11Factory.eINSTANCE.createDomainMetadataType();
+            uom.setValue(UomList.toString());
+            ((DimensionType) value).setUOM(uom);
+        }
+        return value;
     }
 }

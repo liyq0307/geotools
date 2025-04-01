@@ -37,6 +37,7 @@ public class ValueReferenceTypeBinding extends AbstractComplexEMFBinding {
         this.namespaceContext = namespaceContext;
     }
 
+    @Override
     public QName getTarget() {
         return WFS.PropertyType_ValueReference;
     }
@@ -58,8 +59,7 @@ public class ValueReferenceTypeBinding extends AbstractComplexEMFBinding {
 
     @Override
     public Element encode(Object object, Document document, Element value) throws Exception {
-        value.setTextContent(
-                Converters.convert(((ValueReferenceType) object).getValue(), String.class));
+        value.setTextContent(Converters.convert(((ValueReferenceType) object).getValue(), String.class));
         return value;
     }
 }

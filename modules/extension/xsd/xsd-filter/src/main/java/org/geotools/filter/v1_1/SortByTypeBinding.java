@@ -18,11 +18,11 @@ package org.geotools.filter.v1_1;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:SortByType.
@@ -50,6 +50,7 @@ public class SortByTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.SortByType;
     }
@@ -61,6 +62,7 @@ public class SortByTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return SortBy[].class;
     }
@@ -72,14 +74,16 @@ public class SortByTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // &lt;xsd:element maxOccurs="unbounded" name="SortProperty"
         // type="ogc:SortPropertyType"/&gt;
-        List sortBy = node.getChildValues(SortBy.class);
+        List<SortBy> sortBy = node.getChildValues(SortBy.class);
 
         return sortBy.toArray(new SortBy[sortBy.size()]);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("SortProperty".equals(name.getLocalPart())) {
             SortBy[] sortBy = (SortBy[]) object;

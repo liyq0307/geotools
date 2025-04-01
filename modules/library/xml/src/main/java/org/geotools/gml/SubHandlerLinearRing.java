@@ -17,6 +17,7 @@
 package org.geotools.gml;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.geotools.util.logging.Logging;
@@ -38,7 +39,7 @@ public class SubHandlerLinearRing extends SubHandler {
     static final Logger LOGGER = Logging.getLogger(SubHandlerLinearRing.class);
 
     /** Internal coordinate list. */
-    private ArrayList coordinateList = new ArrayList();
+    private List<Coordinate> coordinateList = new ArrayList<>();
 
     /** Creates a new instance of GMLLinearRingHandler. */
     public SubHandlerLinearRing() {}
@@ -48,6 +49,7 @@ public class SubHandlerLinearRing extends SubHandler {
      *
      * @param coordinate The coordinate to add to the LinearRing.
      */
+    @Override
     public void addCoordinate(Coordinate coordinate) {
         coordinateList.add(coordinate);
     }
@@ -58,12 +60,13 @@ public class SubHandlerLinearRing extends SubHandler {
      * @param message The current geometry type in the GML stream.
      * @return Ready for creation flag.
      */
+    @Override
     public boolean isComplete(String message) {
         // makes sure that this LinearRing has more than one coordinate and its first and last are
         // identical
         if (coordinateList.size() > 1) {
-            Coordinate firstCoordinate = (Coordinate) coordinateList.get(0);
-            Coordinate lastCoordinate = (Coordinate) coordinateList.get(coordinateList.size() - 1);
+            Coordinate firstCoordinate = coordinateList.get(0);
+            Coordinate lastCoordinate = coordinateList.get(coordinateList.size() - 1);
 
             if (lastCoordinate.equals2D(firstCoordinate)) {
                 return true;
@@ -81,10 +84,10 @@ public class SubHandlerLinearRing extends SubHandler {
      * @param geometryFactory The geometry factory used for the build.
      * @return LinearRing geometry created.
      */
+    @Override
     public Geometry create(GeometryFactory geometryFactory) {
         try {
-            Coordinate[] coords =
-                    (Coordinate[]) coordinateList.toArray(new Coordinate[coordinateList.size()]);
+            Coordinate[] coords = coordinateList.toArray(new Coordinate[coordinateList.size()]);
             LinearRing ring = geometryFactory.createLinearRing(coords);
             ring.setUserData(getSRS());
             ring.setSRID(getSRID());

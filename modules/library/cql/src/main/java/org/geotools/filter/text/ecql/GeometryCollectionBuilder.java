@@ -31,10 +31,7 @@ import org.locationtech.jts.geom.GeometryCollection;
  */
 final class GeometryCollectionBuilder extends GeometryBuilder {
 
-    /**
-     * @param statement
-     * @param resultStack
-     */
+    /** */
     public GeometryCollectionBuilder(String statement, BuildResultStack resultStack) {
         super(statement, resultStack);
     }
@@ -46,8 +43,7 @@ final class GeometryCollectionBuilder extends GeometryBuilder {
 
         Geometry[] geometries = geometryList.toArray(new Geometry[geometryList.size()]);
 
-        GeometryCollection geometryCollection =
-                getGeometryFactory().createGeometryCollection(geometries);
+        GeometryCollection geometryCollection = getGeometryFactory().createGeometryCollection(geometries);
 
         return geometryCollection;
     }

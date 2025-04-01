@@ -17,13 +17,16 @@
 
 package org.geotools.jdbc;
 
+import static org.junit.Assert.assertEquals;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.store.ContentFeatureSource;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
+import org.junit.Test;
 
 /** Base class for online tests of JDBC time zone handling. */
 public abstract class JDBCTimeZoneDateOnlineTest extends JDBCTestSupport {
@@ -44,6 +47,7 @@ public abstract class JDBCTimeZoneDateOnlineTest extends JDBCTestSupport {
         TimeZone.setDefault(zone);
     }
 
+    @Test
     public void testFiltersByDate() throws Exception {
         setup.setUpData();
         FilterFactory ff = dataStore.getFilterFactory();

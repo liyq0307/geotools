@@ -6,6 +6,7 @@
  */
 package net.opengis.cat.csw20.impl;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -26,7 +27,7 @@ import org.eclipse.emf.ecore.InternalEObject;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 
 import org.eclipse.emf.ecore.util.EDataTypeUniqueEList;
-import org.opengis.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortBy;
 
 /**
  * <!-- begin-user-doc -->
@@ -130,6 +131,7 @@ public class QueryTypeImpl extends AbstractQueryTypeImpl implements QueryType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public ElementSetNameType getElementSetName() {
         return elementSetName;
     }
@@ -154,6 +156,7 @@ public class QueryTypeImpl extends AbstractQueryTypeImpl implements QueryType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setElementSetName(ElementSetNameType newElementSetName) {
         if (newElementSetName != elementSetName) {
             NotificationChain msgs = null;
@@ -173,9 +176,10 @@ public class QueryTypeImpl extends AbstractQueryTypeImpl implements QueryType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<QName> getElementName() {
         if (elementName == null) {
-            elementName = new EDataTypeUniqueEList<QName>(QName.class, this, Csw20Package.QUERY_TYPE__ELEMENT_NAME);
+            elementName = new EDataTypeUniqueEList<>(QName.class, this, Csw20Package.QUERY_TYPE__ELEMENT_NAME);
         }
         return elementName;
     }
@@ -185,6 +189,7 @@ public class QueryTypeImpl extends AbstractQueryTypeImpl implements QueryType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public QueryConstraintType getConstraint() {
         return constraint;
     }
@@ -209,6 +214,7 @@ public class QueryTypeImpl extends AbstractQueryTypeImpl implements QueryType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setConstraint(QueryConstraintType newConstraint) {
         if (newConstraint != constraint) {
             NotificationChain msgs = null;
@@ -228,6 +234,7 @@ public class QueryTypeImpl extends AbstractQueryTypeImpl implements QueryType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public SortBy[] getSortBy() {
         return sortBy;
     }
@@ -237,6 +244,7 @@ public class QueryTypeImpl extends AbstractQueryTypeImpl implements QueryType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setSortBy(SortBy[] newSortBy) {
         SortBy[] oldSortBy = sortBy;
         sortBy = newSortBy;
@@ -249,6 +257,7 @@ public class QueryTypeImpl extends AbstractQueryTypeImpl implements QueryType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public List<QName> getTypeNames() {
         return typeNames;
     }
@@ -258,6 +267,7 @@ public class QueryTypeImpl extends AbstractQueryTypeImpl implements QueryType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setTypeNames(List<QName> newTypeNames) {
         List<QName> oldTypeNames = typeNames;
         typeNames = newTypeNames;
@@ -374,7 +384,7 @@ public class QueryTypeImpl extends AbstractQueryTypeImpl implements QueryType {
             case Csw20Package.QUERY_TYPE__CONSTRAINT:
                 return constraint != null;
             case Csw20Package.QUERY_TYPE__SORT_BY:
-                return SORT_BY_EDEFAULT == null ? sortBy != null : !SORT_BY_EDEFAULT.equals(sortBy);
+                return SORT_BY_EDEFAULT == null ? sortBy != null : !Arrays.equals(SORT_BY_EDEFAULT, sortBy);
             case Csw20Package.QUERY_TYPE__TYPE_NAMES:
                 return typeNames != null;
         }

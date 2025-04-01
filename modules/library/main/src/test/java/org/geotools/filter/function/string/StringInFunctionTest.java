@@ -18,49 +18,42 @@ package org.geotools.filter.function.string;
 
 import java.util.Arrays;
 import java.util.List;
-import junit.framework.TestCase;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.filter.FunctionImpl;
-import org.opengis.filter.FilterFactory;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class StringInFunctionTest extends TestCase {
+public class StringInFunctionTest {
 
     FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
+    @Test
     public void test() throws Exception {
         StringInFunction f = new StringInFunction();
 
-        List params =
-                Arrays.asList(
-                        ff.literal("foo"),
-                        ff.literal(true),
-                        ff.literal("foo"),
-                        ff.literal("bar"),
-                        ff.literal("baz"));
-        ((FunctionImpl) f).setParameters(params);
+        List<Expression> params = Arrays.asList(
+                ff.literal("foo"), ff.literal(true), ff.literal("foo"), ff.literal("bar"), ff.literal("baz"));
+        f.setParameters(params);
 
-        assertEquals(Boolean.TRUE, f.evaluate(null));
+        Assert.assertEquals(Boolean.TRUE, f.evaluate(null));
 
-        params =
-                Arrays.asList(
-                        ff.literal("foo"),
-                        ff.literal(true),
-                        ff.literal("FOO"),
-                        ff.literal("bar"),
-                        ff.literal("baz"));
-        ((FunctionImpl) f).setParameters(params);
-        assertEquals(Boolean.FALSE, f.evaluate(null));
+        params = Arrays.asList(
+                ff.literal("foo"), ff.literal(true), ff.literal("FOO"), ff.literal("bar"), ff.literal("baz"));
+        f.setParameters(params);
+        Assert.assertEquals(Boolean.FALSE, f.evaluate(null));
     }
 
+    @Test
     public void testTooFewArguments() throws Exception {
         StringInFunction f = new StringInFunction();
 
-        List params = Arrays.asList(ff.literal("foo"), ff.literal(true));
-        ((FunctionImpl) f).setParameters(params);
+        List<Expression> params = Arrays.asList(ff.literal("foo"), ff.literal(true));
+        f.setParameters(params);
 
         try {
             f.evaluate(null);
-            fail();
+            Assert.fail();
         } catch (IllegalArgumentException e) {
         }
     }

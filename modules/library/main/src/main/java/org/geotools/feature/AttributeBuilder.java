@@ -20,30 +20,30 @@ package org.geotools.feature;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.Association;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureFactory;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.AssociationDescriptor;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.type.AttributeDescriptorImpl;
 import org.geotools.feature.type.ComplexTypeImpl;
 import org.geotools.feature.type.Types;
+import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Association;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureFactory;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.AssociationDescriptor;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Builder for attributes.
@@ -52,15 +52,14 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  */
 public class AttributeBuilder {
 
-    protected static final ComplexType ANYTYPE_TYPE =
-            new ComplexTypeImpl(
-                    new NameImpl("http://www.w3.org/2001/XMLSchema", "anyType"),
-                    null,
-                    false,
-                    true,
-                    Collections.EMPTY_LIST,
-                    null,
-                    null);
+    protected static final ComplexType ANYTYPE_TYPE = new ComplexTypeImpl(
+            new NameImpl("http://www.w3.org/2001/XMLSchema", "anyType"),
+            null,
+            false,
+            true,
+            Collections.emptyList(),
+            null,
+            null);
 
     /** Factory used to create attributes */
     FeatureFactory attributeFactory;
@@ -68,20 +67,14 @@ public class AttributeBuilder {
     /** Namespace context. */
     String namespace;
 
-    /**
-     * Type of complex attribute being built. This field is mutually exclusive with {@link
-     * #descriptor}
-     */
+    /** Type of complex attribute being built. This field is mutually exclusive with {@link #descriptor} */
     AttributeType type;
 
-    /**
-     * Descriptor of complex attribute being built. This field is mutually exclusive with {@link
-     * #type}
-     */
+    /** Descriptor of complex attribute being built. This field is mutually exclusive with {@link #type} */
     AttributeDescriptor descriptor;
 
     /** Contained properties (associations + attributes) */
-    List properties;
+    List<Property> properties;
 
     /** The crs of the attribute. */
     CoordinateReferenceSystem crs;
@@ -112,10 +105,7 @@ public class AttributeBuilder {
     // State
     //
 
-    /**
-     * Initializes the builder to its initial state, the same state it is in directly after being
-     * instantiated.
-     */
+    /** Initializes the builder to its initial state, the same state it is in directly after being instantiated. */
     public void init() {
         descriptor = null;
         type = null;
@@ -137,13 +127,13 @@ public class AttributeBuilder {
 
         if (attribute instanceof ComplexAttribute) {
             ComplexAttribute complex = (ComplexAttribute) attribute;
-            Collection properties = (Collection) complex.getValue();
-            for (Iterator itr = properties.iterator(); itr.hasNext(); ) {
-                Property property = (Property) itr.next();
+            for (Property property : toPropertyCollection(complex.getValue())) {
                 if (property instanceof Attribute) {
                     Attribute att = (Attribute) property;
                     add(
-                            att.getIdentifier() == null ? null : att.getIdentifier().toString(),
+                            att.getIdentifier() == null
+                                    ? null
+                                    : att.getIdentifier().toString(),
                             att.getValue(),
                             att.getName());
                 } else if (property instanceof Association) {
@@ -158,10 +148,7 @@ public class AttributeBuilder {
 
             if (feature.getDefaultGeometryProperty() != null) {
                 if (crs == null) {
-                    crs =
-                            feature.getDefaultGeometryProperty()
-                                    .getType()
-                                    .getCoordinateReferenceSystem();
+                    crs = feature.getDefaultGeometryProperty().getType().getCoordinateReferenceSystem();
                 }
                 defaultGeometry = feature.getDefaultGeometryProperty().getValue();
             }
@@ -185,8 +172,7 @@ public class AttributeBuilder {
     /**
      * Sets the type of the attribute being built.
      *
-     * <p>When building a complex attribute, this type is used a reference to obtain the types of
-     * contained attributes.
+     * <p>When building a complex attribute, this type is used a reference to obtain the types of contained attributes.
      */
     public void setType(AttributeType type) {
         this.type = type;
@@ -196,12 +182,11 @@ public class AttributeBuilder {
     /**
      * Sets the descriptor of the attribute being built.
      *
-     * <p>When building a complex attribute, this type is used a reference to obtain the types of
-     * contained attributes.
+     * <p>When building a complex attribute, this type is used a reference to obtain the types of contained attributes.
      */
     public void setDescriptor(AttributeDescriptor descriptor) {
         this.descriptor = descriptor;
-        this.type = (AttributeType) descriptor.getType();
+        this.type = descriptor.getType();
     }
 
     /** @return The type of the attribute being built. */
@@ -217,15 +202,15 @@ public class AttributeBuilder {
 
     /** @return The coordinate reference system of the feature, or null if not set. */
     public CoordinateReferenceSystem getCRS(Object geom) {
-        if (crs != null) {
-            return crs;
-        } else if (geom != null && geom instanceof Geometry) {
-            Object userData = ((Geometry) geom).getUserData();
-            if (userData != null && userData instanceof CoordinateReferenceSystem) {
-                return (CoordinateReferenceSystem) userData;
+        if (geom != null && geom instanceof Geometry) {
+            // the CRS in the geometry itself is preferred
+            // to support multiple geometries/CRS
+            CoordinateReferenceSystem featureCrs = JTS.getCRS((Geometry) geom);
+            if (featureCrs != null) {
+                return featureCrs;
             }
         }
-        return null;
+        return crs;
     }
 
     /** Sets the default geometry of the feature. */
@@ -244,11 +229,10 @@ public class AttributeBuilder {
     /**
      * Adds an attribute to the complex attribute being built. <br>
      *
-     * <p>This method uses the result of {@link #getNamespaceURI()} to build a qualified attribute
-     * name.
+     * <p>This method uses the result of {@link #getNamespaceURI()} to build a qualified attribute name.
      *
-     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to
-     * determine the attribute type.
+     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to determine the attribute
+     * type.
      *
      * @param name The name of the attribute.
      * @param value The value of the attribute.
@@ -260,11 +244,10 @@ public class AttributeBuilder {
     /**
      * Adds an association to the complex attribute being built. <br>
      *
-     * <p>This method uses the result of {@link #getNamespaceURI()} to build a qualified attribute
-     * name.
+     * <p>This method uses the result of {@link #getNamespaceURI()} to build a qualified attribute name.
      *
-     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to
-     * determine the association type.
+     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to determine the association
+     * type.
      *
      * @param value The value of the association, an attribute.
      * @param name The name of the association.
@@ -276,8 +259,8 @@ public class AttributeBuilder {
     /**
      * Adds an attribute to the complex attribute being built. <br>
      *
-     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to
-     * determine the attribute type.
+     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to determine the attribute
+     * type.
      *
      * @param value The value of the attribute.
      * @param name The name of the attribute.
@@ -290,8 +273,8 @@ public class AttributeBuilder {
     /**
      * Adds an association to the complex attribute being built. <br>
      *
-     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to
-     * determine the association type.
+     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to determine the association
+     * type.
      *
      * @param attribute The value of the association, an attribute.
      * @param name The name of the association.
@@ -304,8 +287,8 @@ public class AttributeBuilder {
     /**
      * Adds an attribute to the complex attribute being built. <br>
      *
-     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to
-     * determine the attribute type.
+     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to determine the attribute
+     * type.
      *
      * @param name The name of the attribute.
      * @param value The value of the attribute.
@@ -317,8 +300,8 @@ public class AttributeBuilder {
     /**
      * Adds an association to the complex attribute being built. <br>
      *
-     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to
-     * determine the association type.
+     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to determine the association
+     * type.
      *
      * @param value The value of the association, an attribute.
      * @param name The name of the association.
@@ -335,8 +318,8 @@ public class AttributeBuilder {
      *
      * <p>The result of {@link #getNamespaceURI()} to build a qualified attribute name.
      *
-     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to
-     * determine the attribute type.
+     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to determine the attribute
+     * type.
      *
      * @param id The id of the attribute.
      * @param name The name of the attribute.
@@ -349,8 +332,8 @@ public class AttributeBuilder {
     /**
      * Adds an attribute to the complex attribute being built. <br>
      *
-     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to
-     * determine the attribute type.
+     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to determine the attribute
+     * type.
      *
      * @param id The id of the attribute.
      * @param value The value of the attribute.
@@ -364,8 +347,8 @@ public class AttributeBuilder {
     /**
      * Adds an attribute to the complex attribute being built. <br>
      *
-     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to
-     * determine the attribute type.
+     * <p>This method uses the type supplied in {@link #setType(AttributeType)} in order to determine the attribute
+     * type.
      *
      * @param id The id of the attribute.
      * @param name The name of the attribute.
@@ -379,9 +362,9 @@ public class AttributeBuilder {
     }
 
     /** Convenience accessor for properties list which does the null check. */
-    protected List properties() {
+    protected List<Property> properties() {
         if (properties == null) {
-            properties = new ArrayList();
+            properties = new ArrayList<>();
         }
 
         return properties;
@@ -419,14 +402,10 @@ public class AttributeBuilder {
         return (AttributeDescriptor) descriptor;
     }
 
-    /**
-     * Factors out attribute creation code, needs to be called with either one of type or descriptor
-     * null.
-     */
-    protected Attribute create(
-            Object value, AttributeType type, AttributeDescriptor descriptor, String id) {
+    /** Factors out attribute creation code, needs to be called with either one of type or descriptor null. */
+    protected Attribute create(Object value, AttributeType type, AttributeDescriptor descriptor, String id) {
         if (descriptor != null) {
-            type = (AttributeType) descriptor.getType();
+            type = descriptor.getType();
         }
         // if (type instanceof FeatureCollectionType) {
         // attribute = descriptor != null ? attributeFactory.createFeatureCollection(
@@ -435,39 +414,34 @@ public class AttributeBuilder {
         // } else
         if (type instanceof FeatureType) {
             return descriptor != null
-                    ? attributeFactory.createFeature((Collection) value, descriptor, id)
-                    : attributeFactory.createFeature((Collection) value, (FeatureType) type, id);
+                    ? attributeFactory.createFeature(toPropertyCollection(value), descriptor, id)
+                    : attributeFactory.createFeature(toPropertyCollection(value), (FeatureType) type, id);
         } else if (type instanceof ComplexType) {
-            return createComplexAttribute((Collection) value, (ComplexType) type, descriptor, id);
+            return createComplexAttribute(toPropertyCollection(value), (ComplexType) type, descriptor, id);
         } else if (type instanceof GeometryType) {
-            return attributeFactory.createGeometryAttribute(
-                    value, (GeometryDescriptor) descriptor, id, getCRS(value));
+            return attributeFactory.createGeometryAttribute(value, (GeometryDescriptor) descriptor, id, getCRS(value));
         } else {
             return attributeFactory.createAttribute(value, descriptor, id);
         }
     }
 
-    /**
-     * Create complex attribute
-     *
-     * @param value
-     * @param type
-     * @param descriptor
-     * @param id
-     * @return
-     */
+    @SuppressWarnings("unchecked")
+    private Collection<Property> toPropertyCollection(Object value) {
+        return (Collection<Property>) value;
+    }
+
+    /** Create complex attribute */
     public ComplexAttribute createComplexAttribute(
             Object value, ComplexType type, AttributeDescriptor descriptor, String id) {
         return descriptor != null
-                ? attributeFactory.createComplexAttribute((Collection) value, descriptor, id)
-                : attributeFactory.createComplexAttribute((Collection) value, type, id);
+                ? attributeFactory.createComplexAttribute(toPropertyCollection(value), descriptor, id)
+                : attributeFactory.createComplexAttribute(toPropertyCollection(value), type, id);
     }
 
     /**
      * Builds the attribute.
      *
-     * <p>The class of the attribute built is determined from its type set with {@link
-     * #setType(AttributeType)}.
+     * <p>The class of the attribute built is determined from its type set with {@link #setType(AttributeType)}.
      *
      * @return The build attribute.
      */
@@ -478,8 +452,7 @@ public class AttributeBuilder {
     /**
      * Builds the attribute.
      *
-     * <p>The class of the attribute built is determined from its type set with {@link
-     * #setType(AttributeType)}.
+     * <p>The class of the attribute built is determined from its type set with {@link #setType(AttributeType)}.
      *
      * @param id The id of the attribute, or null.
      * @return The build attribute.
@@ -498,11 +471,10 @@ public class AttributeBuilder {
             Feature feature = (Feature) built;
             // FIXME feature.setCRS(getCRS());
             if (defaultGeometry != null) {
-                for (Iterator itr = feature.getProperties().iterator(); itr.hasNext(); ) {
-                    Attribute att = (Attribute) itr.next();
-                    if (att instanceof GeometryAttribute) {
-                        if (defaultGeometry.equals(att.getValue())) {
-                            feature.setDefaultGeometryProperty((GeometryAttribute) att);
+                for (Property p : feature.getProperties()) {
+                    if (p instanceof GeometryAttribute) {
+                        if (defaultGeometry.equals(p.getValue())) {
+                            feature.setDefaultGeometryProperty((GeometryAttribute) p);
                         }
                     }
                 }
@@ -513,51 +485,41 @@ public class AttributeBuilder {
     }
 
     /**
-     * Special case for any type. Skip validating existence in the schema, since anyType legally can
-     * be casted into anything.
+     * Special case for any type. Skip validating existence in the schema, since anyType legally can be casted into
+     * anything.
      *
      * @param value the value to be set
      * @param type the type of the value
      * @param descriptor the attribute descriptor of anyType type
-     * @param id
-     * @return
      */
-    public Attribute addAnyTypeValue(
-            Object value, AttributeType type, AttributeDescriptor descriptor, String id) {
+    public Attribute addAnyTypeValue(Object value, AttributeType type, AttributeDescriptor descriptor, String id) {
         Attribute attribute = create(value, type, descriptor, id);
         properties().add(attribute);
         return attribute;
     }
 
     /**
-     * Create a complex attribute for XS.AnyType, since it's defined as a simple type. We need a
-     * complex attribute so we can set xlink:href in it.
-     *
-     * @param value
-     * @param descriptor
-     * @param id
-     * @return
+     * Create a complex attribute for XS.AnyType, since it's defined as a simple type. We need a complex attribute so we
+     * can set xlink:href in it.
      */
-    public Attribute addComplexAnyTypeAttribute(
-            Object value, AttributeDescriptor descriptor, String id) {
+    public Attribute addComplexAnyTypeAttribute(Object value, AttributeDescriptor descriptor, String id) {
         // need to create a complex attribute for any type, so we can have client properties
         // for xlink:href and so we chain features etc.
         Map<Object, Object> userData = descriptor.getUserData();
-        descriptor =
-                new AttributeDescriptorImpl(
-                        ANYTYPE_TYPE,
-                        descriptor.getName(),
-                        descriptor.getMinOccurs(),
-                        descriptor.getMaxOccurs(),
-                        descriptor.isNillable(),
-                        descriptor.getDefaultValue());
+        descriptor = new AttributeDescriptorImpl(
+                ANYTYPE_TYPE,
+                descriptor.getName(),
+                descriptor.getMinOccurs(),
+                descriptor.getMaxOccurs(),
+                descriptor.isNillable(),
+                descriptor.getDefaultValue());
         descriptor.getUserData().putAll(userData);
         return createComplexAttribute(value, ANYTYPE_TYPE, descriptor, id);
     }
 
     /**
-     * @return The descriptor of the attribute being built or null there is no descriptor (this
-     *     occurs if setType() was used).
+     * @return The descriptor of the attribute being built or null there is no descriptor (this occurs if setType() was
+     *     used).
      */
     public AttributeDescriptor getDescriptor() {
         return this.descriptor;
@@ -569,9 +531,9 @@ public class AttributeBuilder {
     }
 
     /** Convenience accessor for properties list which does the null check. */
-    protected List getProperties() {
+    protected List<Property> getProperties() {
         if (this.properties == null) {
-            this.properties = new ArrayList();
+            this.properties = new ArrayList<>();
         }
 
         return this.properties;

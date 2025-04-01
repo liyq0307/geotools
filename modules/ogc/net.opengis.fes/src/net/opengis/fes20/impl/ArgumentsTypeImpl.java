@@ -72,9 +72,10 @@ public class ArgumentsTypeImpl extends EObjectImpl implements ArgumentsType {
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<ArgumentType> getArgument() {
         if (argument == null) {
-            argument = new EObjectContainmentEList<ArgumentType>(ArgumentType.class, this, Fes20Package.ARGUMENTS_TYPE__ARGUMENT);
+            argument = new EObjectContainmentEList<>(ArgumentType.class, this, Fes20Package.ARGUMENTS_TYPE__ARGUMENT);
         }
         return argument;
     }

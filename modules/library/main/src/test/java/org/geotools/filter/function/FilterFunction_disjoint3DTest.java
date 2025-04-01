@@ -1,24 +1,26 @@
 package org.geotools.filter.function;
 
-import junit.framework.TestCase;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.data.DataUtilities;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.filter.FilterFactoryImpl;
+import org.junit.Assert;
+import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Unit tests for FilterFunction_disjoint3D
  *
  * @author Martin Davis
  */
-public class FilterFunction_disjoint3DTest extends TestCase {
+public class FilterFunction_disjoint3DTest {
 
+    @Test
     public void testIntersects() throws Exception {
         FilterFactoryImpl ff = new FilterFactoryImpl();
 
@@ -38,7 +40,7 @@ public class FilterFunction_disjoint3DTest extends TestCase {
 
         Function exp = ff.function("disjoint3D", ff.property("geom"), literal_geom);
         Object value = exp.evaluate(f);
-        assertTrue(value instanceof Boolean);
-        assertTrue(!(Boolean) value);
+        Assert.assertTrue(value instanceof Boolean);
+        Assert.assertFalse((Boolean) value);
     }
 }

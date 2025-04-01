@@ -18,10 +18,10 @@ package org.geotools.data.ogr;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * An OGR feature reader, reads data from the provided layer.<br>
@@ -65,6 +65,7 @@ class OGRFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature
         // the per feature style, assuming the caps say we can
     }
 
+    @Override
     public void close() throws IOException {
         if (curr != null) {
             ogr.FeatureDestroy(curr);
@@ -81,15 +82,18 @@ class OGRFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature
         schema = null;
     }
 
+    @Override
     @SuppressWarnings("deprecation") // finalize is deprecated in Java 9
     protected void finalize() throws Throwable {
         close();
     }
 
+    @Override
     public SimpleFeatureType getFeatureType() {
         return schema;
     }
 
+    @Override
     public boolean hasNext() throws IOException {
         // ugly, but necessary to close the reader when getting to the end, because
         // it would break feature appending otherwise (the reader is used in feature
@@ -109,6 +113,7 @@ class OGRFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature
         }
     }
 
+    @Override
     public SimpleFeature next() throws IOException, NoSuchElementException {
         if (!hasNext()) throw new NoSuchElementException("There are no more Features to be read");
 

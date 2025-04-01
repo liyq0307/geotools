@@ -20,13 +20,13 @@ package org.geotools.feature;
 
 import java.util.Collection;
 import java.util.Iterator;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
 /** @author jamesm */
 public class MockFeatureCollection implements SimpleFeatureCollection {
@@ -34,9 +34,9 @@ public class MockFeatureCollection implements SimpleFeatureCollection {
     /** Creates a new instance of MockFeatureCollection */
     public MockFeatureCollection() {}
 
+    @Override
     public void accepts(
-            org.opengis.feature.FeatureVisitor visitor,
-            org.opengis.util.ProgressListener progress) {}
+            org.geotools.api.feature.FeatureVisitor visitor, org.geotools.api.util.ProgressListener progress) {}
 
     public void addListener(CollectionListener listener) throws NullPointerException {}
 
@@ -44,20 +44,24 @@ public class MockFeatureCollection implements SimpleFeatureCollection {
 
     public void close(Iterator close) {}
 
+    @Override
     public SimpleFeatureIterator features() {
         return null;
     }
 
+    @Override
     public SimpleFeatureType getSchema() {
         return null;
     }
 
     public void removeListener(CollectionListener listener) throws NullPointerException {}
 
+    @Override
     public SimpleFeatureCollection sort(SortBy order) {
         return null;
     }
 
+    @Override
     public SimpleFeatureCollection subCollection(Filter filter) {
         return null;
     }
@@ -76,21 +80,23 @@ public class MockFeatureCollection implements SimpleFeatureCollection {
         return false;
     }
 
-    public boolean addAll(
-            FeatureCollection<? extends SimpleFeatureType, ? extends SimpleFeature> resource) {
+    public boolean addAll(FeatureCollection<? extends SimpleFeatureType, ? extends SimpleFeature> resource) {
         return false;
     }
 
     public void clear() {}
 
+    @Override
     public boolean contains(Object o) {
         return false;
     }
 
+    @Override
     public boolean containsAll(Collection c) {
         return false;
     }
 
+    @Override
     public boolean isEmpty() {
         return false;
     }
@@ -107,22 +113,27 @@ public class MockFeatureCollection implements SimpleFeatureCollection {
         return false;
     }
 
+    @Override
     public int size() {
         return 0;
     }
 
+    @Override
     public Object[] toArray() {
         return null;
     }
 
-    public Object[] toArray(Object[] a) {
+    @Override
+    public <O> O[] toArray(O[] a) {
         return null;
     }
 
+    @Override
     public ReferencedEnvelope getBounds() {
         return null;
     }
 
+    @Override
     public String getID() {
         return null;
     }

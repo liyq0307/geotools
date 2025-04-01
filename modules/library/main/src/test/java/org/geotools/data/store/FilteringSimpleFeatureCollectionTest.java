@@ -17,7 +17,16 @@
 
 package org.geotools.data.store;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+
 import java.io.IOException;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -26,13 +35,8 @@ import org.geotools.feature.SchemaException;
 import org.geotools.feature.collection.FilteringSimpleFeatureCollection;
 import org.geotools.feature.visitor.CountVisitor;
 import org.geotools.feature.visitor.MaxVisitor;
+import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.util.ProgressListener;
 
 public class FilteringSimpleFeatureCollectionTest extends FeatureCollectionWrapperTestSupport {
     FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
@@ -40,58 +44,56 @@ public class FilteringSimpleFeatureCollectionTest extends FeatureCollectionWrapp
     FeatureVisitor lastVisitor = null;
     private ListFeatureCollection visitorCollection;
 
-    protected void setUp() throws Exception {
+    @Override
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
         SimpleFeatureType schema =
-                DataUtilities.createType(
-                        "BasicPolygons", "the_geom:MultiPolygon:srid=4326,ID:String,value:int");
-        visitorCollection =
-                new ListFeatureCollection(schema) {
-                    public void accepts(FeatureVisitor visitor, ProgressListener progress)
-                            throws java.io.IOException {
-                        lastVisitor = visitor;
-                    };
+                DataUtilities.createType("BasicPolygons", "the_geom:MultiPolygon:srid=4326,ID:String,value:int");
+        visitorCollection = new ListFeatureCollection(schema) {
+            @Override
+            public void accepts(FeatureVisitor visitor, ProgressListener progress) throws java.io.IOException {
+                lastVisitor = visitor;
+            }
+            ;
 
-                    @Override
-                    public SimpleFeatureCollection subCollection(Filter filter) {
-                        if (filter == Filter.INCLUDE) {
-                            return this;
-                        } else {
-                            return super.subCollection(filter);
-                        }
-                    }
-                };
+            @Override
+            public SimpleFeatureCollection subCollection(Filter filter) {
+                if (filter == Filter.INCLUDE) {
+                    return this;
+                } else {
+                    return super.subCollection(filter);
+                }
+            }
+        };
     }
 
+    @Test
     public void testNext() {
         Filter filter = ff.equal(ff.property("someAtt"), ff.literal("1"), false);
         SimpleFeatureCollection collection = new FilteringSimpleFeatureCollection(delegate, filter);
         assertNotNull(collection.features().next());
     }
 
+    @Test
     public void testCount() {
         Filter filter = ff.equal(ff.property("someAtt"), ff.literal("1"), false);
         SimpleFeatureCollection collection = new FilteringSimpleFeatureCollection(delegate, filter);
         assertEquals(1, collection.size());
     }
 
+    @Test
     public void testVisitor() throws IOException {
         Filter filter = ff.equal(ff.property("someAtt"), ff.literal("1"), false);
         SimpleFeatureCollection collection = new FilteringSimpleFeatureCollection(delegate, filter);
         collection.accepts(
-                new FeatureVisitor() {
-
-                    public void visit(Feature feature) {
-                        assertEquals(1, feature.getProperty("someAtt").getValue());
-                    }
-                },
-                null);
+                feature -> assertEquals(1, feature.getProperty("someAtt").getValue()), null);
     }
 
     @Test
     public void testMaxVisitorDelegation() throws SchemaException, IOException {
         MaxVisitor visitor =
-                new MaxVisitor(CommonFactoryFinder.getFilterFactory2().property("value"));
+                new MaxVisitor(CommonFactoryFinder.getFilterFactory().property("value"));
         assertOptimalVisit(visitor);
     }
 

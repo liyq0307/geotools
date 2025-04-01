@@ -16,6 +16,8 @@
  */
 package org.geotools.data.db2;
 
+import static org.junit.Assert.assertEquals;
+
 import org.geotools.jdbc.JDBCGeometryOnlineTest;
 import org.geotools.jdbc.JDBCGeometryTestSetup;
 import org.locationtech.jts.geom.LineString;
@@ -28,6 +30,7 @@ public class DB2GeometryOnlineTest extends JDBCGeometryOnlineTest {
         return new DB2GeometryTestSetup();
     }
 
+    @Override
     public void testLinearRing() throws Exception {
         assertEquals(LineString.class, checkGeometryType(LinearRing.class));
     }

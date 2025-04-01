@@ -19,15 +19,15 @@ package org.geotools.data.transform;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.collection.AbstractFeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.geometry.BoundingBox;
 
 /**
  * A reshaping collection based on a user provided feature collection
@@ -81,10 +81,8 @@ class TransformFeatureCollectionWrapper extends AbstractFeatureCollection {
         }
 
         // sigh, fall back to brute force computation
-        SimpleFeatureIterator fi = null;
         ReferencedEnvelope re = null;
-        try {
-            fi = features();
+        try (SimpleFeatureIterator fi = features()) {
             while (fi.hasNext()) {
                 SimpleFeature f = fi.next();
                 BoundingBox bb = f.getBounds();
@@ -99,10 +97,6 @@ class TransformFeatureCollectionWrapper extends AbstractFeatureCollection {
             }
 
             return re;
-        } finally {
-            if (fi != null) {
-                fi.close();
-            }
         }
     }
 }

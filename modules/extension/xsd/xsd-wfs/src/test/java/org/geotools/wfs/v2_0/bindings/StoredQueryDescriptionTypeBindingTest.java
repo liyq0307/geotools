@@ -16,6 +16,9 @@
  */
 package org.geotools.wfs.v2_0.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.Arrays;
 import javax.xml.namespace.QName;
 import net.opengis.wfs20.ParameterExpressionType;
@@ -25,33 +28,32 @@ import net.opengis.wfs20.Wfs20Factory;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.wfs.v2_0.WFS;
 import org.geotools.wfs.v2_0.WFSTestSupport;
+import org.junit.Test;
 import org.w3c.dom.Document;
 
 public class StoredQueryDescriptionTypeBindingTest extends WFSTestSupport {
-
+    @Test
     public void testParse() throws Exception {
-        String xml =
-                "   <wfs:StoredQueryDefinition id='myStoredQuery' xmlns:wfs='http://www.opengis.net/wfs/2.0' "
-                        + "       xmlns:fes='http://www.opengis.net/fes/2.0' xmlns:gml='http://www.opengis.net/gml/3.2'>"
-                        + "      <wfs:Parameter name='AreaOfInterest' type='gml:Polygon'/> "
-                        + "      <wfs:QueryExpressionText "
-                        + "           returnFeatureTypes='sf:PrimitiveGeoFeature' "
-                        + "           language='urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression' "
-                        + "           isPrivate='false'> "
-                        + "         <wfs:Query typeNames='myns:Parks'> "
-                        + "            <fes:Filter> "
-                        + "               <fes:Within> "
-                        + "                  <fes:ValueReference>pointProperty</fes:ValueReference> "
-                        + "                  ${AreaOfInterest} "
-                        + "               </fes:Within> "
-                        + "            </fes:Filter> "
-                        + "         </wfs:Query> "
-                        + "      </wfs:QueryExpressionText> "
-                        + "   </wfs:StoredQueryDefinition> ";
+        String xml = "   <wfs:StoredQueryDefinition id='myStoredQuery' xmlns:wfs='http://www.opengis.net/wfs/2.0' "
+                + "       xmlns:fes='http://www.opengis.net/fes/2.0' xmlns:gml='http://www.opengis.net/gml/3.2'>"
+                + "      <wfs:Parameter name='AreaOfInterest' type='gml:Polygon'/> "
+                + "      <wfs:QueryExpressionText "
+                + "           returnFeatureTypes='sf:PrimitiveGeoFeature' "
+                + "           language='urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression' "
+                + "           isPrivate='false'> "
+                + "         <wfs:Query typeNames='myns:Parks'> "
+                + "            <fes:Filter> "
+                + "               <fes:Within> "
+                + "                  <fes:ValueReference>pointProperty</fes:ValueReference> "
+                + "                  ${AreaOfInterest} "
+                + "               </fes:Within> "
+                + "            </fes:Filter> "
+                + "         </wfs:Query> "
+                + "      </wfs:QueryExpressionText> "
+                + "   </wfs:StoredQueryDefinition> ";
         buildDocument(xml);
 
-        StoredQueryDescriptionType sqd =
-                (StoredQueryDescriptionType) parse(WFS.StoredQueryDescriptionType);
+        StoredQueryDescriptionType sqd = (StoredQueryDescriptionType) parse(WFS.StoredQueryDescriptionType);
         assertNotNull(sqd);
 
         assertEquals(1, sqd.getParameter().size());
@@ -63,6 +65,7 @@ public class StoredQueryDescriptionTypeBindingTest extends WFSTestSupport {
         assertEquals(1, sqd.getQueryExpressionText().size());
     }
 
+    @Test
     public void testEncode() throws Exception {
         Wfs20Factory f = Wfs20Factory.eINSTANCE;
         StoredQueryDescriptionType sqd = f.createStoredQueryDescriptionType();
@@ -73,33 +76,31 @@ public class StoredQueryDescriptionTypeBindingTest extends WFSTestSupport {
         p.setType(GML.Polygon);
         sqd.getParameter().add(p);
 
-        String xml =
-                "<wfs:Query typeNames='myns:Parks'>"
-                        + "  <fes:Filter>"
-                        + "   <fes:Within>\n"
-                        + "     <fes:ValueReference>geometry</fes:ValueReference>"
-                        + "     ${AreaOfInterest}"
-                        + "   </fes:Within>"
-                        + "  </fes:Filter>"
-                        + "</wfs:Query> ";
+        String xml = "<wfs:Query typeNames='myns:Parks'>"
+                + "  <fes:Filter>"
+                + "   <fes:Within>\n"
+                + "     <fes:ValueReference>geometry</fes:ValueReference>"
+                + "     ${AreaOfInterest}"
+                + "   </fes:Within>"
+                + "  </fes:Filter>"
+                + "</wfs:Query> ";
 
         QueryExpressionTextType qet = f.createQueryExpressionTextType();
         sqd.getQueryExpressionText().add(qet);
 
         qet.setLanguage("urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression");
-        qet.setReturnFeatureTypes(
-                Arrays.asList(new QName("http://www.someserver.com/myns", "Parks")));
+        qet.setReturnFeatureTypes(Arrays.asList(new QName("http://www.someserver.com/myns", "Parks")));
         qet.setValue(xml);
 
         Document dom = encode(sqd, WFS.StoredQueryDescription, WFS.StoredQueryDescriptionType);
         assertEquals("wfs:StoredQueryDescription", dom.getDocumentElement().getNodeName());
         assertEquals(1, dom.getElementsByTagName("wfs:QueryExpressionText").getLength());
 
-        assertTrue(
+        assertEquals(
+                "wfs:Query",
                 dom.getElementsByTagName("wfs:QueryExpressionText")
                         .item(0)
                         .getFirstChild()
-                        .getNodeName()
-                        .equals("wfs:Query"));
+                        .getNodeName());
     }
 }

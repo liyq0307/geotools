@@ -18,11 +18,11 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converter;
 import org.geotools.util.Converters;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * Applies the available {@link Converter} to turn the value into the desired target class
@@ -31,17 +31,18 @@ import org.opengis.filter.capability.FunctionName;
  */
 public class FilterFunction_Convert extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "convert",
-                    parameter("converted", Object.class),
-                    parameter("value", Object.class),
-                    parameter("class", Class.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "convert",
+            parameter("converted", Object.class),
+            parameter("value", Object.class),
+            parameter("class", Class.class));
 
     public FilterFunction_Convert() {
         super(NAME);
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
     public Object evaluate(Object feature) {
         try {
             Object arg = getExpression(0).evaluate(feature);

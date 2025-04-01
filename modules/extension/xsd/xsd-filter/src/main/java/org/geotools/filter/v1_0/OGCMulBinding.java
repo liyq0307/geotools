@@ -17,12 +17,12 @@
 package org.geotools.filter.v1_0;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Multiply;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Multiply;
 
 /**
  * Binding object for the element http://www.opengis.net/ogc:Mul.
@@ -46,10 +46,12 @@ public class OGCMulBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.Mul;
     }
 
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -61,6 +63,7 @@ public class OGCMulBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Multiply.class;
     }
@@ -72,8 +75,8 @@ public class OGCMulBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        return filterfactory.multiply(
-                (Expression) node.getChildValue(0), (Expression) node.getChildValue(1));
+        return filterfactory.multiply((Expression) node.getChildValue(0), (Expression) node.getChildValue(1));
     }
 }

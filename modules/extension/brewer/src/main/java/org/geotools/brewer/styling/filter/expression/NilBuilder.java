@@ -16,24 +16,28 @@
  */
 package org.geotools.brewer.styling.filter.expression;
 
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.NilExpression;
 import org.geotools.brewer.styling.builder.Builder;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.NilExpression;
 
 public class NilBuilder implements Builder<NilExpression> {
 
+    @Override
     public NilExpression build() {
         return (NilExpression) Expression.NIL;
     }
 
+    @Override
     public Builder<NilExpression> reset() {
         return this;
     }
 
+    @Override
     public Builder<NilExpression> reset(NilExpression original) {
         return this;
     }
 
+    @Override
     public Builder<NilExpression> unset() {
         return this;
     }

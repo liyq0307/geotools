@@ -23,16 +23,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.RemoteOWS;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.UserLayer;
 import org.geotools.util.Utilities;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
- * DJB: on inlinefeature support: The inline features also lets you "sort of" make your WMS into a
- * WFS-T.
+ * DJB: on inlinefeature support: The inline features also lets you "sort of" make your WMS into a WFS-T.
  *
- * <p>I was going to implement this after SLD POST on monday, but I was expecting the definition in
- * the spec to be a bit "nicer". Right now its just:
+ * <p>I was going to implement this after SLD POST on monday, but I was expecting the definition in the spec to be a bit
+ * "nicer". Right now its just:
  *
  * <pre>
  * {@code <element name="InlineFeature"> <complexType> <sequence> <element ref="gml:_Feature" maxOccurs="unbounded"/> </sequence> </complexType>}
@@ -40,98 +44,110 @@ import org.opengis.feature.simple.SimpleFeatureType;
  *
  * <p>(the spec hasnt been finalized)
  *
- * <p>I guess if we make some assumptions about the data coming in - ie. every feature is the same
- * type, and its simple (no nesting, no <choices>, and no attributes), then we can parse ones that
- * look like:
+ * <p>I guess if we make some assumptions about the data coming in - ie. every feature is the same type, and its simple
+ * (no nesting, no <choices>, and no attributes), then we can parse ones that look like:
  *
  * <pre>
  * {@code <Feature> <Name>David Blasby</Name> <Location> ... GML ... </Location> </Feature>}
  * </pre>
  *
- * <p>I'm not the best at reading .xsd, but I think that means you can stick in ANY GML Feature. If
- * so, its way too general.
+ * <p>I'm not the best at reading .xsd, but I think that means you can stick in ANY GML Feature. If so, its way too
+ * general.
  *
- * <p>My plan was to parse the first Feature (or, the given schema if there is one) to find out all
- * the property names (and which one(s) are the geometry) and make a FeatureType. (I'd assume all
- * the properties were strings)
+ * <p>My plan was to parse the first Feature (or, the given schema if there is one) to find out all the property names
+ * (and which one(s) are the geometry) and make a FeatureType. (I'd assume all the properties were strings)
  *
- * <p>Then, make a MemoryDataStore and put the features in it. I can pass this off to the lite
- * renderer as normal.
+ * <p>Then, make a MemoryDataStore and put the features in it. I can pass this off to the lite renderer as normal.
  *
  * @author jamesm
  */
 public class UserLayerImpl extends StyledLayerImpl implements UserLayer {
 
     /**
-     * the (memory) datastore that will contain the inline features. The initial implementation has
-     * this as a MemoryDataStore with one FeatureType in it. You should ensure that you dont keep
-     * references to it around so it can be GCed.
+     * the (memory) datastore that will contain the inline features. The initial implementation has this as a
+     * MemoryDataStore with one FeatureType in it. You should ensure that you dont keep references to it around so it
+     * can be GCed.
      */
     private DataStore inlineFeatureDatastore = null;
 
     private SimpleFeatureType inlineFeatureType = null;
     RemoteOWS remoteOWS;
-    List<Style> styles = new ArrayList<Style>();
-    List<FeatureTypeConstraint> constraints = new ArrayList<FeatureTypeConstraint>();
+    List<Style> styles = new ArrayList<>();
+    List<FeatureTypeConstraint> constraints = new ArrayList<>();
 
+    @Override
     public RemoteOWS getRemoteOWS() {
         return remoteOWS;
     }
 
+    @Override
     public DataStore getInlineFeatureDatastore() {
         return inlineFeatureDatastore;
     }
 
+    @Override
     public SimpleFeatureType getInlineFeatureType() {
         return inlineFeatureType;
     }
 
-    public void setInlineFeatureDatastore(DataStore store) {
-        inlineFeatureDatastore = store;
+    @Override
+    public void setInlineFeatureDatastore(Object store) {
+        inlineFeatureDatastore = (DataStore) store;
     }
 
+    @Override
     public void setInlineFeatureType(SimpleFeatureType ft) {
         inlineFeatureType = ft;
     }
 
+    @Override
     public void setRemoteOWS(RemoteOWS service) {
         this.remoteOWS = service;
     }
 
+    @Override
     public List<FeatureTypeConstraint> layerFeatureConstraints() {
         return constraints;
     }
 
+    @Override
     public FeatureTypeConstraint[] getLayerFeatureConstraints() {
         return constraints.toArray(new FeatureTypeConstraint[0]);
     }
 
+    @Override
     public void setLayerFeatureConstraints(FeatureTypeConstraint[] array) {
         this.constraints.clear();
         this.constraints.addAll(Arrays.asList(array));
     }
 
+    @Override
     public List<Style> userStyles() {
         return styles;
     }
 
+    @Override
     public Style[] getUserStyles() {
-        return (Style[]) styles.toArray(new Style[0]);
+        return styles.toArray(new Style[0]);
     }
 
+    @Override
     public void setUserStyles(Style[] styles) {
         this.styles.clear();
         this.styles.addAll(Arrays.asList(styles));
     }
 
+    @Override
     public void addUserStyle(Style style) {
         styles.add(style);
     }
 
+    @Override
     public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
+    @Override
     public boolean equals(Object oth) {
         if (this == oth) {
             return true;
@@ -157,7 +173,6 @@ public class UserLayerImpl extends StyledLayerImpl implements UserLayer {
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                inlineFeatureDatastore, inlineFeatureType, remoteOWS, styles, constraints);
+        return Objects.hash(inlineFeatureDatastore, inlineFeatureType, remoteOWS, styles, constraints);
     }
 }

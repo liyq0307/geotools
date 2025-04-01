@@ -19,9 +19,9 @@ package org.geotools.coverageio.gdal.jp2kak;
 import it.geosolutions.imageio.plugins.jp2kakadu.JP2GDALKakaduImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverageio.BaseGridFormatFactorySPI;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for JP2K files.
@@ -30,17 +30,16 @@ import org.opengis.coverage.grid.Format;
  * @author Simone Giannecchini (simboss), GeoSolutions
  * @since 2.5.x
  */
-public final class JP2KFormatFactory extends BaseGridFormatFactorySPI
-        implements GridFormatFactorySpi {
+public final class JP2KFormatFactory extends BaseGridFormatFactorySPI implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(JP2KFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(JP2KFormatFactory.class);
 
     /**
      * Tells me if the coverage plugin to access JP2K is available or not.
      *
      * @return <code>true</code> if the plugin is available, <code>false</code> otherwise.
      */
+    @Override
     public boolean isAvailable() {
         boolean available = true;
 
@@ -74,6 +73,7 @@ public final class JP2KFormatFactory extends BaseGridFormatFactorySPI
      *
      * @return A {@link JP2KFormat}.;
      */
+    @Override
     public JP2KFormat createFormat() {
         return new JP2KFormat();
     }

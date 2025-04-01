@@ -30,7 +30,6 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,9 +59,8 @@ import org.junit.runner.RunWith;
 /**
  * Tests for {@linkplain JTextReporter}.
  *
- * <p>This test class uses an {@linkplain ExecutorService} to launch the dialog which avoids a
- * deadlock between the dialog waiting for its Connection object and this class waiting for the
- * dialog to show up on the event thread.
+ * <p>This test class uses an {@linkplain ExecutorService} to launch the dialog which avoids a deadlock between the
+ * dialog waiting for its Connection object and this class waiting for the dialog to show up on the event thread.
  *
  * @author Michael Bedward
  * @since 8.0
@@ -88,13 +86,13 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    private WindowActivatedListener listener;
+    private WindowActivatedListener<DialogFixture, Dialog, DialogDriver> listener;
     private StreamHandler handler;
     private ByteArrayOutputStream out;
 
     @Before
     public void setup() {
-        listener = new WindowActivatedListener(DIALOG_CLASS);
+        listener = new WindowActivatedListener<>(DIALOG_CLASS);
         Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.WINDOW_EVENT_MASK);
     }
 
@@ -130,8 +128,7 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
         boolean expectResizable = (JTextReporter.DEFAULT_FLAGS & JTextReporter.FLAG_RESIZABLE) > 0;
         assertEquals(expectResizable, df.target().isResizable());
 
-        boolean expectAlwaysOnTop =
-                (JTextReporter.DEFAULT_FLAGS & JTextReporter.FLAG_ALWAYS_ON_TOP) > 0;
+        boolean expectAlwaysOnTop = (JTextReporter.DEFAULT_FLAGS & JTextReporter.FLAG_ALWAYS_ON_TOP) > 0;
         assertEquals(expectAlwaysOnTop, df.target().isAlwaysOnTop());
     }
 
@@ -285,7 +282,7 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
         Connection conn = showDialog(TITLE).get();
         String text = conn.getText();
         assertNotNull(text);
-        assertTrue(text.length() == 0);
+        assertEquals(0, text.length());
     }
 
     @Test
@@ -293,16 +290,15 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
         Connection conn = showDialog(TITLE).get();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        conn.addListener(
-                new TextReporterListener() {
-                    @Override
-                    public void onReporterClosed() {}
+        conn.addListener(new TextReporterListener() {
+            @Override
+            public void onReporterClosed() {}
 
-                    @Override
-                    public void onReporterUpdated() {
-                        latch.countDown();
-                    }
-                });
+            @Override
+            public void onReporterUpdated() {
+                latch.countDown();
+            }
+        });
 
         conn.append(TEXT[0]);
         assertTrue(latch.await(LISTENER_TIMEOUT, TimeUnit.MILLISECONDS));
@@ -313,16 +309,15 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
         Connection conn = showDialog(TITLE).get();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        conn.addListener(
-                new TextReporterListener() {
-                    @Override
-                    public void onReporterClosed() {
-                        latch.countDown();
-                    }
+        conn.addListener(new TextReporterListener() {
+            @Override
+            public void onReporterClosed() {
+                latch.countDown();
+            }
 
-                    @Override
-                    public void onReporterUpdated() {}
-                });
+            @Override
+            public void onReporterUpdated() {}
+        });
 
         windowFixture.close();
         assertTrue(latch.await(LISTENER_TIMEOUT, TimeUnit.MILLISECONDS));
@@ -333,16 +328,15 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
         Connection conn = showDialog(TITLE).get();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        conn.addListener(
-                new TextReporterListener() {
-                    @Override
-                    public void onReporterClosed() {
-                        latch.countDown();
-                    }
+        conn.addListener(new TextReporterListener() {
+            @Override
+            public void onReporterClosed() {
+                latch.countDown();
+            }
 
-                    @Override
-                    public void onReporterUpdated() {}
-                });
+            @Override
+            public void onReporterUpdated() {}
+        });
 
         getButton("Close").click();
         assertTrue(latch.await(LISTENER_TIMEOUT, TimeUnit.MILLISECONDS));
@@ -434,18 +428,9 @@ public class JTextReporterTest extends GraphicsTestBase<DialogFixture, Dialog, D
      * @param initial text to be displayed
      * @return the Future for the dialog task
      */
-    private Future<JTextReporter.Connection> showDialog(
-            final String title, final String initialText) throws Exception {
+    private Future<JTextReporter.Connection> showDialog(final String title, final String initialText) throws Exception {
 
-        Future<Connection> future =
-                executor.submit(
-                        new Callable<JTextReporter.Connection>() {
-
-                            @Override
-                            public Connection call() throws Exception {
-                                return JTextReporter.showDialog(title, initialText);
-                            }
-                        });
+        Future<Connection> future = executor.submit(() -> JTextReporter.showDialog(title, initialText));
 
         assertComponentDisplayed(DIALOG_CLASS);
         windowFixture = listener.getFixture(DISPLAY_TIMEOUT);

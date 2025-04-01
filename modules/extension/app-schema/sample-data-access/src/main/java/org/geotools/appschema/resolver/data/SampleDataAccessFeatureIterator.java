@@ -18,14 +18,14 @@
 package org.geotools.appschema.resolver.data;
 
 import java.util.Iterator;
+import org.geotools.api.feature.Feature;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.Feature;
 
 /**
- * Decorator for Iterator&lt;Feature&gt; to provide a FeatureIterator&lt;Feature&gt; that adds a
- * close method that does nothing. This class exists only to satisfy the {@link FeatureCollection}
- * API. All iteration is performed using the iterator passed to the constructor.
+ * Decorator for Iterator&lt;Feature&gt; to provide a FeatureIterator&lt;Feature&gt; that adds a close method that does
+ * nothing. This class exists only to satisfy the {@link FeatureCollection} API. All iteration is performed using the
+ * iterator passed to the constructor.
  *
  * @author Ben Caradoc-Davies (CSIRO Earth Science and Resource Engineering)
  * @version $Id$
@@ -45,11 +45,13 @@ public class SampleDataAccessFeatureIterator implements FeatureIterator<Feature>
     }
 
     /** @see java.util.Iterator#hasNext() */
+    @Override
     public boolean hasNext() {
         return iterator.hasNext();
     }
 
     /** @see java.util.Iterator#next() */
+    @Override
     public Feature next() {
         return iterator.next();
     }
@@ -64,6 +66,7 @@ public class SampleDataAccessFeatureIterator implements FeatureIterator<Feature>
      *
      * @see org.geotools.feature.FeatureIterator#close()
      */
+    @Override
     public void close() {
         // do nothing
     }

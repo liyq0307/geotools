@@ -26,16 +26,18 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import javax.xml.namespace.QName;
-import org.geotools.data.ows.HTTPResponse;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.feature.NameImpl;
+import org.geotools.http.HTTPResponse;
+import org.geotools.ows.ServiceException;
 import org.geotools.referencing.CRS;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.util.factory.Hints;
 
 public class TransactionRequest extends WFSRequest {
 
@@ -45,8 +47,8 @@ public class TransactionRequest extends WFSRequest {
 
     public TransactionRequest(WFSConfig config, WFSStrategy strategy) {
         super(TRANSACTION, config, strategy);
-        txElements = new ArrayList<TransactionElement>();
-        typeNames = new HashSet<QName>();
+        txElements = new ArrayList<>();
+        typeNames = new HashSet<>();
     }
 
     public void add(TransactionElement txElem) {
@@ -57,12 +59,12 @@ public class TransactionRequest extends WFSRequest {
     }
 
     public Set<QName> getTypeNames() {
-        return Collections.unmodifiableSet(new HashSet<QName>(typeNames));
+        return Collections.unmodifiableSet(new HashSet<>(typeNames));
     }
 
     public List<TransactionElement> getTransactionElements() {
         synchronized (txElements) {
-            return new ArrayList<TransactionElement>(txElements);
+            return new ArrayList<>(txElements);
         }
     }
 
@@ -70,11 +72,7 @@ public class TransactionRequest extends WFSRequest {
         return new Insert(typeName);
     }
 
-    public Update createUpdate(
-            QName typeName,
-            List<QName> propertyNames,
-            List<Object> newValues,
-            Filter updateFilter) {
+    public Update createUpdate(QName typeName, List<QName> propertyNames, List<Object> newValues, Filter updateFilter) {
         return new Update(typeName, propertyNames, newValues, updateFilter);
     }
 
@@ -83,7 +81,7 @@ public class TransactionRequest extends WFSRequest {
     }
 
     @Override
-    public WFSResponse createResponse(HTTPResponse response) throws IOException {
+    public WFSResponse createResponse(HTTPResponse response) throws ServiceException, IOException {
         return super.createResponse(response);
     }
 
@@ -102,12 +100,13 @@ public class TransactionRequest extends WFSRequest {
     }
 
     public class Insert extends TransactionElement {
+        private boolean isUseExisting = false;
 
         private List<SimpleFeature> added;
 
         Insert(QName typeName) {
             super(typeName);
-            added = new LinkedList<SimpleFeature>();
+            added = new LinkedList<>();
         }
 
         public void add(final SimpleFeature feature) {
@@ -116,10 +115,7 @@ public class TransactionRequest extends WFSRequest {
 
             if (!new NameImpl(typeName).equals(name)) {
                 throw new IllegalArgumentException(
-                        "Type name does not match. Expected "
-                                + new NameImpl(typeName)
-                                + ", but got "
-                                + name);
+                        "Type name does not match. Expected " + new NameImpl(typeName) + ", but got " + name);
             }
 
             WFSStrategy strategy = getStrategy();
@@ -129,22 +125,26 @@ public class TransactionRequest extends WFSRequest {
                 if (!(property instanceof GeometryAttribute)) {
                     continue;
                 }
-                CoordinateReferenceSystem attCrs =
-                        ((GeometryType) property.getType()).getCoordinateReferenceSystem();
+                CoordinateReferenceSystem attCrs = ((GeometryType) property.getType()).getCoordinateReferenceSystem();
                 if (!CRS.equalsIgnoreMetadata(crs, attCrs)) {
-                    throw new IllegalArgumentException(
-                            "Added Features shall match the native CRS: "
-                                    + typeInfo.getDefaultSRS()
-                                    + ". Got "
-                                    + attCrs);
+                    throw new IllegalArgumentException("Added Features shall match the native CRS: "
+                            + typeInfo.getDefaultSRS()
+                            + ". Got "
+                            + attCrs);
                 }
             }
+
+            isUseExisting = Boolean.TRUE.equals(feature.getUserData().get(Hints.USE_PROVIDED_FID));
 
             added.add(feature);
         }
 
         public List<SimpleFeature> getFeatures() {
-            return Collections.unmodifiableList(new ArrayList<SimpleFeature>(added));
+            return Collections.unmodifiableList(new ArrayList<>(added));
+        }
+
+        public boolean isUseExisting() {
+            return isUseExisting;
         }
     }
 
@@ -156,14 +156,10 @@ public class TransactionRequest extends WFSRequest {
 
         private final Filter filter;
 
-        Update(
-                QName typeName,
-                List<QName> propertyNames,
-                List<Object> newValues,
-                Filter updateFilter) {
+        Update(QName typeName, List<QName> propertyNames, List<Object> newValues, Filter updateFilter) {
             super(typeName);
-            this.propertyNames = Collections.unmodifiableList(new ArrayList<QName>(propertyNames));
-            this.newValues = Collections.unmodifiableList(new ArrayList<Object>(newValues));
+            this.propertyNames = Collections.unmodifiableList(new ArrayList<>(propertyNames));
+            this.newValues = Collections.unmodifiableList(new ArrayList<>(newValues));
             this.filter = updateFilter;
         }
 

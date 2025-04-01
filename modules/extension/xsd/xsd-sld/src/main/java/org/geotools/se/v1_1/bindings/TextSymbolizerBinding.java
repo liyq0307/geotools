@@ -17,10 +17,9 @@
 package org.geotools.se.v1_1.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.se.v1_1.SE;
 import org.geotools.sld.bindings.SLDTextSymbolizerBinding;
-import org.geotools.styling.StyleFactory;
-import org.geotools.xml.*;
 
 /**
  * Binding object for the element http://www.opengis.net/se:TextSymbolizer.
@@ -55,6 +54,7 @@ public class TextSymbolizerBinding extends SLDTextSymbolizerBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.TextSymbolizer;
     }

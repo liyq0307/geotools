@@ -39,8 +39,7 @@ public class IconStyle2D extends Style2D implements PointStyle2D {
 
     private float anchorPointY = 0.5f;
 
-    public IconStyle2D(
-            Icon icon, Object feature, float displacementX, float displacementY, float rotation) {
+    public IconStyle2D(Icon icon, Object feature, float displacementX, float displacementY, float rotation) {
         this.icon = icon;
         this.rotation = rotation;
         this.displacementX = displacementX;
@@ -56,42 +55,30 @@ public class IconStyle2D extends Style2D implements PointStyle2D {
      *
      * @return icon rotation, in radians.
      */
+    @Override
     public float getRotation() {
         return rotation;
     }
 
-    /**
-     * The icon composite
-     *
-     * @return
-     */
+    /** The icon composite */
+    @Override
     public Composite getComposite() {
         return composite;
     }
 
-    /**
-     * The icon x displacement
-     *
-     * @return
-     */
+    /** The icon x displacement */
+    @Override
     public float getDisplacementX() {
         return displacementX;
     }
 
-    /**
-     * The icon y displacement
-     *
-     * @return
-     */
+    /** The icon y displacement */
+    @Override
     public float getDisplacementY() {
         return displacementY;
     }
 
-    /**
-     * Returns the icon backing this style
-     *
-     * @return
-     */
+    /** Returns the icon backing this style */
     public Icon getIcon() {
         return icon;
     }
@@ -100,35 +87,44 @@ public class IconStyle2D extends Style2D implements PointStyle2D {
         this.icon = icon;
     }
 
+    @Override
     public void setRotation(float rotation) {
         this.rotation = rotation;
     }
 
+    @Override
     public void setComposite(Composite composite) {
         this.composite = composite;
     }
 
+    @Override
     public void setDisplacementX(float displacementX) {
         this.displacementX = displacementX;
     }
 
+    @Override
     public void setDisplacementY(float displacementY) {
         this.displacementY = displacementY;
     }
 
+    @Override
     public float getAnchorPointX() {
         return anchorPointX;
     }
 
+    @Override
     public void setAnchorPointX(float anchorPointX) {
         this.anchorPointX = anchorPointX;
     }
 
+    @Override
     public float getAnchorPointY() {
         return anchorPointY;
     }
 
+    @Override
     public void setAnchorPointY(float anchorPointY) {
         this.anchorPointY = anchorPointY;
-    };
+    }
+    ;
 }

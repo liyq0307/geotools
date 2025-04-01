@@ -27,9 +27,9 @@ import org.yaml.snakeyaml.DumperOptions;
 /**
  * Base class for Yaml object wrappers.
  *
- * <p>Yaml is represented as atomic types (literals, expressions) and YamlObjects (for wrapping
- * lists and maps). The factory method {@link #create(Object)} will sort out the details. These
- * YamlObjects are used to stage data when parsing a Yaml document.
+ * <p>Yaml is represented as atomic types (literals, expressions) and YamlObjects (for wrapping lists and maps). The
+ * factory method {@link #create(Object)} will sort out the details. These YamlObjects are used to stage data when
+ * parsing a Yaml document.
  */
 public class YamlObject<T> {
 
@@ -43,10 +43,8 @@ public class YamlObject<T> {
      *   <li>List wrapped as {@link YamlSeq}
      * </ul>
      *
-     * Other data (Literals, Expressions) are considered atomic and do not provide a YamlObject
-     * representation.
+     * Other data (Literals, Expressions) are considered atomic and do not provide a YamlObject representation.
      *
-     * @param raw
      * @return Yaml object wrapper, or null if the provided raw object is null.
      */
     @SuppressWarnings("unchecked")
@@ -115,7 +113,6 @@ public class YamlObject<T> {
      *   <li>raw("x"): value for "x" in a map
      *   <li>raw("rules/2/symbolizers/3"): third symbolizer in second rule
      *
-     * @param path
      * @return raw value, or null if not available
      */
     public Object lookup(String path) {
@@ -146,8 +143,7 @@ public class YamlObject<T> {
                 if (index != -1) {
                     here = list.get(index);
                 } else {
-                    throw new IndexOutOfBoundsException(
-                            "Index: " + key + ", Size: " + list.raw.size());
+                    throw new IndexOutOfBoundsException("Index: " + key + ", Size: " + list.raw.size());
                 }
             } else {
                 throw new NoSuchElementException(
@@ -162,12 +158,7 @@ public class YamlObject<T> {
         return raw;
     }
 
-    /**
-     * See {@link #lookup}. Ensures that the result is wrapped as a YamlObject if it is a map, list,
-     * or array.
-     *
-     * @param path
-     */
+    /** See {@link #lookup}. Ensures that the result is wrapped as a YamlObject if it is a map, list, or array. */
     public Object lookupY(String path) {
         return yamlize(lookup(path));
     }

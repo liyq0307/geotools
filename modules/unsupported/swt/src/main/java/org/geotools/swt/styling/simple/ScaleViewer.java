@@ -104,29 +104,17 @@ public class ScaleViewer {
         this.scale = type == MIN ? 0 : Double.MAX_VALUE;
     }
 
-    /**
-     * Accepts a listener that will be notified when content changes.
-     *
-     * @param listener1
-     */
+    /** Accepts a listener that will be notified when content changes. */
     public void addListener(SelectionListener listener1) {
         this.listener = listener1;
     }
 
-    /**
-     * Remove listener.
-     *
-     * @param listener1
-     */
+    /** Remove listener. */
     public void removeListener(SelectionListener listener1) {
         if (this.listener == listener1) this.listener = null;
     }
 
-    /**
-     * TODO summary sentence for fire ...
-     *
-     * @param event
-     */
+    /** TODO summary sentence for fire ... */
     protected void fire(SelectionEvent event) {
         if (this.listener == null) return;
         this.listener.widgetSelected(event);
@@ -134,8 +122,6 @@ public class ScaleViewer {
     /**
      * TODO summary sentence for createControl ...
      *
-     * @param parent
-     * @param kListener
      * @return Generated composite
      */
     public Composite createControl(Composite parent, KeyListener kListener) {
@@ -168,7 +154,6 @@ public class ScaleViewer {
      * Gets the scale denominator chosen by the user, or the default value for this type if none was
      * selected. Default values are 0 for MIN type, {@linkplain Double#MAX_VALUE} for the MAX type
      *
-     * @param build
      * @return Fill defined by this model
      */
     public double getScale() {
@@ -179,8 +164,6 @@ public class ScaleViewer {
     /**
      * Sets the scale denominator, or disables the component if the provided scale is not a positive
      * number
-     *
-     * @param scale
      */
     public void setScale(double scale2, long defaultScale) {
         listen(false);

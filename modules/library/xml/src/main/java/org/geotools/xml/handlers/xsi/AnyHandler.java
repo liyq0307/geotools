@@ -56,23 +56,23 @@ public class AnyHandler extends ElementGroupingHandler {
     private DefaultAny cache = null;
 
     /** @see java.lang.Object#hashCode() */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return (LOCALNAME.hashCode() * ((id == null) ? 1 : id.hashCode()))
-                + (minOccurs * maxOccurs);
+        return (LOCALNAME.hashCode() * ((id == null) ? 1 : id.hashCode())) + (minOccurs * maxOccurs);
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
+    @Override
     public XSIElementHandler getHandler(String namespaceURI, String localName) {
         return null;
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
-    public void startElement(String namespaceURI, String localName, Attributes atts)
-            throws SAXException {
+    @Override
+    public void startElement(String namespaceURI, String localName, Attributes atts) throws SAXException {
         id = atts.getValue("", "id");
 
         if (id == null) {
@@ -142,16 +142,12 @@ public class AnyHandler extends ElementGroupingHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
 
-    /**
-     * maps strings -> int constants for the 'process' attribute
-     *
-     * @param process
-     * @throws SAXException
-     */
+    /** maps strings -> int constants for the 'process' attribute */
     public static int findProcess(String process) throws SAXException {
         if ((process == null) || "".equalsIgnoreCase(process)) {
             return STRICT;
@@ -172,12 +168,7 @@ public class AnyHandler extends ElementGroupingHandler {
         throw new SAXException("Unknown Process Type: '" + process + "'");
     }
 
-    /**
-     * reverses the findProcess method, converting from integers to String for the process
-     * attribute.
-     *
-     * @param process
-     */
+    /** reverses the findProcess method, converting from integers to String for the process attribute. */
     public static String writeProcess(int process) {
         switch (process) {
             case LAX:
@@ -192,10 +183,8 @@ public class AnyHandler extends ElementGroupingHandler {
         }
     }
 
-    /**
-     * @see
-     *     org.geotools.xml.XSIHandlers.ElementGroupingHandler#compress(org.geotools.xml.XSIHandlers.SchemaHandler)
-     */
+    /** @see org.geotools.xml.XSIHandlers.ElementGroupingHandler#compress(org.geotools.xml.XSIHandlers.SchemaHandler) */
+    @Override
     protected ElementGrouping compress(SchemaHandler parent) {
         synchronized (this) {
             if (cache != null) return cache;
@@ -213,11 +202,13 @@ public class AnyHandler extends ElementGroupingHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandlerType() */
+    @Override
     public int getHandlerType() {
         return DEFAULT;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String) */
+    @Override
     public void endElement(String namespaceURI, String localName) {
         // do nothing
     }
@@ -234,36 +225,43 @@ public class AnyHandler extends ElementGroupingHandler {
         int maxOccurs;
         int minOccurs;
 
+        @Override
         public Element findChildElement(String name) {
             // TODO look up namespace Schema and do this correctly
             return null;
         }
 
         /** @see org.geotools.xml.xsi.Any#getId() */
+        @Override
         public String getId() {
             return id;
         }
 
         /** @see org.geotools.xml.xsi.ElementGrouping#getMaxOccurs() */
+        @Override
         public int getMaxOccurs() {
             return maxOccurs;
         }
 
         /** @see org.geotools.xml.xsi.ElementGrouping#getMinOccurs() */
+        @Override
         public int getMinOccurs() {
             return minOccurs;
         }
 
         /** @see org.geotools.xml.xsi.Any#getNamespace() */
+        @Override
         public URI getNamespace() {
             return namespace;
         }
 
         /** @see org.geotools.xml.xsi.ElementGrouping#getGrouping() */
+        @Override
         public int getGrouping() {
             return ANY;
         }
 
+        @Override
         public Element findChildElement(String localName, URI namespaceURI) {
             // TODO look up namespace Schema and do this correctly
             return null;

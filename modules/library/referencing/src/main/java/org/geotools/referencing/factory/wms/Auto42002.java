@@ -18,13 +18,13 @@ package org.geotools.referencing.factory.wms;
 
 // OpenGIS dependencies
 
-import org.opengis.parameter.ParameterValueGroup;
+import org.geotools.api.parameter.ParameterValueGroup;
 
 /**
- * Auto Transverse Mercator ({@code AUTO:42002}). In the notation below, "<code>${var}</code>"
- * denotes a reference to the value of a variable "{@code var}". The variables "{@code lat0}" and
- * "{@code lon0}" are the central point of the projection appearing in the CRS parameter of the map
- * request. The coordinate operation method uses ellipsoidal formulas.
+ * Auto Transverse Mercator ({@code AUTO:42002}). In the notation below, "<code>${var}</code>" denotes a reference to
+ * the value of a variable "{@code var}". The variables "{@code lat0}" and "{@code lon0}" are the central point of the
+ * projection appearing in the CRS parameter of the map request. The coordinate operation method uses ellipsoidal
+ * formulas.
  *
  * <pre>
  * PROJCS["WGS 84 / Auto Tr. Mercator",
@@ -62,21 +62,25 @@ final class Auto42002 extends Factlet {
     private Auto42002() {}
 
     /** {@inheritDoc} */
+    @Override
     public int code() {
         return 42002;
     }
 
     /** {@inheritDoc} */
+    @Override
     public String getName() {
         return "WGS 84 / Auto Tr. Mercator";
     }
 
     /** {@inheritDoc} */
+    @Override
     public String getClassification() {
         return "Transverse_Mercator";
     }
 
     /** {@inheritDoc} */
+    @Override
     protected void setProjectionParameters(final ParameterValueGroup parameters, final Code code) {
         final double centralMeridian = code.longitude;
         final double falseNorthing = code.latitude >= 0.0 ? 0.0 : 10000000.0;

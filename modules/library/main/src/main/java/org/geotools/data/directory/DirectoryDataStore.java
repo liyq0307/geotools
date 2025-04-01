@@ -26,26 +26,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureStore;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.FileStoreFactory;
+import org.geotools.api.data.LockingManager;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.data.SimpleFeatureLocking;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.DefaultServiceInfo;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureStore;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.LockingManager;
-import org.geotools.data.Query;
-import org.geotools.data.ServiceInfo;
-import org.geotools.data.Transaction;
-import org.geotools.data.simple.SimpleFeatureLocking;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.FeatureTypes;
 import org.geotools.feature.NameImpl;
 import org.geotools.util.URLs;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 
 public class DirectoryDataStore implements DataStore {
 
@@ -56,12 +57,14 @@ public class DirectoryDataStore implements DataStore {
         cache = new DirectoryTypeCache(directory, dialect);
     }
 
-    public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(
-            Query query, Transaction transaction) throws IOException {
+    @Override
+    public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(Query query, Transaction transaction)
+            throws IOException {
         String typeName = query.getTypeName();
         return getDataStore(typeName).getFeatureReader(query, transaction);
     }
 
+    @Override
     public SimpleFeatureSource getFeatureSource(String typeName) throws IOException {
         SimpleFeatureSource fs = getDataStore(typeName).getFeatureSource(typeName);
         if (fs instanceof SimpleFeatureLocking) {
@@ -69,25 +72,29 @@ public class DirectoryDataStore implements DataStore {
         } else if (fs instanceof FeatureStore) {
             return new DirectoryFeatureStore((SimpleFeatureStore) fs);
         } else {
-            return new DirectoryFeatureSource((SimpleFeatureSource) fs);
+            return new DirectoryFeatureSource(fs);
         }
     }
 
+    @Override
     public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(
             String typeName, Filter filter, Transaction transaction) throws IOException {
         return getDataStore(typeName).getFeatureWriter(typeName, filter, transaction);
     }
 
-    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(
-            String typeName, Transaction transaction) throws IOException {
+    @Override
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(String typeName, Transaction transaction)
+            throws IOException {
         return getDataStore(typeName).getFeatureWriter(typeName, transaction);
     }
 
+    @Override
     public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(
             String typeName, Transaction transaction) throws IOException {
         return getDataStore(typeName).getFeatureWriterAppend(typeName, transaction);
     }
 
+    @Override
     public LockingManager getLockingManager() {
         if (lm == null) {
             lm = new DirectoryLockingManager(cache);
@@ -95,23 +102,27 @@ public class DirectoryDataStore implements DataStore {
         return lm;
     }
 
+    @Override
     public SimpleFeatureType getSchema(String typeName) throws IOException {
         return getDataStore(typeName).getSchema(typeName);
     }
 
+    @Override
     public String[] getTypeNames() throws IOException {
         Set<String> typeNames = cache.getTypeNames();
         return typeNames.toArray(new String[typeNames.size()]);
     }
 
+    @Override
     public void updateSchema(String typeName, SimpleFeatureType featureType) throws IOException {
         getDataStore(typeName).updateSchema(typeName, featureType);
     }
 
+    @Override
     public void createSchema(SimpleFeatureType featureType) throws IOException {
         File f = new File(cache.directory, featureType.getTypeName() + ".shp");
 
-        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        Map<String, Serializable> params = new HashMap<>();
         params.put("url", URLs.fileToUrl(f));
         params.put("filetype", "shapefile");
         DataStore ds = null;
@@ -130,14 +141,17 @@ public class DirectoryDataStore implements DataStore {
         }
     }
 
+    @Override
     public void dispose() {
         cache.dispose();
     }
 
+    @Override
     public SimpleFeatureSource getFeatureSource(Name typeName) throws IOException {
         return getFeatureSource(typeName.getLocalPart());
     }
 
+    @Override
     public ServiceInfo getInfo() {
         DefaultServiceInfo info = new DefaultServiceInfo();
         info.setDescription("Features from Directory " + cache.directory);
@@ -150,30 +164,27 @@ public class DirectoryDataStore implements DataStore {
         return info;
     }
 
+    @Override
     public List<Name> getNames() throws IOException {
         String[] typeNames = getTypeNames();
-        List<Name> names = new ArrayList<Name>(typeNames.length);
+        List<Name> names = new ArrayList<>(typeNames.length);
         for (String typeName : typeNames) {
             names.add(new NameImpl(typeName));
         }
         return names;
     }
 
+    @Override
     public SimpleFeatureType getSchema(Name name) throws IOException {
         return getSchema(name.getLocalPart());
     }
 
+    @Override
     public void updateSchema(Name typeName, SimpleFeatureType featureType) throws IOException {
         updateSchema(typeName.getLocalPart(), featureType);
     }
 
-    /**
-     * Returns the native store for a specified type name
-     *
-     * @param typeName
-     * @return
-     * @throws IOException
-     */
+    /** Returns the native store for a specified type name */
     public DataStore getDataStore(String typeName) throws IOException {
         // grab the store for a specific feature type, making sure it's actually there
         DataStore store = cache.getDataStore(typeName, true);

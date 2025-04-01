@@ -17,9 +17,9 @@
 package org.geotools.filter.capability;
 
 import java.util.Collection;
-import org.opengis.filter.capability.TemporalCapabilities;
-import org.opengis.filter.capability.TemporalOperator;
-import org.opengis.filter.capability.TemporalOperators;
+import org.geotools.api.filter.capability.TemporalCapabilities;
+import org.geotools.api.filter.capability.TemporalOperator;
+import org.geotools.api.filter.capability.TemporalOperators;
 
 public class TemporalCapabilitiesImpl implements TemporalCapabilities {
 
@@ -46,11 +46,12 @@ public class TemporalCapabilitiesImpl implements TemporalCapabilities {
             return new TemporalOperatorsImpl();
         }
         if (operators instanceof TemporalOperatorsImpl) {
-            return (TemporalOperatorsImpl) operators;
+            return operators;
         }
         return new TemporalOperatorsImpl(operators.getOperators());
     }
 
+    @Override
     public TemporalOperators getTemporalOperators() {
         return temporalOperators;
     }

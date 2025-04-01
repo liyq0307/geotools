@@ -20,28 +20,28 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.FilterAttributeExtractor;
 import org.geotools.util.Range;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /**
- * Utility class used by {@link SimplifyingFilterVisitor} to combine range based filters. This class
- * works correctly only if all the range based filters have the same MatchAction, but does not check
- * it internally, so it is suitable for usage only in a simple feature context
+ * Utility class used by {@link SimplifyingFilterVisitor} to combine range based filters. This class works correctly
+ * only if all the range based filters have the same MatchAction, but does not check it internally, so it is suitable
+ * for usage only in a simple feature context
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -54,19 +54,19 @@ abstract class RangeCombiner {
      */
     static class Or extends RangeCombiner {
 
-        public Or(FilterFactory2 ff, FeatureType featureType, List<Filter> filters) {
+        public Or(FilterFactory ff, FeatureType featureType, List<Filter> filters) {
             super(ff, featureType, filters);
         }
 
         @Override
-        protected MultiRange combineRanges(MultiRange r1, MultiRange r2) {
+        protected <T extends Comparable<T>> MultiRange<T> combineRanges(MultiRange<T> r1, MultiRange<T> r2) {
             return r1.merge(r2);
         }
 
         @Override
         protected void addFiltersToResults(List<Filter> results, Filter filter) {
-            if (filter instanceof org.opengis.filter.Or) {
-                results.addAll(((org.opengis.filter.Or) filter).getChildren());
+            if (filter instanceof org.geotools.api.filter.Or) {
+                results.addAll(((org.geotools.api.filter.Or) filter).getChildren());
             } else {
                 results.add(filter);
             }
@@ -80,19 +80,19 @@ abstract class RangeCombiner {
      */
     static class And extends RangeCombiner {
 
-        public And(FilterFactory2 ff, FeatureType featureType, List<Filter> filters) {
+        public And(FilterFactory ff, FeatureType featureType, List<Filter> filters) {
             super(ff, featureType, filters);
         }
 
         @Override
-        protected MultiRange combineRanges(MultiRange r1, MultiRange r2) {
+        protected <T extends Comparable<T>> MultiRange<T> combineRanges(MultiRange<T> r1, MultiRange<T> r2) {
             return r1.intersect(r2);
         }
 
         @Override
         protected void addFiltersToResults(List<Filter> results, Filter filter) {
-            if (filter instanceof org.opengis.filter.And) {
-                results.addAll(((org.opengis.filter.And) filter).getChildren());
+            if (filter instanceof org.geotools.api.filter.And) {
+                results.addAll(((org.geotools.api.filter.And) filter).getChildren());
             } else {
                 results.add(filter);
             }
@@ -136,8 +136,7 @@ abstract class RangeCombiner {
 
         boolean combinationHappened;
 
-        public CombinationResult(
-                Map<Expression, List<FilterRange>> rangeMap, boolean combinationHappened) {
+        public CombinationResult(Map<Expression, List<FilterRange>> rangeMap, boolean combinationHappened) {
             this.rangeMap = rangeMap;
             this.combinationHappened = combinationHappened;
         }
@@ -149,13 +148,16 @@ abstract class RangeCombiner {
 
     FeatureType featureType;
 
-    List<Filter> otherFilters = new ArrayList<Filter>();
+    List<Filter> otherFilters = new ArrayList<>();
 
     List<Filter> filters;
 
-    FilterFactory2 ff;
+    FilterFactory ff;
 
-    public RangeCombiner(FilterFactory2 ff, FeatureType featureType, List<Filter> filters) {
+    @SuppressWarnings("unchecked")
+    // this class combines ranges of comparables, but without really knowing the type of comparable
+    // hence it cannot avoid unchecked assignments
+    public RangeCombiner(FilterFactory ff, FeatureType featureType, List<Filter> filters) {
         this.ff = ff;
         this.filters = filters;
         this.featureType = featureType;
@@ -174,6 +176,7 @@ abstract class RangeCombiner {
                         otherFilters.add(f);
                     } else {
                         Expression expression = pb.getExpression();
+                        @SuppressWarnings("unchecked")
                         Range<?> range = new Range(binding, (Comparable) min, (Comparable) max);
                         addRange(rangeMap, expression, new MultiRange(range));
                     }
@@ -207,17 +210,16 @@ abstract class RangeCombiner {
                 // Right now, only PropertyIsEqualTo actually considers matchcase, all others
                 // behave as if they were case sensitive regardgless of the setting.
                 // TODO: change the logic to consider matchcase when
-                if (er.range != null
-                        && (!(op instanceof PropertyIsEqualTo) || (op.isMatchingCase()))) {
+                if (er.range != null && (!(op instanceof PropertyIsEqualTo) || (op.isMatchingCase()))) {
                     addRange(rangeMap, er.expression, new MultiRange(er.range));
                 } else {
                     otherFilters.add(f);
                 }
-            } else if (f instanceof org.opengis.filter.And || f instanceof org.opengis.filter.Or) {
+            } else if (f instanceof org.geotools.api.filter.And || f instanceof org.geotools.api.filter.Or) {
                 BinaryLogicOperator logic = (BinaryLogicOperator) f;
                 List<Filter> children = logic.getChildren();
                 RangeCombiner subCombiner;
-                if (logic instanceof org.opengis.filter.And) {
+                if (logic instanceof org.geotools.api.filter.And) {
                     subCombiner = new RangeCombiner.And(ff, featureType, children);
                 } else {
                     subCombiner = new RangeCombiner.Or(ff, featureType, children);
@@ -245,6 +247,8 @@ abstract class RangeCombiner {
         }
     }
 
+    // we don't know what type of range is built here, any comparable will do
+    @SuppressWarnings("unchecked")
     private ExpressionRange getRange(BinaryComparisonOperator op) {
         Range range = null;
         Expression expression = null;
@@ -321,7 +325,7 @@ abstract class RangeCombiner {
         }
 
         List<Filter> result = new ArrayList<>(otherFilters);
-        for (Expression ex : new ArrayList<Expression>(rangeMap.keySet())) {
+        for (Expression ex : new ArrayList<>(rangeMap.keySet())) {
             MultiRange multiRange = rangeMap.get(ex);
             addFiltersToResults(result, multiRange.toFilter(ff, ex));
         }
@@ -332,10 +336,10 @@ abstract class RangeCombiner {
     protected abstract void addFiltersToResults(List<Filter> result, Filter filter);
 
     /** Combines two multiranges */
-    protected abstract MultiRange combineRanges(MultiRange r1, MultiRange r2);
+    protected abstract <T extends Comparable<T>> MultiRange<T> combineRanges(MultiRange<T> r1, MultiRange<T> r2);
 
-    private void addRange(
-            Map<Expression, MultiRange> rangeMap, Expression expression, MultiRange other) {
+    @SuppressWarnings("unchecked")
+    private void addRange(Map<Expression, MultiRange> rangeMap, Expression expression, MultiRange other) {
         MultiRange ranges = rangeMap.get(expression);
         if (ranges == null) {
             rangeMap.put(expression, other);

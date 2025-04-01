@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.jface.wizard.Wizard;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 import org.geotools.util.URLs;
 
 /**
@@ -46,7 +46,7 @@ public class JParameterListWizard extends Wizard {
      * @param contents a {@code List} of {@code Parameter} objects defining the data being requested
      */
     public JParameterListWizard(String title, String description, List<Parameter<?>> contents) {
-        this(title, description, contents, new HashMap<String, Object>());
+        this(title, description, contents, new HashMap<>());
     }
 
     public JParameterListWizard(
@@ -55,8 +55,7 @@ public class JParameterListWizard extends Wizard {
             List<Parameter<?>> contents,
             Map<String, Object> connectionParams) {
 
-        this.connectionParameters =
-                connectionParams == null ? new HashMap<String, Object>() : connectionParams;
+        this.connectionParameters = connectionParams == null ? new HashMap<>() : connectionParams;
         fillInDefaults(contents, this.connectionParameters);
 
         List<Parameter<?>> userContents = contentsForLevel(contents, "user");
@@ -85,7 +84,6 @@ public class JParameterListWizard extends Wizard {
     /**
      * Method used to fill in any required "programming" level defaults such as dbtype.
      *
-     * @param contents
      * @param connectionParams a {@code Map} of initial parameter values
      */
     private void fillInDefaults(List<Parameter<?>> contents, Map<String, Object> connectionParams) {
@@ -101,7 +99,7 @@ public class JParameterListWizard extends Wizard {
     }
 
     List<Parameter<?>> contentsForLevel(List<Parameter<?>> contents, String level) {
-        List<Parameter<?>> list = new ArrayList<Parameter<?>>();
+        List<Parameter<?>> list = new ArrayList<>();
         if (level == null) {
             level = "user";
         }

@@ -17,7 +17,7 @@
  */
 package org.geotools.data.mongodb;
 
-import com.mongodb.util.JSON;
+import com.mongodb.BasicDBObject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -29,8 +29,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 
 /** @author tkunicki@boundlessgeo.com */
 public class MongoSchemaFileStore implements MongoSchemaStore {
@@ -62,11 +62,9 @@ public class MongoSchemaFileStore implements MongoSchemaStore {
             return;
         }
         File schemaFile = schemaFile(schema.getTypeName());
-        BufferedWriter writer = new BufferedWriter(new FileWriter(schemaFile));
-        try {
-            writer.write(JSON.serialize(FeatureTypeDBObject.convert(schema)));
-        } finally {
-            writer.close();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(schemaFile))) {
+            BasicDBObject dbObject = FeatureTypeDBObject.convert(schema);
+            writer.write(dbObject.toJson());
         }
     }
 
@@ -79,8 +77,8 @@ public class MongoSchemaFileStore implements MongoSchemaStore {
         if (!schemaFile.canRead()) {
             return null;
         }
+        @SuppressWarnings("PMD.CloseResource") // closed in getSimpleFeatureType
         BufferedReader reader = new BufferedReader(new FileReader(schemaFile));
-
         return MongoUtil.getSimpleFeatureType(reader, name);
     }
 
@@ -94,7 +92,7 @@ public class MongoSchemaFileStore implements MongoSchemaStore {
 
     @Override
     public List<String> typeNames() {
-        List<String> typeNames = new ArrayList<String>();
+        List<String> typeNames = new ArrayList<>();
         File[] files = schemaStoreFile.listFiles(new SchemaFilter());
         if (files != null) {
             for (File schemaFile : files) {
@@ -130,21 +128,18 @@ public class MongoSchemaFileStore implements MongoSchemaStore {
     static void validateDirectory(File file) throws IOException {
         if (!file.exists() && !file.mkdirs()) {
             throw new IOException(
-                    "Schema store directory does not exist and could not be created: "
-                            + file.getAbsolutePath());
+                    "Schema store directory does not exist and could not be created: " + file.getAbsolutePath());
         }
         if (file.isDirectory()) {
             // File.canWrite() doesn't report as intended for directories on
             // certain platforms with certain permissions scenarios.  Will
             // instead we verify we can create a file then delete it.
             if (!File.createTempFile("test", ".tmp", file).delete()) {
-                throw new IOException(
-                        "Unable to write to schema store directory: " + file.getAbsolutePath());
+                throw new IOException("Unable to write to schema store directory: " + file.getAbsolutePath());
             }
         } else {
             throw new IOException(
-                    "Specified schema store directory exists but is not a directory: "
-                            + file.getAbsolutePath());
+                    "Specified schema store directory exists but is not a directory: " + file.getAbsolutePath());
         }
     }
 }

@@ -1,29 +1,29 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2015-2017, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.tile;
 
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
@@ -31,21 +31,16 @@ import org.geotools.map.GridCoverageLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.geotools.styling.RasterSymbolizer;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
 import org.geotools.swing.JMapFrame;
 import org.geotools.tile.impl.WebMercatorZoomLevel;
 import org.geotools.tile.impl.bing.BingService;
 import org.geotools.tile.impl.osm.OSMService;
-import org.geotools.tile.impl.osm.OSMTile;
+import org.geotools.tile.impl.osm.OSMTileFactory;
 import org.geotools.tile.impl.osm.OSMTileIdentifier;
 import org.geotools.tile.util.AsyncTileLayer;
 import org.geotools.tile.util.TileLayer;
 import org.geotools.util.SuppressFBWarnings;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
 
 @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
 public class TileViewer {
@@ -73,8 +68,7 @@ public class TileViewer {
         final MapContent map = new MapContent();
 
         map.setTitle("TileLab");
-        ReferencedEnvelope env =
-                new ReferencedEnvelope(-180, 180, -80, 80, DefaultGeographicCRS.WGS84);
+        ReferencedEnvelope env = new ReferencedEnvelope(-180, 180, -80, 80, DefaultGeographicCRS.WGS84);
 
         env = new ReferencedEnvelope(5, 15, 45, 55, DefaultGeographicCRS.WGS84);
 
@@ -90,8 +84,7 @@ public class TileViewer {
         String baseURL =
                 "http://ak.dynamic.t2.tiles.virtualearth.net/comp/ch/${code}?mkt=de-de&it=G,VE,BX,L,LA&shading=hill&og=78&n=z";
         map.addLayer(new TileLayer(new BingService("Road", baseURL)));
-        map.addLayer(
-                new AsyncTileLayer(new OSMService("Mapnik", "http://tile.openstreetmap.org/")));
+        map.addLayer(new AsyncTileLayer(new OSMService("Mapnik", "http://tile.openstreetmap.org/")));
 
         /*
          * String baseURL =
@@ -131,12 +124,10 @@ public class TileViewer {
 
         String baseURL = "http://tile.openstreetmap.org/";
         TileService service = new OSMService("OSM", baseURL);
+        TileIdentifier identifier =
+                new OSMTileIdentifier(38596, 49269, new WebMercatorZoomLevel(17), service.getName());
 
-        Tile t =
-                new OSMTile(
-                        new OSMTileIdentifier(
-                                38596, 49269, new WebMercatorZoomLevel(17), service.getName()),
-                        service);
+        Tile t = new OSMTileFactory().create(identifier, service);
 
         GridCoverageFactory gf = new GridCoverageFactory();
 
@@ -157,9 +148,8 @@ public class TileViewer {
     private void addTestShape(MapContent map, String shapeFilename) {
         try {
             File shpFile = new File(shapeFilename);
-            FileDataStore dataStore;
 
-            dataStore = FileDataStoreFinder.getDataStore(shpFile);
+            FileDataStore dataStore = FileDataStoreFinder.getDataStore(shpFile);
 
             SimpleFeatureSource shapefileSource = dataStore.getFeatureSource();
             Style shpStyle = SLD.createPolygonStyle(Color.BLUE, null, 0.50f);

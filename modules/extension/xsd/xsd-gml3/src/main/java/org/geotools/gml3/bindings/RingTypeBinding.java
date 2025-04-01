@@ -17,7 +17,6 @@
 package org.geotools.gml3.bindings;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import javax.xml.namespace.QName;
 import org.geotools.geometry.jts.CompoundCurvedGeometry;
@@ -36,6 +35,7 @@ import org.locationtech.jts.geom.LineString;
  * @author Erik van de Pol. B3Partners BV.
  * @author Andrea Aime
  */
+@SuppressWarnings("ComparableType")
 public class RingTypeBinding extends AbstractComplexBinding implements Comparable {
     protected GeometryFactory gf;
 
@@ -46,6 +46,7 @@ public class RingTypeBinding extends AbstractComplexBinding implements Comparabl
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.RingType;
     }
@@ -57,6 +58,7 @@ public class RingTypeBinding extends AbstractComplexBinding implements Comparabl
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return CurvedRing.class;
     }
@@ -73,6 +75,7 @@ public class RingTypeBinding extends AbstractComplexBinding implements Comparabl
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         List members = node.getChildValues("curveMember");
 
@@ -89,22 +92,20 @@ public class RingTypeBinding extends AbstractComplexBinding implements Comparabl
         } else {
             LineString curved = null;
             List<LineString> components = new ArrayList<>();
-            for (Iterator it = members.iterator(); it.hasNext(); ) {
-                LineString ls = (LineString) it.next();
+            for (Object member : members) {
+                LineString ls = (LineString) member;
                 if (ls instanceof CurvedGeometry<?>) {
                     curved = ls;
                 }
                 components.add(ls);
             }
-            CurvedGeometryFactory factory =
-                    GML3ParsingUtils.getCurvedGeometryFactory(
-                            arcParameters,
-                            gf,
-                            curved != null ? curved.getCoordinateSequence() : null);
+            CurvedGeometryFactory factory = GML3ParsingUtils.getCurvedGeometryFactory(
+                    arcParameters, gf, curved != null ? curved.getCoordinateSequence() : null);
             return factory.createCurvedGeometry(components);
         }
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         // System.out.println(name.getLocalPart());
         if ("curveMember".equals(name.getLocalPart())) {
@@ -124,6 +125,7 @@ public class RingTypeBinding extends AbstractComplexBinding implements Comparabl
         this.arcParameters = arcParameters;
     }
 
+    @Override
     public int compareTo(Object o) {
         if (o instanceof LinearRingTypeBinding) {
             return -1;

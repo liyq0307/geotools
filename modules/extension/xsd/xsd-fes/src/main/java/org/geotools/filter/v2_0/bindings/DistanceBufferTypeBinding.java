@@ -19,9 +19,9 @@ package org.geotools.filter.v2_0.bindings;
 import java.util.List;
 import javax.xml.namespace.QName;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
 import org.geotools.filter.v2_0.FES;
 import org.geotools.xsd.AbstractComplexBinding;
-import org.opengis.filter.spatial.DistanceBufferOperator;
 
 /**
  * Binding object for the type http://www.opengis.net/fes/2.0:DistanceBufferType.
@@ -50,6 +50,7 @@ import org.opengis.filter.spatial.DistanceBufferOperator;
 public class DistanceBufferTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return FES.DistanceBufferType;
     }
@@ -61,6 +62,7 @@ public class DistanceBufferTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return DistanceBufferOperator.class;
     }
@@ -71,7 +73,7 @@ public class DistanceBufferTypeBinding extends AbstractComplexBinding {
     //    }
 
     @Override
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         return FESParseEncodeUtil.getProperties((DistanceBufferOperator) object);
     }
 }

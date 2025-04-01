@@ -42,9 +42,9 @@ import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 
 /**
- * Builds a offset curve, that is, a line parallel to the provided geometry at a given distance. An
- * offset curve is not the same as a buffer, the line is built only on one side of the original
- * geometry, and will self intersect if the original geometry does the same.
+ * Builds a offset curve, that is, a line parallel to the provided geometry at a given distance. An offset curve is not
+ * the same as a buffer, the line is built only on one side of the original geometry, and will self intersect if the
+ * original geometry does the same.
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -68,8 +68,8 @@ public class OffsetCurveBuilder {
      * Creates an offset builder with the given offset and the default number of quadrant segments
      * {@link QUADRANT_SEGMENTS_DEFAULT}
      *
-     * @param offset The offset distance. The offset line will be on the left for positive values,
-     *     on the right otherwise
+     * @param offset The offset distance. The offset line will be on the left for positive values, on the right
+     *     otherwise
      */
     public OffsetCurveBuilder(double offset) {
         this(offset, QUADRANT_SEGMENTS_DEFAULT);
@@ -78,8 +78,8 @@ public class OffsetCurveBuilder {
     /**
      * Creates an offset builder with the given offset and number of quadrant segments
      *
-     * @param offset The offset distance. The offset line will be on the left for positive values,
-     *     on the right otherwise
+     * @param offset The offset distance. The offset line will be on the left for positive values, on the right
+     *     otherwise
      * @param quadrantSegments The number of segments per quadrant, must be positive
      */
     public OffsetCurveBuilder(double offset, int quadrantSegments) {
@@ -87,21 +87,18 @@ public class OffsetCurveBuilder {
         this.maxSearchDistanceSquared = offset * offset * thresholdRatio * thresholdRatio;
         if (quadrantSegments < 1) {
             throw new IllegalArgumentException(
-                    "Invalid number of quadrantSegments, must be greater than zero: "
-                            + quadrantSegments);
+                    "Invalid number of quadrantSegments, must be greater than zero: " + quadrantSegments);
         }
         this.quadrantSegments = quadrantSegments;
     }
 
     /**
-     * Builds and return the perpendicular offset geometry. Only the linestring elements in the
-     * input geometries will be subject to offset, the returned geometry will be either a LineString
-     * or a MultiLineString
+     * Builds and return the perpendicular offset geometry. Only the linestring elements in the input geometries will be
+     * subject to offset, the returned geometry will be either a LineString or a MultiLineString
      *
      * @param g The source geometry
-     * @return The offset geometry (a single linestring for single line inputs, a multi-linestring
-     *     for multi-line inputs), or null if no offset geometry could be computed (e.g. the input
-     *     geometry is made of points)
+     * @return The offset geometry (a single linestring for single line inputs, a multi-linestring for multi-line
+     *     inputs), or null if no offset geometry could be computed (e.g. the input geometry is made of points)
      */
     public Geometry offset(Geometry g) {
         // shortcut for too short offset
@@ -133,7 +130,7 @@ public class OffsetCurveBuilder {
                 dest.setOrdinate(numCoordinates, 1, source.getOrdinate(0, 1));
                 simplified = simplified.getFactory().createLinearRing(dest);
             }
-            LineString offsetLine = (LineString) offset(simplified);
+            LineString offsetLine = offset(simplified);
             if (offsetLine != null) {
                 offsets.add(offsetLine);
             }
@@ -144,34 +141,23 @@ public class OffsetCurveBuilder {
             return offsets.get(0);
         } else {
             GeometryFactory factory = offsets.get(0).getFactory();
-            MultiLineString result =
-                    factory.createMultiLineString(offsets.toArray(new LineString[offsets.size()]));
+            MultiLineString result = factory.createMultiLineString(offsets.toArray(new LineString[offsets.size()]));
             return result;
         }
     }
 
-    /**
-     * Extracts all the {@link LineString} present in the given geometry
-     *
-     * @param g
-     * @return
-     */
+    /** Extracts all the {@link LineString} present in the given geometry */
     private List<LineString> extractLineStrings(Geometry g) {
         // normalize order of polygons so that
         // left is equivalent to outwards
         if (g instanceof Polygon) {
-            ((Polygon) g).normalize();
+            g.normalize();
         } else if (g instanceof GeometryCollection) {
-            g.apply(
-                    new GeometryFilter() {
-
-                        @Override
-                        public void filter(Geometry geom) {
-                            if (geom instanceof Polygon) {
-                                ((Polygon) geom).normalize();
-                            }
-                        }
-                    });
+            g.apply((GeometryFilter) geom -> {
+                if (geom instanceof Polygon) {
+                    geom.normalize();
+                }
+            });
         }
 
         // then extract the lines
@@ -179,26 +165,16 @@ public class OffsetCurveBuilder {
         if (g instanceof LineString) {
             lines.add((LineString) g);
         } else {
-            g.apply(
-                    new GeometryComponentFilter() {
-
-                        @Override
-                        public void filter(Geometry geom) {
-                            if (geom instanceof LineString) {
-                                lines.add((LineString) geom);
-                            }
-                        }
-                    });
+            g.apply((GeometryComponentFilter) geom -> {
+                if (geom instanceof LineString) {
+                    lines.add((LineString) geom);
+                }
+            });
         }
         return lines;
     }
 
-    /**
-     * Offsets a single linestring
-     *
-     * @param ls
-     * @return
-     */
+    /** Offsets a single linestring */
     private LineString offset(LineString ls) {
         boolean closed = ls instanceof LinearRing;
         CoordinateSequence cs = ls.getCoordinateSequence();
@@ -268,8 +244,7 @@ public class OffsetCurveBuilder {
         return result;
     }
 
-    private GrowableOrdinateArray cleanupOrdinates(
-            GrowableOrdinateArray ordinates, boolean closed) {
+    private GrowableOrdinateArray cleanupOrdinates(GrowableOrdinateArray ordinates, boolean closed) {
         final int max = ordinates.size();
         if (max <= 8 && closed || (max < 8 && !closed)) {
             // not enough points for self intersection anyways
@@ -400,12 +375,7 @@ public class OffsetCurveBuilder {
         }
     }
 
-    private void addBulge(
-            GrowableOrdinateArray ordinates,
-            double c1x,
-            double c1y,
-            double angle10,
-            double angle12) {
+    private void addBulge(GrowableOrdinateArray ordinates, double c1x, double c1y, double angle10, double angle12) {
         double curveAngle = reflexAngle(angle12 - angle10);
         double segmentTurns = quadrantSegments * abs(curveAngle);
         int steps = 1 + (int) (segmentTurns / PI * 2);
@@ -457,25 +427,16 @@ public class OffsetCurveBuilder {
         return angle;
     }
 
-    /**
-     * Appends to ordinates a point calculated as the perpendicular offset to the specified angle,
-     * from location x,y
-     */
-    private void appendPerpendicular(
-            double x, double y, double angle, GrowableOrdinateArray ordinates) {
+    /** Appends to ordinates a point calculated as the perpendicular offset to the specified angle, from location x,y */
+    private void appendPerpendicular(double x, double y, double angle, GrowableOrdinateArray ordinates) {
         double px = x - offset * sin(angle);
         double py = y + offset * cos(angle);
         ordinates.add(px, py);
     }
 
     /**
-     * Appends to ordinates a point calculated as being the joining point of two segments with
-     * angles angle01, angle02 and starting in x,y
-     *
-     * @param dx10
-     * @param dy10
-     * @param dx12
-     * @param dy12
+     * Appends to ordinates a point calculated as being the joining point of two segments with angles angle01, angle02
+     * and starting in x,y
      */
     private void appendInternalJoint(
             double x,
@@ -497,9 +458,7 @@ public class OffsetCurveBuilder {
         // a very small angle can cause the point to spike away, control this
         // by adding some limits (yes, these are just heuristics)
         double maxAllowedDistanceSquared =
-                Math.max(
-                        maxSearchDistanceSquared,
-                        Math.max(squaredDistance(dx10, dy10), squaredDistance(dx12, dy12)));
+                Math.max(maxSearchDistanceSquared, Math.max(squaredDistance(dx10, dy10), squaredDistance(dx12, dy12)));
         if (squaredDistance(px - x, py - y) > maxAllowedDistanceSquared) {
             double angle = atan2(py - y, px - x);
             double maxAllowedDistance = Math.sqrt(maxAllowedDistanceSquared);

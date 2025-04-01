@@ -31,20 +31,24 @@ public class SwingUtil {
 
     public static ListModel toListModel(final List elements) {
         return (new AbstractListModel() {
+            @Override
             public int getSize() {
                 return (elements.size());
             }
 
+            @Override
             public Object getElementAt(int index) {
                 return (elements.get(index));
             }
         });
     }
 
+    @SuppressWarnings("unchecked")
     public static ListModel toListModel(Collection elements) {
         return (toListModel(new ArrayList(elements)));
     }
 
+    @SuppressWarnings("unchecked")
     public static List toList(ListModel model) {
         ArrayList list = new ArrayList(model.getSize());
         for (int i = 0; i < model.getSize(); i++) {
@@ -56,7 +60,7 @@ public class SwingUtil {
 
     public static void setSelection(JList list, Object element) {
         for (int i = 0; i < list.getModel().getSize(); i++) {
-            Object value = (Object) list.getModel().getElementAt(i);
+            Object value = list.getModel().getElementAt(i);
             if (value == element) {
                 list.setSelectedIndex(i);
                 list.scrollRectToVisible(list.getCellBounds(i, i));
@@ -66,22 +70,18 @@ public class SwingUtil {
     }
 
     public static void addDoubleClickEvent(JList list) {
-        list.addMouseListener(
-                new MouseAdapter() {
-                    public void mouseClicked(MouseEvent e) {
-                        JList source = (JList) e.getSource();
-                        if (e.getClickCount() == 2) {
-                            ListSelectionListener[] listeners = source.getListSelectionListeners();
-                            for (int i = 0; i < listeners.length; i++) {
-                                listeners[i].valueChanged(
-                                        new ListSelectionEvent(
-                                                source,
-                                                source.getSelectedIndex(),
-                                                source.getSelectedIndex(),
-                                                false));
-                            }
-                        }
+        list.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                JList source = (JList) e.getSource();
+                if (e.getClickCount() == 2) {
+                    ListSelectionListener[] listeners = source.getListSelectionListeners();
+                    for (ListSelectionListener listener : listeners) {
+                        listener.valueChanged(new ListSelectionEvent(
+                                source, source.getSelectedIndex(), source.getSelectedIndex(), false));
                     }
-                });
+                }
+            }
+        });
     }
 }

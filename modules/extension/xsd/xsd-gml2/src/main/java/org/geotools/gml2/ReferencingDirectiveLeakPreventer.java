@@ -28,11 +28,10 @@ import org.geotools.util.Utilities;
 /**
  * Adapter to prevent memory leaks that occur when importing a gml schema.
  *
- * <p>When an application schema imports the gml schema a link from the gml schema to the app schema
- * is created. Since the gml schema is a singleton we store permenantly this causes a memory leak.
- * This adapter watches the {@link XSDSchema#getReferencingDirectives()} list and ensures that it
- * does not continue to grow by only allowing unique schema references (in terms of target
- * namespace) to reference it.
+ * <p>When an application schema imports the gml schema a link from the gml schema to the app schema is created. Since
+ * the gml schema is a singleton we store permenantly this causes a memory leak. This adapter watches the
+ * {@link XSDSchema#getReferencingDirectives()} list and ensures that it does not continue to grow by only allowing
+ * unique schema references (in terms of target namespace) to reference it.
  *
  * @author Justin Deoliveira, OpenGeo
  */
@@ -40,18 +39,22 @@ public class ReferencingDirectiveLeakPreventer implements Adapter {
 
     XSDSchema target;
 
+    @Override
     public Notifier getTarget() {
         return target;
     }
 
+    @Override
     public void setTarget(Notifier newTarget) {
         target = (XSDSchema) newTarget;
     }
 
+    @Override
     public boolean isAdapterForType(Object type) {
         return type instanceof XSDSchema;
     }
 
+    @Override
     public void notifyChanged(Notification notification) {
         int featureId = notification.getFeatureID(target.getClass());
         if (featureId != XSDPackage.XSD_SCHEMA__REFERENCING_DIRECTIVES) {
@@ -68,10 +71,9 @@ public class ReferencingDirectiveLeakPreventer implements Adapter {
         XSDSchemaDirective newDirective = (XSDSchemaDirective) notification.getNewValue();
         XSDSchema schema = newDirective.getSchema();
         synchronized (target) {
-            ArrayList<Integer> toremove = new ArrayList();
+            ArrayList<Integer> toremove = new ArrayList<>();
             for (int i = 0; i < target.getReferencingDirectives().size(); i++) {
-                XSDSchemaDirective directive =
-                        (XSDSchemaDirective) target.getReferencingDirectives().get(i);
+                XSDSchemaDirective directive = target.getReferencingDirectives().get(i);
                 XSDSchema schema2 = directive.getSchema();
                 if (schema2 == null) {
                     toremove.add(i);

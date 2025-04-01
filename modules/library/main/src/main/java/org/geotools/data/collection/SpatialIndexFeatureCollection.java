@@ -25,6 +25,13 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.util.NullProgressListener;
@@ -38,19 +45,11 @@ import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.index.ItemVisitor;
 import org.locationtech.jts.index.strtree.STRtree;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.ProgressListener;
 
 /**
  * FeatureCollection used to stage information for display using a SpatialIndex.
  *
- * <p>Please note that this feature collection cannot be modified after the spatial index is
- * created.
+ * <p>Please note that this feature collection cannot be modified after the spatial index is created.
  *
  * @author Jody
  */
@@ -83,13 +82,12 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
 
     public synchronized void addListener(CollectionListener listener) throws NullPointerException {
         if (listeners == null) {
-            listeners = Collections.synchronizedList(new ArrayList<CollectionListener>());
+            listeners = Collections.synchronizedList(new ArrayList<>());
         }
         listeners.add(listener);
     }
 
-    public synchronized void removeListener(CollectionListener listener)
-            throws NullPointerException {
+    public synchronized void removeListener(CollectionListener listener) throws NullPointerException {
         if (listeners == null) {
             return;
         }
@@ -101,8 +99,7 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
             return;
         }
         CollectionEvent event = new CollectionEvent(this, features, eventType);
-        CollectionListener[] notify =
-                (CollectionListener[]) listeners.toArray(new CollectionListener[listeners.size()]);
+        CollectionListener[] notify = listeners.toArray(new CollectionListener[listeners.size()]);
         for (CollectionListener listener : notify) {
             try {
                 listener.collectionChanged(event);
@@ -112,34 +109,36 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public SimpleFeatureIterator features() {
-        Envelope everything =
-                new Envelope(
-                        Double.NEGATIVE_INFINITY,
-                        Double.POSITIVE_INFINITY,
-                        Double.NEGATIVE_INFINITY,
-                        Double.POSITIVE_INFINITY);
+        Envelope everything = new Envelope(
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
         final List<SimpleFeature> list = (List<SimpleFeature>) index.query(everything);
         final Iterator<SimpleFeature> iterator = list.iterator();
         return new SimpleFeatureIterator() {
+            @Override
             public SimpleFeature next() throws NoSuchElementException {
                 return iterator.next();
             }
 
+            @Override
             public boolean hasNext() {
                 return iterator.hasNext();
             }
 
+            @Override
             public void close() {}
         };
     }
 
+    @Override
     public SimpleFeatureCollection sort(SortBy order) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public SimpleFeatureCollection subCollection(Filter filter) {
         // split out the spatial part of the filter
         SpatialIndexFeatureCollection ret = new SpatialIndexFeatureCollection(schema);
@@ -149,11 +148,9 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
             LOGGER.fine("Found no spatial element in " + filter);
             LOGGER.fine("Just going to iterate");
         }
-        for (Iterator<SimpleFeature> iter = (Iterator<SimpleFeature>) index.query(env).iterator();
-                iter.hasNext(); ) {
-
-            SimpleFeature sample = iter.next();
-
+        @SuppressWarnings("unchecked")
+        List<SimpleFeature> queryResults = (List<SimpleFeature>) index.query(env);
+        for (SimpleFeature sample : queryResults) {
             if (LOGGER.isLoggable(Level.FINEST)) {
                 LOGGER.finest("Looking at " + sample);
             }
@@ -170,40 +167,33 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
     }
 
     @Override
-    public void accepts(final FeatureVisitor visitor, ProgressListener listener)
-            throws IOException {
-        Envelope everything =
-                new Envelope(
-                        Double.NEGATIVE_INFINITY,
-                        Double.POSITIVE_INFINITY,
-                        Double.NEGATIVE_INFINITY,
-                        Double.POSITIVE_INFINITY);
+    public void accepts(final FeatureVisitor visitor, ProgressListener listener) throws IOException {
+        Envelope everything = new Envelope(
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         final ProgressListener progress = listener != null ? listener : new NullProgressListener();
         progress.started();
         final float size = (float) size();
-        final IOException problem[] = new IOException[1];
-        index.query(
-                everything,
-                new ItemVisitor() {
-                    float count = 0f;
+        final IOException[] problem = new IOException[1];
+        index.query(everything, new ItemVisitor() {
+            float count = 0f;
 
-                    public void visitItem(Object item) {
-                        SimpleFeature feature = null;
-                        try {
-                            feature = (SimpleFeature) item;
-                            visitor.visit(feature);
-                        } catch (Throwable t) {
-                            progress.exceptionOccurred(t);
-                            String fid =
-                                    feature == null
-                                            ? "feature"
-                                            : feature.getIdentifier().toString();
-                            problem[0] = new IOException("Problem visiting " + fid + ":" + t, t);
-                        } finally {
-                            progress.progress(count / size);
-                        }
-                    }
-                });
+            @Override
+            public void visitItem(Object item) {
+                SimpleFeature feature = null;
+                try {
+                    feature = (SimpleFeature) item;
+                    visitor.visit(feature);
+                } catch (Throwable t) {
+                    progress.exceptionOccurred(t);
+                    String fid = feature == null
+                            ? "feature"
+                            : feature.getIdentifier().toString();
+                    problem[0] = new IOException("Problem visiting " + fid + ":" + t, t);
+                } finally {
+                    progress.progress(count / size);
+                }
+            }
+        });
         if (problem[0] != null) {
             throw problem[0];
         }
@@ -228,10 +218,8 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
         return false;
     }
 
-    public boolean addAll(
-            FeatureCollection<? extends SimpleFeatureType, ? extends SimpleFeature> collection) {
-        FeatureIterator<? extends SimpleFeature> iter = collection.features();
-        try {
+    public boolean addAll(FeatureCollection<? extends SimpleFeatureType, ? extends SimpleFeature> collection) {
+        try (FeatureIterator<? extends SimpleFeature> iter = collection.features()) {
             while (iter.hasNext()) {
                 try {
                     SimpleFeature feature = iter.next();
@@ -240,8 +228,6 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
                 } catch (Throwable t) {
                 }
             }
-        } finally {
-            iter.close();
         }
         return false;
     }
@@ -257,14 +243,13 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
 
     public void close(Iterator<SimpleFeature> close) {}
 
+    @Override
     @SuppressWarnings("unchecked")
     public boolean contains(Object obj) {
         if (obj instanceof SimpleFeature) {
             SimpleFeature feature = (SimpleFeature) obj;
             ReferencedEnvelope bounds = ReferencedEnvelope.reference(feature.getBounds());
-            for (Iterator<SimpleFeature> iter = (Iterator<SimpleFeature>) index.query(bounds);
-                    iter.hasNext(); ) {
-                SimpleFeature sample = iter.next();
+            for (SimpleFeature sample : (List<SimpleFeature>) index.query(bounds)) {
                 if (sample == feature) {
                     return true;
                 }
@@ -273,6 +258,7 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
         return false;
     }
 
+    @Override
     public boolean containsAll(Collection<?> collection) {
         boolean containsAll = true;
         for (Object obj : collection) {
@@ -285,34 +271,34 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
         return containsAll;
     }
 
+    @Override
     public ReferencedEnvelope getBounds() {
         CoordinateReferenceSystem crs = schema.getCoordinateReferenceSystem();
         Envelope bounds = (Envelope) index.getRoot().getBounds();
         return new ReferencedEnvelope(bounds, crs);
     }
 
+    @Override
     public String getID() {
         return null;
     }
 
+    @Override
     public SimpleFeatureType getSchema() {
         return schema;
     }
 
+    @Override
     public boolean isEmpty() {
         return index.itemsTree().isEmpty();
     }
 
     @SuppressWarnings("unchecked")
     public Iterator<SimpleFeature> iterator() {
-        Envelope everything =
-                new Envelope(
-                        Double.NEGATIVE_INFINITY,
-                        Double.POSITIVE_INFINITY,
-                        Double.NEGATIVE_INFINITY,
-                        Double.POSITIVE_INFINITY);
+        Envelope everything = new Envelope(
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         final List<SimpleFeature> list = (List<SimpleFeature>) index.query(everything);
-        return (Iterator<SimpleFeature>) list.iterator();
+        return list.iterator();
     }
 
     public void purge() {}
@@ -325,28 +311,27 @@ public class SpatialIndexFeatureCollection implements SimpleFeatureCollection {
         throw new UnsupportedOperationException("Cannot remove items from STRtree");
     }
 
-    @SuppressWarnings("unchecked")
     public boolean retainAll(Collection<?> c) {
         throw new UnsupportedOperationException("Cannot remove items from STRtree");
     }
 
     /** Will build the STRtree index if required. */
+    @Override
     public int size() {
         return index.size();
     }
 
+    @Override
     public Object[] toArray() {
         return toArray(new Object[size()]);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public <O> O[] toArray(O[] array) {
         int size = size();
         if (array.length < size) {
-            array =
-                    (O[])
-                            java.lang.reflect.Array.newInstance(
-                                    array.getClass().getComponentType(), size);
+            array = (O[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), size);
         }
         Iterator<SimpleFeature> it = iterator();
         try {

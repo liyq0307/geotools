@@ -18,11 +18,11 @@ package org.geotools.filter.v1_1.capabilities;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.GeometryOperand;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.capability.GeometryOperand;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:GeometryOperandsType.
@@ -44,6 +44,7 @@ import org.opengis.filter.capability.GeometryOperand;
  */
 public class GeometryOperandsTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.GeometryOperandsType;
     }
@@ -55,6 +56,7 @@ public class GeometryOperandsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return GeometryOperand[].class;
     }
@@ -66,12 +68,14 @@ public class GeometryOperandsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List gops = node.getChildValues(GeometryOperand.class);
+        List<GeometryOperand> gops = node.getChildValues(GeometryOperand.class);
 
         return gops.toArray(new GeometryOperand[gops.size()]);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("GeometryOperand".equals(name.getLocalPart())) {
             return object;

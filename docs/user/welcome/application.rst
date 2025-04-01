@@ -57,7 +57,7 @@ Command Line
 
 2. We can specify that the ``FactoryUsingWKT`` authority is used::
       
-      java -Porg.opengis.referencing.crs.CRSAuthorityFactory=org.geotools.referencing.factory.epsg.FactoryUsingWKT PrintWSG84
+      java -Porg.geotools.api.referencing.crs.CRSAuthorityFactory=org.geotools.referencing.factory.epsg.FactoryUsingWKT PrintWSG84
 
 GeoTools Class
 '''''''''''''''
@@ -83,19 +83,19 @@ Factory control of GeoTools
 
 The plugin system for GeoTools allows you to write your plugin; and then register it in your jar as a service so that the rest of the library can use it. To register make a text file with the complete name of your function class in ``META-INF/services/``
 
-When adding a "Function" to GeoTools the name of the text file is the interface being implemented (in this case ``org.opengis.filter.expression.Function``), the contents is a list of functions, one per line. 
+When adding a "Function" to GeoTools the name of the text file is the interface being implemented (in this case ``org.geotools.api.filter.expression.Function``), the contents is a list of functions, one per line. 
 
 For a good working example look at the CQL module:
 
-* https://github.com/geotools/geotools/tree/master/modules/library/cql
+* https://github.com/geotools/geotools/tree/main/modules/library/cql
 
 It advertises one function here:
 
-* https://github.com/geotools/geotools/blob/master/modules/library/cql/src/main/resources/META-INF/services/org.opengis.filter.expression.Function
+* https://github.com/geotools/geotools/blob/main/modules/library/cql/src/main/resources/META-INF/services/org.geotools.api.filter.expression.Function
 
 * And implements it here:
   
-  https://github.com/geotools/geotools/blob/master/modules/library/cql/src/main/java/org/geotools/filter/function/PropertyExistsFunction.java
+  https://github.com/geotools/geotools/blob/main/modules/library/cql/src/main/java/org/geotools/filter/function/PropertyExistsFunction.java
 
 Combining the two Techniques
 ''''''''''''''''''''''''''''

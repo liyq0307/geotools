@@ -17,28 +17,26 @@
 package org.geotools.referencing.factory.wms;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.CitationImpl;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.factory.DirectAuthorityFactory;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.Hints;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.util.InternationalString;
 
 /**
- * The factory for {@linkplain ProjectedCRS projected CRS} in the {@code AUTO} and {@code AUTO2}
- * space.
+ * The factory for {@linkplain ProjectedCRS projected CRS} in the {@code AUTO} and {@code AUTO2} space.
  *
  * @since 2.2
  * @version $Id$
@@ -49,8 +47,8 @@ import org.opengis.util.InternationalString;
  */
 public class AutoCRSFactory extends DirectAuthorityFactory implements CRSAuthorityFactory {
     /**
-     * The authority code. We use {@code AUTO2} citation, but merge {@code AUTO} and {@code AUTO2}
-     * identifiers in order to use the same factory for both authorities.
+     * The authority code. We use {@code AUTO2} citation, but merge {@code AUTO} and {@code AUTO2} identifiers in order
+     * to use the same factory for both authorities.
      */
     private static final Citation AUTHORITY;
 
@@ -65,7 +63,7 @@ public class AutoCRSFactory extends DirectAuthorityFactory implements CRSAuthori
      *
      * @todo Replace this with full FactorySPI system.
      */
-    private final Map<Integer, Factlet> factlets = new TreeMap<Integer, Factlet>();
+    private final Map<Integer, Factlet> factlets = new TreeMap<>();
 
     /** Constructs a default factory for the {@code AUTO} authority. */
     public AutoCRSFactory() {
@@ -79,10 +77,12 @@ public class AutoCRSFactory extends DirectAuthorityFactory implements CRSAuthori
         add(Auto42002.DEFAULT);
         add(Auto42003.DEFAULT);
         add(Auto42004.DEFAULT);
-        add(Auto97001.DEFAULT);
-        add(Auto97002.DEFAULT);
         // We don't actually support the Mollweide projection
         // add(Auto42005.DEFAULT);
+        add(Auto97001.DEFAULT);
+        add(Auto97002.DEFAULT);
+        add(Auto97003.DEFAULT);
+        add(Auto97004.DEFAULT);
     }
 
     /** Add the specified factlet. */
@@ -112,36 +112,35 @@ public class AutoCRSFactory extends DirectAuthorityFactory implements CRSAuthori
     }
 
     /** Returns the authority for this factory. */
+    @Override
     public Citation getAuthority() {
         return AUTHORITY;
     }
 
     /**
-     * Provides a complete set of the known codes provided by this authority. The returned set
-     * contains only numeric identifiers like {@code "42001"}, {@code "42002"}, <cite>etc</cite>.
-     * The authority name ({@code "AUTO"}) and the {@code lon0,lat0} part are not included. This is
-     * consistent with the {@linkplain
-     * org.geotools.referencing.factory.epsg.DirectEpsgFactory#getAuthorityCodes codes returned by
-     * the EPSG factory} and avoid duplication, since the authority is the same for every codes
-     * returned by this factory. It also make it easier for clients to prepend whatever authority
-     * name they wish, as for example in the {@linkplain
-     * org.geotools.referencing.factory.AllAuthoritiesFactory#getAuthorityCodes all authorities
-     * factory}.
+     * Provides a complete set of the known codes provided by this authority. The returned set contains only numeric
+     * identifiers like {@code "42001"}, {@code "42002"}, <cite>etc</cite>. The authority name ({@code "AUTO"}) and the
+     * {@code lon0,lat0} part are not included. This is consistent with the
+     * {@linkplain org.geotools.referencing.factory.epsg.DirectEpsgFactory#getAuthorityCodes codes returned by the EPSG
+     * factory} and avoid duplication, since the authority is the same for every codes returned by this factory. It also
+     * make it easier for clients to prepend whatever authority name they wish, as for example in the
+     * {@linkplain org.geotools.referencing.factory.AllAuthoritiesFactory#getAuthorityCodes all authorities factory}.
      */
-    public Set getAuthorityCodes(final Class type) throws FactoryException {
+    @Override
+    public Set<String> getAuthorityCodes(final Class<? extends IdentifiedObject> type) throws FactoryException {
         if (type.isAssignableFrom(ProjectedCRS.class)) {
-            final Set set = new LinkedHashSet();
-            for (final Iterator it = factlets.keySet().iterator(); it.hasNext(); ) {
-                Integer code = (Integer) it.next();
+            final Set<String> set = new LinkedHashSet<>();
+            for (Integer code : factlets.keySet()) {
                 set.add(String.valueOf(code));
             }
             return set;
         } else {
-            return Collections.EMPTY_SET;
+            return Collections.emptySet();
         }
     }
 
     /** Returns the CRS name for the given code. */
+    @Override
     public InternationalString getDescriptionText(final String code) throws FactoryException {
         final Code c = new Code(code, ProjectedCRS.class);
         return new SimpleInternationalString(findFactlet(c).getName());
@@ -151,20 +150,22 @@ public class AutoCRSFactory extends DirectAuthorityFactory implements CRSAuthori
      * Creates an object from the specified code. The default implementation delegates to <code>
      * {@linkplain #createCoordinateReferenceSystem createCoordinateReferenceSystem}(code)</code>.
      */
+    @Override
     public IdentifiedObject createObject(final String code) throws FactoryException {
         return createCoordinateReferenceSystem(code);
     }
 
     /**
-     * Creates a coordinate reference system from the specified code. The default implementation
-     * delegates to <code>{@linkplain #createProjectedCRS createProjectedCRS}(code)</code>.
+     * Creates a coordinate reference system from the specified code. The default implementation delegates to <code>
+     * {@linkplain #createProjectedCRS createProjectedCRS}(code)</code>.
      */
-    public CoordinateReferenceSystem createCoordinateReferenceSystem(final String code)
-            throws FactoryException {
+    @Override
+    public CoordinateReferenceSystem createCoordinateReferenceSystem(final String code) throws FactoryException {
         return createProjectedCRS(code);
     }
 
     /** Creates a projected coordinate reference system from the specified code. */
+    @Override
     public ProjectedCRS createProjectedCRS(final String code) throws FactoryException {
         final Code c = new Code(code, ProjectedCRS.class);
         return findFactlet(c).create(c, factories);

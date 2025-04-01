@@ -22,8 +22,8 @@ import org.locationtech.jts.geom.Geometry;
 import org.xml.sax.helpers.XMLFilterImpl;
 
 /**
- * Simple test implementation of <code>GMLHandlerJTS</code>. This very simple handler just prints
- * every JTS geometry that it gets to the standard output.
+ * Simple test implementation of <code>GMLHandlerJTS</code>. This very simple handler just prints every JTS geometry
+ * that it gets to the standard output.
  *
  * @author Rob Hranac, Vision for New York
  * @version $Id$
@@ -32,6 +32,7 @@ public class TestHandler extends XMLFilterImpl implements GMLHandlerJTS {
 
     static final Logger LOGGER = Logging.getLogger(TestHandler.class);
 
+    @Override
     public void geometry(Geometry geometry) {
         LOGGER.info("here is the geometry: " + geometry);
     }

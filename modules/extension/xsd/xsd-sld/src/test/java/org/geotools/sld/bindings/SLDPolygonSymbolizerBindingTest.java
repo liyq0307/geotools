@@ -16,14 +16,20 @@
  */
 package org.geotools.sld.bindings;
 
-import org.geotools.styling.PolygonSymbolizer;
-import org.opengis.filter.expression.Function;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.junit.Test;
 
 public class SLDPolygonSymbolizerBindingTest extends SLDTestSupport {
+    @Test
     public void testType() throws Exception {
         assertEquals(PolygonSymbolizer.class, new SLDPolygonSymbolizerBinding(null).getType());
     }
 
+    @Test
     public void test() throws Exception {
         SLDMockData.polygonSymbolizer(document, document);
 
@@ -33,6 +39,7 @@ public class SLDPolygonSymbolizerBindingTest extends SLDTestSupport {
         assertNotNull(ps.getStroke());
     }
 
+    @Test
     public void testTransform() throws Exception {
         SLDMockData.transformedPolygonSymbolizer(document, document);
 

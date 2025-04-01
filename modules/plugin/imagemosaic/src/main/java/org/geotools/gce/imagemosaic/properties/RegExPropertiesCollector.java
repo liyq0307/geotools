@@ -17,6 +17,8 @@
 package org.geotools.gce.imagemosaic.properties;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -26,31 +28,30 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FilenameUtils;
 import org.geotools.util.logging.Logging;
 
-public abstract class RegExPropertiesCollector extends PropertiesCollector {
+public abstract class RegExPropertiesCollector extends PropertiesCollector implements FullPathCollector {
 
     private static final Logger LOGGER = Logging.getLogger(RegExPropertiesCollector.class);
 
     private boolean fullPath = false;
 
+    private Pattern pattern;
+
+    @Override
     public boolean isFullPath() {
         return fullPath;
     }
 
+    @Override
     public void setFullPath(boolean fullPath) {
         this.fullPath = fullPath;
     }
 
     public RegExPropertiesCollector(
-            PropertiesCollectorSPI spi,
-            List<String> propertyNames,
-            String regex,
-            boolean fullPath) {
+            PropertiesCollectorSPI spi, List<String> propertyNames, String regex, boolean fullPath) {
         super(spi, propertyNames);
         this.fullPath = fullPath;
         pattern = Pattern.compile(regex);
     }
-
-    private Pattern pattern;
 
     @Override
     public RegExPropertiesCollector collect(File file) {
@@ -61,6 +62,40 @@ public abstract class RegExPropertiesCollector extends PropertiesCollector {
         final String name = fullPath ? absolutePath : FilenameUtils.getBaseName(absolutePath);
 
         // get matches
+        addMatches(name);
+        return this;
+    }
+
+    @Override
+    public RegExPropertiesCollector collect(URL url) {
+        super.collect(url);
+
+        // get name of the url
+        final String fullUrl = url.toString();
+        return collectFromPath(fullUrl);
+    }
+
+    @Override
+    public RegExPropertiesCollector collect(URI uri) {
+        super.collect(uri);
+
+        // get path of the uri
+        final String path = uri.toString();
+        return collectFromPath(path);
+    }
+
+    private RegExPropertiesCollector collectFromPath(String name) {
+        if (!fullPath) {
+            int index = name.lastIndexOf("/");
+            name = name.substring(index + 1);
+        }
+
+        // get matches
+        addMatches(name);
+        return this;
+    }
+
+    private void addMatches(String name) {
         final Matcher matcher = pattern.matcher(name);
 
         while (matcher.find()) {
@@ -75,8 +110,8 @@ public abstract class RegExPropertiesCollector extends PropertiesCollector {
             }
             addMatch(match);
         }
-        return this;
     }
+    ;
 
     @Override
     public void setProperties(Map<String, Object> map) {
@@ -85,9 +120,8 @@ public abstract class RegExPropertiesCollector extends PropertiesCollector {
         List<String> matches = getMatches();
 
         // set the properties, only if we have matches!
-        if (matches.size() <= 0) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.fine("No matches found for this property extractor:");
+        if (matches.isEmpty()) {
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("No matches found for this property extractor:");
         }
         int index = 0;
         for (String propertyName : getPropertyNames()) {

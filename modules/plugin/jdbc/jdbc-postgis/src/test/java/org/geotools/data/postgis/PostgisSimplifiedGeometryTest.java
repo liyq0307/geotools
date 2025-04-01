@@ -18,8 +18,10 @@
 
 package org.geotools.data.postgis;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
@@ -27,6 +29,7 @@ import org.geotools.geometry.jts.WKTReader2;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.jdbc.JDBCTestSupport;
 import org.geotools.util.factory.Hints;
+import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 
@@ -37,31 +40,51 @@ public class PostgisSimplifiedGeometryTest extends JDBCTestSupport {
         return new PostgisSimplifiedGeometryTestSetup(new PostGISTestSetup());
     }
 
+    @Test
     public void testPoint() throws IOException, ParseException {
         Geometry geom = getFirstGeometry("simplify_point", 10);
         // same point, but before the fix with TWKB enabled it would have been 0,0
         assertGeometryEquals(geom, "POINT(-120 40)");
     }
 
+    @Test
+    public void testPointSmallDistance() throws IOException, ParseException {
+        Geometry geom = getFirstGeometry("simplify_point", 6.191820034473494e-8);
+        // same point, but before the fix with TWKB parameters it would have
+        // thrown ERROR: lwgeom_write_to_buffer: X/Z precision cannot be greater
+        // than 7 or less than -7
+        assertGeometryEquals(geom, "POINT(-120 40)");
+    }
+
+    @Test
     public void testLine() throws IOException, ParseException {
         Geometry geom = getFirstGeometry("simplify_line", 20);
         // mid point gone
         assertGeometryEquals(geom, "LINESTRING(-120.0 40.0, -140 60)");
     }
 
+    @Test
     public void testPolygon() throws IOException, ParseException {
         Geometry geom = getFirstGeometry("simplify_polygon", 20);
         // simplified down to a triangle
         assertGeometryEquals(geom, "POLYGON ((-120 40, -130 40, -130 50, -120 40))");
     }
 
+    @Test
+    public void testPolygon0Distance() throws IOException, ParseException {
+        Geometry geom = getFirstGeometry("simplify_polygon", 0);
+        // do not simplify
+        assertGeometryEquals(geom, "POLYGON ((-120 40, -130 40, -130 50, -130 40, -120 40))");
+    }
+
+    @Test
     public void testCollection() throws IOException, ParseException {
         Geometry geom = getFirstGeometry("simplify_collection", 20);
         // line part simplified, but won't use TWKB
-        assertGeometryEquals(
-                geom, "GEOMETRYCOLLECTION (POINT (-120 40), LINESTRING (-120 40, -140 50))");
+        assertGeometryEquals(geom, "GEOMETRYCOLLECTION (POINT (-120 40), LINESTRING (-120 40, -140 50))");
     }
 
+    @Test
     public void testCurve() throws IOException, ParseException {
         Geometry geom = getFirstGeometry("simplify_curve", 20);
         // actual curve, does not get simplified
@@ -73,8 +96,7 @@ public class PostgisSimplifiedGeometryTest extends JDBCTestSupport {
         assertTrue("Expected " + expectedWKT + " but got " + actual, actual.equalsExact(expected));
     }
 
-    private Geometry getFirstGeometry(String tableName, double simplificationDistance)
-            throws IOException {
+    private Geometry getFirstGeometry(String tableName, double simplificationDistance) throws IOException {
         ContentFeatureSource fs = dataStore.getFeatureSource(tname(tableName));
         Query q = new Query(tname(tableName));
         q.setHints(new Hints(Hints.GEOMETRY_SIMPLIFICATION, simplificationDistance));

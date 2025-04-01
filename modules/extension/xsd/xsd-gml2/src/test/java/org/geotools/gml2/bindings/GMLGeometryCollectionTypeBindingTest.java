@@ -16,10 +16,16 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import javax.xml.namespace.QName;
 import org.geotools.gml2.GML;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -38,17 +44,15 @@ public class GMLGeometryCollectionTypeBindingTest extends AbstractGMLBindingTest
     ElementInstance poly1;
     GeometryFactory gf;
 
-    protected void setUp() throws Exception {
+    @Override
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
         point1 = createElement(GML.NAMESPACE, "myPoint", GML.PointMemberType, null);
         point2 = createElement(GML.NAMESPACE, "myPoint", GML.PointMemberType, null);
-        line1 =
-                createElement(
-                        GML.NAMESPACE,
-                        "myLine",
-                        new QName("http://www.opengis.net/gml", "LineStringMemberType"),
-                        null);
+        line1 = createElement(
+                GML.NAMESPACE, "myLine", new QName("http://www.opengis.net/gml", "LineStringMemberType"), null);
         ring1 = createElement(GML.NAMESPACE, "myLine", GML.LinearRingMemberType, null);
         poly1 = createElement(GML.NAMESPACE, "myPoly", GML.PolygonMemberType, null);
         gcol = createElement(GML.NAMESPACE, "myColl", GML.GeometryCollectionType, null);
@@ -59,22 +63,17 @@ public class GMLGeometryCollectionTypeBindingTest extends AbstractGMLBindingTest
         container.registerComponentImplementation(GMLGeometryCollectionTypeBinding.class);
     }
 
+    @Test
     public void testHomogeneous() throws Exception {
-        Node node =
-                createNode(
-                        gcol,
-                        new ElementInstance[] {point1, point2},
-                        new Object[] {
-                            gf.createPoint(new Coordinate(0, 0)),
-                            gf.createPoint(new Coordinate(1, 1))
-                        },
-                        null,
-                        null);
+        Node node = createNode(
+                gcol,
+                new ElementInstance[] {point1, point2},
+                new Object[] {gf.createPoint(new Coordinate(0, 0)), gf.createPoint(new Coordinate(1, 1))},
+                null,
+                null);
 
-        GMLGeometryCollectionTypeBinding s =
-                (GMLGeometryCollectionTypeBinding)
-                        container.getComponentInstanceOfType(
-                                GMLGeometryCollectionTypeBinding.class);
+        GMLGeometryCollectionTypeBinding s = (GMLGeometryCollectionTypeBinding)
+                container.getComponentInstanceOfType(GMLGeometryCollectionTypeBinding.class);
 
         GeometryCollection gc = (GeometryCollection) s.parse(gcol, node, null);
         assertNotNull(gc);
@@ -87,40 +86,29 @@ public class GMLGeometryCollectionTypeBindingTest extends AbstractGMLBindingTest
         assertEquals(((Point) gc.getGeometryN(1)).getY(), 1d, 0d);
     }
 
+    @Test
     public void testHeterogeneous() throws Exception {
-        Node node =
-                createNode(
-                        gcol,
-                        new ElementInstance[] {point1, point2, line1, ring1, poly1},
-                        new Object[] {
-                            gf.createPoint(new Coordinate(0, 0)),
-                            gf.createPoint(new Coordinate(1, 1)),
-                            gf.createLineString(
-                                    new Coordinate[] {new Coordinate(0, 0), new Coordinate(1, 1)}),
-                            gf.createLinearRing(
-                                    new Coordinate[] {
-                                        new Coordinate(0, 0),
-                                        new Coordinate(1, 1),
-                                        new Coordinate(2, 2),
-                                        new Coordinate(0, 0)
-                                    }),
-                            gf.createPolygon(
-                                    gf.createLinearRing(
-                                            new Coordinate[] {
-                                                new Coordinate(0, 0),
-                                                new Coordinate(1, 1),
-                                                new Coordinate(2, 2),
-                                                new Coordinate(0, 0)
-                                            }),
-                                    null)
-                        },
-                        null,
-                        null);
+        Node node = createNode(
+                gcol,
+                new ElementInstance[] {point1, point2, line1, ring1, poly1},
+                new Object[] {
+                    gf.createPoint(new Coordinate(0, 0)),
+                    gf.createPoint(new Coordinate(1, 1)),
+                    gf.createLineString(new Coordinate[] {new Coordinate(0, 0), new Coordinate(1, 1)}),
+                    gf.createLinearRing(new Coordinate[] {
+                        new Coordinate(0, 0), new Coordinate(1, 1), new Coordinate(2, 2), new Coordinate(0, 0)
+                    }),
+                    gf.createPolygon(
+                            gf.createLinearRing(new Coordinate[] {
+                                new Coordinate(0, 0), new Coordinate(1, 1), new Coordinate(2, 2), new Coordinate(0, 0)
+                            }),
+                            null)
+                },
+                null,
+                null);
 
-        GMLGeometryCollectionTypeBinding s =
-                (GMLGeometryCollectionTypeBinding)
-                        container.getComponentInstanceOfType(
-                                GMLGeometryCollectionTypeBinding.class);
+        GMLGeometryCollectionTypeBinding s = (GMLGeometryCollectionTypeBinding)
+                container.getComponentInstanceOfType(GMLGeometryCollectionTypeBinding.class);
 
         GeometryCollection gc = (GeometryCollection) s.parse(gcol, node, null);
         assertNotNull(gc);

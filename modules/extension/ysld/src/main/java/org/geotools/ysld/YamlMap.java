@@ -38,10 +38,9 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Internal cast to map used by constructor.
      *
-     * @param obj
      * @return Map
-     * @throws IllegalArgumentException
      */
+    @SuppressWarnings("unchecked")
     static Map<String, Object> cast(Object obj) {
         if (!(obj instanceof Map)) {
             throw new IllegalArgumentException(obj + " is not a map");
@@ -62,7 +61,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * String access.
      *
-     * @param key
      * @return String access, converting if necessary.
      */
     public String str(String key) {
@@ -72,7 +70,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * String access.
      *
-     * @param key
      * @param def default if value not provided
      * @return String access, converting if necessary.
      */
@@ -83,7 +80,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Integer access.
      *
-     * @param key
      * @return Integer access, converting if necessary.
      */
     public Integer integer(String key) {
@@ -93,7 +89,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Integer access.
      *
-     * @param key
      * @param def default if value not provided
      * @return Integer access, converting if necessary.
      */
@@ -104,7 +99,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Double access.
      *
-     * @param key
      * @return Integer access, converting if necessary.
      */
     public Double doub(String key) {
@@ -114,7 +108,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Double access.
      *
-     * @param key
      * @param def default if value not provided
      * @return Integer access, converting if necessary.
      */
@@ -125,7 +118,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Boolean access.
      *
-     * @param key
      * @return Boolean access, converting if necessary.
      */
     public Boolean bool(String key) {
@@ -135,7 +127,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Boolean access.
      *
-     * @param key
      * @param def default if value not provided
      * @return Boolean access, converting if necessary.
      */
@@ -146,7 +137,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Check if mapping available for key
      *
-     * @param key
      * @return true if mapping available for key
      */
     public boolean has(String key) {
@@ -156,7 +146,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Value access
      *
-     * @param key
      * @return Value access
      */
     public Object get(String key) {
@@ -168,7 +157,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
      *
      * <p>Wrappers are provided for Map and List
      *
-     * @param key
      * @return Access as Yaml wrapper
      */
     public YamlObject<?> obj(String key) {
@@ -178,7 +166,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Access value as a YamlMap
      *
-     * @param key
      * @return Access as YamlMap
      */
     public YamlMap map(String key) {
@@ -195,7 +182,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Access value as a YamlSeq
      *
-     * @param key
      * @return Access as YamlSeq
      */
     public YamlSeq seq(String key) {
@@ -217,11 +203,11 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
      */
     public String key(int i) {
         int index = 0;
-        for (Iterator<String> iterator = iterator(); iterator.hasNext(); index++) {
-            String key = iterator.next();
+        for (String key : this) {
             if (index == i) {
                 return key;
             }
+            index++;
         }
         throw new IndexOutOfBoundsException("Index: " + i + ", Size: " + this.raw.size());
     }
@@ -235,7 +221,6 @@ public class YamlMap extends YamlObject<Map<String, Object>> implements Iterable
     /**
      * Typed access
      *
-     * @param key
      * @param def default if value not provided
      * @return Typed access, converting if necessary.
      */

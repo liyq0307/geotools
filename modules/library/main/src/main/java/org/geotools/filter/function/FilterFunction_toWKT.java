@@ -20,26 +20,26 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_toWKT extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "toWKT", parameter("wkt", String.class), parameter("geometry", Geometry.class));
+            new FunctionNameImpl("toWKT", parameter("wkt", String.class), parameter("geometry", Geometry.class));
 
     public FilterFunction_toWKT() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
         Geometry arg0;
 
         try { // attempt to get value and perform conversion
-            arg0 = (Geometry) getExpression(0).evaluate(feature);
+            arg0 = getExpression(0).evaluate(feature, Geometry.class);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

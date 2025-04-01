@@ -17,6 +17,7 @@
 package org.geotools.coverage.processing.operation;
 
 import it.geosolutions.jaiext.iterators.RandomIterFactory;
+import it.geosolutions.jaiext.range.NoDataContainer;
 import javax.media.jai.BorderExtender;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.RenderedOp;
@@ -35,15 +36,13 @@ class ExtendedRandomIter implements RandomIter {
     RenderedOp op;
 
     public static RandomIter getRandomIterator(
-            final PlanarImage src,
-            int leftPad,
-            int rightPad,
-            int topPad,
-            int bottomPad,
-            BorderExtender extender) {
+            final PlanarImage src, int leftPad, int rightPad, int topPad, int bottomPad, BorderExtender extender) {
         RandomIter iterSource;
         if (extender != null) {
             ImageWorker w = new ImageWorker(src).setRenderingHints(GeoTools.getDefaultHints());
+            if (w.getNoData() != null) {
+                w.setBackground(new NoDataContainer(w.getNoData()).getAsArray());
+            }
             RenderedOp op =
                     w.border(leftPad, rightPad, topPad, bottomPad, extender).getRenderedOperation();
             RandomIter it = RandomIterFactory.create(op, op.getBounds(), true, true);
@@ -60,30 +59,37 @@ class ExtendedRandomIter implements RandomIter {
         this.op = op;
     }
 
+    @Override
     public int getSample(int x, int y, int b) {
         return delegate.getSample(x, y, b);
     }
 
+    @Override
     public float getSampleFloat(int x, int y, int b) {
         return delegate.getSampleFloat(x, y, b);
     }
 
+    @Override
     public double getSampleDouble(int x, int y, int b) {
         return delegate.getSampleDouble(x, y, b);
     }
 
+    @Override
     public int[] getPixel(int x, int y, int[] iArray) {
         return delegate.getPixel(x, y, iArray);
     }
 
+    @Override
     public float[] getPixel(int x, int y, float[] fArray) {
         return delegate.getPixel(x, y, fArray);
     }
 
+    @Override
     public double[] getPixel(int x, int y, double[] dArray) {
         return delegate.getPixel(x, y, dArray);
     }
 
+    @Override
     public void done() {
         delegate.done();
         op.dispose();

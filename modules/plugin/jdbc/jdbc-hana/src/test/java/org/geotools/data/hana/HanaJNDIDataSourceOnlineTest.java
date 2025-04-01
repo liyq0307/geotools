@@ -16,6 +16,8 @@
  */
 package org.geotools.data.hana;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.List;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.jdbc.JDBCJNDIDataSourceOnlineTest;
@@ -25,8 +27,9 @@ import org.geotools.jdbc.JDBCJNDITestSetup;
 /** @author Stefan Uhrig, SAP SE */
 public class HanaJNDIDataSourceOnlineTest extends JDBCJNDIDataSourceOnlineTest {
 
+    @Override
     protected JDBCJNDITestSetup createTestSetup() {
-        return new JDBCJNDITestSetup(new HanaTestSetup());
+        return new JDBCJNDITestSetup(new HanaTestSetupPSPooling());
     }
 
     @Override
@@ -40,6 +43,7 @@ public class HanaJNDIDataSourceOnlineTest extends JDBCJNDIDataSourceOnlineTest {
     }
 
     /** Make sure the JNDI factory exposes all the extra params that the non JNDI one exposes */
+    @Override
     public void testExtraParams() {
         List<String> baseParams = getBaseParams();
         List<String> standardParams = getParamKeys(getDataStoreFactory());

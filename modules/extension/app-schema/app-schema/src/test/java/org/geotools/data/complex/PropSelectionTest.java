@@ -28,22 +28,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.appschema.filter.FilterFactoryImplNamespaceAware;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
 import org.geotools.data.complex.feature.type.Types;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.test.AppSchemaTestSupport;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
@@ -66,7 +66,7 @@ public class PropSelectionTest extends AppSchemaTestSupport {
     private FeatureSource<FeatureType, Feature> mfSource;
 
     /** namespace aware filter factory * */
-    private FilterFactory2 ff;
+    private FilterFactory ff;
 
     @Before
     public void setUp() throws Exception {
@@ -77,7 +77,7 @@ public class PropSelectionTest extends AppSchemaTestSupport {
         ff = new FilterFactoryImplNamespaceAware(namespaces);
 
         /** Load mapped feature data access */
-        Map<String, Serializable> dsParams = new HashMap<String, Serializable>();
+        Map<String, Serializable> dsParams = new HashMap<>();
         URL url = PropSelectionTest.class.getResource(schemaBase + "MappedFeaturePropertyfile.xml");
         assertNotNull(url);
 
@@ -90,7 +90,7 @@ public class PropSelectionTest extends AppSchemaTestSupport {
         url = PropSelectionTest.class.getResource(schemaBase + "GeologicUnit.xml");
         assertNotNull(url);
 
-        dsParams = new HashMap<String, Serializable>();
+        dsParams = new HashMap<>();
         dsParams.put("dbtype", "app-schema");
         dsParams.put("url", url.toExternalForm());
         DataAccess<FeatureType, Feature> guDataAccess = DataAccessFinder.getDataStore(dsParams);
@@ -99,52 +99,47 @@ public class PropSelectionTest extends AppSchemaTestSupport {
         mfSource = mfDataAccess.getFeatureSource(MAPPED_FEATURE);
     }
 
-    /**
-     * Testing Property Name Selection
-     *
-     * @throws IOException
-     */
+    /** Testing Property Name Selection */
     @Test
     public void testPropertyNameSelection() throws IOException {
 
-        PropertyName propertyName1 =
-                ff.property("gsml:specification/gsml:GeologicUnit/gml:description");
-        PropertyName propertyName2 =
-                ff.property("gsml:specification/gsml:GeologicUnit/gsml:occurrence");
+        PropertyName propertyName1 = ff.property("gsml:specification/gsml:GeologicUnit/gml:description");
+        PropertyName propertyName2 = ff.property("gsml:specification/gsml:GeologicUnit/gsml:occurrence");
 
-        List<PropertyName> properties = new ArrayList<PropertyName>();
+        List<PropertyName> properties = new ArrayList<>();
         properties.add(propertyName1);
         Query query = new Query();
         query.setProperties(properties);
+        query.setFilter(ff.not(ff.id(ff.featureId("mf5"))));
 
         FeatureCollection<FeatureType, Feature> mfCollection = mfSource.getFeatures(query);
 
-        FeatureIterator iterator = mfCollection.features();
+        try (FeatureIterator iterator = mfCollection.features()) {
+            int i = 0;
+            while (iterator.hasNext()) {
+                Feature feature = iterator.next();
+                assertNotNull(propertyName1.evaluate(feature));
+                assertNull(propertyName2.evaluate(feature));
+                i++;
+            }
+            assertEquals(4, i);
 
-        int i = 0;
-        while (iterator.hasNext()) {
-            Feature feature = iterator.next();
-            assertNotNull(propertyName1.evaluate(feature));
-            assertNull(propertyName2.evaluate(feature));
-            i++;
+            properties = new ArrayList<>();
+            properties.add(propertyName2);
+            query.setProperties(properties);
+
+            mfCollection = mfSource.getFeatures(query);
         }
-        assertEquals(4, i);
 
-        properties = new ArrayList<PropertyName>();
-        properties.add(propertyName2);
-        query.setProperties(properties);
-
-        mfCollection = mfSource.getFeatures(query);
-
-        iterator = mfCollection.features();
-
-        i = 0;
-        while (iterator.hasNext()) {
-            Feature feature = iterator.next();
-            assertNotNull(propertyName2.evaluate(feature));
-            assertNull(propertyName1.evaluate(feature));
-            i++;
+        try (FeatureIterator iterator = mfCollection.features()) {
+            int i = 0;
+            while (iterator.hasNext()) {
+                Feature feature = iterator.next();
+                assertNotNull(propertyName2.evaluate(feature));
+                assertNull(propertyName1.evaluate(feature));
+                i++;
+            }
+            assertEquals(4, i);
         }
-        assertEquals(4, i);
     }
 }

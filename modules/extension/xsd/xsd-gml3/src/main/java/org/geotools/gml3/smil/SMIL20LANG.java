@@ -44,25 +44,20 @@ public final class SMIL20LANG extends XSD {
             new QName("http://www.w3.org/2001/SMIL20/Language", "animateMotionType");
 
     /** @generated */
-    public static final QName ANIMATETYPE =
-            new QName("http://www.w3.org/2001/SMIL20/Language", "animateType");
+    public static final QName ANIMATETYPE = new QName("http://www.w3.org/2001/SMIL20/Language", "animateType");
 
     /** @generated */
-    public static final QName SETTYPE =
-            new QName("http://www.w3.org/2001/SMIL20/Language", "setType");
+    public static final QName SETTYPE = new QName("http://www.w3.org/2001/SMIL20/Language", "setType");
 
     /* Elements */
     /** @generated */
-    public static final QName ANIMATE =
-            new QName("http://www.w3.org/2001/SMIL20/Language", "animate");
+    public static final QName ANIMATE = new QName("http://www.w3.org/2001/SMIL20/Language", "animate");
 
     /** @generated */
-    public static final QName ANIMATECOLOR =
-            new QName("http://www.w3.org/2001/SMIL20/Language", "animateColor");
+    public static final QName ANIMATECOLOR = new QName("http://www.w3.org/2001/SMIL20/Language", "animateColor");
 
     /** @generated */
-    public static final QName ANIMATEMOTION =
-            new QName("http://www.w3.org/2001/SMIL20/Language", "animateMotion");
+    public static final QName ANIMATEMOTION = new QName("http://www.w3.org/2001/SMIL20/Language", "animateMotion");
 
     /** @generated */
     public static final QName SET = new QName("http://www.w3.org/2001/SMIL20/Language", "set");
@@ -74,20 +69,24 @@ public final class SMIL20LANG extends XSD {
         return instance;
     }
 
-    protected void addDependencies(Set dependencies) {
+    @Override
+    protected void addDependencies(Set<XSD> dependencies) {
         dependencies.add(SMIL20.getInstance());
     }
 
     /** Returns 'http://www.w3.org/2001/SMIL20/'. */
+    @Override
     public String getNamespaceURI() {
         return NAMESPACE;
     }
 
     /** Returns the location of 'smil20-language.xsd'. */
+    @Override
     public String getSchemaLocation() {
         return getClass().getResource("smil20-language.xsd").toString();
     }
 
+    @Override
     public SchemaLocator createSchemaLocator() {
         return null;
     }

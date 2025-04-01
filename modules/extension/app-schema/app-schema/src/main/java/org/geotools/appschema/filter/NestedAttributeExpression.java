@@ -22,6 +22,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
 import org.geotools.appschema.jdbc.NamespaceAwareAttributeRenameVisitor;
 import org.geotools.data.complex.AppSchemaDataAccessRegistry;
 import org.geotools.data.complex.AttributeMapping;
@@ -35,16 +40,10 @@ import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.AttributeExpressionImpl;
 import org.geotools.filter.visitor.DuplicatingFilterVisitor;
 import org.geotools.xlink.XLINK;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
 
 /**
- * This class represents a list of expressions broken up from a single XPath expression that is
- * nested in more than one feature. The purpose is to allow filtering these attributes on the parent
- * feature.
+ * This class represents a list of expressions broken up from a single XPath expression that is nested in more than one
+ * feature. The purpose is to allow filtering these attributes on the parent feature.
  *
  * @author Rini Angreani (CSIRO Earth Science and Resource Engineering)
  */
@@ -80,9 +79,8 @@ public class NestedAttributeExpression extends AttributeExpressionImpl {
         return getValues(((Feature) object), rootMapping, fullSteps);
     }
 
-    private List<Object> getValues(
-            Feature feature, NestedAttributeMapping nestedMapping, StepList steps) {
-        List<Object> values = new ArrayList<Object>();
+    private List<Object> getValues(Feature feature, NestedAttributeMapping nestedMapping, StepList steps) {
+        List<Object> values = new ArrayList<>();
         FeatureTypeMapping nextFMapping;
         try {
             nextFMapping = nestedMapping.getFeatureTypeMapping(feature);
@@ -95,15 +93,13 @@ public class NestedAttributeExpression extends AttributeExpressionImpl {
                 return values;
             }
             throw new UnsupportedOperationException(
-                    "FeatureTypeMapping not found for "
-                            + attPath
-                            + ". Please revise PropertyName in your filter!");
+                    "FeatureTypeMapping not found for " + attPath + ". Please revise PropertyName in your filter!");
         }
-        List<Feature> nestedFeatures = new ArrayList<Feature>();
+        List<Feature> nestedFeatures = new ArrayList<>();
         if (nestedMapping.isSameSource()) {
             // same root/database row, different mappings, used in
             // polymorphism
-            nestedFeatures = new ArrayList<Feature>();
+            nestedFeatures = new ArrayList<>();
             nestedFeatures.add(feature);
         } else {
             // get nested features
@@ -111,10 +107,7 @@ public class NestedAttributeExpression extends AttributeExpressionImpl {
                 nestedFeatures = getNestedFeatures(feature, nestedMapping, nextFMapping);
             } catch (IOException e) {
                 throw new RuntimeException(
-                        "Failed evaluating filter expression: '"
-                                + attPath
-                                + "'. Caused by: "
-                                + e.getMessage());
+                        "Failed evaluating filter expression: '" + attPath + "'. Caused by: " + e.getMessage());
             } catch (IllegalArgumentException e) {
                 // might be a polymorphic case where it's looking for an attribute
                 // from another type
@@ -183,8 +176,7 @@ public class NestedAttributeExpression extends AttributeExpressionImpl {
                 }
                 boolean isXlinkHref = isClientProperty && isXlinkHref(steps);
 
-                List<AttributeMapping> attMappings =
-                        nextFMapping.getAttributeMappingsIgnoreIndex(newSteps);
+                List<AttributeMapping> attMappings = nextFMapping.getAttributeMappingsIgnoreIndex(newSteps);
                 for (AttributeMapping attMapping : attMappings) {
                     if (isClientProperty) {
                         if (!(isXlinkHref && attMapping instanceof NestedAttributeMapping)) {
@@ -224,7 +216,7 @@ public class NestedAttributeExpression extends AttributeExpressionImpl {
     }
 
     private List<Object> getClientProperties(AttributeMapping attMapping, Feature f) {
-        List<Object> values = new ArrayList<Object>();
+        List<Object> values = new ArrayList<>();
         Step lastStep = getLastStep();
         Expression exp = getClientPropertyExpression(attMapping, lastStep);
         if (exp != null) {
@@ -247,11 +239,9 @@ public class NestedAttributeExpression extends AttributeExpressionImpl {
      * @param nestedMapping Attribute mapping for nested features
      * @param fMapping The root feature type mapping
      * @return list of nested features
-     * @throws IOException
      */
     private List<Feature> getNestedFeatures(
-            Feature root, NestedAttributeMapping nestedMapping, FeatureTypeMapping fMapping)
-            throws IOException {
+            Feature root, NestedAttributeMapping nestedMapping, FeatureTypeMapping fMapping) throws IOException {
         Object fTypeName = nestedMapping.getNestedFeatureType(root);
         if (fTypeName == null || !(fTypeName instanceof Name)) {
             return null;
@@ -282,14 +272,7 @@ public class NestedAttributeExpression extends AttributeExpressionImpl {
         }
     }
 
-    /**
-     * Extract the value that might be wrapped in an attribute. If the value is a collection, gets
-     * the first value.
-     *
-     * @param value
-     * @return
-     */
-    @SuppressWarnings("rawtypes")
+    /** Extract the value that might be wrapped in an attribute. If the value is a collection, gets the first value. */
     private Object extractAttributeValue(Object value) {
         if (value == null) {
             return null;
@@ -319,7 +302,6 @@ public class NestedAttributeExpression extends AttributeExpressionImpl {
      *
      * @param mapping attribute mapping
      * @param lastStep the last step
-     * @return
      */
     private Expression getClientPropertyExpression(AttributeMapping mapping, Step lastStep) {
         Expression exp = null;
@@ -339,7 +321,7 @@ public class NestedAttributeExpression extends AttributeExpressionImpl {
             }
             if (clientProperties.containsKey(lastStepName)) {
                 // end NC - added
-                exp = (Expression) clientProperties.get(lastStepName);
+                exp = clientProperties.get(lastStepName);
             } else if (XPath.isId(lastStep)) {
                 if (mapping.getIdentifierExpression() == Expression.NIL) {
                     // no specific attribute mapping or that idExpression is not mapped
@@ -353,11 +335,11 @@ public class NestedAttributeExpression extends AttributeExpressionImpl {
         return exp;
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         // Workaround for GEOT-4981: NestedAttributeExpresionImpl is incompatible with
         // DuplicatingFilterVisitor
-        if (visitor instanceof DuplicatingFilterVisitor
-                && !(visitor instanceof NamespaceAwareAttributeRenameVisitor)) {
+        if (visitor instanceof DuplicatingFilterVisitor && !(visitor instanceof NamespaceAwareAttributeRenameVisitor)) {
             return new NestedAttributeExpression(fullSteps, rootMapping);
         }
         return visitor.visit(this, extraData);

@@ -25,11 +25,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
 import org.geotools.gce.imagemosaic.Utils;
 import org.geotools.gce.imagemosaic.catalog.oracle.OracleDatastoreWrapper;
 import org.geotools.gce.imagemosaic.catalog.postgis.PostgisDatastoreWrapper;
+import org.geotools.gce.imagemosaic.catalog.sqlserver.SQLServerDatastoreWrapper;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
 
@@ -40,12 +41,16 @@ public class GTDataStoreGranuleCatalog extends AbstractGTDataStoreGranuleCatalog
     private Set<String> validTypeNames;
 
     public GTDataStoreGranuleCatalog(
-            Properties params, boolean create, DataStoreFactorySpi spi, Hints hints) {
-        super(params, create, spi, hints);
+            Properties params,
+            CatalogConfigurationBeans configurations,
+            boolean create,
+            DataStoreFactorySpi spi,
+            Hints hints) {
+        super(params, configurations, create, spi, hints);
     }
 
-    protected void initTileIndexStore(
-            final Properties params, final boolean create, final DataStoreFactorySpi spi)
+    @Override
+    protected void initTileIndexStore(final Properties params, final boolean create, final DataStoreFactorySpi spi)
             throws IOException, MalformedURLException {
         Utilities.ensureNonNull("spi", spi);
 
@@ -77,16 +82,18 @@ public class GTDataStoreGranuleCatalog extends AbstractGTDataStoreGranuleCatalog
 
         if (isPostgis && wrapstore) {
             this.tileIndexStore =
-                    new PostgisDatastoreWrapper(
-                            getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
+                    new PostgisDatastoreWrapper(getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
         } else if (Utils.isOracleStore(spi)) {
             this.tileIndexStore =
-                    new OracleDatastoreWrapper(
-                            getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
+                    new OracleDatastoreWrapper(getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
+        } else if (Utils.isSQLServerStore(spi)) {
+            // always wrap to ensure the geometry metadata table is there
+            this.tileIndexStore =
+                    new SQLServerDatastoreWrapper(getTileIndexStore(), FilenameUtils.getFullPath(parentLocation));
         }
 
         // this init must be here as it's getting called by the parent class constructor
-        this.validTypeNames = new HashSet<String>();
+        this.validTypeNames = new HashSet<>();
 
         // is this a new store? If so we do not set any properties
         if (create) {
@@ -95,6 +102,7 @@ public class GTDataStoreGranuleCatalog extends AbstractGTDataStoreGranuleCatalog
         initializeTypeNames(params);
     }
 
+    @Override
     protected void handleInitializationException(Throwable t) {
         try {
             if (tileIndexStore != null) tileIndexStore.dispose();
@@ -110,6 +118,7 @@ public class GTDataStoreGranuleCatalog extends AbstractGTDataStoreGranuleCatalog
         return tileIndexStore;
     }
 
+    @Override
     protected void disposeTileIndexStore() {
         try {
             if (tileIndexStore != null) {

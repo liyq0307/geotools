@@ -16,8 +16,18 @@
  */
 package org.geotools.jdbc;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.data.DataUtilities;
+import org.geotools.data.store.ContentFeatureStore;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.geometry.jts.WKTReader2;
 import org.geotools.referencing.CRS;
+import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.LineString;
@@ -27,61 +37,85 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Tests that geometry types can be properly created and retrieved back from the database. You might
- * need to override some of the tests method to fix the expectations for specific geometry class
- * types.
+ * Tests that geometry types can be properly created and retrieved back from the database. You might need to override
+ * some of the tests method to fix the expectations for specific geometry class types.
  */
 public abstract class JDBCGeometryOnlineTest extends JDBCTestSupport {
 
     @Override
     protected abstract JDBCGeometryTestSetup createTestSetup();
 
+    @Test
     public void testPoint() throws Exception {
         assertEquals(Point.class, checkGeometryType(Point.class));
     }
 
+    @Test
     public void testLineString() throws Exception {
         assertEquals(LineString.class, checkGeometryType(LineString.class));
     }
 
+    @Test
     public void testLinearRing() throws Exception {
         assertEquals(LinearRing.class, checkGeometryType(LinearRing.class));
     }
 
+    @Test
     public void testPolygon() throws Exception {
         assertEquals(Polygon.class, checkGeometryType(Polygon.class));
     }
 
+    @Test
     public void testMultiPoint() throws Exception {
         assertEquals(MultiPoint.class, checkGeometryType(MultiPoint.class));
     }
 
+    @Test
     public void testMultiLineString() throws Exception {
         assertEquals(MultiLineString.class, checkGeometryType(MultiLineString.class));
     }
 
+    @Test
     public void testMultiPolygon() throws Exception {
         assertEquals(MultiPolygon.class, checkGeometryType(MultiPolygon.class));
     }
 
-    /**
-     * Sometimes the source cannot anticipate the geometry type, can we cope with this?
-     *
-     * @throws Exception
-     */
+    @Test
+    public void testMultiSurfaceLinearized() throws Exception {
+        String featureTypeName = tname("tMultiPolygon");
+
+        SimpleFeatureTypeBuilder ftb = new SimpleFeatureTypeBuilder();
+        ftb.setName("tMultiPolygon");
+        ftb.add(aname("id"), Integer.class);
+        ftb.add(aname("name"), String.class);
+        ftb.add(aname("geom"), MultiPolygon.class, CRS.decode("EPSG:4326"));
+
+        SimpleFeatureType ft = ftb.buildFeatureType();
+        dataStore.createSchema(ft);
+
+        SimpleFeatureType newSchema = dataStore.getSchema(featureTypeName);
+        assertNotNull(newSchema);
+        newSchema.getGeometryDescriptor().getType().getBinding();
+
+        SimpleFeatureBuilder sfb = new SimpleFeatureBuilder(ft);
+        WKTReader2 reader = new WKTReader2();
+        sfb.set(aname("name"), "the name");
+        sfb.set(aname("geom"), reader.read("MultiSurface (((1 0, 2 0, 2 1, 1 1, 1 0)))"));
+
+        ContentFeatureStore store = (ContentFeatureStore) dataStore.getFeatureSource(featureTypeName);
+        store.addFeatures(DataUtilities.collection(sfb.buildFeature("1")));
+    }
+
+    /** Sometimes the source cannot anticipate the geometry type, can we cope with this? */
+    @Test
     public void testGeometry() throws Exception {
         assertEquals(Geometry.class, checkGeometryType(Geometry.class));
     }
 
-    /**
-     * Same goes for heterogeneous collections
-     *
-     * @throws Exception
-     */
+    /** Same goes for heterogeneous collections */
+    @Test
     public void testGeometryCollection() throws Exception {
         assertEquals(GeometryCollection.class, checkGeometryType(GeometryCollection.class));
     }

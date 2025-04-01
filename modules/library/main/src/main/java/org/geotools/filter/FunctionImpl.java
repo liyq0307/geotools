@@ -23,21 +23,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.parameter.Parameter;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.filter.expression.ExpressionAbstract;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.parameter.Parameter;
 
 /**
- * Default implementation of a Function; you may extend this class to implement specific
- * functionality.
+ * Default implementation of a Function; you may extend this class to implement specific functionality.
  *
  * <p>
  *
@@ -55,8 +54,8 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
     Literal fallbackValue;
 
     /**
-     * FunctionName description for FilterCapabilities, may be provided by subclass in constructor,
-     * or will be lazily created based on name and number of arguments.
+     * FunctionName description for FilterCapabilities, may be provided by subclass in constructor, or will be lazily
+     * created based on name and number of arguments.
      */
     protected FunctionName functionName;
 
@@ -65,6 +64,7 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
      *
      * @return the name of the function.
      */
+    @Override
     public String getName() {
         if (name == null && functionName != null) {
             return functionName.getName();
@@ -72,6 +72,7 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
         return name;
     }
 
+    @Override
     public synchronized FunctionName getFunctionName() {
         if (functionName == null) {
             functionName = new FunctionNameImpl(name, getParameters().size());
@@ -85,8 +86,9 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
     }
 
     /** Returns the function parameters. */
+    @Override
     public List<Expression> getParameters() {
-        return new ArrayList<Expression>(params);
+        return new ArrayList<>(params);
     }
 
     /**
@@ -97,45 +99,47 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
      * @param object Object being evaluated; often a Feature
      * @return value for the provided object
      */
+    @Override
     public Object evaluate(Object object) {
         if (fallbackValue != null) {
             return fallbackValue.evaluate(object);
         }
-        throw new UnsupportedOperationException("Function " + name + " not implemented");
+        throw new UnsupportedOperationException("Function " + name + "(" + this.getClass() + ") not implemented");
     }
 
     /** Sets the function parameters. */
-    @SuppressWarnings("unchecked")
     public void setParameters(List<Expression> params) {
-        this.params = params == null ? Collections.EMPTY_LIST : new ArrayList<Expression>(params);
+        this.params = params == null ? Collections.emptyList() : new ArrayList<>(params);
     }
 
     public void setFallbackValue(Literal fallbackValue) {
         this.fallbackValue = fallbackValue;
     }
 
+    @Override
     public Literal getFallbackValue() {
         return fallbackValue;
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
     /**
-     * Creates a String representation of this Function with the function name and the arguments.
-     * The String created should be good for most subclasses
+     * Creates a String representation of this Function with the function name and the arguments. The String created
+     * should be good for most subclasses
      */
     // Copied from FunctionExpressionImpl KS
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getName());
         sb.append("(");
-        List<org.opengis.filter.expression.Expression> params = getParameters();
+        List<org.geotools.api.filter.expression.Expression> params = getParameters();
         if (params != null) {
-            org.opengis.filter.expression.Expression exp;
-            for (Iterator<org.opengis.filter.expression.Expression> it = params.iterator();
-                    it.hasNext(); ) {
+            org.geotools.api.filter.expression.Expression exp;
+            for (Iterator<org.geotools.api.filter.expression.Expression> it = params.iterator(); it.hasNext(); ) {
                 exp = it.next();
                 sb.append("[");
                 sb.append(exp);
@@ -149,49 +153,34 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
         return sb.toString();
     }
 
-    /**
-     * Evaluates a specific argument against the context, checking for required values and proper
-     * conversion.
-     *
-     * @param object
-     * @param argumentIndex
-     * @return
-     */
+    /** Evaluates a specific argument against the context, checking for required values and proper conversion. */
     protected Object getParameterValue(Object object, int argumentIndex) {
         Parameter<?> parameter = getFunctionName().getArguments().get(argumentIndex);
         if (params.size() <= argumentIndex) {
             if (parameter.getMinOccurs() == 0) {
                 return null;
             } else {
-                throw new IllegalArgumentException(
-                        String.format(
-                                "No arguments specified for arg " + "%s, minOccurs = %d",
-                                parameter.getName().toString(), parameter.getMinOccurs()));
+                throw new IllegalArgumentException(String.format(
+                        "No arguments specified for arg " + "%s, minOccurs = %d",
+                        parameter.getName().toString(), parameter.getMinOccurs()));
             }
         }
 
         final Expression expression = params.get(argumentIndex);
         Object value = expression.evaluate(object, parameter.getType());
         if (value == null && expression.evaluate(object) != null) {
-            throw new IllegalArgumentException(
-                    String.format(
-                            "Failure converting value for "
-                                    + "argument %s. %s could not be converted to %s",
-                            parameter.getName(),
-                            expression.toString(),
-                            parameter.getType().getName()));
+            throw new IllegalArgumentException(String.format(
+                    "Failure converting value for " + "argument %s. %s could not be converted to %s",
+                    parameter.getName(),
+                    expression.toString(),
+                    parameter.getType().getName()));
         }
         return value;
     }
 
     /**
-     * Evaluates a specific argument against the context, checking for required values and proper
-     * conversion. This version accepts a default value
-     *
-     * @param object
-     * @param argumentIndex
-     * @param defaultValue
-     * @return
+     * Evaluates a specific argument against the context, checking for required values and proper conversion. This
+     * version accepts a default value
      */
     protected Object getParameterValue(Object object, int argumentIndex, Object defaultValue) {
         Object value = getParameterValue(object, argumentIndex);
@@ -205,12 +194,11 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
     /**
      * Gathers up and groups the parameters to the function based on the declared parameters.
      *
-     * <p>This method calls {@link #validateArguments()} which enforces java style argument
-     * conventions for multi valued parameters. Basically enforcing that only teh last argument in a
-     * function can be variable.
+     * <p>This method calls {@link #validateArguments()} which enforces java style argument conventions for multi valued
+     * parameters. Basically enforcing that only the last argument in a function can be variable.
      */
     protected LinkedHashMap<String, Object> dispatchArguments(Object obj) {
-        LinkedHashMap<String, Object> prepped = new LinkedHashMap<String, Object>();
+        LinkedHashMap<String, Object> prepped = new LinkedHashMap<>();
 
         List<Parameter<?>> args = getFunctionName().getArguments();
         List<Expression> expr = getParameters();
@@ -220,10 +208,9 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
 
             // check the last argument
             if (args.get(0).getMinOccurs() != 0) {
-                throw new IllegalArgumentException(
-                        String.format(
-                                "No arguments specified for arg " + "%s, minOccurs = %d",
-                                last.getName().toString(), last.getMinOccurs()));
+                throw new IllegalArgumentException(String.format(
+                        "No arguments specified for arg " + "%s, minOccurs = %d",
+                        last.getName().toString(), last.getMinOccurs()));
             }
         }
         for (int i = 0; i < expr.size(); i++) {
@@ -234,30 +221,26 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
             if (o == null) {
                 if (expr.get(i).evaluate(obj) != null) {
                     // conversion error
-                    throw new IllegalArgumentException(
-                            String.format(
-                                    "Failure converting value for "
-                                            + "argument %s. %s could not be converted to %s",
-                                    arg.getName(), obj.toString(), arg.getType().getName()));
+                    throw new IllegalArgumentException(String.format(
+                            "Failure converting value for " + "argument %s. %s could not be converted to %s",
+                            arg.getName(), obj.toString(), arg.getType().getName()));
                 }
             }
             if (prepped.containsKey(argName)) {
                 if (arg.getMaxOccurs() == 1) {
-                    throw new IllegalArgumentException(
-                            String.format(
-                                    "Multiple values specified for "
-                                            + "argument %s  but maxOccurs = 1",
-                                    argName));
+                    throw new IllegalArgumentException(String.format(
+                            "Multiple values specified for " + "argument %s  but maxOccurs = 1", argName));
                 }
 
                 // if there is already a value for this argument it is a multi argument which
                 // means a list
-                List l = (List) prepped.get(argName);
+                @SuppressWarnings("unchecked")
+                List<Object> l = (List<Object>) prepped.get(argName);
                 l.add(o);
             } else {
                 // check for variable argument, use a list if maxOccurs > 1
                 if (arg.getMaxOccurs() < 0 || arg.getMaxOccurs() > 1) {
-                    List l = new ArrayList();
+                    List<Object> l = new ArrayList<>();
                     l.add(o);
                     prepped.put(argName, l);
                 } else {
@@ -270,17 +253,16 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
     }
 
     /** filter factory */
-    static FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    static FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     /** regex for parameter specification */
     static Pattern PARAM = Pattern.compile("(\\w+)(?::([\\.\\w]*)(?::(\\d*),(\\d*))?+)?+");
 
     /**
-     * Convenience method for creating a function name from a set of strings describing the return
-     * and argument parameters of the function.
+     * Convenience method for creating a function name from a set of strings describing the return and argument
+     * parameters of the function.
      *
-     * <p>The value of <tt>ret</tt> and each value of <tt>args</tt> is a string of the following
-     * structure:
+     * <p>The value of <tt>ret</tt> and each value of <tt>args</tt> is a string of the following structure:
      *
      * <pre>
      *  name[:type[:min,max]]
@@ -320,7 +302,7 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
      * @param args The argument specifications of the function arguments
      */
     protected static FunctionName functionName(String name, String ret, String... args) {
-        List<Parameter<?>> list = new ArrayList<Parameter<?>>();
+        List<Parameter<?>> list = new ArrayList<>();
         for (String arg : args) {
             list.add(toParameter(arg));
         }
@@ -328,14 +310,14 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
         return ff.functionName(name, list, toParameter(ret));
     }
 
-    static Parameter toParameter(String param) throws IllegalArgumentException {
+    static Parameter<?> toParameter(String param) throws IllegalArgumentException {
         Matcher m = PARAM.matcher(param);
         if (!m.matches()) {
             throw new IllegalArgumentException("Illegal parameter syntax: " + param);
         }
 
         String name = m.group(1);
-        Class type = null;
+        Class<? extends Object> type = null;
         int min = 1;
         int max = 1;
 
@@ -384,7 +366,7 @@ public class FunctionImpl extends ExpressionAbstract implements Function {
             max = !"".equals(grp) ? Integer.parseInt(grp) : -1;
         }
 
-        return new org.geotools.data.Parameter(name, type, min, max);
+        return new org.geotools.api.data.Parameter<>(name, type, min, max);
     }
 
     @Override

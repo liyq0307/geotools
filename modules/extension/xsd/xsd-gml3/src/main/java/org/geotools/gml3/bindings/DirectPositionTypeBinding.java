@@ -17,9 +17,11 @@
 package org.geotools.gml3.bindings;
 
 import javax.xml.namespace.QName;
-import org.geotools.geometry.DirectPosition1D;
-import org.geotools.geometry.DirectPosition2D;
-import org.geotools.geometry.DirectPosition3D;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.geometry.Position1D;
+import org.geotools.geometry.Position2D;
+import org.geotools.geometry.Position3D;
 import org.geotools.gml.producer.CoordinateFormatter;
 import org.geotools.gml3.GML;
 import org.geotools.xsd.AbstractComplexBinding;
@@ -27,8 +29,6 @@ import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -73,10 +73,12 @@ public class DirectPositionTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.DirectPositionType;
     }
 
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -88,6 +90,7 @@ public class DirectPositionTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return CoordinateSequence.class;
     }
@@ -99,22 +102,23 @@ public class DirectPositionTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         CoordinateReferenceSystem crs = GML3ParsingUtils.crs(node);
 
         // double[] position = (double[]) value;
         Double[] position = (Double[]) value;
-        DirectPosition dp = null;
+        Position dp = null;
 
         if (position.length < 2) {
-            dp = (crs != null) ? new DirectPosition1D(crs) : new DirectPosition1D();
+            dp = (crs != null) ? new Position1D(crs) : new Position1D();
             dp.setOrdinate(0, position[0].doubleValue());
         } else if (position.length < 3) {
-            dp = (crs != null) ? new DirectPosition2D(crs) : new DirectPosition2D();
+            dp = (crs != null) ? new Position2D(crs) : new Position2D();
             dp.setOrdinate(0, position[0].doubleValue());
             dp.setOrdinate(1, position[1].doubleValue());
         } else {
-            dp = (crs != null) ? new DirectPosition3D(crs) : new DirectPosition3D();
+            dp = (crs != null) ? new Position3D(crs) : new Position3D();
             dp.setOrdinate(0, position[0].doubleValue());
             dp.setOrdinate(1, position[1].doubleValue());
             dp.setOrdinate(2, position[2].doubleValue());
@@ -123,6 +127,7 @@ public class DirectPositionTypeBinding extends AbstractComplexBinding {
         return dp;
     }
 
+    @Override
     public Element encode(Object object, Document document, Element value) throws Exception {
         CoordinateSequence cs = (CoordinateSequence) object;
         boolean hasm = cs.hasM();

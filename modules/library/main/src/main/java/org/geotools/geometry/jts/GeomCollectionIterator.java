@@ -27,8 +27,8 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
 /**
- * A path iterator for the LiteShape class, specialized to iterate over a geometry collection. It
- * can be seen as a composite, since uses in fact other, simpler iterator to carry on its duties.
+ * A path iterator for the LiteShape class, specialized to iterate over a geometry collection. It can be seen as a
+ * composite, since uses in fact other, simpler iterator to carry on its duties.
  *
  * @author Andrea Aime
  * @version $Id$
@@ -57,12 +57,8 @@ public final class GeomCollectionIterator extends AbstractLiteIterator {
 
     public GeomCollectionIterator() {}
 
-    /**
-     * @param gc
-     * @param at
-     */
-    public void init(
-            GeometryCollection gc, AffineTransform at, boolean generalize, double maxDistance) {
+    /** */
+    public void init(GeometryCollection gc, AffineTransform at, boolean generalize, double maxDistance) {
         this.gc = gc;
         this.at = at == null ? new AffineTransform() : at;
         this.generalize = generalize;
@@ -78,11 +74,10 @@ public final class GeomCollectionIterator extends AbstractLiteIterator {
      * @param gc The geometry collection the iterator will use
      * @param at The affine transform applied to coordinates during iteration
      * @param generalize if true apply simple distance based generalization
-     * @param maxDistance during iteration, a point will be skipped if it's distance from the
-     *     previous is less than maxDistance
+     * @param maxDistance during iteration, a point will be skipped if it's distance from the previous is less than
+     *     maxDistance
      */
-    public GeomCollectionIterator(
-            GeometryCollection gc, AffineTransform at, boolean generalize, double maxDistance) {
+    public GeomCollectionIterator(GeometryCollection gc, AffineTransform at, boolean generalize, double maxDistance) {
         init(gc, at, generalize, maxDistance);
     }
 
@@ -132,11 +127,10 @@ public final class GeomCollectionIterator extends AbstractLiteIterator {
     }
 
     /**
-     * Returns the coordinates and type of the current path segment in the iteration. The return
-     * value is the path-segment type: SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or
-     * SEG_CLOSE. A double array of length 6 must be passed in and can be used to store the
-     * coordinates of the point(s). Each point is stored as a pair of double x,y coordinates.
-     * SEG_MOVETO and SEG_LINETO types returns one point, SEG_QUADTO returns two points, SEG_CUBICTO
+     * Returns the coordinates and type of the current path segment in the iteration. The return value is the
+     * path-segment type: SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or SEG_CLOSE. A double array of length 6 must
+     * be passed in and can be used to store the coordinates of the point(s). Each point is stored as a pair of double
+     * x,y coordinates. SEG_MOVETO and SEG_LINETO types returns one point, SEG_QUADTO returns two points, SEG_CUBICTO
      * returns 3 points and SEG_CLOSE does not return any points.
      *
      * @param coords an array that holds the data returned from this method
@@ -147,16 +141,16 @@ public final class GeomCollectionIterator extends AbstractLiteIterator {
      * @see #SEG_CUBICTO
      * @see #SEG_CLOSE
      */
+    @Override
     public int currentSegment(double[] coords) {
         return currentIterator.currentSegment(coords);
     }
 
     /**
-     * Returns the coordinates and type of the current path segment in the iteration. The return
-     * value is the path-segment type: SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or
-     * SEG_CLOSE. A float array of length 6 must be passed in and can be used to store the
-     * coordinates of the point(s). Each point is stored as a pair of float x,y coordinates.
-     * SEG_MOVETO and SEG_LINETO types returns one point, SEG_QUADTO returns two points, SEG_CUBICTO
+     * Returns the coordinates and type of the current path segment in the iteration. The return value is the
+     * path-segment type: SEG_MOVETO, SEG_LINETO, SEG_QUADTO, SEG_CUBICTO, or SEG_CLOSE. A float array of length 6 must
+     * be passed in and can be used to store the coordinates of the point(s). Each point is stored as a pair of float
+     * x,y coordinates. SEG_MOVETO and SEG_LINETO types returns one point, SEG_QUADTO returns two points, SEG_CUBICTO
      * returns 3 points and SEG_CLOSE does not return any points.
      *
      * @param coords an array that holds the data returned from this method
@@ -167,6 +161,7 @@ public final class GeomCollectionIterator extends AbstractLiteIterator {
      * @see #SEG_CUBICTO
      * @see #SEG_CLOSE
      */
+    @Override
     public int currentSegment(float[] coords) {
         return currentIterator.currentSegment(coords);
     }
@@ -178,6 +173,7 @@ public final class GeomCollectionIterator extends AbstractLiteIterator {
      * @see #WIND_EVEN_ODD
      * @see #WIND_NON_ZERO
      */
+    @Override
     public int getWindingRule() {
         return WIND_NON_ZERO;
     }
@@ -187,14 +183,16 @@ public final class GeomCollectionIterator extends AbstractLiteIterator {
      *
      * @return <code>true</code> if all the segments have been read; <code>false</code> otherwise.
      */
+    @Override
     public boolean isDone() {
         return done;
     }
 
     /**
-     * Moves the iterator to the next segment of the path forwards along the primary direction of
-     * traversal as long as there are more points in that direction.
+     * Moves the iterator to the next segment of the path forwards along the primary direction of traversal as long as
+     * there are more points in that direction.
      */
+    @Override
     public void next() {
         // try to move the current iterator forward
         if (!currentIterator.isDone()) {

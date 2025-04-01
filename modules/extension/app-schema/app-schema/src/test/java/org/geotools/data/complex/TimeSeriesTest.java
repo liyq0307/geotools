@@ -23,13 +23,13 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,10 +37,21 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.appschema.filter.FilterFactoryImplNamespaceAware;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.complex.config.AppSchemaDataAccessConfigurator;
 import org.geotools.data.complex.config.AppSchemaDataAccessDTO;
 import org.geotools.data.complex.config.AppSchemaFeatureTypeRegistry;
@@ -56,16 +67,6 @@ import org.geotools.xlink.XLINK;
 import org.geotools.xsd.SchemaIndex;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.NamespaceSupport;
 
@@ -75,8 +76,7 @@ import org.xml.sax.helpers.NamespaceSupport;
  * @since 2.4
  */
 public class TimeSeriesTest extends AppSchemaTestSupport {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(TimeSeriesTest.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(TimeSeriesTest.class);
 
     private static final String AWNS = "http://www.water.gov.au/awdip";
 
@@ -97,8 +97,6 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
 
     EmfComplexFeatureReader reader;
 
-    private FeatureSource<FeatureType, Feature> source;
-
     /** */
     @Before
     public void setUp() throws Exception {
@@ -107,10 +105,7 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
         // Logging.GEOTOOLS.forceMonolineConsoleOutput(Level.FINEST);
     }
 
-    /**
-     * @param location schema location path discoverable through getClass().getResource()
-     * @return
-     */
+    /** @param location schema location path discoverable through getClass().getResource() */
     private SchemaIndex loadSchema(URL location) throws IOException {
         URL catalogLocation = getClass().getResource(schemaBase + "observations.oasis.xml");
         reader.setResolver(catalogLocation);
@@ -118,10 +113,8 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Tests if the schema-to-FM parsing code developed for complex datastore configuration loading
-     * can parse the GeoSciML types
-     *
-     * @throws Exception
+     * Tests if the schema-to-FM parsing code developed for complex datastore configuration loading can parse the
+     * GeoSciML types
      */
     @Test
     public void testParseSchema() throws Exception {
@@ -154,20 +147,17 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
             // assertTrue(superType instanceof FeatureType);
 
             // ensure all needed types were parsed and aren't just empty proxies
-            Map samplingProperties = new HashMap();
+            Map<Name, Name> samplingProperties = new HashMap<>();
 
             // from gml:AbstractFeatureType
-            samplingProperties.put(
-                    name(GMLNS, "metaDataProperty"), typeName(GMLNS, "MetaDataPropertyType"));
+            samplingProperties.put(name(GMLNS, "metaDataProperty"), typeName(GMLNS, "MetaDataPropertyType"));
             samplingProperties.put(name(GMLNS, "description"), typeName(GMLNS, "StringOrRefType"));
             samplingProperties.put(name(GMLNS, "name"), typeName(GMLNS, "CodeType"));
             samplingProperties.put(name(GMLNS, "boundedBy"), typeName(GMLNS, "BoundingShapeType"));
-            samplingProperties.put(
-                    name(GMLNS, "location"), typeName(GMLNS, "LocationPropertyType"));
+            samplingProperties.put(name(GMLNS, "location"), typeName(GMLNS, "LocationPropertyType"));
 
             // aw:SamplingSiteType
-            samplingProperties.put(
-                    name(AWNS, "samplingRegimeType"), Types.toTypeName(GML.CodeType));
+            samplingProperties.put(name(AWNS, "samplingRegimeType"), Types.toTypeName(GML.CodeType));
             samplingProperties.put(name(AWNS, "waterBodyType"), Types.toTypeName(GML.CodeType));
             samplingProperties.put(name(AWNS, "accessTypeCode"), Types.toTypeName(GML.CodeType));
 
@@ -175,41 +165,30 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
             samplingProperties.put(name(SANS, "position"), typeName(GMLNS, "PointPropertyType"));
 
             // sa:SamplingFeatureType
+            samplingProperties.put(name(SANS, "relatedObservation"), typeName(OMNS, "ObservationPropertyType"));
             samplingProperties.put(
-                    name(SANS, "relatedObservation"), typeName(OMNS, "ObservationPropertyType"));
-            samplingProperties.put(
-                    name(SANS, "relatedSamplingFeature"),
-                    typeName(SANS, "SamplingFeatureRelationPropertyType"));
-            samplingProperties.put(
-                    name(SANS, "sampledFeature"), typeName(GMLNS, "FeaturePropertyType"));
-            samplingProperties.put(
-                    name(SANS, "surveyDetails"), typeName(SANS, "SurveyProcedurePropertyType"));
+                    name(SANS, "relatedSamplingFeature"), typeName(SANS, "SamplingFeatureRelationPropertyType"));
+            samplingProperties.put(name(SANS, "sampledFeature"), typeName(GMLNS, "FeaturePropertyType"));
+            samplingProperties.put(name(SANS, "surveyDetails"), typeName(SANS, "SurveyProcedurePropertyType"));
 
             // sa:SiteSinglePhenomTimeSeriesType
             samplingProperties.put(
-                    name(AWNS, "relatedObservation"),
-                    typeName(AWNS, "PhenomenonTimeSeriesPropertyType"));
+                    name(AWNS, "relatedObservation"), typeName(AWNS, "PhenomenonTimeSeriesPropertyType"));
 
             assertPropertyNamesAndTypeNames(testType, samplingProperties);
 
             AttributeDescriptor relatedObservation =
-                    (AttributeDescriptor)
-                            Types.descriptor(testType, name(AWNS, "relatedObservation"));
-            Map relatedObsProps = new HashMap();
-            relatedObsProps.put(
-                    name(AWNS, "PhenomenonTimeSeries"), typeName(AWNS, "PhenomenonTimeSeriesType"));
-            ComplexType phenomenonTimeSeriesPropertyType =
-                    (ComplexType) relatedObservation.getType();
+                    (AttributeDescriptor) Types.descriptor(testType, name(AWNS, "relatedObservation"));
+            Map<Name, Name> relatedObsProps = new HashMap<>();
+            relatedObsProps.put(name(AWNS, "PhenomenonTimeSeries"), typeName(AWNS, "PhenomenonTimeSeriesType"));
+            ComplexType phenomenonTimeSeriesPropertyType = (ComplexType) relatedObservation.getType();
 
             assertPropertyNamesAndTypeNames(phenomenonTimeSeriesPropertyType, relatedObsProps);
 
-            AttributeDescriptor phenomenonTimeSeries =
-                    (AttributeDescriptor)
-                            Types.descriptor(
-                                    phenomenonTimeSeriesPropertyType,
-                                    name(AWNS, "PhenomenonTimeSeries"));
+            AttributeDescriptor phenomenonTimeSeries = (AttributeDescriptor)
+                    Types.descriptor(phenomenonTimeSeriesPropertyType, name(AWNS, "PhenomenonTimeSeries"));
             ComplexType phenomenonTimeSeriesType = (ComplexType) phenomenonTimeSeries.getType();
-            Map phenomenonTimeSeriesProps = new HashMap();
+            Map<Name, Name> phenomenonTimeSeriesProps = new HashMap<>();
             // from
             // aw:WaterObservationType/om:TimeSeriesObsType/om:AbstractObservationType
             // phenomenonTimeSeriesProps.put(name(OMNS, "procedure"), typeName(OMNS,
@@ -229,31 +208,27 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
             //
             // from PhenomenonTimeSeriesType
             phenomenonTimeSeriesProps.put(
-                    name(AWNS, "result"),
-                    typeName(CVNS, "CompactDiscreteTimeCoveragePropertyType"));
+                    name(AWNS, "result"), typeName(CVNS, "CompactDiscreteTimeCoveragePropertyType"));
 
             assertPropertyNamesAndTypeNames(phenomenonTimeSeriesType, phenomenonTimeSeriesProps);
 
             AttributeDescriptor observedProperty =
-                    (AttributeDescriptor)
-                            Types.descriptor(
-                                    phenomenonTimeSeriesType, name(OMNS, "observedProperty"));
+                    (AttributeDescriptor) Types.descriptor(phenomenonTimeSeriesType, name(OMNS, "observedProperty"));
 
             ComplexType phenomenonPropertyType = (ComplexType) observedProperty.getType();
 
             assertPropertyNamesAndTypeNames(
                     phenomenonPropertyType,
-                    Collections.singletonMap(
-                            name(SWENS, "Phenomenon"), typeName(SWENS, "PhenomenonType")));
+                    Collections.singletonMap(name(SWENS, "Phenomenon"), typeName(SWENS, "PhenomenonType")));
 
             AttributeDescriptor phenomenon =
-                    (AttributeDescriptor)
-                            Types.descriptor(phenomenonPropertyType, name(SWENS, "Phenomenon"));
+                    (AttributeDescriptor) Types.descriptor(phenomenonPropertyType, name(SWENS, "Phenomenon"));
             ComplexType phenomenonType = (ComplexType) phenomenon.getType();
             assertNotNull(phenomenonType.getSuper());
-            assertEquals(typeName(GMLNS, "DefinitionType"), phenomenonType.getSuper().getName());
+            assertEquals(
+                    typeName(GMLNS, "DefinitionType"), phenomenonType.getSuper().getName());
 
-            Map phenomenonProps = new HashMap();
+            Map<Name, Name> phenomenonProps = new HashMap<>();
             // from gml:DefinitionType
             phenomenonProps.put(name(GMLNS, "metaDataProperty"), null);
             phenomenonProps.put(name(GMLNS, "description"), null);
@@ -265,11 +240,11 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
         }
     }
 
-    private void assertPropertyNamesAndTypeNames(
-            ComplexType parentType, Map expectedPropertiesAndTypes) throws Exception {
+    private void assertPropertyNamesAndTypeNames(ComplexType parentType, Map expectedPropertiesAndTypes)
+            throws Exception {
 
-        for (Iterator it = expectedPropertiesAndTypes.entrySet().iterator(); it.hasNext(); ) {
-            Map.Entry entry = (Entry) it.next();
+        for (Object o : expectedPropertiesAndTypes.entrySet()) {
+            Entry entry = (Entry) o;
             Name dName = (Name) entry.getKey();
             Name expectedDescriptorTypeName = (Name) entry.getValue();
 
@@ -277,12 +252,9 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
             assertNotNull("Descriptor " + dName + " not found for type " + parentType.getName(), d);
             AttributeType type;
             try {
-                type = (AttributeType) d.getType();
+                type = d.getType();
             } catch (Exception e) {
-                LOGGER.log(
-                        Level.SEVERE,
-                        "type not parsed for " + ((AttributeDescriptor) d).getName(),
-                        e);
+                LOGGER.log(Level.SEVERE, "type not parsed for " + d.getName(), e);
                 throw e;
             }
             assertNotNull(type);
@@ -290,10 +262,7 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
             assertNotNull(actualTypeName);
             assertNotNull(type.getBinding());
             if (expectedDescriptorTypeName != null) {
-                assertEquals(
-                        "type mismatch for property " + dName,
-                        expectedDescriptorTypeName,
-                        actualTypeName);
+                assertEquals("type mismatch for property " + dName, expectedDescriptorTypeName, actualTypeName);
             }
         }
     }
@@ -334,7 +303,8 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
         List attributeMappings = mapping.getAttributeMappings();
         AttributeMapping attMapping = (AttributeMapping) attributeMappings.get(0);
         assertNotNull(attMapping);
-        assertEquals("aw:SiteSinglePhenomTimeSeries", attMapping.getTargetXPath().toString());
+        assertEquals(
+                "aw:SiteSinglePhenomTimeSeries", attMapping.getTargetXPath().toString());
 
         attMapping = (AttributeMapping) attributeMappings.get(1);
         assertNotNull(attMapping);
@@ -350,19 +320,14 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
         assertEquals(2, clientProperties.size());
 
         Name clientPropName = name(XLINK.NAMESPACE, "title");
-        assertTrue(
-                "client property " + clientPropName + " not found",
-                clientProperties.containsKey(clientPropName));
+        assertTrue("client property " + clientPropName + " not found", clientProperties.containsKey(clientPropName));
         clientPropName = name(XLINK.NAMESPACE, "href");
-        assertTrue(
-                "client property " + clientPropName + " not found",
-                clientProperties.containsKey(clientPropName));
+        assertTrue("client property " + clientPropName + " not found", clientProperties.containsKey(clientPropName));
 
         // now test the use of specific subtype overriding a general node type
         attMapping = (AttributeMapping) attributeMappings.get(5);
         assertNotNull(attMapping);
-        String expected =
-                "aw:relatedObservation/aw:PhenomenonTimeSeries/om:observedProperty/swe:Phenomenon/gml:name";
+        String expected = "aw:relatedObservation/aw:PhenomenonTimeSeries/om:observedProperty/swe:Phenomenon/gml:name";
         String actual = attMapping.getTargetXPath().toString();
         assertEquals(expected, actual);
     }
@@ -372,7 +337,7 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
         DataAccess<FeatureType, Feature> mappingDataStore;
         final Name typeName = new NameImpl(AWNS, "SiteSinglePhenomTimeSeries");
         {
-            final Map dsParams = new HashMap();
+            final Map<String, Serializable> dsParams = new HashMap<>();
 
             String configLocation = schemaBase + "TimeSeriesTest_properties.xml";
             final URL url = getClass().getResource(configLocation);
@@ -392,7 +357,7 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
             assertNotNull(fType);
             fSource = mappingDataStore.getFeatureSource(typeName);
         }
-        FeatureCollection features;
+        FeatureCollection<FeatureType, Feature> features;
         // make a getFeatures request with a nested properties filter.
         //
         // was 96, but now 3 as mapped features are grouped by id
@@ -402,7 +367,7 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
         {
             features = fSource.getFeatures();
 
-            int resultCount = getCount(features);
+            int resultCount = DataUtilities.count(features);
             String msg = "be sure difference in result count is not due to different dataset.";
             assertEquals(msg, EXPECTED_MAPPED_FEATURE_COUNT, resultCount);
         }
@@ -426,107 +391,94 @@ public class TimeSeriesTest extends AppSchemaTestSupport {
 
         final String phenomNamePath =
                 "aw:relatedObservation/aw:PhenomenonTimeSeries/om:observedProperty/swe:Phenomenon/gml:name";
-        FeatureIterator it = features.features();
-        for (; it.hasNext(); ) {
-            feature = (Feature) it.next();
-            count++;
-            {
-                PropertyName gmlName = ffac.property("gml:name");
-                PropertyName phenomName = ffac.property(phenomNamePath);
+        try (FeatureIterator it = features.features()) {
+            while (it.hasNext()) {
+                feature = it.next();
+                count++;
+                {
+                    PropertyName gmlName = ffac.property("gml:name");
+                    PropertyName phenomName = ffac.property(phenomNamePath);
 
-                Object nameVal = gmlName.evaluate(feature, String.class);
-                assertNotNull("gml:name evaluated to null", nameVal);
+                    Object nameVal = gmlName.evaluate(feature, String.class);
+                    assertNotNull("gml:name evaluated to null", nameVal);
 
-                Object phenomNameVal = phenomName.evaluate(feature, String.class);
-                assertNotNull(phenomNamePath + " evaluated to null", phenomNameVal);
-            }
-            {
-                PropertyName sampledFeatureName = ffac.property("sa:sampledFeature");
-                Attribute sampledFeatureVal = (Attribute) sampledFeatureName.evaluate(feature);
-                assertNotNull("sa:sampledFeature evaluated to null", sampledFeatureVal);
-                assertEquals(0, ((Collection) sampledFeatureVal.getValue()).size());
-                Map attributes = (Map) sampledFeatureVal.getUserData().get(Attributes.class);
-                assertNotNull(attributes);
-                Name xlinkTitle = name(XLINK.NAMESPACE, "title");
-                assertTrue(attributes.containsKey(xlinkTitle));
-                assertNotNull(attributes.get(xlinkTitle));
+                    Object phenomNameVal = phenomName.evaluate(feature, String.class);
+                    assertNotNull(phenomNamePath + " evaluated to null", phenomNameVal);
+                }
+                {
+                    PropertyName sampledFeatureName = ffac.property("sa:sampledFeature");
+                    Attribute sampledFeatureVal = (Attribute) sampledFeatureName.evaluate(feature);
+                    assertNotNull("sa:sampledFeature evaluated to null", sampledFeatureVal);
+                    assertEquals(0, ((Collection) sampledFeatureVal.getValue()).size());
+                    Map attributes = (Map) sampledFeatureVal.getUserData().get(Attributes.class);
+                    assertNotNull(attributes);
+                    Name xlinkTitle = name(XLINK.NAMESPACE, "title");
+                    assertTrue(attributes.containsKey(xlinkTitle));
+                    assertNotNull(attributes.get(xlinkTitle));
 
-                Name xlinkHref = name(XLINK.NAMESPACE, "href");
-                assertTrue(attributes.containsKey(xlinkHref));
-                assertNotNull(attributes.get(xlinkHref));
-            }
+                    Name xlinkHref = name(XLINK.NAMESPACE, "href");
+                    assertTrue(attributes.containsKey(xlinkHref));
+                    assertNotNull(attributes.get(xlinkHref));
+                }
 
-            {
-                final String elementPath =
-                        "aw:relatedObservation/aw:PhenomenonTimeSeries/om:result/cv:CompactDiscreteTimeCoverage";
-                PropertyName elementName = ffac.property(elementPath);
-                Object timeCovVal = elementName.evaluate(feature);
-                assertNotNull(elementPath, timeCovVal);
-                assertTrue(timeCovVal instanceof Feature);
-                final List elements = (List) ((Feature) timeCovVal).getValue();
-                assertEquals(1, elements.size());
+                {
+                    final String elementPath =
+                            "aw:relatedObservation/aw:PhenomenonTimeSeries/om:result/cv:CompactDiscreteTimeCoverage";
+                    PropertyName elementName = ffac.property(elementPath);
+                    Object timeCovVal = elementName.evaluate(feature);
+                    assertNotNull(elementPath, timeCovVal);
+                    assertTrue(timeCovVal instanceof Feature);
+                    final List elements = (List) ((Feature) timeCovVal).getValue();
+                    assertEquals(1, elements.size());
+                }
             }
         }
-        it.close();
 
         count = 0;
-        FeatureIterator<? extends Feature> simpleIterator =
-                ((AbstractMappingFeatureIterator) features.features()).getSourceFeatureIterator();
-        for (; simpleIterator.hasNext(); ) {
-            feature = (Feature) simpleIterator.next();
-            count++;
-
-            if (count == 22) {
-                String compactTimeValuePairName = "result";
-                String geomName = "sample_time_position";
-
-                Collection compactTimes = feature.getProperties(compactTimeValuePairName);
-                assertNotNull(compactTimes);
-                assertEquals(1, compactTimes.size());
-
-                Attribute value = (Attribute) compactTimes.iterator().next();
-                assertNotNull(value.getValue());
-
-                Collection geomProperties = feature.getProperties(geomName);
-                assertNotNull(geomProperties);
-                assertEquals(1, geomProperties.size());
-
-                Attribute geom = (Attribute) geomProperties.iterator().next();
-                assertNotNull(geom.getValue());
-
-                Object valueContent = geom.getValue();
-                Date sampleTimePosition = (Date) valueContent;
-                Calendar cal = Calendar.getInstance();
-                // property file dates appear to be parsed as being in UTC
-                cal.setTimeZone(TimeZone.getTimeZone("UTC"));
-                cal.setTime(sampleTimePosition);
-                // see row TS2.22
-                assertEquals(2007, cal.get(Calendar.YEAR));
-                assertEquals(Calendar.JANUARY, cal.get(Calendar.MONTH));
-                assertEquals(21, cal.get(Calendar.DAY_OF_MONTH));
-                // sanity (timezone handling has been bungled one time too many)
-                assertEquals(0, cal.get(Calendar.HOUR_OF_DAY));
-                assertEquals(0, cal.get(Calendar.MINUTE));
-                assertEquals(0, cal.get(Calendar.SECOND));
-            }
-        }
-
-        mappingDataStore.dispose();
-
-        assertEquals(EXPECTED_SIMPLE_FEATURE_COUNT, count);
-    }
-
-    private int getCount(FeatureCollection features) {
-        FeatureIterator iterator = features.features();
-        int count = 0;
-        try {
-            while (iterator.hasNext()) {
-                iterator.next();
+        try (FeatureIterator<? extends Feature> simpleIterator =
+                ((AbstractMappingFeatureIterator) features.features()).getSourceFeatureIterator()) {
+            while (simpleIterator.hasNext()) {
+                feature = simpleIterator.next();
                 count++;
+
+                if (count == 22) {
+                    String compactTimeValuePairName = "result";
+                    String geomName = "sample_time_position";
+
+                    Collection compactTimes = feature.getProperties(compactTimeValuePairName);
+                    assertNotNull(compactTimes);
+                    assertEquals(1, compactTimes.size());
+
+                    Attribute value = (Attribute) compactTimes.iterator().next();
+                    assertNotNull(value.getValue());
+
+                    Collection geomProperties = feature.getProperties(geomName);
+                    assertNotNull(geomProperties);
+                    assertEquals(1, geomProperties.size());
+
+                    Attribute geom = (Attribute) geomProperties.iterator().next();
+                    assertNotNull(geom.getValue());
+
+                    Object valueContent = geom.getValue();
+                    Date sampleTimePosition = (Date) valueContent;
+                    Calendar cal = Calendar.getInstance();
+                    // property file dates appear to be parsed as being in UTC
+                    cal.setTimeZone(TimeZone.getTimeZone("UTC"));
+                    cal.setTime(sampleTimePosition);
+                    // see row TS2.22
+                    assertEquals(2007, cal.get(Calendar.YEAR));
+                    assertEquals(Calendar.JANUARY, cal.get(Calendar.MONTH));
+                    assertEquals(21, cal.get(Calendar.DAY_OF_MONTH));
+                    // sanity (timezone handling has been bungled one time too many)
+                    assertEquals(0, cal.get(Calendar.HOUR_OF_DAY));
+                    assertEquals(0, cal.get(Calendar.MINUTE));
+                    assertEquals(0, cal.get(Calendar.SECOND));
+                }
             }
-        } finally {
-            iterator.close();
+
+            mappingDataStore.dispose();
+
+            assertEquals(EXPECTED_SIMPLE_FEATURE_COUNT, count);
         }
-        return count;
     }
 }

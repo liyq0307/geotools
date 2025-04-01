@@ -24,7 +24,11 @@ import org.geotools.kml.KML;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateSequence;
+import org.locationtech.jts.geom.CoordinateSequenceFactory;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LinearRing;
 
 /**
  * Binding object for the type http://earth.google.com/kml/2.1:LinearRingType.
@@ -53,13 +57,13 @@ public class LinearRingTypeBinding extends AbstractComplexBinding {
     CoordinateSequenceFactory csFactory;
     GeometryFactory geometryFactory;
 
-    public LinearRingTypeBinding(
-            GeometryFactory geometryFactory, CoordinateSequenceFactory csFactory) {
+    public LinearRingTypeBinding(GeometryFactory geometryFactory, CoordinateSequenceFactory csFactory) {
         this.geometryFactory = geometryFactory;
         this.csFactory = csFactory;
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.LinearRingType;
     }
@@ -71,6 +75,7 @@ public class LinearRingTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return LinearRing.class;
     }
@@ -82,9 +87,9 @@ public class LinearRingTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        CoordinateSequence coordinates =
-                (CoordinateSequence) node.getChildValue(KML.coordinates.getLocalPart());
+        CoordinateSequence coordinates = (CoordinateSequence) node.getChildValue(KML.coordinates.getLocalPart());
 
         // If the last point is not the same as the first point jts will throw an error
         // where as other KML readers like google earth just auto close the polygon so
@@ -93,8 +98,7 @@ public class LinearRingTypeBinding extends AbstractComplexBinding {
         Coordinate lastCoord = coordinates.getCoordinate(coordinates.size() - 1);
 
         if (!firstCoord.equals3D(lastCoord)) {
-            List<Coordinate> updateCoords =
-                    new ArrayList<>(Arrays.asList(coordinates.toCoordinateArray()));
+            List<Coordinate> updateCoords = new ArrayList<>(Arrays.asList(coordinates.toCoordinateArray()));
             updateCoords.add((Coordinate) firstCoord.clone());
 
             coordinates = csFactory.create(updateCoords.toArray(new Coordinate[0]));
@@ -103,6 +107,7 @@ public class LinearRingTypeBinding extends AbstractComplexBinding {
         return geometryFactory.createLinearRing(coordinates);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if (KML.coordinates.getLocalPart().equals(name.getLocalPart())) {
             LinearRing l = (LinearRing) object;

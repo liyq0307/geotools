@@ -16,8 +16,8 @@
  */
 package org.geotools.feature.visitor;
 
+import org.geotools.api.filter.Id;
 import org.geotools.filter.visitor.AbstractFinderFilterVisitor;
-import org.opengis.filter.Id;
 
 /**
  * Quick check to see if an ID filter is found.
@@ -26,6 +26,7 @@ import org.opengis.filter.Id;
  */
 public class IdFinderFilterVisitor extends AbstractFinderFilterVisitor {
 
+    @Override
     public Object visit(Id filter, Object data) {
         found = true;
         return found;

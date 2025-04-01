@@ -17,6 +17,7 @@
 package org.geotools.data.shapefile.shp;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -31,18 +32,16 @@ import org.geotools.util.NIOUtilities;
 
 /**
  * IndexFile parser for .shx files.<br>
- * For now, the creation of index files is done in the ShapefileWriter. But this can be used to
- * access the index.<br>
+ * For now, the creation of index files is done in the ShapefileWriter. But this can be used to access the index.<br>
  * For details on the index file, see <br>
- * <a href="http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf"><b>"ESRI(r) Shapefile - A
- * Technical Description"</b><br>
+ * <a href="http://www.esri.com/library/whitepapers/pdfs/shapefile.pdf"><b>"ESRI(r) Shapefile - A Technical
+ * Description"</b><br>
  * * <i>'An ESRI White Paper . May 1997'</i></a>
  *
  * @author Ian Schneider
  */
-public class IndexFile implements FileReader {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(IndexFile.class);
+public class IndexFile implements FileReader, AutoCloseable {
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(IndexFile.class);
 
     private static final int RECS_IN_BUFFER = 2000;
 
@@ -65,25 +64,24 @@ public class IndexFile implements FileReader {
      * @param shpFiles The channel to read from.
      * @throws IOException If an error occurs.
      */
+    @SuppressWarnings("PMD.CloseResource") // file channel managed as a resource
     public IndexFile(ShpFiles shpFiles, boolean useMemoryMappedBuffer) throws IOException {
         this.useMemoryMappedBuffer = useMemoryMappedBuffer;
         streamLogger.open();
         ReadableByteChannel byteChannel = shpFiles.getReadChannel(ShpFileType.SHX, this);
         try {
             if (byteChannel instanceof FileChannel) {
-
                 this.channel = (FileChannel) byteChannel;
                 if (useMemoryMappedBuffer) {
                     LOGGER.finest("Memory mapping file...");
-                    this.buf =
-                            this.channel.map(FileChannel.MapMode.READ_ONLY, 0, this.channel.size());
+                    this.buf = this.channel.map(FileChannel.MapMode.READ_ONLY, 0, this.channel.size());
 
                     this.channelOffset = 0;
                 } else {
                     LOGGER.finest("Reading from file...");
                     this.buf = NIOUtilities.allocate(8 * RECS_IN_BUFFER);
                     channel.read(buf);
-                    buf.flip();
+                    ((Buffer) buf).flip();
                     this.channelOffset = 0;
                 }
 
@@ -155,24 +153,23 @@ public class IndexFile implements FileReader {
         check();
         int pos = 100 + index * 8;
         if (!this.useMemoryMappedBuffer) {
-            if (pos - this.channelOffset < 0
-                    || this.channelOffset + buf.limit() <= pos
-                    || this.lastIndex == -1) {
+            if (pos - this.channelOffset < 0 || this.channelOffset + buf.limit() <= pos || this.lastIndex == -1) {
                 LOGGER.finest("Filling buffer...");
                 this.channelOffset = pos;
                 this.channel.position(pos);
-                buf.clear();
+                ((Buffer) buf).clear();
                 this.channel.read(buf);
-                buf.flip();
+                ((Buffer) buf).flip();
             }
         }
 
-        buf.position(pos - this.channelOffset);
+        ((Buffer) buf).position(pos - this.channelOffset);
         this.recOffset = buf.getInt();
         this.recLen = buf.getInt();
         this.lastIndex = index;
     }
 
+    @Override
     public void close() throws IOException {
         closed = true;
         if (channel != null && channel.isOpen()) {
@@ -187,6 +184,7 @@ public class IndexFile implements FileReader {
     }
 
     /** @see java.lang.Object#finalize() */
+    @Override
     @SuppressWarnings("deprecation") // finalize is deprecated in Java 9
     protected void finalize() throws Throwable {
         this.close();
@@ -207,7 +205,6 @@ public class IndexFile implements FileReader {
      *
      * @param index The index, from 0 to getRecordCount - 1
      * @return The offset in 16-bit words.
-     * @throws IOException
      */
     public int getOffset(int index) throws IOException {
         int ret = -1;
@@ -230,7 +227,6 @@ public class IndexFile implements FileReader {
      *
      * @param index The index, from 0 to getRecordCount - 1
      * @return The offset in bytes.
-     * @throws IOException
      */
     public int getOffsetInBytes(int index) throws IOException {
         return this.getOffset(index) * 2;
@@ -241,7 +237,6 @@ public class IndexFile implements FileReader {
      *
      * @param index The index, from 0 to getRecordCount - 1
      * @return The lengh in bytes of the record.
-     * @throws IOException
      */
     public int getContentLength(int index) throws IOException {
         int ret = -1;
@@ -259,6 +254,7 @@ public class IndexFile implements FileReader {
         return ret;
     }
 
+    @Override
     public String id() {
         return getClass().getName();
     }

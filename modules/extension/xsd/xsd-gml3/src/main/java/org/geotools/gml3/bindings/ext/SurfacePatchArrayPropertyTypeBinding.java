@@ -32,6 +32,7 @@ public class SurfacePatchArrayPropertyTypeBinding
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Polygon[].class;
     }
@@ -43,15 +44,15 @@ public class SurfacePatchArrayPropertyTypeBinding
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List l = node.getChildValues(Polygon.class);
+        List<Polygon> l = node.getChildValues(Polygon.class);
         return l.toArray(new Polygon[l.size()]);
     }
 
     @Override
     public Object getProperty(Object object, QName name) {
-        if ("_SurfacePatch".equals(name.getLocalPart())
-                || "AbstractSurfacePatch".equals(name.getLocalPart())) {
+        if ("_SurfacePatch".equals(name.getLocalPart()) || "AbstractSurfacePatch".equals(name.getLocalPart())) {
             Polygon[] patches = (Polygon[]) object;
             return patches;
         }

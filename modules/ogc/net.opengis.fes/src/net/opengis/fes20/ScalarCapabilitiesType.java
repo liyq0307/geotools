@@ -7,7 +7,7 @@
 package net.opengis.fes20;
 
 import org.eclipse.emf.ecore.EObject;
-import org.opengis.filter.capability.ScalarCapabilities;
+import org.geotools.api.filter.capability.ScalarCapabilities;
 
 /**
  * <!-- begin-user-doc -->
@@ -69,6 +69,7 @@ public interface ScalarCapabilitiesType extends EObject, ScalarCapabilities {
      *        extendedMetaData="kind='element' name='ComparisonOperators' namespace='##targetNamespace'"
      * @generated
      */
+    @Override
     ComparisonOperatorsType getComparisonOperators();
 
     /**

@@ -18,23 +18,21 @@ package org.geotools.data.mongodb.complex;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /** Function used to chain an entity with a sub collection. */
 public final class CollectionLinkFunction extends FunctionExpressionImpl {
 
     private static final FunctionName DEFINITION =
-            new FunctionNameImpl(
-                    "collectionLink",
-                    parameter("value", String.class),
-                    parameter("path", String.class));
+            new FunctionNameImpl("collectionLink", parameter("value", String.class), parameter("path", String.class));
 
     public CollectionLinkFunction() {
         super(DEFINITION);
     }
 
+    @Override
     public Object evaluate(Object object) {
         String path = (String) this.params.get(0).evaluate(object);
         return new LinkCollection(path);

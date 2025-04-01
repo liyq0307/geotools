@@ -30,17 +30,17 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
-import org.geotools.data.Repository;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.Repository;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.type.Name;
 
 /**
- * Implementation of {@link Repository} This class interprets the data source name as a file name or
- * an URL for a property file containing the ds creation parameters
+ * Implementation of {@link Repository} This class interprets the data source name as a file name or an URL for a
+ * property file containing the ds creation parameters
  *
  * <p>For shape files ending with .shp or SHP, the shape file could be passed as name
  *
@@ -48,12 +48,12 @@ import org.opengis.feature.type.Name;
  */
 public class DSFinderRepository implements Repository {
 
-    Map<String, DataStore> map = new HashMap<String, DataStore>();
+    Map<String, DataStore> map = new HashMap<>();
 
     Logger log = Logging.getLogger(this.getClass());
 
     public void clear() {
-        map = new HashMap<String, DataStore>();
+        map = new HashMap<>();
     }
 
     protected URL getURLForLocation(String location) throws IOException {
@@ -70,28 +70,27 @@ public class DSFinderRepository implements Repository {
     }
 
     private Map<String, Serializable> getMapForShapeFile(URL shapeFileURL) throws IOException {
-        Map<String, Serializable> result = new HashMap<String, Serializable>();
+        Map<String, Serializable> result = new HashMap<>();
         result.put(ShapefileDataStoreFactory.URLP.key, shapeFileURL);
         return result;
     }
 
-    private Map<String, Serializable> getMapFromPropetryLocation(String location)
-            throws IOException {
+    private Map<String, Serializable> getMapFromPropetryLocation(String location) throws IOException {
 
         URL url = getURLForLocation(location);
 
         // for convenience, handle shape files in a short way
         if (location.endsWith(".shp") || location.endsWith(".SHP")) return getMapForShapeFile(url);
 
-        Map<String, Serializable> result = new HashMap<String, Serializable>();
+        Map<String, Serializable> result = new HashMap<>();
 
         Properties properties = new Properties();
-        InputStream in = url.openStream();
-        properties.load(in);
-        for (Object key : properties.keySet()) {
-            result.put((String) key, (Serializable) properties.get(key));
+        try (InputStream in = url.openStream()) {
+            properties.load(in);
+            for (Object key : properties.keySet()) {
+                result.put((String) key, (Serializable) properties.get(key));
+            }
         }
-        in.close();
         return result;
     }
 
@@ -99,10 +98,12 @@ public class DSFinderRepository implements Repository {
         clear();
     }
 
+    @Override
     public DataAccess<?, ?> access(Name name) {
         return dataStore(name);
     }
 
+    @Override
     public DataStore dataStore(Name name) {
         String localName = name.getLocalPart();
         DataStore ds = map.get(localName);
@@ -120,10 +121,11 @@ public class DSFinderRepository implements Repository {
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.Repository#getDataStores()
+     * @see org.geotools.api.data.Repository#getDataStores()
      *
      * These datastores are for internal use only
      */
+    @Override
     public List<DataStore> getDataStores() {
         return Collections.emptyList();
         //        List<DataStore> available = new ArrayList<DataStore>( this.map.values() );

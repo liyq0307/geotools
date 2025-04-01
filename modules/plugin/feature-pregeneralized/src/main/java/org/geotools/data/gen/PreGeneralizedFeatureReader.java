@@ -19,30 +19,29 @@ package org.geotools.data.gen;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
  * @author Christian Mueller
  *     <p>Implementation of {@link FeatureReader} for {@link PreGeneralizedSimpleFeature}
  */
-public class PreGeneralizedFeatureReader
-        implements FeatureReader<SimpleFeatureType, SimpleFeature> {
+public class PreGeneralizedFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
     protected SimpleFeatureType featureTyp;
 
     protected SimpleFeatureType returnedFeatureType;
 
     protected FeatureReader<SimpleFeatureType, SimpleFeature> backendReader;
 
-    protected int indexMapping[];
+    protected int[] indexMapping;
 
     protected String geomPropertyName, backendGeomPropertyName;
 
     public PreGeneralizedFeatureReader(
             SimpleFeatureType featureTyp,
             SimpleFeatureType returnedFeatureType,
-            int indexMapping[],
+            int[] indexMapping,
             FeatureReader<SimpleFeatureType, SimpleFeature> backendReader,
             String geomPropertyName,
             String backendGeomPropertyName) {
@@ -55,28 +54,26 @@ public class PreGeneralizedFeatureReader
         this.indexMapping = indexMapping;
     }
 
+    @Override
     public void close() throws IOException {
         backendReader.close();
     }
 
+    @Override
     public SimpleFeatureType getFeatureType() {
         return returnedFeatureType;
     }
 
+    @Override
     public boolean hasNext() throws IOException {
         return backendReader.hasNext();
     }
 
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    @Override
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         SimpleFeature next = backendReader.next();
         if (next == null) return null;
         return new PreGeneralizedSimpleFeature(
-                featureTyp,
-                returnedFeatureType,
-                indexMapping,
-                next,
-                geomPropertyName,
-                backendGeomPropertyName);
+                featureTyp, returnedFeatureType, indexMapping, next, geomPropertyName, backendGeomPropertyName);
     }
 }

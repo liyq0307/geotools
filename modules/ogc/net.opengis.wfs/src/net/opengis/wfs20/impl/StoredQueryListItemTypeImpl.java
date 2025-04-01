@@ -109,9 +109,10 @@ public class StoredQueryListItemTypeImpl extends EObjectImpl implements StoredQu
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<TitleType> getTitle() {
     if (title == null) {
-      title = new EObjectContainmentEList<TitleType>(TitleType.class, this, Wfs20Package.STORED_QUERY_LIST_ITEM_TYPE__TITLE);
+      title = new EObjectContainmentEList<>(TitleType.class, this, Wfs20Package.STORED_QUERY_LIST_ITEM_TYPE__TITLE);
     }
     return title;
   }
@@ -121,9 +122,10 @@ public class StoredQueryListItemTypeImpl extends EObjectImpl implements StoredQu
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<QName> getReturnFeatureType() {
     if (returnFeatureType == null) {
-      returnFeatureType = new EDataTypeEList<QName>(QName.class, this, Wfs20Package.STORED_QUERY_LIST_ITEM_TYPE__RETURN_FEATURE_TYPE);
+      returnFeatureType = new EDataTypeEList<>(QName.class, this, Wfs20Package.STORED_QUERY_LIST_ITEM_TYPE__RETURN_FEATURE_TYPE);
     }
     return returnFeatureType;
   }
@@ -133,6 +135,7 @@ public class StoredQueryListItemTypeImpl extends EObjectImpl implements StoredQu
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public String getId() {
     return id;
   }
@@ -142,6 +145,7 @@ public class StoredQueryListItemTypeImpl extends EObjectImpl implements StoredQu
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setId(String newId) {
     String oldId = id;
     id = newId;

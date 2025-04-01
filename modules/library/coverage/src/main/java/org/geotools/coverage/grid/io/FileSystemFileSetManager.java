@@ -27,7 +27,7 @@ public class FileSystemFileSetManager implements FileSetManager {
 
     private static Logger LOGGER = Logger.getLogger(FileSystemFileSetManager.class.toString());
 
-    private List<String> fileSet = Collections.synchronizedList(new ArrayList<String>());
+    private List<String> fileSet = Collections.synchronizedList(new ArrayList<>());
 
     @Override
     public void addFile(String filePath) {
@@ -62,11 +62,7 @@ public class FileSystemFileSetManager implements FileSetManager {
                 deleteFile(file);
             } catch (Throwable t) {
                 if (LOGGER.isLoggable(Level.FINE)) {
-                    LOGGER.fine(
-                            "Exception occurred while deleting file: "
-                                    + filePath
-                                    + "\n"
-                                    + t.getLocalizedMessage());
+                    LOGGER.fine("Exception occurred while deleting file: " + filePath + "\n" + t.getLocalizedMessage());
                 }
             }
         }
@@ -85,7 +81,7 @@ public class FileSystemFileSetManager implements FileSetManager {
     @Override
     public void purge() {
         if (!fileSet.isEmpty()) {
-            String[] files = (String[]) fileSet.toArray(new String[fileSet.size()]);
+            String[] files = fileSet.toArray(new String[fileSet.size()]);
             for (String filePath : files) {
                 removeFile(filePath);
             }

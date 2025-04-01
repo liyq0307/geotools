@@ -58,6 +58,7 @@ import org.locationtech.jts.geom.Envelope;
  */
 public class GMLBoxTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.BoxType;
     }
@@ -69,6 +70,7 @@ public class GMLBoxTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Envelope.class;
     }
@@ -82,6 +84,7 @@ public class GMLBoxTypeBinding extends AbstractComplexBinding {
      *     <!-- end-user-doc -->
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         List coordinates = node.getChildren("coord");
 
@@ -99,7 +102,8 @@ public class GMLBoxTypeBinding extends AbstractComplexBinding {
         }
 
         if (node.getChild("coordinates") != null) {
-            CoordinateSequence cs = (CoordinateSequence) node.getChild("coordinates").getValue();
+            CoordinateSequence cs =
+                    (CoordinateSequence) node.getChild("coordinates").getValue();
 
             if (cs.size() != 2) {
                 throw new RuntimeException("Envelope can have only two coordinates");
@@ -111,12 +115,12 @@ public class GMLBoxTypeBinding extends AbstractComplexBinding {
         throw new RuntimeException("Could not find coordinates for envelope");
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         Envelope e = (Envelope) object;
 
         if (GML.coord.equals(name)) {
-            return new Coordinate[] {
-                new Coordinate(e.getMinX(), e.getMinY()), new Coordinate(e.getMaxX(), e.getMaxY())
+            return new Coordinate[] {new Coordinate(e.getMinX(), e.getMinY()), new Coordinate(e.getMaxX(), e.getMaxY())
             };
         } else if ("srsName".equals(name.getLocalPart()) && e instanceof ReferencedEnvelope) {
             return GML2EncodingUtils.toURI(((ReferencedEnvelope) e).getCoordinateReferenceSystem());

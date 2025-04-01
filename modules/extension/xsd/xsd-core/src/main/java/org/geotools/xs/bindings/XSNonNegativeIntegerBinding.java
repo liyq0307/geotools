@@ -48,6 +48,7 @@ public class XSNonNegativeIntegerBinding implements SimpleBinding {
     final BigInteger MAX_INTEGER = BigInteger.valueOf(Integer.MAX_VALUE);
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.NONNEGATIVEINTEGER;
     }
@@ -59,6 +60,7 @@ public class XSNonNegativeIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -71,6 +73,7 @@ public class XSNonNegativeIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return BigInteger.class;
     }
@@ -80,8 +83,7 @@ public class XSNonNegativeIntegerBinding implements SimpleBinding {
      * <!-- begin-user-doc -->
      * Restriction of integer to non negative values.
      *
-     * <p>Please just treat this as a Number, actual value returned may be BigInteger or Long or
-     * Integer.
+     * <p>Please just treat this as a Number, actual value returned may be BigInteger or Long or Integer.
      *
      * @param instance with text to be parsed
      * @param value BigInteger from parent XSIntegerStratagy
@@ -89,12 +91,12 @@ public class XSNonNegativeIntegerBinding implements SimpleBinding {
      *     <!-- end-user-doc -->
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         BigInteger number = (BigInteger) value;
 
         if (BigInteger.ZERO.compareTo(number) > 0) {
-            throw new IllegalArgumentException(
-                    "Value '" + number + "' must be non-negative (0 or above).");
+            throw new IllegalArgumentException("Value '" + number + "' must be non-negative (0 or above).");
         }
 
         if (MAX_INTEGER.compareTo(number) >= 0) {
@@ -115,12 +117,12 @@ public class XSNonNegativeIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public String encode(Object object, String value) throws Exception {
         Number number = (Number) object;
 
         if (number.longValue() < 0) {
-            throw new IllegalArgumentException(
-                    "Value '" + number + "' must be non-negative (0 or above).");
+            throw new IllegalArgumentException("Value '" + number + "' must be non-negative (0 or above).");
         }
 
         return value;

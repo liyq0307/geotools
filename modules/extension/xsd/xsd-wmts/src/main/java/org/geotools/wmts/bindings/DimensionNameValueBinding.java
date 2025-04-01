@@ -22,7 +22,7 @@ import javax.xml.namespace.QName;
 import net.opengis.wmts.v_1.DimensionNameValueType;
 import net.opengis.wmts.v_1.wmtsv_1Factory;
 import org.geotools.wmts.WMTS;
-import org.geotools.xsd.AbstractComplexBinding;
+import org.geotools.xsd.AbstractComplexEMFBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
@@ -55,7 +55,7 @@ import org.geotools.xsd.Node;
  *
  * @generated
  */
-public class DimensionNameValueBinding extends AbstractComplexBinding {
+public class DimensionNameValueBinding extends AbstractComplexEMFBinding {
 
     wmtsv_1Factory factory;
 
@@ -65,6 +65,7 @@ public class DimensionNameValueBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WMTS.DimensionNameValue;
     }
@@ -76,6 +77,7 @@ public class DimensionNameValueBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return DimensionNameValueType.class;
     }
@@ -87,6 +89,7 @@ public class DimensionNameValueBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         DimensionNameValueType name = factory.createDimensionNameValueType();
         name.setName((String) node.getChildValue("name"));

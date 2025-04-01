@@ -30,18 +30,18 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.StyledLayerDescriptor;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.sld.SLDConfiguration;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.StyledLayerDescriptor;
 import org.geotools.xml.styling.SLDParser;
 import org.geotools.xml.styling.SLDTransformer;
 import org.geotools.xsd.Parser;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.opengis.style.Style;
 import org.parboiled.parserunners.ReportingParseRunner;
 import org.parboiled.support.ParsingResult;
 import org.xml.sax.SAXException;
@@ -83,20 +83,19 @@ public abstract class AbstractIntegrationTest extends CssBaseTest {
     private void testTranslation(String css)
             throws TransformerException, IOException, FileNotFoundException, SAXException,
                     ParserConfigurationException {
-        File sldFile =
-                new File(
-                        file.getParentFile(),
-                        FilenameUtils.getBaseName(file.getName())
-                                + (exclusiveRulesEnabled ? "" : "-first")
-                                + ".sld");
+        File sldFile = new File(
+                file.getParentFile(),
+                FilenameUtils.getBaseName(file.getName()) + (exclusiveRulesEnabled ? "" : "-first") + ".sld");
 
         // Java 9 pretty-print has slightly different indentation
-        File sldFile_java9 =
-                new File(
-                        file.getParentFile(),
-                        FilenameUtils.getBaseName(file.getName())
-                                + (exclusiveRulesEnabled ? "" : "-first")
-                                + "_java9.sld");
+        File sldFile_java9 = new File(
+                file.getParentFile(),
+                FilenameUtils.getBaseName(file.getName()) + (exclusiveRulesEnabled ? "" : "-first") + "_java9.sld");
+
+        // Java 17 pretty-print has slightly different indentation
+        File sldFile_java17 = new File(
+                file.getParentFile(),
+                FilenameUtils.getBaseName(file.getName()) + (exclusiveRulesEnabled ? "" : "-first") + "_java17.sld");
 
         if (!sldFile.exists()) {
             Stylesheet ss = CssParser.parse(css);
@@ -108,8 +107,7 @@ public abstract class AbstractIntegrationTest extends CssBaseTest {
         }
 
         Style actual = cssToSld(css);
-        File sldFile2 =
-                new File("./target/css", FilenameUtils.getBaseName(file.getName()) + ".sld");
+        File sldFile2 = new File("./target/css", FilenameUtils.getBaseName(file.getName()) + ".sld");
         writeStyle(actual, sldFile2);
         String actualSld = FileUtils.readFileToString(sldFile2, "UTF-8");
 
@@ -124,11 +122,10 @@ public abstract class AbstractIntegrationTest extends CssBaseTest {
                     LOGGER.log(Level.SEVERE, "Other exception type", e);
                 }
             }
-            LOGGER.severe(
-                    "Validation failed, the two files are: "
-                            + sldFile.getAbsolutePath()
-                            + " "
-                            + sldFile2.getAbsolutePath());
+            LOGGER.severe("Validation failed, the two files are: "
+                    + sldFile.getAbsolutePath()
+                    + " "
+                    + sldFile2.getAbsolutePath());
             fail("Validation failed");
         }
 
@@ -140,15 +137,21 @@ public abstract class AbstractIntegrationTest extends CssBaseTest {
         // Diff diff = new Diff(expectedDom, actualDom);
         // if (!diff.identical()) {
         if (!expectedSLD.equals(actualSLD)) {
-            String message =
-                    "Comparison failed, the two files are: "
-                            + sldFile.getAbsolutePath()
-                            + " "
-                            + sldFile2.getAbsolutePath();
+            String message = "Comparison failed, the two files are: "
+                    + sldFile.getAbsolutePath()
+                    + " "
+                    + sldFile2.getAbsolutePath();
 
             // Try the java9 version
             if (sldFile_java9.exists()) {
                 expectedSLD = parseToSld(FileUtils.readFileToString(sldFile_java9, "UTF-8"));
+                if (expectedSLD.equals(actualSLD)) {
+                    return;
+                }
+            }
+
+            if (sldFile_java17.exists()) {
+                expectedSLD = parseToSld(FileUtils.readFileToString(sldFile_java17, "UTF-8"));
                 if (expectedSLD.equals(actualSLD)) {
                     return;
                 }
@@ -165,18 +168,16 @@ public abstract class AbstractIntegrationTest extends CssBaseTest {
         return parser.parseSLD();
     }
 
-    private List validateSLD(String sld)
-            throws IOException, SAXException, ParserConfigurationException {
+    private List validateSLD(String sld) throws IOException, SAXException, ParserConfigurationException {
         Parser parser = new Parser(new SLDConfiguration());
         parser.validate(new StringReader(sld));
         return parser.getValidationErrors();
     }
 
-    private void writeStyle(Style s, File sldFile)
-            throws TransformerException, IOException, FileNotFoundException {
+    private void writeStyle(Style s, File sldFile) throws TransformerException, IOException, FileNotFoundException {
         StyledLayerDescriptor sld = STYLE_FACTORY.createStyledLayerDescriptor();
         NamedLayer layer = STYLE_FACTORY.createNamedLayer();
-        layer.addStyle((org.geotools.styling.Style) s);
+        layer.addStyle((org.geotools.api.style.Style) s);
         sld.layers().add(layer);
         if (!sldFile.getParentFile().exists()) {
             assertTrue(sldFile.getParentFile().mkdirs());
@@ -189,8 +190,7 @@ public abstract class AbstractIntegrationTest extends CssBaseTest {
     }
 
     private Style cssToSld(String css) {
-        ParsingResult<Stylesheet> result =
-                new ReportingParseRunner<Stylesheet>(parser.StyleSheet()).run(css);
+        ParsingResult<Stylesheet> result = new ReportingParseRunner<Stylesheet>(parser.StyleSheet()).run(css);
 
         assertNoErrors(result);
         Stylesheet ss = result.parseTreeRoot.getValue();

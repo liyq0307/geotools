@@ -17,11 +17,11 @@
 package org.geotools.gml3.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.temporal.Instant;
 import org.geotools.gml3.GML;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.temporal.Instant;
 
 /**
  * Binding object for the type http://www.opengis.net/gml:TimeInstantPropertyType.
@@ -45,6 +45,7 @@ import org.opengis.temporal.Instant;
 public class TimeInstantPropertyTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.TimeInstantPropertyType;
     }
@@ -56,6 +57,7 @@ public class TimeInstantPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Instant.class;
     }
@@ -67,6 +69,7 @@ public class TimeInstantPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return node.getChildValue(Instant.class);
     }

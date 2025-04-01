@@ -18,11 +18,11 @@ package org.geotools.filter.v1_1.capabilities;
 
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.GeometryOperand;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xs.bindings.XSQNameBinding;
 import org.geotools.xsd.AbstractSimpleBinding;
 import org.geotools.xsd.InstanceComponent;
-import org.opengis.filter.capability.GeometryOperand;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:GeometryOperandType.
@@ -68,6 +68,7 @@ public class GeometryOperandTypeBinding extends AbstractSimpleBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.GeometryOperandType;
     }
@@ -79,6 +80,7 @@ public class GeometryOperandTypeBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return GeometryOperand.class;
     }
@@ -90,12 +92,14 @@ public class GeometryOperandTypeBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         QName name = (QName) value;
 
         return GeometryOperand.get(name.getNamespaceURI(), name.getLocalPart());
     }
 
+    @Override
     public String encode(Object object, String value) throws Exception {
         GeometryOperand operand = (GeometryOperand) object;
 

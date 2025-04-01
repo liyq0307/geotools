@@ -25,18 +25,21 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.Displacement;
 import org.geotools.filter.function.FilterFunction_strConcat;
 import org.geotools.filter.function.string.ConcatenateFunction;
 import org.geotools.renderer.style.ExpressionExtractor;
-import org.geotools.styling.AnchorPoint;
-import org.geotools.styling.Displacement;
+import org.geotools.styling.zoom.WellKnownZoomContextFinder;
+import org.geotools.styling.zoom.ZoomContext;
+import org.geotools.styling.zoom.ZoomContextFinder;
 import org.geotools.ysld.Colors;
 import org.geotools.ysld.Tuple;
 import org.geotools.ysld.YamlMap;
 import org.geotools.ysld.Ysld;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /** Parsing utilities */
 public class Util {
@@ -73,14 +76,12 @@ public class Util {
     }
 
     /**
-     * Simplifies an {@link Expression} which may contain multiple {@link ConcatenateFunction} into
-     * a single top-level {@link ConcatenateFunction} with a flat list of parameters.
+     * Simplifies an {@link Expression} which may contain multiple {@link ConcatenateFunction} into a single top-level
+     * {@link ConcatenateFunction} with a flat list of parameters.
      *
-     * <p>If the passed {@link Expression} performs no concatenation, it is returned as-is. If the
-     * passed {@link Expression} represents an empty value, a {@link Literal} expression with value
-     * null is returned.
+     * <p>If the passed {@link Expression} performs no concatenation, it is returned as-is. If the passed
+     * {@link Expression} represents an empty value, a {@link Literal} expression with value null is returned.
      *
-     * @param expr
      * @param factory Function factory
      * @return Simplified expression
      */
@@ -96,12 +97,11 @@ public class Util {
     }
 
     /**
-     * Splits an {@link Expression} into a list of expressions by removing {@link
-     * ConcatenateFunction} and {@link FilterFunction_strConcat} Functions, and listing the children
-     * of those functions. This is applied recursively, so nested Expressions are also handled.
-     * Null-valued or empty {@link Literal} Expressions are removed.
+     * Splits an {@link Expression} into a list of expressions by removing {@link ConcatenateFunction} and
+     * {@link FilterFunction_strConcat} Functions, and listing the children of those functions. This is applied
+     * recursively, so nested Expressions are also handled. Null-valued or empty {@link Literal} Expressions are
+     * removed.
      *
-     * @param expr
      * @return List of expressions, containing no concatenate functions
      */
     public static List<Expression> splitConcatenates(Expression expr) {
@@ -113,9 +113,8 @@ public class Util {
     /**
      * Parses an expression from its string representation.
      *
-     * <p>The <tt>safe</tt> parameter when set to true will cause null to be returned when the
-     * string can not be parsed as a ECQL expression. When false it will result in an exception
-     * thrown back.
+     * <p>The <tt>safe</tt> parameter when set to true will cause null to be returned when the string can not be parsed
+     * as a ECQL expression. When false it will result in an exception thrown back.
      *
      * @return The parsed expression, or null if the string value was empty.
      */
@@ -140,14 +139,11 @@ public class Util {
         try {
             t = Tuple.of(2).parse(value);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(
-                    String.format("Bad anchor: '%s', must be of form (<x>,<y>)", value), e);
+            throw new IllegalArgumentException(String.format("Bad anchor: '%s', must be of form (<x>,<y>)", value), e);
         }
 
-        Expression x =
-                t.at(0) != null ? expression(t.strAt(0), factory) : factory.filter.literal(0);
-        Expression y =
-                t.at(1) != null ? expression(t.strAt(1), factory) : factory.filter.literal(0);
+        Expression x = t.at(0) != null ? expression(t.strAt(0), factory) : factory.filter.literal(0);
+        Expression y = t.at(1) != null ? expression(t.strAt(1), factory) : factory.filter.literal(0);
         return factory.style.createAnchorPoint(x, y);
     }
 
@@ -161,20 +157,15 @@ public class Util {
                     String.format("Bad displacement: '%s', must be of form (<x>,<y>)", value), e);
         }
 
-        Expression x =
-                t.at(0) != null ? expression(t.strAt(0), factory) : factory.filter.literal(0);
-        Expression y =
-                t.at(1) != null ? expression(t.strAt(1), factory) : factory.filter.literal(0);
+        Expression x = t.at(0) != null ? expression(t.strAt(0), factory) : factory.filter.literal(0);
+        Expression y = t.at(1) != null ? expression(t.strAt(1), factory) : factory.filter.literal(0);
         return factory.style.createDisplacement(x, y);
     }
 
-    static final Pattern HEX_PATTERN =
-            Pattern.compile("\\s*(?:(?:0x)|#)?([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})\\s*");
+    static final Pattern HEX_PATTERN = Pattern.compile("\\s*(?:(?:0x)|#)?([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})\\s*");
 
-    static final Pattern RGB_PATTERN =
-            Pattern.compile(
-                    "\\s*rgb\\s*\\(\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*\\)\\s*",
-                    Pattern.CASE_INSENSITIVE);
+    static final Pattern RGB_PATTERN = Pattern.compile(
+            "\\s*rgb\\s*\\(\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*,\\s*(\\d{1,3})\\s*\\)\\s*", Pattern.CASE_INSENSITIVE);
 
     /** Parses a color from string representation. */
     public static Expression color(Object value, Factory factory) {
@@ -218,15 +209,12 @@ public class Util {
     }
 
     static Color parseColorAsRGB(Matcher m) {
-        return new Color(
-                Integer.parseInt(m.group(1)),
-                Integer.parseInt(m.group(2)),
-                Integer.parseInt(m.group(3)));
+        return new Color(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3)));
     }
 
     /** Parses a float array from a space delimited list. */
     public static float[] floatArray(String value) {
-        List<Float> list = new ArrayList<Float>();
+        List<Float> list = new ArrayList<>();
         for (String str : value.split(" ")) {
             list.add(Float.parseFloat(str));
         }
@@ -263,22 +251,21 @@ public class Util {
      *
      * @param name Name of the ZoomContext.
      * @param zCtxtFinders List of finders for the {@link ZoomContext}
-     * @throws IllegalArgumentException If name is "EPSG:4326", "EPSG:3857", or "EPSG:900913" (These
-     *     names cause ambiguities).
+     * @throws IllegalArgumentException If name is "EPSG:4326", "EPSG:3857", or "EPSG:900913" (These names cause
+     *     ambiguities).
      * @return {@link ZoomContext} matching the name.
      */
-    public static @Nullable ZoomContext getNamedZoomContext(
-            String name, List<ZoomContextFinder> zCtxtFinders) {
+    public static @Nullable org.geotools.styling.zoom.ZoomContext getNamedZoomContext(
+            String name, List<org.geotools.styling.zoom.ZoomContextFinder> zCtxtFinders) {
         if (name.equalsIgnoreCase("EPSG:4326")) {
             throw new IllegalArgumentException(
                     "Should not use EPSG code to refer to WGS84 zoom levels as it causes ambiguities");
         }
         if (name.equalsIgnoreCase("EPSG:3857") || name.equalsIgnoreCase("EPSG:900913")) {
-            throw new IllegalArgumentException(
-                    "Should not use EPSG code to refer to WebMercator zoom levels");
+            throw new IllegalArgumentException("Should not use EPSG code to refer to WebMercator zoom levels");
         }
         for (ZoomContextFinder finder : zCtxtFinders) {
-            ZoomContext found = finder.get(name);
+            org.geotools.styling.zoom.ZoomContext found = finder.get(name);
             if (found != null) {
                 return found;
             }
@@ -291,10 +278,9 @@ public class Util {
     static final Pattern EMBEDED_FILTER = Pattern.compile("^\\s*\\$\\{(.*?)\\}\\s*$");
 
     /**
-     * Removes up to one set of ${ } expression brackets from a YSLD string. Escape sequences for
-     * the characters $}\ within the brackets are unescaped.
+     * Removes up to one set of ${ } expression brackets from a YSLD string. Escape sequences for the characters $}\
+     * within the brackets are unescaped.
      *
-     * @param s
      * @return s with brackets and escape sequences removed.
      */
     public static String removeExpressionBrackets(String s) {
@@ -306,8 +292,8 @@ public class Util {
     }
 
     /**
-     * @return A number parsed from the provided string, or the string itself if parsing failed.
-     *     Also returns null if the string was null.
+     * @return A number parsed from the provided string, or the string itself if parsing failed. Also returns null if
+     *     the string was null.
      */
     public static Object makeNumberIfPossible(String str) {
         if (str == null) return null;
@@ -336,10 +322,7 @@ public class Util {
         return String.format("#%06X", c.getRGB() & 0x00_FF_FF_FF);
     }
 
-    /**
-     * @return The string with quotes (') stripped from the beginning and end, or null if the string
-     *     was null.
-     */
+    /** @return The string with quotes (') stripped from the beginning and end, or null if the string was null. */
     public static String stripQuotes(String str) {
         if (str == null) {
             return str;

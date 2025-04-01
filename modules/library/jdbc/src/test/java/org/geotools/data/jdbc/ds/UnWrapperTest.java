@@ -21,46 +21,57 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import junit.framework.TestCase;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.geotools.data.jdbc.datasource.DataSourceFinder;
 import org.geotools.data.jdbc.datasource.UnWrapper;
+import org.h2.jdbc.JdbcConnection;
+import org.h2.jdbc.JdbcPreparedStatement;
+import org.h2.jdbc.JdbcStatement;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class UnWrapperTest extends TestCase {
+public class UnWrapperTest {
 
+    @Test
     public void testDBCPUnwrapper() throws SQLException, IOException {
         BasicDataSource ds = new BasicDataSource();
         ds.setDriverClassName("org.h2.Driver");
         ds.setUrl("jdbc:h2:mem:test_mem");
         ds.setAccessToUnderlyingConnectionAllowed(true);
 
+        // some weird stuff happening in connection management, the H2 connection
+        // has been already closed once the try-resource block finishes, so not using it here,
+        // not our job to debug the connection pool nor H2
+        @SuppressWarnings("PMD.CloseResource")
         Connection conn = ds.getConnection();
         UnWrapper uw = DataSourceFinder.getUnWrapper(conn);
-        assertNotNull(uw);
-        assertTrue(uw.canUnwrap(conn));
-        Connection unwrapped = uw.unwrap(conn);
-        assertNotNull(unwrapped);
-        assertTrue(unwrapped instanceof org.h2.jdbc.JdbcConnection);
+        Assert.assertNotNull(uw);
+        Assert.assertTrue(uw.canUnwrap(conn));
+        try (Connection unwrapped = uw.unwrap(conn)) {
+            Assert.assertNotNull(unwrapped);
+            Assert.assertTrue(unwrapped instanceof JdbcConnection);
 
-        Statement st = conn.createStatement();
-        uw = DataSourceFinder.getUnWrapper(st);
-        assertNotNull(uw);
-        assertTrue(uw.canUnwrap(st));
-        Statement uwst = uw.unwrap(st);
-        assertNotNull(uwst);
-        assertTrue(uwst instanceof org.h2.jdbc.JdbcStatement);
-        st.close();
+            try (Statement st = conn.createStatement()) {
+                uw = DataSourceFinder.getUnWrapper(st);
+                Assert.assertNotNull(uw);
+                Assert.assertTrue(uw.canUnwrap(st));
 
-        PreparedStatement ps = conn.prepareStatement("select curtime()");
-        uw = DataSourceFinder.getUnWrapper(ps);
-        assertNotNull(uw);
-        assertTrue(uw.canUnwrap(ps));
-        PreparedStatement uwps = (PreparedStatement) uw.unwrap(ps);
-        assertNotNull(uwps);
-        assertTrue(uwps instanceof org.h2.jdbc.JdbcPreparedStatement);
-        ps.close();
+                try (Statement uwst = uw.unwrap(st)) {
+                    Assert.assertNotNull(uwst);
+                    Assert.assertTrue(uwst instanceof JdbcStatement);
+                }
+            }
 
-        conn.close();
-        ds.close();
+            try (PreparedStatement ps = conn.prepareStatement("select curtime()")) {
+                uw = DataSourceFinder.getUnWrapper(ps);
+                Assert.assertNotNull(uw);
+                Assert.assertTrue(uw.canUnwrap(ps));
+
+                try (PreparedStatement uwps = (PreparedStatement) uw.unwrap(ps)) {
+                    Assert.assertNotNull(uwps);
+                    Assert.assertTrue(uwps instanceof JdbcPreparedStatement);
+                }
+            }
+        }
     }
 }

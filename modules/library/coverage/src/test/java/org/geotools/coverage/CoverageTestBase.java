@@ -25,17 +25,17 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.RenderedImage;
 import javax.media.jai.iterator.RectIter;
 import javax.media.jai.iterator.RectIterFactory;
+import org.geotools.api.coverage.Coverage;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.coverage.grid.GridGeometry;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.Viewer;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.referencing.operation.matrix.XAffineTransform;
 import org.geotools.test.TestData;
-import org.opengis.coverage.Coverage;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.coverage.grid.GridGeometry;
-import org.opengis.geometry.Envelope;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Base class for tests on {@link AbstractCoverage} subclasses.
@@ -45,26 +45,25 @@ import org.opengis.referencing.operation.MathTransform;
  */
 public class CoverageTestBase {
     /**
-     * {@code true} if the result of coverage operations should be displayed. This is sometime
-     * useful for debugging purpose.
+     * {@code true} if the result of coverage operations should be displayed. This is sometime useful for debugging
+     * purpose.
      */
     protected static boolean SHOW = TestData.isInteractiveTest();
 
     /**
-     * Small value for comparaison of sample values. Since most grid coverage implementations in
-     * Geotools 2 store geophysics values as {@code float} numbers, this {@code EPS} value must be
-     * of the order of {@code float} relative precision, not {@code double}.
+     * Small value for comparaison of sample values. Since most grid coverage implementations in Geotools 2 store
+     * geophysics values as {@code float} numbers, this {@code EPS} value must be of the order of {@code float} relative
+     * precision, not {@code double}.
      */
     protected static final float EPS = 1E-5f;
 
     /**
-     * Returns the "Sample to geophysics" transform as an affine transform, or {@code null} if none.
-     * Note that the returned instance may be an immutable one, not necessarly the default Java2D
-     * implementation.
+     * Returns the "Sample to geophysics" transform as an affine transform, or {@code null} if none. Note that the
+     * returned instance may be an immutable one, not necessarly the default Java2D implementation.
      *
      * @param coverage The coverage for which to get the "grid to CRS" affine transform.
-     * @return The "grid to CRS" affine transform of the given coverage, or {@code null} if none or
-     *     if the transform is not affine.
+     * @return The "grid to CRS" affine transform of the given coverage, or {@code null} if none or if the transform is
+     *     not affine.
      */
     protected static AffineTransform getAffineTransform(final Coverage coverage) {
         if (coverage instanceof GridCoverage) {
@@ -72,7 +71,7 @@ public class CoverageTestBase {
             if (geometry != null) {
                 final MathTransform gridToCRS;
                 if (geometry instanceof GridGeometry2D) {
-                    gridToCRS = ((GridGeometry2D) geometry).getGridToCRS();
+                    gridToCRS = geometry.getGridToCRS();
                 } else {
                     gridToCRS = geometry.getGridToCRS();
                 }
@@ -96,30 +95,30 @@ public class CoverageTestBase {
     }
 
     /**
-     * Returns the envelope of the given coverage as a {@link GeneralEnvelope} implementation.
+     * Returns the envelope of the given coverage as a {@link GeneralBounds} implementation.
      *
      * @param coverage The coverage for which to get the envelope.
      * @return The envelope of the given coverage (never {@code null}).
      */
-    protected static GeneralEnvelope getGeneralEnvelope(final Coverage coverage) {
-        final Envelope envelope = coverage.getEnvelope();
+    protected static GeneralBounds getGeneralEnvelope(final Coverage coverage) {
+        final Bounds envelope = coverage.getEnvelope();
         assertNotNull(envelope);
-        assertEquals(
-                coverage.getCoordinateReferenceSystem(), envelope.getCoordinateReferenceSystem());
-        if (coverage instanceof GeneralEnvelope) {
-            return (GeneralEnvelope) envelope;
+        assertEquals(coverage.getCoordinateReferenceSystem(), envelope.getCoordinateReferenceSystem());
+        if (coverage instanceof GeneralBounds) {
+            return (GeneralBounds) envelope;
         } else {
-            return new GeneralEnvelope(envelope);
+            return new GeneralBounds(envelope);
         }
     }
 
     /**
-     * Compares the envelopes of two coverages for equality using the smallest scale factor of their
-     * "grid to world" transform as the tolerance.
+     * Compares the envelopes of two coverages for equality using the smallest scale factor of their "grid to world"
+     * transform as the tolerance.
      *
      * @param expected The coverage having the expected envelope.
      * @param actual The coverage having the actual envelope.
      */
+    @SuppressWarnings("PMD.SimplifiableTestAssertion") // equality with tolerance
     protected static void assertEnvelopeEquals(Coverage expected, Coverage actual) {
         final double scaleA = getScale(expected);
         final double scaleB = getScale(actual);
@@ -167,8 +166,7 @@ public class CoverageTestBase {
      * @param expected The image containing the expected pixel values.
      * @param actual The image containing the actual pixel values.
      */
-    protected static void assertRasterEquals(
-            final RenderedImage expected, final RenderedImage actual) {
+    protected static void assertRasterEquals(final RenderedImage expected, final RenderedImage actual) {
         final RectIter e = RectIterFactory.create(expected, null);
         final RectIter a = RectIterFactory.create(actual, null);
         if (!e.finishedLines())

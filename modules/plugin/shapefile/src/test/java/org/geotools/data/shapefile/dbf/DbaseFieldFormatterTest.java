@@ -1,6 +1,7 @@
 package org.geotools.data.shapefile.dbf;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.Charset;
 import java.util.TimeZone;
@@ -26,7 +27,6 @@ public class DbaseFieldFormatterTest {
         // assertEquals("Formatted Output", xpected, s.trim());
         boolean ascii = true;
         int i, c = 0;
-        ;
         for (i = 0; i < s.length(); i++) {
             c = s.charAt(i);
             if (c > 127) {

@@ -16,10 +16,13 @@
  */
 package org.geotools.filter.v1_1.capabilities;
 
+import static org.junit.Assert.assertEquals;
+
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.GeometryOperand;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.Binding;
-import org.opengis.filter.capability.GeometryOperand;
+import org.junit.Test;
 import org.w3c.dom.Document;
 
 /**
@@ -59,14 +62,17 @@ import org.w3c.dom.Document;
  * @generated
  */
 public class GeometryOperandTypeBindingTest extends OGCTestSupport {
+    @Test
     public void testType() {
         assertEquals(GeometryOperand.class, binding(OGC.GeometryOperandType).getType());
     }
 
+    @Test
     public void testExecutionMode() {
         assertEquals(Binding.AFTER, binding(OGC.GeometryOperandType).getExecutionMode());
     }
 
+    @Test
     public void testParse() throws Exception {
         FilterMockData.geometryOperand(document, document, "Envelope");
 
@@ -75,12 +81,10 @@ public class GeometryOperandTypeBindingTest extends OGCTestSupport {
         assertEquals(GeometryOperand.Envelope, operand);
     }
 
+    @Test
     public void testEncode() throws Exception {
         Document dom =
-                encode(
-                        GeometryOperand.Envelope,
-                        new QName(OGC.NAMESPACE, "GeometryOperand"),
-                        OGC.GeometryOperandType);
+                encode(GeometryOperand.Envelope, new QName(OGC.NAMESPACE, "GeometryOperand"), OGC.GeometryOperandType);
         assertEquals("gml:Envelope", dom.getDocumentElement().getFirstChild().getNodeValue());
     }
 }

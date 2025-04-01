@@ -17,7 +17,8 @@
 package org.geotools.data;
 
 import java.io.IOException;
-import org.opengis.feature.type.AttributeDescriptor;
+import org.geotools.api.data.AttributeWriter;
+import org.geotools.api.feature.type.AttributeDescriptor;
 
 /**
  * Provides ...
@@ -30,12 +31,12 @@ public class JoiningAttributeWriter implements AttributeWriter {
     private AttributeDescriptor[] metaData;
 
     /** */
-    public JoiningAttributeWriter(AttributeWriter[] writers) {
+    public JoiningAttributeWriter(AttributeWriter... writers) {
         this.writers = writers;
         metaData = joinMetaData(writers);
     }
 
-    private AttributeDescriptor[] joinMetaData(AttributeWriter[] writers) {
+    private AttributeDescriptor[] joinMetaData(AttributeWriter... writers) {
         int total = 0;
         index = new int[writers.length];
         for (int i = 0, ii = writers.length; i < ii; i++) {
@@ -44,9 +45,9 @@ public class JoiningAttributeWriter implements AttributeWriter {
         }
         AttributeDescriptor[] md = new AttributeDescriptor[total];
         int idx = 0;
-        for (int i = 0, ii = writers.length; i < ii; i++) {
-            for (int j = 0, jj = writers[i].getAttributeCount(); j < jj; j++) {
-                md[idx] = writers[i].getAttributeType(j);
+        for (AttributeWriter writer : writers) {
+            for (int j = 0, jj = writer.getAttributeCount(); j < jj; j++) {
+                md[idx] = writer.getAttributeType(j);
                 idx++;
             }
         }
@@ -54,13 +55,14 @@ public class JoiningAttributeWriter implements AttributeWriter {
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.AttributeWriter#close()
+     * @see org.geotools.api.data.AttributeWriter#close()
      */
+    @Override
     public void close() throws IOException {
         IOException dse = null;
-        for (int i = 0, ii = writers.length; i < ii; i++) {
+        for (AttributeWriter writer : writers) {
             try {
-                writers[i].close();
+                writer.close();
             } catch (IOException e) {
                 dse = e;
             }
@@ -68,25 +70,28 @@ public class JoiningAttributeWriter implements AttributeWriter {
         if (dse != null) throw dse;
     }
 
+    @Override
     public boolean hasNext() throws IOException {
-        for (int i = 0, ii = writers.length; i < ii; i++) {
-            if (writers[i].hasNext()) {
+        for (AttributeWriter writer : writers) {
+            if (writer.hasNext()) {
                 return true;
             }
         }
         return false;
     }
 
+    @Override
     public void next() throws IOException {
-        for (int i = 0, ii = writers.length; i < ii; i++) {
+        for (AttributeWriter writer : writers) {
             // if (writers[i].hasNext()) Dont want to check this, need to be able to insert
-            writers[i].next();
+            writer.next();
         }
     }
 
     /* (non-Javadoc)
-     * @see org.geotools.data.AttributeWriter#write(int, java.lang.Object)
+     * @see org.geotools.api.data.AttributeWriter#write(int, java.lang.Object)
      */
+    @Override
     public void write(int position, Object attribute) throws IOException {
         AttributeWriter writer = null;
         for (int i = index.length - 1; i >= 0; i--) {
@@ -101,10 +106,12 @@ public class JoiningAttributeWriter implements AttributeWriter {
         writer.write(position, attribute);
     }
 
+    @Override
     public int getAttributeCount() {
         return metaData.length;
     }
 
+    @Override
     public AttributeDescriptor getAttributeType(int i) {
         return metaData[i];
     }

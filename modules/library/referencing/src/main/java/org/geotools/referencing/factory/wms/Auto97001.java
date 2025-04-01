@@ -18,12 +18,12 @@ package org.geotools.referencing.factory.wms;
 
 // OpenGIS dependencies
 
-import org.opengis.parameter.ParameterValueGroup;
+import org.geotools.api.parameter.ParameterValueGroup;
 
 /**
- * Auto Gnomonic ({@code AUTO:97001}). In the notation below, "<code>${var}</code>" denotes a
- * reference to the value of a variable "{@code var}". The variables "{@code lat0}" and "{@code
- * lon0}" are the central point of the projection appearing in the CRS parameter of the map request.
+ * Auto Gnomonic ({@code AUTO:97001}). In the notation below, "<code>${var}</code>" denotes a reference to the value of
+ * a variable "{@code var}". The variables "{@code lat0}" and "{@code lon0}" are the central point of the projection
+ * appearing in the CRS parameter of the map request.
  *
  * <pre>
  * PROJCS["WGS 84 / Auto Gnomonic",
@@ -58,21 +58,25 @@ final class Auto97001 extends Factlet {
     private Auto97001() {}
 
     /** {@inheritDoc} */
+    @Override
     public int code() {
         return 97001;
     }
 
     /** {@inheritDoc} */
+    @Override
     public String getName() {
         return "WGS 84 / Auto Gnomonic";
     }
 
     /** {@inheritDoc} */
+    @Override
     public String getClassification() {
         return "Gnomonic";
     }
 
     /** {@inheritDoc} */
+    @Override
     protected void setProjectionParameters(final ParameterValueGroup parameters, final Code code) {
         final double latitudeOfCenter = code.latitude;
         final double longitudeOfCenter = code.longitude;

@@ -35,28 +35,29 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
-import junit.framework.TestCase;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.style.Style;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.label.LabelCacheImpl;
-import org.geotools.styling.Style;
 import org.geotools.test.TestData;
 import org.geotools.util.logging.Logging;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /** Confirm functionality of letter level conflict detection. */
-public class LetterConflictTest extends TestCase {
+public class LetterConflictTest {
     static final Logger LOGGER = Logging.getLogger(LetterConflictTest.class);
     /**
      * Makes the test interactive, showing a Swing dialog with image.
      *
      * <p>Build with mvn -P image.interactive
      */
-    static final boolean IMAGE_INTERACTIVE =
-            Boolean.getBoolean("org.geotools.image.test.interactive");
+    static final boolean IMAGE_INTERACTIVE = Boolean.getBoolean("org.geotools.image.test.interactive");
 
     /**
      * Forces the image comparison / output tests to be skipped.
@@ -80,11 +81,11 @@ public class LetterConflictTest extends TestCase {
     ReferencedEnvelope bounds1;
     ReferencedEnvelope bounds2;
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
 
-        File property_line =
-                new File(TestData.getResource(this, "letterConflict1.properties").toURI());
+        File property_line = new File(
+                TestData.getResource(this, "letterConflict1.properties").toURI());
         PropertyDataStore ds_line = new PropertyDataStore(property_line.getParentFile());
 
         fs_line1 = ds_line.getFeatureSource("letterConflict1");
@@ -100,7 +101,7 @@ public class LetterConflictTest extends TestCase {
 
     private StreamingRenderer getNewRenderer(MapContent context) {
         StreamingRenderer renderer = new StreamingRenderer();
-        Map<String, Object> rendererParams = new HashMap<String, Object>();
+        Map<Object, Object> rendererParams = new HashMap<>();
         LabelCacheImpl labelCache = new LabelCacheImpl();
         rendererParams.put(StreamingRenderer.LABEL_CACHE_KEY, labelCache);
         renderer.setRendererHints(rendererParams);
@@ -109,6 +110,7 @@ public class LetterConflictTest extends TestCase {
         return renderer;
     }
 
+    @Test
     public void testLetterConflictEnabled() throws Exception {
 
         LabelCacheImpl.DISABLE_LETTER_LEVEL_CONFLICT = true;
@@ -131,7 +133,7 @@ public class LetterConflictTest extends TestCase {
         final BufferedImage image2 = RendererBaseTest.renderImage(renderer, bounds1, null);
         mc.dispose();
 
-        assertTrue(
+        Assert.assertTrue(
                 "More labels in image2 than image1",
                 countPixels(image2, Color.BLACK) >= countPixels(image1, Color.BLACK));
 
@@ -141,6 +143,7 @@ public class LetterConflictTest extends TestCase {
         showImage("letterConflictEnabled true", TIME, image2);
     }
 
+    @Test
     public void testLetterConflictEnabled2Lines() throws Exception {
 
         LabelCacheImpl.DISABLE_LETTER_LEVEL_CONFLICT = true;
@@ -161,7 +164,7 @@ public class LetterConflictTest extends TestCase {
         renderer = getNewRenderer(mc);
         final BufferedImage image2 = RendererBaseTest.renderImage(renderer, bounds1, null);
 
-        assertTrue(
+        Assert.assertTrue(
                 "More labels in image2 than image1",
                 countPixels(image2, Color.BLACK) > countPixels(image1, Color.BLACK));
 
@@ -172,6 +175,7 @@ public class LetterConflictTest extends TestCase {
         mc.dispose();
     }
 
+    @Test
     public void testLetterConflictEnabledCurvedLine() throws Exception {
 
         LabelCacheImpl.DISABLE_LETTER_LEVEL_CONFLICT = true;
@@ -193,7 +197,7 @@ public class LetterConflictTest extends TestCase {
         final BufferedImage image2 = RendererBaseTest.renderImage(renderer, bounds1, null);
         mc.dispose();
 
-        assertTrue(
+        Assert.assertTrue(
                 "More labels in image2 than image1",
                 countPixels(image2, Color.BLACK) > countPixels(image1, Color.BLACK));
 
@@ -204,6 +208,7 @@ public class LetterConflictTest extends TestCase {
         showImage("letterConflictEnabledCurvedLine true", TIME, image2);
     }
 
+    @Test
     public void testLetterConflictEnabledPerf() throws Exception {
         synchronized (LabelCacheImpl.class) {
             LabelCacheImpl.DISABLE_LETTER_LEVEL_CONFLICT = true;
@@ -246,9 +251,7 @@ public class LetterConflictTest extends TestCase {
             LOGGER.fine("time true " + ta / 10000000);
             mc.dispose();
 
-            assertTrue(
-                    "More labels in image2 than image1",
-                    countDarkPixels(image2) >= countDarkPixels(image1));
+            Assert.assertTrue("More labels in image2 than image1", countDarkPixels(image2) >= countDarkPixels(image1));
 
             writeImage("letterConflictEnabledPerfFalse", image1);
             writeImage("letterConflictEnabledPerfTrue", image2);
@@ -278,13 +281,7 @@ public class LetterConflictTest extends TestCase {
         return count;
     }
 
-    /**
-     * Internal utility method used to write out image for debugging purposes.
-     *
-     * @param testName
-     * @param image
-     * @throws IOException
-     */
+    /** Internal utility method used to write out image for debugging purposes. */
     static void writeImage(String testName, BufferedImage image) throws IOException {
         if (IMAGE_SKIP) return;
 
@@ -298,12 +295,8 @@ public class LetterConflictTest extends TestCase {
      * Internal utility method used to display an image for interactive tests.
      *
      * @param testName test name used as window name
-     * @param timeOut
-     * @param image
-     * @throws InterruptedException
      */
-    static void showImage(String testName, long timeOut, final BufferedImage image)
-            throws InterruptedException {
+    static void showImage(String testName, long timeOut, final BufferedImage image) throws InterruptedException {
         boolean HEADLESS = Boolean.getBoolean("java.awt.headless");
 
         if (HEADLESS || IMAGE_SKIP) {
@@ -313,27 +306,26 @@ public class LetterConflictTest extends TestCase {
         if (IMAGE_INTERACTIVE && TestData.isInteractiveTest()) {
             try {
                 Frame frame = new Frame(testName);
-                frame.addWindowListener(
-                        new WindowAdapter() {
-                            public void windowClosing(WindowEvent e) {
-                                e.getWindow().dispose();
-                            }
-                        });
+                frame.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        e.getWindow().dispose();
+                    }
+                });
 
-                Panel p =
-                        new Panel() {
-                            /** <code>serialVersionUID</code> field */
-                            private static final long serialVersionUID = 1L;
+                Panel p = new Panel() {
+                    /** <code>serialVersionUID</code> field */
+                    private static final long serialVersionUID = 1L;
 
-                            {
-                                setPreferredSize(
-                                        new Dimension(image.getWidth(), image.getHeight()));
-                            }
+                    {
+                        setPreferredSize(new Dimension(image.getWidth(), image.getHeight()));
+                    }
 
-                            public void paint(Graphics g) {
-                                g.drawImage(image, 0, 0, this);
-                            }
-                        };
+                    @Override
+                    public void paint(Graphics g) {
+                        g.drawImage(image, 0, 0, this);
+                    }
+                };
 
                 frame.add(p);
                 frame.pack();

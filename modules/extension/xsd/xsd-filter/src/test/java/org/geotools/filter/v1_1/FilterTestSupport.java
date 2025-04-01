@@ -20,6 +20,8 @@ import org.geotools.xsd.Configuration;
 import org.geotools.xsd.test.XMLTestSupport;
 
 public abstract class FilterTestSupport extends XMLTestSupport {
+
+    @Override
     protected Configuration createConfiguration() {
         return new OGCConfiguration();
     }

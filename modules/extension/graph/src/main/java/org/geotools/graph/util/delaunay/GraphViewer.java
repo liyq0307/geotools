@@ -20,7 +20,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Vector;
+import java.util.List;
 import javax.swing.JPanel;
 import org.geotools.graph.structure.Edge;
 import org.geotools.graph.structure.Graph;
@@ -38,20 +38,19 @@ public class GraphViewer extends JPanel {
     int xOffset = 0;
     int yOffset = 0;
     boolean colorEdges = false;
-    Color[] nodeColors =
-            new Color[] {
-                Color.RED,
-                Color.ORANGE,
-                Color.YELLOW,
-                Color.GREEN,
-                Color.BLUE,
-                Color.MAGENTA,
-                Color.LIGHT_GRAY,
-                Color.GRAY,
-                Color.DARK_GRAY,
-                Color.BLACK
-            };
-    Vector shortEdges, longEdges, otherEdges;
+    Color[] nodeColors = {
+        Color.RED,
+        Color.ORANGE,
+        Color.YELLOW,
+        Color.GREEN,
+        Color.BLUE,
+        Color.MAGENTA,
+        Color.LIGHT_GRAY,
+        Color.GRAY,
+        Color.DARK_GRAY,
+        Color.BLACK
+    };
+    List shortEdges, longEdges, otherEdges;
 
     /** Creates a new instance of GraphViewer */
     public GraphViewer() {}
@@ -97,18 +96,19 @@ public class GraphViewer extends JPanel {
         colorEdges = b;
     }
 
-    public void setShortEdges(Vector l) {
+    public void setShortEdges(List l) {
         shortEdges = l;
     }
 
-    public void setLongEdges(Vector l) {
+    public void setLongEdges(List l) {
         longEdges = l;
     }
 
-    public void setOtherEdges(Vector l) {
+    public void setOtherEdges(List l) {
         otherEdges = l;
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         xOffset = (int) Math.round(xScaling - minX * xScaling);
         yOffset = (int) Math.round(yScaling - minY * yScaling);

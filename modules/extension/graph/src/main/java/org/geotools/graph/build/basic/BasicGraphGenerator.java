@@ -17,6 +17,7 @@
 package org.geotools.graph.build.basic;
 
 import java.util.HashMap;
+import java.util.Map;
 import org.geotools.graph.build.GraphBuilder;
 import org.geotools.graph.build.GraphGenerator;
 import org.geotools.graph.structure.Edge;
@@ -48,15 +49,16 @@ public class BasicGraphGenerator implements GraphGenerator {
     private GraphBuilder m_builder;
 
     /** object to node lookup table * */
-    private HashMap m_obj2graphable;
+    private Map<Object, Graphable> m_obj2graphable;
 
     /** Constructs a new generator. */
     public BasicGraphGenerator() {
-        m_obj2graphable = new HashMap();
+        m_obj2graphable = new HashMap<>();
         setGraphBuilder(new BasicGraphBuilder());
     }
 
     /** @see GraphGenerator#add(Object) */
+    @Override
     public Graphable add(Object obj) {
         Object[] objs = (Object[]) obj;
 
@@ -90,6 +92,7 @@ public class BasicGraphGenerator implements GraphGenerator {
     }
 
     /** @see GraphGenerator#get(Object) */
+    @Override
     public Graphable get(Object obj) {
         Object[] objs = (Object[]) obj;
         Node n1 = (Node) m_obj2graphable.get(objs[0]);
@@ -99,6 +102,7 @@ public class BasicGraphGenerator implements GraphGenerator {
     }
 
     /** @see GraphGenerator#remove(Object) */
+    @Override
     public Graphable remove(Object obj) {
         Object[] objs = (Object[]) obj;
 
@@ -112,16 +116,19 @@ public class BasicGraphGenerator implements GraphGenerator {
     }
 
     /** @see GraphGenerator#setGraphBuilder(GraphBuilder) */
+    @Override
     public void setGraphBuilder(GraphBuilder builder) {
         m_builder = builder;
     }
 
     /** @see GraphGenerator#getGraphBuilder() */
+    @Override
     public GraphBuilder getGraphBuilder() {
         return (m_builder);
     }
 
     /** @see GraphGenerator#getGraph() */
+    @Override
     public Graph getGraph() {
         return (m_builder.getGraph());
     }

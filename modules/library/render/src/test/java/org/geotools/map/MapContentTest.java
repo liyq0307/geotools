@@ -17,19 +17,25 @@
 
 package org.geotools.map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Tests to ensure the consistency of MapContent and MapViewport functionality.
@@ -78,10 +84,7 @@ public class MapContentTest {
         assertTrue(maxBounds.isEmpty());
     }
 
-    /**
-     * Calling {@link MapContent#getViewport()} initially creates a new viewport instance with
-     * default settings.
-     */
+    /** Calling {@link MapContent#getViewport()} initially creates a new viewport instance with default settings. */
     @Test
     public void getDefaultViewport() throws Exception {
         mapContent.addLayer(new MockLayer(WORLD));
@@ -153,8 +156,7 @@ public class MapContentTest {
 
         Layer layerWithCRS = new MockLayer(WORLD);
         mapContent.addLayer(layerWithCRS);
-        assertEquals(
-                WORLD.getCoordinateReferenceSystem(), mapContent.getCoordinateReferenceSystem());
+        assertEquals(WORLD.getCoordinateReferenceSystem(), mapContent.getCoordinateReferenceSystem());
     }
 
     @Test
@@ -182,9 +184,7 @@ public class MapContentTest {
 
         assertTrue(viewport.isEditable());
         assertEquals(crs, mapContent.getCoordinateReferenceSystem());
-        assertFalse(
-                WORLD.getCoordinateReferenceSystem()
-                        .equals(mapContent.getCoordinateReferenceSystem()));
+        assertNotEquals(WORLD.getCoordinateReferenceSystem(), mapContent.getCoordinateReferenceSystem());
     }
 
     @Test
@@ -225,8 +225,8 @@ public class MapContentTest {
         mapContent.layers().add(0, layer2);
 
         // check reference equality
-        assertTrue(mapContent.layers().get(0) == layer2);
-        assertTrue(mapContent.layers().get(1) == layer1);
+        assertSame(mapContent.layers().get(0), layer2);
+        assertSame(mapContent.layers().get(1), layer1);
     }
 
     @Test
@@ -259,9 +259,9 @@ public class MapContentTest {
         assertEquals(layers.size(), mapContent.layers().size());
 
         // check expected layer order
-        assertTrue(mapContent.layers().get(0) == layer1);
-        assertTrue(mapContent.layers().get(1) == layer3);
-        assertTrue(mapContent.layers().get(2) == layer2);
+        assertSame(mapContent.layers().get(0), layer1);
+        assertSame(mapContent.layers().get(1), layer3);
+        assertSame(mapContent.layers().get(2), layer2);
     }
 
     @Test
@@ -276,7 +276,7 @@ public class MapContentTest {
         mapContent.layers().remove(0);
 
         assertEquals(1, mapContent.layers().size());
-        assertTrue(mapContent.layers().get(0) == layer2);
+        assertSame(mapContent.layers().get(0), layer2);
         assertTrue(layer1.isDisposed());
         assertFalse(layer2.isDisposed());
     }
@@ -292,7 +292,7 @@ public class MapContentTest {
         mapContent.layers().remove(layer1);
 
         assertEquals(1, mapContent.layers().size());
-        assertTrue(mapContent.layers().get(0) == layer2);
+        assertSame(mapContent.layers().get(0), layer2);
         assertTrue(layer1.isDisposed());
         assertFalse(layer2.isDisposed());
     }
@@ -313,7 +313,7 @@ public class MapContentTest {
         MockLayer layerFirst = new MockLayer(WORLD);
         mapContent.addLayer(layerFirst);
 
-        List<MockLayer> layers = new ArrayList<MockLayer>();
+        List<MockLayer> layers = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             MockLayer layer = new MockLayer(WORLD);
             layers.add(layer);
@@ -326,8 +326,8 @@ public class MapContentTest {
         assertTrue(mapContent.layers().removeAll(layers));
 
         assertEquals(2, mapContent.layers().size());
-        assertTrue(mapContent.layers().get(0) == layerFirst);
-        assertTrue(mapContent.layers().get(1) == layerLast);
+        assertSame(mapContent.layers().get(0), layerFirst);
+        assertSame(mapContent.layers().get(1), layerLast);
 
         assertFalse(layerFirst.isDisposed());
         assertFalse(layerLast.isDisposed());
@@ -342,7 +342,7 @@ public class MapContentTest {
         MockLayer layerFirst = new MockLayer(WORLD);
         mapContent.addLayer(layerFirst);
 
-        List<MockLayer> layers = new ArrayList<MockLayer>();
+        List<MockLayer> layers = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             MockLayer layer = new MockLayer(WORLD);
             layers.add(layer);
@@ -356,7 +356,7 @@ public class MapContentTest {
 
         assertEquals(layers.size(), mapContent.layers().size());
         for (int i = 0; i < layers.size(); i++) {
-            assertTrue(mapContent.layers().get(i) == layers.get(i));
+            assertSame(mapContent.layers().get(i), layers.get(i));
         }
 
         assertTrue(layerFirst.isDisposed());
@@ -382,7 +382,7 @@ public class MapContentTest {
         assertTrue(listener.await(WaitingMapListener.Type.ADDED, LISTENER_TIMEOUT));
 
         assertEquals(1, mapContent.layers().size());
-        assertTrue(mapContent.layers().get(0) == layer2);
+        assertSame(mapContent.layers().get(0), layer2);
         assertTrue(layer1.isDisposed());
         assertFalse(layer2.isDisposed());
     }

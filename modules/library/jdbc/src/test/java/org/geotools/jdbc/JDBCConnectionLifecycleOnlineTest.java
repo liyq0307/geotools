@@ -16,16 +16,20 @@
  */
 package org.geotools.jdbc;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
@@ -35,16 +39,14 @@ public abstract class JDBCConnectionLifecycleOnlineTest extends JDBCTestSupport 
 
     JDBCFeatureStore featureStore;
 
+    @Override
     protected void connect() throws Exception {
         super.connect();
         featureStore = (JDBCFeatureStore) dataStore.getFeatureSource(tname("ft1"));
     }
 
-    /**
-     * Check null encoding is working properly
-     *
-     * @throws IOException
-     */
+    /** Check null encoding is working properly */
+    @Test
     public void testListenerCalled() throws IOException {
         dataStore.getConnectionLifecycleListeners().add(mockListener);
 
@@ -62,8 +64,7 @@ public abstract class JDBCConnectionLifecycleOnlineTest extends JDBCTestSupport 
         // now write something within a transaction
         try (Transaction t = new DefaultTransaction()) {
             SimpleFeatureBuilder b = new SimpleFeatureBuilder(featureStore.getSchema());
-            DefaultFeatureCollection collection =
-                    new DefaultFeatureCollection(null, featureStore.getSchema());
+            DefaultFeatureCollection collection = new DefaultFeatureCollection(null, featureStore.getSchema());
             featureStore.setTransaction(t);
             for (int i = 3; i < 6; i++) {
                 b.set(aname("intProperty"), Integer.valueOf(i));
@@ -83,6 +84,7 @@ public abstract class JDBCConnectionLifecycleOnlineTest extends JDBCTestSupport 
         }
     }
 
+    @Test
     public void testConnectionReleased() throws IOException {
         dataStore.getConnectionLifecycleListeners().add(new ExceptionListener());
 
@@ -105,18 +107,22 @@ public abstract class JDBCConnectionLifecycleOnlineTest extends JDBCTestSupport 
 
         boolean onRollbackCalled;
 
+        @Override
         public void onBorrow(JDBCDataStore store, Connection cx) throws SQLException {
             onBorrowCalled = true;
         }
 
+        @Override
         public void onRelease(JDBCDataStore store, Connection cx) throws SQLException {
             onReleaseCalled = true;
         }
 
+        @Override
         public void onCommit(JDBCDataStore store, Connection cx) throws SQLException {
             onCommitCalled = true;
         }
 
+        @Override
         public void onRollback(JDBCDataStore store, Connection cx) throws SQLException {
             onRollbackCalled = true;
         }
@@ -124,18 +130,22 @@ public abstract class JDBCConnectionLifecycleOnlineTest extends JDBCTestSupport 
 
     private static class ExceptionListener implements ConnectionLifecycleListener {
 
+        @Override
         public void onBorrow(JDBCDataStore store, Connection cx) throws SQLException {
             // nothing to do
         }
 
+        @Override
         public void onRelease(JDBCDataStore store, Connection cx) throws SQLException {
             throw new SQLException("Ha, are you relasing the connection anyways??");
         }
 
+        @Override
         public void onCommit(JDBCDataStore store, Connection cx) throws SQLException {
             throw new SQLException("Nope, no writes sir");
         }
 
+        @Override
         public void onRollback(JDBCDataStore store, Connection cx) throws SQLException {
             // nothing to do
         }

@@ -16,25 +16,24 @@
  */
 package org.geotools.feature.collection;
 
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.EmptyFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.sort.SortBy;
 
 /**
- * Reasonable default implementation for subCollection making use of parent {@link
- * SimpleFeatureCollection#features()} and provided Filter.
+ * Reasonable default implementation for subCollection making use of parent {@link SimpleFeatureCollection#features()}
+ * and provided Filter.
  *
- * <p>This is only a reasonable implementation and is not optimal. It is recommended that
- * implementors construct a new {@link Query} and use {@link
- * SimpleFeatureSource#getFeatures(Query)}.
+ * <p>This is only a reasonable implementation and is not optimal. It is recommended that implementors construct a new
+ * {@link Query} and use {@link SimpleFeatureSource#getFeatures(Query)}.
  *
  * @author Jody Garnett, Refractions Research, Inc.
  */
@@ -51,10 +50,7 @@ public class SubFeatureCollection extends BaseSimpleFeatureCollection {
     public SubFeatureCollection(SimpleFeatureCollection collection) {
         this(collection, Filter.INCLUDE);
     }
-    /**
-     * @param collection Collection or AbstractFeatureCollection
-     * @param subfilter
-     */
+    /** @param collection Collection or AbstractFeatureCollection */
     public SubFeatureCollection(SimpleFeatureCollection collection, Filter subfilter) {
         super(collection.getSchema());
 
@@ -62,8 +58,7 @@ public class SubFeatureCollection extends BaseSimpleFeatureCollection {
             subfilter = Filter.INCLUDE;
         }
         if (subfilter.equals(Filter.EXCLUDE)) {
-            throw new IllegalArgumentException(
-                    "A subcollection with Filter.EXCLUDE would be empty");
+            throw new IllegalArgumentException("A subcollection with Filter.EXCLUDE would be empty");
         }
         if (collection instanceof SubFeatureCollection) {
             SubFeatureCollection filtered = (SubFeatureCollection) collection;
@@ -80,20 +75,19 @@ public class SubFeatureCollection extends BaseSimpleFeatureCollection {
         }
     }
 
+    @Override
     public SimpleFeatureIterator features() {
         return new FilteringSimpleFeatureIterator(collection.features(), filter());
     }
 
+    @Override
     public int size() {
         int count = 0;
-        SimpleFeatureIterator i = features();
-        try {
+        try (SimpleFeatureIterator i = features()) {
             while (i.hasNext()) {
                 i.next();
                 count++;
             }
-        } finally {
-            i.close();
         }
         return count;
     }
@@ -114,6 +108,7 @@ public class SubFeatureCollection extends BaseSimpleFeatureCollection {
         return Filter.INCLUDE;
     }
 
+    @Override
     public SimpleFeatureCollection subCollection(Filter filter) {
         if (filter.equals(Filter.INCLUDE)) {
             return this;
@@ -124,10 +119,12 @@ public class SubFeatureCollection extends BaseSimpleFeatureCollection {
         return new SubFeatureCollection(this, filter);
     }
 
+    @Override
     public SimpleFeatureCollection sort(SortBy order) {
         return new SubFeatureList(collection, filter, order);
     }
 
+    @Override
     public String getID() {
         return collection.getID();
     }

@@ -16,7 +16,8 @@
  */
 package org.geotools.data.shapefile.fid;
 
-import static org.geotools.data.shapefile.files.ShpFileType.*;
+import static org.geotools.data.shapefile.files.ShpFileType.FIX;
+import static org.geotools.data.shapefile.files.ShpFileType.SHP;
 
 import java.io.IOException;
 import java.net.URL;
@@ -42,31 +43,15 @@ public class FidIndexer {
     public static void generate(ShpFiles shpFiles) throws IOException {
         LOGGER.fine("Generating fids for " + shpFiles.get(SHP));
 
-        IndexFile indexFile = null;
         StorageFile file = shpFiles.getStorageFile(FIX);
-        IndexedFidWriter writer = null;
 
-        try {
-            indexFile = new IndexFile(shpFiles, false);
-
-            // writer closes channel for you.
-            writer = new IndexedFidWriter(shpFiles, file);
-
+        try (IndexFile indexFile = new IndexFile(shpFiles, false);
+                IndexedFidWriter writer = new IndexedFidWriter(shpFiles, file)) {
             for (int i = 0, j = indexFile.getRecordCount(); i < j; i++) {
                 writer.next();
             }
-
         } finally {
-            try {
-                if (writer != null) {
-                    writer.close();
-                }
-                file.replaceOriginal();
-            } finally {
-                if (indexFile != null) {
-                    indexFile.close();
-                }
-            }
+            file.replaceOriginal();
         }
     }
 }

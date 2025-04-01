@@ -26,8 +26,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 
 /**
- * Represents the start of an XML document ... serves up elements wrapped in handlers for a
- * specified schema.
+ * Represents the start of an XML document ... serves up elements wrapped in handlers for a specified schema.
  *
  * @author dzwiers www.refractions.net
  */
@@ -49,21 +48,23 @@ public class DocumentHandler extends XMLElementHandler {
     }
 
     /** @see org.geotools.xml.XMLElementHandler#getElement() */
+    @Override
     public Element getElement() {
         return null;
     }
 
     /** @see org.geotools.xml.XMLElementHandler#endElement(java.lang.String, java.lang.String) */
-    public void endElement(URI namespaceURI, String localName, Map hints) {
+    @Override
+    public void endElement(URI namespaceURI, String localName, Map<String, Object> hints) {
         // do nothing
     }
 
     /** @see org.geotools.xml.XMLElementHandler#getHandler(java.lang.String, java.lang.String) */
-    public XMLElementHandler getHandler(URI namespaceURI, String localName, Map hints)
+    @Override
+    public XMLElementHandler getHandler(URI namespaceURI, String localName, Map<String, Object> hints)
             throws SAXException {
         if (xeh != null) {
-            throw new SAXNotRecognizedException(
-                    "XML Documents may only have one top-level element");
+            throw new SAXNotRecognizedException("XML Documents may only have one top-level element");
         }
         if (hints != null && hints.containsKey(DEFAULT_NAMESPACE_HINT_KEY)) {
             Object t = hints.get(DEFAULT_NAMESPACE_HINT_KEY);
@@ -76,19 +77,21 @@ public class DocumentHandler extends XMLElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XMLElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XMLElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
+    @Override
     public void startElement(URI namespaceURI, String localName, Attributes attr) {
         // do nothing
     }
 
     /** @see org.geotools.xml.XMLElementHandler#getValue() */
+    @Override
     public Object getValue() throws SAXException {
         return (xeh == null) ? null : xeh.getValue();
     }
 
     /** @see org.geotools.xml.XMLElementHandler#getName() */
+    @Override
     public String getName() {
         return "";
     }

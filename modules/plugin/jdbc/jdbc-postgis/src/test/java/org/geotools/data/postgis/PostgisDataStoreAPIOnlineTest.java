@@ -16,18 +16,32 @@
  */
 package org.geotools.data.postgis;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.sql.Connection;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.jdbc.JDBCDataStoreAPIOnlineTest;
 import org.geotools.jdbc.JDBCDataStoreAPITestSetup;
 import org.geotools.util.Version;
 import org.geotools.util.factory.Hints;
+import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 
 public class PostgisDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
+
+    public PostgisDataStoreAPIOnlineTest() {
+        this.forceLongitudeFirst = true;
+    }
 
     @Override
     protected JDBCDataStoreAPITestSetup createTestSetup() {
@@ -39,16 +53,14 @@ public class PostgisDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
         // postgis will lock indefinitely, won't throw an exception
     }
 
-    /**
-     * Test PostGIS specific collapsed simplified geometries (GEOT-4737)
-     *
-     * @throws Exception
-     */
+    /** Test PostGIS specific collapsed simplified geometries (GEOT-4737) */
+    @Test
     public void testSimplificationPreserveCollapsed() throws Exception {
-        Connection cx = dataStore.getDataSource().getConnection();
-        PostGISDialect dialect = ((PostGISDialect) dataStore.getSQLDialect());
-        Version version = dialect.getVersion(cx);
-        dataStore.closeSafe(cx);
+        Version version;
+        try (Connection cx = dataStore.getDataSource().getConnection()) {
+            PostGISDialect dialect = ((PostGISDialect) dataStore.getSQLDialect());
+            version = dialect.getVersion(cx);
+        }
 
         // Would use Assume.assumeTrue here, but this class extends TestCase
         // and thus is run as a JUnit 3 test, which reports false assumptions
@@ -62,14 +74,11 @@ public class PostgisDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
         if (fs.getSupportedHints().contains(Hints.GEOMETRY_SIMPLIFICATION) == false) return;
 
         SimpleFeatureCollection fColl = fs.getFeatures();
-        SimpleFeatureIterator iterator = fColl.features();
         Geometry original = null;
-        try {
+        try (SimpleFeatureIterator iterator = fColl.features()) {
             if (iterator.hasNext()) {
                 original = (Geometry) iterator.next().getDefaultGeometry();
             }
-        } finally {
-            iterator.close();
         }
         double width = original.getEnvelope().getEnvelopeInternal().getWidth();
 
@@ -79,15 +88,25 @@ public class PostgisDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
 
         Geometry simplified = null;
         fColl = fs.getFeatures(query);
-        iterator = fColl.features();
-        try {
+        try (SimpleFeatureIterator iterator = fColl.features()) {
             if (iterator.hasNext()) simplified = (Geometry) iterator.next().getDefaultGeometry();
-        } finally {
-            iterator.close();
         }
 
         // PostGIS 2.2+ should use ST_Simplify's preserveCollapsed flag
         assertNotNull("Simplified geometry is null", simplified);
         assertTrue(original.getNumPoints() >= simplified.getNumPoints());
+    }
+
+    @Test
+    public void testGetComments() throws Exception {
+        // PostgreSQL comment retrieval is always on, so this should work
+        ContentFeatureSource featureSource = dataStore.getFeatureSource(tname("lake"));
+        SimpleFeatureType simpleFeatureType = featureSource.getSchema();
+        AttributeDescriptor attributeDescriptor = simpleFeatureType.getDescriptor("name");
+        AttributeType attributeType = attributeDescriptor.getType();
+        assertEquals("This is a text column", attributeType.getDescription().toString());
+        AttributeDescriptor attributeDescriptor2 = simpleFeatureType.getDescriptor("geom");
+        AttributeType attributeType2 = attributeDescriptor2.getType();
+        assertNull(attributeType2.getDescription()); // no comment on GEOM
     }
 }

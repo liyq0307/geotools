@@ -16,21 +16,24 @@
  */
 package org.geotools.wfs;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.NoSuchElementException;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilderFactory;
 import net.opengis.wfs.WfsFactory;
 import org.eclipse.emf.ecore.EObject;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.test.XMLTestSupport;
-import org.opengis.filter.FilterFactory2;
+import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -40,7 +43,7 @@ import org.xml.sax.InputSource;
 public abstract class WFSTestSupport extends XMLTestSupport {
     protected WfsFactory factory = WfsFactory.eINSTANCE;
 
-    protected FilterFactory2 filterFac;
+    protected FilterFactory filterFac;
 
     private Class bindingTargetClass;
 
@@ -50,36 +53,39 @@ public abstract class WFSTestSupport extends XMLTestSupport {
 
     protected final Binding binding;
 
-    protected WFSTestSupport(
-            final QName qname,
-            final Class<? extends EObject> bindingClass,
-            final int executionMode) {
+    protected WFSTestSupport(final QName qname, final Class<? extends EObject> bindingClass, final int executionMode) {
         super();
         this.qname = qname;
         this.bindingTargetClass = bindingClass;
         this.executionMode = executionMode;
         binding = binding(qname);
-        filterFac = CommonFactoryFinder.getFilterFactory2(null);
+        filterFac = CommonFactoryFinder.getFilterFactory(null);
     }
 
+    @Override
     protected Configuration createConfiguration() {
         return new org.geotools.wfs.v1_1.WFSConfiguration();
     }
 
+    @Test
     public void testTarget() {
         assertEquals(qname, binding.getTarget());
     }
 
+    @Test
     public void testType() throws Exception {
         assertEquals(bindingTargetClass, binding.getType());
     }
 
+    @Test
     public void testExecutionMode() throws Exception {
         assertEquals(toExModeString(executionMode), executionMode, binding.getExecutionMode());
     }
 
+    @Test
     public abstract void testParse() throws Exception;
 
+    @Test
     public abstract void testEncode() throws Exception;
 
     private String toExModeString(final int executionMode) {
@@ -107,35 +113,27 @@ public abstract class WFSTestSupport extends XMLTestSupport {
     }
 
     /**
-     * Returns the value of the element named <code>propertyName</code> at index <code>index</code>,
-     * where the index starts at 0 (zero).
-     *
-     * @param dom
-     * @param propertyName
-     * @param index
-     * @return
+     * Returns the value of the element named <code>propertyName</code> at index <code>index</code>, where the index
+     * starts at 0 (zero).
      */
-    protected final String getElementValueByQName(
-            final Document dom, final QName propertyName, final int index) {
+    protected final String getElementValueByQName(final Document dom, final QName propertyName, final int index) {
         final NodeList elementsByQName = getElementsByQName(dom, propertyName);
 
         if (elementsByQName.getLength() == 0) {
-            throw new NoSuchElementException(
-                    "No element named "
-                            + propertyName
-                            + " in "
-                            + dom.getDocumentElement().getLocalName());
+            throw new NoSuchElementException("No element named "
+                    + propertyName
+                    + " in "
+                    + dom.getDocumentElement().getLocalName());
         }
 
         if (index > elementsByQName.getLength()) {
-            throw new NoSuchElementException(
-                    "Expected element named "
-                            + propertyName
-                            + " at index "
-                            + index
-                            + " but there are only "
-                            + elementsByQName.getLength()
-                            + " elements in the node list");
+            throw new NoSuchElementException("Expected element named "
+                    + propertyName
+                    + " at index "
+                    + index
+                    + " but there are only "
+                    + elementsByQName.getLength()
+                    + " elements in the node list");
         }
 
         final Node item = elementsByQName.item(index);
@@ -155,8 +153,8 @@ public abstract class WFSTestSupport extends XMLTestSupport {
     }
 
     /**
-     * Convenience method which parses the content of the xml resource pointed by the provided UEL
-     * into a dom and sets the built document which is to be parsed.
+     * Convenience method which parses the content of the xml resource pointed by the provided UEL into a dom and sets
+     * the built document which is to be parsed.
      *
      * @param xml An URL for the xml resource to build the document from
      */
@@ -164,9 +162,10 @@ public abstract class WFSTestSupport extends XMLTestSupport {
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
         docFactory.setNamespaceAware(true);
 
-        InputStream in = resource.openStream();
-        InputStreamReader reader = new InputStreamReader(in, Charset.forName("UTF-8"));
-        InputSource source = new InputSource(new BufferedReader(reader));
-        document = docFactory.newDocumentBuilder().parse(source);
+        try (InputStream in = resource.openStream();
+                InputStreamReader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+            InputSource source = new InputSource(new BufferedReader(reader));
+            document = docFactory.newDocumentBuilder().parse(source);
+        }
     }
 }

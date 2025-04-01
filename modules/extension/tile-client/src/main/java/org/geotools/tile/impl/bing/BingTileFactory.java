@@ -17,6 +17,7 @@
 package org.geotools.tile.impl.bing;
 
 import org.geotools.tile.Tile;
+import org.geotools.tile.TileIdentifier;
 import org.geotools.tile.TileService;
 import org.geotools.tile.impl.WebMercatorTileFactory;
 import org.geotools.tile.impl.ZoomLevel;
@@ -29,24 +30,24 @@ import org.geotools.tile.impl.ZoomLevel;
  */
 class BingTileFactory extends WebMercatorTileFactory {
 
-    public Tile findTileAtCoordinate(
-            double lon, double lat, ZoomLevel zoomLevel, TileService service) {
+    @Override
+    public Tile create(TileIdentifier identifier, TileService service) {
+        return new BingTile(identifier, service);
+    }
 
-        int[] tileXY = BingTileUtil.lonLatToPixelXY(lon, lat, zoomLevel.getZoomLevel());
+    @Override
+    public Tile findTileAtCoordinate(double lon, double lat, ZoomLevel zoomLevel, TileService service) {
 
-        int colX = (int) Math.floor(tileXY[0] / BingTile.DEFAULT_TILE_SIZE);
-        int rowY = (int) Math.floor(tileXY[1] / BingTile.DEFAULT_TILE_SIZE);
-
-        return new BingTile(colX, rowY, zoomLevel, service);
+        return create(service.identifyTileAtCoordinate(lon, lat, zoomLevel), service);
     }
 
     @Override
     public Tile findRightNeighbour(Tile tile, TileService service) {
-        return new BingTile(tile.getTileIdentifier().getRightNeighbour(), service);
+        return create(tile.getTileIdentifier().getRightNeighbour(), service);
     }
 
     @Override
     public Tile findLowerNeighbour(Tile tile, TileService service) {
-        return new BingTile(tile.getTileIdentifier().getLowerNeighbour(), service);
+        return create(tile.getTileIdentifier().getLowerNeighbour(), service);
     }
 }

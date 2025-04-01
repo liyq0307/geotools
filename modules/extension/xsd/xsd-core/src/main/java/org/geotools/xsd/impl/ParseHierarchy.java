@@ -19,8 +19,7 @@ package org.geotools.xsd.impl;
 /**
  * A utility class used to parse objects in a type hierarchy.
  *
- * @author Justin Deoliveira,Refractions Research Inc.,jdeolive@refractions.net TODO: kill this
- *     class
+ * @author Justin Deoliveira,Refractions Research Inc.,jdeolive@refractions.net TODO: kill this class
  */
 public class ParseHierarchy {
     //	XSDTypeDefinition bottom;
@@ -64,7 +63,7 @@ public class ParseHierarchy {
     //					// delegating to parent, because if we dont, any attributes
     //					// defined by the type will not be parsed because simple
     //					// types cannot have attributes.
-    //					//TODO: put this somewhere else, perahps in teh factories
+    //					//TODO: put this somewhere else, perahps in the factories
     //					// that create the strategy objects
     //					strategy = new XSAnyTypeStrategy();
     //				}

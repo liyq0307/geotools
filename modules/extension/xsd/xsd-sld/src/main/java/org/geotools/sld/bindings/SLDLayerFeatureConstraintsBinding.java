@@ -18,9 +18,9 @@ package org.geotools.sld.bindings;
 
 import java.util.List;
 import javax.xml.namespace.QName;
-import org.geotools.styling.FeatureTypeConstraint;
-import org.geotools.styling.LayerFeatureConstraints;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.LayerFeatureConstraints;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -59,6 +59,7 @@ public class SLDLayerFeatureConstraintsBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.LAYERFEATURECONSTRAINTS;
     }
@@ -70,6 +71,7 @@ public class SLDLayerFeatureConstraintsBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -81,6 +83,7 @@ public class SLDLayerFeatureConstraintsBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return LayerFeatureConstraints.class;
     }
@@ -92,6 +95,7 @@ public class SLDLayerFeatureConstraintsBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -101,10 +105,11 @@ public class SLDLayerFeatureConstraintsBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List ftc = node.getChildValues("FeatureTypeConstraint");
+        @SuppressWarnings("unchecked")
+        List<FeatureTypeConstraint> ftc = node.getChildValues("FeatureTypeConstraint");
 
-        return styleFactory.createLayerFeatureConstraints(
-                (FeatureTypeConstraint[]) ftc.toArray(new FeatureTypeConstraint[ftc.size()]));
+        return styleFactory.createLayerFeatureConstraints(ftc.toArray(new FeatureTypeConstraint[ftc.size()]));
     }
 }

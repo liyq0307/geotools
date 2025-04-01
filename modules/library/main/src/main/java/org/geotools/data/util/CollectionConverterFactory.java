@@ -20,7 +20,6 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -38,8 +37,8 @@ import org.geotools.util.factory.Hints;
  *   <li>Collection to Collection where collections are different types ( ex list to set )
  *   <li>Collection to Array
  *   <li>Array to Collection
- *   <li>Array to Array where the declared type of the target array is assignable from the declared
- *       type of the source array
+ *   <li>Array to Array where the declared type of the target array is assignable from the declared type of the source
+ *       array
  * </ul>
  *
  * @author Justin Deoliveira, The Open Planning Project
@@ -47,118 +46,125 @@ import org.geotools.util.factory.Hints;
 public class CollectionConverterFactory implements ConverterFactory {
 
     /** Converter for collection to collection */
-    protected static final Converter CollectionToCollection =
-            new Converter() {
+    protected static final Converter CollectionToCollection = new Converter() {
 
-                public Object convert(Object source, Class target) throws Exception {
-                    // if source is already an instance nevermind
-                    if (target.isInstance(source)) {
-                        return source;
-                    }
+        @Override
+        public <T> T convert(Object source, Class<T> target) throws Exception {
+            // if source is already an instance nevermind
+            if (target.isInstance(source)) {
+                return target.cast(source);
+            }
 
-                    // dynamically create and add
-                    Collection converted = newCollection(target);
-                    if (converted != null) {
-                        converted.addAll((Collection) source);
-                    }
+            // dynamically create and add
+            Collection<Object> converted = newCollection(target);
+            if (converted != null) {
+                @SuppressWarnings("unchecked")
+                Collection<Object> castSource = (Collection<Object>) source;
+                converted.addAll(castSource);
+            }
 
-                    return converted;
-                }
-            };
+            return target.cast(converted);
+        }
+    };
 
     /** Converter for collection to array. */
-    protected static final Converter CollectionToArray =
-            new Converter() {
+    protected static final Converter CollectionToArray = new Converter() {
 
-                public Object convert(Object source, Class target) throws Exception {
-                    Collection s = (Collection) source;
-                    Object array = Array.newInstance(target.getComponentType(), s.size());
+        @Override
+        public <T> T convert(Object source, Class<T> target) throws Exception {
+            Collection s = (Collection) source;
+            Object array = Array.newInstance(target.getComponentType(), s.size());
 
-                    try {
-                        int x = 0;
-                        for (Iterator i = s.iterator(); i.hasNext(); x++) {
-                            Array.set(array, x, i.next());
-                        }
-
-                        return array;
-                    } catch (Exception e) {
-                        // Means an incompatable type assignment
-
-                    }
-
-                    return null;
+            try {
+                int x = 0;
+                for (Object o : s) {
+                    Array.set(array, x++, o);
                 }
-            };
+
+                return target.cast(array);
+            } catch (Exception e) {
+                // Means an incompatable type assignment
+
+            }
+
+            return null;
+        }
+    };
 
     /** Converter for array to collection. */
-    protected static final Converter ArrayToCollection =
-            new Converter() {
+    protected static final Converter ArrayToCollection = new Converter() {
 
-                public Object convert(Object source, Class target) throws Exception {
-                    Collection collection = newCollection(target);
-                    if (collection != null) {
-                        int length = Array.getLength(source);
-                        for (int i = 0; i < length; i++) {
-                            collection.add(Array.get(source, i));
-                        }
-                    }
-
-                    return collection;
+        @Override
+        public <T> T convert(Object source, Class<T> target) throws Exception {
+            Collection<Object> collection = newCollection(target);
+            if (collection != null) {
+                int length = Array.getLength(source);
+                for (int i = 0; i < length; i++) {
+                    collection.add(Array.get(source, i));
                 }
-            };
+            }
+
+            return target.cast(collection);
+        }
+    };
 
     /** Converter for array to array. */
-    protected static final Converter ArrayToArray =
-            new Converter() {
+    protected static final Converter ArrayToArray = new Converter() {
 
-                public Object convert(Object source, Class target) throws Exception {
-                    // get the individual component types
-                    Class s = source.getClass().getComponentType();
-                    Class t = target.getComponentType();
+        @Override
+        public <T> T convert(Object source, Class<T> target) throws Exception {
+            // get the individual component types
+            Class<?> s = source.getClass().getComponentType();
+            Class<?> t = target.getComponentType();
 
-                    // make sure the source can be assiigned to the target
-                    if (t.isAssignableFrom(s)) {
-                        int length = Array.getLength(source);
-                        Object converted = Array.newInstance(t, length);
+            // make sure the source can be assiigned to the target
+            if (t.isAssignableFrom(s)) {
+                int length = Array.getLength(source);
+                Object converted = Array.newInstance(t, length);
 
-                        for (int i = 0; i < length; i++) {
-                            Array.set(converted, i, Array.get(source, i));
-                        }
-
-                        return converted;
-                    }
-
-                    return null;
+                for (int i = 0; i < length; i++) {
+                    Array.set(converted, i, Array.get(source, i));
                 }
-            };
 
-    protected static Collection newCollection(Class target) throws Exception {
+                @SuppressWarnings("unchecked")
+                T cast = (T) converted;
+                return cast;
+            }
+
+            return null;
+        }
+    };
+
+    protected static Collection<Object> newCollection(Class target) throws Exception {
         if (target.isInterface()) {
             // try the common ones
             if (List.class.isAssignableFrom(target)) {
-                return new ArrayList();
+                return new ArrayList<>();
             }
             if (SortedSet.class.isAssignableFrom(target)) {
-                return new TreeSet();
+                return new TreeSet<>();
             } else if (Set.class.isAssignableFrom(target)) {
-                return new HashSet();
+                return new HashSet<>();
             }
 
             // could not figure out
             return null;
         } else {
             // instantiate directly
-            return (Collection) target.getDeclaredConstructor().newInstance();
+            @SuppressWarnings("unchecked")
+            Collection<Object> result =
+                    (Collection) target.getDeclaredConstructor().newInstance();
+            return result;
         }
     }
 
-    public Converter createConverter(Class source, Class target, Hints hints) {
+    @Override
+    public Converter createConverter(Class<?> source, Class<?> target, Hints hints) {
         if ((Collection.class.isAssignableFrom(source) || source.isArray())
                 && (Collection.class.isAssignableFrom(target) || target.isArray())) {
 
             // both collections?
-            if (Collection.class.isAssignableFrom(source)
-                    && Collection.class.isAssignableFrom(target)) {
+            if (Collection.class.isAssignableFrom(source) && Collection.class.isAssignableFrom(target)) {
                 return CollectionToCollection;
             }
 

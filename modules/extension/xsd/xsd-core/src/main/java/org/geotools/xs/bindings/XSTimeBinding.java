@@ -20,6 +20,7 @@ import java.sql.Time;
 import java.util.Calendar;
 import java.util.TimeZone;
 import javax.xml.namespace.QName;
+import org.apache.commons.lang3.StringUtils;
 import org.geotools.xml.impl.DatatypeConverterImpl;
 import org.geotools.xs.XS;
 import org.geotools.xsd.InstanceComponent;
@@ -61,6 +62,7 @@ import org.geotools.xsd.SimpleBinding;
  */
 public class XSTimeBinding implements SimpleBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.TIME;
     }
@@ -72,6 +74,7 @@ public class XSTimeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -84,6 +87,7 @@ public class XSTimeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Time.class;
     }
@@ -96,7 +100,9 @@ public class XSTimeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Time parse(InstanceComponent instance, Object value) throws Exception {
+        if (StringUtils.isBlank((String) value)) return null;
         Calendar calTime = DatatypeConverterImpl.getInstance().parseTime((String) value);
         Time time = new Time(calTime.getTimeInMillis());
         return time;
@@ -109,6 +115,7 @@ public class XSTimeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public String encode(Object object, String value) {
         final Time time = (Time) object;
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));

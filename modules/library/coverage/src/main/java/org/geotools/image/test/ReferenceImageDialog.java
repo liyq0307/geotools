@@ -18,8 +18,6 @@ package org.geotools.image.test;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.image.RenderedImage;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -36,31 +34,21 @@ class ReferenceImageDialog extends JDialog {
         JPanel content = new JPanel(new BorderLayout());
         this.setContentPane(content);
         this.setTitle("ImageAssert");
-        final JLabel topLabel =
-                new JLabel(
-                        "<html><body>Reference image file is missing.<br>"
-                                + "This is the result, do you want to make it the referecence?</html></body>");
+        final JLabel topLabel = new JLabel("<html><body>Reference image file is missing.<br>"
+                + "This is the result, do you want to make it the referecence?</html></body>");
         content.add(topLabel, BorderLayout.NORTH);
         content.add(new javax.media.jai.widget.ScrollingImagePanel(image, 400, 400));
         JPanel commands = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton accept = new JButton("Accept as reference");
-        accept.addActionListener(
-                new ActionListener() {
-
-                    public void actionPerformed(ActionEvent e) {
-                        ReferenceImageDialog.this.accept = true;
-                        ReferenceImageDialog.this.setVisible(false);
-                    }
-                });
+        accept.addActionListener(e -> {
+            this.accept = true;
+            setVisible(false);
+        });
         JButton reject = new JButton("Reject output");
-        reject.addActionListener(
-                new ActionListener() {
-
-                    public void actionPerformed(ActionEvent e) {
-                        ReferenceImageDialog.this.accept = false;
-                        ReferenceImageDialog.this.setVisible(false);
-                    }
-                });
+        reject.addActionListener(e -> {
+            this.accept = false;
+            setVisible(false);
+        });
         commands.add(accept);
         commands.add(reject);
         content.add(commands, BorderLayout.SOUTH);

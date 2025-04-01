@@ -20,23 +20,23 @@ package org.geotools.filter.function.math;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_sqrt extends FunctionExpressionImpl {
 
     // public static FunctionName NAME = new FunctionNameImpl("sqrt", "number");
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "sqrt", parameter("root", Double.class), parameter("number", Number.class));
+            new FunctionNameImpl("sqrt", parameter("root", Double.class), parameter("number", Number.class));
 
     public FilterFunction_sqrt() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
 
         Object arg0 = getExpression(0).evaluate(feature);

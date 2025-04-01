@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
-  
+
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>extension</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
-  
+
   <groupId>org.geotools</groupId>
   <artifactId>gt-ysld</artifactId>
   <name>YSLD Parser/Encoder</name>
-  
+
   <developers>
     <developer>
-      <name>Kevin Smith</name>
       <id>smithkm</id>
+      <name>Kevin Smith</name>
       <organization>Boundless</organization>
       <roles>
         <role>Module Maintainer</role>
@@ -25,8 +24,8 @@
       </roles>
     </developer>
     <developer>
-      <name>Justin Deoliveira</name>
       <id>jdeolive</id>
+      <name>Justin Deoliveira</name>
       <roles>
         <role>Module Maintainer</role>
         <role>Java Developer</role>
@@ -34,13 +33,13 @@
     </developer>
   </developers>
 
+  <properties>
+    <!-- TODO: remove once EsyMock is updated, see https://github.com/easymock/easymock/issues/274 -->
+    <test.otherJVMParams>--add-opens=java.base/java.lang=ALL-UNNAMED</test.otherJVMParams>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>org.yaml</groupId>
-        <artifactId>snakeyaml</artifactId>
-        <version>1.23</version>
-      </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
@@ -54,6 +53,10 @@
       <groupId>org.geotools</groupId>
       <artifactId>gt-xml</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.measure</groupId>
+      <artifactId>unit-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
@@ -87,23 +90,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.easymock</groupId>
       <artifactId>easymock</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-library</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymockclassextension</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -119,10 +107,10 @@
         <version>2.4</version>
         <executions>
           <execution>
-            <phase>package</phase>
             <goals>
               <goal>test-jar</goal>
             </goals>
+            <phase>package</phase>
           </execution>
         </executions>
       </plugin>

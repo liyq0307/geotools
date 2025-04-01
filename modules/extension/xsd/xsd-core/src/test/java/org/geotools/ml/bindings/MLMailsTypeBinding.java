@@ -43,10 +43,12 @@ import org.geotools.xsd.Node;
  */
 public class MLMailsTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return ML.MAILSTYPE;
     }
 
+    @Override
     public Class getType() {
         return List.class;
     }
@@ -58,12 +60,13 @@ public class MLMailsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        ArrayList list = new ArrayList();
-        List children = node.getChildren();
+        ArrayList<Object> list = new ArrayList<>();
+        List<Node> children = node.getChildren();
 
-        for (int i = 0; i < children.size(); i++) {
-            list.add(((Node) children.get(i)).getValue());
+        for (Node child : children) {
+            list.add(child.getValue());
         }
 
         return list;

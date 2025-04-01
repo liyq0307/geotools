@@ -38,12 +38,12 @@ public abstract class GeometryPropertyTypeBindingBase extends AbstractComplexBin
 
     private GML3EncodingUtils encodingUtils;
 
-    public GeometryPropertyTypeBindingBase(
-            GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry) {
+    public GeometryPropertyTypeBindingBase(GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry) {
         this.idSet = idRegistry;
         this.encodingUtils = encodingUtils;
     }
 
+    @Override
     public Class getType() {
         return getGeometryType();
     }
@@ -59,32 +59,32 @@ public abstract class GeometryPropertyTypeBindingBase extends AbstractComplexBin
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return node.getChildValue(getGeometryType());
     }
 
-    /**
-     * @see AbstractComplexBinding#encode(java.lang.Object, org.w3c.dom.Document,
-     *     org.w3c.dom.Element)
-     */
+    /** @see AbstractComplexBinding#encode(java.lang.Object, org.w3c.dom.Document, org.w3c.dom.Element) */
     @Override
     public Element encode(Object object, Document document, Element value) throws Exception {
         checkExistingId((Geometry) object);
         return value;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
 
         return encodingUtils.GeometryPropertyType_GetProperty((Geometry) object, name, makeEmpty);
     }
 
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    @Override
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         return encodingUtils.GeometryPropertyType_GetProperties((Geometry) object);
     }
 
     /**
-     * Check if the geometry contains a feature which id is pre-existing in the document. If it's
-     * true, make the geometry empty and add xlink:href property
+     * Check if the geometry contains a feature which id is pre-existing in the document. If it's true, make the
+     * geometry empty and add xlink:href property
      *
      * @param geom The geometry to be checked
      */

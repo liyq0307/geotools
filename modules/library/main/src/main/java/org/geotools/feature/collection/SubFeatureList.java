@@ -24,26 +24,26 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.EmptyFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.util.SoftValueHashMap;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Id;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
 
 /**
  * Default implementation of {@link FeatureCollection#sort(SortBy)}.
  *
- * <p>This implementation is not suitable for working with large content as it makes use of memory
- * both when eastablishing an initial sort order, and subsequently to hold a list of FeatureId.
+ * <p>This implementation is not suitable for working with large content as it makes use of memory both when
+ * eastablishing an initial sort order, and subsequently to hold a list of FeatureId.
  */
 public class SubFeatureList extends SubFeatureCollection implements RandomFeatureAccess {
     /** Order by which content should be sorted */
@@ -60,18 +60,14 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
         this(list, Filter.INCLUDE, sort);
     }
 
-    /**
-     * Create a simple SubFeatureList with the provided filter.
-     *
-     * @param filter
-     */
+    /** Create a simple SubFeatureList with the provided filter. */
     public SubFeatureList(SimpleFeatureCollection list, Filter filter, SortBy subSort) {
         super(list, filter);
 
         if (subSort == null || subSort.equals(SortBy.NATURAL_ORDER)) {
             sort = Collections.emptyList();
         } else {
-            sort = new ArrayList<SortBy>();
+            sort = new ArrayList<>();
             if (collection instanceof SubFeatureList) {
                 SubFeatureList sorted = (SubFeatureList) collection;
                 sort.addAll(sorted.sort);
@@ -81,7 +77,7 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
         index = createIndex();
     }
 
-    public SubFeatureList(SimpleFeatureCollection list, List order) {
+    public SubFeatureList(SimpleFeatureCollection list, List<FeatureId> order) {
         super(list);
 
         index = order;
@@ -101,26 +97,23 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
             RandomFeatureAccess random = (RandomFeatureAccess) collection;
             return random.getFeatureMember(fid.getID());
         }
-        SimpleFeatureIterator it = collection.features();
-        try {
+        try (SimpleFeatureIterator it = collection.features()) {
             while (it.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) it.next();
+                SimpleFeature feature = it.next();
                 if (id.equals(feature.getID())) {
                     return feature;
                 }
             }
             throw new IndexOutOfBoundsException();
-        } finally {
-            it.close();
         }
     }
 
     /** Lazy create a filter based on index */
+    @Override
     protected Filter createFilter() {
         FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
-        Set<FeatureId> featureIds = new HashSet<FeatureId>();
-        for (Iterator<FeatureId> it = index.iterator(); it.hasNext(); ) {
-            FeatureId fid = it.next();
+        Set<FeatureId> featureIds = new HashSet<>();
+        for (FeatureId fid : index) {
             featureIds.add(ff.featureId(fid.getID()));
         }
         Id fids = ff.id(featureIds);
@@ -130,9 +123,8 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
 
     /** Put this SubFeatureList in touch with its inner index */
     protected List<FeatureId> createIndex() {
-        List<FeatureId> fids = new ArrayList<FeatureId>();
-        SimpleFeatureIterator it = collection.features();
-        try {
+        List<FeatureId> fids = new ArrayList<>();
+        try (SimpleFeatureIterator it = collection.features()) {
             while (it.hasNext()) {
                 SimpleFeature feature = it.next();
                 if (filter.evaluate(feature)) {
@@ -140,50 +132,46 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
                 }
             }
             if (sort != null && !sort.isEmpty()) {
-                final SortBy initialOrder = (SortBy) sort.get(sort.size() - 1);
+                final SortBy initialOrder = sort.get(sort.size() - 1);
                 final FeatureIdAccessor idAccessor = new FeatureIdAccessor(true);
-                Collections.sort(
-                        fids,
-                        new Comparator<FeatureId>() {
-                            public int compare(FeatureId key1, FeatureId key2) {
-                                SimpleFeature feature1 = idAccessor.getFeature(key1.getID());
-                                SimpleFeature feature2 = idAccessor.getFeature(key2.getID());
+                Collections.sort(fids, new Comparator<FeatureId>() {
+                    @Override
+                    public int compare(FeatureId key1, FeatureId key2) {
+                        SimpleFeature feature1 = idAccessor.getFeature(key1.getID());
+                        SimpleFeature feature2 = idAccessor.getFeature(key2.getID());
 
-                                int compare = compare(feature1, feature2, initialOrder);
-                                if (compare == 0 && sort.size() > 1) {
-                                    for (int i = sort.size() - 1; compare == 0 && i >= 0; i--) {
-                                        compare = compare(feature1, feature2, (SortBy) sort.get(i));
-                                    }
-                                }
-                                return compare;
+                        int compare = compare(feature1, feature2, initialOrder);
+                        if (compare == 0 && sort.size() > 1) {
+                            for (int i = sort.size() - 1; compare == 0 && i >= 0; i--) {
+                                compare = compare(feature1, feature2, sort.get(i));
                             }
+                        }
+                        return compare;
+                    }
 
-                            @SuppressWarnings("unchecked")
-                            protected int compare(
-                                    SimpleFeature feature1, SimpleFeature feature2, SortBy order) {
-                                PropertyName name = order.getPropertyName();
-                                Comparable value1 = (Comparable) name.evaluate(feature1);
-                                Comparable value2 = (Comparable) name.evaluate(feature2);
+                    @SuppressWarnings("unchecked")
+                    protected int compare(SimpleFeature feature1, SimpleFeature feature2, SortBy order) {
+                        PropertyName name = order.getPropertyName();
+                        Comparable value1 = (Comparable) name.evaluate(feature1);
+                        Comparable value2 = (Comparable) name.evaluate(feature2);
 
-                                if (value1 == value2) {
-                                    return 0;
-                                }
-                                if (order.getSortOrder() == SortOrder.ASCENDING) {
-                                    if (value1 == null) {
-                                        return -1;
-                                    }
-                                    return value1.compareTo(value2);
-                                } else {
-                                    if (value2 == null) {
-                                        return -1;
-                                    }
-                                    return value2.compareTo(value1);
-                                }
+                        if (value1 == value2) {
+                            return 0;
+                        }
+                        if (order.getSortOrder() == SortOrder.ASCENDING) {
+                            if (value1 == null) {
+                                return -1;
                             }
-                        });
+                            return value1.compareTo(value2);
+                        } else {
+                            if (value2 == null) {
+                                return -1;
+                            }
+                            return value2.compareTo(value1);
+                        }
+                    }
+                });
             }
-        } finally {
-            it.close();
         }
         return fids;
     }
@@ -202,8 +190,7 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
     /**
      * Sublist of this sublist!
      *
-     * <p>Implementation will ensure this does not get out of hand, order is maintained and only
-     * indexed once.
+     * <p>Implementation will ensure this does not get out of hand, order is maintained and only indexed once.
      */
     public SimpleFeatureCollection subList(Filter subfilter) {
         if (filter.equals(Filter.INCLUDE)) {
@@ -219,6 +206,7 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
     // RandomFeatureAccess
     //
 
+    @Override
     public SimpleFeature getFeatureMember(String id) throws NoSuchElementException {
         int position = index.indexOf(ff.featureId(id));
         if (position == -1) {
@@ -244,16 +232,19 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
         String id;
         FeatureIdAccessor idAccessor = new FeatureIdAccessor(true);
 
+        @Override
         public boolean hasNext() {
             return iterator != null && iterator.hasNext();
         }
 
+        @Override
         public SimpleFeature next() {
             FeatureId fid = iterator.next();
             id = fid.getID();
             return idAccessor.getFeature(id);
         }
 
+        @Override
         public void remove() {
             removeFeatureMember(id);
         }
@@ -266,7 +257,7 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
         public FeatureIdAccessor(boolean cacheFeatures) {
             this.cacheFeatures = cacheFeatures;
             if (cacheFeatures) {
-                featureCache = new SoftValueHashMap<String, SimpleFeature>();
+                featureCache = new SoftValueHashMap<>();
             }
         }
 
@@ -282,8 +273,7 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
                 }
 
                 // sigh, full scan needed
-                SimpleFeatureIterator it = collection.features();
-                try {
+                try (SimpleFeatureIterator it = collection.features()) {
                     while (it.hasNext()) {
                         SimpleFeature feature = it.next();
                         featureCache.put(id, feature);
@@ -291,23 +281,18 @@ public class SubFeatureList extends SubFeatureCollection implements RandomFeatur
                             return feature;
                         }
                     }
-                } finally {
-                    it.close();
                 }
 
                 throw new RuntimeException("Could not find feature with id " + id);
             } else {
                 // full scan...
-                SimpleFeatureIterator it = collection.features();
-                try {
+                try (SimpleFeatureIterator it = collection.features()) {
                     while (it.hasNext()) {
                         SimpleFeature feature = it.next();
                         if (id.equals(feature.getID())) {
                             return feature;
                         }
                     }
-                } finally {
-                    it.close();
                 }
 
                 throw new RuntimeException("Could not find feature with id " + id);

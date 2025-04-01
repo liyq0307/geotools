@@ -17,14 +17,14 @@
 package org.geotools.process.feature;
 
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 
 /**
  * Process which buffers an entire feature collection.
@@ -34,18 +34,13 @@ import org.opengis.feature.type.GeometryDescriptor;
  */
 public class BufferFeatureCollectionProcess extends FeatureToFeatureProcess {
 
-    /**
-     * Constructor
-     *
-     * @param factory
-     */
+    /** Constructor */
     public BufferFeatureCollectionProcess(BufferFeatureCollectionFactory factory) {
         super(factory);
     }
 
     @Override
-    protected void processFeature(SimpleFeature feature, Map<String, Object> input)
-            throws Exception {
+    protected void processFeature(SimpleFeature feature, Map<String, Object> input) throws Exception {
         Double buffer = (Double) input.get(BufferFeatureCollectionFactory.BUFFER.key);
 
         Geometry g = (Geometry) feature.getDefaultGeometry();
@@ -59,16 +54,12 @@ public class BufferFeatureCollectionProcess extends FeatureToFeatureProcess {
     }
 
     @Override
-    protected SimpleFeatureType getTargetSchema(
-            SimpleFeatureType sourceSchema, Map<String, Object> input) {
+    protected SimpleFeatureType getTargetSchema(SimpleFeatureType sourceSchema, Map<String, Object> input) {
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         for (AttributeDescriptor ad : sourceSchema.getAttributeDescriptors()) {
             GeometryDescriptor defaultGeometry = sourceSchema.getGeometryDescriptor();
             if (ad == defaultGeometry) {
-                tb.add(
-                        ad.getName().getLocalPart(),
-                        MultiPolygon.class,
-                        defaultGeometry.getCoordinateReferenceSystem());
+                tb.add(ad.getName().getLocalPart(), MultiPolygon.class, defaultGeometry.getCoordinateReferenceSystem());
             } else {
                 tb.add(ad);
             }

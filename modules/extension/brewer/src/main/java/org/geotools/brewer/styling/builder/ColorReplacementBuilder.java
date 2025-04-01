@@ -18,13 +18,13 @@ package org.geotools.brewer.styling.builder;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.styling.ColorReplacement;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ColorReplacement;
 
 public class ColorReplacementBuilder extends AbstractStyleBuilder<ColorReplacement> {
     private Expression propertyName;
 
-    private List<Expression> mapping = new ArrayList<Expression>();
+    private List<Expression> mapping = new ArrayList<>();
 
     public ColorReplacementBuilder() {
         this(null);
@@ -35,11 +35,12 @@ public class ColorReplacementBuilder extends AbstractStyleBuilder<ColorReplaceme
         reset();
     }
 
+    @Override
     public ColorReplacement build() {
         if (unset) {
             return null;
         }
-        Expression array[] = mapping.toArray(new Expression[mapping.size()]);
+        Expression[] array = mapping.toArray(new Expression[mapping.size()]);
         ColorReplacement replacement = sf.colorReplacement(propertyName, array);
         if (parent == null) {
             reset();
@@ -47,6 +48,7 @@ public class ColorReplacementBuilder extends AbstractStyleBuilder<ColorReplaceme
         return replacement;
     }
 
+    @Override
     public ColorReplacementBuilder reset() {
         propertyName = property("Raster");
         mapping.clear();
@@ -55,11 +57,7 @@ public class ColorReplacementBuilder extends AbstractStyleBuilder<ColorReplaceme
     }
 
     @Override
-    public ColorReplacementBuilder reset(ColorReplacement original) {
-        return reset((org.opengis.style.ColorReplacement) original);
-    }
-
-    public ColorReplacementBuilder reset(org.opengis.style.ColorReplacement replacement) {
+    public ColorReplacementBuilder reset(org.geotools.api.style.ColorReplacement replacement) {
         if (replacement == null) {
             return unset();
         }
@@ -68,8 +66,8 @@ public class ColorReplacementBuilder extends AbstractStyleBuilder<ColorReplaceme
                 && replacement.getRecoding().getParameters().size() > 0) {
             List<Expression> params = replacement.getRecoding().getParameters();
             propertyName = params.get(0);
-            for (int i = 0; i < params.size(); i++) {
-                mapping.add(params.get(i));
+            for (Expression param : params) {
+                mapping.add(param);
             }
         }
 
@@ -77,6 +75,7 @@ public class ColorReplacementBuilder extends AbstractStyleBuilder<ColorReplaceme
         return this;
     }
 
+    @Override
     public ColorReplacementBuilder unset() {
         return (ColorReplacementBuilder) super.unset();
     }

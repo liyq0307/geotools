@@ -43,17 +43,16 @@ import org.geotools.xml.impl.DatatypeConverterImpl;
  */
 public class XmlConverterFactory implements ConverterFactory {
 
+    @Override
     public Converter createConverter(Class source, Class target, Hints hints) {
         // make sure either source or target is String in order not to step over
         // TemporalConverterFactory
         if (String.class.equals(target)) {
-            if (java.util.Date.class.isAssignableFrom(source)
-                    || Calendar.class.isAssignableFrom(source)) {
+            if (java.util.Date.class.isAssignableFrom(source) || Calendar.class.isAssignableFrom(source)) {
                 return new XmlConverter();
             }
         } else if (String.class.equals(source)) {
-            if (java.util.Date.class.isAssignableFrom(target)
-                    || Calendar.class.isAssignableFrom(target)) {
+            if (java.util.Date.class.isAssignableFrom(target) || Calendar.class.isAssignableFrom(target)) {
                 return new XmlConverter();
             }
         }
@@ -61,11 +60,13 @@ public class XmlConverterFactory implements ConverterFactory {
     }
 
     static class XmlConverter implements Converter {
-        public Object convert(Object source, Class target) throws Exception {
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T convert(Object source, Class<T> target) throws Exception {
             if (String.class.equals(target)) {
-                return convertToString(source);
+                return (T) convertToString(source);
             }
-            return convertFromString((String) source, target);
+            return (T) convertFromString((String) source, target);
         }
 
         private Object convertFromString(final String source, final Class<?> target) {
@@ -76,8 +77,7 @@ public class XmlConverterFactory implements ConverterFactory {
             // JD: this is a bit of a hack but delegate to the
             // commons converter in case we are executing first.
             try {
-                Converter converter =
-                        new CommonsConverterFactory().createConverter(String.class, target, null);
+                Converter converter = new CommonsConverterFactory().createConverter(String.class, target, null);
 
                 if (converter != null) {
                     Object converted = null;

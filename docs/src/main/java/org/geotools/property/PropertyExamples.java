@@ -1,21 +1,14 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2019, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
-
 package org.geotools.property;
 
 import java.io.BufferedWriter;
@@ -25,13 +18,13 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 public class PropertyExamples {
 
@@ -77,10 +70,10 @@ public class PropertyExamples {
             e.printStackTrace();
         } finally {
             if (tmp != null) {
-                File list[] = tmp.listFiles();
+                File[] list = tmp.listFiles();
                 if (list != null) {
-                    for (int i = 0; i < list.length; i++) {
-                        list[i].delete();
+                    for (File file : list) {
+                        file.delete();
                     }
                 }
                 tmp.delete();
@@ -96,9 +89,8 @@ public class PropertyExamples {
         DataStore datastore = DataStoreFinder.getDataStore(params);
 
         Query query = new Query("example");
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader =
-                datastore.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        try {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                datastore.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
             int count = 0;
             while (reader.hasNext()) {
                 SimpleFeature feature = reader.next();
@@ -106,8 +98,6 @@ public class PropertyExamples {
                 count++;
             }
             System.out.println("read in " + count + " features");
-        } finally {
-            reader.close();
         }
         // example3 end
         System.out.println("\nexample3 end\n");

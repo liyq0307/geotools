@@ -18,12 +18,12 @@ package org.geotools.temporal.reference;
 
 import java.util.Collection;
 import java.util.Set;
+import org.geotools.api.metadata.extent.Extent;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.temporal.TemporalReferenceSystem;
+import org.geotools.api.util.GenericName;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.Utilities;
-import org.opengis.metadata.extent.Extent;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.temporal.TemporalReferenceSystem;
-import org.opengis.util.GenericName;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultTemporalReferenceSystem implements TemporalReferenceSystem {
@@ -36,41 +36,44 @@ public class DefaultTemporalReferenceSystem implements TemporalReferenceSystem {
     private InternationalString scope;
 
     /**
-     * Creates a new instance of TemporalReferenceSystem by passing a ReferenceIdentifier name and a
-     * domain of validity.
-     *
-     * @param name
-     * @param domainOfValidity
+     * Creates a new instance of TemporalReferenceSystem by passing a ReferenceIdentifier name and a domain of validity.
      */
     public DefaultTemporalReferenceSystem(ReferenceIdentifier name, Extent domainOfValidity) {
         this.name = name;
         this.domainOfValidity = domainOfValidity;
     }
 
+    @Override
     public ReferenceIdentifier getName() {
         return name;
     }
 
+    @Override
     public Extent getDomainOfValidity() {
         return domainOfValidity;
     }
 
+    @Override
     public InternationalString getScope() {
         return scope;
     }
 
+    @Override
     public Collection<GenericName> getAlias() {
         return null;
     }
 
+    @Override
     public Set<ReferenceIdentifier> getIdentifiers() {
         return null;
     }
 
+    @Override
     public InternationalString getRemarks() {
         return null;
     }
 
+    @Override
     public String toWKT() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Not supported yet.");
     }

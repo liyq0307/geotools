@@ -37,11 +37,11 @@ import org.locationtech.jts.io.InStream;
 import org.locationtech.jts.io.ParseException;
 
 /**
- * Reads <a href="https://github.com/TWKB/Specification/blob/master/twkb.md">Tiny Well-known
- * Binary</a> (TWKB)into a JTS geometry.
+ * Reads <a href="https://github.com/TWKB/Specification/blob/master/twkb.md">Tiny Well-known Binary</a> (TWKB)into a JTS
+ * geometry.
  *
- * <p>This class is designed to support reuse of a single instance to read multiple geometries. This
- * * class is not thread-safe; each thread should create its own instance.
+ * <p>This class is designed to support reuse of a single instance to read multiple geometries. This * class is not
+ * thread-safe; each thread should create its own instance.
  *
  * @author James Hughes
  * @author Andrea Aime
@@ -147,8 +147,7 @@ public class TWKBReader {
         }
     }
 
-    private MultiLineString readMultiLineString(TWKBMetadata metadata)
-            throws IOException, ParseException {
+    private MultiLineString readMultiLineString(TWKBMetadata metadata) throws IOException, ParseException {
         if (!metadata.isEmpty()) {
             int numGeom = dis.readUnsignedInt();
             LineString[] geoms = new LineString[numGeom];
@@ -161,8 +160,7 @@ public class TWKBReader {
         }
     }
 
-    private MultiPolygon readMultiPolygon(TWKBMetadata metadata)
-            throws IOException, ParseException {
+    private MultiPolygon readMultiPolygon(TWKBMetadata metadata) throws IOException, ParseException {
         if (!metadata.isEmpty()) {
             int numGeom = dis.readUnsignedInt();
             Polygon[] geoms = new Polygon[numGeom];
@@ -175,8 +173,7 @@ public class TWKBReader {
         }
     }
 
-    private GeometryCollection readGeometryCollection(TWKBMetadata metadata)
-            throws IOException, ParseException {
+    private GeometryCollection readGeometryCollection(TWKBMetadata metadata) throws IOException, ParseException {
         if (!metadata.isEmpty()) {
             int numGeom = dis.readUnsignedInt();
             Geometry[] geoms = new Geometry[numGeom];
@@ -198,8 +195,7 @@ public class TWKBReader {
         return factory.createLinearRing(pts);
     }
 
-    private CoordinateSequence readCoordinateSequenceRing(int size, TWKBMetadata metadata)
-            throws IOException {
+    private CoordinateSequence readCoordinateSequenceRing(int size, TWKBMetadata metadata) throws IOException {
         CoordinateSequence seq = readCoordinateSequence(size, metadata);
         return CoordinateSequences.ensureValidRing(csFactory, seq);
     }
@@ -220,18 +216,19 @@ public class TWKBReader {
         metadata.setHeader(header);
 
         int dims = 2;
+        // according to https://github.com/TWKB/Specification/blob/master/twkb.md it is Z then M
         if (metadata.hasExtendedDims()) {
             int dimensions = dis.readByte();
 
             if ((dimensions & 0x01) > 0) {
                 dims += 1;
-                metadata.setHasM(true);
-                metadata.setMprecision((dimensions & 0xE0) >> 5);
+                metadata.setHasZ(true);
+                metadata.setZprecision((dimensions & 0x1C) >> 2);
             }
             if ((dimensions & 0x02) > 0) {
                 dims += 1;
-                metadata.setHasZ(true);
-                metadata.setZprecision((dimensions & 0x1C) >> 2);
+                metadata.setHasM(true);
+                metadata.setMprecision((dimensions & 0xE0) >> 5);
             }
         }
         metadata.setDims(dims);
@@ -258,8 +255,7 @@ public class TWKBReader {
         return metadata;
     }
 
-    protected CoordinateSequence readCoordinateSequence(int numPts, TWKBMetadata metadata)
-            throws IOException {
+    protected CoordinateSequence readCoordinateSequence(int numPts, TWKBMetadata metadata) throws IOException {
         int dims = metadata.getDims();
 
         // Create CoordinateSequence and read geometry
@@ -281,7 +277,7 @@ public class TWKBReader {
     }
 
     protected double readNextDouble(double scale) throws IOException {
-        int value = dis.readSignedInt();
+        long value = dis.readSignedLong();
         return value / scale;
     }
 
@@ -359,8 +355,7 @@ public class TWKBReader {
                     if (hasZ && hasM) {
                         return scaleM;
                     } else {
-                        throw new IllegalArgumentException(
-                                "Mismatch with the number of dimensions.");
+                        throw new IllegalArgumentException("Mismatch with the number of dimensions.");
                     }
             }
 

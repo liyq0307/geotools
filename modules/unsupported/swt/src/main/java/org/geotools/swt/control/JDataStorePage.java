@@ -27,9 +27,9 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
-import org.geotools.data.DataAccessFactory.Param;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.DataAccessFactory.Param;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.Parameter;
 
 /**
  * Data store wizard page for the {@link JDataStoreWizard data store wizard}.
@@ -43,7 +43,7 @@ public class JDataStorePage extends WizardPage {
     protected DataStoreFactorySpi format;
 
     /** Map of user interface ParamFields displayed to the user */
-    private Map<Param, ParamField> fields = new HashMap<Param, ParamField>();
+    private Map<Param, ParamField> fields = new HashMap<>();
 
     /** Connection params for datastore */
     protected Map<String, Object> connectionParameters;
@@ -62,7 +62,7 @@ public class JDataStorePage extends WizardPage {
 
         this.format = format;
         if (params == null) {
-            params = new HashMap<String, Object>();
+            params = new HashMap<>();
             if (format != null) {
                 for (Param param : format.getParametersInfo()) {
                     params.put(param.key, (Serializable) param.sample);

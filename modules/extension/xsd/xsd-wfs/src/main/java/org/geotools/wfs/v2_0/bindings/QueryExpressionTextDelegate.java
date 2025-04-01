@@ -38,8 +38,7 @@ public class QueryExpressionTextDelegate extends CopyingHandler implements Parse
     }
 
     @Override
-    public void startElement(String uri, String localName, String qName, Attributes attributes)
-            throws SAXException {
+    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 
         if (QueryExpressionText.getLocalPart().equals(localName)) {
             // root element
@@ -50,7 +49,7 @@ public class QueryExpressionTextDelegate extends CopyingHandler implements Parse
                 result.setIsPrivate("true".equalsIgnoreCase(isPrivate) || "1".equals(isPrivate));
             }
 
-            result.setReturnFeatureTypes(new ArrayList<QName>());
+            result.setReturnFeatureTypes(new ArrayList<>());
             for (String returnType : attributes.getValue("returnFeatureTypes").split(" +")) {
                 QName typeName = null;
                 String[] split = returnType.split(":");
@@ -83,11 +82,11 @@ public class QueryExpressionTextDelegate extends CopyingHandler implements Parse
     }
 
     @Override
-    public boolean canHandle(
-            QName elementName, Attributes attributes, Handler handler, Handler parent) {
+    public boolean canHandle(QName elementName, Attributes attributes, Handler handler, Handler parent) {
         return canHandle(elementName);
     }
 
+    @Override
     public Object getParsedObject() {
         return result;
     }

@@ -29,8 +29,8 @@ import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
- * Helper class writing out GML elements and coordinates. Geared towards efficiency, write out
- * elements and ordinate lists with the minimim amount of garbage generation
+ * Helper class writing out GML elements and coordinates. Geared towards efficiency, write out elements and ordinate
+ * lists with the minimim amount of garbage generation
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -51,10 +51,7 @@ public class GMLWriter {
     /** We use a StringBuffer because the date formatters cannot take a StringBuilder */
     StringBuffer sb = new StringBuffer();
 
-    /**
-     * The StringBuffer above gets dumped into this char buffer in order to pass the chars to the
-     * handler
-     */
+    /** The StringBuffer above gets dumped into this char buffer in order to pass the chars to the handler */
     char[] buffer;
 
     /** Coordinates qualified name, with the right prefix */
@@ -140,57 +137,34 @@ public class GMLWriter {
         this.encodeMeasures = encodeMeasures;
     }
 
-    /**
-     * @param locator
-     * @see org.xml.sax.ContentHandler#setDocumentLocator(org.xml.sax.Locator)
-     */
+    /** @see org.xml.sax.ContentHandler#setDocumentLocator(org.xml.sax.Locator) */
     public void setDocumentLocator(Locator locator) {
         handler.setDocumentLocator(locator);
     }
 
-    /**
-     * @throws SAXException
-     * @see org.xml.sax.ContentHandler#startDocument()
-     */
+    /** @see org.xml.sax.ContentHandler#startDocument() */
     public void startDocument() throws SAXException {
         handler.startDocument();
     }
 
-    /**
-     * @throws SAXException
-     * @see org.xml.sax.ContentHandler#endDocument()
-     */
+    /** @see org.xml.sax.ContentHandler#endDocument() */
     public void endDocument() throws SAXException {
         handler.endDocument();
     }
 
-    /**
-     * @param prefix
-     * @param uri
-     * @throws SAXException
-     * @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String, java.lang.String)
-     */
+    /** @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String, java.lang.String) */
     public void startPrefixMapping(String prefix, String uri) throws SAXException {
         handler.startPrefixMapping(prefix, uri);
     }
 
-    /**
-     * @param prefix
-     * @throws SAXException
-     * @see org.xml.sax.ContentHandler#endPrefixMapping(java.lang.String)
-     */
+    /** @see org.xml.sax.ContentHandler#endPrefixMapping(java.lang.String) */
     public void endPrefixMapping(String prefix) throws SAXException {
         handler.endPrefixMapping(prefix);
     }
 
     /**
-     * @param uri
-     * @param localName
-     * @param qName
-     * @param atts
-     * @throws SAXException
-     * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String,
-     *     java.lang.String, org.xml.sax.Attributes)
+     * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String, java.lang.String,
+     *     org.xml.sax.Attributes)
      */
     public void startElement(QualifiedName qn, Attributes atts) throws SAXException {
         String qualifiedName = qn.getQualifiedName();
@@ -223,14 +197,7 @@ public class GMLWriter {
         return qName;
     }
 
-    /**
-     * @param uri
-     * @param localName
-     * @param qName
-     * @throws SAXException
-     * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String,
-     *     java.lang.String)
-     */
+    /** @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String) */
     public void endElement(QualifiedName qn) throws SAXException {
         String qualifiedName = qn.getQualifiedName();
         if (qualifiedName == null) {
@@ -243,13 +210,7 @@ public class GMLWriter {
         }
     }
 
-    /**
-     * @param ch
-     * @param start
-     * @param length
-     * @throws SAXException
-     * @see org.xml.sax.ContentHandler#characters(char[], int, int)
-     */
+    /** @see org.xml.sax.ContentHandler#characters(char[], int, int) */
     private void characters(char[] ch, int start, int length) throws SAXException {
         handler.characters(ch, start, length);
     }
@@ -273,12 +234,7 @@ public class GMLWriter {
         characters(buffer, 0, length);
     }
 
-    /**
-     * Writes a GML2 coordinates element
-     *
-     * @param cs
-     * @throws SAXException
-     */
+    /** Writes a GML2 coordinates element */
     public void coordinates(CoordinateSequence cs) throws SAXException {
         startElement(coordinates, null);
         coordinates(cs, ',', ' ', sb);
@@ -286,13 +242,7 @@ public class GMLWriter {
         endElement(coordinates);
     }
 
-    /**
-     * Writes a single x/y position, without wrapping it in any element
-     *
-     * @param x
-     * @param y
-     * @throws SAXException
-     */
+    /** Writes a single x/y position, without wrapping it in any element */
     public void position(double x, double y, double z) throws SAXException {
         position(x, y, z, sb);
         characters(sb);
@@ -316,8 +266,8 @@ public class GMLWriter {
     }
 
     /**
-     * Encodes the provided coordinates sequence, if encoding of measures is enabled this method
-     * will encode all the available ordinates.
+     * Encodes the provided coordinates sequence, if encoding of measures is enabled this method will encode all the
+     * available ordinates.
      *
      * @param coordinates the coordinates sequence
      */
@@ -346,24 +296,14 @@ public class GMLWriter {
         sb.setLength(sb.length() - 1);
     }
 
-    /**
-     * Writes a single ordinate, without wrapping it inside any element
-     *
-     * @param x
-     * @throws SAXException
-     */
+    /** Writes a single ordinate, without wrapping it inside any element */
     public void ordinate(double x) throws SAXException {
         sb.setLength(0);
         coordFormatter.format(x, sb);
         characters(sb);
     }
 
-    /**
-     * Write a GML3 posList
-     *
-     * @param coordinateSequence
-     * @throws SAXException
-     */
+    /** Write a GML3 posList */
     public void posList(CoordinateSequence coordinateSequence) throws SAXException {
         startElement(posList, null);
         positions(coordinateSequence);

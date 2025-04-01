@@ -25,17 +25,16 @@ import javax.xml.namespace.QName;
 import net.opengis.wfs.QueryType;
 import net.opengis.wfs.WfsFactory;
 import org.eclipse.emf.ecore.EObject;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.xs.bindings.XSQNameBinding;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.PropertyName;
 
 public class QueryTypeBinding extends org.geotools.wfs.bindings.QueryTypeBinding {
 
     FilterFactory filterFactory;
     NamespaceContext namespaceContext;
 
-    public QueryTypeBinding(
-            WfsFactory factory, FilterFactory filterFactory, NamespaceContext namespaceContext) {
+    public QueryTypeBinding(WfsFactory factory, FilterFactory filterFactory, NamespaceContext namespaceContext) {
         super(factory);
         this.filterFactory = filterFactory;
         this.namespaceContext = namespaceContext;
@@ -55,8 +54,10 @@ public class QueryTypeBinding extends org.geotools.wfs.bindings.QueryTypeBinding
             }
             return null;
         } else if ("PropertyName".equals(name.getLocalPart())) {
-            List l = new ArrayList();
-            for (String s : (List<String>) super.getProperty(object, name)) {
+            List<PropertyName> l = new ArrayList<>();
+            @SuppressWarnings("unchecked")
+            List<String> property = (List<String>) super.getProperty(object, name);
+            for (String s : property) {
                 l.add(filterFactory.property(s));
             }
             return l;
@@ -72,7 +73,7 @@ public class QueryTypeBinding extends org.geotools.wfs.bindings.QueryTypeBinding
             // in wfs 1.0 we are only allowed a singel type name
             QueryType query = (QueryType) eObject;
 
-            ArrayList list = new ArrayList();
+            List<Object> list = new ArrayList<>();
             list.add(value);
             query.setTypeName(list);
         } else if ("PropertyName".equals(property)) {

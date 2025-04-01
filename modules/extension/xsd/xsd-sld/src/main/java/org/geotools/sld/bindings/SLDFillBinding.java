@@ -16,18 +16,17 @@
  */
 package org.geotools.sld.bindings;
 
-import java.util.Iterator;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.sld.CssParameter;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -67,6 +66,7 @@ public class SLDFillBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.FILL;
     }
@@ -78,6 +78,7 @@ public class SLDFillBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -89,6 +90,7 @@ public class SLDFillBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Fill.class;
     }
@@ -100,6 +102,7 @@ public class SLDFillBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -109,19 +112,19 @@ public class SLDFillBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Expression color = null;
         Expression opacity = null;
-        Graphic graphicFill = null;
 
-        graphicFill = (Graphic) node.getChildValue("GraphicFill");
+        Graphic graphicFill = (Graphic) node.getChildValue("GraphicFill");
 
         // &quot;fill&quot; (color)
         // &quot;fill-opacity&quot;
         List params = node.getChildValues(CssParameter.class);
 
-        for (Iterator itr = params.iterator(); itr.hasNext(); ) {
-            CssParameter param = (CssParameter) itr.next();
+        for (Object o : params) {
+            CssParameter param = (CssParameter) o;
 
             if ("fill".equals(param.getName())) {
                 color = param.getExpression();

@@ -66,9 +66,10 @@ public class TopoSolidTypeImpl extends AbstractTopoPrimitiveTypeImpl implements 
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<DirectedFacePropertyType> getDirectedFace() {
         if (directedFace == null) {
-            directedFace = new EObjectContainmentEList<DirectedFacePropertyType>(DirectedFacePropertyType.class, this, Gml311Package.TOPO_SOLID_TYPE__DIRECTED_FACE);
+            directedFace = new EObjectContainmentEList<>(DirectedFacePropertyType.class, this, Gml311Package.TOPO_SOLID_TYPE__DIRECTED_FACE);
         }
         return directedFace;
     }

@@ -72,9 +72,10 @@ public class ListStoredQueriesResponseTypeImpl extends EObjectImpl implements Li
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<StoredQueryListItemType> getStoredQuery() {
     if (storedQuery == null) {
-      storedQuery = new EObjectContainmentEList<StoredQueryListItemType>(StoredQueryListItemType.class, this, Wfs20Package.LIST_STORED_QUERIES_RESPONSE_TYPE__STORED_QUERY);
+      storedQuery = new EObjectContainmentEList<>(StoredQueryListItemType.class, this, Wfs20Package.LIST_STORED_QUERIES_RESPONSE_TYPE__STORED_QUERY);
     }
     return storedQuery;
   }

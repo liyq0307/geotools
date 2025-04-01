@@ -18,12 +18,12 @@ package org.geotools.sld.bindings;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.styling.AbstractContrastMethodStrategy;
 import org.geotools.styling.HistogramContrastMethodStrategy;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.expression.Expression;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -44,6 +44,7 @@ import org.picocontainer.MutablePicoContainer;
  */
 public class SLDHistogramBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.HISTOGRAM;
     }
@@ -55,6 +56,7 @@ public class SLDHistogramBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -66,6 +68,7 @@ public class SLDHistogramBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return null;
     }
@@ -77,6 +80,7 @@ public class SLDHistogramBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -86,6 +90,7 @@ public class SLDHistogramBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         AbstractContrastMethodStrategy ret = new HistogramContrastMethodStrategy();
         if (node.getChildValue("Algorithm") != null) {

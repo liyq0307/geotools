@@ -72,9 +72,10 @@ public class DescribeStoredQueriesResponseTypeImpl extends EObjectImpl implement
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<StoredQueryDescriptionType> getStoredQueryDescription() {
     if (storedQueryDescription == null) {
-      storedQueryDescription = new EObjectContainmentEList<StoredQueryDescriptionType>(StoredQueryDescriptionType.class, this, Wfs20Package.DESCRIBE_STORED_QUERIES_RESPONSE_TYPE__STORED_QUERY_DESCRIPTION);
+      storedQueryDescription = new EObjectContainmentEList<>(StoredQueryDescriptionType.class, this, Wfs20Package.DESCRIBE_STORED_QUERIES_RESPONSE_TYPE__STORED_QUERY_DESCRIPTION);
     }
     return storedQueryDescription;
   }

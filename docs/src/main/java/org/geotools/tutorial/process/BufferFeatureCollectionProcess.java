@@ -1,31 +1,26 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2008, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.tutorial.process;
 
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.process.feature.FeatureToFeatureProcess;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 
 /**
  * Process which buffers an entire feature collection.
@@ -35,18 +30,13 @@ import org.opengis.feature.type.GeometryDescriptor;
  */
 public class BufferFeatureCollectionProcess extends FeatureToFeatureProcess {
 
-    /**
-     * Constructor
-     *
-     * @param factory
-     */
+    /** Constructor */
     public BufferFeatureCollectionProcess(BufferFeatureCollectionFactory factory) {
         super(factory);
     }
 
     @Override
-    protected void processFeature(SimpleFeature feature, Map<String, Object> input)
-            throws Exception {
+    protected void processFeature(SimpleFeature feature, Map<String, Object> input) throws Exception {
         Double buffer = (Double) input.get(BufferFeatureCollectionFactory.BUFFER.key);
 
         Geometry g = (Geometry) feature.getDefaultGeometry();
@@ -60,16 +50,12 @@ public class BufferFeatureCollectionProcess extends FeatureToFeatureProcess {
     }
 
     @Override
-    protected SimpleFeatureType getTargetSchema(
-            SimpleFeatureType sourceSchema, Map<String, Object> input) {
+    protected SimpleFeatureType getTargetSchema(SimpleFeatureType sourceSchema, Map<String, Object> input) {
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         for (AttributeDescriptor ad : sourceSchema.getAttributeDescriptors()) {
             GeometryDescriptor defaultGeometry = sourceSchema.getGeometryDescriptor();
             if (ad == defaultGeometry) {
-                tb.add(
-                        ad.getName().getLocalPart(),
-                        MultiPolygon.class,
-                        defaultGeometry.getCoordinateReferenceSystem());
+                tb.add(ad.getName().getLocalPart(), MultiPolygon.class, defaultGeometry.getCoordinateReferenceSystem());
             } else {
                 tb.add(ad);
             }

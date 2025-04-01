@@ -16,10 +16,12 @@
  */
 package org.geotools.styling;
 
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.SimpleInternationalString;
-import org.opengis.util.InternationalString;
 
-public class DescriptionImpl implements Description {
+public class DescriptionImpl implements org.geotools.api.style.Description {
     private InternationalString title;
 
     private InternationalString description;
@@ -38,43 +40,47 @@ public class DescriptionImpl implements Description {
         this.description = description;
     }
 
-    /**
-     * Copy constructor.
-     *
-     * @param description
-     */
-    public DescriptionImpl(org.opengis.style.Description description) {
+    /** Copy constructor. */
+    public DescriptionImpl(org.geotools.api.style.Description description) {
         this(description.getTitle(), description.getAbstract());
     }
 
+    @Override
     public InternationalString getTitle() {
         return title;
     }
 
+    @Override
     public void setTitle(InternationalString title) {
         this.title = title;
     }
 
+    @Override
     public void setTitle(String title) {
         this.title = title != null ? new SimpleInternationalString(title) : null;
     }
 
+    @Override
     public InternationalString getAbstract() {
         return description;
     }
 
+    @Override
     public void setAbstract(InternationalString description) {
         this.description = description;
     }
 
+    @Override
     public void setAbstract(String description) {
         this.description = description != null ? new SimpleInternationalString(description) : null;
     }
 
-    public Object accept(org.opengis.style.StyleVisitor visitor, Object extraData) {
+    @Override
+    public Object accept(TraversingStyleVisitor visitor, Object extraData) {
         return null;
     }
 
+    @Override
     public void accept(StyleVisitor visitor) {
         // nothing to do
     }
@@ -106,10 +112,9 @@ public class DescriptionImpl implements Description {
     /**
      * Check the provided description return it as a DescriptionImpl
      *
-     * @param description
      * @return DescriptionImpl from the provided description
      */
-    static DescriptionImpl cast(org.opengis.style.Description description) {
+    static DescriptionImpl cast(org.geotools.api.style.Description description) {
         if (description == null) {
             return null;
         } else if (description instanceof DescriptionImpl) {

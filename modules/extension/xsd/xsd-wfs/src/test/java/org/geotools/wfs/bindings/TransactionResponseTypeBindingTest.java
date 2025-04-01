@@ -16,6 +16,11 @@
  */
 package org.geotools.wfs.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.math.BigInteger;
 import java.net.URL;
 import javax.xml.namespace.QName;
@@ -30,17 +35,11 @@ import org.geotools.test.TestData;
 import org.geotools.wfs.WFSTestSupport;
 import org.geotools.wfs.v1_1.WFS;
 import org.geotools.xsd.Binding;
+import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-/**
- * Unit test suite for {@link TransactionResponseTypeBinding}
- *
- * @author Gabriel Roldan (TOPP)
- * @version $Id$
- * @since 2.5.x
- */
 public class TransactionResponseTypeBindingTest extends WFSTestSupport {
 
     public TransactionResponseTypeBindingTest() {
@@ -49,6 +48,7 @@ public class TransactionResponseTypeBindingTest extends WFSTestSupport {
 
     @SuppressWarnings("unchecked")
     @Override
+    @Test
     public void testEncode() throws Exception {
         final TransactionResponseType tr = factory.createTransactionResponseType();
         {
@@ -113,8 +113,7 @@ public class TransactionResponseTypeBindingTest extends WFSTestSupport {
         Element totalDeleted = getElementByQName(summary, new QName(WFS.NAMESPACE, "totalDeleted"));
         assertEquals("2", totalDeleted.getFirstChild().getNodeValue());
 
-        Element totalInserted =
-                getElementByQName(summary, new QName(WFS.NAMESPACE, "totalInserted"));
+        Element totalInserted = getElementByQName(summary, new QName(WFS.NAMESPACE, "totalInserted"));
         assertEquals("3", totalInserted.getFirstChild().getNodeValue());
 
         Element totalUpdated = getElementByQName(summary, new QName(WFS.NAMESPACE, "totalUpdated"));
@@ -122,6 +121,7 @@ public class TransactionResponseTypeBindingTest extends WFSTestSupport {
     }
 
     @Override
+    @Test
     public void testParse() throws Exception {
         final URL resource = TestData.getResource(this, "TransactionResponseTypeBindingTest.xml");
         buildDocument(resource);
@@ -164,11 +164,13 @@ public class TransactionResponseTypeBindingTest extends WFSTestSupport {
         {
             InsertResultsType insertResults = tr.getInsertResults();
             assertEquals(2, insertResults.getFeature().size());
-            InsertedFeatureType feature1 = (InsertedFeatureType) insertResults.getFeature().get(0);
+            InsertedFeatureType feature1 =
+                    (InsertedFeatureType) insertResults.getFeature().get(0);
             assertEquals("handle1", feature1.getHandle());
             assertEquals(2, feature1.getFeatureId().size());
 
-            InsertedFeatureType feature2 = (InsertedFeatureType) insertResults.getFeature().get(1);
+            InsertedFeatureType feature2 =
+                    (InsertedFeatureType) insertResults.getFeature().get(1);
             assertEquals("handle2", feature2.getHandle());
             assertEquals(1, feature2.getFeatureId().size());
         }

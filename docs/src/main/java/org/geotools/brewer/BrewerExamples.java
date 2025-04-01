@@ -1,27 +1,25 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2019, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
-
 package org.geotools.brewer;
 
 import java.awt.Color;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.FeatureTypeStyle;
 import org.geotools.brewer.color.ColorBrewer;
 import org.geotools.brewer.color.StyleGenerator;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -29,12 +27,7 @@ import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.function.Classifier;
 import org.geotools.filter.function.ExplicitClassifier;
 import org.geotools.filter.function.RangedClassifier;
-import org.geotools.styling.FeatureTypeStyle;
 import org.geotools.util.SuppressFBWarnings;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.PropertyName;
 
 @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
 public class BrewerExamples {
@@ -43,7 +36,7 @@ public class BrewerExamples {
         SimpleFeatureCollection collection = null;
         SimpleFeature feature = null;
         // classiferExample start
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         Function classify = ff.function("Quantile", ff.property("name"), ff.literal(2));
 
         Classifier groups = (Classifier) classify.evaluate(collection);
@@ -66,7 +59,7 @@ public class BrewerExamples {
         SimpleFeatureCollection collection = null;
         SimpleFeature feature = null;
         // classiferQuantile start
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         Function classify = ff.function("Quantile", ff.property("zone"), ff.literal(2));
 
         // Zones assigned by a municipal board do not have an intrinsic numerical
@@ -80,7 +73,7 @@ public class BrewerExamples {
         SimpleFeatureCollection collection = null;
         SimpleFeature feature = null;
         // classiferEqualInterval start
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         Function classify = ff.function("EqualInterval", ff.property("height"), ff.literal(5));
 
         // this will create a nice smooth series of intervals suitable for presentation
@@ -96,19 +89,13 @@ public class BrewerExamples {
         // explicitClassifierExample start
         Set[] zones = new Set[3];
         // urban commercial or residencial
-        zones[0] =
-                new HashSet(
-                        Arrays.asList(
-                                new String[] {
-                                    "Zone 1", "Zone 2",
-                                }));
+        zones[0] = new HashSet(Arrays.asList(new String[] {
+            "Zone 1", "Zone 2",
+        }));
         // municipal or crown parkland
-        zones[1] =
-                new HashSet(
-                        Arrays.asList(
-                                new String[] {
-                                    "Zone 4", "Crown 2",
-                                }));
+        zones[1] = new HashSet(Arrays.asList(new String[] {
+            "Zone 4", "Crown 2",
+        }));
         // industrial
         zones[2] = new HashSet(Arrays.asList(new String[] {"Zone 3"}));
 
@@ -121,8 +108,8 @@ public class BrewerExamples {
 
     public void rangedClassifierExample() {
         // rangedClassifierExample start
-        Comparable min[] = new Comparable[25];
-        Comparable max[] = new Comparable[25];
+        Comparable[] min = new Comparable[25];
+        Comparable[] max = new Comparable[25];
         for (int i = 0; i < 25; i++) {
             min[i] = (char) ('A' + i);
             max[i] = (char) ('B' + i);
@@ -137,7 +124,7 @@ public class BrewerExamples {
         ColorBrewer brewer = ColorBrewer.instance();
 
         // STEP 1 - call a classifier function to summarise your content
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         PropertyName propteryExpression = ff.property("height");
 
         // classify into five categories
@@ -150,16 +137,15 @@ public class BrewerExamples {
 
         // STEP 3 - ask StyleGenerator to make a set of rules for the Classifier
         // assigning features the correct color based on height
-        FeatureTypeStyle style =
-                StyleGenerator.createFeatureTypeStyle(
-                        groups,
-                        propteryExpression,
-                        colors,
-                        "Generated FeatureTypeStyle for GreeBlue",
-                        featureCollection.getSchema().getGeometryDescriptor(),
-                        StyleGenerator.ELSEMODE_IGNORE,
-                        0.95,
-                        null);
+        FeatureTypeStyle style = StyleGenerator.createFeatureTypeStyle(
+                groups,
+                propteryExpression,
+                colors,
+                "Generated FeatureTypeStyle for GreeBlue",
+                featureCollection.getSchema().getGeometryDescriptor(),
+                StyleGenerator.ELSEMODE_IGNORE,
+                0.95,
+                null);
         // colorBrewerExample end
     }
 }

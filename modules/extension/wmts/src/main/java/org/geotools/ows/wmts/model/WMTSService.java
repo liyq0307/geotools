@@ -14,13 +14,21 @@
  */
 package org.geotools.ows.wmts.model;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.opengis.ows11.LanguageStringType;
 import net.opengis.ows11.ServiceIdentificationType;
+import net.opengis.ows11.ServiceProviderType;
 import net.opengis.ows11.impl.KeywordsTypeImpl;
 import net.opengis.ows11.impl.LanguageStringTypeImpl;
 import org.geotools.data.ows.Service;
+import org.geotools.metadata.iso.citation.ResponsiblePartyImpl;
+import org.geotools.util.SimpleInternationalString;
+import org.geotools.util.logging.Logging;
 
 /**
  * @author ian
@@ -28,12 +36,49 @@ import org.geotools.data.ows.Service;
  */
 public class WMTSService extends Service {
 
+    static final Logger LOGGER = Logging.getLogger(WMTSService.class);
+
+    public WMTSService(ServiceIdentificationType serviceType, ServiceProviderType serviceProvider) {
+
+        this(serviceType);
+
+        // According to the spec, the serviceProvider section may not exist so guard against it
+        if (serviceProvider == null) {
+            return;
+        }
+
+        ResponsiblePartyImpl contactInfo = new ResponsiblePartyImpl(serviceProvider.getServiceContact());
+
+        if (serviceProvider.getProviderName() != null) {
+            contactInfo.setOrganisationName(new SimpleInternationalString(serviceProvider.getProviderName()));
+        }
+
+        setContactInformation(contactInfo);
+
+        if (serviceProvider.getProviderSite() != null) {
+            try {
+                URL providerSite = new URL(serviceProvider.getProviderSite().getHref());
+                setOnlineResource(providerSite);
+            } catch (MalformedURLException e) {
+                LOGGER.log(Level.SEVERE, "", e);
+            }
+        }
+    }
+
     public WMTSService(ServiceIdentificationType serviceType) {
 
-        String title =
-                serviceType.getTitle().isEmpty()
-                        ? "N/A"
-                        : ((LanguageStringType) serviceType.getTitle().get(0)).getValue();
+        // Initialise the important items for the service
+        setName("");
+        setTitle("");
+
+        // According to the spec, the ServiceIdentifier section may not exist so guard against it
+        if (serviceType == null) {
+            return;
+        }
+
+        String title = serviceType.getTitle().isEmpty()
+                ? "N/A"
+                : ((LanguageStringType) serviceType.getTitle().get(0)).getValue();
         setTitle(title);
         setName(serviceType.getServiceType().getValue());
 

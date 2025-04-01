@@ -32,8 +32,8 @@ import org.w3c.dom.Element;
 /**
  * Manual binding for 'wps:Languages' in wpsGetCapabilibies_response.xsd'.
  *
- * <p>This binding is implemented because it is an anonymous complex type which contains another
- * anonymous complex type. On top of all that its name conflicts with another type in the schema.
+ * <p>This binding is implemented because it is an anonymous complex type which contains another anonymous complex type.
+ * On top of all that its name conflicts with another type in the schema.
  *
  * <pre>
  * &lt;element name="Languages">
@@ -74,14 +74,17 @@ public class LanguagesBinding extends AbstractComplexBinding {
         this.factory = factory;
     }
 
+    @Override
     public QName getTarget() {
         return WPS._Languages;
     }
 
+    @Override
     public Class getType() {
         return LanguagesType1.class;
     }
 
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         LanguagesType1 langs = factory.createLanguagesType1();
 

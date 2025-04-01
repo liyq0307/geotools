@@ -11,8 +11,8 @@ import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 
 import org.eclipse.emf.ecore.util.FeatureMap;
-import org.opengis.filter.capability.ComparisonOperators;
-import org.opengis.filter.capability.Operator;
+import org.geotools.api.filter.capability.ComparisonOperators;
+import org.geotools.api.filter.capability.Operator;
 
 /**
  * <!-- begin-user-doc -->
@@ -64,6 +64,7 @@ public interface ComparisonOperatorsType extends EObject, ComparisonOperators {
      *        extendedMetaData="kind='element' name='ComparisonOperator' namespace='##targetNamespace' group='#group:0'"
      * @generated
      */
+    @Override
     EList<Operator> getOperators();
 
 } // ComparisonOperatorsType

@@ -68,9 +68,10 @@ public class CoverageDescriptionsTypeImpl extends EObjectImpl implements Coverag
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public EList<CoverageDescriptionType> getCoverageDescription() {
 		if (coverageDescription == null) {
-			coverageDescription = new EObjectContainmentEList<CoverageDescriptionType>(CoverageDescriptionType.class, this, Wcs20Package.COVERAGE_DESCRIPTIONS_TYPE__COVERAGE_DESCRIPTION);
+			coverageDescription = new EObjectContainmentEList<>(CoverageDescriptionType.class, this, Wcs20Package.COVERAGE_DESCRIPTIONS_TYPE__COVERAGE_DESCRIPTION);
 		}
 		return coverageDescription;
 	}

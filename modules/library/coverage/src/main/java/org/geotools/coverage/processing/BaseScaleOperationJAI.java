@@ -26,7 +26,11 @@ import javax.media.jai.ImageLayout;
 import javax.media.jai.JAI;
 import javax.media.jai.OperationDescriptor;
 import javax.media.jai.PlanarImage;
-import org.geotools.coverage.GridSampleDimension;
+import org.geotools.api.coverage.processing.OperationNotFoundException;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -34,20 +38,13 @@ import org.geotools.coverage.util.CoverageUtilities;
 import org.geotools.image.util.ImageUtilities;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.geotools.referencing.operation.transform.ConcatenatedTransform;
-import org.opengis.coverage.processing.OperationNotFoundException;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 /**
- * Base class for providing capabilities to scale {@link GridCoverage2D} objects using JAI scale
- * operations.
+ * Base class for providing capabilities to scale {@link GridCoverage2D} objects using JAI scale operations.
  *
- * <p>This class tries to handles all the problems related to scaling index-color images in order to
- * avoid strange results in the smoothest possible way by performing color expansions under the hood
- * as needed. It may also apply some optimizations in case we were dealing with non-geo view of
- * coverage.
+ * <p>This class tries to handles all the problems related to scaling index-color images in order to avoid strange
+ * results in the smoothest possible way by performing color expansions under the hood as needed. It may also apply some
+ * optimizations in case we were dealing with non-geo view of coverage.
  *
  * @author Simone Giannecchini, GeoSolutions.
  * @since 2.5
@@ -67,7 +64,6 @@ public abstract class BaseScaleOperationJAI extends OperationJAI {
      * Constructor for {@link BaseScaleOperationJAI}.
      *
      * @param operation name of the {@link JAI} operation we wrap.
-     * @throws OperationNotFoundException
      */
     public BaseScaleOperationJAI(String operation) throws OperationNotFoundException {
         super(operation);
@@ -86,10 +82,8 @@ public abstract class BaseScaleOperationJAI extends OperationJAI {
      * Constructor for {@link BaseScaleOperationJAI}.
      *
      * @param operation {@link OperationDescriptor} of the {@link JAI} operation we wrap.
-     * @param descriptor
      */
-    public BaseScaleOperationJAI(
-            OperationDescriptor operation, ParameterDescriptorGroup descriptor) {
+    public BaseScaleOperationJAI(OperationDescriptor operation, ParameterDescriptorGroup descriptor) {
         super(operation, descriptor);
     }
 
@@ -107,11 +101,10 @@ public abstract class BaseScaleOperationJAI extends OperationJAI {
             indexOfBorderExtenderParam = -1;
         }
 
-        final BorderExtender borderExtender =
-                (BorderExtender)
-                        (indexOfBorderExtenderParam != -1
-                                ? parameters.parameters.getObjectParameter("BorderExtender")
-                                : ImageUtilities.DEFAULT_BORDER_EXTENDER);
+        final BorderExtender borderExtender = (BorderExtender)
+                (indexOfBorderExtenderParam != -1
+                        ? parameters.parameters.getObjectParameter("BorderExtender")
+                        : ImageUtilities.DEFAULT_BORDER_EXTENDER);
 
         // /////////////////////////////////////////////////////////////////////
         //
@@ -136,9 +129,7 @@ public abstract class BaseScaleOperationJAI extends OperationJAI {
         // honored.
         // /////////////////////////////////////////////////////////////////////
         RenderingHints targetHints =
-                parameters.hints != null
-                        ? parameters.hints
-                        : ImageUtilities.getRenderingHints(sourceImage);
+                parameters.hints != null ? parameters.hints : ImageUtilities.getRenderingHints(sourceImage);
         if (targetHints == null) targetHints = new RenderingHints(null);
         if (parameters.hints != null) targetHints.add(parameters.hints);
         ImageLayout layout = (ImageLayout) targetHints.get(JAI.KEY_IMAGE_LAYOUT);
@@ -173,10 +164,8 @@ public abstract class BaseScaleOperationJAI extends OperationJAI {
         // If we explicitly provide an ImageLayout built with the source image
         // where the CM and the SM are valid. those will be employed overriding
         // a the possibility to expand the color model.
-        final boolean asPhotographicStrategy =
-                sourceImage.getColorModel() instanceof IndexColorModel;
-        if (!(asPhotographicStrategy))
-            targetHints.add(ImageUtilities.DONT_REPLACE_INDEX_COLOR_MODEL);
+        final boolean asPhotographicStrategy = sourceImage.getColorModel() instanceof IndexColorModel;
+        if (!(asPhotographicStrategy)) targetHints.add(ImageUtilities.DONT_REPLACE_INDEX_COLOR_MODEL);
         else {
             targetHints.add(ImageUtilities.REPLACE_INDEX_COLOR_MODEL);
             layout.unsetValid(ImageLayout.COLOR_MODEL_MASK);
@@ -216,9 +205,8 @@ public abstract class BaseScaleOperationJAI extends OperationJAI {
             scaleTranslate.invert();
             scaleTranslate.preConcatenate(CoverageUtilities.CENTER_TO_CORNER);
             final AffineTransform2D tr = new AffineTransform2D(scaleTranslate);
-            finalTransform =
-                    ConcatenatedTransform.create(
-                            tr, sourceCoverage.getGridGeometry().getGridToCRS2D());
+            finalTransform = ConcatenatedTransform.create(
+                    tr, sourceCoverage.getGridGeometry().getGridToCRS2D());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -238,27 +226,22 @@ public abstract class BaseScaleOperationJAI extends OperationJAI {
         final InternationalString name = deriveName(sources, 0, parameters);
         final Map<String, ?> properties =
                 getProperties(image, parameters.crs, name, finalTransform, sources, parameters);
-        final GridGeometry2D gg2D =
-                new GridGeometry2D(
-                        new GridEnvelope2D(PlanarImage.wrapRenderedImage(image).getBounds()),
-                        PixelInCell.CELL_CORNER,
-                        finalTransform,
-                        parameters.crs,
-                        null);
-        final GridCoverage2D result =
-                getFactory(parameters.hints)
-                        .create(
-                                name, // The grid coverage name
-                                image, // The underlying data
-                                gg2D,
-                                (GridSampleDimension[])
-                                        (asPhotographicStrategy
-                                                ? null
-                                                : sourceCoverage
-                                                        .getSampleDimensions()
-                                                        .clone()), // The sample dimensions
-                                sources, // The source grid coverage.
-                                properties); // Properties
+        final GridGeometry2D gg2D = new GridGeometry2D(
+                new GridEnvelope2D(PlanarImage.wrapRenderedImage(image).getBounds()),
+                PixelInCell.CELL_CORNER,
+                finalTransform,
+                parameters.crs,
+                null);
+        final GridCoverage2D result = getFactory(parameters.hints)
+                .create(
+                        name, // The grid coverage name
+                        image, // The underlying data
+                        gg2D,
+                        asPhotographicStrategy
+                                ? null
+                                : sourceCoverage.getSampleDimensions().clone(), // The sample dimensions
+                        sources, // The source grid coverage.
+                        properties); // Properties
 
         // now let's see what we need to do in order to clean things up
         return result;

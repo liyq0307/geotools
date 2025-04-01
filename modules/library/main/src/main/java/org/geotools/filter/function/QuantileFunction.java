@@ -18,9 +18,10 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.feature.visitor.QuantileListVisitor;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * Breaks a SimpleFeatureCollection into classes with an equal number of items in each.
@@ -29,19 +30,30 @@ import org.opengis.filter.capability.FunctionName;
  */
 public class QuantileFunction extends AbstractQuantityClassificationFunction {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "Quantile",
-                    RangedClassifier.class,
-                    parameter("value", Double.class),
-                    parameter("classes", Integer.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "Quantile",
+            RangedClassifier.class,
+            parameter("value", Double.class),
+            parameter("classes", Integer.class),
+            parameter("percentages", Boolean.class, 0, 1));
 
     public QuantileFunction() {
         super(NAME);
     }
 
+    @Override
     protected QuantileListVisitor getListVisitor() {
         // use a visitor to find the values in each bin
         return new QuantileListVisitor(getParameters().get(0), getClasses());
+    }
+
+    @Override
+    protected boolean percentages() {
+        boolean percentages = false;
+        if (getParameters().size() > 2) {
+            Literal literal = (Literal) getParameters().get(2);
+            percentages = ((Boolean) literal.getValue()).booleanValue();
+        }
+        return percentages;
     }
 }

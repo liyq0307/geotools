@@ -20,14 +20,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.type.FeatureTypeImpl;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
 
 /**
  * Implementation fo SimpleFeatureType, subtypes must be atomic and are stored in a list.
@@ -55,19 +55,13 @@ public class SimpleFeatureTypeImpl extends FeatureTypeImpl implements SimpleFeat
             InternationalString description) {
         // Note intentional circumvention of generics type checking;
         // this is only valid if schema is not modified.
-        super(
-                name,
-                (List) schema,
-                defaultGeometry,
-                isAbstract,
-                restrictions,
-                superType,
-                description);
+        super(name, (List) schema, defaultGeometry, isAbstract, restrictions, superType, description);
         index = buildIndex(this);
         descriptors = buildDescriptorIndex(this);
     }
 
-    /** @see org.opengis.feature.simple.SimpleFeatureType#getAttributeDescriptors() */
+    /** @see org.geotools.api.feature.simple.SimpleFeatureType#getAttributeDescriptors() */
+    @Override
     @SuppressWarnings("unchecked")
     public final List<AttributeDescriptor> getAttributeDescriptors() {
         // Here we circumvent the generics type system. Because we provide the schema and know it is
@@ -76,11 +70,12 @@ public class SimpleFeatureTypeImpl extends FeatureTypeImpl implements SimpleFeat
         return (List) getDescriptors();
     }
 
+    @Override
     public List<AttributeType> getTypes() {
         if (types == null) {
             synchronized (this) {
                 if (types == null) {
-                    ArrayList<AttributeType> temp = new ArrayList<AttributeType>();
+                    ArrayList<AttributeType> temp = new ArrayList<>();
                     for (AttributeDescriptor ad : getAttributeDescriptors()) {
                         temp.add(ad.getType());
                     }
@@ -91,38 +86,45 @@ public class SimpleFeatureTypeImpl extends FeatureTypeImpl implements SimpleFeat
         return types;
     }
 
+    @Override
     public AttributeType getType(Name name) {
-        AttributeDescriptor attribute = (AttributeDescriptor) getDescriptor(name);
+        AttributeDescriptor attribute = getDescriptor(name);
         if (attribute != null) {
             return attribute.getType();
         }
         return null;
     }
 
+    @Override
     public AttributeType getType(String name) {
-        AttributeDescriptor attribute = (AttributeDescriptor) getDescriptor(name);
+        AttributeDescriptor attribute = getDescriptor(name);
         if (attribute != null) {
             return attribute.getType();
         }
         return null;
     }
 
+    @Override
     public AttributeType getType(int index) {
         return getTypes().get(index);
     }
 
+    @Override
     public AttributeDescriptor getDescriptor(Name name) {
         return (AttributeDescriptor) super.getDescriptor(name);
     }
 
+    @Override
     public AttributeDescriptor getDescriptor(String name) {
         return descriptors.get(name);
     }
 
+    @Override
     public AttributeDescriptor getDescriptor(int index) {
         return getAttributeDescriptors().get(index);
     }
 
+    @Override
     public int indexOf(Name name) {
         if (name.getNamespaceURI() == null) {
             return indexOf(name.getLocalPart());
@@ -138,6 +140,7 @@ public class SimpleFeatureTypeImpl extends FeatureTypeImpl implements SimpleFeat
         return -1;
     }
 
+    @Override
     public int indexOf(String name) {
         Integer idx = index.get(name);
         if (idx != null) {
@@ -147,23 +150,20 @@ public class SimpleFeatureTypeImpl extends FeatureTypeImpl implements SimpleFeat
         }
     }
 
+    @Override
     public int getAttributeCount() {
         return getAttributeDescriptors().size();
     }
 
+    @Override
     public String getTypeName() {
         return getName().getLocalPart();
     }
 
-    /**
-     * Builds the name -> position index used by simple features for fast attribute lookup
-     *
-     * @param featureType
-     * @return
-     */
+    /** Builds the name -> position index used by simple features for fast attribute lookup */
     static Map<String, Integer> buildIndex(SimpleFeatureType featureType) {
         // build an index of attribute name to index
-        Map<String, Integer> index = new HashMap<String, Integer>();
+        Map<String, Integer> index = new HashMap<>();
         int i = 0;
         for (AttributeDescriptor ad : featureType.getAttributeDescriptors()) {
             index.put(ad.getLocalName(), i++);
@@ -174,12 +174,7 @@ public class SimpleFeatureTypeImpl extends FeatureTypeImpl implements SimpleFeat
         return index;
     }
 
-    /**
-     * Builds the name -> descriptor index used by simple features for fast attribute lookup
-     *
-     * @param featureType
-     * @return
-     */
+    /** Builds the name -> descriptor index used by simple features for fast attribute lookup */
     static Map<String, AttributeDescriptor> buildDescriptorIndex(SimpleFeatureType featureType) {
         // build an index of attribute name to index
         Map<String, AttributeDescriptor> index = new HashMap<>();

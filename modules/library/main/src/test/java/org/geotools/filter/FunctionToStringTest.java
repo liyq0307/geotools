@@ -16,13 +16,20 @@
  */
 package org.geotools.filter;
 
-import static org.junit.Assert.assertFalse;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertNotNull;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.measure.Unit;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.parameter.Parameter;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.function.CategorizeFunction;
 import org.geotools.filter.function.Classifier;
@@ -36,16 +43,12 @@ import org.geotools.filter.function.Collection_NearestFunction;
 import org.geotools.filter.function.Collection_SumFunction;
 import org.geotools.filter.function.Collection_UniqueFunction;
 import org.geotools.filter.function.DefaultFunctionFactory;
+import org.hamcrest.MatcherAssert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.parameter.Parameter;
 
 /**
  * Test that all functions in the DefaultFunctionFactory have the toString() method implemented.
@@ -53,22 +56,21 @@ import org.opengis.parameter.Parameter;
  * @author Rob Ward
  */
 public class FunctionToStringTest {
-    static org.opengis.filter.FilterFactory ff;
+    static org.geotools.api.filter.FilterFactory ff;
 
     private DefaultFunctionFactory functionFactory;
 
     /** The collection function list. */
-    private static List<String> collectionFunctionList =
-            Arrays.asList(
-                    Collection_AverageFunction.NAME.getName(),
-                    Collection_BoundsFunction.NAME.getName(),
-                    Collection_CountFunction.NAME.getName(),
-                    Collection_MaxFunction.NAME.getName(),
-                    Collection_MedianFunction.NAME.getName(),
-                    Collection_MinFunction.NAME.getName(),
-                    Collection_NearestFunction.NAME.getName(),
-                    Collection_SumFunction.NAME.getName(),
-                    Collection_UniqueFunction.NAME.getName());
+    private static List<String> collectionFunctionList = Arrays.asList(
+            Collection_AverageFunction.NAME.getName(),
+            Collection_BoundsFunction.NAME.getName(),
+            Collection_CountFunction.NAME.getName(),
+            Collection_MaxFunction.NAME.getName(),
+            Collection_MedianFunction.NAME.getName(),
+            Collection_MinFunction.NAME.getName(),
+            Collection_NearestFunction.NAME.getName(),
+            Collection_SumFunction.NAME.getName(),
+            Collection_UniqueFunction.NAME.getName());
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -81,8 +83,8 @@ public class FunctionToStringTest {
     }
 
     /**
-     * Create an instance of every function using default parameters and call toString(). Check to
-     * see if the implemented toString() is called, should not contain '@' symbol.
+     * Create an instance of every function using default parameters and call toString(). Check to see if the
+     * implemented toString() is called, should not contain '@' symbol.
      */
     @Test
     public void testFunctionToStringMethod() {
@@ -91,30 +93,13 @@ public class FunctionToStringTest {
         // Get list of all support functions
         List<FunctionName> functionNameList = functionFactory.getFunctionNames();
 
-        boolean fail = false;
-
         for (FunctionName functionName : functionNameList) {
-            try {
-                // Create a function expression with default parameters
-                Expression expression = createExpression(functionName);
-                if (expression != null) {
-                    String result = expression.toString();
-
-                    if (result.contains("@")) {
-                        // System.err.println(functionName.getName() + "\t\t\t" + "TOSTRING
-                        // MISSING");
-                    }
-                } else {
-                    fail = true;
-                    // System.err.println(functionName.getName() + "\t\t\t" + "TOSTRING FAIL");
-                }
-            } catch (Exception e) {
-                fail = true;
-                // System.err.println(functionName.getName() + "\t\t\t" + "TOSTRING FAIL");
-            }
+            // Create a function expression with default parameters
+            Expression expression = createExpression(functionName);
+            assertNotNull(expression);
+            assertNotNull(expression.toString());
+            MatcherAssert.assertThat(expression.toString(), not(containsString("@")));
         }
-
-        assertFalse(fail);
     }
 
     /**
@@ -128,15 +113,14 @@ public class FunctionToStringTest {
             return null;
         }
 
-        List<Expression> parameters = new ArrayList<Expression>();
+        List<Expression> parameters = new ArrayList<>();
         Literal fallback = null;
 
         // Retrieve default parameters for function
         createNewFunctionParameters(functionName, parameters);
 
         // Create function expression with supplied parameters
-        Function function =
-                functionFactory.function(functionName.getFunctionName(), parameters, fallback);
+        Function function = functionFactory.function(functionName.getFunctionName(), parameters, fallback);
 
         return function;
     }
@@ -149,8 +133,7 @@ public class FunctionToStringTest {
      * @param functionName the function name
      * @param parameters the parameters
      */
-    private static void createNewFunctionParameters(
-            FunctionName functionName, List<Expression> parameters) {
+    private static void createNewFunctionParameters(FunctionName functionName, List<Expression> parameters) {
         String name = functionName.getName();
 
         if (collectionFunctionList.contains(name)) {
@@ -166,9 +149,7 @@ public class FunctionToStringTest {
         } else {
             List<Parameter<?>> functionParamList = functionName.getArguments();
 
-            for (int paramIndex = 0; paramIndex < functionParamList.size(); paramIndex++) {
-                Parameter<?> param = functionParamList.get(paramIndex);
-
+            for (Parameter<?> param : functionParamList) {
                 Class<?> type = param.getType();
                 if (type == Object.class) {
                     parameters.add(ff.literal(""));
@@ -188,8 +169,6 @@ public class FunctionToStringTest {
                     parameters.add(null);
                 } else if (type == Geometry.class) {
                     parameters.add(null);
-                } else if (type == org.opengis.geometry.Geometry.class) {
-                    parameters.add(null);
                 } else if (type == LineString.class) {
                     parameters.add(null);
                 } else if (type == Classifier.class) {
@@ -197,21 +176,17 @@ public class FunctionToStringTest {
                 } else if (type == Class.class) {
                     parameters.add(null);
                 } else if (type.getName()
-                                .compareToIgnoreCase(
-                                        "org.geotools.filter.function.color.AbstractHSLFunction$Method")
+                                .compareToIgnoreCase("org.geotools.filter.function.color.AbstractHSLFunction$Method")
                         == 0) {
                     parameters.add(null);
-                } else if (type.getName()
-                                .compareToIgnoreCase("org.geotools.styling.visitor.RescalingMode")
-                        == 0) {
+                } else if (type.getName().compareToIgnoreCase("org.geotools.styling.visitor.RescalingMode") == 0) {
                     parameters.add(ff.literal(0));
                 } else {
                     Object newObj = null;
                     try {
                         newObj = type.getDeclaredConstructor().newInstance();
                     } catch (Exception e) {
-                        java.util.logging.Logger.getGlobal()
-                                .log(java.util.logging.Level.INFO, "", e);
+                        java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
                     }
 
                     parameters.add(ff.literal(newObj));

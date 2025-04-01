@@ -25,11 +25,19 @@ import org.geotools.jdbc.JDBCTestSetup;
  * @author Justin Deoliveira, The Open Planning Project
  */
 public class MySQLDataStoreOnlineTest extends JDBCDataStoreOnlineTest {
+    @Override
     protected JDBCTestSetup createTestSetup() {
         return new MySQLTestSetup();
     }
 
+    @Override
     public void testCreateSchemaWithConstraints() throws Exception {
         // MySql does not complain if the string is too long, so we cannot run this test
+    }
+
+    @Override
+    protected String getCLOBTypeName() {
+        // CLOB is supported in MySQL 8 but not in 5
+        return "TEXT";
     }
 }

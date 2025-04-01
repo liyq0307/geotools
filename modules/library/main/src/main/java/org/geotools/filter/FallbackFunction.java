@@ -17,26 +17,26 @@
 package org.geotools.filter;
 
 import java.util.List;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.expression.Literal;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
 
 /**
- * A placeholder class used to track a function the user requested that is not supported by our java
- * implementation.
+ * A placeholder class used to track a function the user requested that is not supported by our java implementation.
  *
- * <p>This can be used to construct expressions that are to be executed by another systems (say as
- * SQL or as a WFS request).
+ * <p>This can be used to construct expressions that are to be executed by another systems (say as SQL or as a WFS
+ * request).
  *
  * @author Jody Garnett
  */
 public class FallbackFunction extends FunctionExpressionImpl {
 
-    public FallbackFunction(String name, List params, Literal fallback) {
+    public FallbackFunction(String name, List<Expression> params, Literal fallback) {
         super(name, fallback);
         this.setParameters(params);
     }
 
-    public FallbackFunction(Name name, List params, Literal fallback) {
+    public FallbackFunction(Name name, List<Expression> params, Literal fallback) {
         super(name, fallback);
         this.setParameters(params);
     }
@@ -46,9 +46,8 @@ public class FallbackFunction extends FunctionExpressionImpl {
         return fallback.evaluate(object);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public Object evaluate(Object object, Class context) {
+    public <T> T evaluate(Object object, Class<T> context) {
         return fallback.evaluate(object, context);
     }
 }

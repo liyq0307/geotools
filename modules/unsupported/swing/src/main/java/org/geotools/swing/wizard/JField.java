@@ -26,14 +26,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.text.JTextComponent;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.swing.wizard.JWizard.Controller;
 import org.geotools.util.Converters;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-/**
- * Field that uses the converter API to hack away at a text representation of the provided value.
- */
+/** Field that uses the converter API to hack away at a text representation of the provided value. */
 public class JField extends ParamField {
     private JTextComponent text;
     private boolean single = true;
@@ -46,9 +44,9 @@ public class JField extends ParamField {
         this.single = single;
     }
 
+    @Override
     public JComponent doLayout() {
-        if (parameter.metadata != null
-                && parameter.metadata.get(Parameter.IS_PASSWORD) == Boolean.TRUE) {
+        if (parameter.metadata != null && parameter.metadata.get(Parameter.IS_PASSWORD) == Boolean.TRUE) {
             text = new JPasswordField(32);
         } else if (single) {
             text = new JTextField(32);
@@ -56,24 +54,22 @@ public class JField extends ParamField {
             text = new JTextArea(40, 2);
             ((JTextArea) text).setWrapStyleWord(true);
         }
-        text.addKeyListener(
-                new KeyAdapter() {
-                    public void keyReleased(KeyEvent e) {
-                        validate();
-                    }
-                });
+        text.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                validate();
+            }
+        });
         if (text instanceof JTextArea) {
-            JScrollPane scroll =
-                    new JScrollPane(
-                            text,
-                            JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            JScrollPane scroll = new JScrollPane(
+                    text, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
             scroll.setPreferredSize(new Dimension(400, 80));
             return scroll;
         }
         return text;
     }
 
+    @Override
     public Object getValue() {
         String txt = text.getText();
         if (txt.length() == 0) {
@@ -89,8 +85,7 @@ public class JField extends ParamField {
      * @return Number of dimensions expected based on metadata, default of 2
      */
     int getD() {
-        CoordinateReferenceSystem crs =
-                (CoordinateReferenceSystem) parameter.metadata.get(Parameter.CRS);
+        CoordinateReferenceSystem crs = (CoordinateReferenceSystem) parameter.metadata.get(Parameter.CRS);
         if (crs == null) {
             return 2;
         } else {
@@ -98,11 +93,13 @@ public class JField extends ParamField {
         }
     }
 
+    @Override
     public void setValue(Object value) {
-        String txt = (String) Converters.convert(value, String.class);
+        String txt = Converters.convert(value, String.class);
         text.setText(txt);
     }
 
+    @Override
     public void addListener(Controller controller) {
         text.addKeyListener(controller);
     }
@@ -112,6 +109,7 @@ public class JField extends ParamField {
         text.addKeyListener(controller);
     }
 
+    @Override
     public boolean validate() {
         String txt = text.getText();
         if (txt.length() == 0) {

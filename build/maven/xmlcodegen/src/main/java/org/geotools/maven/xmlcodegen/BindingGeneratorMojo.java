@@ -52,7 +52,7 @@ import org.geotools.xsd.Configuration;
 public class BindingGeneratorMojo extends AbstractGeneratorMojo {
 
 	/**
-     * Flag controlling wether a parser configuration ( {@link Configuration} )
+     * Flag controlling whether a parser configuration ( {@link Configuration} )
      * the default is true.
      * 
      * @parameter expression="true"
@@ -60,14 +60,14 @@ public class BindingGeneratorMojo extends AbstractGeneratorMojo {
     boolean generateConfiguration;
     
     /**
-     * Flag controlling wether an xsd ({@link XSD} subclass should be generated.
+     * Flag controlling whether an xsd ({@link XSD} subclass should be generated.
      * 
      * @parameter expression="true"
      */
     boolean generateXsd;
     
     /**
-     * Flag controlling wether bindings for attributes should be generated, default is
+     * Flag controlling whether bindings for attributes should be generated, default is
      * false.
      * 
      * @parameter expression="false"
@@ -75,7 +75,7 @@ public class BindingGeneratorMojo extends AbstractGeneratorMojo {
     boolean generateAttributeBindings;
     
     /**
-     * Flag controlling wether bindings for eleements should be generated, default is
+     * Flag controlling whether bindings for elements should be generated, default is
      * false.
      * 
      * @parameter expression="false"
@@ -83,7 +83,7 @@ public class BindingGeneratorMojo extends AbstractGeneratorMojo {
     boolean generateElementBindings;
     
     /**
-     * Flag controlling wether bindings for types should be generated, default is
+     * Flag controlling whether bindings for types should be generated, default is
      * true.
      * 
      * @parameter expression="true"
@@ -91,7 +91,7 @@ public class BindingGeneratorMojo extends AbstractGeneratorMojo {
     boolean generateTypeBindings;
 	
     /**
-     * Flag controlling wether test for bindings should be generated, default is
+     * Flag controlling whether test for bindings should be generated, default is
      * false.
      * 
      * @parameter expression="false"
@@ -101,7 +101,7 @@ public class BindingGeneratorMojo extends AbstractGeneratorMojo {
     /**
      * List of constructor arguments that should be supplied to generated bindings.
      * Each argument is a 'name','type','mode' triplet. 'name' and 'type' declare 
-     * the name and class of the argument respectivley. 'mode' can be set to 
+     * the name and class of the argument respectively. 'mode' can be set to
      * "member", or "parent". If set to "member" the argument will be set to a 
      * member of the binding. If set to "parent" the argument will passed through
      * to the call to the super constructor. The default is "member"
@@ -127,6 +127,7 @@ public class BindingGeneratorMojo extends AbstractGeneratorMojo {
      */
     String simpleBindingBaseClass;
     
+    @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
 		
     	XSDSchema xsdSchema = schema();
@@ -174,68 +175,70 @@ public class BindingGeneratorMojo extends AbstractGeneratorMojo {
 		}
 		
 		//list of urls to use as class loading locations
-		Set urls = new HashSet();
+		Set<URL> urls = new HashSet<>();
 		
 		try {
 		    //get the ones from the project
 			List l = project.getCompileClasspathElements();
-			for ( Iterator i = l.iterator(); i.hasNext(); ) {
-				String element = (String) i.next();
-				File d = new File( element );
-			
-				if ( d.exists() && d.isDirectory() ) {
-					urls.add( d.toURI().toURL() );
-				}
-			}
+            for (Object item : l) {
+                String element = (String) item;
+                File d = new File(element);
+
+                if (d.exists() && d.isDirectory()) {
+                    urls.add(d.toURI().toURL());
+                }
+            }
 			
 			//get the ones from project dependencies
 			List d = project.getDependencies();
-			
-			for ( Iterator i = d.iterator(); i.hasNext(); ) {
-			    Dependency dep = (Dependency) i.next();
-			    if ( "jar".equals( dep.getType() ) ) {
-			        Artifact artifact = artifactFactory.createArtifact( 
-	                    dep.getGroupId(), dep.getArtifactId(), dep.getVersion(), 
-	                    dep.getScope(), dep.getType()
-	                );
-			        Set artifacts = project.createArtifacts( artifactFactory, null, null);
-			        ArtifactResolutionResult result = 
-			            artifactResolver.resolveTransitively(artifacts, artifact, remoteRepositories, localRepository, artifactMetadataSource);
-			        artifacts = result.getArtifacts();
-			        for ( Iterator a = artifacts.iterator(); a.hasNext(); ) {
-			            Artifact dartifact = (Artifact) a.next();
-			            urls.add(dartifact.getFile().toURI().toURL());
-			        }
-			        
-			    }
-			}
+
+            for (Object value : d) {
+                Dependency dep = (Dependency) value;
+                if ("jar".equals(dep.getType())) {
+                    Artifact artifact = artifactFactory.createArtifact(
+                            dep.getGroupId(), dep.getArtifactId(), dep.getVersion(),
+                            dep.getScope(), dep.getType()
+                    );
+                    Set artifacts = project.createArtifacts(artifactFactory, null, null);
+                    ArtifactResolutionResult result =
+                            artifactResolver.resolveTransitively(artifacts, artifact,
+                                    remoteRepositories, localRepository, artifactMetadataSource);
+                    artifacts = result.getArtifacts();
+                    for (Object o : artifacts) {
+                        Artifact dartifact = (Artifact) o;
+                        urls.add(dartifact.getFile().toURI().toURL());
+                    }
+
+                }
+            }
 			
 		} catch (Exception e) {
 			getLog().error( e );
 			return;
 		}
 		
-		ClassLoader cl = new URLClassLoader( (URL[]) urls.toArray( new URL[ urls.size() ] ) );
+		ClassLoader cl = new URLClassLoader(urls.toArray( new URL[ urls.size() ] ));
 		if ( bindingConstructorArguments != null ) {
 			HashMap map = new HashMap();
-			
-			for ( int i = 0; i < bindingConstructorArguments.length; i++) {
-				String name = bindingConstructorArguments[i].getName();
-				String type = bindingConstructorArguments[i].getType();
-				
-				try {
-				    bindingConstructorArguments[i].clazz = cl.loadClass( type );
-				} catch (ClassNotFoundException e) {
-					getLog().error( "Could not locate class:" + type );
-					return;
-				}
-			}
+
+            for (BindingConstructorArgument bindingConstructorArgument :
+                    bindingConstructorArguments) {
+                String name = bindingConstructorArgument.getName();
+                String type = bindingConstructorArgument.getType();
+
+                try {
+                    bindingConstructorArgument.clazz = cl.loadClass(type);
+                } catch (ClassNotFoundException e) {
+                    getLog().error("Could not locate class:" + type);
+                    return;
+                }
+            }
 			
 			generator.setBindingConstructorArguments( bindingConstructorArguments );
 		}
 		
 		if ( includes != null && includes.length > 0 ) {
-			HashSet included = new HashSet( Arrays.asList( includes ) );
+			Set<String> included = new HashSet<>( Arrays.asList( includes ) );
 			getLog().info( "Including: " + included ); 
 			generator.setIncluded( included );
 		}

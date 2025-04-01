@@ -19,10 +19,10 @@ package org.geotools.filter.function;
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.util.regex.Pattern;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Filter function to multiply a text list of numbers with a given factor.
@@ -33,12 +33,8 @@ import org.opengis.filter.expression.Expression;
  */
 public class FilterFunction_listMultiply extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "listMultiply",
-                    String.class,
-                    parameter("factor", Number.class),
-                    parameter("list", String.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "listMultiply", String.class, parameter("factor", Number.class), parameter("list", String.class));
 
     public FilterFunction_listMultiply() {
         super(NAME);
@@ -94,14 +90,14 @@ public class FilterFunction_listMultiply extends FunctionExpressionImpl {
         String[] values = WHITE_SPACE_SPLIT.split(arg1);
         StringBuilder b = new StringBuilder();
 
-        for (int i = 0; i < values.length; i++) {
-            if ("".equals(values[i])) {
+        for (String value : values) {
+            if ("".equals(value)) {
                 continue;
             }
             if (b.length() != 0) {
                 b.append(" ");
             }
-            b.append(Double.valueOf(values[i]) * arg0.doubleValue());
+            b.append(Double.valueOf(value) * arg0.doubleValue());
         }
 
         return b.toString();

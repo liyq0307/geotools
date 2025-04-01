@@ -24,19 +24,18 @@ import java.io.OutputStream;
 import java.net.URL;
 import javax.xml.namespace.QName;
 import org.apache.commons.io.IOUtils;
-import org.geotools.data.ows.HTTPResponse;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.xsd.Configuration;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class DescribeFeatureTypeResponse extends WFSResponse {
 
     private FeatureType parsed;
 
-    public DescribeFeatureTypeResponse(
-            final DescribeFeatureTypeRequest request, final HTTPResponse httpResponse)
+    public DescribeFeatureTypeResponse(final DescribeFeatureTypeRequest request, final HTTPResponse httpResponse)
             throws ServiceException, IOException {
 
         super(request, httpResponse);
@@ -47,8 +46,7 @@ public class DescribeFeatureTypeResponse extends WFSResponse {
         final FeatureTypeInfo featureTypeInfo = strategy.getFeatureTypeInfo(remoteTypeName);
         final CoordinateReferenceSystem defaultCrs = featureTypeInfo.getCRS();
 
-        InputStream responseStream = httpResponse.getResponseStream();
-        try {
+        try (InputStream responseStream = httpResponse.getResponseStream()) {
             String prefix = remoteTypeName.getLocalPart();
             if (prefix.length() < 3) {
                 /*
@@ -63,18 +61,12 @@ public class DescribeFeatureTypeResponse extends WFSResponse {
             }
             try {
                 URL schemaLocation = tmpSchemaFile.toURI().toURL();
-                this.parsed =
-                        EmfAppSchemaParser.parse(
-                                wfsConfiguration,
-                                remoteTypeName,
-                                schemaLocation,
-                                defaultCrs,
-                                strategy.getFieldTypeMappings());
+                this.parsed = EmfAppSchemaParser.parse(
+                        wfsConfiguration, remoteTypeName, schemaLocation, defaultCrs, strategy.getFieldTypeMappings());
             } finally {
                 tmpSchemaFile.delete();
             }
         } finally {
-            responseStream.close();
             httpResponse.dispose();
         }
     }

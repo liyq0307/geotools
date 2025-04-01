@@ -18,10 +18,10 @@ package org.geotools.data.vpf;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.vpf.file.VPFFile;
 import org.geotools.data.vpf.readers.VPFGeometryFactory;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * @author <a href="mailto:jim@lomasoft.com">James Gambale</a>
@@ -54,7 +54,7 @@ class ColumnSet {
         // this.tableKey = key;
 
         if (table != null) {
-            this.colNames = new ArrayList<String>();
+            this.colNames = new ArrayList<>();
 
             int colCount = this.table.getColumnCount();
 
@@ -87,13 +87,12 @@ class ColumnSet {
     }
     */
 
-    public void setGeometry(
-            boolean b, VPFGeometryFactory geometryFactory, VPFColumn geometryColumn) {
+    public void setGeometry(boolean b, VPFGeometryFactory geometryFactory, VPFColumn geometryColumn) {
         this.isGeometryTable = b;
         this.geometryFactory = geometryFactory;
         this.geometryColumn = geometryColumn;
         if (geometryColumn != null) {
-            this.colNames = new ArrayList<String>();
+            this.colNames = new ArrayList<>();
             String colName = geometryColumn.getName();
             this.colNames.add(colName);
         }

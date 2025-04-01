@@ -82,6 +82,7 @@ public class CoverageOfferingsTypeImpl extends EObjectImpl implements CoverageOf
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public ServiceMetadataType getServiceMetadata() {
 		return serviceMetadata;
 	}
@@ -106,6 +107,7 @@ public class CoverageOfferingsTypeImpl extends EObjectImpl implements CoverageOf
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public void setServiceMetadata(ServiceMetadataType newServiceMetadata) {
 		if (newServiceMetadata != serviceMetadata) {
 			NotificationChain msgs = null;
@@ -125,9 +127,10 @@ public class CoverageOfferingsTypeImpl extends EObjectImpl implements CoverageOf
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public EList<OfferedCoverageType> getOfferedCoverage() {
 		if (offeredCoverage == null) {
-			offeredCoverage = new EObjectContainmentEList<OfferedCoverageType>(OfferedCoverageType.class, this, Wcs20Package.COVERAGE_OFFERINGS_TYPE__OFFERED_COVERAGE);
+			offeredCoverage = new EObjectContainmentEList<>(OfferedCoverageType.class, this, Wcs20Package.COVERAGE_OFFERINGS_TYPE__OFFERED_COVERAGE);
 		}
 		return offeredCoverage;
 	}

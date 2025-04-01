@@ -25,23 +25,23 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.Repository;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.io.FileSetManager;
 import org.geotools.coverage.io.CoverageAccess;
 import org.geotools.coverage.io.CoverageSource;
 import org.geotools.coverage.io.Driver;
 import org.geotools.coverage.io.impl.DefaultFileCoverageAccess;
 import org.geotools.coverage.io.impl.DefaultFileDriver;
-import org.geotools.data.DataSourceException;
 import org.geotools.data.DefaultServiceInfo;
-import org.geotools.data.Parameter;
-import org.geotools.data.Repository;
-import org.geotools.data.ServiceInfo;
 import org.geotools.data.util.NullProgressListener;
 import org.geotools.feature.NameImpl;
 import org.geotools.gce.imagemosaic.Utils;
@@ -51,32 +51,20 @@ import org.geotools.imageio.netcdf.utilities.NetCDFUtilities;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.type.Name;
-import org.opengis.util.ProgressListener;
 
 /**
  * {@link CoverageAccess} implementation for NetCDF Data format.
  *
  * @author Romagnoli Daniele, GeoSolutions SAS
  */
-public class NetCDFAccess extends DefaultFileCoverageAccess
-        implements CoverageAccess, FileSetManager {
+public class NetCDFAccess extends DefaultFileCoverageAccess implements CoverageAccess, FileSetManager {
 
     private static final Logger LOGGER = Logging.getLogger(NetCDFAccess.class);
     private Exception tracer;
 
     GeoSpatialImageReader reader = null;
 
-    /**
-     * Constructor
-     *
-     * @param driver
-     * @param source
-     * @param additionalParameters
-     * @param hints
-     * @param listener
-     * @throws IOException
-     */
+    /** Constructor */
     @SuppressWarnings("serial")
     NetCDFAccess(
             Driver driver,
@@ -89,11 +77,7 @@ public class NetCDFAccess extends DefaultFileCoverageAccess
         super(
                 driver,
                 EnumSet.of(AccessType.READ_ONLY),
-                new HashMap<String, Parameter<?>>() {
-                    {
-                        put(DefaultFileDriver.URL.key, DefaultFileDriver.URL);
-                    }
-                },
+                Map.of(DefaultFileDriver.URL.key, DefaultFileDriver.URL),
                 source,
                 additionalParameters);
 
@@ -128,7 +112,7 @@ public class NetCDFAccess extends DefaultFileCoverageAccess
             reader.setInput(this.source);
 
             if (names == null) {
-                names = new ArrayList<Name>();
+                names = new ArrayList<>();
                 final Collection<Name> originalNames = reader.getCoveragesNames();
                 for (Name name : originalNames) {
                     Name coverageName = new NameImpl(/*namePrefix + */ name.toString());
@@ -145,11 +129,7 @@ public class NetCDFAccess extends DefaultFileCoverageAccess
         }
     }
 
-    /**
-     * Scan the provided hints (if any) and look for auxiliary entries to be set into the reader.
-     *
-     * @param hints
-     */
+    /** Scan the provided hints (if any) and look for auxiliary entries to be set into the reader. */
     private void setAuxiliaryEntries(Hints hints) {
         String prefix = "";
         if (hints != null) {
@@ -180,18 +160,14 @@ public class NetCDFAccess extends DefaultFileCoverageAccess
     }
 
     @Override
-    public boolean delete(Name name, Map<String, Serializable> params, Hints hints)
-            throws IOException {
+    public boolean delete(Name name, Map<String, Serializable> params, Hints hints) throws IOException {
         // Right now, simply delete the name
         return names.remove(name);
     }
 
+    @Override
     public CoverageSource access(
-            Name name,
-            Map<String, Serializable> params,
-            AccessType accessType,
-            Hints hints,
-            ProgressListener listener)
+            Name name, Map<String, Serializable> params, AccessType accessType, Hints hints, ProgressListener listener)
             throws IOException {
         if (listener == null) {
             listener = new NullProgressListener();
@@ -249,14 +225,10 @@ public class NetCDFAccess extends DefaultFileCoverageAccess
     @SuppressWarnings("deprecation") // finalize is deprecated in Java 9
     protected void finalize() throws Throwable {
         if (reader != null) {
-            LOGGER.warning(
-                    "There is code leaving netcdf readers open, this might cause "
-                            + "issues with file deletion on Windows!");
+            LOGGER.warning("There is code leaving netcdf readers open, this might cause "
+                    + "issues with file deletion on Windows!");
             if (NetCDFUtilities.TRACE_ENABLED) {
-                LOGGER.log(
-                        Level.WARNING,
-                        "The unclosed reader originated on this stack trace",
-                        tracer);
+                LOGGER.log(Level.WARNING, "The unclosed reader originated on this stack trace", tracer);
             }
             dispose();
         }

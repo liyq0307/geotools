@@ -16,20 +16,21 @@
  */
 package org.geotools.xs.bindings;
 
+import static org.junit.Assert.assertEquals;
+
 import javax.xml.namespace.QName;
 import org.geotools.xs.TestSchema;
 import org.geotools.xs.XS;
 import org.geotools.xsd.ElementInstance;
+import org.junit.Test;
 
 public class XSDoubleStrategyTest extends TestSchema {
-    /**
-     * For example, -1E4, 1267.43233E12, 12.78e-2, 12 , -0, 0 and INF are all legal literals for
-     * double.
-     */
+    /** For example, -1E4, 1267.43233E12, 12.78e-2, 12 , -0, 0 and INF are all legal literals for double. */
 
     /*
      * Test method for 'org.geotools.xml.strategies.xs.XSDoubleStrategy.parse(Element, Node[], Object)'
      */
+    @Test
     public void testParse() throws Exception {
         validateValues("-1E4", Double.valueOf(-1E4));
         validateValues("1267.43233E12", Double.valueOf(1267.43233E12));
@@ -42,12 +43,21 @@ public class XSDoubleStrategyTest extends TestSchema {
         assertEquals(Double.valueOf(Double.POSITIVE_INFINITY), strategy.parse(element, "INF"));
     }
 
+    @Test
     public void testIntegerParse() throws Exception {
         ElementInstance element = element("12345", XS.INTEGER);
         assertEquals(Double.valueOf(12345.0), strategy.parse(element, "12345"));
     }
 
+    @Override
     protected QName getQName() {
         return XS.DOUBLE;
+    }
+
+    /** GEOT-7072: Non-comformant WFS implementations tend to send empty elements (e.g. {@code <value></value>}) */
+    @Test
+    public void testParseEmptyStringAsNull() throws Exception {
+        validateValues("", null);
+        validateValues("\t", null);
     }
 }

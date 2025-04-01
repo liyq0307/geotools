@@ -16,18 +16,24 @@
  */
 package org.geotools.referencing.factory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Collection;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.junit.*;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.junit.Test;
 
 /**
  * Tests the {@link AllAuthoritiesFactory} implementation.
@@ -49,15 +55,12 @@ public final class AllAuthoritiesFactoryTest {
     /** Tests the {@link AllAuthoritiesFactory#createCoordinateReferenceSystem} method. */
     @Test
     public void testCreateCRS() throws FactoryException {
-        final CRSAuthorityFactory auto =
-                ReferencingFactoryFinder.getCRSAuthorityFactory("AUTO", null);
-        final CRSAuthorityFactory crs =
-                ReferencingFactoryFinder.getCRSAuthorityFactory("CRS", null);
+        final CRSAuthorityFactory auto = ReferencingFactoryFinder.getCRSAuthorityFactory("AUTO", null);
+        final CRSAuthorityFactory crs = ReferencingFactoryFinder.getCRSAuthorityFactory("CRS", null);
         final CRSAuthorityFactory all = AllAuthoritiesFactory.DEFAULT;
-        CoordinateReferenceSystem actual, expected;
 
-        actual = all.createCoordinateReferenceSystem("CRS:84");
-        expected = crs.createCoordinateReferenceSystem("84");
+        CoordinateReferenceSystem actual = all.createCoordinateReferenceSystem("CRS:84");
+        CoordinateReferenceSystem expected = crs.createCoordinateReferenceSystem("84");
         assertSame(expected, actual);
         assertSame(expected, all.createObject("CRS:84"));
 
@@ -89,19 +92,17 @@ public final class AllAuthoritiesFactoryTest {
     }
 
     /**
-     * Tests the {@code "http://www.opengis.net/gml/srs/"} name space. This requires special
-     * processing by {@link AllAuthoritiesFactory}, since the separator character is not the usual
-     * {@code ':'}.
+     * Tests the {@code "http://www.opengis.net/gml/srs/"} name space. This requires special processing by
+     * {@link AllAuthoritiesFactory}, since the separator character is not the usual {@code ':'}.
      */
     @Test
     public void testHttp() throws FactoryException {
-        final CRSAuthorityFactory crs =
-                ReferencingFactoryFinder.getCRSAuthorityFactory("CRS", null);
+        final CRSAuthorityFactory crs = ReferencingFactoryFinder.getCRSAuthorityFactory("CRS", null);
         final CRSAuthorityFactory all = AllAuthoritiesFactory.DEFAULT;
-        CoordinateReferenceSystem actual, expected;
 
-        actual = all.createCoordinateReferenceSystem("http://www.opengis.net/gml/srs/CRS#84");
-        expected = crs.createCoordinateReferenceSystem("84");
+        CoordinateReferenceSystem actual =
+                all.createCoordinateReferenceSystem("http://www" + ".opengis.net/gml/srs/CRS#84");
+        CoordinateReferenceSystem expected = crs.createCoordinateReferenceSystem("84");
         assertSame(expected, actual);
 
         actual = all.createCoordinateReferenceSystem("HTTP://WWW.OPENGIS.NET/GML/SRS/crs#84");
@@ -129,11 +130,9 @@ public final class AllAuthoritiesFactoryTest {
     @Test
     public void testFind() throws FactoryException {
         final AbstractAuthorityFactory all = AllAuthoritiesFactory.DEFAULT;
-        final IdentifiedObjectFinder finder =
-                all.getIdentifiedObjectFinder(CoordinateReferenceSystem.class);
+        final IdentifiedObjectFinder finder = all.getIdentifiedObjectFinder(CoordinateReferenceSystem.class);
         finder.setFullScanAllowed(false);
-        assertNull(
-                "Should not find the CRS without a scan.", finder.find(DefaultGeographicCRS.WGS84));
+        assertNull("Should not find the CRS without a scan.", finder.find(DefaultGeographicCRS.WGS84));
 
         finder.setFullScanAllowed(true);
         final IdentifiedObject find = finder.find(DefaultGeographicCRS.WGS84);

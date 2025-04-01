@@ -17,12 +17,12 @@
 package org.geotools.filter.v1_0;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -56,6 +56,7 @@ public class OGCFunctionTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.FunctionType;
     }
@@ -67,6 +68,7 @@ public class OGCFunctionTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Function.class;
     }
@@ -78,6 +80,7 @@ public class OGCFunctionTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -87,11 +90,12 @@ public class OGCFunctionTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Expression[] args = new Expression[node.getChildren().size()];
 
         for (int i = 0; i < node.getChildren().size(); i++) {
-            Node child = (Node) node.getChildren().get(i);
+            Node child = node.getChildren().get(i);
             args[i] = (Expression) child.getValue();
         }
 
@@ -100,6 +104,7 @@ public class OGCFunctionTypeBinding extends AbstractComplexBinding {
         return factory.function(name, args);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         Function function = (Function) object;
 

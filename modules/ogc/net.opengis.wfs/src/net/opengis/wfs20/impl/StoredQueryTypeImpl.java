@@ -96,9 +96,10 @@ public class StoredQueryTypeImpl extends AbstractQueryExpressionTypeImpl impleme
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<ParameterType> getParameter() {
     if (parameter == null) {
-      parameter = new EObjectContainmentEList<ParameterType>(ParameterType.class, this, Wfs20Package.STORED_QUERY_TYPE__PARAMETER);
+      parameter = new EObjectContainmentEList<>(ParameterType.class, this, Wfs20Package.STORED_QUERY_TYPE__PARAMETER);
     }
     return parameter;
   }
@@ -108,6 +109,7 @@ public class StoredQueryTypeImpl extends AbstractQueryExpressionTypeImpl impleme
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public String getId() {
     return id;
   }
@@ -117,6 +119,7 @@ public class StoredQueryTypeImpl extends AbstractQueryExpressionTypeImpl impleme
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setId(String newId) {
     String oldId = id;
     id = newId;

@@ -18,16 +18,15 @@ package org.geotools.filter.text.commons;
 
 import java.security.InvalidParameterException;
 import java.util.Date;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Literal;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Literal;
 
 /**
- * Period is constructed in the parsing process. this has convenient method to deliver begin and end
- * date of period. a period can be created from date-time/date-time or date-time/duration or
- * duration/date-time
+ * Period is constructed in the parsing process. this has convenient method to deliver begin and end date of period. a
+ * period can be created from date-time/date-time or date-time/duration or duration/date-time
  *
- * <p>Warning: This component is not published. It is part of module implementation. Client module
- * should not use this feature.
+ * <p>Warning: This component is not published. It is part of module implementation. Client module should not use this
+ * feature.
  *
  * @since 2.4
  * @author Mauricio Pazos - Axios Engineering
@@ -38,11 +37,7 @@ public class PeriodNode {
     private Literal begin = null;
     private Literal end = null;
 
-    /**
-     * @see create
-     * @param begin
-     * @param end
-     */
+    /** @see create */
     private PeriodNode(final Literal begin, final Literal end) {
         if (!(begin.getValue() instanceof Date)) {
             throw new InvalidParameterException("begin parameter must be Literal with Date");
@@ -56,8 +51,7 @@ public class PeriodNode {
         this.end = end;
     }
 
-    public static PeriodNode createPeriodDateAndDate(
-            final Literal beginDate, final Literal endDate) {
+    public static PeriodNode createPeriodDateAndDate(final Literal beginDate, final Literal endDate) {
         PeriodNode period = new PeriodNode(beginDate, endDate);
 
         return period;

@@ -1,37 +1,36 @@
 /*
- * GeoTools - The Open Source Java GIS Toolkit
- * http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- * (C) 2010-2014, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- * This file is hereby placed into the Public Domain. This means anyone is
- * free to do whatever they wish with this file. Use it well and enjoy!
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.tutorial.csv;
 
 import com.csvreader.CsvReader;
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.store.ContentState;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class CSVFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
 
     /** State used when reading file */
     protected ContentState state;
 
-    /**
-     * Current row number - used in the generation of FeatureId. TODO: Subclass ContentState to
-     * track row
-     */
+    /** Current row number - used in the generation of FeatureId. TODO: Subclass ContentState to track row */
     private int row;
 
     protected CsvReader reader;
@@ -56,7 +55,7 @@ public class CSVFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     }
     /** Access FeatureType (documenting available attributes) */
     public SimpleFeatureType getFeatureType() {
-        return (SimpleFeatureType) state.getFeatureType();
+        return state.getFeatureType();
     }
     // class definition end
 
@@ -72,8 +71,7 @@ public class CSVFeatureReader implements FeatureReader<SimpleFeatureType, Simple
      * @throws IllegalAttributeException for invalid data
      * @throws NoSuchElementException If hasNext() indicates no more features are available
      */
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         SimpleFeature feature;
         if (next != null) {
             feature = next;
@@ -87,7 +85,6 @@ public class CSVFeatureReader implements FeatureReader<SimpleFeatureType, Simple
      * Check if additional content is available.
      *
      * @return <code>true</code> if additional content is available
-     * @throws IOException
      */
     public boolean hasNext() throws IOException {
         if (next != null) {
@@ -134,11 +131,7 @@ public class CSVFeatureReader implements FeatureReader<SimpleFeatureType, Simple
     // parse end
 
     // close start
-    /**
-     * Close the FeatureReader when not in use.
-     *
-     * @throws IOException
-     */
+    /** Close the FeatureReader when not in use. */
     public void close() throws IOException {
         if (reader != null) {
             reader.close();

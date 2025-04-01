@@ -17,13 +17,13 @@
 package org.geotools.filter.v1_0;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.spatial.Touches;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.spatial.Touches;
 
 /**
  * Binding object for the element http://www.opengis.net/ogc:Touches.
@@ -40,15 +40,16 @@ import org.opengis.filter.spatial.Touches;
  * @generated
  */
 public class OGCTouchesBinding extends AbstractComplexBinding {
-    FilterFactory2 filterFactory;
+    FilterFactory filterFactory;
     GeometryFactory geometryFactory;
 
-    public OGCTouchesBinding(FilterFactory2 filterFactory, GeometryFactory geometryFactory) {
+    public OGCTouchesBinding(FilterFactory filterFactory, GeometryFactory geometryFactory) {
         this.filterFactory = filterFactory;
         this.geometryFactory = geometryFactory;
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.Touches;
     }
@@ -60,10 +61,12 @@ public class OGCTouchesBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Touches.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -75,6 +78,7 @@ public class OGCTouchesBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Expression[] operands = OGCUtils.spatial(node, filterFactory, geometryFactory);
 

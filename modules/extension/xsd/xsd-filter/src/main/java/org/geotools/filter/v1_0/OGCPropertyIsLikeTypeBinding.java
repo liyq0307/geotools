@@ -18,14 +18,14 @@ package org.geotools.filter.v1_0;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:PropertyIsLikeType.
@@ -61,6 +61,7 @@ public class OGCPropertyIsLikeTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.PropertyIsLikeType;
     }
@@ -72,6 +73,7 @@ public class OGCPropertyIsLikeTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return PropertyIsLike.class;
     }
@@ -83,12 +85,12 @@ public class OGCPropertyIsLikeTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
-    @SuppressWarnings("unchecked")
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Expression name = null;
         List<Expression> names = node.getChildValues(Expression.class);
         if (names.size() == 2) { // simple pair extract PropertyName
-            name = (Expression) node.getChildValue(PropertyName.class);
+            name = node.getChildValue(PropertyName.class);
         }
         if (name == null) { // search for a non literal Expression
             for (Expression n : names) {
@@ -98,7 +100,7 @@ public class OGCPropertyIsLikeTypeBinding extends AbstractComplexBinding {
                 name = n;
             }
         }
-        Literal literal = (Literal) node.getChildValue(Literal.class);
+        Literal literal = node.getChildValue(Literal.class);
 
         String wildcard = (String) node.getAttributeValue("wildCard");
         String single = (String) node.getAttributeValue("singleChar");
@@ -117,6 +119,7 @@ public class OGCPropertyIsLikeTypeBinding extends AbstractComplexBinding {
         return factory.like(name, literal.toString(), wildcard, single, escape, matchCase);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         PropertyIsLike isLike = (PropertyIsLike) object;
 

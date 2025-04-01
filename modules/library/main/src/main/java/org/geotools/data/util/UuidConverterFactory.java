@@ -35,6 +35,7 @@ import org.geotools.util.factory.Hints;
  */
 public class UuidConverterFactory implements ConverterFactory {
 
+    @Override
     public Converter createConverter(Class source, Class target, Hints hints) {
         if (target.equals(UUID.class)) {
 
@@ -42,8 +43,9 @@ public class UuidConverterFactory implements ConverterFactory {
             if (source.equals(String.class)) {
                 return new Converter() {
 
-                    public Object convert(Object source, Class target) throws Exception {
-                        return UUID.fromString((String) source);
+                    @Override
+                    public <T> T convert(Object source, Class<T> target) throws Exception {
+                        return target.cast(UUID.fromString((String) source));
                     }
                 };
             }
@@ -52,8 +54,9 @@ public class UuidConverterFactory implements ConverterFactory {
             if (source.equals(byte[].class)) {
                 return new Converter() {
 
-                    public Object convert(Object source, Class target) throws Exception {
-                        return UUID.nameUUIDFromBytes((byte[]) source);
+                    @Override
+                    public <T> T convert(Object source, Class<T> target) throws Exception {
+                        return target.cast(UUID.nameUUIDFromBytes((byte[]) source));
                     }
                 };
             }

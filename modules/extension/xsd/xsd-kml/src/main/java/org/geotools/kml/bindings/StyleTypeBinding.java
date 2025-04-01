@@ -19,11 +19,11 @@ package org.geotools.kml.bindings;
 import java.net.URI;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.kml.KML;
 import org.geotools.kml.StyleMap;
-import org.geotools.styling.FeatureTypeStyle;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.styling.Symbolizer;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -65,6 +65,7 @@ public class StyleTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.StyleType;
     }
@@ -76,6 +77,7 @@ public class StyleTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return FeatureTypeStyle.class;
     }
@@ -87,9 +89,10 @@ public class StyleTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List l = node.getChildValues(Symbolizer.class);
-        Symbolizer[] syms = (Symbolizer[]) l.toArray(new Symbolizer[l.size()]);
+        List<Symbolizer> l = node.getChildValues(Symbolizer.class);
+        Symbolizer[] syms = l.toArray(new Symbolizer[l.size()]);
 
         FeatureTypeStyle style = sb.createFeatureTypeStyle(syms, 1.0, 1.0);
 

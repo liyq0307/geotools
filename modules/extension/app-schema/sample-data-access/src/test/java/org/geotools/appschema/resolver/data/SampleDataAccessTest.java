@@ -17,14 +17,15 @@
 
 package org.geotools.appschema.resolver.data;
 
-import junit.framework.TestCase;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test for {@link org.geotools.appschema.resolver.data.SampleDataAccess}.
@@ -33,26 +34,22 @@ import org.opengis.feature.type.FeatureType;
  * @version $Id$
  * @since 2.6
  */
-public class SampleDataAccessTest extends TestCase {
+public class SampleDataAccessTest {
 
-    /**
-     * Test that {@link org.geotools.appschema.resolver.data.SampleDataAccess} can be used to obtain
-     * two features.
-     *
-     * @throws Exception
-     */
-    public static void testDataAccess() throws Exception {
-        DataAccess<FeatureType, Feature> dataAccess =
-                DataAccessFinder.getDataStore(SampleDataAccessFactory.PARAMS);
+    /** Test that {@link org.geotools.appschema.resolver.data.SampleDataAccess} can be used to obtain two features. */
+    @Test
+    public void testDataAccess() throws Exception {
+        DataAccess<FeatureType, Feature> dataAccess = DataAccessFinder.getDataStore(SampleDataAccessFactory.PARAMS);
         FeatureSource<FeatureType, Feature> featureSource =
                 dataAccess.getFeatureSource(SampleDataAccessData.MAPPEDFEATURE_TYPE_NAME);
         FeatureCollection<FeatureType, Feature> featureCollection = featureSource.getFeatures();
         int count = 0;
-        for (FeatureIterator<Feature> iterator = featureCollection.features();
-                iterator.hasNext();
-                iterator.next()) {
-            count++;
+        try (FeatureIterator<Feature> iterator = featureCollection.features()) {
+            while (iterator.hasNext()) {
+                count++;
+                iterator.next();
+            }
+            Assert.assertEquals(2, count);
         }
-        assertEquals(2, count);
     }
 }

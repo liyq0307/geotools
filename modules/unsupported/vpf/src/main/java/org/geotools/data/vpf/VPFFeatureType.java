@@ -21,18 +21,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 
 /**
- * A VPF feature type. Note that feature classes may contain one or more feature types. However, all
- * of the feature types of a feature class share the same schema. A feature type will therefore
- * delegate its schema related operations to its feature class.
+ * A VPF feature type. Note that feature classes may contain one or more feature types. However, all of the feature
+ * types of a feature class share the same schema. A feature type will therefore delegate its schema related operations
+ * to its feature class.
  *
  * @author <a href="mailto:jeff@ionicenterprise.com">Jeff Yutzler</a>
  * @source $URL$
@@ -87,8 +91,8 @@ public class VPFFeatureType implements SimpleFeatureType {
      * Constructor
      *
      * @param cFeatureClass The owning feature class
-     * @param cFeature A <code>Feature</code> from the CHAR.VDT file with more detailed information
-     *     for this feature type
+     * @param cFeature A <code>Feature</code> from the CHAR.VDT file with more detailed information for this feature
+     *     type
      */
     public VPFFeatureType(VPFFeatureClass cFeatureClass, SimpleFeature cFeature) {
         featureClass = cFeatureClass;
@@ -100,7 +104,8 @@ public class VPFFeatureType implements SimpleFeatureType {
         // This block helps us give tables a distinguishing suffix
         try {
             int index = mainTableFileName.lastIndexOf(".") + 1;
-            String dimensionality = mainTableFileName.substring(index, index + 1).toLowerCase();
+            String dimensionality =
+                    mainTableFileName.substring(index, index + 1).toLowerCase();
             if (dimensionality.equals("a")) {
                 tempTypeName = tempTypeName.concat(" Area");
             } else if (dimensionality.equals("l")) {
@@ -134,6 +139,7 @@ public class VPFFeatureType implements SimpleFeatureType {
     /* (non-Javadoc)
      * @see org.geotools.feature.FeatureType#getAttributeCount()
      */
+    @Override
     public int getAttributeCount() {
         return featureClass.getAttributeCount();
     }
@@ -168,9 +174,8 @@ public class VPFFeatureType implements SimpleFeatureType {
         return featureClass.getFileList();
     }
     /**
-     * @return A <code>List</code> containing the <code>ColumnPair</code> objects which identify the
-     *     file joins for the <code>VPFFeatureClass</code> that this <code>FeatureType</code>
-     *     belongs to.
+     * @return A <code>List</code> containing the <code>ColumnPair</code> objects which identify the file joins for the
+     *     <code>VPFFeatureClass</code> that this <code>FeatureType</code> belongs to.
      */
     /*
     public List getJoinList() {
@@ -181,6 +186,7 @@ public class VPFFeatureType implements SimpleFeatureType {
     /* (non-Javadoc)
      * @see org.geotools.feature.FeatureType#getTypeName()
      */
+    @Override
     public String getTypeName() {
         return typeName;
     }
@@ -188,6 +194,7 @@ public class VPFFeatureType implements SimpleFeatureType {
     /* (non-Javadoc)
      * @see org.geotools.feature.FeatureType#isAbstract()
      */
+    @Override
     public boolean isAbstract() {
         return featureClass.isAbstract();
     }
@@ -201,6 +208,7 @@ public class VPFFeatureType implements SimpleFeatureType {
         return faccCode;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof VPFFeatureType) {
             return Objects.equals(featureClass, ((VPFFeatureType) obj).featureClass);
@@ -208,90 +216,112 @@ public class VPFFeatureType implements SimpleFeatureType {
         return false;
     }
 
+    @Override
     public int hashCode() {
         return featureClass.hashCode();
     }
 
+    @Override
     public AttributeDescriptor getDescriptor(int index) {
         return featureClass.getDescriptor(index);
     }
 
-    public List getAttributeDescriptors() {
+    @Override
+    public List<AttributeDescriptor> getAttributeDescriptors() {
         return featureClass.getAttributeDescriptors();
     }
 
+    @Override
     public AttributeDescriptor getDescriptor(Name name) {
         return featureClass.getDescriptor(name);
     }
 
+    @Override
     public AttributeDescriptor getDescriptor(String name) {
         return featureClass.getDescriptor(name);
     }
 
-    public org.opengis.feature.type.AttributeType getType(Name name) {
+    @Override
+    public org.geotools.api.feature.type.AttributeType getType(Name name) {
         return featureClass.getType(name);
     }
 
-    public org.opengis.feature.type.AttributeType getType(String name) {
+    @Override
+    public org.geotools.api.feature.type.AttributeType getType(String name) {
         return featureClass.getType(name);
     }
 
-    public org.opengis.feature.type.AttributeType getType(int index) {
+    @Override
+    public org.geotools.api.feature.type.AttributeType getType(int index) {
         return featureClass.getType(index);
     }
 
-    public List getTypes() {
+    @Override
+    public List<AttributeType> getTypes() {
         return featureClass.getTypes();
     }
 
+    @Override
     public CoordinateReferenceSystem getCoordinateReferenceSystem() {
         return featureClass.getCoordinateReferenceSystem();
     }
 
+    @Override
     public GeometryDescriptor getGeometryDescriptor() {
         return featureClass.getGeometryDescriptor();
     }
 
-    public Class getBinding() {
+    @Override
+    public Class<Collection<Property>> getBinding() {
         return featureClass.getBinding();
     }
 
-    public Collection getDescriptors() {
+    @Override
+    public Collection<PropertyDescriptor> getDescriptors() {
         return featureClass.getDescriptors();
     }
 
+    @Override
     public boolean isInline() {
         return featureClass.isInline();
     }
 
-    public List getRestrictions() {
+    @Override
+    public List<Filter> getRestrictions() {
         return featureClass.getRestrictions();
     }
 
-    public org.opengis.feature.type.AttributeType getSuper() {
+    @Override
+    public org.geotools.api.feature.type.AttributeType getSuper() {
         return featureClass.getSuper();
     }
 
+    @Override
     public boolean isIdentified() {
         return featureClass.isIdentified();
     }
 
+    @Override
     public InternationalString getDescription() {
         return featureClass.getDescription();
     }
 
+    @Override
     public Name getName() {
         return featureClass.getName();
     }
 
+    @Override
     public Map<Object, Object> getUserData() {
         return featureClass.getUserData();
     }
 
+    @Override
     public int indexOf(String name) {
         return featureClass.indexOf(name);
     }
 
+    @Override
     public int indexOf(Name name) {
         return featureClass.indexOf(name);
     }

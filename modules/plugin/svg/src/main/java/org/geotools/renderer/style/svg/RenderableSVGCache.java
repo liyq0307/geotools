@@ -31,10 +31,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.data.ows.URLCheckers;
 import org.geotools.util.Converters;
 import org.geotools.util.SoftValueHashMap;
-import org.opengis.feature.Feature;
-import org.opengis.filter.expression.Expression;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -47,11 +48,10 @@ public class RenderableSVGCache {
     private static final Pattern PARAMETER_PATTERN = Pattern.compile("param\\((.+)\\).*");
 
     /** Parsed SVG glyphs cache */
-    static Map<String, RenderableSVG> glyphCache =
-            Collections.synchronizedMap(new SoftValueHashMap<>());
+    static Map<String, RenderableSVG> glyphCache = Collections.synchronizedMap(new SoftValueHashMap<>());
 
     /** The possible mime types for SVG */
-    static final Set<String> formats = new HashSet<String>();
+    static final Set<String> formats = new HashSet<>();
 
     static {
         formats.add("image/svg");
@@ -65,22 +65,24 @@ public class RenderableSVGCache {
 
     public RenderableSVGCache(Map<Key, Object> hints) {}
 
-    public RenderableSVG getRenderableSVG(Feature feature, Expression url, String format)
-            throws Exception {
+    public RenderableSVG getRenderableSVG(Feature feature, Expression url, String format) throws Exception {
         // check we do support the declared format
         if (format == null || !formats.contains(format.toLowerCase())) return null;
 
         // grab the url
         String svgfile = url.evaluate(feature, String.class);
         if (svgfile == null) {
-            throw new IllegalArgumentException(
-                    "The specified expression could not be turned into an URL");
+            throw new IllegalArgumentException("The specified expression could not be turned into an URL");
         } else {
             // just for validation parse the URL
             if (Converters.convert(svgfile, URL.class) == null) {
                 throw new IllegalArgumentException("Invalid URL: " + svgfile);
             }
         }
+
+        // validate the icon can actually be fetched, it may go to a random
+        // local filesystem location, or a remote server
+        URLCheckers.confirm(svgfile);
 
         // turn the svg into a document and cache results
         RenderableSVG svg = glyphCache.get(svgfile);
@@ -106,12 +108,7 @@ public class RenderableSVGCache {
         return svg;
     }
 
-    /**
-     * Splits the query string in
-     *
-     * @param url
-     * @return
-     */
+    /** Splits the query string in */
     Map<String, String> getParametersFromUrl(String url) {
         // url.getQuery won't work on file addresses
         int idx = url.indexOf("?");

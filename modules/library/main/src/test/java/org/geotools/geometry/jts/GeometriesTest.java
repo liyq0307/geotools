@@ -46,11 +46,7 @@ public class GeometriesTest {
     private static GeometryFactory geomFactory = new GeometryFactory();
 
     private static final Coordinate[] coords = {
-        new Coordinate(0, 0),
-        new Coordinate(0, 10),
-        new Coordinate(10, 10),
-        new Coordinate(10, 0),
-        new Coordinate(0, 0)
+        new Coordinate(0, 0), new Coordinate(0, 10), new Coordinate(10, 10), new Coordinate(10, 0), new Coordinate(0, 0)
     };
 
     @Test
@@ -123,7 +119,6 @@ public class GeometriesTest {
             }
         }
 
-        DerivedLine p = new DerivedLine(new CoordinateArraySequence(coords), geomFactory);
         assertEquals(Geometries.LINESTRING, Geometries.getForBinding(DerivedLine.class));
     }
 

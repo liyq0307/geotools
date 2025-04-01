@@ -22,11 +22,12 @@ package org.geotools.styling;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.util.Utilities;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
 
 /**
  * Provides a Java representation of the Font element of an SLD.
@@ -39,7 +40,7 @@ public class FontImpl implements Font, Cloneable {
 
     // private static final Logger LOGGER =
     // org.geotools.util.logging.Logging.getLogger(FontImpl.class);
-    private final List<Expression> fontFamily = new ArrayList<Expression>();
+    private final List<Expression> fontFamily = new ArrayList<>();
 
     private Expression fontSize = null;
     private Expression fontStyle = null;
@@ -48,30 +49,37 @@ public class FontImpl implements Font, Cloneable {
     /** Creates a new instance of DefaultFont */
     protected FontImpl() {}
 
+    @Override
     public List<Expression> getFamily() {
         return fontFamily;
     }
 
+    @Override
     public Expression getSize() {
         return fontSize;
     }
 
+    @Override
     public void setSize(Expression size) {
         this.fontSize = size;
     }
 
+    @Override
     public Expression getStyle() {
         return fontStyle;
     }
 
+    @Override
     public void setStyle(Expression style) {
         fontStyle = style;
     }
 
+    @Override
     public Expression getWeight() {
         return fontWeight;
     }
 
+    @Override
     public void setWeight(Expression weight) {
         fontWeight = weight;
     }
@@ -81,6 +89,7 @@ public class FontImpl implements Font, Cloneable {
      *
      * @see Cloneable#clone()
      */
+    @Override
     public Object clone() {
         try {
             // all the members are immutable expression
@@ -96,6 +105,7 @@ public class FontImpl implements Font, Cloneable {
      *
      * @return the hash code.
      */
+    @Override
     public int hashCode() {
         final int PRIME = 1000003;
         int result = 0;
@@ -120,11 +130,12 @@ public class FontImpl implements Font, Cloneable {
     }
 
     /**
-     * Compares this font with another for equality. Two fonts are equal if their family, style,
-     * weight and size are equal.
+     * Compares this font with another for equality. Two fonts are equal if their family, style, weight and size are
+     * equal.
      *
      * @return True if this and oth are equal.
      */
+    @Override
     public boolean equals(Object oth) {
         if (this == oth) {
             return true;
@@ -146,11 +157,7 @@ public class FontImpl implements Font, Cloneable {
         return false;
     }
 
-    /**
-     * Utility method to capture the default font in one place.
-     *
-     * @return
-     */
+    /** Utility method to capture the default font in one place. */
     static Font createDefault(FilterFactory filterFactory) {
         Font font = new FontImpl();
         try {
@@ -164,11 +171,12 @@ public class FontImpl implements Font, Cloneable {
         return font;
     }
 
-    public Object accept(StyleVisitor visitor, Object data) {
+    @Override
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
-    static FontImpl cast(org.opengis.style.Font font) {
+    static FontImpl cast(org.geotools.api.style.Font font) {
         if (font == null) {
             return null;
         } else if (font instanceof FontImpl) {

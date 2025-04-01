@@ -26,15 +26,15 @@ import javax.xml.namespace.QName;
 import net.opengis.wcs11.TimePeriodType;
 import net.opengis.wcs11.TimeSequenceType;
 import net.opengis.wcs11.Wcs111Factory;
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.Period;
+import org.geotools.api.temporal.Position;
 import org.geotools.gml3.GML;
 import org.geotools.temporal.object.DefaultInstant;
 import org.geotools.wcs.v1_1.WCS;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.Period;
-import org.opengis.temporal.Position;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -63,6 +63,7 @@ import org.w3c.dom.Element;
 public class TimeSequenceTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WCS.TimeSequenceType;
     }
@@ -74,6 +75,7 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return TimeSequenceType.class;
     }
@@ -85,6 +87,8 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
+    @SuppressWarnings("unchecked")
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         List<Node> timePositions = node.getChildren("timePosition");
         TimeSequenceType results = Wcs111Factory.eINSTANCE.createTimeSequenceType();
@@ -100,12 +104,10 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
             List<Node> timePeriods = node.getChildren("TimePeriod");
             if (timePeriods != null && !timePeriods.isEmpty()) {
                 for (Node timePeriodNode : timePeriods) {
-                    Instant begining =
-                            new DefaultInstant(
-                                    (Position) timePeriodNode.getChild("BeginPosition").getValue());
-                    Instant ending =
-                            new DefaultInstant(
-                                    (Position) timePeriodNode.getChild("EndPosition").getValue());
+                    Instant begining = new DefaultInstant(
+                            (Position) timePeriodNode.getChild("BeginPosition").getValue());
+                    Instant ending = new DefaultInstant(
+                            (Position) timePeriodNode.getChild("EndPosition").getValue());
 
                     // Period timePeriod = new DefaultPeriod(begining, ending);
                     TimePeriodType timePeriod = Wcs111Factory.eINSTANCE.createTimePeriodType();
@@ -142,6 +144,7 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
         return null;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) {
         List timeSequence = (List) object;
 
@@ -154,9 +157,11 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
         }
 
         if (name.getLocalPart().equals("timePosition") && timeSequence.get(0) instanceof Position) {
-            List<Position> result = new LinkedList<Position>();
+            List<Position> result = new LinkedList<>();
 
-            for (Position position : (List<Position>) timeSequence) result.add(position);
+            @SuppressWarnings("unchecked")
+            List<Position> positions = timeSequence;
+            for (Position position : positions) result.add(position);
 
             return result;
         }
@@ -164,10 +169,7 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
         return null;
     }
 
-    /**
-     * @param date
-     * @return
-     */
+    /** */
     private static Date cvtToGmt(Date date) {
         TimeZone tz = TimeZone.getDefault();
         Date ret = new Date(date.getTime() - tz.getRawOffset());

@@ -19,37 +19,39 @@ package org.geotools.jdbc;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.geotools.data.DelegatingFeatureReader;
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.DelegatingFeatureReader;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.jdbc.JoinInfo.JoinPart;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Feature reader that wraps multiple feature readers in a joining / post filtered query.
  *
  * @author Justin Deoliveira, OpenGeo
  */
-public class JDBCJoiningFilteringFeatureReader
-        implements DelegatingFeatureReader<SimpleFeatureType, SimpleFeature> {
+public class JDBCJoiningFilteringFeatureReader implements DelegatingFeatureReader<SimpleFeatureType, SimpleFeature> {
 
     FeatureReader<SimpleFeatureType, SimpleFeature> delegate;
     JoinInfo join;
     SimpleFeature next;
 
-    public JDBCJoiningFilteringFeatureReader(FeatureReader delegate, JoinInfo join) {
+    public JDBCJoiningFilteringFeatureReader(FeatureReader<SimpleFeatureType, SimpleFeature> delegate, JoinInfo join) {
         this.delegate = delegate;
         this.join = join;
     }
 
+    @Override
     public FeatureReader<SimpleFeatureType, SimpleFeature> getDelegate() {
         return delegate;
     }
 
+    @Override
     public SimpleFeatureType getFeatureType() {
         return delegate.getFeatureType();
     }
 
+    @Override
     public boolean hasNext() throws IOException {
         if (next != null) {
             return true;
@@ -79,8 +81,8 @@ public class JDBCJoiningFilteringFeatureReader
         return next != null;
     }
 
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    @Override
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         if (!hasNext()) {
             throw new NoSuchElementException("No more features");
         }
@@ -90,6 +92,7 @@ public class JDBCJoiningFilteringFeatureReader
         return f;
     }
 
+    @Override
     public void close() throws IOException {
         delegate.close();
     }

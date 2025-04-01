@@ -21,25 +21,26 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.StringTokenizer;
 import org.geotools.data.ows.AbstractGetCapabilitiesRequest;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Response;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wms.response.WMSGetCapabilitiesResponse;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class GetCapabilitiesRequestTest extends ServerTestCase {
+public class GetCapabilitiesRequestTest {
 
+    @Test
     public void testGetCapabilitiesRequest() throws Exception {
         URL testURL =
-                new URL(
-                        "http://office.refractions.net:4001/cgi-bin/mapserv?map=/opt/dra2/orthophotos/tiles.map&");
+                new URL("http://office.refractions.net:4001/cgi-bin/mapserv?map=/opt/dra2/orthophotos/tiles.map&");
         AbstractGetCapabilitiesRequest request = new Request(testURL);
         URL finalURL = request.getFinalURL();
 
         int index = finalURL.toExternalForm().lastIndexOf("?");
-        String urlWithoutQuery = null;
-        urlWithoutQuery = finalURL.toExternalForm().substring(0, index);
+        String urlWithoutQuery = finalURL.toExternalForm().substring(0, index);
 
-        assertEquals(urlWithoutQuery, "http://office.refractions.net:4001/cgi-bin/mapserv");
+        Assert.assertEquals(urlWithoutQuery, "http://office.refractions.net:4001/cgi-bin/mapserv");
 
         HashMap<String, String> map = new HashMap<>();
         map.put("VERSION", "1.1.1");
@@ -52,8 +53,11 @@ public class GetCapabilitiesRequestTest extends ServerTestCase {
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
             String[] param = token.split("=");
-
-            assertEquals((String) map.get(param[0]), param[1]);
+            if (param[0].equalsIgnoreCase("map")) {
+                Assert.assertEquals(map.get(param[0].toUpperCase()), param[1]);
+            } else {
+                Assert.assertEquals(map.get(param[0]), param[1]);
+            }
         }
     }
 
@@ -68,16 +72,18 @@ public class GetCapabilitiesRequestTest extends ServerTestCase {
         /* (non-Javadoc)
          * @see org.geotools.data.wms.request.AbstractGetCapabilitiesRequest#initVersion()
          */
+        @Override
         protected void initVersion() {
-            setProperty("VERSION", "1.1.1");
+            setProperty(processKey("VERSION"), "1.1.1");
         }
 
+        @Override
         protected void initService() {
-            setProperty("SERVICE", "WMS");
+            setProperty(processKey("SERVICE"), "WMS");
         }
 
-        public Response createResponse(HTTPResponse httpResponse)
-                throws ServiceException, IOException {
+        @Override
+        public Response createResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
             return new WMSGetCapabilitiesResponse(httpResponse, hints);
         }
     }

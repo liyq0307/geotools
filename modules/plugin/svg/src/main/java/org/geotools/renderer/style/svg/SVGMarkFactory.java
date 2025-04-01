@@ -16,8 +16,9 @@
  */
 package org.geotools.renderer.style.svg;
 
-import java.awt.*;
+import java.awt.Graphics2D;
 import java.awt.RenderingHints.Key;
+import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
@@ -25,10 +26,10 @@ import java.util.Map;
 import org.apache.batik.gvt.CompositeGraphicsNode;
 import org.apache.batik.gvt.GraphicsNode;
 import org.apache.batik.gvt.ShapeNode;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.geometry.jts.TransformedShape;
 import org.geotools.renderer.style.MarkFactory;
-import org.opengis.feature.Feature;
-import org.opengis.filter.expression.Expression;
 
 public class SVGMarkFactory implements MarkFactory {
 
@@ -43,8 +44,7 @@ public class SVGMarkFactory implements MarkFactory {
     }
 
     @Override
-    public Shape getShape(Graphics2D graphics, Expression symbolUrl, Feature feature)
-            throws Exception {
+    public Shape getShape(Graphics2D graphics, Expression symbolUrl, Feature feature) throws Exception {
         RenderableSVG svg = cache.getRenderableSVG(feature, symbolUrl, "image/svg");
         if (svg == null) {
             return null;

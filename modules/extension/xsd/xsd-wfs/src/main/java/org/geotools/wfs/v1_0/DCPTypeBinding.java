@@ -35,13 +35,11 @@ public class DCPTypeBinding extends AbstractComplexEMFBinding {
         return WFSCapabilities.DCPType;
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public Class getType() {
         return DCPType.class;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Ows10Factory ows10Factory = Ows10Factory.eINSTANCE;
@@ -67,8 +65,7 @@ public class DCPTypeBinding extends AbstractComplexEMFBinding {
         return dcpType;
     }
 
-    private RequestMethodType createRequestMethodType(
-            Ows10Factory ows10Factory, Node getOrPostNode) {
+    private RequestMethodType createRequestMethodType(Ows10Factory ows10Factory, Node getOrPostNode) {
         RequestMethodType methodType = ows10Factory.createRequestMethodType();
         String href = (String) getOrPostNode.getAttributeValue("onlineResource");
         methodType.setHref(href);

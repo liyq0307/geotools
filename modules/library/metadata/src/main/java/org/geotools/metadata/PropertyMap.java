@@ -25,8 +25,8 @@ import java.util.Set;
 import org.geotools.util.Utilities;
 
 /**
- * A view of a metadata object as a map. Keys are property names and values are the value returned
- * by the {@code getFoo()} method using reflection.
+ * A view of a metadata object as a map. Keys are property names and values are the value returned by the
+ * {@code getFoo()} method using reflection.
  *
  * @since 2.4
  * @version $Id$
@@ -63,8 +63,8 @@ final class PropertyMap extends AbstractMap<String, Object> {
     }
 
     /**
-     * Returns the value to which the specified key is mapped, or {@code null} if this map contains
-     * no mapping for the key.
+     * Returns the value to which the specified key is mapped, or {@code null} if this map contains no mapping for the
+     * key.
      */
     @Override
     public Object get(final Object key) {
@@ -84,8 +84,7 @@ final class PropertyMap extends AbstractMap<String, Object> {
      * @throws ClassCastException if the given value is not of the expected type.
      */
     @Override
-    public Object put(final String key, final Object value)
-            throws IllegalArgumentException, ClassCastException {
+    public Object put(final String key, final Object value) throws IllegalArgumentException, ClassCastException {
         return accessor.set(accessor.requiredIndexOf(key), metadata, value);
     }
 
@@ -125,11 +124,13 @@ final class PropertyMap extends AbstractMap<String, Object> {
         }
 
         /** Returns the key corresponding to this entry. */
+        @Override
         public String getKey() {
             return accessor.name(index);
         }
 
         /** Returns the value corresponding to this entry. */
+        @Override
         public Object getValue() {
             final Object value = accessor.get(index, metadata);
             return PropertyAccessor.isEmpty(value) ? null : value;
@@ -140,19 +141,19 @@ final class PropertyMap extends AbstractMap<String, Object> {
          *
          * @throws ClassCastException if the given value is not of the expected type.
          */
+        @Override
         public Object setValue(Object value) throws ClassCastException {
             return accessor.set(index, metadata, value);
         }
 
         /** Compares the specified entry with this one for equality. */
         public boolean equals(final Map.Entry<?, ?> entry) {
-            return Utilities.equals(getKey(), entry.getKey())
-                    && Utilities.equals(getValue(), entry.getValue());
+            return Utilities.equals(getKey(), entry.getKey()) && Utilities.equals(getValue(), entry.getValue());
         }
 
         /**
-         * Compares the specified object with this entry for equality. Criterions are specified by
-         * the {@link Map.Entry} contract.
+         * Compares the specified object with this entry for equality. Criterions are specified by the {@link Map.Entry}
+         * contract.
          */
         @Override
         public boolean equals(final Object object) {
@@ -160,8 +161,7 @@ final class PropertyMap extends AbstractMap<String, Object> {
         }
 
         /**
-         * Returns the hash code value for this map entry. The formula is specified by the {@link
-         * Map.Entry} contract.
+         * Returns the hash code value for this map entry. The formula is specified by the {@link Map.Entry} contract.
          */
         @Override
         public int hashCode() {
@@ -189,10 +189,7 @@ final class PropertyMap extends AbstractMap<String, Object> {
             move(0);
         }
 
-        /**
-         * Move {@link #next} to the first property with a valid value, starting at the specified
-         * index.
-         */
+        /** Move {@link #next} to the first property with a valid value, starting at the specified index. */
         private void move(int index) {
             final int count = accessor.count();
             while (index < count) {
@@ -206,11 +203,13 @@ final class PropertyMap extends AbstractMap<String, Object> {
         }
 
         /** Returns {@code true} if the iteration has more elements. */
+        @Override
         public boolean hasNext() {
             return next != null;
         }
 
         /** Returns the next element in the iteration. */
+        @Override
         public Map.Entry<String, Object> next() {
             if (next != null) {
                 current = next;
@@ -222,6 +221,7 @@ final class PropertyMap extends AbstractMap<String, Object> {
         }
 
         /** Removes from the underlying collection the last element returned by the iterator. */
+        @Override
         public void remove() {
             if (current != null) {
                 current.setValue(null);
@@ -248,6 +248,7 @@ final class PropertyMap extends AbstractMap<String, Object> {
         }
 
         /** Returns the number of elements in this collection. */
+        @Override
         public int size() {
             return accessor.count(metadata, Integer.MAX_VALUE);
         }

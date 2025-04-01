@@ -16,13 +16,12 @@
  */
 package org.geotools.sld.bindings;
 
-import java.util.Iterator;
 import javax.xml.namespace.QName;
-import org.geotools.styling.LayerFeatureConstraints;
-import org.geotools.styling.RemoteOWS;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.UserLayer;
+import org.geotools.api.style.LayerFeatureConstraints;
+import org.geotools.api.style.RemoteOWS;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.UserLayer;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -63,6 +62,7 @@ public class SLDUserLayerBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.USERLAYER;
     }
@@ -74,6 +74,7 @@ public class SLDUserLayerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -85,6 +86,7 @@ public class SLDUserLayerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return UserLayer.class;
     }
@@ -96,6 +98,7 @@ public class SLDUserLayerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -105,6 +108,7 @@ public class SLDUserLayerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         UserLayer userLayer = styleFactory.createUserLayer();
 
@@ -120,14 +124,13 @@ public class SLDUserLayerBinding extends AbstractComplexBinding {
 
         // &lt;xsd:element ref="sld:LayerFeatureConstraints"/&gt;
         if (node.hasChild("LayerFeatureConstraints")) {
-            LayerFeatureConstraints lfc =
-                    (LayerFeatureConstraints) node.getChildValue("LayerFeatureConstraints");
+            LayerFeatureConstraints lfc = (LayerFeatureConstraints) node.getChildValue("LayerFeatureConstraints");
             userLayer.setLayerFeatureConstraints(lfc.getFeatureTypeConstraints());
         }
 
         // &lt;xsd:element ref="sld:UserStyle" maxOccurs="unbounded"/&gt;
-        for (Iterator i = node.getChildValues("UserStyle").iterator(); i.hasNext(); ) {
-            userLayer.addUserStyle((Style) i.next());
+        for (Object o : node.getChildValues("UserStyle")) {
+            userLayer.addUserStyle((Style) o);
         }
 
         return userLayer;

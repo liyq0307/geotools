@@ -19,9 +19,9 @@ package org.geotools.coverageio.gdal.erdasimg;
 import it.geosolutions.imageio.plugins.erdasimg.ErdasImgImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 import org.geotools.coverageio.BaseGridFormatFactorySPI;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for ERDAS Imagine files.
@@ -30,17 +30,16 @@ import org.opengis.coverage.grid.Format;
  * @author Simone Giannecchini (simboss), GeoSolutions
  * @since 2.5.x
  */
-public final class ErdasImgFormatFactory extends BaseGridFormatFactorySPI
-        implements GridFormatFactorySpi {
+public final class ErdasImgFormatFactory extends BaseGridFormatFactorySPI implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ErdasImgFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ErdasImgFormatFactory.class);
 
     /**
      * Tells me if the coverage plugin to access Erdas imagine is available or not.
      *
      * @return {@code true} if the plugin is available, {@code false} otherwise.
      */
+    @Override
     public boolean isAvailable() {
         boolean available = true;
 
@@ -55,8 +54,7 @@ public final class ErdasImgFormatFactory extends BaseGridFormatFactorySPI
                 else LOGGER.fine("ErdasImgFormatFactory is not available.");
             }
         } catch (ClassNotFoundException cnf) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.fine("ErdasImgFormatFactory is not available.");
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("ErdasImgFormatFactory is not available.");
 
             available = false;
         }
@@ -69,6 +67,7 @@ public final class ErdasImgFormatFactory extends BaseGridFormatFactorySPI
      *
      * @return A {@link ErdasImgFormat}
      */
+    @Override
     public ErdasImgFormat createFormat() {
         return new ErdasImgFormat();
     }

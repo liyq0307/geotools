@@ -19,13 +19,14 @@ package org.geotools.xsd.impl;
 import org.geotools.xsd.Configuration;
 
 public class TypeStreamingParserHandler extends StreamingParserHandler {
-    Class type;
+    Class<?> type;
 
-    public TypeStreamingParserHandler(Configuration config, Class type) {
+    public TypeStreamingParserHandler(Configuration config, Class<?> type) {
         super(config);
         this.type = type;
     }
 
+    @Override
     protected boolean stream(ElementHandler handler) {
         return (handler.getParseNode().getValue() != null)
                 && type.isAssignableFrom(handler.getParseNode().getValue().getClass());

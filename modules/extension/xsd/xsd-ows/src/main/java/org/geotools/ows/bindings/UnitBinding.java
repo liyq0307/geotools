@@ -24,34 +24,38 @@ import org.geotools.xsd.AbstractSimpleBinding;
 import org.geotools.xsd.InstanceComponent;
 import si.uom.NonSI;
 import si.uom.SI;
-import tec.uom.se.AbstractUnit;
-import tec.uom.se.unit.AlternateUnit;
-import tec.uom.se.unit.BaseUnit;
+import tech.units.indriya.AbstractUnit;
+import tech.units.indriya.unit.AlternateUnit;
+import tech.units.indriya.unit.BaseUnit;
 
 public class UnitBinding extends AbstractSimpleBinding {
 
+    @Override
     public QName getTarget() {
         return OWS.UOM;
     }
 
+    @Override
     public Class getType() {
         return Unit.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
 
     /** @override */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         // Object parseObject = UnitFormat.getInstance().parseObject((String) value);
         // Object parseObject = UnitFormat.getAsciiInstance().parseObject((String) value);
-        Unit valueOf = lookup((String) value);
+        Unit<?> valueOf = lookup((String) value);
         return valueOf;
     }
 
-    private Unit lookup(String name) {
-        Unit unit = lookup(SI.class, name);
+    private Unit<?> lookup(String name) {
+        Unit<?> unit = lookup(SI.class, name);
         if (unit != null) return unit;
 
         unit = lookup(NonSI.class, name);
@@ -75,35 +79,35 @@ public class UnitBinding extends AbstractSimpleBinding {
     }
 
     private Unit<?> lookup(Class<?> class1, String name) {
-        Unit<?> unit = null;
+        Unit<?> unit;
         Field[] fields = class1.getDeclaredFields();
-        for (int i = 0; i < fields.length; i++) {
-            Field field = fields[i];
+        for (Field field : fields) {
             String name2 = field.getName();
             if ((field.getType().isAssignableFrom(BaseUnit.class)
                             || field.getType().isAssignableFrom(AlternateUnit.class))
                     && name2.equalsIgnoreCase(name)) {
 
                 try {
-                    unit = (Unit<?>) field.get(unit);
+                    unit = (Unit<?>) field.get(class1);
                     return unit;
                 } catch (Exception e) {
                     // continue searching
                 }
             }
         }
-        return unit;
+
+        return null;
     }
 
     /**
      * Performs the encoding of the object as a String.
      *
      * @param object The object being encoded, never null.
-     * @param value The string returned from another binding in the type hierachy, which could be
-     *     null.
+     * @param value The string returned from another binding in the type hierachy, which could be null.
      * @return A String representing the object.
      * @override
      */
+    @Override
     public String encode(Object object, String value) throws Exception {
         return object.toString();
     }

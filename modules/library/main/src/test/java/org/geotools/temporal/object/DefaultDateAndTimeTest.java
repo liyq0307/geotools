@@ -16,10 +16,15 @@
  */
 package org.geotools.temporal.object;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.*;
-import static wiremock.org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
+import org.geotools.api.temporal.DateAndTime;
+import org.geotools.api.temporal.TemporalReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.reference.DefaultTemporalReferenceSystem;
@@ -27,9 +32,6 @@ import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.DateAndTime;
-import org.opengis.temporal.TemporalReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultDateAndTimeTest {
@@ -67,7 +69,7 @@ public class DefaultDateAndTimeTest {
     @Test
     public void testGetCalendarEraName() {
         InternationalString result = dateAndTime1.getCalendarEraName();
-        assertTrue(dateAndTime2.getCalendarEraName().equals(result));
+        assertEquals(dateAndTime2.getCalendarEraName(), result);
     }
 
     /** Test of getCalendarDate method, of class DefaultDateAndTime. */
@@ -81,9 +83,8 @@ public class DefaultDateAndTimeTest {
     @Test
     public void testSetCalendarEraName() {
         InternationalString result = dateAndTime1.getCalendarEraName();
-        ((DefaultDateAndTime) dateAndTime1)
-                .setCalendarEraName(new SimpleInternationalString("new Era"));
-        assertFalse(dateAndTime1.getCalendarEraName().equals(result));
+        ((DefaultDateAndTime) dateAndTime1).setCalendarEraName(new SimpleInternationalString("new Era"));
+        assertNotEquals(dateAndTime1.getCalendarEraName(), result);
     }
 
     /** Test of setCalendarDate method, of class DefaultDateAndTime. */
@@ -107,7 +108,7 @@ public class DefaultDateAndTimeTest {
     /** Test of equals method, of class DefaultDateAndTime. */
     @Test
     public void testEquals() {
-        assertFalse(dateAndTime1.equals(null));
+        assertNotEquals(null, dateAndTime1);
         assertEquals(dateAndTime1, dateAndTime1);
     }
 
@@ -115,13 +116,13 @@ public class DefaultDateAndTimeTest {
     @Test
     public void testHashCode() {
         int result = dateAndTime1.hashCode();
-        assertFalse(dateAndTime2.hashCode() == result);
+        assertNotEquals(dateAndTime2.hashCode(), result);
     }
 
     /** Test of toString method, of class DefaultDateAndTime. */
     @Test
     public void testToString() {
         String result = dateAndTime1.toString();
-        assertFalse(dateAndTime2.toString().equals(result));
+        assertNotEquals(dateAndTime2.toString(), result);
     }
 }

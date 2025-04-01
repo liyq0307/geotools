@@ -20,25 +20,25 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_in3 extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "in3",
-                    Boolean.class,
-                    parameter("value", Object.class),
-                    parameter("in1", Object.class),
-                    parameter("in2", Object.class),
-                    parameter("in3", Object.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "in3",
+            Boolean.class,
+            parameter("value", Object.class),
+            parameter("in1", Object.class),
+            parameter("in2", Object.class),
+            parameter("in3", Object.class));
 
     public FilterFunction_in3() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
         Object arg0;
         Object arg1;
@@ -46,7 +46,7 @@ public class FilterFunction_in3 extends FunctionExpressionImpl {
         Object arg3;
 
         try { // attempt to get value and perform conversion
-            arg0 = (Object) getExpression(0).evaluate(feature);
+            arg0 = getExpression(0).evaluate(feature);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(
@@ -54,7 +54,7 @@ public class FilterFunction_in3 extends FunctionExpressionImpl {
         }
 
         try { // attempt to get value and perform conversion
-            arg1 = (Object) getExpression(1).evaluate(feature);
+            arg1 = getExpression(1).evaluate(feature);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(
@@ -62,7 +62,7 @@ public class FilterFunction_in3 extends FunctionExpressionImpl {
         }
 
         try { // attempt to get value and perform conversion
-            arg2 = (Object) getExpression(2).evaluate(feature);
+            arg2 = getExpression(2).evaluate(feature);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(
@@ -70,7 +70,7 @@ public class FilterFunction_in3 extends FunctionExpressionImpl {
         }
 
         try { // attempt to get value and perform conversion
-            arg3 = (Object) getExpression(3).evaluate(feature);
+            arg3 = getExpression(3).evaluate(feature);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

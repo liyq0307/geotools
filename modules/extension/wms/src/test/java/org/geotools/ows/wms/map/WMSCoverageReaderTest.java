@@ -7,22 +7,24 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.util.ParameterParser;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
-import org.geotools.data.ows.HTTPResponse;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.ows.MockHttpClient;
-import org.geotools.ows.MockHttpResponse;
+import org.geotools.http.HTTPResponse;
+import org.geotools.http.MockHttpClient;
+import org.geotools.http.MockHttpResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wms.Layer;
 import org.geotools.ows.wms.WebMapServer;
@@ -32,21 +34,20 @@ import org.geotools.util.factory.Hints;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class WMSCoverageReaderTest {
 
     Map<String, String> parseParams(String query) {
-        ParameterParser pp = new ParameterParser();
-        List params = pp.parse(query, '&');
-        Map<String, String> result = new HashMap<String, String>();
-        for (Iterator it = params.iterator(); it.hasNext(); ) {
-            NameValuePair pair = (NameValuePair) it.next();
+
+        List<NameValuePair> params = URLEncodedUtils.parse(query, StandardCharsets.UTF_8);
+        Map<String, String> result = new HashMap<>();
+        for (Object param : params) {
+            NameValuePair pair = (NameValuePair) param;
             result.put(pair.getName().toUpperCase(), pair.getValue());
         }
         return result;
-    };
+    }
+    ;
 
     @Before
     public void setup() {
@@ -115,34 +116,30 @@ public class WMSCoverageReaderTest {
         assertEquals(worldEnvelope, new ReferencedEnvelope(coverage.getEnvelope()));
     }
 
-    private WMSCoverageReader getReader4326wms13()
-            throws IOException, ServiceException, MalformedURLException {
+    private WMSCoverageReader getReader4326wms13() throws IOException, ServiceException, MalformedURLException {
         // prepare the responses
-        MockHttpClient client =
-                new MockHttpClient() {
+        MockHttpClient client = new MockHttpClient() {
 
-                    public HTTPResponse get(URL url) throws IOException {
-                        if (url.getQuery().contains("GetCapabilities")) {
-                            URL caps130 = WMSCoverageReaderTest.class.getResource("caps130.xml");
-                            return new MockHttpResponse(caps130, "text/xml");
-                        } else if (url.getQuery().contains("GetMap")
-                                && url.getQuery().contains("world4326")) {
-                            Map<String, String> params = parseParams(url.getQuery());
-                            assertEquals("1.3.0", params.get("VERSION"));
-                            assertEquals("-90.0,-180.0,90.0,180.0", params.get("BBOX"));
-                            assertEquals("EPSG:4326", params.get("CRS"));
-                            URL world = WMSCoverageReaderTest.class.getResource("world.png");
-                            return new MockHttpResponse(world, "image/png");
-                        } else {
-                            throw new IllegalArgumentException(
-                                    "Don't know how to handle a get request over "
-                                            + url.toExternalForm());
-                        }
-                    }
-                };
+            @Override
+            public HTTPResponse get(URL url) throws IOException {
+                if (url.getQuery().contains("GetCapabilities")) {
+                    URL caps130 = WMSCoverageReaderTest.class.getResource("caps130.xml");
+                    return new MockHttpResponse(caps130, "text/xml");
+                } else if (url.getQuery().contains("GetMap") && url.getQuery().contains("world4326")) {
+                    Map<String, String> params = parseParams(url.getQuery());
+                    assertEquals("1.3.0", params.get("VERSION"));
+                    assertEquals("-90.0,-180.0,90.0,180.0", params.get("BBOX"));
+                    assertEquals("EPSG:4326", params.get("CRS"));
+                    URL world = WMSCoverageReaderTest.class.getResource("world.png");
+                    return new MockHttpResponse(world, "image/png");
+                } else {
+                    throw new IllegalArgumentException(
+                            "Don't know how to handle a get request over " + url.toExternalForm());
+                }
+            }
+        };
         // setup the reader
-        WebMapServer server =
-                new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
+        WebMapServer server = new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
         WMSCoverageReader reader = new WMSCoverageReader(server, getLayer(server, "world4326"));
         return reader;
     }
@@ -156,36 +153,35 @@ public class WMSCoverageReaderTest {
 
         // prepare the responses
         final AtomicBoolean disposeCalled = new AtomicBoolean(false);
-        MockHttpClient client =
-                new MockHttpClient() {
+        MockHttpClient client = new MockHttpClient() {
 
-                    public HTTPResponse get(URL url) throws IOException {
-                        if (url.getQuery().contains("GetCapabilities")) {
-                            URL caps130 = WMSCoverageReaderTest.class.getResource("caps130.xml");
-                            return new MockHttpResponse(caps130, "text/xml");
-                        } else if (url.getQuery().contains("GetMap")
-                                && url.getQuery().contains("world4326")) {
-                            Map<String, String> params = parseParams(url.getQuery());
-                            assertEquals("1.3.0", params.get("VERSION"));
-                            assertEquals("-90.0,-180.0,90.0,180.0", params.get("BBOX"));
-                            assertEquals("EPSG:4326", params.get("CRS"));
-                            URL world = WMSCoverageReaderTest.class.getResource("world.png");
-                            return new MockHttpResponse(world, null) {
-                                public void dispose() {
-                                    disposeCalled.set(true);
-                                    super.dispose();
-                                };
-                            };
-                        } else {
-                            throw new IllegalArgumentException(
-                                    "Don't know how to handle a get request over "
-                                            + url.toExternalForm());
+            @Override
+            public HTTPResponse get(URL url) throws IOException {
+                if (url.getQuery().contains("GetCapabilities")) {
+                    URL caps130 = WMSCoverageReaderTest.class.getResource("caps130.xml");
+                    return new MockHttpResponse(caps130, "text/xml");
+                } else if (url.getQuery().contains("GetMap") && url.getQuery().contains("world4326")) {
+                    Map<String, String> params = parseParams(url.getQuery());
+                    assertEquals("1.3.0", params.get("VERSION"));
+                    assertEquals("-90.0,-180.0,90.0,180.0", params.get("BBOX"));
+                    assertEquals("EPSG:4326", params.get("CRS"));
+                    URL world = WMSCoverageReaderTest.class.getResource("world.png");
+                    return new MockHttpResponse(world, null) {
+                        @Override
+                        public void dispose() {
+                            disposeCalled.set(true);
+                            super.dispose();
                         }
-                    }
-                };
+                        ;
+                    };
+                } else {
+                    throw new IllegalArgumentException(
+                            "Don't know how to handle a get request over " + url.toExternalForm());
+                }
+            }
+        };
         // setup the reader
-        WebMapServer server =
-                new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
+        WebMapServer server = new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
         WMSCoverageReader reader = new WMSCoverageReader(server, getLayer(server, "world4326"));
 
         // build a getmap request and check it
@@ -208,7 +204,7 @@ public class WMSCoverageReaderTest {
     @Test
     public void test4326wms11() throws Exception {
         WMSCoverageReader reader = getReader4326wms11();
-        GeneralEnvelope original = reader.getOriginalEnvelope();
+        GeneralBounds original = reader.getOriginalEnvelope();
         CoordinateReferenceSystem wgs84 = CRS.decode("EPSG:4326", true);
         assertTrue(CRS.equalsIgnoreMetadata(wgs84, original.getCoordinateReferenceSystem()));
 
@@ -223,34 +219,30 @@ public class WMSCoverageReaderTest {
         assertEquals(worldEnvelope, new ReferencedEnvelope(coverage.getEnvelope()));
     }
 
-    private WMSCoverageReader getReader4326wms11()
-            throws IOException, ServiceException, MalformedURLException {
+    private WMSCoverageReader getReader4326wms11() throws IOException, ServiceException, MalformedURLException {
         // prepare the responses
-        MockHttpClient client =
-                new MockHttpClient() {
+        MockHttpClient client = new MockHttpClient() {
 
-                    public HTTPResponse get(URL url) throws IOException {
-                        if (url.getQuery().contains("GetCapabilities")) {
-                            URL caps130 = WMSCoverageReaderTest.class.getResource("caps110.xml");
-                            return new MockHttpResponse(caps130, "text/xml");
-                        } else if (url.getQuery().contains("GetMap")
-                                && url.getQuery().contains("world4326")) {
-                            Map<String, String> params = parseParams(url.getQuery());
-                            assertEquals("1.1.0", params.get("VERSION"));
-                            assertEquals("-180.0,-90.0,180.0,90.0", params.get("BBOX"));
-                            assertEquals("EPSG:4326", params.get("SRS"));
-                            URL world = WMSCoverageReaderTest.class.getResource("world.png");
-                            return new MockHttpResponse(world, "image/png");
-                        } else {
-                            throw new IllegalArgumentException(
-                                    "Don't know how to handle a get request over "
-                                            + url.toExternalForm());
-                        }
-                    }
-                };
+            @Override
+            public HTTPResponse get(URL url) throws IOException {
+                if (url.getQuery().contains("GetCapabilities")) {
+                    URL caps130 = WMSCoverageReaderTest.class.getResource("caps110.xml");
+                    return new MockHttpResponse(caps130, "text/xml");
+                } else if (url.getQuery().contains("GetMap") && url.getQuery().contains("world4326")) {
+                    Map<String, String> params = parseParams(url.getQuery());
+                    assertEquals("1.1.0", params.get("VERSION"));
+                    assertEquals("-180.0,-90.0,180.0,90.0", params.get("BBOX"));
+                    assertEquals("EPSG:4326", params.get("SRS"));
+                    URL world = WMSCoverageReaderTest.class.getResource("world.png");
+                    return new MockHttpResponse(world, "image/png");
+                } else {
+                    throw new IllegalArgumentException(
+                            "Don't know how to handle a get request over " + url.toExternalForm());
+                }
+            }
+        };
         // setup the reader
-        WebMapServer server =
-                new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
+        WebMapServer server = new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
         WMSCoverageReader reader = new WMSCoverageReader(server, getLayer(server, "world4326"));
         return reader;
     }
@@ -258,31 +250,27 @@ public class WMSCoverageReaderTest {
     @Test
     public void testCrs84wms13() throws Exception {
         // prepare the responses
-        MockHttpClient client =
-                new MockHttpClient() {
+        MockHttpClient client = new MockHttpClient() {
 
-                    public HTTPResponse get(URL url) throws IOException {
-                        if (url.getQuery().contains("GetCapabilities")) {
-                            URL caps130 =
-                                    WMSCoverageReaderTest.class.getResource("caps130_crs84.xml");
-                            return new MockHttpResponse(caps130, "text/xml");
-                        } else if (url.getQuery().contains("GetMap")
-                                && url.getQuery().contains("world84")) {
-                            Map<String, String> params = parseParams(url.getQuery());
-                            assertEquals("1.3.0", params.get("VERSION"));
-                            assertEquals("CRS:84", params.get("CRS"));
-                            assertEquals("-180.0,-90.0,180.0,90.0", params.get("BBOX"));
-                            URL world = WMSCoverageReaderTest.class.getResource("world.png");
-                            return new MockHttpResponse(world, "image/png");
-                        } else {
-                            throw new IllegalArgumentException(
-                                    "Don't know how to handle a get request over "
-                                            + url.toExternalForm());
-                        }
-                    }
-                };
-        WebMapServer server =
-                new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
+            @Override
+            public HTTPResponse get(URL url) throws IOException {
+                if (url.getQuery().contains("GetCapabilities")) {
+                    URL caps130 = WMSCoverageReaderTest.class.getResource("caps130_crs84.xml");
+                    return new MockHttpResponse(caps130, "text/xml");
+                } else if (url.getQuery().contains("GetMap") && url.getQuery().contains("world84")) {
+                    Map<String, String> params = parseParams(url.getQuery());
+                    assertEquals("1.3.0", params.get("VERSION"));
+                    assertEquals("CRS:84", params.get("CRS"));
+                    assertEquals("-180.0,-90.0,180.0,90.0", params.get("BBOX"));
+                    URL world = WMSCoverageReaderTest.class.getResource("world.png");
+                    return new MockHttpResponse(world, "image/png");
+                } else {
+                    throw new IllegalArgumentException(
+                            "Don't know how to handle a get request over " + url.toExternalForm());
+                }
+            }
+        };
+        WebMapServer server = new WebMapServer(new URL("http://geoserver.org/geoserver/wms"), client);
         WMSCoverageReader reader = new WMSCoverageReader(server, getLayer(server, "world84"));
 
         // setup the request and check it

@@ -31,8 +31,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStoreFinder;
 
 /**
  * Data chooser wizard page for the {@link JDataStoreWizard data store wizard}.
@@ -55,7 +55,7 @@ public class JDataChoosePage extends WizardPage implements ISelectionChangedList
         GridLayout gridLayout = new GridLayout(1, false);
         mainComposite.setLayout(gridLayout);
 
-        List<DataStoreFactorySpi> factoryList = new ArrayList<DataStoreFactorySpi>();
+        List<DataStoreFactorySpi> factoryList = new ArrayList<>();
         for (Iterator<DataStoreFactorySpi> iter = DataStoreFinder.getAvailableDataStores();
                 iter.hasNext(); ) {
             factoryList.add(iter.next());

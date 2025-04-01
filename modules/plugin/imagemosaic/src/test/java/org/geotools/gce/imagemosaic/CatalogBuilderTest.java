@@ -16,7 +16,8 @@
  */
 package org.geotools.gce.imagemosaic;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -25,6 +26,8 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.Properties;
 import javax.media.jai.PlanarImage;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -35,14 +38,12 @@ import org.geotools.gce.imagemosaic.ImageMosaicEventHandlers.ProcessingEventList
 import org.geotools.gce.imagemosaic.Utils.Prop;
 import org.geotools.gce.imagemosaic.catalog.GranuleCatalog;
 import org.geotools.gce.imagemosaic.catalogbuilder.CatalogBuilderConfiguration;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.test.TestData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
 
 /**
  * Testing {@link CatalogBuilder} and its related subclasses.
@@ -104,11 +105,11 @@ public class CatalogBuilderTest extends Assert {
         //		c2.setRootMosaicDirectory(TestData.file(this,"/rgb").toString());
         //		c2.setIndexingDirectories(Arrays.asList(TestData.file(this,"/rgb").toString()));
         //
-        assertTrue(c1.equals(c2));
+        assertEquals(c1, c2);
         assertEquals(c1.hashCode(), c2.hashCode());
 
         CatalogBuilderConfiguration c3 = c2.clone();
-        assertTrue(c3.equals(c2));
+        assertEquals(c3, c2);
         assertEquals(c3.hashCode(), c2.hashCode());
 
         // check errors
@@ -123,19 +124,10 @@ public class CatalogBuilderTest extends Assert {
             return;
         }
 
-        ImageMosaicDirectoryWalker builder = null;
-        ImageMosaicReader reader = null;
-        ParameterValue<GridGeometry2D> gg = null;
-        GeneralEnvelope envelope = null;
-        Dimension dim = null;
-        Rectangle rasterArea = null;
-        GridEnvelope2D range = null;
-        GridCoverage2D coverage = null;
         final ParameterValue<Boolean> useJai = AbstractGridFormat.USE_JAI_IMAGEREAD.createValue();
         useJai.setValue(false);
 
-        final ParameterValue<String> tileSize =
-                AbstractGridFormat.SUGGESTED_TILE_SIZE.createValue();
+        final ParameterValue<String> tileSize = AbstractGridFormat.SUGGESTED_TILE_SIZE.createValue();
         tileSize.setValue("128,128");
 
         // build a relative index and then make it run
@@ -144,7 +136,8 @@ public class CatalogBuilderTest extends Assert {
         c1.setParameter(Prop.LOCATION_ATTRIBUTE, "location");
         c1.setParameter(Prop.ABSOLUTE_PATH, "false");
         c1.setParameter(Prop.ROOT_MOSAIC_DIR, TestData.file(this, "/overview/0").toString());
-        c1.setParameter(Prop.INDEXING_DIRECTORIES, TestData.file(this, "/overview/0").toString());
+        c1.setParameter(
+                Prop.INDEXING_DIRECTORIES, TestData.file(this, "/overview/0").toString());
         //		c1.setIndexName("shpindex");
         //		c1.setLocationAttribute("location");
         //		c1.setAbsolute(false);
@@ -153,36 +146,34 @@ public class CatalogBuilderTest extends Assert {
         //	c1.setIndexingDirectories(Arrays.asList(TestData.file(this,"/overview/0").toString()));
         assertNotNull(c1.toString());
         ImageMosaicEventHandlers eventHandler = new ImageMosaicEventHandlers();
-        final ImageMosaicConfigHandler catalogHandler =
-                new ImageMosaicConfigHandler(c1, eventHandler);
+        final ImageMosaicConfigHandler catalogHandler = new ImageMosaicConfigHandler(c1, eventHandler);
         // TODO
         // build the index
-        builder = new ImageMosaicDirectoryWalker(catalogHandler, eventHandler);
+        ImageMosaicDirectoryWalker builder = new ImageMosaicDirectoryWalker(catalogHandler, eventHandler);
         eventHandler.addProcessingEventListener(new CatalogBuilderListener());
         builder.run();
-        final File relativeMosaic =
-                TestData.file(this, "/overview/" + c1.getParameter(Prop.INDEX_NAME) + ".shp");
+        final File relativeMosaic = TestData.file(this, "/overview/" + c1.getParameter(Prop.INDEX_NAME) + ".shp");
         assertTrue(relativeMosaic.exists());
 
         assertTrue(new ImageMosaicFormat().accepts(relativeMosaic));
-        reader = (ImageMosaicReader) new ImageMosaicReader(relativeMosaic);
+        ImageMosaicReader reader = new ImageMosaicReader(relativeMosaic);
 
         // limit yourself to reading just a bit of it
-        gg = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
-        envelope = reader.getOriginalEnvelope();
-        dim = new Dimension();
+        ParameterValue<GridGeometry2D> gg = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
+        GeneralBounds envelope = reader.getOriginalEnvelope();
+        Dimension dim = new Dimension();
         dim.setSize(
                 reader.getOriginalGridRange().getSpan(0) / 2.0,
                 reader.getOriginalGridRange().getSpan(1) / 2.0);
-        rasterArea = ((GridEnvelope2D) reader.getOriginalGridRange());
+        Rectangle rasterArea = ((GridEnvelope2D) reader.getOriginalGridRange());
         rasterArea.setSize(dim);
-        range = new GridEnvelope2D(rasterArea);
+        GridEnvelope2D range = new GridEnvelope2D(rasterArea);
         gg.setValue(new GridGeometry2D(range, envelope));
 
         // use imageio with defined tiles
 
         // Test the output coverage
-        coverage = (GridCoverage2D) reader.read(new GeneralParameterValue[] {gg, useJai, tileSize});
+        GridCoverage2D coverage = reader.read(new GeneralParameterValue[] {gg, useJai, tileSize});
         Assert.assertNotNull(coverage);
         PlanarImage.wrapRenderedImage(coverage.getRenderedImage()).getTiles();
 
@@ -208,7 +199,8 @@ public class CatalogBuilderTest extends Assert {
         c2.setParameter(Prop.ABSOLUTE_PATH, "true");
         c2.setParameter(Prop.CACHING, "true");
         c2.setParameter(Prop.ROOT_MOSAIC_DIR, TestData.file(this, "/overview").toString());
-        c2.setParameter(Prop.INDEXING_DIRECTORIES, TestData.file(this, "/overview").toString());
+        c2.setParameter(
+                Prop.INDEXING_DIRECTORIES, TestData.file(this, "/overview").toString());
         //		c2.setIndexName("shpindex_absolute");
         //		c2.setLocationAttribute("location");
         //		c2.setAbsolute(true);
@@ -218,21 +210,18 @@ public class CatalogBuilderTest extends Assert {
         //	c2.setIndexingDirectories(Arrays.asList(TestData.file(this,"/overview/0").toString()));
         assertNotNull(c2.toString());
         ImageMosaicEventHandlers eventHandler2 = new ImageMosaicEventHandlers();
-        final ImageMosaicConfigHandler catalogHandler2 =
-                new ImageMosaicConfigHandler(c2, eventHandler);
+        final ImageMosaicConfigHandler catalogHandler2 = new ImageMosaicConfigHandler(c2, eventHandler);
         // build the index
         builder = new ImageMosaicDirectoryWalker(catalogHandler2, eventHandler);
         eventHandler2.addProcessingEventListener(new CatalogBuilderListener());
         builder.run();
-        final File absoluteMosaic =
-                TestData.file(this, "/overview/" + c2.getParameter(Prop.INDEX_NAME) + ".shp");
+        final File absoluteMosaic = TestData.file(this, "/overview/" + c2.getParameter(Prop.INDEX_NAME) + ".shp");
         assertTrue(absoluteMosaic.exists());
 
         // caching should be false by default
         props = new Properties();
         try (InputStream in =
-                TestData.openStream(
-                        this, "/overview/" + c2.getParameter(Prop.INDEX_NAME) + ".properties")) {
+                TestData.openStream(this, "/overview/" + c2.getParameter(Prop.INDEX_NAME) + ".properties")) {
             assertNotNull("unable to find mosaic properties file", in);
             props.load(in);
 
@@ -241,7 +230,7 @@ public class CatalogBuilderTest extends Assert {
         }
 
         assertTrue(new ImageMosaicFormat().accepts(absoluteMosaic));
-        reader = (ImageMosaicReader) new ImageMosaicReader(absoluteMosaic);
+        reader = new ImageMosaicReader(absoluteMosaic);
 
         // limit yourself to reading just a bit of it
         gg = AbstractGridFormat.READ_GRIDGEOMETRY2D.createValue();
@@ -258,7 +247,7 @@ public class CatalogBuilderTest extends Assert {
         // use imageio with defined tiles
 
         // Test the output coverage
-        coverage = (GridCoverage2D) reader.read(new GeneralParameterValue[] {gg, useJai, tileSize});
+        coverage = reader.read(new GeneralParameterValue[] {gg, useJai, tileSize});
         Assert.assertNotNull(coverage);
         PlanarImage.wrapRenderedImage(coverage.getRenderedImage()).getTiles();
 
@@ -284,7 +273,8 @@ public class CatalogBuilderTest extends Assert {
         c1.setParameter(Prop.LOCATION_ATTRIBUTE, "location");
         c1.setParameter(Prop.ABSOLUTE_PATH, "false");
         c1.setParameter(Prop.ROOT_MOSAIC_DIR, TestData.file(this, "/caching").toString());
-        c1.setParameter(Prop.INDEXING_DIRECTORIES, TestData.file(this, "/caching").toString());
+        c1.setParameter(
+                Prop.INDEXING_DIRECTORIES, TestData.file(this, "/caching").toString());
 
         Properties prop = new Properties();
 
@@ -294,28 +284,25 @@ public class CatalogBuilderTest extends Assert {
             c1.setParameter(Prop.CACHING, "false");
 
             ImageMosaicEventHandlers eventHandler = new ImageMosaicEventHandlers();
-            final ImageMosaicConfigHandler catalogHandler =
-                    new ImageMosaicConfigHandler(c1, eventHandler);
+            final ImageMosaicConfigHandler catalogHandler = new ImageMosaicConfigHandler(c1, eventHandler);
             // TODO
             // build the index
             builder = new ImageMosaicDirectoryWalker(catalogHandler, eventHandler);
             eventHandler.addProcessingEventListener(new CatalogBuilderListener());
             builder.run();
-            final File relativeMosaic =
-                    TestData.file(this, "/caching/" + c1.getParameter(Prop.INDEX_NAME) + ".shp");
+            final File relativeMosaic = TestData.file(this, "/caching/" + c1.getParameter(Prop.INDEX_NAME) + ".shp");
             final File propertiesFile =
-                    TestData.file(
-                            this, "/caching/" + c1.getParameter(Prop.INDEX_NAME) + ".properties");
+                    TestData.file(this, "/caching/" + c1.getParameter(Prop.INDEX_NAME) + ".properties");
             assertTrue(relativeMosaic.exists());
             try (InputStream inStream = new FileInputStream(propertiesFile)) {
                 prop.load(inStream);
             }
             String value = prop.getProperty("Caching");
             assertNotNull(value);
-            assertTrue(value.toLowerCase().equals("false"));
+            assertEquals("false", value.toLowerCase());
 
             assertTrue(new ImageMosaicFormat().accepts(relativeMosaic));
-            reader = (ImageMosaicReader) new ImageMosaicReader(relativeMosaic);
+            reader = new ImageMosaicReader(relativeMosaic);
 
             GranuleCatalog catalog = reader.getRasterManager(reader.defaultName).granuleCatalog;
             assertTrue(catalog.getClass().toString().endsWith("GTDataStoreGranuleCatalog"));
@@ -335,30 +322,27 @@ public class CatalogBuilderTest extends Assert {
             c1.setParameter(Prop.CACHING, "true");
 
             ImageMosaicEventHandlers eventHandler = new ImageMosaicEventHandlers();
-            final ImageMosaicConfigHandler catalogHandler =
-                    new ImageMosaicConfigHandler(c1, eventHandler);
+            final ImageMosaicConfigHandler catalogHandler = new ImageMosaicConfigHandler(c1, eventHandler);
             // TODO
             // build the index
             builder = new ImageMosaicDirectoryWalker(catalogHandler, eventHandler);
             eventHandler.addProcessingEventListener(new CatalogBuilderListener());
             builder.run();
-            final File relativeMosaic =
-                    TestData.file(this, "/caching/" + c1.getParameter(Prop.INDEX_NAME) + ".shp");
+            final File relativeMosaic = TestData.file(this, "/caching/" + c1.getParameter(Prop.INDEX_NAME) + ".shp");
             final File propertiesFile =
-                    TestData.file(
-                            this, "/caching/" + c1.getParameter(Prop.INDEX_NAME) + ".properties");
+                    TestData.file(this, "/caching/" + c1.getParameter(Prop.INDEX_NAME) + ".properties");
             try (InputStream inStream = new FileInputStream(propertiesFile)) {
                 prop.load(inStream);
             }
 
             String value = prop.getProperty("Caching");
             assertNotNull(value);
-            assertTrue(value.toLowerCase().equals("true"));
+            assertEquals("true", value.toLowerCase());
 
             assertTrue(relativeMosaic.exists());
 
             assertTrue(new ImageMosaicFormat().accepts(relativeMosaic));
-            reader = (ImageMosaicReader) new ImageMosaicReader(relativeMosaic);
+            reader = new ImageMosaicReader(relativeMosaic);
 
             GranuleCatalog catalog = reader.getRasterManager(reader.defaultName).granuleCatalog;
             assertTrue(catalog.getClass().toString().endsWith("STRTreeGranuleCatalog"));

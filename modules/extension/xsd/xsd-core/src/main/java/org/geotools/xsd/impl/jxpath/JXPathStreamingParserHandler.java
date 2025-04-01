@@ -17,12 +17,9 @@
 package org.geotools.xsd.impl.jxpath;
 
 import java.util.Iterator;
-import org.apache.commons.jxpath.JXPathContext;
-import org.apache.commons.jxpath.JXPathContextFactory;
 import org.apache.commons.jxpath.JXPathIntrospector;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Node;
-import org.geotools.xsd.impl.DocumentHandler;
 import org.geotools.xsd.impl.ElementHandler;
 import org.geotools.xsd.impl.NodeImpl;
 import org.geotools.xsd.impl.StreamingParserHandler;
@@ -37,6 +34,7 @@ public class JXPathStreamingParserHandler extends StreamingParserHandler {
         this.xpath = xpath;
     }
 
+    @Override
     protected boolean stream(ElementHandler handler) {
         // create an xpath context from the root element
         // TODO: cache the context, should work just the same
@@ -46,12 +44,8 @@ public class JXPathStreamingParserHandler extends StreamingParserHandler {
 
         //        ElementHandler rootHandler =
         //        	((DocumentHandler) handlers.firstElement()).getDocumentElementHandler();
-        Node root = ((DocumentHandler) handlers.firstElement()).getParseNode();
-        JXPathContext jxpContext = JXPathContextFactory.newInstance().newContext(null, root);
-
-        jxpContext.setLenient(true);
-
-        Iterator itr = jxpContext.iterate(xpath);
+        Node root = handlers.firstElement().getParseNode();
+        Iterator itr = JXPathUtils.newSafeContext(root, true).iterate(xpath);
 
         while (itr.hasNext()) {
             Object obj = itr.next();

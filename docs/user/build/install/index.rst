@@ -7,7 +7,6 @@ Install Build Tools
    jdk
    mvn
    git
-   ojdbc
    sphinx
 
 Download Links
@@ -18,53 +17,68 @@ downloading now before proceeding on to the step by step install instructions.
 
 The following tools are required to build GeoTools:
 
-* Apache Maven 3.2.1
+1. Required: Java Development Kit 11 (JDK 11)
   
-  Apache build tool used for GeoTools. Excels at managing dependencies.
+   Open JDK:
   
-  * http://maven.apache.org/download.html  
+   * https://adoptium.net/temurin/releases/?version=11 Temurin 11 (LTS) - Recommended
+  
+   `SDKMAN! <https://sdkman.io>`__ installation:
+   
+   .. code-block:: bash
+   
+      # list to determine latest Temurin JDK 11
+      sdk list java 11
+   
+      # Installing latest Temurin JDK 11 shown above
+      sdk install java 11.0.20.1-tem
 
-* Java Development Kit 8 (JDK 8)
+2. Optional: Java Development Kit 17 (JDK 17)
   
-  * http://www.oracle.com/technetwork/java/javase/downloads/
+   Open JDK:
+  
+   * https://adoptium.net/temurin/releases/?version=17 Temurin 17 (LTS)
 
-The following optional downloads provide increased functionality or performance:
+   `SDKMAN! <https://sdkman.io>`__ installation:
+   
+   .. code-block:: bash
+   
+      # list to determine latest Temurin JDK 17
+      sdk list java 17
+   
+      # Installing latest Temurin JDK 11 shown above
+      sdk install java 17.0.8.1-tem
+   
+   GeoTools build process takes advantage of quality assurance tools compatible with the JDK you have installed.
+   Pull-requests are tested with both JDK 11 and JDK 17.
 
-* Java Advanced Imaging (Optional)
-  
-  Java Advanced Imaging API 1.1.3 is a Java extension for image processing.
-  
-  * http://download.java.net/media/jai/builds/release/1_1_3/
-  
+   It is recommended you have both JDK 11 and JDK 17 both on hand troubleshoot QA failures.
 
-* Java ImageIO (Optional)
+3. Apache Maven
   
-  Java Image I/O Tools 1.1 is a Java extension providing drivers for reading and writing
-  image files.
+   Maven is the primary build tool used for GeoTools.
+   
+   Maven excels at downloading and managing dependencies.
+   Jars are staged in your home directory :file:`.m2/repository` folder for use when building.
+     
+   * http://maven.apache.org/download.html
+   
+  `SDKMAN! <https://sdkman.io>`__ installation:
   
-  * http://download.java.net/media/jai-imageio/builds/release/1.1/
+   .. code-block:: bash
+   
+      sdk install maven
 
-* Java ImageIO-Ext (Optional)
+4. Optional: Apache Ant
   
-  Allows the JAI subsystem to read geospatial raster files such as GeoTiff.
-
-  * http://java.net/projects/imageio-ext/downloads
-
-* Oracle (Optional):
-    
-  * Obtain a jdbc jar from Oracle or your Oracle installation
-
-* DB2 (Optional)
-
-  DB2 Jdbc Driver
+   A few update scripts and build integration scripts use Apache Ant.
+   
+   Apache Ant provides a cross-platform `Makefile` of build targets .. with all the usability of XML.
   
-  * https://www-304.ibm.com/support/docview.wss?uid=swg27016878&wv=1
+   * https://ant.apache.org/bindownload.cgi
+   
+  `SDKMAN! <https://sdkman.io>`__ installation:
   
-  DB2 Express-C and Spatial Extender
-  
-  * http://www-01.ibm.com/software/data/db2/express/download.html
-
-* ArcSDE (Optional):
-  
-  Not available for download - Included on CD
-
+   .. code-block:: bash
+   
+      sdk install ant

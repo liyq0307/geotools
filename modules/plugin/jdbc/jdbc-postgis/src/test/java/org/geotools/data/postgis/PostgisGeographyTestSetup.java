@@ -31,14 +31,10 @@ public class PostgisGeographyTestSetup extends JDBCGeographyTestSetup {
 
     @Override
     protected void createGeoPointTable() throws Exception {
-        run(
-                "CREATE TABLE geopoint ( id SERIAL PRIMARY KEY, name VARCHAR(64), geo GEOGRAPHY(POINT,4326))");
-        run(
-                "INSERT INTO geopoint(name, geo) VALUES ('Town', ST_GeographyFromText('SRID=4326;POINT(-110 30)'))");
-        run(
-                "INSERT INTO geopoint(name, geo) VALUES ('Forest', ST_GeographyFromText('SRID=4326;POINT(-109 29)'))");
-        run(
-                "INSERT INTO geopoint(name, geo) VALUES ('London', ST_GeographyFromText('SRID=4326;POINT(0 49)') )");
+        run("CREATE TABLE geopoint ( id SERIAL PRIMARY KEY, name VARCHAR(64), geo GEOGRAPHY(POINT,4326))");
+        run("INSERT INTO geopoint(name, geo) VALUES ('Town', ST_GeographyFromText('SRID=4326;POINT(-110 30)'))");
+        run("INSERT INTO geopoint(name, geo) VALUES ('Forest', ST_GeographyFromText('SRID=4326;POINT(-109 29)'))");
+        run("INSERT INTO geopoint(name, geo) VALUES ('London', ST_GeographyFromText('SRID=4326;POINT(0 49)') )");
     }
 
     @Override
@@ -48,29 +44,20 @@ public class PostgisGeographyTestSetup extends JDBCGeographyTestSetup {
 
     @Override
     public boolean isGeographySupportAvailable() throws Exception {
-        Connection cx = null;
-        Statement st = null;
-        ResultSet rs = null;
-        try {
-            cx = getDataSource().getConnection();
-            st = cx.createStatement();
-            rs = st.executeQuery("select PostGIS_Lib_Version()");
+        try (Connection cx = getDataSource().getConnection();
+                Statement st = cx.createStatement();
+                ResultSet rs = st.executeQuery("select PostGIS_Lib_Version()")) {
             if (rs.next()) {
                 return new Version(rs.getString(1)).compareTo(new Version("1.5.0")) >= 0;
             } else {
                 return true;
             }
-        } finally {
-            rs.close();
-            st.close();
-            cx.close();
         }
     }
 
     @Override
     protected void createGeoLineTable() throws Exception {
-        run(
-                "CREATE TABLE geoline ( id SERIAL PRIMARY KEY, name VARCHAR(64), geo GEOGRAPHY(LINESTRING,4326))");
+        run("CREATE TABLE geoline ( id SERIAL PRIMARY KEY, name VARCHAR(64), geo GEOGRAPHY(LINESTRING,4326))");
         run(
                 "INSERT INTO geoline(name, geo) VALUES ('theline', ST_GeographyFromText('SRID=4326;LINESTRING(0 0, 1 1, 2 2, 3 3, 4 4)'))");
     }

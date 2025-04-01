@@ -31,9 +31,9 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
+import org.geotools.api.style.Style;
 import org.geotools.styling.StyleBuilder;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
  * This is here to save me some typing and ensure that the simple raster and feature configurators
@@ -99,8 +99,6 @@ public class AbstractSimpleConfigurator extends Dialog {
      * <p>Creates a composite with a grid layout of the specifed columns, and a label with text from
      * label.
      *
-     * @param parent
-     * @param label
      * @return Composite with one label
      */
     public static Composite subpart(Composite parent, String label) {
@@ -146,7 +144,6 @@ public class AbstractSimpleConfigurator extends Dialog {
      * <p>However this does seem to be in keeping with the purpose of SelectionEvent it already
      * isolates out code from TypedEvents by providing a summary of what changed in which widet.
      *
-     * @param e
      * @return A SelectionEvent based on the provided modify event
      */
     public static SelectionEvent selectionEvent(final ModifyEvent e) {

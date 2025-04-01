@@ -20,24 +20,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.data.DataUtilities;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.filter.IllegalFilterException;
-import org.geotools.filter.LengthFunction;
 import org.geotools.util.Classes;
 import org.geotools.util.SimpleInternationalString;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /**
  * Builder for attribute types and descriptors.
@@ -105,7 +102,7 @@ public class AttributeTypeBuilder {
     /** restrictions */
     protected List<Filter> restrictions;
     /** string description */
-    protected String description;
+    protected InternationalString description;
     /** identifiable flag */
     protected boolean isIdentifiable = false;
     /** bound java class */
@@ -125,29 +122,24 @@ public class AttributeTypeBuilder {
     // AttributeDescriptor
     //
     /**
-     * Minimum number of occurrences allowed. See minOccurs() function for the default value based
-     * on nillable if not explicitly set.
+     * Minimum number of occurrences allowed. See minOccurs() function for the default value based on nillable if not
+     * explicitly set.
      */
     protected Integer minOccurs = null;
 
-    /**
-     * Maximum number of occurrences allowed. See maxOccurs() function for the default value (of 1).
-     */
+    /** Maximum number of occurrences allowed. See maxOccurs() function for the default value (of 1). */
     protected Integer maxOccurs = null;
 
     /**
      * True if value is allowed to be null.
      *
-     * <p>Depending on this value minOccurs, maxOccurs and defaultValue() will return different
-     * results.
+     * <p>Depending on this value minOccurs, maxOccurs and defaultValue() will return different results.
      *
      * <p>The default value is <code>true</code>.
      */
     protected boolean isNillable = true;
 
-    /**
-     * If this value is set an additional restriction will be added based on the length function.
-     */
+    /** If this value is set an additional restriction will be added based on the length function. */
     protected Integer length = null;
 
     /** User data for the attribute. */
@@ -155,6 +147,9 @@ public class AttributeTypeBuilder {
 
     /** filter factory */
     protected FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
+
+    /** The list of valid values for attributes described by this type (enumeration). */
+    private List<?> options;
 
     /** Constructs the builder. */
     public AttributeTypeBuilder() {
@@ -177,8 +172,7 @@ public class AttributeTypeBuilder {
     /**
      * Resets all builder state used to build the attribute type.
      *
-     * <p>This method is called automatically after {@link #buildType()} and {@link
-     * #buildGeometryType()}.
+     * <p>This method is called automatically after {@link #buildType()} and {@link #buildGeometryType()}.
      */
     protected void resetTypeState() {
         name = null;
@@ -199,9 +193,11 @@ public class AttributeTypeBuilder {
         minOccurs = null;
         maxOccurs = null;
         isNillable = true;
-        userData = new HashMap<Object, Object>();
+        userData = new HashMap<>();
         defaultValue = null;
         isDefaultValueSet = false;
+        length = null;
+        options = null;
     }
 
     public AttributeTypeBuilder setFactory(FeatureTypeFactory factory) {
@@ -220,7 +216,7 @@ public class AttributeTypeBuilder {
             restrictions().addAll(type.getRestrictions());
         }
 
-        description = type.getDescription() != null ? type.getDescription().toString() : null;
+        description = type.getDescription();
         isIdentifiable = type.isIdentified();
         binding = type.getBinding();
         superType = type.getSuper();
@@ -265,6 +261,10 @@ public class AttributeTypeBuilder {
     }
 
     public void setDescription(String description) {
+        this.description = description != null ? new SimpleInternationalString(description) : null;
+    }
+
+    public void setDescription(InternationalString description) {
         this.description = description;
     }
 
@@ -348,6 +348,20 @@ public class AttributeTypeBuilder {
         return this;
     }
 
+    /**
+     * Sets a list of possible valid values for the attribute type being built, and returns a reference to the builder
+     * itself
+     */
+    public AttributeTypeBuilder options(List<?> options) {
+        setOptions(options);
+        return this;
+    }
+
+    /** Sets a list of possible valid values for the attribute type being built */
+    public void setOptions(List<?> options) {
+        this.options = options;
+    }
+
     public AttributeTypeBuilder restriction(Filter restriction) {
         addRestriction(restriction);
         return this;
@@ -381,6 +395,11 @@ public class AttributeTypeBuilder {
         return this;
     }
 
+    public AttributeTypeBuilder superType(AttributeType superType) {
+        this.superType = superType;
+        return this;
+    }
+
     // construction methods
     //
 
@@ -395,29 +414,16 @@ public class AttributeTypeBuilder {
             restrictions().add(lengthRestriction);
         }
 
-        AttributeType type =
-                factory.createAttributeType(
-                        name(),
-                        binding,
-                        isIdentifiable,
-                        isAbstract,
-                        restrictions(),
-                        superType,
-                        description());
+        if (options != null && !options.isEmpty()) {
+            Filter optionsRestriction = FeatureTypes.createFieldOptions(options);
+            restrictions().add(optionsRestriction);
+        }
+
+        AttributeType type = factory.createAttributeType(
+                name(), binding, isIdentifiable, isAbstract, restrictions(), superType, description());
         resetTypeState();
 
         return type;
-    }
-
-    protected String typeName() {
-        if (name == null) {
-            return Classes.getShortName(binding);
-        }
-        return name;
-    }
-
-    private InternationalString description() {
-        return description != null ? new SimpleInternationalString(description) : null;
     }
 
     /**
@@ -426,38 +432,43 @@ public class AttributeTypeBuilder {
      * <p>This method resets all state after the attribute is built.
      */
     public GeometryType buildGeometryType() {
-        GeometryType type =
-                factory.createGeometryType(
-                        name(),
-                        binding,
-                        crs,
-                        isIdentifiable,
-                        isAbstract,
-                        restrictions(),
-                        superType,
-                        description());
+        GeometryType type = factory.createGeometryType(
+                name(), binding, crs, isIdentifiable, isAbstract, restrictions(), superType, description());
 
         resetTypeState();
 
         return type;
     }
 
+    private Name name() {
+        if (name == null) {
+            name = Classes.getShortName(binding);
+        }
+        return separator == null ? new NameImpl(namespaceURI, name) : new NameImpl(namespaceURI, separator, name);
+    }
+
+    private InternationalString description() {
+        return description;
+    }
+
     /**
      * Builds an attribute descriptor first building an attribute type from internal state.
      *
-     * <p>If {@link #crs} has been set via {@link #setCRS(CoordinateReferenceSystem)} the internal
-     * attribute type will be built via {@link #buildGeometryType()}, otherwise it will be built via
-     * {@link #buildType()}.
+     * <p>If {@link #crs} has been set via {@link #setCRS(CoordinateReferenceSystem)}, or {@link #binding} is of
+     * Geometry. The internal attribute type will be built via {@link #buildGeometryType()}, and
+     * {@link #buildDescriptor(String, GeometryType)} will be called.
      *
-     * <p>This method calls through to {@link #buildDescriptor(String, AttributeType)}.
+     * <p>Otherwise it will be built via {@link #buildType()}, and {@link #buildDescriptor(String, AttributeType)} will
+     * be called.
      *
      * @param name The name of the descriptor.
      * @see #buildDescriptor(String, AttributeType)
+     * @throws IllegalStateException If no binding is set
      */
     public AttributeDescriptor buildDescriptor(String name) {
-        setName(name);
-        if (binding == null)
+        if (binding == null) {
             throw new IllegalStateException("No binding has been provided for this attribute");
+        }
         if (crs != null || Geometry.class.isAssignableFrom(binding)) {
             return buildDescriptor(name, buildGeometryType());
         } else {
@@ -493,8 +504,7 @@ public class AttributeTypeBuilder {
 
         // build the descriptor
         AttributeDescriptor descriptor =
-                factory.createAttributeDescriptor(
-                        type, name, minOccurs(), maxOccurs(), isNillable, defaultValue());
+                factory.createAttributeDescriptor(type, name, minOccurs(), maxOccurs(), isNillable, defaultValue());
 
         // set the user data
         descriptor.getUserData().putAll(userData);
@@ -504,8 +514,7 @@ public class AttributeTypeBuilder {
 
     public GeometryDescriptor buildDescriptor(Name name, GeometryType type) {
         GeometryDescriptor descriptor =
-                factory.createGeometryDescriptor(
-                        type, name, minOccurs(), maxOccurs(), isNillable, defaultValue());
+                factory.createGeometryDescriptor(type, name, minOccurs(), maxOccurs(), isNillable, defaultValue());
 
         // set the user data
         descriptor.getUserData().putAll(userData);
@@ -536,14 +545,6 @@ public class AttributeTypeBuilder {
         return maxOccurs;
     }
 
-    private Name name() {
-        if (separator == null) {
-            return new NameImpl(namespaceURI, typeName());
-        } else {
-            return new NameImpl(namespaceURI, separator, typeName());
-        }
-    }
-
     private Object defaultValue() {
         if (defaultValue == null && !isNillable && binding != null) {
             defaultValue = DataUtilities.defaultValue(binding);
@@ -556,7 +557,7 @@ public class AttributeTypeBuilder {
 
     protected List<Filter> restrictions() {
         if (restrictions == null) {
-            restrictions = new ArrayList<Filter>();
+            restrictions = new ArrayList<>();
         }
 
         return restrictions;
@@ -564,20 +565,6 @@ public class AttributeTypeBuilder {
 
     /** Helper method to create a "length" filter. */
     protected Filter lengthRestriction(int length) {
-        if (length < 0) {
-            return null;
-        }
-        LengthFunction lengthFunction =
-                (LengthFunction) ff.function("LengthFunction", new Expression[] {ff.property(".")});
-        if (lengthFunction == null) {
-            return null;
-        }
-        Filter cf = null;
-        try {
-            cf = ff.lessOrEqual(lengthFunction, ff.literal(length));
-        } catch (IllegalFilterException e) {
-            // TODO something
-        }
-        return cf == null ? Filter.EXCLUDE : cf;
+        return FeatureTypes.createLengthRestriction(length);
     }
 }

@@ -25,10 +25,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Join;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Join;
-import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureIterator;
@@ -38,11 +43,6 @@ import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
 
 /**
  * A FeatureCollection that completely delegates to a backing FetaureSource#getReader
@@ -70,8 +70,7 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
 
         // retype feature type if necessary
         if (query.getPropertyNames() != Query.ALL_NAMES) {
-            this.featureType =
-                    SimpleFeatureTypeBuilder.retype(this.featureType, query.getPropertyNames());
+            this.featureType = SimpleFeatureTypeBuilder.retype(this.featureType, query.getPropertyNames());
         }
         // Check for change in coordinate reference system
         // (Even if featureSource.canReproject the feature reader, we will need to adjust the
@@ -79,17 +78,12 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
         try {
             if (query.getCoordinateSystemReproject() != null) {
                 this.featureType =
-                        FeatureTypes.transform(
-                                this.featureType, query.getCoordinateSystemReproject());
+                        FeatureTypes.transform(this.featureType, query.getCoordinateSystemReproject(), false, true);
             } else if (query.getCoordinateSystem() != null) {
-                this.featureType =
-                        FeatureTypes.transform(this.featureType, query.getCoordinateSystem());
+                this.featureType = FeatureTypes.transform(this.featureType, query.getCoordinateSystem(), false, true);
             }
         } catch (SchemaException e) {
-            LOGGER.log(
-                    Level.FINER,
-                    "Problem handling Query change of CoordinateReferenceSystem:" + e,
-                    e);
+            LOGGER.log(Level.FINER, "Problem handling Query change of CoordinateReferenceSystem:" + e, e);
         }
 
         // check for join and expand attributes as necessary
@@ -113,13 +107,15 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
         }
     }
 
+    @Override
     public SimpleFeatureType getSchema() {
         return featureType;
     }
 
     // Visitors
+    @Override
     public void accepts(
-            org.opengis.feature.FeatureVisitor visitor, org.opengis.util.ProgressListener progress)
+            org.geotools.api.feature.FeatureVisitor visitor, org.geotools.api.util.ProgressListener progress)
             throws IOException {
         featureSource.accepts(query, visitor, progress);
     }
@@ -133,6 +129,7 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
             this.delegate = delegate;
         }
 
+        @Override
         public boolean hasNext() {
             try {
                 return delegate.hasNext();
@@ -141,6 +138,7 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
             }
         }
 
+        @Override
         public SimpleFeature next() throws java.util.NoSuchElementException {
             try {
                 return delegate.next();
@@ -149,6 +147,7 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
             }
         }
 
+        @Override
         public void close() {
             try {
                 delegate.close();
@@ -158,16 +157,17 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
         }
     }
 
+    @Override
     public SimpleFeatureIterator features() {
         try {
             return new WrappingFeatureIterator(featureSource.getReader(query));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
+    @Override
     public ReferencedEnvelope getBounds() {
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader = null;
         try {
             ReferencedEnvelope result = featureSource.getBounds(query);
             if (result != null) {
@@ -177,50 +177,43 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
             // ops, we have to compute the results by hand. Let's load just the
             // geometry attributes though
             Query q = new Query(query);
-            List<String> geometries = new ArrayList<String>();
+            List<String> geometries = new ArrayList<>();
             for (AttributeDescriptor ad : getSchema().getAttributeDescriptors()) {
                 if (ad instanceof GeometryDescriptor) {
                     geometries.add(ad.getLocalName());
                 }
             }
             // no geometries, no bounds
-            if (geometries.size() == 0) {
+            if (geometries.isEmpty()) {
                 return new ReferencedEnvelope();
             } else {
                 q.setPropertyNames(geometries);
             }
             // grab the features and scan through them
-            reader = featureSource.getReader(q);
-            while (reader.hasNext()) {
-                SimpleFeature f = reader.next();
-                ReferencedEnvelope featureBounds = ReferencedEnvelope.reference(f.getBounds());
-                if (result == null) {
-                    result = featureBounds;
-                } else if (featureBounds != null) {
-                    result.expandToInclude(featureBounds);
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader = featureSource.getReader(q)) {
+                while (reader.hasNext()) {
+                    SimpleFeature f = reader.next();
+                    ReferencedEnvelope featureBounds = ReferencedEnvelope.reference(f.getBounds());
+                    if (result == null) {
+                        result = featureBounds;
+                    } else if (featureBounds != null) {
+                        result.expandToInclude(featureBounds);
+                    }
                 }
-            }
-            // return the results if we got any, or return an empty one otherwise
-            if (result != null) {
-                return result;
-            } else {
-                return ReferencedEnvelope.create(getSchema().getCoordinateReferenceSystem());
+                // return the results if we got any, or return an empty one otherwise
+                if (result != null) {
+                    return result;
+                } else {
+                    return ReferencedEnvelope.create(getSchema().getCoordinateReferenceSystem());
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException ex) {
-                    // we tried...
-                }
-            }
         }
     }
 
+    @Override
     public int size() {
-        FeatureReader<?, ?> fr = null;
         try {
             int size = featureSource.getCount(query);
             if (size >= 0) {
@@ -236,24 +229,17 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
                     q.setPropertyNames(Collections.singletonList(chosen.getLocalName()));
                 }
                 // bean counting...
-                fr = featureSource.getReader(q);
-                int count = 0;
-                while (fr.hasNext()) {
-                    fr.next();
-                    count++;
+                try (FeatureReader<?, ?> fr = featureSource.getReader(q)) {
+                    int count = 0;
+                    while (fr.hasNext()) {
+                        fr.next();
+                        count++;
+                    }
+                    return count;
                 }
-                return count;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            if (fr != null) {
-                try {
-                    fr.close();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
         }
     }
 
@@ -268,19 +254,13 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
     }
 
     /**
-     * Quick heuristic used to find a small attribute to use when scanning over the entire
-     * collection just to get the size of the collection. The result is indicative, just an
-     * heuristic to quickly compare attributes in order to find a suitably small one, it's not meant
-     * to be the actual size of an attribute in bytes.
-     *
-     * @param ad
-     * @return
+     * Quick heuristic used to find a small attribute to use when scanning over the entire collection just to get the
+     * size of the collection. The result is indicative, just an heuristic to quickly compare attributes in order to
+     * find a suitably small one, it's not meant to be the actual size of an attribute in bytes.
      */
     int size(AttributeDescriptor ad) {
         Class<?> binding = ad.getType().getBinding();
-        if (binding.isPrimitive()
-                || Number.class.isAssignableFrom(binding)
-                || Date.class.isAssignableFrom(binding)) {
+        if (binding.isPrimitive() || Number.class.isAssignableFrom(binding) || Date.class.isAssignableFrom(binding)) {
             return 4;
         } else if (binding.equals(String.class)) {
             int fieldLen = FeatureTypes.getFieldLength(ad);
@@ -296,6 +276,7 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
         }
     }
 
+    @Override
     public boolean isEmpty() {
         // build a minimal query
         Query notEmptyQuery = new Query(query);
@@ -303,16 +284,12 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
 
         AttributeDescriptor smallAttribute = getSmallAttributeInSchema();
         if (smallAttribute != null) {
-            notEmptyQuery.setPropertyNames(
-                    Collections.singletonList(smallAttribute.getLocalName()));
+            notEmptyQuery.setPropertyNames(Collections.singletonList(smallAttribute.getLocalName()));
         }
 
         try {
-            FeatureReader<?, ?> fr = featureSource.getReader(notEmptyQuery);
-            try {
+            try (FeatureReader<?, ?> fr = featureSource.getReader(notEmptyQuery)) {
                 return !fr.hasNext();
-            } finally {
-                fr.close();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -326,14 +303,16 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
         throw new UnsupportedOperationException("read only");
     }
 
-    public SimpleFeatureCollection sort(org.opengis.filter.sort.SortBy sort) {
+    @Override
+    public SimpleFeatureCollection sort(org.geotools.api.filter.sort.SortBy sort) {
         Query query = new Query();
-        query.setSortBy(new org.opengis.filter.sort.SortBy[] {sort});
+        query.setSortBy(sort);
 
         query = DataUtilities.mixQueries(this.query, query, null);
         return new ContentFeatureCollection(featureSource, query);
     }
 
+    @Override
     public SimpleFeatureCollection subCollection(Filter filter) {
         Query query = new Query();
         query.setFilter(filter);
@@ -351,17 +330,16 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
     /**
      * Returns <tt>true</tt> if this collection contains the specified element. <tt></tt>.
      *
-     * <p>This implementation iterates over the elements in the collection, checking each element in
-     * turn for equality with the specified element.
+     * <p>This implementation iterates over the elements in the collection, checking each element in turn for equality
+     * with the specified element.
      *
      * @param o object to be checked for containment in this collection.
      * @return <tt>true</tt> if this collection contains the specified element.
      */
+    @Override
     public boolean contains(Object o) {
         // TODO: base this on reader
-        SimpleFeatureIterator e = null;
-        try {
-            e = this.features();
+        try (SimpleFeatureIterator e = this.features()) {
             if (o == null) {
                 while (e.hasNext()) {
                     if (e.next() == null) {
@@ -376,24 +354,19 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
                 }
             }
             return false;
-        } finally {
-            if (e != null) {
-                e.close();
-            }
         }
     }
     /**
-     * Returns <tt>true</tt> if this collection contains all of the elements in the specified
-     * collection.
+     * Returns <tt>true</tt> if this collection contains all of the elements in the specified collection.
      *
      * <p>
      *
      * @param c collection to be checked for containment in this collection.
-     * @return <tt>true</tt> if this collection contains all of the elements in the specified
-     *     collection.
+     * @return <tt>true</tt> if this collection contains all of the elements in the specified collection.
      * @throws NullPointerException if the specified collection is null.
      * @see #contains(Object)
      */
+    @Override
     public boolean containsAll(Collection<?> c) {
         Iterator<?> e = c.iterator();
         try {
@@ -431,8 +404,7 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
         //                return false; // nothing to do; we can only remove features
         //            }
         //        }
-        throw new UnsupportedOperationException(
-                "Content is not writable; FeatureStore not available");
+        throw new UnsupportedOperationException("Content is not writable; FeatureStore not available");
     }
 
     /**
@@ -440,35 +412,27 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
      *
      * @return an array containing all of the elements in this collection.
      */
+    @Override
     public Object[] toArray() {
         // code based on AbstractFeatureCollection
         // TODO: base this on reader
-        ArrayList<SimpleFeature> array = new ArrayList<SimpleFeature>();
-        FeatureIterator<SimpleFeature> e = null;
-        try {
-            e = features();
+        ArrayList<SimpleFeature> array = new ArrayList<>();
+        try (FeatureIterator<SimpleFeature> e = features()) {
             while (e.hasNext()) {
                 array.add(e.next());
             }
             return array.toArray(new SimpleFeature[array.size()]);
-        } finally {
-            if (e != null) {
-                e.close();
-            }
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public <T> T[] toArray(T[] array) {
         int size = size();
         if (array.length < size) {
-            array =
-                    (T[])
-                            java.lang.reflect.Array.newInstance(
-                                    array.getClass().getComponentType(), size);
+            array = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), size);
         }
-        FeatureIterator<SimpleFeature> it = features();
-        try {
+        try (FeatureIterator<SimpleFeature> it = features()) {
             Object[] result = array;
             for (int i = 0; it.hasNext() && i < size; i++) {
                 result[i] = it.next();
@@ -477,13 +441,10 @@ public class ContentFeatureCollection implements SimpleFeatureCollection {
                 array[size] = null;
             }
             return array;
-        } finally {
-            if (it != null) {
-                it.close();
-            }
         }
     }
 
+    @Override
     public String getID() {
         return null; // Only useful for XML Content
     }

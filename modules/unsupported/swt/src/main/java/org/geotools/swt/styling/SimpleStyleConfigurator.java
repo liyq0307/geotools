@@ -35,26 +35,25 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.map.Layer;
-import org.geotools.styling.FeatureTypeConstraint;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.LabelPlacement;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.SLDTransformer;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.Symbolizer;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.UserLayer;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.LabelPlacement;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.Symbolizer;
+import org.geotools.api.style.TextSymbolizer;
+import org.geotools.api.style.UserLayer;
 import org.geotools.swt.styling.simple.AbstractSimpleConfigurator;
 import org.geotools.swt.styling.simple.FillViewer;
 import org.geotools.swt.styling.simple.GraphicViewer;
@@ -66,10 +65,11 @@ import org.geotools.swt.styling.simple.StrokeViewer;
 import org.geotools.swt.utils.Messages;
 import org.geotools.swt.utils.Utils;
 import org.geotools.util.factory.GeoTools;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.PropertyDescriptor;
+import org.geotools.xml.styling.SLDTransformer;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.PropertyDescriptor;
 
 /**
  * Defines a "simple" StyleConfigurator for working with SLD documents.
@@ -241,7 +241,7 @@ public class SimpleStyleConfigurator extends AbstractSimpleConfigurator {
 
                     public Object[] getElements(Object inputElement) {
                         // note use of descriptors; so we can make use of associations if available
-                        ArrayList<String> names = new ArrayList<String>();
+                        ArrayList<String> names = new ArrayList<>();
                         names.add(DEFAULT_GEOMETRY);
                         if (schema != null) {
                             for (PropertyDescriptor descriptor : schema.getDescriptors()) {
@@ -310,7 +310,6 @@ public class SimpleStyleConfigurator extends AbstractSimpleConfigurator {
      *
      * @param style the style to convert.
      * @return the style string.
-     * @throws Exception
      */
     public static String styleToString(Style style) throws Exception {
         StyledLayerDescriptor sld = sf.createStyledLayerDescriptor();
@@ -443,7 +442,7 @@ public class SimpleStyleConfigurator extends AbstractSimpleConfigurator {
 
     /** Synchronize the SLD with the array of symbolizers */
     public void synchronize() {
-        List<Symbolizer> acquire = new ArrayList<Symbolizer>();
+        List<Symbolizer> acquire = new ArrayList<>();
         TextSymbolizer textSym = this.label.get(this.build);
 
         SimpleFeatureType schema = featureCollection.getSchema();
@@ -558,7 +557,7 @@ public class SimpleStyleConfigurator extends AbstractSimpleConfigurator {
                 style.featureTypeStyles().addAll(fts);
             } else {
                 // add the new entry to the array
-                List<FeatureTypeStyle> fts2 = new ArrayList<FeatureTypeStyle>(fts);
+                List<FeatureTypeStyle> fts2 = new ArrayList<>(fts);
                 Collections.copy(fts2, fts);
                 fts2.add(featureTypeStyle);
                 style.featureTypeStyles().clear();

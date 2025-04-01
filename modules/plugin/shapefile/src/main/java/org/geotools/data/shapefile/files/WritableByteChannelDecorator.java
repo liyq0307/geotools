@@ -22,8 +22,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
 /**
- * A WritableByteChannel that delegates all calls to the underlying WritableByteChannel but for
- * {@link #close()} it also calls ShapefileFiles.unlock method to release the lock on the URL.
+ * A WritableByteChannel that delegates all calls to the underlying WritableByteChannel but for {@link #close()} it also
+ * calls ShapefileFiles.unlock method to release the lock on the URL.
  *
  * @author jesse
  */
@@ -36,10 +36,7 @@ public class WritableByteChannelDecorator implements WritableByteChannel {
     private boolean closed;
 
     public WritableByteChannelDecorator(
-            WritableByteChannel newChannel,
-            ShpFiles shapefileFiles,
-            URL url,
-            FileWriter requestor) {
+            WritableByteChannel newChannel, ShpFiles shapefileFiles, URL url, FileWriter requestor) {
         this.wrapped = newChannel;
         this.shapefileFiles = shapefileFiles;
         this.url = url;
@@ -47,10 +44,12 @@ public class WritableByteChannelDecorator implements WritableByteChannel {
         closed = false;
     }
 
+    @Override
     public int write(ByteBuffer src) throws IOException {
         return wrapped.write(src);
     }
 
+    @Override
     public void close() throws IOException {
         try {
             wrapped.close();
@@ -62,6 +61,7 @@ public class WritableByteChannelDecorator implements WritableByteChannel {
         }
     }
 
+    @Override
     public boolean isOpen() {
         return wrapped.isOpen();
     }

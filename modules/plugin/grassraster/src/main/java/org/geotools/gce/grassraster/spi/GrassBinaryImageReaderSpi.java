@@ -33,28 +33,22 @@ import org.geotools.gce.grassraster.GrassBinaryImageWriter;
  * @see GrassBinaryImageWriter
  * @see GrassBinaryImageReaderSpi
  */
-@SuppressWarnings("nls")
 public class GrassBinaryImageReaderSpi extends ImageReaderSpi {
 
     private static final String vendorName = "www.hydrologis.com";
     private static final String[] suffixes = {""};
-    private static final String[] formatNames = {
-        "grass", "GRASS", "grassbin", "GRASS binary raster"
-    };
+    private static final String[] formatNames = {"grass", "GRASS", "grassbin", "GRASS binary raster"};
     private static final String[] MIMETypes = {"image/grass"};
     private static final String version = "1.0";
 
     /** the class name of the image reader. */
-    private static final String readerCN =
-            "eu.hydrologis.jgrass.grassbinary.imageio.io.GrassBinaryImageReader";
+    private static final String readerCN = "eu.hydrologis.jgrass.grassbinary.imageio.io.GrassBinaryImageReader";
 
     /** the inputTypes that are accepted by the {@link GrassBinaryImageReader}. */
-    private static final Class<?>[] inputTypes = new Class[] {File.class, ImageInputStream.class};
+    private static final Class<?>[] inputTypes = {File.class, ImageInputStream.class};
 
     /** the writerSpiName */
-    private static final String[] wSN = {
-        "eu.hydrologis.jgrass.grassbinary.imageio.io.GrassBinaryImageWriterSpi"
-    };
+    private static final String[] wSN = {"eu.hydrologis.jgrass.grassbinary.imageio.io.GrassBinaryImageWriterSpi"};
 
     /** the flag for stream metadata support. */
     private static final boolean supportsStandardStreamMetadataFormat = false;
@@ -97,10 +91,12 @@ public class GrassBinaryImageReaderSpi extends ImageReaderSpi {
                 extraImageMetadataFormatClassNames);
     }
 
+    @Override
     public String getDescription(Locale locale) {
         return "GRASS binary raster image reader service provider interface, version " + version;
     }
 
+    @Override
     public boolean canDecodeInput(Object source) throws IOException {
         if (source instanceof File) {
             return true;
@@ -108,6 +104,7 @@ public class GrassBinaryImageReaderSpi extends ImageReaderSpi {
         return false;
     }
 
+    @Override
     public GrassBinaryImageReader createReaderInstance(Object extension) throws IOException {
         return new GrassBinaryImageReader(this);
     }

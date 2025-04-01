@@ -16,9 +16,14 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.geotools.gml2.GML;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPoint;
@@ -31,7 +36,9 @@ public class GMLMultiPointTypeBindingTest extends AbstractGMLBindingTest {
     ElementInstance point2;
     GeometryFactory gf;
 
-    protected void setUp() throws Exception {
+    @Override
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
         point1 = createElement(GML.NAMESPACE, "myPoint", GML.PointMemberType, null);
@@ -44,25 +51,22 @@ public class GMLMultiPointTypeBindingTest extends AbstractGMLBindingTest {
         container.registerComponentImplementation(GMLMultiPointTypeBinding.class);
     }
 
+    @Test
     public void test() throws Exception {
-        Node node =
-                createNode(
-                        mp,
-                        new ElementInstance[] {point1, point2},
-                        new Object[] {
-                            new GeometryFactory().createPoint(new Coordinate(0, 0)),
-                            new GeometryFactory().createPoint(new Coordinate(1, 1))
-                        },
-                        null,
-                        null);
+        Node node = createNode(
+                mp,
+                new ElementInstance[] {point1, point2},
+                new Object[] {
+                    new GeometryFactory().createPoint(new Coordinate(0, 0)),
+                    new GeometryFactory().createPoint(new Coordinate(1, 1))
+                },
+                null,
+                null);
 
-        GMLGeometryCollectionTypeBinding s1 =
-                (GMLGeometryCollectionTypeBinding)
-                        container.getComponentInstanceOfType(
-                                GMLGeometryCollectionTypeBinding.class);
+        GMLGeometryCollectionTypeBinding s1 = (GMLGeometryCollectionTypeBinding)
+                container.getComponentInstanceOfType(GMLGeometryCollectionTypeBinding.class);
         GMLMultiPointTypeBinding s2 =
-                (GMLMultiPointTypeBinding)
-                        container.getComponentInstanceOfType(GMLMultiPointTypeBinding.class);
+                (GMLMultiPointTypeBinding) container.getComponentInstanceOfType(GMLMultiPointTypeBinding.class);
 
         MultiPoint mpoint = (MultiPoint) s2.parse(mp, node, s1.parse(mp, node, null));
 

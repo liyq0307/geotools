@@ -30,7 +30,7 @@ import net.opengis.wmts.v_1.TileMatrixSetLinkType;
 import net.opengis.wmts.v_1.URLTemplateType;
 import net.opengis.wmts.v_1.wmtsv_1Factory;
 import org.geotools.wmts.WMTS;
-import org.geotools.xsd.AbstractComplexBinding;
+import org.geotools.xsd.AbstractComplexEMFBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
@@ -91,7 +91,7 @@ import org.geotools.xsd.Node;
  *
  * @generated
  */
-public class LayerTypeBinding extends AbstractComplexBinding {
+public class LayerTypeBinding extends AbstractComplexEMFBinding {
 
     wmtsv_1Factory factory;
 
@@ -101,6 +101,7 @@ public class LayerTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WMTS.LayerType;
     }
@@ -112,6 +113,7 @@ public class LayerTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class<LayerType> getType() {
         return LayerType.class;
     }
@@ -123,13 +125,12 @@ public class LayerTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     @SuppressWarnings("unchecked")
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         LayerType layer = factory.createLayerType();
 
-        List<Node> children;
-
-        children = node.getChildren("Abstract");
+        List<Node> children = node.getChildren("Abstract");
         for (Node c : children) {
             layer.getAbstract().add(c.getValue());
         }
@@ -143,8 +144,7 @@ public class LayerTypeBinding extends AbstractComplexBinding {
             layer.getWGS84BoundingBox().add(c.getValue());
         }
 
-        layer.getDatasetDescriptionSummary()
-                .addAll(node.getChildren(DatasetDescriptionSummaryBaseType.class));
+        layer.getDatasetDescriptionSummary().addAll(node.getChildren(DatasetDescriptionSummaryBaseType.class));
 
         layer.getDimension().addAll(node.getChildValues(DimensionType.class));
 

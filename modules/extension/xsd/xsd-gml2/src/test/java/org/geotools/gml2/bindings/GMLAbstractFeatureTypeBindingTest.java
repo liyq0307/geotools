@@ -16,35 +16,44 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.gml2.GML;
 import org.geotools.gml2.TEST;
 import org.geotools.gml2.TestConfiguration;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.Configuration;
+import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class GMLAbstractFeatureTypeBindingTest extends GMLTestSupport {
+
+    @Override
+    protected Map<String, String> getNamespaces() {
+        return namespaces(Namespace("test", TEST.NAMESPACE));
+    }
+
+    @Override
     protected Configuration createConfiguration() {
         return new TestConfiguration();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        registerNamespaceMapping("test", TEST.NAMESPACE);
-    }
-
+    @Test
     public void testType() {
         assertEquals(SimpleFeature.class, binding(GML.AbstractFeatureType).getType());
     }
 
+    @Test
     public void testExectionMode() {
         assertEquals(Binding.OVERRIDE, binding(GML.AbstractFeatureType).getExecutionMode());
     }
 
+    @Test
     public void testParse() throws Exception {
         Element feature = GML2MockData.feature(document, document);
         feature.setAttributeNS(GML.NAMESPACE, "fid", "fid.1");
@@ -64,6 +73,7 @@ public class GMLAbstractFeatureTypeBindingTest extends GMLTestSupport {
         assertEquals(1, i.intValue());
     }
 
+    @Test
     public void testEncode() throws Exception {
         Document dom = encode(GML2MockData.feature(), TEST.TestFeature);
         // print(dom);

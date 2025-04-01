@@ -26,13 +26,14 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.http.HTTPResponse;
 import org.geotools.image.io.ImageIOExt;
 import org.geotools.util.logging.Logging;
 
 /**
- * At tile represents a single space on the map within a specific ReferencedEnvelope. It holds a
- * RenderExecutorComposite for fetching its image, and an SWTImage (which is disposed at various
- * times). It listens to events for when to fetch, dispose, and construct new images. From
+ * At tile represents a single space on the map within a specific ReferencedEnvelope. It holds a RenderExecutorComposite
+ * for fetching its image, and an SWTImage (which is disposed at various times). It listens to events for when to fetch,
+ * dispose, and construct new images. From
  *
  * @author GDavis
  * @author Ugo Taddei
@@ -40,11 +41,12 @@ import org.geotools.util.logging.Logging;
  */
 public abstract class Tile implements ImageLoader {
 
-    protected static final Logger LOGGER = Logging.getLogger(Tile.class);
+    protected static final Logger LOGGER = Logging.getLogger("org.geotools.tile.loader");
+    public static final String DEBUG_FLAG = "SHOW_DEBUG_TILES";
 
     /**
-     * These are the states of the tile. This state represents if the tile needs to be re-rendered
-     * or not. A state of new or invalid means the tile should be re-rendered
+     * These are the states of the tile. This state represents if the tile needs to be re-rendered or not. A state of
+     * new or invalid means the tile should be re-rendered
      */
     public enum RenderState {
         NEW,
@@ -53,9 +55,8 @@ public abstract class Tile implements ImageLoader {
     };
 
     /**
-     * These states represent the state of the context. If the context is invalid than the rendering
-     * stack no longer matches the rendering stack the user has defined and the rendering stack
-     * needs to be updated.
+     * These states represent the state of the context. If the context is invalid than the rendering stack no longer
+     * matches the rendering stack the user has defined and the rendering stack needs to be updated.
      */
     public enum ContextState {
         OKAY,
@@ -63,8 +64,8 @@ public abstract class Tile implements ImageLoader {
     };
 
     /**
-     * These states represent if the tile is on or off screen. This information is used to determine
-     * what tiles can be disposed.
+     * These states represent if the tile is on or off screen. This information is used to determine what tiles can be
+     * disposed.
      */
     public enum ScreenState {
         ONSCREEN,
@@ -74,8 +75,7 @@ public abstract class Tile implements ImageLoader {
     /**
      * These states represent if the tile has been validated in response to a user event.
      *
-     * <p>This information is used along with the screen state to determine if a tile can be
-     * disposed.
+     * <p>This information is used along with the screen state to determine if a tile can be disposed.
      */
     public enum ValidatedState {
         VALIDATED,
@@ -112,6 +112,9 @@ public abstract class Tile implements ImageLoader {
     /** A delegate to proved direct loading or load from a disk (cache). */
     private ImageLoader imageLoader = this;
 
+    /** The initiating service */
+    protected TileService service = null;
+
     public void setImageLoader(ImageLoader imageLoader) {
         if (imageLoader == null) {
             throw new IllegalArgumentException("ImageLoader cannot be null");
@@ -119,9 +122,7 @@ public abstract class Tile implements ImageLoader {
         this.imageLoader = imageLoader;
     }
 
-    /** for locking on the SWT image to prevent creating it multiple times */
-    // private Object SWTLock = new Object();
-
+    /** Creates a tile for the identity given by tileId. Will use this instance as imageLoader. */
     public Tile(TileIdentifier tileId, ReferencedEnvelope env, int tileSize) {
 
         if (env == null) {
@@ -134,6 +135,13 @@ public abstract class Tile implements ImageLoader {
             throw new IllegalArgumentException("TileIdentifier cannot be null");
         }
         this.tileIdentifier = tileId;
+    }
+
+    /** Creates a new tile. This constructor will use the service as imageLoader. */
+    public Tile(TileIdentifier tileId, ReferencedEnvelope env, int tileSize, TileService service) {
+        this(tileId, env, tileSize);
+        imageLoader = service;
+        this.service = service;
     }
 
     public void setStateChangedListener(TileStateChangedListener listener) {
@@ -171,13 +179,25 @@ public abstract class Tile implements ImageLoader {
         }
     }
 
+    /**
+     * Implementation of ImageLoader. Has been moved to {@link
+     * @see org.geotools.tile.TileService#loadImageTileImage(Tile)}
+     */
+    @Override
     public BufferedImage loadImageTileImage(Tile tile) throws IOException {
-        return ImageIOExt.readBufferedImage(getUrl());
+        if (service == null) {
+            throw new IllegalStateException("service cannot be null.");
+        }
+        final HTTPResponse response = service.getHttpClient().get(tile.getUrl());
+        try {
+            return ImageIOExt.readBufferedImage(response.getResponseStream());
+        } finally {
+            response.dispose();
+        }
     }
 
     /**
-     * Returns true if the image has been correctly loaded and the render state is {@link
-     * RenderState.RENDERED}.
+     * Returns true if the image has been correctly loaded and the render state is {@link RenderState}.
      *
      * @return the tile image
      */
@@ -185,38 +205,36 @@ public abstract class Tile implements ImageLoader {
         return this.renderState == RenderState.RENDERED && this.tileImage != null;
     }
 
-    /**
-     * Gets an image showing an error, possibly indicating a failure to load the tile image.
-     *
-     * @return
-     */
+    /** Gets an image showing an error, possibly indicating a failure to load the tile image. */
     protected BufferedImage createErrorImage(final String message) {
-        BufferedImage buffImage = null;
 
+        String flag = System.getProperty(DEBUG_FLAG);
+        boolean showMessage = flag == null || !"no".equalsIgnoreCase(flag);
         final int size = getTileSize();
-        buffImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage buffImage = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 
         Graphics2D graphics = buffImage.createGraphics();
-        graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) 0.5));
+        if (showMessage) {
+            graphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) 0.5));
 
-        graphics.setColor(Color.WHITE);
-        graphics.fillRect(0, 0, size, size);
-        graphics.setColor(Color.RED);
-        graphics.drawLine(0, 0, size, size);
-        graphics.drawLine(0, size, size, 0);
-        int mesgWidth = graphics.getFontMetrics().stringWidth(message);
-        graphics.drawString(message, (size - mesgWidth) / 2, size / 2);
+            graphics.setColor(Color.WHITE);
+            graphics.fillRect(0, 0, size, size);
+            graphics.setColor(Color.RED);
+            graphics.drawLine(0, 0, size, size);
+            graphics.drawLine(0, size, size, 0);
+            int mesgWidth = graphics.getFontMetrics().stringWidth(message);
+            graphics.drawString(message, (size - mesgWidth) / 2, size / 2);
+        }
         graphics.dispose();
 
         return buffImage;
     }
 
     /**
-     * Creates an swt image from the tiles buffered image. private void createSWTImage() { //
-     * synchronize this code to prevent multiple threads from creating the SWT image more times than
-     * needed synchronized (SWTLock) { // if the SWTImage is created once the lock is gained, exit
-     * if (swtImage != null && !swtImage.isDisposed()) { return; } // otherwise try creating the
-     * SWTImage now try { BufferedImage buffImage = getBufferedImage(); swtImage =
+     * Creates an swt image from the tiles buffered image. private void createSWTImage() { // synchronize this code to
+     * prevent multiple threads from creating the SWT image more times than needed synchronized (SWTLock) { // if the
+     * SWTImage is created once the lock is gained, exit if (swtImage != null && !swtImage.isDisposed()) { return; } //
+     * otherwise try creating the SWTImage now try { BufferedImage buffImage = getBufferedImage(); swtImage =
      * AWTSWTImageUtils.createSWTImage(buffImage, false); } catch (Exception ex) {
      * java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", ex); } } }
      */
@@ -232,15 +250,13 @@ public abstract class Tile implements ImageLoader {
     }
 
     /**
-     * @return the parent render executor public RenderExecutorComposite getRenderExecutor() {
-     *     return renderExecutorComp; }
+     * @return the parent render executor public RenderExecutorComposite getRenderExecutor() { return
+     *     renderExecutorComp; }
      */
     /**
      * Sets the state of the tiles image.
      *
      * <p>See getRenderState() for a description of the valid states.
-     *
-     * @param newState
      */
     public void setRenderState(RenderState newState) {
         this.renderState = newState;
@@ -257,19 +273,17 @@ public abstract class Tile implements ImageLoader {
      * <ul>
      *   <li>RenderState.NEW - a new tile that needs to be rendered
      *   <li>RenderState.Renderer - the tile has been rendered or is in the state of being rendered
-     *   <li>RenderState.Invalid - something has changed and the tile's rendered image is not longer
-     *       valid and needs to be re-rendered
+     *   <li>RenderState.Invalid - something has changed and the tile's rendered image is not longer valid and needs to
+     *       be re-rendered
      * </ul>
-     *
-     * @return
      */
     public RenderState getRenderState() {
         return this.renderState;
     }
 
     /**
-     * This function returns the state of the tile render stack. If the context is invalid then the
-     * context needs to be updated before the tile is rendered.
+     * This function returns the state of the tile render stack. If the context is invalid then the context needs to be
+     * updated before the tile is rendered.
      *
      * <p>Should be one of:
      *
@@ -288,8 +302,6 @@ public abstract class Tile implements ImageLoader {
      * Sets the state of the tile rendering stack.
      *
      * <p>See getContextState() for valid value descriptions.
-     *
-     * @param newState
      */
     public void setContextState(ContextState newState) {
         this.contextState = newState;
@@ -301,16 +313,12 @@ public abstract class Tile implements ImageLoader {
     /**
      * Sets if the tile is on screen or not.
      *
-     * <p>This is used with other information to determine if a tile can be disposed of. Valid
-     * values include:
+     * <p>This is used with other information to determine if a tile can be disposed of. Valid values include:
      *
      * <ul>
-     *   <li>ONSCREEN - the tile has been requested by the viewport therefore we assume it is on
-     *       screen
+     *   <li>ONSCREEN - the tile has been requested by the viewport therefore we assume it is on screen
      *   <li>OFFSCREEN - this tile was not requested by the viewport
      * </ul>
-     *
-     * @return
      */
     public ScreenState getScreenState() {
         return this.screenState;
@@ -320,8 +328,6 @@ public abstract class Tile implements ImageLoader {
      * Sets the screen state.
      *
      * <p>See getScreenState() for a description of the valid values.
-     *
-     * @param newState
      */
     public void setScreenState(ScreenState newState) {
         this.screenState = newState;
@@ -333,17 +339,13 @@ public abstract class Tile implements ImageLoader {
     /**
      * Gets the validation state.
      *
-     * <p>This is used in conjunction with the screen state to determine it a tile can be disposed
-     * of. This state is set during a refresh event that is triggered from some gui event. Valid
-     * values include:
+     * <p>This is used in conjunction with the screen state to determine it a tile can be disposed of. This state is set
+     * during a refresh event that is triggered from some gui event. Valid values include:
      *
      * <ul>
-     *   <li>VALIDATED - The tile is validated and ready to be used for painting on the screen.
-     *       Don't remove this tile.
+     *   <li>VALIDATED - The tile is validated and ready to be used for painting on the screen. Don't remove this tile.
      *   <li>OLD - This tile is an old tile that if off screen can be removed.
      * </ul>
-     *
-     * @return
      */
     public ValidatedState getTileState() {
         return this.tileState;
@@ -353,8 +355,6 @@ public abstract class Tile implements ImageLoader {
      * Sets the validation state.
      *
      * <p>See getTileState() for a description of valid values.
-     *
-     * @param newState
      */
     public void setTileState(ValidatedState newState) {
         this.tileState = newState;
@@ -363,20 +363,12 @@ public abstract class Tile implements ImageLoader {
         }
     }
 
-    /**
-     * Diese Methode wird verwendet um... TODO.
-     *
-     * @return
-     */
+    /** Diese Methode wird verwendet um... TODO. */
     public String getId() {
         return this.tileIdentifier.getId();
     }
 
-    /**
-     * Diese Methode wird verwendet um... TODO.
-     *
-     * @return
-     */
+    /** Diese Methode wird verwendet um... TODO. */
     public TileIdentifier getTileIdentifier() {
         return this.tileIdentifier;
     }
@@ -398,9 +390,11 @@ public abstract class Tile implements ImageLoader {
         return getUrl().equals(((Tile) other).getUrl());
     }
 
+    @Override
     public String toString() {
         return this.getId(); // this.getUrl().toString();
     }
 
+    /** A unique url for every tile */
     public abstract URL getUrl();
 }

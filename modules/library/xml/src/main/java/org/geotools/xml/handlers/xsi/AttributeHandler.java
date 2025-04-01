@@ -74,6 +74,7 @@ public class AttributeHandler extends XSIElementHandler {
     }
 
     /** @see java.lang.Object#hashCode() */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
         return (LOCALNAME.hashCode()
@@ -84,6 +85,7 @@ public class AttributeHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
+    @Override
     public XSIElementHandler getHandler(String namespaceURI, String localName) throws SAXException {
         if (SchemaHandler.namespaceURI.equalsIgnoreCase(namespaceURI)) {
             // child types
@@ -107,9 +109,9 @@ public class AttributeHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
+    @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
         id = atts.getValue("", "id");
 
@@ -162,15 +164,12 @@ public class AttributeHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
 
-    /**
-     * Convert the 'use' attribute to an int mask
-     *
-     * @param use
-     */
+    /** Convert the 'use' attribute to an int mask */
     public static int findUse(String use) {
         if ("optional".equalsIgnoreCase(use)) {
             return OPTIONAL;
@@ -187,11 +186,7 @@ public class AttributeHandler extends XSIElementHandler {
         return -1;
     }
 
-    /**
-     * converts an int mask representing use to the string representation
-     *
-     * @param use
-     */
+    /** converts an int mask representing use to the string representation */
     public static String writeUse(int use) {
         switch (use) {
             case OPTIONAL:
@@ -213,12 +208,7 @@ public class AttributeHandler extends XSIElementHandler {
         return name;
     }
 
-    /**
-     * creates a smaller simpler version
-     *
-     * @param parent
-     * @throws SAXException
-     */
+    /** creates a smaller simpler version */
     protected Attribute compress(SchemaHandler parent) throws SAXException {
         if (cache != null) {
             return cache;
@@ -258,9 +248,7 @@ public class AttributeHandler extends XSIElementHandler {
             }
         }
 
-        cache =
-                new AttributeGT(
-                        id, name1, parent.getTargetNamespace(), st, use1, def1, fixed1, false);
+        cache = new AttributeGT(id, name1, parent.getTargetNamespace(), st, use1, def1, fixed1, false);
 
         id = type = ref = null;
 
@@ -268,11 +256,13 @@ public class AttributeHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandlerType() */
+    @Override
     public int getHandlerType() {
         return DEFAULT;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String) */
+    @Override
     public void endElement(String namespaceURI, String localName) {
         // do nothing
     }

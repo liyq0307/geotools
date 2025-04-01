@@ -22,7 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Properties;
-import junit.framework.TestCase;
+import junit.framework.TestCase; // NOPMD
 
 /**
  * Static methods to support the implementation of tests that use fixture configuration files. See
@@ -35,16 +35,10 @@ public class FixtureUtilities {
     /** Load {@link Properties} from a {@link File}. */
     public static Properties loadProperties(File file) {
         try {
-            InputStream input = null;
-            try {
-                input = new BufferedInputStream(new FileInputStream(file));
+            try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
                 Properties properties = new Properties();
                 properties.load(input);
                 return properties;
-            } finally {
-                if (input != null) {
-                    input.close();
-                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -52,8 +46,8 @@ public class FixtureUtilities {
     }
 
     /**
-     * Return the directory containing GeoTools test fixture configuration files. This is
-     * ".geotools" in the user home directory.
+     * Return the directory containing GeoTools test fixture configuration files. This is ".geotools" in the user home
+     * directory.
      */
     public static File getFixtureDirectory() {
         return new File(System.getProperty("user.home") + File.separator + ".geotools");
@@ -69,10 +63,8 @@ public class FixtureUtilities {
      * file directory. For example, an id <code>a.b.foo</code> would be resolved to
      * <code>.geotools/a/b/foo.properties<code>.
      *
-     * @param fixtureDirectory
      *            the base fixture configuration file directory, typically ".geotools" in the user
      *            home directory.
-     * @param fixtureId
      *            the fixture id
      */
     public static File getFixtureFile(File fixtureDirectory, String fixtureId) {
@@ -81,8 +73,7 @@ public class FixtureUtilities {
     }
 
     /**
-     * Print a notice that tests are being skipped, identifying the property file whose absence is
-     * responsible.
+     * Print a notice that tests are being skipped, identifying the property file whose absence is responsible.
      *
      * @param fixtureId the fixture id
      * @param fixtureFile the missing fixture configuration file
@@ -91,11 +82,7 @@ public class FixtureUtilities {
     public static void printSkipNotice(String fixtureId, File fixtureFile) {
         try {
             System.out.println(
-                    "Skipping "
-                            + fixtureId
-                            + " tests. Fixture file "
-                            + fixtureFile.getCanonicalPath()
-                            + " not found.");
+                    "Skipping " + fixtureId + " tests. Fixture file " + fixtureFile.getCanonicalPath() + " not found.");
         } catch (Exception e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
         }
@@ -104,21 +91,19 @@ public class FixtureUtilities {
     /**
      * Return Properties loaded from a fixture configuration file, or null if not found.
      *
-     * <p>If a fixture configuration file is not found, a notice is printed to standard output
-     * stating that tests for this fixture id are skipped.
+     * <p>If a fixture configuration file is not found, a notice is printed to standard output stating that tests for
+     * this fixture id are skipped.
      *
-     * <p>This method allows tests that cannot extend {@link OnlineTestCase} or {@link
-     * OnlineTestSupport} because they already extend another class (for example, a non-online test
-     * framework) to access fixture configuration files in the same way that those classes do. Only
-     * basic fixture configuration loading is supported. This method does not support the extra
-     * services such as fixture caching and connection testing provided by {@link OnlineTestCase}
-     * and {@link OnlineTestSupport}.
+     * <p>This method allows tests that cannot extend {@link OnlineTestCase} or {@link OnlineTestSupport} because they
+     * already extend another class (for example, a non-online test framework) to access fixture configuration files in
+     * the same way that those classes do. Only basic fixture configuration loading is supported. This method does not
+     * support the extra services such as fixture caching and connection testing provided by {@link OnlineTestCase} and
+     * {@link OnlineTestSupport}.
      *
-     * <p>A JUnit 4 test fixture can readily be disabled in the absence of a fixture configuration
-     * file by placing <code>Assume.assumeNotNull(FixtureUtilities.loadFixture(fixtureId))</code> or
-     * similar in its <code>@BeforeClass</code> method. JUnit 3 tests must provide their own logic,
-     * typically overriding {@link TestCase#run()} or {@link TestCase#runTest()}, or providing a
-     * suite.
+     * <p>A JUnit 4 test fixture can readily be disabled in the absence of a fixture configuration file by placing
+     * <code>Assume.assumeNotNull(FixtureUtilities.loadFixture(fixtureId))</code> or similar in its <code>@BeforeClass
+     * </code> method. JUnit 3 tests must provide their own logic, typically overriding {@link TestCase#run()} or
+     * {@link TestCase#runTest()}, or providing a suite.
      *
      * @param fixtureId the fixture id, where dots "." are converted to subdirectories.
      * @return the fixture Properties or null

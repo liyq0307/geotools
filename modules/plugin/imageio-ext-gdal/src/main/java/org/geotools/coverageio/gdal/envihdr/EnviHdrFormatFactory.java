@@ -29,9 +29,9 @@ import org.geotools.coverageio.BaseGridFormatFactorySPI;
 public class EnviHdrFormatFactory extends BaseGridFormatFactorySPI implements GridFormatFactorySpi {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(EnviHdrFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(EnviHdrFormatFactory.class);
 
+    @Override
     public boolean isAvailable() {
         boolean available = true;
 
@@ -46,8 +46,7 @@ public class EnviHdrFormatFactory extends BaseGridFormatFactorySPI implements Gr
                 else LOGGER.fine("EnviHdrFormatFactory is not available.");
             }
         } catch (ClassNotFoundException cnf) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.fine("EnviHdrFormatFactory is not available.");
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("EnviHdrFormatFactory is not available.");
 
             available = false;
         }
@@ -60,6 +59,7 @@ public class EnviHdrFormatFactory extends BaseGridFormatFactorySPI implements Gr
      *
      * @return A {@link EnviHdrFormat}
      */
+    @Override
     public EnviHdrFormat createFormat() {
         return new EnviHdrFormat();
     }

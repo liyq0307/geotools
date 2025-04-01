@@ -25,38 +25,37 @@ import org.geotools.graph.structure.Edge;
 import org.geotools.graph.structure.Node;
 
 /**
- * Represents a walk in a graph. A <B>walk</B> W is defined as an ordered set of nodes that two
- * adjacenct nodes in the set share an edge. More precisley: <br>
+ * Represents a walk in a graph. A <B>walk</B> W is defined as an ordered set of nodes that two adjacenct nodes in the
+ * set share an edge. More precisley: <br>
  * <br>
  * G = {N,E} W = { n(i) in N | (n(i-1),n(i)) in E }
  *
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
  */
-public class Walk extends ArrayList implements NodeSequence {
+public class Walk extends ArrayList<Node> implements NodeSequence {
 
-    private List m_edges;
+    private List<Edge> m_edges;
 
     public Walk() {}
 
-    public Walk(Collection nodes) {
+    public Walk(Collection<Node> nodes) {
         super(nodes);
     }
 
-    /**
-     * A valid walk is one in which each pair of adjacent nodes in the sequence share an edge. Note,
-     */
+    /** A valid walk is one in which each pair of adjacent nodes in the sequence share an edge. Note, */
+    @Override
     public boolean isValid() {
         // if edges were calculated successfly it is a valid walk
         return (getEdges() != null);
     }
 
     /**
-     * Calculates the edges in the walk. If the edges of the walk cannot be calculated (due to an
-     * invalid walk), null is returned, otherwise the list of edges is returned.
+     * Calculates the edges in the walk. If the edges of the walk cannot be calculated (due to an invalid walk), null is
+     * returned, otherwise the list of edges is returned.
      *
      * @return The edges of the walk, otherwise null if the edges cannot be calculated.
      */
-    public List getEdges() {
+    public List<Edge> getEdges() {
         // calculate edges
         if (m_edges == null) {
             m_edges = buildEdges();
@@ -66,31 +65,31 @@ public class Walk extends ArrayList implements NodeSequence {
     }
 
     /**
-     * Adds a node to the walk. Adding a node clears the edge list which will be recalculated on the
-     * next call to getEdges().
+     * Adds a node to the walk. Adding a node clears the edge list which will be recalculated on the next call to
+     * getEdges().
      *
      * @param node Node to add to the walk.
      */
+    @Override
     public boolean add(Node node) {
         m_edges = null;
         return (super.add(node));
     }
 
-    public void add(int index, Object element) {
+    @Override
+    public void add(int index, Node element) {
         super.add(index, element);
         m_edges = null;
     }
 
-    public boolean add(Object o) {
-        return (add((Node) o));
-    }
-
-    public boolean addAll(Collection c) {
+    @Override
+    public boolean addAll(Collection<? extends Node> c) {
         m_edges = null;
         return (super.addAll(c));
     }
 
-    public boolean addAll(int index, Collection c) {
+    @Override
+    public boolean addAll(int index, Collection<? extends Node> c) {
         m_edges = null;
         return (super.addAll(index, c));
     }
@@ -100,7 +99,7 @@ public class Walk extends ArrayList implements NodeSequence {
         // must be a node of the edge
 
         // save current edge list
-        List edges = getEdges();
+        List<Edge> edges = getEdges();
 
         if (isEmpty()) {
             // add both nodes
@@ -130,16 +129,15 @@ public class Walk extends ArrayList implements NodeSequence {
         return (true);
     }
 
-    public void addEdges(Collection edges) {
-        for (Iterator itr = edges.iterator(); itr.hasNext(); ) {
-            Edge e = (Edge) itr.next();
+    public void addEdges(Collection<Edge> edges) {
+        for (Edge e : edges) {
             addEdge(e);
         }
     }
 
     /**
-     * Removes a node from the walk. Removing a node clears the edge list which will be recalculated
-     * on the next call to getEdges().
+     * Removes a node from the walk. Removing a node clears the edge list which will be recalculated on the next call to
+     * getEdges().
      *
      * @param node Node to remove from the walk.
      */
@@ -148,24 +146,26 @@ public class Walk extends ArrayList implements NodeSequence {
         m_edges = null;
     }
 
-    public Object remove(int index) {
+    @Override
+    public Node remove(int index) {
         m_edges = null;
         return (super.remove(index));
     }
 
+    @Override
     public boolean remove(Object o) {
         m_edges = null;
         return (super.remove(o));
     }
 
+    @Override
     public boolean removeAll(Collection c) {
         m_edges = null;
         return (super.removeAll(c));
     }
 
     /**
-     * Determines if the walk is closed. A closed walk is one in which the first and last nodes are
-     * the same.
+     * Determines if the walk is closed. A closed walk is one in which the first and last nodes are the same.
      *
      * @return True if closed, otherwise false.
      */
@@ -175,28 +175,28 @@ public class Walk extends ArrayList implements NodeSequence {
     }
 
     /** @see NodeSequence#getFirst() */
+    @Override
     public Node getFirst() {
-        return ((Node) get(0));
+        return get(0);
     }
 
     /** @see NodeSequence#getLast() */
+    @Override
     public Node getLast() {
-        return ((Node) get(size() - 1));
+        return get(size() - 1);
     }
 
     /**
-     * Internal method for building the edge set of the walk. This method calculated the edges upon
-     * every call.
+     * Internal method for building the edge set of the walk. This method calculated the edges upon every call.
      *
-     * @return The list of edges for the walk, or null if the edge set could not be calculated due
-     *     to an invalid walk.
+     * @return The list of edges for the walk, or null if the edge set could not be calculated due to an invalid walk.
      */
-    protected List buildEdges() {
-        ArrayList edges = new ArrayList();
+    protected List<Edge> buildEdges() {
+        List<Edge> edges = new ArrayList<>();
 
         for (int i = 1; i < size(); i++) {
-            Node prev = (Node) get(i - 1);
-            Node curr = (Node) get(i);
+            Node prev = get(i - 1);
+            Node curr = get(i);
 
             Edge e = curr.getEdge(prev);
 
@@ -214,8 +214,7 @@ public class Walk extends ArrayList implements NodeSequence {
     }
 
     /**
-     * Truncates the path at the specified index. Nodes in the path whose index is >= the specified
-     * index are removed.
+     * Truncates the path at the specified index. Nodes in the path whose index is >= the specified index are removed.
      *
      * @param index The index of first node to be removed.
      */
@@ -225,24 +224,26 @@ public class Walk extends ArrayList implements NodeSequence {
     }
 
     /**
-     * Returns an iterator that iterates over the path in reverse. The iterator does not support the
-     * remove operation.
+     * Returns an iterator that iterates over the path in reverse. The iterator does not support the remove operation.
      *
      * @return the reverse iterator.
      */
-    public Iterator riterator() {
-        return (new Iterator() {
+    public Iterator<Node> riterator() {
+        return (new Iterator<Node>() {
             int m_index = size() - 1;
 
+            @Override
             public void remove() {
                 throw new UnsupportedOperationException("Path iterator does not support remove()");
             }
 
+            @Override
             public boolean hasNext() {
                 return (m_index > -1);
             }
 
-            public Object next() {
+            @Override
+            public Node next() {
                 return (get(m_index--));
             }
         });
@@ -252,6 +253,7 @@ public class Walk extends ArrayList implements NodeSequence {
         return (new Path(this));
     }
 
+    @Override
     public boolean equals(Object other) {
         if (other instanceof Walk) return (equals((Walk) other));
         return (false);
@@ -260,12 +262,12 @@ public class Walk extends ArrayList implements NodeSequence {
     public boolean equals(Walk other) {
         if (other.size() == size()) {
             // make a node by node comparision
-            Iterator thisnodes = iterator();
-            Iterator othernodes = other.iterator();
+            Iterator<Node> thisnodes = iterator();
+            Iterator<Node> othernodes = other.iterator();
 
             while (thisnodes.hasNext()) {
-                Node thisnode = (Node) thisnodes.next();
-                Node othernode = (Node) othernodes.next();
+                Node thisnode = thisnodes.next();
+                Node othernode = othernodes.next();
 
                 if (!thisnode.equals(othernode)) return (false);
             }
@@ -274,6 +276,7 @@ public class Walk extends ArrayList implements NodeSequence {
         return (false);
     }
 
+    @Override
     public int hashCode() {
         int hash = 7;
         hash = 31 * hash + getFirst().hashCode();

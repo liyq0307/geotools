@@ -17,9 +17,9 @@
 package org.geotools.sld.bindings;
 
 import javax.xml.namespace.QName;
-import org.geotools.styling.ImageOutline;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.Symbolizer;
+import org.geotools.api.style.ImageOutline;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -60,6 +60,7 @@ public class SLDImageOutlineBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.IMAGEOUTLINE;
     }
@@ -71,6 +72,7 @@ public class SLDImageOutlineBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -82,6 +84,7 @@ public class SLDImageOutlineBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return ImageOutline.class;
     }
@@ -93,6 +96,7 @@ public class SLDImageOutlineBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -102,11 +106,12 @@ public class SLDImageOutlineBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // &lt;xsd:choice&gt;
         //  &lt;xsd:element ref="sld:LineSymbolizer"/&gt;
         //  &lt;xsd:element ref="sld:PolygonSymbolizer"/&gt;
         // &lt;/xsd:choice&gt;
-        return styleFactory.createImageOutline((Symbolizer) node.getChildValue(Symbolizer.class));
+        return styleFactory.createImageOutline(node.getChildValue(Symbolizer.class));
     }
 }

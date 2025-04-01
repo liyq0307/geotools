@@ -20,13 +20,12 @@ import java.net.URL;
 import java.util.Properties;
 
 /**
- * Describes an abstract DescribeLayer request. Provides everything except the versioning info,
- * which subclasses must implement.
+ * Describes an abstract DescribeLayer request. Provides everything except the versioning info, which subclasses must
+ * implement.
  *
  * @author Richard Gould
  */
-public abstract class AbstractDescribeLayerRequest extends AbstractWMSRequest
-        implements DescribeLayerRequest {
+public abstract class AbstractDescribeLayerRequest extends AbstractWMSRequest implements DescribeLayerRequest {
 
     /**
      * Constructs a basic DescribeLayerRequest, without versioning info.
@@ -38,14 +37,17 @@ public abstract class AbstractDescribeLayerRequest extends AbstractWMSRequest
         super(onlineResource, properties);
     }
 
+    @Override
     protected void initRequest() {
         setProperty(REQUEST, "DescribeLayer");
     }
 
     /** @see DescribeLayerRequest#setLayers(java.lang.String) */
+    @Override
     public void setLayers(String layers) {
         setProperty(LAYERS, layers);
     }
 
+    @Override
     protected abstract void initVersion();
 }

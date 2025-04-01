@@ -16,31 +16,53 @@
  */
 package org.geotools.data.wfs.internal.v2_0.storedquery;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import net.opengis.wfs20.FeatureTypeType;
 import net.opengis.wfs20.ParameterExpressionType;
 import net.opengis.wfs20.ParameterType;
 import net.opengis.wfs20.StoredQueryDescriptionType;
 import net.opengis.wfs20.Wfs20Factory;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.data.wfs.internal.v2_0.FeatureTypeInfoImpl;
 import org.geotools.filter.FilterFactoryImpl;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.filter.Filter;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class ParameterTypeFactoryTest {
+
     Wfs20Factory wfs20Factory;
 
     FeatureTypeInfoImpl featureType;
     StoredQueryConfiguration config;
     StoredQueryDescriptionType desc;
 
+    private Locale initialLocale;
+    private DecimalFormat numberFormat;
+
+    public ParameterTypeFactoryTest(Locale testLocale) {
+        initialLocale = Locale.getDefault();
+        Locale.setDefault(testLocale);
+    }
+
+    @Parameterized.Parameters
+    public static List<Object[]> locales() {
+        return Arrays.asList(new Object[][] {{Locale.ENGLISH}, {Locale.forLanguageTag("NO")}});
+    }
+
+    /** Set up tests with numberFormat given by parameterized locale. */
     @Before
     public void setup() {
         wfs20Factory = Wfs20Factory.eINSTANCE;
@@ -53,6 +75,17 @@ public class ParameterTypeFactoryTest {
         featureType = new FeatureTypeInfoImpl(ftt, new WFSConfig());
 
         desc = wfs20Factory.createStoredQueryDescriptionType();
+
+        numberFormat = new DecimalFormat("0.0", DecimalFormatSymbols.getInstance());
+    }
+
+    @After
+    public void resetLocale() {
+        Locale.setDefault(initialLocale);
+    }
+
+    private String doubleToLocaleString(Double number) {
+        return numberFormat.format(number);
     }
 
     // One parameter, no view params, no mappings => no parameters
@@ -65,8 +98,7 @@ public class ParameterTypeFactoryTest {
 
         ParameterTypeFactory factory = new ParameterTypeFactory(config, desc, featureType);
 
-        List<ParameterType> params =
-                factory.buildStoredQueryParameters(new HashMap<String, String>(), null);
+        List<ParameterType> params = factory.buildStoredQueryParameters(new HashMap<>(), null);
 
         assertEquals(0, params.size());
     }
@@ -81,7 +113,7 @@ public class ParameterTypeFactoryTest {
 
         ParameterTypeFactory factory = new ParameterTypeFactory(config, desc, featureType);
 
-        Map<String, String> viewParams = new HashMap<String, String>();
+        Map<String, String> viewParams = new HashMap<>();
         viewParams.put("foo", "bar");
 
         List<ParameterType> params = factory.buildStoredQueryParameters(viewParams, null);
@@ -103,7 +135,7 @@ public class ParameterTypeFactoryTest {
 
         ParameterTypeFactory factory = new ParameterTypeFactory(config, desc, featureType);
 
-        Map<String, String> viewParams = new HashMap<String, String>();
+        Map<String, String> viewParams = new HashMap<>();
         viewParams.put("not-defined-in-spec", "bar");
 
         List<ParameterType> params = factory.buildStoredQueryParameters(viewParams, null);
@@ -127,7 +159,7 @@ public class ParameterTypeFactoryTest {
 
         ParameterTypeFactory factory = new ParameterTypeFactory(config, desc, featureType);
 
-        Map<String, String> viewParams = new HashMap<String, String>();
+        Map<String, String> viewParams = new HashMap<>();
 
         List<ParameterType> params = factory.buildStoredQueryParameters(viewParams, null);
 
@@ -154,7 +186,7 @@ public class ParameterTypeFactoryTest {
 
         ParameterTypeFactory factory = new ParameterTypeFactory(config, desc, featureType);
 
-        Map<String, String> viewParams = new HashMap<String, String>();
+        Map<String, String> viewParams = new HashMap<>();
         viewParams.put("foo", "bar");
 
         List<ParameterType> params = factory.buildStoredQueryParameters(viewParams, null);
@@ -183,7 +215,7 @@ public class ParameterTypeFactoryTest {
 
         ParameterTypeFactory factory = new ParameterTypeFactory(config, desc, featureType);
 
-        Map<String, String> viewParams = new HashMap<String, String>();
+        Map<String, String> viewParams = new HashMap<>();
 
         List<ParameterType> params = factory.buildStoredQueryParameters(viewParams, null);
 
@@ -191,31 +223,26 @@ public class ParameterTypeFactoryTest {
 
         ParameterType tmp = params.get(0);
         assertEquals("foo", tmp.getName());
-        assertEquals("3.0", tmp.getValue());
+        assertEquals(doubleToLocaleString(3.0), tmp.getValue());
     }
 
     // Test that bbox parameters from the context are mapped appropriately
     @Test
     public void testCQLExpressionParameterContextBboxMappings() {
         desc.getParameter()
-                .addAll(
-                        Arrays.asList(
-                                createParam("param1"),
-                                createParam("param2"),
-                                createParam("param3"),
-                                createParam("param4")));
+                .addAll(Arrays.asList(
+                        createParam("param1"), createParam("param2"), createParam("param3"), createParam("param4")));
 
         config.getStoredQueryParameterMappings()
-                .addAll(
-                        Arrays.asList(
-                                createBboxExpressionParam("param1", "bboxMinX"),
-                                createBboxExpressionParam("param2", "bboxMinY"),
-                                createBboxExpressionParam("param3", "bboxMaxX"),
-                                createBboxExpressionParam("param4", "bboxMaxY")));
+                .addAll(Arrays.asList(
+                        createBboxExpressionParam("param1", "bboxMinX"),
+                        createBboxExpressionParam("param2", "bboxMinY"),
+                        createBboxExpressionParam("param3", "bboxMaxX"),
+                        createBboxExpressionParam("param4", "bboxMaxY")));
 
         ParameterTypeFactory factory = new ParameterTypeFactory(config, desc, featureType);
 
-        Map<String, String> viewParams = new HashMap<String, String>();
+        Map<String, String> viewParams = new HashMap<>();
 
         Filter f = new FilterFactoryImpl().bbox("nada", -10.0, -5.0, 10.0, 5.0, "EPSG:4326");
 
@@ -226,19 +253,19 @@ public class ParameterTypeFactoryTest {
         // the order is not paramount, though
         ParameterType tmp = params.get(0);
         assertEquals("param1", tmp.getName());
-        assertEquals("-10.0", tmp.getValue());
+        assertEquals(doubleToLocaleString(-10.0), tmp.getValue());
 
         tmp = params.get(1);
         assertEquals("param2", tmp.getName());
-        assertEquals("-5.0", tmp.getValue());
+        assertEquals(doubleToLocaleString(-5.0), tmp.getValue());
 
         tmp = params.get(2);
         assertEquals("param3", tmp.getName());
-        assertEquals("10.0", tmp.getValue());
+        assertEquals(doubleToLocaleString(10.0), tmp.getValue());
 
         tmp = params.get(3);
         assertEquals("param4", tmp.getName());
-        assertEquals("5.0", tmp.getValue());
+        assertEquals(doubleToLocaleString(5.0), tmp.getValue());
     }
 
     private ParameterExpressionType createParam(String name) {
@@ -272,7 +299,7 @@ public class ParameterTypeFactoryTest {
 
         ParameterTypeFactory factory = new ParameterTypeFactory(config, desc, featureType);
 
-        Map<String, String> viewParams = new HashMap<String, String>();
+        Map<String, String> viewParams = new HashMap<>();
 
         List<ParameterType> params = factory.buildStoredQueryParameters(viewParams, null);
 
@@ -301,7 +328,7 @@ public class ParameterTypeFactoryTest {
 
         ParameterTypeFactory factory = new ParameterTypeFactory(config, desc, featureType);
 
-        Map<String, String> viewParams = new HashMap<String, String>();
+        Map<String, String> viewParams = new HashMap<>();
 
         viewParams.put("mapped", "stuff");
 
@@ -330,7 +357,7 @@ public class ParameterTypeFactoryTest {
 
         ParameterTypeFactory factory = new ParameterTypeFactory(config, desc, featureType);
 
-        Map<String, String> viewParams = new HashMap<String, String>();
+        Map<String, String> viewParams = new HashMap<>();
 
         List<ParameterType> params = factory.buildStoredQueryParameters(viewParams, null);
 
@@ -338,6 +365,6 @@ public class ParameterTypeFactoryTest {
 
         ParameterType tmp = params.get(0);
         assertEquals("foo", tmp.getName());
-        assertEquals("3.0,10", tmp.getValue());
+        assertEquals(doubleToLocaleString(3.0) + ",10", tmp.getValue());
     }
 }

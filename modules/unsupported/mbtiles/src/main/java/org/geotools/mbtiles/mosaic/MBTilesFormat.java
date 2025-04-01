@@ -24,6 +24,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
@@ -32,8 +34,6 @@ import org.geotools.parameter.ParameterGroup;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.coverage.grid.GridCoverageWriter;
-import org.opengis.parameter.GeneralParameterDescriptor;
 
 public class MBTilesFormat extends AbstractGridFormat {
 
@@ -120,7 +120,7 @@ public class MBTilesFormat extends AbstractGridFormat {
 
     /** Sets the metadata information. */
     private void setInfo() {
-        final HashMap<String, String> info = new HashMap<String, String>();
+        final HashMap<String, String> info = new HashMap<>();
         info.put("name", "MBTiles");
         info.put("description", "MBTiles plugin");
         info.put("vendor", "Geotools");
@@ -129,11 +129,8 @@ public class MBTilesFormat extends AbstractGridFormat {
         mInfo = info;
 
         // reading parameters
-        readParameters =
-                new ParameterGroup(
-                        new DefaultParameterDescriptorGroup(
-                                mInfo,
-                                new GeneralParameterDescriptor[] {READ_GRIDGEOMETRY2D /*,
+        readParameters = new ParameterGroup(new DefaultParameterDescriptorGroup(
+                mInfo, new GeneralParameterDescriptor[] {READ_GRIDGEOMETRY2D /*,
                        INPUT_TRANSPARENT_COLOR,
                 OUTPUT_TRANSPARENT_COLOR,
                 USE_JAI_IMAGEREAD,

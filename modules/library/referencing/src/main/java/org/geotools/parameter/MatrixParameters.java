@@ -22,29 +22,28 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.referencing.operation.Matrix;
+import org.geotools.api.util.GenericName;
+import org.geotools.api.util.InternationalString;
 import org.geotools.referencing.operation.matrix.MatrixFactory;
 import org.geotools.util.TableWriter;
 import org.geotools.util.UnmodifiableArrayList;
 import org.geotools.util.Utilities;
 import org.geotools.util.XArray;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.referencing.operation.Matrix;
-import org.opengis.util.GenericName;
-import org.opengis.util.InternationalString;
 
 /**
- * The values for a group of {@linkplain MatrixParameterDescriptors matrix parameters}. This value
- * group is extensible, i.e. the number of <code>"elt_<var>row</var>_<var>col</var>"</code>
- * parameters depends on the <code>"num_row"</code> and <code>"num_col"</code> parameter values.
- * Consequently, this {@linkplain ParameterGroup parameter value group} is also its own mutable
- * {@linkplain ParameterDescriptorGroup operation parameter group}.
+ * The values for a group of {@linkplain MatrixParameterDescriptors matrix parameters}. This value group is extensible,
+ * i.e. the number of <code>"elt_<var>row</var>_<var>col</var>"</code> parameters depends on the <code>"num_row"</code>
+ * and <code>"num_col"</code> parameter values. Consequently, this {@linkplain ParameterGroup parameter value group} is
+ * also its own mutable {@linkplain ParameterDescriptorGroup operation parameter group}.
  *
  * @since 2.1
  * @version $Id$
@@ -59,20 +58,19 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
     private ParameterValue<Double>[][] matrixValues;
 
     /**
-     * The value for the {@link MatrixParameterDescriptors#numRow} parameter. Consider this field as
-     * final. It is not only for {@link #clone} implementation.
+     * The value for the {@link MatrixParameterDescriptors#numRow} parameter. Consider this field as final. It is not
+     * only for {@link #clone} implementation.
      */
     private ParameterValue<Integer> numRow;
 
     /**
-     * The value for the {@link MatrixParameterDescriptors#numCol} parameter. Consider this field as
-     * final. It is not only for {@link #clone} implementation.
+     * The value for the {@link MatrixParameterDescriptors#numCol} parameter. Consider this field as final. It is not
+     * only for {@link #clone} implementation.
      */
     private ParameterValue<Integer> numCol;
 
     /**
-     * Constructs default values for the specified {@linkplain MatrixParameterDescriptors matrix
-     * parameter descriptors}.
+     * Constructs default values for the specified {@linkplain MatrixParameterDescriptors matrix parameter descriptors}.
      *
      * @param descriptor The descriptor for this group of parameters.
      */
@@ -83,8 +81,8 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
     }
 
     /**
-     * Returns a description of this parameter value group. Returns always {@code this}, since the
-     * description depends on <code>"num_row"</code> and <code>"num_col"</code> parameter values.
+     * Returns a description of this parameter value group. Returns always {@code this}, since the description depends
+     * on <code>"num_row"</code> and <code>"num_col"</code> parameter values.
      */
     @Override
     public ParameterDescriptorGroup getDescriptor() {
@@ -92,78 +90,81 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
     }
 
     /**
-     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors}
-     * specified at construction time.
+     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors} specified at
+     * construction time.
      */
+    @Override
     public ReferenceIdentifier getName() {
         return descriptor.getName();
     }
 
     /**
-     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors}
-     * specified at construction time.
+     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors} specified at
+     * construction time.
      */
+    @Override
     public Collection<GenericName> getAlias() {
         return descriptor.getAlias();
     }
 
     /**
-     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors}
-     * specified at construction time.
+     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors} specified at
+     * construction time.
      */
+    @Override
     public Set<ReferenceIdentifier> getIdentifiers() {
         return descriptor.getIdentifiers();
     }
 
     /**
-     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors}
-     * specified at construction time.
+     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors} specified at
+     * construction time.
      */
+    @Override
     public InternationalString getRemarks() {
         return descriptor.getRemarks();
     }
 
     /**
-     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors}
-     * specified at construction time.
+     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors} specified at
+     * construction time.
      */
+    @Override
     public int getMinimumOccurs() {
         return descriptor.getMinimumOccurs();
     }
 
     /**
-     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors}
-     * specified at construction time.
+     * Forward the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors} specified at
+     * construction time.
      */
+    @Override
     public int getMaximumOccurs() {
         return descriptor.getMaximumOccurs();
     }
 
     /**
-     * Returns the parameter in this group for the specified name. The name can be a matrix element
-     * if it uses the following syntax: <code>"elt_<var>row</var>_<var>col</var>"</code> where
-     * <code>"elt_"</code> is the {@linkplain MatrixParameterDescriptors#prefix prefix} for all
-     * matrix elements, and <var>row</var> and <var>col</var> are row and column indices
-     * respectively. For example <code>"elt_2_1"</code> is the element name for the value at line 2
-     * and row 1. The row and column index are 0 based.
+     * Returns the parameter in this group for the specified name. The name can be a matrix element if it uses the
+     * following syntax: <code>"elt_<var>row</var>_<var>col</var>"</code> where <code>"elt_"</code> is the
+     * {@linkplain MatrixParameterDescriptors#prefix prefix} for all matrix elements, and <var>row</var> and
+     * <var>col</var> are row and column indices respectively. For example <code>"elt_2_1"</code> is the element name
+     * for the value at line 2 and row 1. The row and column index are 0 based.
      *
      * @param name The case insensitive name of the parameter to search for.
      * @return The parameter for the given name.
      * @throws ParameterNotFoundException if there is no parameter for the given name.
      */
-    public GeneralParameterDescriptor descriptor(final String name)
-            throws ParameterNotFoundException {
-        return ((MatrixParameterDescriptors) descriptor)
-                .descriptor(name, numRow.intValue(), numCol.intValue());
+    @Override
+    public GeneralParameterDescriptor descriptor(final String name) throws ParameterNotFoundException {
+        return ((MatrixParameterDescriptors) descriptor).descriptor(name, numRow.intValue(), numCol.intValue());
     }
 
     /**
-     * Returns the value in this group for the specified name. The name can be a matrix element if
-     * it uses the following syntax: <code>"elt_<var>row</var>_<var>col</var>"</code> where <code>
-     * "elt_"</code> is the {@linkplain MatrixParameterDescriptors#prefix prefix} for all matrix
-     * elements, and <var>row</var> and <var>col</var> are row and column indices respectively. For
-     * example <code>"elt_2_1"</code> is the element name for the value at line 2 and row 1. The row
-     * and column index are 0 based.
+     * Returns the value in this group for the specified name. The name can be a matrix element if it uses the following
+     * syntax: <code>"elt_<var>row</var>_<var>col</var>"</code> where <code>
+     * "elt_"</code> is the {@linkplain MatrixParameterDescriptors#prefix prefix} for all matrix elements, and
+     * <var>row</var> and <var>col</var> are row and column indices respectively. For example <code>"elt_2_1"</code> is
+     * the element name for the value at line 2 and row 1. The row and column index are 0 based.
      *
      * @param name The case insensitive name of the parameter to search for.
      * @return The parameter value for the given name.
@@ -173,8 +174,7 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
     public ParameterValue<?> parameter(String name) throws ParameterNotFoundException {
         ensureNonNull("name", name);
         name = name.trim();
-        final MatrixParameterDescriptors descriptor =
-                ((MatrixParameterDescriptors) this.descriptor);
+        final MatrixParameterDescriptors descriptor = ((MatrixParameterDescriptors) this.descriptor);
         final String prefix = descriptor.prefix;
         RuntimeException cause = null;
         if (name.regionMatches(true, 0, prefix, 0, prefix.length())) {
@@ -184,9 +184,7 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
                     final int row = Integer.parseInt(name.substring(prefix.length(), split));
                     final int col = Integer.parseInt(name.substring(split + 1));
                     return parameter(row, col);
-                } catch (NumberFormatException exception) {
-                    cause = exception;
-                } catch (IndexOutOfBoundsException exception) {
+                } catch (NumberFormatException | IndexOutOfBoundsException exception) {
                     cause = exception;
                 }
         }
@@ -208,16 +206,14 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
     }
 
     /**
-     * Returns the value in this group for a matrix element at the specified index. Row and column
-     * index are 0 based.
+     * Returns the value in this group for a matrix element at the specified index. Row and column index are 0 based.
      *
      * @param row The row indice.
      * @param column The column indice
      * @return The parameter value for the specified matrix element (never {@code null}).
      * @throws IndexOutOfBoundsException if {@code row} or {@code column} is out of bounds.
      */
-    public final ParameterValue<Double> parameter(final int row, final int column)
-            throws IndexOutOfBoundsException {
+    public final ParameterValue<Double> parameter(final int row, final int column) throws IndexOutOfBoundsException {
         return parameter(row, column, numRow.intValue(), numCol.intValue());
     }
 
@@ -232,8 +228,7 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
      * @throws IndexOutOfBoundsException if {@code row} or {@code column} is out of bounds.
      */
     @SuppressWarnings("unchecked") // Because of array creation
-    private ParameterValue<Double> parameter(
-            final int row, final int column, final int numRow, final int numCol)
+    private ParameterValue<Double> parameter(final int row, final int column, final int numRow, final int numCol)
             throws IndexOutOfBoundsException {
         MatrixParameterDescriptors.checkIndice("row", row, numRow);
         MatrixParameterDescriptors.checkIndice("column", column, numCol);
@@ -252,30 +247,26 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
         }
         ParameterValue<Double> param = rowValues[column];
         if (param == null) {
-            rowValues[column] =
-                    param =
-                            new FloatParameter(
-                                    ((MatrixParameterDescriptors) descriptor)
-                                            .descriptor(row, column, numRow, numCol));
+            rowValues[column] = param = new FloatParameter(
+                    ((MatrixParameterDescriptors) descriptor).descriptor(row, column, numRow, numCol));
         }
         return param;
     }
 
     /**
-     * Returns the parameters descriptors in this group. The amount of parameters depends on the
-     * value of <code>"num_row"</code> and <code>"num_col"</code> parameters.
+     * Returns the parameters descriptors in this group. The amount of parameters depends on the value of <code>
+     * "num_row"</code> and <code>"num_col"</code> parameters.
      */
+    @Override
     public List<GeneralParameterDescriptor> descriptors() {
-        return ((MatrixParameterDescriptors) descriptor)
-                .descriptors(numRow.intValue(), numCol.intValue());
+        return ((MatrixParameterDescriptors) descriptor).descriptors(numRow.intValue(), numCol.intValue());
     }
 
     /**
-     * Returns the parameters values in this group. The amount of parameters depends on the value of
-     * <code>"num_row"</code> and <code>"num_col"</code> parameters. The parameter array will
-     * contains only matrix elements which have been requested at least once by one of {@code
-     * parameter(...)} methods. Never requested elements are left to their default value and omitted
-     * from the returned array.
+     * Returns the parameters values in this group. The amount of parameters depends on the value of <code>"num_row"
+     * </code> and <code>"num_col"</code> parameters. The parameter array will contains only matrix elements which have
+     * been requested at least once by one of {@code parameter(...)} methods. Never requested elements are left to their
+     * default value and omitted from the returned array.
      */
     @Override
     public List<GeneralParameterValue> values() {
@@ -300,13 +291,14 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
                 }
             }
         }
-        return UnmodifiableArrayList.wrap((GeneralParameterValue[]) XArray.resize(parameters, k));
+        return UnmodifiableArrayList.wrap(XArray.resize(parameters, k));
     }
 
     /**
-     * Forwards the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors}
-     * specified at construction time.
+     * Forwards the call to the {@linkplain MatrixParameterDescriptors matrix parameter descriptors} specified at
+     * construction time.
      */
+    @Override
     public ParameterValueGroup createValue() {
         return (ParameterValueGroup) descriptor.createValue();
     }
@@ -337,15 +329,14 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
     }
 
     /**
-     * Sets all parameter values to the element value in the specified matrix. After this method
-     * call, {@link #values} will returns only the elements different from the default value.
+     * Sets all parameter values to the element value in the specified matrix. After this method call, {@link #values}
+     * will returns only the elements different from the default value.
      *
      * @param matrix The matrix to copy in this group of parameters.
      */
     @SuppressWarnings("unchecked") // Because of array creation
     public void setMatrix(final Matrix matrix) {
-        final MatrixParameterDescriptors matrixDescriptor =
-                ((MatrixParameterDescriptors) this.descriptor);
+        final MatrixParameterDescriptors matrixDescriptor = ((MatrixParameterDescriptors) this.descriptor);
         final int numRow = matrix.getNumRow();
         final int numCol = matrix.getNumCol();
         this.numRow.setValue(numRow);
@@ -388,9 +379,7 @@ public class MatrixParameters extends ParameterGroup implements ParameterDescrip
             final int numCol = this.numCol.intValue();
             for (int j = 0; j < numRow; j++) {
                 for (int i = 0; i < numCol; i++) {
-                    if (!Utilities.equals(
-                            this.parameter(j, i, numRow, numCol),
-                            that.parameter(j, i, numRow, numCol))) {
+                    if (!Utilities.equals(this.parameter(j, i, numRow, numCol), that.parameter(j, i, numRow, numCol))) {
                         return false;
                     }
                 }

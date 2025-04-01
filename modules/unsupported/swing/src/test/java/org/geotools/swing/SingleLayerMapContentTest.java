@@ -17,7 +17,7 @@
 
 package org.geotools.swing;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
 
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.Layer;
@@ -40,7 +40,7 @@ public class SingleLayerMapContentTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void nullArgToCtorThrowsException() {
-        MapContent mc = new SingleLayerMapContent(null);
+        new SingleLayerMapContent(null);
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -64,13 +64,12 @@ public class SingleLayerMapContentTest {
     public void disposeDoesNotCallLayerDispose() {
         final boolean[] layerDisposed = new boolean[1];
 
-        Layer layer =
-                new MockLayer(WORLD) {
-                    @Override
-                    public void dispose() {
-                        layerDisposed[0] = true;
-                    }
-                };
+        Layer layer = new MockLayer(WORLD) {
+            @Override
+            public void dispose() {
+                layerDisposed[0] = true;
+            }
+        };
 
         MapContent mc = new SingleLayerMapContent(layer);
         mc.dispose();

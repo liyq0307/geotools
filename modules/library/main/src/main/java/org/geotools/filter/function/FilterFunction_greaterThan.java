@@ -20,41 +20,33 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_greaterThan extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
+    public static FunctionName NAME = new FunctionNameImpl(
+            "greaterThan",
+            parameter(
                     "greaterThan",
-                    parameter(
-                            "greaterThan",
-                            Boolean.class,
-                            "greaterThan",
-                            "Returns true if x > y. Parameters can be either numbers or strings (in the second case lexicographic ordering is used)"),
-                    parameter(
-                            "x",
-                            Object.class,
-                            "x",
-                            "Can be any object type: date, string, number, etc..."),
-                    parameter(
-                            "y",
-                            Object.class,
-                            "y",
-                            "Can be any object type: date, string, number, etc..."));
+                    Boolean.class,
+                    "greaterThan",
+                    "Returns true if x > y. Parameters can be either numbers or strings (in the second case lexicographic ordering is used)"),
+            parameter("x", Object.class, "x", "Can be any object type: date, string, number, etc..."),
+            parameter("y", Object.class, "y", "Can be any object type: date, string, number, etc..."));
 
     public FilterFunction_greaterThan() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
         Object arg0;
         Object arg1;
 
         try { // attempt to get value and perform conversion
-            arg0 = (Object) getExpression(0).evaluate(feature);
+            arg0 = getExpression(0).evaluate(feature);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(
@@ -62,7 +54,7 @@ public class FilterFunction_greaterThan extends FunctionExpressionImpl {
         }
 
         try { // attempt to get value and perform conversion
-            arg1 = (Object) getExpression(1).evaluate(feature);
+            arg1 = getExpression(1).evaluate(feature);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

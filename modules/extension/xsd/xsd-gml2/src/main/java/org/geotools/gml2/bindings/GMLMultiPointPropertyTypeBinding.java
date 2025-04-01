@@ -57,6 +57,7 @@ import org.locationtech.jts.geom.MultiPoint;
  */
 public class GMLMultiPointPropertyTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MultiPointPropertyType;
     }
@@ -68,6 +69,7 @@ public class GMLMultiPointPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return MultiPoint.class;
     }
@@ -79,6 +81,7 @@ public class GMLMultiPointPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return node.getChildValue(MultiPoint.class);
     }
@@ -89,7 +92,7 @@ public class GMLMultiPointPropertyTypeBinding extends AbstractComplexBinding {
     }
 
     @Override
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         return GML2EncodingUtils.GeometryPropertyType_getProperties((MultiPoint) object);
     }
 }

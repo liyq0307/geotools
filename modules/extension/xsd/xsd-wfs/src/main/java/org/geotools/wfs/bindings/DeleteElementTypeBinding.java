@@ -19,11 +19,11 @@ package org.geotools.wfs.bindings;
 import javax.xml.namespace.QName;
 import net.opengis.wfs.DeleteElementType;
 import net.opengis.wfs.WfsFactory;
+import org.geotools.api.filter.Filter;
 import org.geotools.wfs.WFS;
 import org.geotools.xsd.AbstractComplexEMFBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.Filter;
 
 /**
  * Binding object for the type http://www.opengis.net/wfs:DeleteElementType.
@@ -92,6 +92,7 @@ public class DeleteElementTypeBinding extends AbstractComplexEMFBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WFS.DeleteElementType;
     }
@@ -103,6 +104,7 @@ public class DeleteElementTypeBinding extends AbstractComplexEMFBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return DeleteElementType.class;
     }
@@ -114,11 +116,12 @@ public class DeleteElementTypeBinding extends AbstractComplexEMFBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         DeleteElementType deleteElement = wfsfactory.createDeleteElementType();
 
         // &lt;xsd:element maxOccurs="1" minOccurs="1" ref="ogc:Filter"&gt;
-        deleteElement.setFilter((Filter) node.getChildValue(Filter.class));
+        deleteElement.setFilter(node.getChildValue(Filter.class));
 
         // &lt;xsd:attribute name="handle" type="xsd:string" use="optional"/&gt;
         if (node.hasAttribute("handle")) {

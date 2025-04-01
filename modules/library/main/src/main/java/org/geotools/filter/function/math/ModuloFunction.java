@@ -19,13 +19,13 @@ package org.geotools.filter.function.math;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Implements the Knuth floored division modulo_operation
@@ -35,12 +35,11 @@ import org.opengis.filter.expression.Literal;
  */
 public class ModuloFunction implements Function {
 
-    static FunctionName NAME =
-            new FunctionNameImpl(
-                    "modulo",
-                    Integer.class,
-                    FunctionNameImpl.parameter("dividend", Integer.class),
-                    FunctionNameImpl.parameter("divisor", Integer.class));
+    static FunctionName NAME = new FunctionNameImpl(
+            "modulo",
+            Integer.class,
+            FunctionNameImpl.parameter("dividend", Integer.class),
+            FunctionNameImpl.parameter("divisor", Integer.class));
 
     private final FunctionName functionName;
 
@@ -60,8 +59,7 @@ public class ModuloFunction implements Function {
         }
 
         if (parameters.size() != NAME.getArguments().size()) {
-            throw new IllegalArgumentException(
-                    NAME.getArguments().size() + " function parameters are required");
+            throw new IllegalArgumentException(NAME.getArguments().size() + " function parameters are required");
         }
 
         this.functionName = NAME;
@@ -69,10 +67,12 @@ public class ModuloFunction implements Function {
         this.fallback = fallback;
     }
 
+    @Override
     public Object evaluate(Object object) {
         return evaluate(object, functionName.getReturn().getType());
     }
 
+    @Override
     public <T> T evaluate(Object object, Class<T> context) {
         Expression dividendExpression = parameters.get(0);
         int dividend = dividendExpression.evaluate(object, Integer.class);
@@ -89,39 +89,41 @@ public class ModuloFunction implements Function {
         return Converters.convert(modulo, context);
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public String getName() {
         return functionName.getName();
     }
 
+    @Override
     public FunctionName getFunctionName() {
         return functionName;
     }
 
+    @Override
     public List<Expression> getParameters() {
         return Collections.unmodifiableList(parameters);
     }
 
+    @Override
     public Literal getFallbackValue() {
         return fallback;
     }
 
-    /**
-     * Creates a String representation of this Function with the function name and the arguments.
-     */
+    /** Creates a String representation of this Function with the function name and the arguments. */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getName());
         sb.append("(");
-        List<org.opengis.filter.expression.Expression> params = getParameters();
+        List<org.geotools.api.filter.expression.Expression> params = getParameters();
         if (params != null) {
-            org.opengis.filter.expression.Expression exp;
-            for (Iterator<org.opengis.filter.expression.Expression> it = params.iterator();
-                    it.hasNext(); ) {
+            org.geotools.api.filter.expression.Expression exp;
+            for (Iterator<org.geotools.api.filter.expression.Expression> it = params.iterator(); it.hasNext(); ) {
                 exp = it.next();
                 sb.append("[");
                 sb.append(exp);

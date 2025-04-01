@@ -16,21 +16,25 @@
  */
 package org.geotools.geopkg;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.util.Collections;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.util.ScreenMap;
 import org.geotools.jdbc.JDBCDataStoreAPIOnlineTest;
 import org.geotools.jdbc.JDBCDataStoreAPITestSetup;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.geotools.util.factory.Hints;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory;
 
 public class GeoPkgDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
 
@@ -56,15 +60,19 @@ public class GeoPkgDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
         // at the same time
     }
 
+    @Override
+    public void testGetFeatureWriterConcurrency() throws Exception {
+        // sqlite does not allow two transactions from two different connections writing
+        // at the same time
+    }
+
+    @Test
     public void testDistanceSimplification() throws Exception {
         SimpleFeatureSource fs = dataStore.getFeatureSource(tname("road"));
         assertTrue(fs.getSupportedHints().contains(Hints.GEOMETRY_DISTANCE));
 
         FilterFactory factory = dataStore.getFilterFactory();
-        Query q =
-                new Query(
-                        tname("road"),
-                        factory.id(Collections.singleton(factory.featureId("road.0"))));
+        Query q = new Query(tname("road"), factory.id(Collections.singleton(factory.featureId("road.0"))));
         Hints hints = new Hints(Hints.GEOMETRY_DISTANCE, Double.valueOf(10));
         q.setHints(hints);
 
@@ -84,22 +92,15 @@ public class GeoPkgDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
         }
     }
 
+    @Test
     public void testScreenMap() throws Exception {
         SimpleFeatureSource fs = dataStore.getFeatureSource(tname("road"));
         assertTrue(fs.getSupportedHints().contains(Hints.SCREENMAP));
 
         FilterFactory factory = dataStore.getFilterFactory();
-        Query q =
-                new Query(
-                        tname("road"),
-                        factory.id(Collections.singleton(factory.featureId("road.0"))));
+        Query q = new Query(tname("road"), factory.id(Collections.singleton(factory.featureId("road.0"))));
         ScreenMap screenMap =
-                new ScreenMap(
-                        0,
-                        0,
-                        10,
-                        10,
-                        new AffineTransform2D(AffineTransform.getScaleInstance(0.1, 0.1)));
+                new ScreenMap(0, 0, 10, 10, new AffineTransform2D(AffineTransform.getScaleInstance(0.1, 0.1)));
         screenMap.setSpans(10, 10);
         Hints hints = new Hints(Hints.SCREENMAP, screenMap);
         q.setHints(hints);

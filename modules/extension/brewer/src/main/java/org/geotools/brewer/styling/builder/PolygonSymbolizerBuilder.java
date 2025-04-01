@@ -18,8 +18,8 @@ package org.geotools.brewer.styling.builder;
 
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
-import org.geotools.styling.PolygonSymbolizer;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.PolygonSymbolizer;
 
 public class PolygonSymbolizerBuilder extends SymbolizerBuilder<PolygonSymbolizer> {
     StrokeBuilder stroke = new StrokeBuilder(this).unset();
@@ -66,6 +66,7 @@ public class PolygonSymbolizerBuilder extends SymbolizerBuilder<PolygonSymbolize
         return this;
     }
 
+    @Override
     public PolygonSymbolizer build() {
         if (unset) {
             return null;
@@ -84,6 +85,7 @@ public class PolygonSymbolizerBuilder extends SymbolizerBuilder<PolygonSymbolize
         return ps;
     }
 
+    @Override
     public PolygonSymbolizerBuilder reset() {
         stroke.unset();
         fill.unset();
@@ -92,22 +94,7 @@ public class PolygonSymbolizerBuilder extends SymbolizerBuilder<PolygonSymbolize
         return this;
     }
 
-    public PolygonSymbolizerBuilder reset(org.opengis.style.PolygonSymbolizer symbolizer) {
-        if (symbolizer == null) {
-            return unset();
-        }
-        if (symbolizer instanceof PolygonSymbolizer) {
-            return reset((PolygonSymbolizer) symbolizer);
-        }
-        stroke.reset(symbolizer.getStroke());
-        fill.reset(symbolizer.getFill());
-        uom = symbolizer.getUnitOfMeasure();
-        geometry = property(symbolizer.getGeometryPropertyName());
-
-        unset = false;
-        return this;
-    }
-
+    @Override
     public PolygonSymbolizerBuilder reset(PolygonSymbolizer symbolizer) {
         if (symbolizer == null) {
             return unset();
@@ -121,6 +108,7 @@ public class PolygonSymbolizerBuilder extends SymbolizerBuilder<PolygonSymbolize
         return this;
     }
 
+    @Override
     public PolygonSymbolizerBuilder unset() {
         return (PolygonSymbolizerBuilder) super.unset();
     }

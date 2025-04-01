@@ -23,8 +23,8 @@ import java.util.List;
 import org.geotools.swing.MapPane;
 
 /**
- * Receives mouse events from a MapPane instance, converts them to MapPaneMouseEvents, and sends
- * these to the active map pane tools.
+ * Receives mouse events from a MapPane instance, converts them to MapPaneMouseEvents, and sends these to the active map
+ * pane tools.
  *
  * @author Michael Bedward
  * @since 8.0
@@ -42,7 +42,7 @@ public class DefaultMapMouseEventDispatcher implements MapMouseEventDispatcher {
      */
     public DefaultMapMouseEventDispatcher(MapPane mapPane) {
         this.mapPane = mapPane;
-        this.listeners = new ArrayList<MapMouseListener>();
+        this.listeners = new ArrayList<>();
     }
 
     /** {@inheritDoc} */

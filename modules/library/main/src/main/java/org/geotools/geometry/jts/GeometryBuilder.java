@@ -32,19 +32,18 @@ import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 import org.locationtech.jts.geom.impl.CoordinateArraySequenceFactory;
 
 /**
- * A builder for {@link Geometry} objects. Primarily intended to support fluent programming in test
- * code.
+ * A builder for {@link Geometry} objects. Primarily intended to support fluent programming in test code.
  *
  * <p>Features include:
  *
  * <ul>
- *   <li>Both 2D and 3D coordinate dimensions are supported (assuming the provided {@link
- *       CoordinateSequenceFactory} supports them)
+ *   <li>Both 2D and 3D coordinate dimensions are supported (assuming the provided {@link CoordinateSequenceFactory}
+ *       supports them)
  *   <li>Sequences of ordinate values can be supplied in a number of ways
  *   <li>Rings do not need to be explicitly closed; a closing point will be supplied if needed
  *   <li>Empty geometries of all types can be created
- *   <li>Composite geometries are validated to ensure they have a consistent GeometryFactory and
- *       coordinate sequence dimension
+ *   <li>Composite geometries are validated to ensure they have a consistent GeometryFactory and coordinate sequence
+ *       dimension
  *       <p>Examples of intended usage are:
  *       <pre>
  *   GeometryBuilder gb = new GeometryBuilder(geomFact);
@@ -186,10 +185,8 @@ public class GeometryBuilder {
     }
 
     /**
-     * Creates a 2D LinearRing. If the supplied coordinate list is not closed, a closing coordinate
-     * is added.
+     * Creates a 2D LinearRing. If the supplied coordinate list is not closed, a closing coordinate is added.
      *
-     * @param ord
      * @return a LinearRing
      */
     public LinearRing linearRing(double... ord) {
@@ -197,8 +194,7 @@ public class GeometryBuilder {
     }
 
     /**
-     * Creates a 3D LinearRing. If the supplied coordinate list is not closed, a closing coordinate
-     * is added.
+     * Creates a 3D LinearRing. If the supplied coordinate list is not closed, a closing coordinate is added.
      *
      * @param ord the XYZ ordinates
      * @return a LinearRing
@@ -246,8 +242,8 @@ public class GeometryBuilder {
     }
 
     /**
-     * Creates a Polygon from an exterior ring. The coordinate dimension of the Polygon is the
-     * dimension of the LinearRing.
+     * Creates a Polygon from an exterior ring. The coordinate dimension of the Polygon is the dimension of the
+     * LinearRing.
      *
      * @param shell the exterior ring
      * @return a Polygon
@@ -268,17 +264,14 @@ public class GeometryBuilder {
     }
 
     /**
-     * Creates a Polygon with a hole from an exterior ring and an interior ring supplied by the
-     * rings of Polygons.
+     * Creates a Polygon with a hole from an exterior ring and an interior ring supplied by the rings of Polygons.
      *
      * @param shell the exterior ring
      * @param hole the interior ring
      * @return a Polygon with a hole
      */
     public Polygon polygon(Polygon shell, Polygon hole) {
-        return geomFact.createPolygon(
-                (LinearRing) shell.getExteriorRing(),
-                new LinearRing[] {(LinearRing) hole.getExteriorRing()});
+        return geomFact.createPolygon(shell.getExteriorRing(), new LinearRing[] {hole.getExteriorRing()});
     }
 
     /**
@@ -291,7 +284,7 @@ public class GeometryBuilder {
      * @return a 2D Polygon
      */
     public Polygon box(double x1, double y1, double x2, double y2) {
-        double[] ord = new double[] {x1, y1, x1, y2, x2, y2, x2, y1, x1, y1};
+        double[] ord = {x1, y1, x1, y2, x2, y2, x2, y1, x1, y1};
         return polygon(ord);
     }
 
@@ -306,18 +299,13 @@ public class GeometryBuilder {
      * @return a 3D Polygon
      */
     public Polygon boxZ(double x1, double y1, double x2, double y2, double z) {
-        double[] ord = new double[] {x1, y1, z, x1, y2, z, x2, y2, z, x2, y1, z, x1, y1, z};
+        double[] ord = {x1, y1, z, x1, y2, z, x2, y2, z, x2, y1, z, x1, y1, z};
         return polygonZ(ord);
     }
 
     /**
      * Creates an elliptical Polygon from a bounding box with a given number of sides.
      *
-     * @param x1
-     * @param y1
-     * @param x2
-     * @param y2
-     * @param nsides
      * @return a 2D Polygon
      */
     public Polygon ellipse(double x1, double y1, double x2, double y2, int nsides) {
@@ -376,8 +364,7 @@ public class GeometryBuilder {
      * @param z2 the Z ordinate of the second point
      * @return A 3D MultiPoint
      */
-    public MultiPoint multiPointZ(
-            double x1, double y1, double z1, double x2, double y2, double z2) {
+    public MultiPoint multiPointZ(double x1, double y1, double z1, double x2, double y2, double z2) {
         return geomFact.createMultiPoint(new Point[] {pointZ(x1, y1, z1), pointZ(x2, y2, z2)});
     }
 
@@ -412,8 +399,8 @@ public class GeometryBuilder {
     }
 
     /**
-     * Tests whether a sequence of ordinates of a given dimension is closed (i.e. has the first and
-     * last coordinate identical).
+     * Tests whether a sequence of ordinates of a given dimension is closed (i.e. has the first and last coordinate
+     * identical).
      *
      * @param ord the list of ordinate values
      * @param dim the dimension of each coordinate
@@ -430,11 +417,7 @@ public class GeometryBuilder {
         return isClosed;
     }
 
-    /**
-     * @param ord
-     * @param dim
-     * @return
-     */
+    /** */
     private CoordinateSequence createRingCS(double[] ord, int dim) {
         if (isClosed(ord, dim)) return createCS(ord, dim);
         double[] ord2 = new double[ord.length + dim];
@@ -447,18 +430,11 @@ public class GeometryBuilder {
         return createCS(ord2, dim);
     }
 
-    /**
-     * @param ord
-     * @param dim
-     * @return
-     */
+    /** */
     private CoordinateSequence createCS(double[] ord, int dim) {
         if (ord.length % dim != 0)
             throw new IllegalArgumentException(
-                    "Ordinate array length "
-                            + ord.length
-                            + " is not a multiple of dimension "
-                            + dim);
+                    "Ordinate array length " + ord.length + " is not a multiple of dimension " + dim);
         int n = ord.length / dim;
         CoordinateSequence cs;
         if (csFact instanceof CoordinateArraySequenceFactory && dim == 1) {
@@ -471,10 +447,7 @@ public class GeometryBuilder {
         if (cs.getDimension() != dim) {
             // illegal state error, try and fix
             throw new IllegalStateException(
-                    "Unable to use"
-                            + csFact
-                            + " to produce CoordinateSequence with dimension "
-                            + dim);
+                    "Unable to use" + csFact + " to produce CoordinateSequence with dimension " + dim);
         }
         for (int i = 0; i < n; i++) {
             for (int d = 0; d < dim; d++) cs.setOrdinate(i, d, ord[dim * i + d]);

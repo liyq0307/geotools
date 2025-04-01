@@ -18,8 +18,9 @@
 package org.geotools.appschema.resolver.data;
 
 import java.util.List;
-import junit.framework.TestCase;
-import org.opengis.feature.Feature;
+import org.geotools.api.feature.Feature;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Test the test data created by {@link org.geotools.appschema.resolver.data.SampleDataAccessData}.
@@ -28,11 +29,12 @@ import org.opengis.feature.Feature;
  * @version $Id$
  * @since 2.6
  */
-public class SampleDataAccessDataTest extends TestCase {
+public class SampleDataAccessDataTest {
 
     /** Test that two features are created. */
-    public static void testData() {
+    @Test
+    public void testData() {
         List<Feature> features = SampleDataAccessData.createMappedFeatures();
-        assertEquals(2, features.size());
+        Assert.assertEquals(2, features.size());
     }
 }

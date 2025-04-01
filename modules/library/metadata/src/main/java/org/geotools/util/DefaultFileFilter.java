@@ -28,8 +28,7 @@ import java.util.regex.Pattern;
  * @author Martin Desruisseaux (IRD)
  * @since 2.0
  */
-public class DefaultFileFilter extends javax.swing.filechooser.FileFilter
-        implements FileFilter, FilenameFilter {
+public class DefaultFileFilter extends javax.swing.filechooser.FileFilter implements FileFilter, FilenameFilter {
     /** The description of this filter, usually for graphical user interfaces. */
     private final String description;
 
@@ -37,8 +36,8 @@ public class DefaultFileFilter extends javax.swing.filechooser.FileFilter
     private final Pattern pattern;
 
     /**
-     * Constructs a file filter for the specified pattern. The pattern can contains the {@code "*"}
-     * and {@code "?"} wildcards.
+     * Constructs a file filter for the specified pattern. The pattern can contains the {@code "*"} and {@code "?"}
+     * wildcards.
      *
      * @param pattern The pattern (e.g. {@code "*.png"}).
      */
@@ -47,8 +46,8 @@ public class DefaultFileFilter extends javax.swing.filechooser.FileFilter
     }
 
     /**
-     * Constructs a file filter for the specified pattern and description. The pattern can contains
-     * the {@code "*"} and {@code "?"} wildcards.
+     * Constructs a file filter for the specified pattern and description. The pattern can contains the {@code "*"} and
+     * {@code "?"} wildcards.
      *
      * @param pattern The pattern (e.g. {@code "*.png"}).
      * @param description The description of this filter, usually for graphical user interfaces.
@@ -78,6 +77,7 @@ public class DefaultFileFilter extends javax.swing.filechooser.FileFilter
     }
 
     /** Returns the description of this filter. For example: {@code "PNG images"}. */
+    @Override
     public String getDescription() {
         return description;
     }
@@ -88,6 +88,7 @@ public class DefaultFileFilter extends javax.swing.filechooser.FileFilter
      * @param file The file to be tested.
      * @return {@code true} if and only if the name matches the pattern.
      */
+    @Override
     public boolean accept(final File file) {
         return (file != null) && pattern.matcher(file.getName()).matches();
     }
@@ -99,6 +100,7 @@ public class DefaultFileFilter extends javax.swing.filechooser.FileFilter
      * @param name The name of the file.
      * @return {@code true} if and only if the name matches the pattern.
      */
+    @Override
     public boolean accept(final File directory, final String name) {
         return (name != null) && pattern.matcher(name).matches();
     }

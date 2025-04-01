@@ -26,14 +26,13 @@ import java.util.TreeSet;
 import org.geotools.ows.wms.Layer;
 
 /** A base class for GetFeatureInfoRequests that provides some functionality. */
-public abstract class AbstractGetFeatureInfoRequest extends AbstractWMSRequest
-        implements GetFeatureInfoRequest {
+public abstract class AbstractGetFeatureInfoRequest extends AbstractWMSRequest implements GetFeatureInfoRequest {
     /** A set of type Layer, each of which is to be queried in the request */
-    private Set queryLayers;
+    private Set<Layer> queryLayers;
 
     /**
-     * Constructs a GetFeatureInfoRequest. It will set the REQUEST and VERSION parameters,
-     * over-writing and values set there previously.
+     * Constructs a GetFeatureInfoRequest. It will set the REQUEST and VERSION parameters, over-writing and values set
+     * there previously.
      *
      * @param onlineResource the URL pointing to the place to execute a GetFeatureInfo request
      * @param request a previously configured GetMapRequest that the query will be executed on
@@ -41,15 +40,12 @@ public abstract class AbstractGetFeatureInfoRequest extends AbstractWMSRequest
     public AbstractGetFeatureInfoRequest(URL onlineResource, GetMapRequest request) {
         super(onlineResource, getMapProperties(request));
 
-        queryLayers = new TreeSet();
+        queryLayers = new TreeSet<>();
     }
 
     /**
-     * GetMap request fills in the LAYERS and STYLES properties only when getFinalURL() is called,
-     * so we force it to fill them in before copying the properties
-     *
-     * @param request
-     * @return
+     * GetMap request fills in the LAYERS and STYLES properties only when getFinalURL() is called, so we force it to
+     * fill them in before copying the properties
      */
     static Properties getMapProperties(GetMapRequest request) {
         request.getFinalURL();
@@ -57,25 +53,20 @@ public abstract class AbstractGetFeatureInfoRequest extends AbstractWMSRequest
     }
 
     /** @see org.geotools.data.wms.request.Request#getFinalURL() */
+    @Override
     public URL getFinalURL() {
-        Iterator iter = queryLayers.iterator();
+        Iterator<Layer> iter = queryLayers.iterator();
         String initialQueryLayerString =
-                properties.getProperty(QUERY_LAYERS) == null
-                        ? ""
-                        : properties.getProperty(QUERY_LAYERS); // $NON-NLS-1$
+                properties.getProperty(QUERY_LAYERS) == null ? "" : properties.getProperty(QUERY_LAYERS); // $NON-NLS-1$
         String queryLayerString =
-                properties.getProperty(QUERY_LAYERS) == null
-                        ? ""
-                        : properties.getProperty(QUERY_LAYERS); // $NON-NLS-1$
+                properties.getProperty(QUERY_LAYERS) == null ? "" : properties.getProperty(QUERY_LAYERS); // $NON-NLS-1$
 
         while (iter.hasNext()) {
-            Layer layer = (Layer) iter.next();
+            Layer layer = iter.next();
             try {
                 // spaces are converted to plus signs, but must be %20 for url calls [GEOT-4317]
-                queryLayerString =
-                        queryLayerString
-                                + URLEncoder.encode(layer.getName(), "UTF-8")
-                                        .replaceAll("\\+", "%20");
+                queryLayerString = queryLayerString
+                        + URLEncoder.encode(layer.getName(), "UTF-8").replaceAll("\\+", "%20");
             } catch (UnsupportedEncodingException | NullPointerException e) {
                 queryLayerString = queryLayerString + layer.getName();
             }
@@ -94,39 +85,44 @@ public abstract class AbstractGetFeatureInfoRequest extends AbstractWMSRequest
     }
 
     /** @see GetFeatureInfoRequest#addQueryLayer(Layer) */
+    @Override
     public void addQueryLayer(Layer layer) {
         queryLayers.add(layer);
     }
 
     /** @see GetFeatureInfoRequest#setQueryLayers(java.util.Set) */
-    public void setQueryLayers(Set layers) {
+    @Override
+    public void setQueryLayers(Set<Layer> layers) {
         queryLayers = layers;
     }
 
     /** @see GetFeatureInfoRequest#setInfoFormat(java.lang.String) */
+    @Override
     public void setInfoFormat(String infoFormat) {
         setProperty(INFO_FORMAT, infoFormat);
     }
 
     /** @see GetFeatureInfoRequest#setFeatureCount(java.lang.String) */
+    @Override
     public void setFeatureCount(String featureCount) {
         setProperty(FEATURE_COUNT, featureCount);
     }
 
     /** @see GetFeatureInfoRequest#setFeatureCount(int) */
+    @Override
     public void setFeatureCount(int featureCount) {
         setFeatureCount(Integer.toString(featureCount));
     }
 
     /** @see GetFeatureInfoRequest#setQueryPoint(int, int) */
+    @Override
     public void setQueryPoint(int x, int y) {
         setProperty(getQueryX(), Integer.toString(x));
         setProperty(getQueryY(), Integer.toString(y));
     }
 
     /**
-     * Created because the 1.3.0 spec changes this parameter name. The 1.3.0 spec should over-ride
-     * this method.
+     * Created because the 1.3.0 spec changes this parameter name. The 1.3.0 spec should over-ride this method.
      *
      * @return a String representing the x-axis query point
      */
@@ -135,8 +131,7 @@ public abstract class AbstractGetFeatureInfoRequest extends AbstractWMSRequest
     }
 
     /**
-     * Created because the 1.3.0 spec changes this parameter name. The 1.3.0 spec should over-ride
-     * this method.
+     * Created because the 1.3.0 spec changes this parameter name. The 1.3.0 spec should over-ride this method.
      *
      * @return a String representing the y-axis query point
      */
@@ -144,9 +139,11 @@ public abstract class AbstractGetFeatureInfoRequest extends AbstractWMSRequest
         return QUERY_Y;
     }
 
+    @Override
     protected void initRequest() {
         setProperty(REQUEST, "feature_info"); // $NON-NLS-1$
     }
 
+    @Override
     protected abstract void initVersion();
 }

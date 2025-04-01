@@ -18,11 +18,11 @@ package org.geotools.filter.v1_0;
 
 import java.net.URI;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.FeatureId;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:FeatureIdType.
@@ -48,11 +48,13 @@ public class OGCFeatureIdTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.FeatureIdType;
     }
 
     /** @generated modifiable */
+    @Override
     public Class getType() {
         return FeatureId.class;
     }
@@ -64,10 +66,12 @@ public class OGCFeatureIdTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return factory.featureId(node.getAttributeValue("fid").toString());
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("fid".equals(name.getLocalPart())) {
             FeatureId featureId = (FeatureId) object;

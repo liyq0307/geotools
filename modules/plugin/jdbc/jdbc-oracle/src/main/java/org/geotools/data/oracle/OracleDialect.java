@@ -16,33 +16,46 @@
  */
 package org.geotools.data.oracle;
 
+import static java.util.Map.entry;
+
 import java.io.IOException;
+import java.io.StringReader;
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Struct;
 import java.sql.Types;
-import java.sql.Wrapper;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import oracle.jdbc.OracleConnection;
-import oracle.sql.ARRAY;
-import oracle.sql.Datum;
-import oracle.sql.STRUCT;
+import oracle.jdbc.OracleStruct;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.cs.CoordinateSystem;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.util.GenericName;
 import org.geotools.data.jdbc.FilterToSQL;
-import org.geotools.data.jdbc.datasource.DataSourceFinder;
-import org.geotools.data.jdbc.datasource.UnWrapper;
 import org.geotools.data.oracle.sdo.GeometryConverter;
 import org.geotools.data.oracle.sdo.SDOSqlDumper;
 import org.geotools.data.oracle.sdo.TT;
+import org.geotools.filter.visitor.JsonPointerFilterSplittingVisitor;
+import org.geotools.filter.visitor.PostPreProcessFilterSplittingVisitor;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.jdbc.JDBCDataStore;
@@ -63,50 +76,16 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.cs.CoordinateSystem;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
-import org.opengis.util.GenericName;
 
 /**
- * Abstract dialect implementation for Oracle. Subclasses differ on the way used to parse and encode
- * the JTS geoemtries into Oracle MDSYS.SDO_GEOMETRY structures.
+ * Abstract dialect implementation for Oracle. Subclasses differ on the way used to parse and encode the JTS geometries
+ * into Oracle MDSYS.SDO_GEOMETRY structures.
  *
  * @author Justin Deoliveira, OpenGEO
  * @author Andrea Aime, OpenGEO
+ * @author Mark Prins, B3Partners
  */
 public class OracleDialect extends PreparedStatementSQLDialect {
-
-    /**
-     * Sentinel value used to mark that the unwrapper lookup happened already, and an unwrapper was
-     * not found
-     */
-    UnWrapper UNWRAPPER_NOT_FOUND =
-            new UnWrapper() {
-
-                @Override
-                public Statement unwrap(Statement statement) {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public Connection unwrap(Connection conn) {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public boolean canUnwrap(Statement st) {
-                    return false;
-                }
-
-                @Override
-                public boolean canUnwrap(Connection conn) {
-                    return false;
-                }
-            };
 
     private static final int DEFAULT_AXIS_MAX = 10000000;
 
@@ -117,22 +96,13 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     /** Marks a geometry column as geodetic */
     public static final String GEODETIC = "geodetic";
 
-    /**
-     * Map of <code>UnWrapper</code> objects keyed by the class of <code>Connection</code> it is an
-     * unwrapper for. This avoids the overhead of searching the <code>DataSourceFinder</code>
-     * service registry at each unwrap.
-     */
-    Map<Class<? extends Connection>, UnWrapper> uwMap =
-            new HashMap<Class<? extends Connection>, UnWrapper>();
-
     private int nameLenghtLimit = 30;
 
     /**
-     * A map from JTS Geometry type to Oracle geometry type. See Oracle Spatial documentation, Table
-     * 2-1, Valid SDO_GTYPE values.
+     * A map from JTS Geometry type to Oracle geometry type. See Oracle Spatial documentation, Table 2-1, Valid
+     * SDO_GTYPE values.
      */
-    public static final Map<Class, String> CLASSES_TO_GEOM =
-            Collections.unmodifiableMap(new GeomClasses());
+    public static final Map<Class, String> CLASSES_TO_GEOM = Collections.unmodifiableMap(new GeomClasses());
 
     public void initVersion(Connection cx) {
         // try to figure out if longer names are supported by the database
@@ -148,6 +118,19 @@ public class OracleDialect extends PreparedStatementSQLDialect {
                             + "will assume length cannot be longer than 30 chars",
                     e);
         }
+    }
+
+    /**
+     * Turns on return of column comments metadata.
+     *
+     * @param cx the connection to use
+     * @param reportRemarks true to turn on column comments metadata
+     * @throws SQLException if the connection is not valid or there is a problem setting the flag
+     */
+    @SuppressWarnings("PMD.CloseResource") // connection is closed by caller
+    public void setRemarksReporting(Connection cx, boolean reportRemarks) throws SQLException {
+        OracleConnection ocx = unwrapConnection(cx);
+        ocx.setRemarksReporting(reportRemarks);
     }
 
     static final class GeomClasses extends HashMap<Class, String> {
@@ -166,17 +149,14 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         }
     }
 
-    static final Map<String, Class> TYPES_TO_CLASSES =
-            new HashMap<String, Class>() {
-                {
-                    put("CHAR", String.class);
-                    put("NCHAR", String.class);
-                    put("NVARCHAR", String.class);
-                    put("NVARCHAR2", String.class);
-                    put("DATE", java.sql.Date.class);
-                    put("TIMESTAMP", java.sql.Timestamp.class);
-                }
-            };
+    static final Map<String, Class> TYPES_TO_CLASSES = Map.ofEntries(
+            entry("CHAR", String.class),
+            entry("NCHAR", String.class),
+            entry("NCLOB", String.class),
+            entry("NVARCHAR", String.class),
+            entry("NVARCHAR2", String.class),
+            entry("DATE", java.sql.Date.class),
+            entry("TIMESTAMP", java.sql.Timestamp.class));
 
     /** Whether to use only primary filters for BBOX filters */
     boolean looseBBOXEnabled = false;
@@ -184,20 +164,19 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     /** Whether to use estimated extents to build */
     boolean estimatedExtentsEnabled = false;
 
+    /** Whether to turn on requesting column comments metadata */
+    boolean isGetColumnRemarksEnabled = false;
+
     /**
-     * Stores srid and their nature, true if geodetic, false otherwise. Avoids repeated accesses to
-     * the MDSYS.GEODETIC_SRIDS table
+     * Stores srid and their nature, true if geodetic, false otherwise. Avoids repeated accesses to the
+     * MDSYS.GEODETIC_SRIDS table
      */
-    SoftValueHashMap<Integer, Boolean> geodeticCache = new SoftValueHashMap<Integer, Boolean>(20);
+    SoftValueHashMap<Integer, Boolean> geodeticCache = new SoftValueHashMap<>(20);
 
     /** Remembers whether the USER_SDO_* views could be accessed or not */
     Boolean canAccessUserViews;
 
-    /**
-     * The direct geometry metadata table, if any
-     *
-     * @param dataStore
-     */
+    /** The direct geometry metadata table, if any */
     String geometryMetadataTable;
 
     /** Whether to use metadata tables to get bbox */
@@ -208,8 +187,17 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
+    public void initializeConnection(Connection cx) throws SQLException {
+        setRemarksReporting(cx, isGetColumnRemarksEnabled);
+    }
+
+    @Override
     public boolean isAggregatedSortSupported(String function) {
         return "distinct".equalsIgnoreCase(function);
+    }
+
+    public void setGetColumnRemarksEnabled(boolean getColumnRemarksEnabled) {
+        isGetColumnRemarksEnabled = getColumnRemarksEnabled;
     }
 
     public boolean isLooseBBOXEnabled() {
@@ -229,12 +217,8 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     /**
-     * Checks the user has permissions to read from the USER_SDO_INDEX_METADATA and
-     * USER_SDO_GEOM_METADATA. The code can use this information to decide to access the
-     * ALL_SDO_INDEX_METADATA and ALL_SOD_GEOM_METADATA views instead.
-     *
-     * @param cx
-     * @return
+     * Checks the user has permissions to read from the USER_SDO_INDEX_METADATA and USER_SDO_GEOM_METADATA. The code can
+     * use this information to decide to access the ALL_SDO_INDEX_METADATA and ALL_SOD_GEOM_METADATA views instead.
      */
     boolean canAccessUserViews(Connection cx) {
         if (canAccessUserViews == null) {
@@ -295,30 +279,18 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         }
     }
 
-    /**
-     * Tries to use the geometry metadata table, if available
-     *
-     * @param cx
-     * @param tableName
-     * @param columnName
-     * @param schema
-     * @return
-     * @throws SQLException
-     */
-    private Class<?> lookupGeometryOnMetadataTable(
-            Connection cx, String tableName, String columnName, String schema) throws SQLException {
+    /** Tries to use the geometry metadata table, if available */
+    private Class<?> lookupGeometryOnMetadataTable(Connection cx, String tableName, String columnName, String schema)
+            throws SQLException {
         if (geometryMetadataTable == null) {
             return null;
         }
 
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
 
         // setup the sql to use for the ALL_SDO table
         String metadataTableStatement =
-                "SELECT TYPE FROM "
-                        + geometryMetadataTable
-                        + " WHERE F_TABLE_NAME = ?"
-                        + " AND F_GEOMETRY_COLUMN = ?";
+                "SELECT TYPE FROM " + geometryMetadataTable + " WHERE F_TABLE_NAME = ?" + " AND F_GEOMETRY_COLUMN = ?";
 
         parameters.add(tableName);
         parameters.add(columnName);
@@ -332,18 +304,17 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     /** Looks up the geometry type on the "ALL_*" metadata views */
-    private Class<?> lookupGeometryClassOnAllIndex(
-            Connection cx, String tableName, String columnName, String schema) throws SQLException {
-        List<String> parameters = new ArrayList<String>();
+    private Class<?> lookupGeometryClassOnAllIndex(Connection cx, String tableName, String columnName, String schema)
+            throws SQLException {
+        List<String> parameters = new ArrayList<>();
 
         // setup the sql to use for the ALL_SDO table
-        String allSdoSqlStatement =
-                "SELECT META.SDO_LAYER_GTYPE\n"
-                        + "FROM ALL_INDEXES INFO\n"
-                        + "INNER JOIN MDSYS.ALL_SDO_INDEX_METADATA META\n"
-                        + "ON INFO.INDEX_NAME = META.SDO_INDEX_NAME\n"
-                        + "WHERE INFO.TABLE_NAME = ?\n"
-                        + "AND REPLACE(meta.sdo_column_name, '\"') = ?\n";
+        String allSdoSqlStatement = "SELECT META.SDO_LAYER_GTYPE\n"
+                + "FROM ALL_INDEXES INFO\n"
+                + "INNER JOIN MDSYS.ALL_SDO_INDEX_METADATA META\n"
+                + "ON INFO.INDEX_NAME = META.SDO_INDEX_NAME\n"
+                + "WHERE INFO.TABLE_NAME = ?\n"
+                + "AND REPLACE(meta.sdo_column_name, '\"') = ?\n";
 
         parameters.add(tableName);
         parameters.add(columnName);
@@ -359,24 +330,23 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     /** Looks up the geometry type on the "USER_*" metadata views */
-    private Class lookupGeometryClassOnUserIndex(
-            Connection cx, String tableName, String columnName, String schema) throws SQLException {
+    private Class lookupGeometryClassOnUserIndex(Connection cx, String tableName, String columnName, String schema)
+            throws SQLException {
         // we only try this if we are able to access the
         // user_sdo views
         if (!canAccessUserViews(cx)) {
             return null;
         }
 
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
 
         // setup the sql to use for the USER_SDO table
-        String userSdoSqlStatement =
-                "SELECT META.SDO_LAYER_GTYPE\n"
-                        + "FROM ALL_INDEXES INFO\n"
-                        + "INNER JOIN MDSYS.USER_SDO_INDEX_METADATA META\n"
-                        + "ON INFO.INDEX_NAME = META.SDO_INDEX_NAME\n"
-                        + "WHERE INFO.TABLE_NAME = ?\n"
-                        + "AND REPLACE(meta.sdo_column_name, '\"') = ?\n";
+        String userSdoSqlStatement = "SELECT META.SDO_LAYER_GTYPE\n"
+                + "FROM ALL_INDEXES INFO\n"
+                + "INNER JOIN MDSYS.USER_SDO_INDEX_METADATA META\n"
+                + "ON INFO.INDEX_NAME = META.SDO_INDEX_NAME\n"
+                + "WHERE INFO.TABLE_NAME = ?\n"
+                + "AND REPLACE(meta.sdo_column_name, '\"') = ?\n";
         parameters.add(tableName);
         parameters.add(columnName);
 
@@ -388,24 +358,13 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         return readGeometryClassFromStatement(cx, userSdoSqlStatement, parameters);
     }
 
-    /**
-     * Reads the geometry type from the first column returned by executing the specified SQL
-     * statement
-     *
-     * @param cx
-     * @param sql
-     * @return
-     * @throws SQLException
-     */
+    /** Reads the geometry type from the first column returned by executing the specified SQL statement */
     private Class readGeometryClassFromStatement(Connection cx, String sql, List<String> parameters)
             throws SQLException {
         PreparedStatement st = null;
         ResultSet rs = null;
         try {
-            LOGGER.log(
-                    Level.FINE,
-                    "Geometry type check; {0} [ parameters = {1} ]",
-                    new Object[] {sql, parameters});
+            LOGGER.log(Level.FINE, "Geometry type check; {0} [ parameters = {1} ]", new Object[] {sql, parameters});
             st = cx.prepareStatement(sql);
             for (int i = 0; i < parameters.size(); i++) {
                 st.setString(i + 1, parameters.get(i));
@@ -413,14 +372,11 @@ public class OracleDialect extends PreparedStatementSQLDialect {
             rs = st.executeQuery();
             if (rs.next()) {
                 String gType = rs.getString(1);
-                Class geometryClass = (Class) TT.GEOM_CLASSES.get(gType);
+                Class geometryClass = TT.GEOM_CLASSES.get(gType);
                 if (geometryClass == null) {
                     // if there was a record but it's not a recognized geometry type fall back on
                     // geometry for backwards compatibility, but at least log the info
-                    LOGGER.fine(
-                            "Unrecognized geometry type "
-                                    + gType
-                                    + " falling back on generic 'GEOMETRY'");
+                    LOGGER.fine("Unrecognized geometry type " + gType + " falling back on generic 'GEOMETRY'");
                     geometryClass = Geometry.class;
                 }
 
@@ -435,8 +391,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public boolean includeTable(String schemaName, String tableName, Connection cx)
-            throws SQLException {
+    public boolean includeTable(String schemaName, String tableName, Connection cx) throws SQLException {
 
         if (tableName.endsWith("$")) {
             return false;
@@ -470,16 +425,17 @@ public class OracleDialect extends PreparedStatementSQLDialect {
             return false;
         } else if (tableName.startsWith("DM$")) {
             return false;
-        } else if (tableName.startsWith("MDXT_")
-                && (tableName.endsWith("$_BKTS") || tableName.endsWith("$_MBR"))) {
+        } else if (tableName.startsWith("MDXT_") && (tableName.endsWith("$_BKTS") || tableName.endsWith("$_MBR"))) {
             return false;
         }
 
         return true;
     }
 
+    @Override
     public void registerSqlTypeNameToClassMappings(Map<String, Class<?>> mappings) {
         super.registerSqlTypeNameToClassMappings(mappings);
+        mappings.put("NCLOB", String.class);
 
         mappings.put("SDO_GEOMETRY", Geometry.class);
         mappings.put("MDSYS.SDO_GEOMETRY", Geometry.class);
@@ -503,7 +459,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         raw = raw.toUpperCase();
         if (raw.length() > nameLenghtLimit) raw = raw.substring(0, nameLenghtLimit);
         // need to quote column names with spaces in
-        if (raw.contains(" ")) {
+        if (raw.contains(" ") || OracleDialect.reservedWords.contains(raw.toUpperCase())) {
             raw = "\"" + raw + "\"";
         }
         sql.append(raw);
@@ -526,8 +482,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx)
-            throws SQLException, IOException {
+    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx) throws SQLException, IOException {
         Geometry geom = readGeometry(rs, column, new GeometryFactory(), cx);
         return geom != null ? geom.getEnvelopeInternal() : null;
     }
@@ -547,6 +502,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         return convertGeometry(geom, descriptor, factory);
     }
 
+    @Override
     public Geometry decodeGeometryValue(
             GeometryDescriptor descriptor,
             ResultSet rs,
@@ -558,10 +514,9 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         // read the geometry
         Geometry geom = readGeometry(rs, column, factory, cx);
         return convertGeometry(geom, descriptor, factory);
-    };
+    }
 
-    Geometry convertGeometry(
-            Geometry geom, GeometryDescriptor descriptor, GeometryFactory factory) {
+    Geometry convertGeometry(Geometry geom, GeometryDescriptor descriptor, GeometryFactory factory) {
         // if the geometry is null no need to convert it
         if (geom == null) {
             return null;
@@ -594,8 +549,8 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         return readGeometry(rs.getObject(column), factory, cx);
     }
 
-    Geometry readGeometry(Object struct, GeometryFactory factory, Connection cx)
-            throws IOException, SQLException {
+    @SuppressWarnings("PMD.CloseResource") // the connection is managed by the caller
+    Geometry readGeometry(Object struct, GeometryFactory factory, Connection cx) throws IOException, SQLException {
         if (struct == null) {
             return null;
         }
@@ -605,12 +560,12 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         GeometryConverter converter =
                 factory != null ? new GeometryConverter(ocx, factory) : new GeometryConverter(ocx);
 
-        return converter.asGeometry((STRUCT) struct);
+        return converter.asGeometry((OracleStruct) struct);
     }
 
     @Override
-    public void setGeometryValue(
-            Geometry g, int dimension, int srid, Class binding, PreparedStatement ps, int column)
+    @SuppressWarnings("PMD.CloseResource") // the connection and ps are managed by the caller
+    public void setGeometryValue(Geometry g, int dimension, int srid, Class binding, PreparedStatement ps, int column)
             throws SQLException {
 
         // Handle the null geometry case.
@@ -623,7 +578,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         OracleConnection ocx = unwrapConnection(ps.getConnection());
 
         GeometryConverter converter = new GeometryConverter(ocx);
-        STRUCT s = converter.toSDO(g, srid);
+        OracleStruct s = converter.toSDO(g, srid);
         ps.setObject(column, s);
 
         if (LOGGER.isLoggable(Level.FINE)) {
@@ -632,72 +587,15 @@ public class OracleDialect extends PreparedStatementSQLDialect {
                 // the dumper cannot translate all types of geometries
                 sdo = SDOSqlDumper.toSDOGeom(g, srid);
             } catch (Exception e) {
-                sdo =
-                        "Could not translate this geometry into a SDO string, "
-                                + "WKT representation is: "
-                                + g;
+                sdo = "Could not translate this geometry into a SDO string, " + "WKT representation is: " + g;
             }
             LOGGER.fine("Setting parameter " + column + " as " + sdo);
         }
     }
 
-    /** Obtains the native oracle connection object given a database connecetion. */
-    @SuppressWarnings("PMD.CloseResource")
+    /** Obtains the native oracle connection object given a database connection. */
     OracleConnection unwrapConnection(Connection cx) throws SQLException {
-        if (cx == null) {
-            return null;
-        }
-
-        if (cx instanceof OracleConnection) {
-            return (OracleConnection) cx;
-        }
-
-        try {
-            // Unwrap the connection multiple levels as necessary to get at the underlying
-            // OracleConnection. Maintain a map of UnWrappers to avoid searching
-            // the registry every time we need to unwrap.
-            Connection testCon = cx;
-            Connection toUnwrap;
-            do {
-                UnWrapper unwrapper = uwMap.get(testCon.getClass());
-                if (unwrapper == null) {
-                    unwrapper = DataSourceFinder.getUnWrapper(testCon);
-                    if (unwrapper == null) {
-                        unwrapper = UNWRAPPER_NOT_FOUND;
-                    }
-                    uwMap.put(testCon.getClass(), unwrapper);
-                }
-                if (unwrapper == UNWRAPPER_NOT_FOUND) {
-                    // give up and do Java 6 unwrap below
-                    break;
-                }
-                toUnwrap = testCon;
-                testCon = unwrapper.unwrap(testCon);
-                if (testCon instanceof OracleConnection) {
-                    return (OracleConnection) testCon;
-                }
-            } while (testCon != null && testCon != toUnwrap);
-
-            if (cx instanceof Wrapper) {
-                // try to use java 6 unwrapping
-                try {
-                    Wrapper w = cx;
-                    if (w.isWrapperFor(OracleConnection.class)) {
-                        return w.unwrap(OracleConnection.class);
-                    }
-                } catch (Throwable t) {
-                    // not a mistake, old DBCP versions will throw an Error here, we need to catch
-                    // it
-                    LOGGER.log(
-                            Level.FINER, "Failed to unwrap connection using java 6 facilities", t);
-                }
-            }
-        } catch (IOException e) {
-            throw (SQLException)
-                    new SQLException("Could not obtain native oracle connection.").initCause(e);
-        }
-
-        throw new SQLException("Could not obtain native oracle connection for " + cx.getClass());
+        return unwrapConnection(cx, OracleConnection.class);
     }
 
     public FilterToSQL createFilterToSQL() {
@@ -713,8 +611,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public Integer getGeometrySRID(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public Integer getGeometrySRID(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
 
         Integer srid = lookupSRIDOnMetadataTable(schemaName, tableName, columnName, cx);
@@ -728,20 +625,17 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     /** Reads the SRID from the geometry metadata table, if available */
-    private Integer lookupSRIDOnMetadataTable(
-            String schema, String tableName, String columnName, Connection cx) throws SQLException {
+    private Integer lookupSRIDOnMetadataTable(String schema, String tableName, String columnName, Connection cx)
+            throws SQLException {
         if (geometryMetadataTable == null) {
             return null;
         }
 
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
 
         // setup the sql to use for the ALL_SDO table
         String metadataTableStatement =
-                "SELECT SRID FROM "
-                        + geometryMetadataTable
-                        + " WHERE F_TABLE_NAME = ?"
-                        + " AND F_GEOMETRY_COLUMN = ?";
+                "SELECT SRID FROM " + geometryMetadataTable + " WHERE F_TABLE_NAME = ?" + " AND F_GEOMETRY_COLUMN = ?";
 
         parameters.add(tableName);
         parameters.add(columnName);
@@ -755,13 +649,11 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     /** Reads the SRID from the SDO_ALL* views */
-    private Integer lookupSRIDFromAllViews(
-            String schemaName, String tableName, String columnName, Connection cx)
+    private Integer lookupSRIDFromAllViews(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
 
-        String allSdoSql =
-                "SELECT SRID FROM MDSYS.ALL_SDO_GEOM_METADATA WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+        String allSdoSql = "SELECT SRID FROM MDSYS.ALL_SDO_GEOM_METADATA WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
 
         parameters.add(tableName.toUpperCase());
         parameters.add(columnName.toUpperCase());
@@ -774,41 +666,27 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         return readIntegerFromStatement(cx, allSdoSql, parameters);
     }
 
-    /**
-     * Reads the SRID from the SDO_USER* views
-     *
-     * @param tableName
-     * @param columnName
-     * @param cx
-     * @return
-     * @throws SQLException
-     */
-    private Integer lookupSRIDFromUserViews(String tableName, String columnName, Connection cx)
-            throws SQLException {
+    /** Reads the SRID from the SDO_USER* views */
+    private Integer lookupSRIDFromUserViews(String tableName, String columnName, Connection cx) throws SQLException {
         // we run this only if we can access the user views
         if (!canAccessUserViews(cx)) {
             return null;
         }
 
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
 
-        String userSdoSql =
-                "SELECT SRID FROM MDSYS.USER_SDO_GEOM_METADATA WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+        String userSdoSql = "SELECT SRID FROM MDSYS.USER_SDO_GEOM_METADATA WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
         parameters.add(tableName.toUpperCase());
         parameters.add(columnName.toUpperCase());
 
         return readIntegerFromStatement(cx, userSdoSql, parameters);
     }
 
-    private Integer readIntegerFromStatement(Connection cx, String sql, List<String> parameters)
-            throws SQLException {
+    private Integer readIntegerFromStatement(Connection cx, String sql, List<String> parameters) throws SQLException {
         PreparedStatement userSdoStatement = null;
         ResultSet userSdoResult = null;
         try {
-            LOGGER.log(
-                    Level.FINE,
-                    "SRID check; {0} [ parameters = {1} ]",
-                    new Object[] {sql, parameters});
+            LOGGER.log(Level.FINE, "SRID check; {0} [ parameters = {1} ]", new Object[] {sql, parameters});
             userSdoStatement = cx.prepareStatement(sql);
             for (int i = 0; i < parameters.size(); i++) {
                 userSdoStatement.setString(i + 1, parameters.get(i));
@@ -830,8 +708,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public int getGeometryDimension(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public int getGeometryDimension(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
         Integer srid = lookupDimensionOnMetadataTable(schemaName, tableName, columnName, cx);
         if (srid == null) {
@@ -849,20 +726,19 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     /** Reads the dimensionfrom the geometry metadata table, if available */
-    private Integer lookupDimensionOnMetadataTable(
-            String schema, String tableName, String columnName, Connection cx) throws SQLException {
+    private Integer lookupDimensionOnMetadataTable(String schema, String tableName, String columnName, Connection cx)
+            throws SQLException {
         if (geometryMetadataTable == null) {
             return null;
         }
 
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
 
         // setup the sql to use for the ALL_SDO table
-        String metadataTableStatement =
-                "SELECT COORD_DIMENSION FROM "
-                        + geometryMetadataTable
-                        + " WHERE F_TABLE_NAME = ?"
-                        + " AND F_GEOMETRY_COLUMN = ?";
+        String metadataTableStatement = "SELECT COORD_DIMENSION FROM "
+                + geometryMetadataTable
+                + " WHERE F_TABLE_NAME = ?"
+                + " AND F_GEOMETRY_COLUMN = ?";
 
         parameters.add(tableName);
         parameters.add(columnName);
@@ -876,14 +752,12 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     /** Reads the SRID from the SDO_ALL* views */
-    private Integer lookupDimensionFromAllViews(
-            String schemaName, String tableName, String columnName, Connection cx)
+    private Integer lookupDimensionFromAllViews(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
 
-        String allSdoSql =
-                "SELECT DIMINFO FROM MDSYS.ALL_SDO_GEOM_METADATA USGM, table(USGM.DIMINFO) "
-                        + "WHERE TABLE_NAME = ? AND COLUMN_NAME= ?";
+        String allSdoSql = "SELECT DIMINFO FROM MDSYS.ALL_SDO_GEOM_METADATA USGM, table(USGM.DIMINFO) "
+                + "WHERE TABLE_NAME = ? AND COLUMN_NAME= ?";
 
         parameters.add(tableName.toUpperCase());
         parameters.add(columnName.toUpperCase());
@@ -896,15 +770,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         return readIntegerFromStatement(cx, allSdoSql, parameters);
     }
 
-    /**
-     * Reads the SRID from the SDO_USER* views
-     *
-     * @param tableName
-     * @param columnName
-     * @param cx
-     * @return
-     * @throws SQLException
-     */
+    /** Reads the SRID from the SDO_USER* views */
     private Integer lookupDimensionFromUserViews(String tableName, String columnName, Connection cx)
             throws SQLException {
         // we run this only if we can access the user views
@@ -912,11 +778,10 @@ public class OracleDialect extends PreparedStatementSQLDialect {
             return null;
         }
 
-        List<String> parameters = new ArrayList<String>();
+        List<String> parameters = new ArrayList<>();
 
-        String userSdoSql =
-                "SELECT COUNT(*) FROM MDSYS.USER_SDO_GEOM_METADATA USGM, table(USGM.DIMINFO)"
-                        + " WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+        String userSdoSql = "SELECT COUNT(*) FROM MDSYS.USER_SDO_GEOM_METADATA USGM, table(USGM.DIMINFO)"
+                + " WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
 
         parameters.add(tableName.toUpperCase());
         parameters.add(columnName.toUpperCase());
@@ -945,8 +810,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
                     try {
                         return CRS.parseWKT(wkt);
                     } catch (Exception e) {
-                        if (LOGGER.isLoggable(Level.FINE))
-                            LOGGER.log(Level.FINE, "Could not parse WKT " + wkt, e);
+                        if (LOGGER.isLoggable(Level.FINE)) LOGGER.log(Level.FINE, "Could not parse WKT " + wkt, e);
                         return null;
                     }
                 }
@@ -966,8 +830,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public List<ReferencedEnvelope> getOptimizedBounds(
-            String schema, SimpleFeatureType featureType, Connection cx)
+    public List<ReferencedEnvelope> getOptimizedBounds(String schema, SimpleFeatureType featureType, Connection cx)
             throws SQLException, IOException {
         if (dataStore.getVirtualTables().get(featureType.getTypeName()) != null) return null;
 
@@ -979,7 +842,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
             ResultSet rs = null;
             String sql;
 
-            List<ReferencedEnvelope> result = new ArrayList<ReferencedEnvelope>();
+            List<ReferencedEnvelope> result = new ArrayList<>();
             Savepoint savePoint = null;
             try {
                 if (!cx.getAutoCommit()) {
@@ -1006,8 +869,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
                                 // reproject and merge
                                 if (env != null && !env.isNull()) {
                                     CoordinateReferenceSystem crs =
-                                            ((GeometryDescriptor) att)
-                                                    .getCoordinateReferenceSystem();
+                                            ((GeometryDescriptor) att).getCoordinateReferenceSystem();
                                     result.add(new ReferencedEnvelope(env, crs));
                                     rs.close();
                                     continue;
@@ -1053,10 +915,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
                 if (savePoint != null) {
                     cx.rollback(savePoint);
                 }
-                LOGGER.log(
-                        Level.WARNING,
-                        "Failed to use METADATA DIMINFO, falling back on SDO_TUNE.EXTENT_OF",
-                        e);
+                LOGGER.log(Level.WARNING, "Failed to use METADATA DIMINFO, falling back on SDO_TUNE.EXTENT_OF", e);
                 return getOptimizedBoundsSDO_TUNE(schema, featureType, cx);
             } finally {
                 if (savePoint != null) {
@@ -1073,8 +932,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     public List<ReferencedEnvelope> getOptimizedBoundsSDO_TUNE(
-            String schema, SimpleFeatureType featureType, Connection cx)
-            throws SQLException, IOException {
+            String schema, SimpleFeatureType featureType, Connection cx) throws SQLException, IOException {
         if (!estimatedExtentsEnabled) return null;
 
         String tableName;
@@ -1087,7 +945,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         Statement st = null;
         ResultSet rs = null;
 
-        List<ReferencedEnvelope> result = new ArrayList<ReferencedEnvelope>();
+        List<ReferencedEnvelope> result = new ArrayList<>();
         Savepoint savePoint = null;
         try {
             st = cx.createStatement();
@@ -1098,16 +956,13 @@ public class OracleDialect extends PreparedStatementSQLDialect {
             for (AttributeDescriptor att : featureType.getAttributeDescriptors()) {
                 if (att instanceof GeometryDescriptor) {
                     // use estimated extent (optimizer statistics)
-                    StringBuffer sql = new StringBuffer();
+                    StringBuilder sql = new StringBuilder();
                     sql.append("select SDO_TUNE.EXTENT_OF('");
                     sql.append(tableName);
                     sql.append("', '");
                     sql.append(att.getName().getLocalPart());
                     sql.append("') FROM DUAL");
-                    LOGGER.log(
-                            Level.FINE,
-                            "Getting the full extent of the table using optimized search: {0}",
-                            sql);
+                    LOGGER.log(Level.FINE, "Getting the full extent of the table using optimized search: {0}", sql);
                     rs = st.executeQuery(sql.toString());
 
                     if (rs.next()) {
@@ -1117,8 +972,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
 
                         // Either a ReferencedEnvelope or ReferencedEnvelope3D will be generated
                         // here
-                        ReferencedEnvelope env =
-                                JTS.bounds(geometry, descriptor.getCoordinateReferenceSystem());
+                        ReferencedEnvelope env = JTS.bounds(geometry, descriptor.getCoordinateReferenceSystem());
 
                         // reproject and merge
                         if (env != null && !env.isNull()) {
@@ -1132,10 +986,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
             if (savePoint != null) {
                 cx.rollback(savePoint);
             }
-            LOGGER.log(
-                    Level.WARNING,
-                    "Failed to use SDO_TUNE.EXTENT_OF, falling back on envelope aggregation",
-                    e);
+            LOGGER.log(Level.WARNING, "Failed to use SDO_TUNE.EXTENT_OF, falling back on envelope aggregation", e);
             return null;
         } finally {
             if (savePoint != null) {
@@ -1148,8 +999,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public void postCreateTable(String schemaName, SimpleFeatureType featureType, Connection cx)
-            throws SQLException {
+    public void postCreateTable(String schemaName, SimpleFeatureType featureType, Connection cx) throws SQLException {
         String tableName = featureType.getName().getLocalPart().toUpperCase();
         Statement st = null;
         try {
@@ -1189,14 +1039,12 @@ public class OracleDialect extends PreparedStatementSQLDialect {
                             if (i < cs.getDimension()) {
                                 CoordinateSystemAxis axis = cs.getAxis(i);
                                 axisNames[i] = getCompatibleAxisName(axis, i);
-                                min[i] =
-                                        Double.isInfinite(axis.getMinimumValue())
-                                                ? DEFAULT_AXIS_MIN
-                                                : axis.getMinimumValue();
-                                max[i] =
-                                        Double.isInfinite(axis.getMaximumValue())
-                                                ? DEFAULT_AXIS_MAX
-                                                : axis.getMaximumValue();
+                                min[i] = Double.isInfinite(axis.getMinimumValue())
+                                        ? DEFAULT_AXIS_MIN
+                                        : axis.getMinimumValue();
+                                max[i] = Double.isInfinite(axis.getMaximumValue())
+                                        ? DEFAULT_AXIS_MAX
+                                        : axis.getMaximumValue();
                                 if (max[i] - min[i] < extent) extent = max[i] - min[i];
                             } else {
                                 min[i] = DEFAULT_AXIS_MIN;
@@ -1225,8 +1073,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
                         srid = (Integer) geom.getUserData().get(JDBCDataStore.JDBC_NATIVE_SRID);
                     } else if (geom.getCoordinateReferenceSystem() != null) {
                         try {
-                            Integer result =
-                                    CRS.lookupEpsgCode(geom.getCoordinateReferenceSystem(), true);
+                            Integer result = CRS.lookupEpsgCode(geom.getCoordinateReferenceSystem(), true);
                             if (result != null) srid = result;
                         } catch (Exception e) {
                             LOGGER.log(
@@ -1238,36 +1085,33 @@ public class OracleDialect extends PreparedStatementSQLDialect {
 
                     // register the metadata
                     String geomColumnName = geom.getLocalName().toUpperCase();
-                    String sql =
-                            "INSERT INTO USER_SDO_GEOM_METADATA" //
-                                    + "(TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)\n" //
-                                    + "VALUES (\n" //
-                                    + "'"
-                                    + tableName
-                                    + "',\n" //
-                                    + "'"
-                                    + geomColumnName
-                                    + "',\n" //
-                                    + "MDSYS.SDO_DIM_ARRAY(\n";
+                    String sql = "INSERT INTO USER_SDO_GEOM_METADATA" //
+                            + "(TABLE_NAME, COLUMN_NAME, DIMINFO, SRID)\n" //
+                            + "VALUES (\n" //
+                            + "'"
+                            + tableName
+                            + "',\n" //
+                            + "'"
+                            + geomColumnName
+                            + "',\n" //
+                            + "MDSYS.SDO_DIM_ARRAY(\n";
                     for (int i = 0; i < dims; i++) {
-                        sql +=
-                                "   MDSYS.SDO_DIM_ELEMENT('"
-                                        + axisNames[i]
-                                        + "', "
-                                        + min[i]
-                                        + ", "
-                                        + max[i]
-                                        + ", "
-                                        + tolerance
-                                        + ")";
+                        sql += "   MDSYS.SDO_DIM_ELEMENT('"
+                                + axisNames[i]
+                                + "', "
+                                + min[i]
+                                + ", "
+                                + max[i]
+                                + ", "
+                                + tolerance
+                                + ")";
                         if (i < dims - 1) sql += ", ";
                         sql += "\n";
                     }
-                    sql =
-                            sql
-                                    + "),\n" //
-                                    + (srid == -1 ? "NULL" : String.valueOf(srid))
-                                    + ")";
+                    sql = sql
+                            + "),\n" //
+                            + (srid == -1 ? "NULL" : String.valueOf(srid))
+                            + ")";
                     LOGGER.log(Level.FINE, "Creating metadata with sql: {0}", sql);
                     st.execute(sql);
 
@@ -1280,24 +1124,19 @@ public class OracleDialect extends PreparedStatementSQLDialect {
                     String type = CLASSES_TO_GEOM.get(geom.getType().getBinding());
                     String idxName = tableName + "_" + geomColumnName + "_IDX";
                     if (idxName.length() > nameLenghtLimit) {
-                        idxName =
-                                "IDX_"
-                                        + UUID.randomUUID()
-                                                .toString()
-                                                .replace("-", "")
-                                                .substring(0, 26);
+                        idxName = "IDX_"
+                                + UUID.randomUUID().toString().replace("-", "").substring(0, 26);
                     }
-                    sql =
-                            "CREATE INDEX " //
-                                    + idxName
-                                    + " ON \"" //
-                                    + tableName
-                                    + "\"(\""
-                                    + geomColumnName
-                                    + "\")" //
-                                    + " INDEXTYPE IS MDSYS.SPATIAL_INDEX" //
-                                    + " PARAMETERS ('SDO_INDX_DIMS="
-                                    + idxDim;
+                    sql = "CREATE INDEX " //
+                            + idxName
+                            + " ON \"" //
+                            + tableName
+                            + "\"(\""
+                            + geomColumnName
+                            + "\")" //
+                            + " INDEXTYPE IS MDSYS.SPATIAL_INDEX" //
+                            + " PARAMETERS ('SDO_INDX_DIMS="
+                            + idxDim;
                     if (type != null) sql += " LAYER_GTYPE=\"" + type + "\"')";
                     else sql += "')";
                     LOGGER.log(Level.FINE, "Creating index with sql: {0}", sql);
@@ -1339,8 +1178,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public String getSequenceForColumn(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public String getSequenceForColumn(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
         String sequenceName = (tableName + "_" + columnName + "_%").toUpperCase();
         PreparedStatement st = null;
@@ -1363,8 +1201,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
             }
 
             // that did not work, let's see if the sequence is available in someone else schema
-            sql =
-                    "SELECT SEQUENCE_NAME, SEQUENCE_OWNER FROM ALL_SEQUENCES WHERE SEQUENCE_NAME like ?";
+            sql = "SELECT SEQUENCE_NAME, SEQUENCE_OWNER FROM ALL_SEQUENCES WHERE SEQUENCE_NAME like ?";
             st = cx.prepareStatement(sql);
             st.setString(1, sequenceName);
             rs = st.executeQuery();
@@ -1385,15 +1222,11 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public Object getNextSequenceValue(String schemaName, String sequenceName, Connection cx)
-            throws SQLException {
+    public Object getNextSequenceValue(String schemaName, String sequenceName, Connection cx) throws SQLException {
         Statement st = cx.createStatement();
         try {
             ResultSet rs =
-                    st.executeQuery(
-                            "SELECT "
-                                    + encodeNextSequenceValue(schemaName, sequenceName)
-                                    + " FROM DUAL");
+                    st.executeQuery("SELECT " + encodeNextSequenceValue(schemaName, sequenceName) + " FROM DUAL");
             try {
                 if (!rs.next()) {
                     throw new SQLException("Could not find next sequence value");
@@ -1413,8 +1246,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public void postDropTable(String schemaName, SimpleFeatureType featureType, Connection cx)
-            throws SQLException {
+    public void postDropTable(String schemaName, SimpleFeatureType featureType, Connection cx) throws SQLException {
         PreparedStatement st = null;
         String tableName = featureType.getTypeName();
 
@@ -1424,10 +1256,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
             String sql = "DELETE FROM USER_SDO_GEOM_METADATA WHERE TABLE_NAME = ?";
             st = cx.prepareStatement(sql);
             st.setString(1, tableName);
-            LOGGER.log(
-                    Level.FINE,
-                    "Post drop table: {0} [ TABLE_NAME = {1} ]",
-                    new Object[] {sql, tableName});
+            LOGGER.log(Level.FINE, "Post drop table: {0} [ TABLE_NAME = {1} ]", new Object[] {sql, tableName});
             st.execute();
         } finally {
             dataStore.closeSafe(st);
@@ -1439,11 +1268,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         return true;
     }
 
-    /**
-     * Checks if the specified srid is geodetic or not
-     *
-     * @throws SQLException
-     */
+    /** Checks if the specified srid is geodetic or not */
     protected boolean isGeodeticSrid(Integer srid, Connection cx) {
         if (srid == null) return false;
 
@@ -1458,19 +1283,14 @@ public class OracleDialect extends PreparedStatementSQLDialect {
                     ResultSet rs = null;
                     boolean closeConnection = false;
                     try {
-                        ps =
-                                cx.prepareStatement(
-                                        "SELECT COUNT(*) FROM MDSYS.GEODETIC_SRIDS WHERE SRID = ?");
+                        ps = cx.prepareStatement("SELECT COUNT(*) FROM MDSYS.GEODETIC_SRIDS WHERE SRID = ?");
                         ps.setInt(1, srid);
                         rs = ps.executeQuery();
                         rs.next();
                         geodetic = rs.getInt(1) > 0;
                         geodeticCache.put(srid, geodetic);
                     } catch (SQLException e) {
-                        LOGGER.log(
-                                Level.WARNING,
-                                "Could not evaluate if the SRID " + srid + " is geodetic",
-                                e);
+                        LOGGER.log(Level.WARNING, "Could not evaluate if the SRID " + srid + " is geodetic", e);
                     } finally {
                         dataStore.closeSafe(rs);
                         dataStore.closeSafe(ps);
@@ -1503,8 +1323,8 @@ public class OracleDialect extends PreparedStatementSQLDialect {
             // find results between N and M
             // select * from
             // ( select rownum rnum, a.*
-            //    from (your_query) a
-            //   where rownum <= :M )
+            // from (your_query) a
+            // where rownum <= :M )
             // where rnum >= :N;
             long max = (limit == Integer.MAX_VALUE ? Long.MAX_VALUE : limit + offset);
             sql.insert(0, "SELECT * FROM (SELECT A.*, ROWNUM RNUM FROM ( ");
@@ -1533,8 +1353,7 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     }
 
     @Override
-    public void postCreateAttribute(
-            AttributeDescriptor att, String tableName, String schemaName, Connection cx)
+    public void postCreateAttribute(AttributeDescriptor att, String tableName, String schemaName, Connection cx)
             throws SQLException {
         super.postCreateAttribute(att, tableName, schemaName, cx);
 
@@ -1545,29 +1364,17 @@ public class OracleDialect extends PreparedStatementSQLDialect {
         }
     }
 
-    /**
-     * The geometry metadata table in use, if any
-     *
-     * @return
-     */
+    /** The geometry metadata table in use, if any */
     public String getGeometryMetadataTable() {
         return geometryMetadataTable;
     }
 
-    /**
-     * Sets the geometry metadata table
-     *
-     * @param geometryMetadataTable
-     */
+    /** Sets the geometry metadata table */
     public void setGeometryMetadataTable(String geometryMetadataTable) {
         this.geometryMetadataTable = geometryMetadataTable;
     }
 
-    /**
-     * Sets the decision if the table MDSYS.USER_SDO_GEOM_METADATA can be used for index calculation
-     *
-     * @param geometryMetadataTable
-     */
+    /** Sets the decision if the table MDSYS.USER_SDO_GEOM_METADATA can be used for index calculation */
     public void setMetadataBboxEnabled(boolean metadataBboxEnabled) {
         this.metadataBboxEnabled = metadataBboxEnabled;
     }
@@ -1575,35 +1382,558 @@ public class OracleDialect extends PreparedStatementSQLDialect {
     /**
      * @param rs result set of the dimension info query
      * @param column column of the dimension info
-     * @return the envelope out of the dimension info (assumption: x before y or longitude before
-     *     latitude) or null, if no data is in the specified column
+     * @return the envelope out of the dimension info (assumption: x before y or longitude before latitude) or null, if
+     *     no data is in the specified column
      * @throws SQLException if dimension info can not be parsed
      * @author Hendrik Peilke
      */
     private Envelope decodeDiminfoEnvelope(ResultSet rs, int column) throws SQLException {
-        ARRAY returnArray = (ARRAY) rs.getObject(column);
+        Array returnArray = rs.getArray(column);
 
         if (returnArray == null) {
             throw new SQLException("no data inside the specified column");
         }
 
-        Datum data[] = returnArray.getOracleArray();
-
+        Object[] data = (Object[]) returnArray.getArray();
         if (data.length < 2) {
             throw new SQLException("too little dimension information found in sdo_geom_metadata");
         }
 
-        Datum[] xInfo = ((STRUCT) data[0]).getOracleAttributes();
-        Datum[] yInfo = ((STRUCT) data[1]).getOracleAttributes();
-        Double minx = xInfo[1].doubleValue();
-        Double maxx = xInfo[2].doubleValue();
-        Double miny = yInfo[1].doubleValue();
-        Double maxy = yInfo[2].doubleValue();
+        Object[] xInfo = ((Struct) data[0]).getAttributes();
+        Object[] yInfo = ((Struct) data[1]).getAttributes();
 
+        // because Oracle insists on BigDecimal/BigInteger for numbers
+        Double minx = ((Number) xInfo[1]).doubleValue();
+        Double maxx = ((Number) xInfo[2]).doubleValue();
+        Double miny = ((Number) yInfo[1]).doubleValue();
+        Double maxy = ((Number) yInfo[2]).doubleValue();
+        returnArray.free();
         return new Envelope(minx, maxx, miny, maxy);
     }
 
+    @Override
+    public Filter[] splitFilter(Filter filter, SimpleFeatureType schema) {
+
+        PostPreProcessFilterSplittingVisitor splitter =
+                new JsonPointerFilterSplittingVisitor(dataStore.getFilterCapabilities(), schema, null);
+        filter.accept(splitter, null);
+
+        Filter[] split = new Filter[2];
+        split[0] = splitter.getFilterPre();
+        split[1] = splitter.getFilterPost();
+
+        return split;
+    }
+
+    @Override
     public int getDefaultVarcharSize() {
         return 4000;
+    }
+
+    static Set<String> reservedWords = new TreeSet<>();
+
+    static {
+        /* List of reserved words from https://docs.oracle.com/cd/B19306_01/em.102/b40103/app_oracle_reserved_words.htm */
+        String[] words = {
+            "ACCESS",
+            "ACCOUNT",
+            "ACTIVATE",
+            "ADD",
+            "ADMIN",
+            "ADVISE",
+            "AFTER",
+            "ALL",
+            "ALL_ROWS",
+            "ALLOCATE",
+            "ALTER",
+            "ANALYZE",
+            "AND",
+            "ANY",
+            "ARCHIVE",
+            "ARCHIVELOG",
+            "ARRAY",
+            "AS",
+            "ASC",
+            "AT",
+            "AUDIT",
+            "AUTHENTICATED",
+            "AUTHORIZATION",
+            "AUTOEXTEND",
+            "AUTOMATIC",
+            "BACKUP",
+            "BECOME",
+            "BEFORE",
+            "BEGIN",
+            "BETWEEN",
+            "BFILE",
+            "BITMAP",
+            "BLOB",
+            "BLOCK",
+            "BODY",
+            "BY",
+            "CACHE",
+            "CACHE_INSTANCES",
+            "CANCEL",
+            "CASCADE",
+            "CAST",
+            "CFILE",
+            "CHAINED",
+            "CHANGE",
+            "CHAR",
+            "CHAR_CS",
+            "CHARACTER",
+            "CHECK",
+            "CHECKPOINT",
+            "CHOOSE",
+            "CHUNK",
+            "CLEAR",
+            "CLOB",
+            "CLONE",
+            "CLOSE",
+            "CLOSE_CACHED_OPEN_CURSORS",
+            "CLUSTER",
+            "COALESCE",
+            "COLUMN",
+            "COLUMNS",
+            "COMMENT",
+            "COMMIT",
+            "COMMITTED",
+            "COMPATIBILITY",
+            "COMPILE",
+            "COMPLETE",
+            "COMPOSITE_LIMIT",
+            "COMPRESS",
+            "COMPUTE",
+            "CONNECT",
+            "CONNECT_TIME",
+            "CONSTRAINT",
+            "CONSTRAINTS",
+            "CONTENTS",
+            "CONTINUE",
+            "CONTROLFILE",
+            "CONVERT",
+            "COST",
+            "CPU_PER_CALL",
+            "CPU_PER_SESSION",
+            "CREATE",
+            "CURRENT",
+            "CURRENT_SCHEMA",
+            "CURREN_USER",
+            "CURSOR",
+            "CYCLE",
+            "DANGLING",
+            "DATABASE",
+            "DATAFILE",
+            "DATAFILES",
+            "DATAOBJNO",
+            "DATE",
+            "DBA",
+            "DBHIGH",
+            "DBLOW",
+            "DBMAC",
+            "DEALLOCATE",
+            "DEBUG",
+            "DEC",
+            "DECIMAL",
+            "DECLARE",
+            "DEFAULT",
+            "DEFERRABLE",
+            "DEFERRED",
+            "DEGREE",
+            "DELETE",
+            "DEREF",
+            "DESC",
+            "DIRECTORY",
+            "DISABLE",
+            "DISCONNECT",
+            "DISMOUNT",
+            "DISTINCT",
+            "DISTRIBUTED",
+            "DML",
+            "DOUBLE",
+            "DROP",
+            "DUMP",
+            "EACH",
+            "ELSE",
+            "ENABLE",
+            "END",
+            "ENFORCE",
+            "ENTRY",
+            "ESCAPE",
+            "EXCEPT",
+            "EXCEPTIONS",
+            "EXCHANGE",
+            "EXCLUDING",
+            "EXCLUSIVE",
+            "EXECUTE",
+            "EXISTS",
+            "EXPIRE",
+            "EXPLAIN",
+            "EXTENT",
+            "EXTENTS",
+            "EXTERNALLY",
+            "FAILED_LOGIN_ATTEMPTS",
+            "FALSE",
+            "FAST",
+            "FILE",
+            "FIRST_ROWS",
+            "FLAGGER",
+            "FLOAT",
+            "FLOB",
+            "FLUSH",
+            "FOR",
+            "FORCE",
+            "FOREIGN",
+            "FREELIST",
+            "FREELISTS",
+            "FROM",
+            "FULL",
+            "FUNCTION",
+            "GLOBAL",
+            "GLOBALLY",
+            "GLOBAL_NAME",
+            "GRANT",
+            "GROUP",
+            "GROUPS",
+            "HASH",
+            "HASHKEYS",
+            "HAVING",
+            "HEADER",
+            "HEAP",
+            "IDENTIFIED",
+            "IDGENERATORS",
+            "IDLE_TIME",
+            "IF",
+            "IMMEDIATE",
+            "IN",
+            "INCLUDING",
+            "INCREMENT",
+            "INDEX",
+            "INDEXED",
+            "INDEXES",
+            "INDICATOR",
+            "IND_PARTITION",
+            "INITIAL",
+            "INITIALLY",
+            "INITRANS",
+            "INSERT",
+            "INSTANCE",
+            "INSTANCES",
+            "INSTEAD",
+            "INT",
+            "INTEGER",
+            "INTERMEDIATE",
+            "INTERSECT",
+            "INTO",
+            "IS",
+            "ISOLATION",
+            "ISOLATION_LEVEL",
+            "KEEP",
+            "KEY",
+            "KILL",
+            "LABEL",
+            "LAYER",
+            "LESS",
+            "LEVEL",
+            "LIBRARY",
+            "LIKE",
+            "LIMIT",
+            "LINK",
+            "LIST",
+            "LOB",
+            "LOCAL",
+            "LOCK",
+            "LOCKED",
+            "LOG",
+            "LOGFILE",
+            "LOGGING",
+            "LOGICAL_READS_PER_CALL",
+            "LOGICAL_READS_PER_SESSION",
+            "LONG",
+            "MANAGE",
+            "MASTER",
+            "MAX",
+            "MAXARCHLOGS",
+            "MAXDATAFILES",
+            "MAXEXTENTS",
+            "MAXINSTANCES",
+            "MAXLOGFILES",
+            "MAXLOGHISTORY",
+            "MAXLOGMEMBERS",
+            "MAXSIZE",
+            "MAXTRANS",
+            "MAXVALUE",
+            "MIN",
+            "MEMBER",
+            "MINIMUM",
+            "MINEXTENTS",
+            "MINUS",
+            "MINVALUE",
+            "MLSLABEL",
+            "MLS_LABEL_FORMAT",
+            "MODE",
+            "MODIFY",
+            "MOUNT",
+            "MOVE",
+            "MTS_DISPATCHERS",
+            "MULTISET",
+            "NATIONAL",
+            "NCHAR",
+            "NCHAR_CS",
+            "NCLOB",
+            "NEEDED",
+            "NESTED",
+            "NETWORK",
+            "NEW",
+            "NEXT",
+            "NOARCHIVELOG",
+            "NOAUDIT",
+            "NOCACHE",
+            "NOCOMPRESS",
+            "NOCYCLE",
+            "NOFORCE",
+            "NOLOGGING",
+            "NOMAXVALUE",
+            "NOMINVALUE",
+            "NONE",
+            "NOORDER",
+            "NOOVERRIDE",
+            "NOPARALLEL",
+            "NOPARALLEL",
+            "NOREVERSE",
+            "NORMAL",
+            "NOSORT",
+            "NOT",
+            "NOTHING",
+            "NOWAIT",
+            "NULL",
+            "NUMBER",
+            "NUMERIC",
+            "NVARCHAR2",
+            "OBJECT",
+            "OBJNO",
+            "OBJNO_REUSE",
+            "OF",
+            "OFF",
+            "OFFLINE",
+            "OID",
+            "OIDINDEX",
+            "OLD",
+            "ON",
+            "ONLINE",
+            "ONLY",
+            "OPCODE",
+            "OPEN",
+            "OPTIMAL",
+            "OPTIMIZER_GOAL",
+            "OPTION",
+            "OR",
+            "ORDER",
+            "ORGANIZATION",
+            "OSLABEL",
+            "OVERFLOW",
+            "OWN",
+            "PACKAGE",
+            "PARALLEL",
+            "PARTITION",
+            "PASSWORD",
+            "PASSWORD_GRACE_TIME",
+            "PASSWORD_LIFE_TIME",
+            "PASSWORD_LOCK_TIME",
+            "PASSWORD_REUSE_MAX",
+            "PASSWORD_REUSE_TIME",
+            "PASSWORD_VERIFY_FUNCTION",
+            "PCTFREE",
+            "PCTINCREASE",
+            "PCTTHRESHOLD",
+            "PCTUSED",
+            "PCTVERSION",
+            "PERCENT",
+            "PERMANENT",
+            "PLAN",
+            "PLSQL_DEBUG",
+            "POST_TRANSACTION",
+            "PRECISION",
+            "PRESERVE",
+            "PRIMARY",
+            "PRIOR",
+            "PRIVATE",
+            "PRIVATE_SGA",
+            "PRIVILEGE",
+            "PRIVILEGES",
+            "PROCEDURE",
+            "PROFILE",
+            "PUBLIC",
+            "PURGE",
+            "QUEUE",
+            "QUOTA",
+            "RANGE",
+            "RAW",
+            "RBA",
+            "READ",
+            "READUP",
+            "REAL",
+            "REBUILD",
+            "RECOVER",
+            "RECOVERABLE",
+            "RECOVERY",
+            "REF",
+            "REFERENCES",
+            "REFERENCING",
+            "REFRESH",
+            "RENAME",
+            "REPLACE",
+            "RESET",
+            "RESETLOGS",
+            "RESIZE",
+            "RESOURCE",
+            "RESTRICTED",
+            "RETURN",
+            "RETURNING",
+            "REUSE",
+            "REVERSE",
+            "REVOKE",
+            "ROLE",
+            "ROLES",
+            "ROLLBACK",
+            "ROW",
+            "ROWID",
+            "ROWNUM",
+            "ROWS",
+            "RULE",
+            "SAMPLE",
+            "SAVEPOINT",
+            "SB4",
+            "SCAN_INSTANCES",
+            "SCHEMA",
+            "SCN",
+            "SCOPE",
+            "SD_ALL",
+            "SD_INHIBIT",
+            "SD_SHOW",
+            "SEGMENT",
+            "SEG_BLOCK",
+            "SEG_FILE",
+            "SELECT",
+            "SEQUENCE",
+            "SERIALIZABLE",
+            "SESSION",
+            "SESSION_CACHED_CURSORS",
+            "SESSIONS_PER_USER",
+            "SET",
+            "SHARE",
+            "SHARED",
+            "SHARED_POOL",
+            "SHRINK",
+            "SIZE",
+            "SKIP",
+            "SKIP_UNUSABLE_INDEXES",
+            "SMALLINT",
+            "SNAPSHOT",
+            "SOME",
+            "SORT",
+            "SPECIFICATION",
+            "SPLIT",
+            "SQL_TRACE",
+            "STANDBY",
+            "START",
+            "STATEMENT_ID",
+            "STATISTICS",
+            "STOP",
+            "STORAGE",
+            "STORE",
+            "STRUCTURE",
+            "SUCCESSFUL",
+            "SWITCH",
+            "SYS_OP_ENFORCE_NOT_NULL$",
+            "SYS_OP_NTCIMG$",
+            "SYNONYM",
+            "SYSDATE",
+            "SYSDBA",
+            "SYSOPER",
+            "SYSTEM",
+            "TABLE",
+            "TABLES",
+            "TABLESPACE",
+            "TABLESPACE_NO",
+            "TABNO",
+            "TEMPORARY",
+            "THAN",
+            "THE",
+            "THEN",
+            "THREAD",
+            "TIMESTAMP",
+            "TIME",
+            "TO",
+            "TOPLEVEL",
+            "TRACE",
+            "TRACING",
+            "TRANSACTION",
+            "TRANSITIONAL",
+            "TRIGGER",
+            "TRIGGERS",
+            "TRUE",
+            "TRUNCATE",
+            "TX",
+            "TYPE",
+            "UB2",
+            "UBA",
+            "UID",
+            "UNARCHIVED",
+            "UNDO",
+            "UNION",
+            "UNIQUE",
+            "UNLIMITED",
+            "UNLOCK",
+            "UNRECOVERABLE",
+            "UNTIL",
+            "UNUSABLE",
+            "UNUSED",
+            "UPDATABLE",
+            "UPDATE",
+            "USAGE",
+            "USE",
+            "USER",
+            "USING",
+            "VALIDATE",
+            "VALIDATION",
+            "VALUE",
+            "VALUES",
+            "VARCHAR",
+            "VARCHAR2",
+            "VARYING",
+            "VIEW",
+            "WHEN",
+            "WHENEVER",
+            "WHERE",
+            "WITH",
+            "WITHOUT",
+            "WORK",
+            "WRITE",
+            "WRITEDOWN",
+            "WRITEUP",
+            "XID",
+            "YEAR",
+            "ZONE"
+        };
+        reservedWords.addAll(Arrays.asList(words));
+    }
+
+    // override setValue to support NCLOB
+    @Override
+    public void setValue(
+            Object value, Class<?> binding, AttributeDescriptor att, PreparedStatement ps, int column, Connection cx)
+            throws SQLException {
+        if (value == null) {
+            super.setValue(null, binding, att, ps, column, cx);
+            return;
+        }
+
+        if (dataStore.getMapping(binding, att) == Types.NCLOB) {
+            String string = convert(value, String.class);
+            ps.setNClob(column, new StringReader(string), string.length());
+        } else {
+            super.setValue(value, binding, att, ps, column, cx);
+        }
     }
 }

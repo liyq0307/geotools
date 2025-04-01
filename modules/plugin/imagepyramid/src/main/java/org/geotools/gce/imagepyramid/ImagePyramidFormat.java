@@ -18,8 +18,6 @@ package org.geotools.gce.imagepyramid;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.util.HashMap;
@@ -27,6 +25,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
 import org.geotools.data.PrjFileReader;
@@ -35,25 +39,17 @@ import org.geotools.parameter.DefaultParameterDescriptorGroup;
 import org.geotools.parameter.ParameterGroup;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.coverage.grid.GridCoverageWriter;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * This class implements the basic format capabilities for a coverage format.
  *
  * @author Simone Giannecchini (simboss)
- * @author Stefan Alfons Krueger (alfonx), Wikisquare.de : Support for
- *     jar:file:foo.jar/bar.properties like URLs
+ * @author Stefan Alfons Krueger (alfonx), Wikisquare.de : Support for jar:file:foo.jar/bar.properties like URLs
  */
 public final class ImagePyramidFormat extends AbstractGridFormat implements Format {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ImagePyramidFormat.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ImagePyramidFormat.class);
 
     /** Creates an instance and sets the metadata. */
     public ImagePyramidFormat() {
@@ -62,7 +58,7 @@ public final class ImagePyramidFormat extends AbstractGridFormat implements Form
 
     /** Sets the metadata information for this format */
     private void setInfo() {
-        HashMap<String, String> info = new HashMap<String, String>();
+        HashMap<String, String> info = new HashMap<>();
         info.put("name", "ImagePyramid");
         info.put("description", "Image pyramidal plugin");
         info.put("vendor", "Geotools");
@@ -73,36 +69,28 @@ public final class ImagePyramidFormat extends AbstractGridFormat implements Form
         // reading parameters. Inheriting them from the ImageMosaic
         final ImageMosaicFormat formatForParameters = new ImageMosaicFormat();
         final ParameterValueGroup readParams = formatForParameters.getReadParameters();
-        final DefaultParameterDescriptorGroup descriptor =
-                (DefaultParameterDescriptorGroup) readParams.getDescriptor();
+        final DefaultParameterDescriptorGroup descriptor = (DefaultParameterDescriptorGroup) readParams.getDescriptor();
         List<GeneralParameterDescriptor> descriptors = descriptor.descriptors();
-        GeneralParameterDescriptor[] descriptorArray =
-                new GeneralParameterDescriptor[descriptors.size()];
+        GeneralParameterDescriptor[] descriptorArray = new GeneralParameterDescriptor[descriptors.size()];
         descriptorArray = descriptors.toArray(descriptorArray);
-        readParameters =
-                new ParameterGroup(new DefaultParameterDescriptorGroup(mInfo, descriptorArray));
+        readParameters = new ParameterGroup(new DefaultParameterDescriptorGroup(mInfo, descriptorArray));
 
         // writing parameters
         writeParameters = null;
     }
 
     /**
-     * Retrieves a reader for this source object in case the provided source can be read using this
-     * plugin.
+     * Retrieves a reader for this source object in case the provided source can be read using this plugin.
      *
      * @param source Object
-     * @return An {@link ImagePyramidReader} if the provided object can be read using this plugin or
-     *     null.
+     * @return An {@link ImagePyramidReader} if the provided object can be read using this plugin or null.
      */
     @Override
     public ImagePyramidReader getReader(Object source) {
         return getReader(source, null);
     }
 
-    /**
-     * This methods throw an {@link UnsupportedOperationException} because this plugiin si read
-     * only.
-     */
+    /** This methods throw an {@link UnsupportedOperationException} because this plugiin si read only. */
     @Override
     public GridCoverageWriter getWriter(Object destination) {
         throw new UnsupportedOperationException("This plugin is a read only plugin!");
@@ -113,8 +101,7 @@ public final class ImagePyramidFormat extends AbstractGridFormat implements Form
     public boolean accepts(Object source, Hints hints) {
 
         if (source == null) {
-            throw new NullPointerException(
-                    "Null parameter provided to the accepts method of this ImagePyramidFormat");
+            throw new NullPointerException("Null parameter provided to the accepts method of this ImagePyramidFormat");
         }
 
         try {
@@ -144,21 +131,18 @@ public final class ImagePyramidFormat extends AbstractGridFormat implements Form
 
             // get the crs if able to
             final URL prjURL = URLs.changeUrlExt(sourceURL, "prj");
-            PrjFileReader crsReader;
-            try {
-                crsReader = new PrjFileReader(Channels.newChannel(prjURL.openStream()));
+            CoordinateReferenceSystem tempcrs = null;
+            try (PrjFileReader crsReader = new PrjFileReader(Channels.newChannel(prjURL.openStream()))) {
+                tempcrs = crsReader.getCoordinateReferenceSystem();
             } catch (FactoryException e) {
-
                 return false;
             }
-            CoordinateReferenceSystem tempcrs = crsReader.getCoordinateReferenceSystem();
             if (tempcrs == null) {
                 // use the default crs
                 tempcrs = AbstractGridFormat.getDefaultCRS();
                 LOGGER.log(
                         Level.FINE,
-                        new StringBuilder(
-                                        "Unable to find a CRS for this coverage, using a default one: ")
+                        new StringBuilder("Unable to find a CRS for this coverage, using a default one: ")
                                 .append(tempcrs.toWKT())
                                 .toString());
             }
@@ -167,25 +151,14 @@ public final class ImagePyramidFormat extends AbstractGridFormat implements Form
 
             // property file
             final Properties properties = new Properties();
-            BufferedInputStream propertyStream = null;
             if (!sourceURL.getPath().endsWith(".properties")) {
                 return false;
             }
             LOGGER.fine("loading properties from: " + sourceURL);
-            final InputStream openStream = sourceURL.openStream();
-            try {
-                propertyStream = new BufferedInputStream(openStream);
+            try (BufferedInputStream propertyStream = new BufferedInputStream(sourceURL.openStream())) {
                 properties.load(propertyStream);
             } catch (Throwable e) {
-                if (propertyStream != null) {
-                    propertyStream.close();
-                }
-
                 return false;
-            } finally {
-                if (openStream != null) {
-                    openStream.close();
-                }
             }
 
             // load the envelope
@@ -194,8 +167,8 @@ public final class ImagePyramidFormat extends AbstractGridFormat implements Form
                 return false;
             }
             String[] pairs = envelope.split(" ");
-            final double cornersV[][] = new double[2][2];
-            String pair[];
+            final double[][] cornersV = new double[2][2];
+            String[] pair;
             for (int i = 0; i < 2; i++) {
                 pair = pairs[i].split(",");
                 cornersV[i][0] = Double.parseDouble(pair[0]);
@@ -227,34 +200,22 @@ public final class ImagePyramidFormat extends AbstractGridFormat implements Form
     }
 
     /**
-     * Retrieves a reader for this source object in case the provided source can be read using this
-     * plugin.
+     * Retrieves a reader for this source object in case the provided source can be read using this plugin.
      *
      * @param source Object
      * @param hints {@link Hints} to control the reader behaviour.
-     * @return An {@link ImagePyramidReader} if the provided object can be read using this plugin or
-     *     null.
+     * @return An {@link ImagePyramidReader} if the provided object can be read using this plugin or null.
      */
     @Override
     public ImagePyramidReader getReader(Object source, Hints hints) {
         try {
 
             return new ImagePyramidReader(source, hints);
-        } catch (MalformedURLException e) {
-            if (LOGGER.isLoggable(Level.SEVERE))
-                LOGGER.severe(
-                        new StringBuffer(
-                                        "impossible to get a reader for the provided source. The error is ")
-                                .append(e.getLocalizedMessage())
-                                .toString());
-            return null;
         } catch (IOException e) {
             if (LOGGER.isLoggable(Level.SEVERE))
-                LOGGER.severe(
-                        new StringBuffer(
-                                        "impossible to get a reader for the provided source. The error is ")
-                                .append(e.getLocalizedMessage())
-                                .toString());
+                LOGGER.severe(new StringBuffer("impossible to get a reader for the provided source. The error is ")
+                        .append(e.getLocalizedMessage())
+                        .toString());
             return null;
         }
     }

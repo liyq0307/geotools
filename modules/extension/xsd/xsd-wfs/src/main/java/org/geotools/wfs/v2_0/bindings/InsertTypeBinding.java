@@ -34,18 +34,20 @@ public class InsertTypeBinding extends AbstractComplexEMFBinding {
         super(factory);
     }
 
+    @Override
     public QName getTarget() {
         return WFS.InsertType;
     }
 
+    @Override
     public Class<?> getType() {
         return InsertType.class;
     }
 
     @Override
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         InsertType insert = (InsertType) object;
-        List properties = new ArrayList();
+        List<Object[]> properties = new ArrayList<>();
         for (final Object feature : insert.getAny()) {
             properties.add(new Object[] {GML.AbstractFeature, feature});
         }

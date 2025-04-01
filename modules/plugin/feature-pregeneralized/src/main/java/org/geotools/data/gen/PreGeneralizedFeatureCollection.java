@@ -22,23 +22,22 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.util.ProgressListener;
 
 /**
  * @author Christian Mueller
  *     <p>Implementation of {@link FeatureCollection} for {@link PreGeneralizedSimpleFeature}
- *     <p>This collection is read only, modifying methods result in {@link
- *     UnsupportedOperationException}
+ *     <p>This collection is read only, modifying methods result in {@link UnsupportedOperationException}
  */
 public class PreGeneralizedFeatureCollection implements SimpleFeatureCollection {
 
@@ -71,21 +70,24 @@ public class PreGeneralizedFeatureCollection implements SimpleFeatureCollection 
     /*
      * (non-Javadoc)
      *
-     * @see org.geotools.feature.FeatureCollection#accepts(org.opengis.feature.FeatureVisitor,
-     *      org.opengis.util.ProgressListener) Logic copied from DefaultFeatureCollection class
+     * @see org.geotools.feature.FeatureCollection#accepts(org.geotools.api.feature.FeatureVisitor,
+     *      org.geotools.api.util.ProgressListener) Logic copied from DefaultFeatureCollection class
      */
+    @Override
     public void accepts(FeatureVisitor visitor, ProgressListener progress) throws IOException {
         DataUtilities.visit(this, visitor, progress);
     }
 
+    @Override
     public boolean contains(Object feature) {
         if (feature instanceof PreGeneralizedSimpleFeature)
             return backendCollection.contains(((PreGeneralizedSimpleFeature) feature).feature);
         else return backendCollection.contains(feature);
     }
 
+    @Override
     public boolean containsAll(Collection coll) {
-        List searchColl = new ArrayList();
+        List<Object> searchColl = new ArrayList<>();
         Iterator it = coll.iterator();
         while (it.hasNext()) {
             Object feature = it.next();
@@ -96,6 +98,7 @@ public class PreGeneralizedFeatureCollection implements SimpleFeatureCollection 
         return backendCollection.containsAll(searchColl);
     }
 
+    @Override
     public SimpleFeatureIterator features() {
         return new PreGeneralizedFeatureIterator(
                 backendCollection.features(),
@@ -106,76 +109,75 @@ public class PreGeneralizedFeatureCollection implements SimpleFeatureCollection 
                 backendGeomPropertyName);
     }
 
+    @Override
     public ReferencedEnvelope getBounds() {
         return backendCollection.getBounds();
     }
 
+    @Override
     public String getID() {
         return "pregeneralizd featurecollection";
     }
 
+    @Override
     public SimpleFeatureType getSchema() {
         return returnedFeatureType;
     }
 
+    @Override
     public boolean isEmpty() {
         return backendCollection.isEmpty();
     }
 
+    @Override
     public int size() {
         return backendCollection.size();
     }
 
+    @Override
     public SimpleFeatureCollection sort(SortBy sortBy) {
         SimpleFeatureCollection fColl = backendCollection.sort(sortBy);
         if (fColl == null) return null;
         return new PreGeneralizedFeatureCollection(
-                fColl,
-                featureType,
-                returnedFeatureType,
-                indexMapping,
-                geomPropertyName,
-                backendGeomPropertyName);
+                fColl, featureType, returnedFeatureType, indexMapping, geomPropertyName, backendGeomPropertyName);
     }
 
+    @Override
     public SimpleFeatureCollection subCollection(Filter filter) {
         SimpleFeatureCollection fColl = backendCollection.subCollection(filter);
         if (fColl == null) return null;
         return new PreGeneralizedFeatureCollection(
-                fColl,
-                featureType,
-                returnedFeatureType,
-                indexMapping,
-                geomPropertyName,
-                backendGeomPropertyName);
+                fColl, featureType, returnedFeatureType, indexMapping, geomPropertyName, backendGeomPropertyName);
     }
 
+    @Override
     public Object[] toArray() {
         Object[] res = backendCollection.toArray();
         for (int i = 0; i < res.length; i++) {
-            res[i] =
-                    new PreGeneralizedSimpleFeature(
-                            getSchema(),
-                            getSchema(),
-                            indexMapping,
-                            (SimpleFeature) res[i],
-                            geomPropertyName,
-                            backendGeomPropertyName);
+            res[i] = new PreGeneralizedSimpleFeature(
+                    getSchema(),
+                    getSchema(),
+                    indexMapping,
+                    (SimpleFeature) res[i],
+                    geomPropertyName,
+                    backendGeomPropertyName);
         }
         return res;
     }
 
-    public Object[] toArray(Object[] arg0) {
-        Object[] res = backendCollection.toArray(arg0);
+    @Override
+    public <O> O[] toArray(O[] a) {
+        O[] res = backendCollection.toArray(a);
         for (int i = 0; i < res.length; i++) {
-            res[i] =
-                    new PreGeneralizedSimpleFeature(
-                            getSchema(),
-                            getSchema(),
-                            indexMapping,
-                            (SimpleFeature) res[i],
-                            geomPropertyName,
-                            backendGeomPropertyName);
+            @SuppressWarnings("unchecked")
+            O cast = (O) new PreGeneralizedSimpleFeature(
+                    getSchema(),
+                    getSchema(),
+                    indexMapping,
+                    (SimpleFeature) res[i],
+                    geomPropertyName,
+                    backendGeomPropertyName);
+            res[i] = cast;
         }
         return res;
     }

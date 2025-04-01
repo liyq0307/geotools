@@ -16,9 +16,14 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.geotools.gml2.GML;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPolygon;
@@ -28,9 +33,10 @@ public class GMLMultiPolygonTypeBindingTest extends AbstractGMLBindingTest {
     ElementInstance mp;
     ElementInstance poly1;
     ElementInstance poly2;
-    GeometryFactory gf;
 
-    protected void setUp() throws Exception {
+    @Override
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
         poly1 = createElement(GML.NAMESPACE, "myPoly", GML.PolygonMemberType, null);
@@ -43,45 +49,38 @@ public class GMLMultiPolygonTypeBindingTest extends AbstractGMLBindingTest {
         container.registerComponentImplementation(GMLMultiPolygonTypeBinding.class);
     }
 
+    @Test
     public void test() throws Exception {
-        Node node =
-                createNode(
-                        mp,
-                        new ElementInstance[] {poly1, poly2},
-                        new Object[] {
-                            new GeometryFactory()
-                                    .createPolygon(
-                                            new GeometryFactory()
-                                                    .createLinearRing(
-                                                            new Coordinate[] {
-                                                                new Coordinate(0, 0),
-                                                                new Coordinate(1, 1),
-                                                                new Coordinate(2, 2),
-                                                                new Coordinate(0, 0)
-                                                            }),
-                                            null),
-                            new GeometryFactory()
-                                    .createPolygon(
-                                            new GeometryFactory()
-                                                    .createLinearRing(
-                                                            new Coordinate[] {
-                                                                new Coordinate(2, 2),
-                                                                new Coordinate(3, 3),
-                                                                new Coordinate(4, 4),
-                                                                new Coordinate(2, 2)
-                                                            }),
-                                            null)
-                        },
-                        null,
-                        null);
+        Node node = createNode(
+                mp,
+                new ElementInstance[] {poly1, poly2},
+                new Object[] {
+                    new GeometryFactory()
+                            .createPolygon(
+                                    new GeometryFactory().createLinearRing(new Coordinate[] {
+                                        new Coordinate(0, 0),
+                                        new Coordinate(1, 1),
+                                        new Coordinate(2, 2),
+                                        new Coordinate(0, 0)
+                                    }),
+                                    null),
+                    new GeometryFactory()
+                            .createPolygon(
+                                    new GeometryFactory().createLinearRing(new Coordinate[] {
+                                        new Coordinate(2, 2),
+                                        new Coordinate(3, 3),
+                                        new Coordinate(4, 4),
+                                        new Coordinate(2, 2)
+                                    }),
+                                    null)
+                },
+                null,
+                null);
 
-        GMLGeometryCollectionTypeBinding s1 =
-                (GMLGeometryCollectionTypeBinding)
-                        container.getComponentInstanceOfType(
-                                GMLGeometryCollectionTypeBinding.class);
+        GMLGeometryCollectionTypeBinding s1 = (GMLGeometryCollectionTypeBinding)
+                container.getComponentInstanceOfType(GMLGeometryCollectionTypeBinding.class);
         GMLMultiPolygonTypeBinding s2 =
-                (GMLMultiPolygonTypeBinding)
-                        container.getComponentInstanceOfType(GMLMultiPolygonTypeBinding.class);
+                (GMLMultiPolygonTypeBinding) container.getComponentInstanceOfType(GMLMultiPolygonTypeBinding.class);
 
         MultiPolygon mpoly = (MultiPolygon) s2.parse(mp, node, s1.parse(mp, node, null));
 

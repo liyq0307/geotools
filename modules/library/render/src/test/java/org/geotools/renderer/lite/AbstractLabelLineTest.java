@@ -19,21 +19,25 @@ package org.geotools.renderer.lite;
 import static java.awt.RenderingHints.KEY_ANTIALIASING;
 import static java.awt.RenderingHints.VALUE_ANTIALIAS_ON;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.data.property.PropertyDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.MapContent;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
 import org.geotools.test.TestData;
 import org.geotools.xml.styling.SLDParser;
 import org.junit.Before;
@@ -49,7 +53,8 @@ public abstract class AbstractLabelLineTest {
         RendererBaseTest.setupVeraFonts();
 
         // load the data, in this case a set of different linestring
-        File property = new File(TestData.getResource(this, "nonStraightLines.properties").toURI());
+        File property = new File(
+                TestData.getResource(this, "nonStraightLines.properties").toURI());
         PropertyDataStore dataStore = new PropertyDataStore(property.getParentFile());
         featureSource = dataStore.getFeatureSource("nonStraightLines");
         // expand the bands so we can view all the labels
@@ -57,12 +62,11 @@ public abstract class AbstractLabelLineTest {
         bounds.expandBy(1, 1);
     }
 
-    protected Style loadParametricStyle(Object loader, String sldFilename, String... parameters)
-            throws IOException {
+    protected Style loadParametricStyle(Object loader, String sldFilename, String... parameters) throws IOException {
         StyleFactory factory = CommonFactoryFinder.getStyleFactory(null);
 
         java.net.URL url = TestData.getResource(loader, sldFilename);
-        String styleTemplate = IOUtils.toString(url, "UTF-8");
+        String styleTemplate = IOUtils.toString(url, StandardCharsets.UTF_8);
         for (int i = 0; i < parameters.length; i += 2) {
             String key = parameters[i];
             String value = parameters[i + 1];
@@ -76,11 +80,7 @@ public abstract class AbstractLabelLineTest {
     }
 
     protected BufferedImage renderNonStraightLines(
-            SimpleFeatureSource featureSource,
-            Style style,
-            int width,
-            int height,
-            ReferencedEnvelope bounds) {
+            SimpleFeatureSource featureSource, Style style, int width, int height, ReferencedEnvelope bounds) {
         MapContent mapContent = new MapContent();
         mapContent.addLayer(new FeatureLayer(featureSource, style));
         // instantiate and initiate the render

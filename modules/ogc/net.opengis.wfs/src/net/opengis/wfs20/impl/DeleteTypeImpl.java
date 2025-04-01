@@ -20,7 +20,7 @@ import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
-import org.opengis.filter.Filter;
+import org.geotools.api.filter.Filter;
 
 /**
  * <!-- begin-user-doc -->
@@ -101,6 +101,7 @@ public class DeleteTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public Filter getFilter() {
     return filter;
   }
@@ -110,6 +111,7 @@ public class DeleteTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setFilter(Filter newFilter) {
     Filter oldFilter = filter;
     filter = newFilter;
@@ -122,6 +124,7 @@ public class DeleteTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public QName getTypeName() {
     return typeName;
   }
@@ -131,6 +134,7 @@ public class DeleteTypeImpl extends AbstractTransactionActionTypeImpl implements
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setTypeName(QName newTypeName) {
     QName oldTypeName = typeName;
     typeName = newTypeName;

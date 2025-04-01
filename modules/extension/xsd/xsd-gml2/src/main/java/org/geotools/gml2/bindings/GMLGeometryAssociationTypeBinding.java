@@ -57,6 +57,7 @@ import org.locationtech.jts.geom.Geometry;
  */
 public class GMLGeometryAssociationTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.GeometryAssociationType;
     }
@@ -68,6 +69,7 @@ public class GMLGeometryAssociationTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Geometry.class;
     }
@@ -80,17 +82,19 @@ public class GMLGeometryAssociationTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // TODO: xlink and remoteSchema attributes, hard to do because of streaming
         return node.getChildValue(Geometry.class);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         return GML2EncodingUtils.GeometryPropertyType_getProperty((Geometry) object, name);
     }
 
     @Override
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         return GML2EncodingUtils.GeometryPropertyType_getProperties((Geometry) object);
     }
 }

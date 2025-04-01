@@ -24,28 +24,27 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
 import org.hsqldb.jdbc.JDBCDataSource;
-import org.opengis.referencing.FactoryException;
 
 /**
- * This utility class knows everything there is to know about the care and feeding of our pet EPSG
- * database. This utility class is used to hold logic previously associated with our own custom
- * DataSource.
+ * This utility class knows everything there is to know about the care and feeding of our pet EPSG database. This
+ * utility class is used to hold logic previously associated with our own custom DataSource.
  *
- * <p>The EPSG database can be downloaded from <A
- * HREF="http://www.epsg.org">http://www.epsg.org</A>. The SQL scripts (modified for the HSQL syntax
- * as <A HREF="doc-files/HSQL.html">explained here</A>) are bundled into this plugin. The database
- * version is given in the {@linkplain org.opengis.metadata.citation.Citation#getEdition edition
- * attribute} of the {@linkplain org.opengis.referencing.AuthorityFactory#getAuthority authority}.
- * The HSQL database is read only.
+ * <p>The EPSG database can be downloaded from <A HREF="http://www.epsg.org">http://www.epsg.org</A>. The SQL scripts
+ * (modified for the HSQL syntax as <A HREF="doc-files/HSQL.html">explained here</A>) are bundled into this plugin. The
+ * database version is given in the {@linkplain org.geotools.api.metadata.citation.Citation#getEdition edition
+ * attribute} of the {@linkplain org.geotools.api.referencing.AuthorityFactory#getAuthority authority}. The HSQL
+ * database is read only.
  *
  * <p>
  *
@@ -55,10 +54,7 @@ import org.opengis.referencing.FactoryException;
  * @todo This class is used only by {@link HSQLDataSource}, which is deprecated.
  */
 public class HsqlEpsgDatabase {
-    /**
-     * The key for fetching the database directory from {@linkplain System#getProperty(String)
-     * system properties}.
-     */
+    /** The key for fetching the database directory from {@linkplain System#getProperty(String) system properties}. */
     public static final String DIRECTORY_KEY = "EPSG-HSQL.directory";
 
     /** The database name. */
@@ -67,11 +63,8 @@ public class HsqlEpsgDatabase {
     /**
      * Creates a DataSource that is set up and ready to go.
      *
-     * <p>This method pays attention to the system property "EPSG-HSQL.directory" and makes use of
-     * the default database name "EPSG".
-     *
-     * @return
-     * @throws SQLException
+     * <p>This method pays attention to the system property "EPSG-HSQL.directory" and makes use of the default database
+     * name "EPSG".
      */
     public static javax.sql.DataSource createDataSource() throws SQLException {
         return createDataSource(getDirectory());
@@ -123,21 +116,16 @@ public class HsqlEpsgDatabase {
     }
 
     /**
-     * HSQL has created automatically an empty database. We need to populate it. Executes the SQL
-     * scripts bundled in the JAR. In theory, each line contains a full SQL statement. For this
-     * plugin however, we have compressed "INSERT INTO" statements using Compactor class in this
-     * package.
+     * HSQL has created automatically an empty database. We need to populate it. Executes the SQL scripts bundled in the
+     * JAR. In theory, each line contains a full SQL statement. For this plugin however, we have compressed "INSERT
+     * INTO" statements using Compactor class in this package.
      */
     private static void generateData(javax.sql.DataSource dataSource) throws SQLException {
-        Logging.getLogger(HsqlEpsgDatabase.class)
-                .config("Creating cached EPSG database."); // TODO: localize
+        Logging.getLogger(HsqlEpsgDatabase.class).config("Creating cached EPSG database."); // TODO: localize
         try (Connection connection = dataSource.getConnection();
-                Statement statement = connection.createStatement()) {
-            final BufferedReader in =
-                    new BufferedReader(
-                            new InputStreamReader(
-                                    HsqlEpsgDatabase.class.getResourceAsStream("EPSG.sql"),
-                                    "ISO-8859-1"));
+                Statement statement = connection.createStatement();
+                BufferedReader in = new BufferedReader(new InputStreamReader(
+                        HsqlEpsgDatabase.class.getResourceAsStream("EPSG.sql"), StandardCharsets.ISO_8859_1))) {
             StringBuilder insertStatement = null;
             String line;
             while ((line = in.readLine()) != null) {
@@ -174,7 +162,6 @@ public class HsqlEpsgDatabase {
                     statement.execute(line);
                 }
             }
-            in.close();
         } catch (IOException exception) {
             SQLException e = new SQLException("Can't read the SQL script."); // TODO: localize
             e.initCause(exception); // TODO: inline cause when we will be allowed to target Java 6.
@@ -184,23 +171,22 @@ public class HsqlEpsgDatabase {
 
     private static void forceReadOnly(File directory) throws IOException {
         final File file = new File(directory, HsqlEpsgDatabase.DATABASE_NAME + ".properties");
-        final InputStream propertyIn = new FileInputStream(file);
         final Properties properties = new Properties();
-        properties.load(propertyIn);
-        propertyIn.close();
+        try (InputStream propertyIn = new FileInputStream(file)) {
+
+            properties.load(propertyIn);
+        }
         properties.put("readonly", "true");
-        final OutputStream out = new FileOutputStream(file);
-        properties.store(out, "EPSG database on HSQL");
-        out.close();
+        try (OutputStream out = new FileOutputStream(file)) {
+            properties.store(out, "EPSG database on HSQL");
+        }
     }
 
     /**
      * Returns the default directory for the EPSG database. If the {@value #DIRECTORY_KEY}
-     * {@linkplain System#getProperty(String) system property} is defined and contains the name of a
-     * directory with a valid {@linkplain File#getParent parent}, then the {@value #DATABASE_NAME}
-     * database will be saved in that directory. Otherwise, a temporary directory will be used.
-     *
-     * @throws SQLException
+     * {@linkplain System#getProperty(String) system property} is defined and contains the name of a directory with a
+     * valid {@linkplain File#getParent parent}, then the {@value #DATABASE_NAME} database will be saved in that
+     * directory. Otherwise, a temporary directory will be used.
      */
     static File getDirectory() throws SQLException {
         try {
@@ -237,26 +223,19 @@ public class HsqlEpsgDatabase {
     }
 
     static boolean dataExists(javax.sql.DataSource dataSource) throws SQLException {
-        Connection connection = dataSource.getConnection();
-        try {
+        try (Connection connection = dataSource.getConnection()) {
             return dataExists(connection);
-        } finally {
-            connection.close();
         }
     }
 
     /**
-     * Returns {@code true} if the database contains data. This method returns {@code false} if an
-     * empty EPSG database has been automatically created by HSQL and not yet populated.
+     * Returns {@code true} if the database contains data. This method returns {@code false} if an empty EPSG database
+     * has been automatically created by HSQL and not yet populated.
      */
     static boolean dataExists(final Connection connection) throws SQLException {
         final DatabaseMetaData metaData = connection.getMetaData();
-        try (final ResultSet tables =
-                metaData.getTables(
-                        null,
-                        null,
-                        "EPSG" + metaData.getSearchStringEscape() + "_%",
-                        new String[] {"TABLE"})) {
+        try (final ResultSet tables = metaData.getTables(
+                null, null, "EPSG" + metaData.getSearchStringEscape() + "_%", new String[] {"TABLE"})) {
             return tables.next();
         }
     }

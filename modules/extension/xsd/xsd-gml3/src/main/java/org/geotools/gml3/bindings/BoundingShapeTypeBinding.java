@@ -50,6 +50,7 @@ import org.locationtech.jts.geom.Polygon;
  */
 public class BoundingShapeTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.BoundingShapeType;
     }
@@ -61,6 +62,7 @@ public class BoundingShapeTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Envelope.class;
     }
@@ -72,8 +74,9 @@ public class BoundingShapeTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        Envelope envelope = (Envelope) node.getChildValue(Envelope.class);
+        Envelope envelope = node.getChildValue(Envelope.class);
 
         if (envelope == null) {
             envelope = new Envelope();
@@ -83,6 +86,7 @@ public class BoundingShapeTypeBinding extends AbstractComplexBinding {
         return envelope;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) {
         // check for a polygon
         if (object instanceof Polygon) {

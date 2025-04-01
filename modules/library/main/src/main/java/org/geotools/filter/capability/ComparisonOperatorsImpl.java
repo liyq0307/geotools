@@ -21,8 +21,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import org.opengis.filter.capability.ComparisonOperators;
-import org.opengis.filter.capability.Operator;
+import org.geotools.api.filter.capability.ComparisonOperators;
+import org.geotools.api.filter.capability.Operator;
 
 /**
  * Implementation of the ComparisonOperators interface.
@@ -34,40 +34,38 @@ public class ComparisonOperatorsImpl implements ComparisonOperators {
     Set<Operator> operators;
 
     public ComparisonOperatorsImpl() {
-        this(new ArrayList<Operator>());
+        this(new ArrayList<>());
     }
 
-    /**
-     * Copy the provided ComparisonOperator
-     *
-     * @param copy
-     */
+    /** Copy the provided ComparisonOperator */
     public ComparisonOperatorsImpl(ComparisonOperators copy) {
-        this.operators = new HashSet<Operator>(copy.getOperators());
+        this.operators = new HashSet<>(copy.getOperators());
     }
 
     public ComparisonOperatorsImpl(Collection<Operator> operators) {
-        this.operators = new HashSet<Operator>(operators);
+        this.operators = new HashSet<>(operators);
     }
 
-    public ComparisonOperatorsImpl(Operator[] operators) {
+    public ComparisonOperatorsImpl(Operator... operators) {
         if (operators == null) {
             operators = new Operator[] {};
         }
-        this.operators = new HashSet(Arrays.asList(operators));
+        this.operators = new HashSet<>(Arrays.asList(operators));
     }
 
+    @Override
     public Collection<Operator> getOperators() {
         if (operators == null) {
-            operators = new HashSet<Operator>();
+            operators = new HashSet<>();
         }
         return operators;
     }
 
     public void setOperators(Collection<Operator> operators) {
-        this.operators = new HashSet<Operator>(operators);
+        this.operators = new HashSet<>(operators);
     }
     /** @return Operator with the provided name, or null if not supported */
+    @Override
     public Operator getOperator(String name) {
         if (name == null || operators == null) {
             return null;

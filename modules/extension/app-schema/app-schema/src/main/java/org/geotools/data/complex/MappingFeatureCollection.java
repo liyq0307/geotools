@@ -20,9 +20,15 @@ package org.geotools.data.complex;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.crs.ReprojectFeatureResults;
 import org.geotools.feature.CollectionListener;
 import org.geotools.feature.FeatureCollection;
@@ -30,12 +36,6 @@ import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.util.ProgressListener;
 
 /**
  * {@link FeatureCollection} for a {@link MappingFeatureIterator}.
@@ -53,8 +53,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
 
     private Filter unrolledFilter = null;
 
-    public MappingFeatureCollection(
-            AppSchemaDataAccess store, FeatureTypeMapping mapping, Query query) {
+    public MappingFeatureCollection(AppSchemaDataAccess store, FeatureTypeMapping mapping, Query query) {
         this.store = store;
         this.mapping = mapping;
         this.query = query;
@@ -65,9 +64,10 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
     }
 
     /**
-     * @see org.geotools.feature.FeatureCollection#accepts(org.opengis.feature.FeatureVisitor,
-     *     org.opengis.util.ProgressListener)
+     * @see org.geotools.feature.FeatureCollection#accepts(org.geotools.api.feature.FeatureVisitor,
+     *     org.geotools.api.util.ProgressListener)
      */
+    @Override
     public void accepts(FeatureVisitor visitor, ProgressListener progress) throws IOException {
         DataUtilities.visit(this, visitor, progress);
     }
@@ -75,7 +75,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
     /**
      * Not a supported operation.
      *
-     * @see org.geotools.feature.FeatureCollection#add(org.opengis.feature.Feature)
+     * @see org.geotools.feature.FeatureCollection#add(org.geotools.api.feature.Feature)
      */
     public boolean add(Feature obj) {
         throw new UnsupportedOperationException();
@@ -141,6 +141,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      *
      * @see org.geotools.feature.FeatureCollection#contains(java.lang.Object)
      */
+    @Override
     public boolean contains(Object o) {
         throw new UnsupportedOperationException();
     }
@@ -150,6 +151,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      *
      * @see org.geotools.feature.FeatureCollection#containsAll(java.util.Collection)
      */
+    @Override
     public boolean containsAll(Collection<?> o) {
         throw new UnsupportedOperationException();
     }
@@ -159,6 +161,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      *
      * @see org.geotools.feature.FeatureCollection#features()
      */
+    @Override
     public FeatureIterator<Feature> features() {
         try {
             return MappingFeatureIteratorFactory.getInstance(store, mapping, query, unrolledFilter);
@@ -168,13 +171,12 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
     }
 
     /**
-     * This overload allows client code to explicitly specify the transaction that the created
-     * iterator will be working against.
+     * This overload allows client code to explicitly specify the transaction that the created iterator will be working
+     * against.
      *
-     * <p>Passing <code>null</code> is equivalent to calling {@link #features()} and lets the
-     * iterator decide whether a new transaction should be created (and closed when the iterator is
-     * closed) or not. Currently, a new transaction is created by {@link
-     * DataAccessMappingFeatureIterator} only if a database backend is available and joining is
+     * <p>Passing <code>null</code> is equivalent to calling {@link #features()} and lets the iterator decide whether a
+     * new transaction should be created (and closed when the iterator is closed) or not. Currently, a new transaction
+     * is created by {@link DataAccessMappingFeatureIterator} only if a database backend is available and joining is
      * enabled, to reduce the number of concurrent connections opened due to feature chaining.
      *
      * @see org.geotools.feature.FeatureCollection#features()
@@ -182,8 +184,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      */
     public FeatureIterator<Feature> features(Transaction transaction) {
         try {
-            return MappingFeatureIteratorFactory.getInstance(
-                    store, mapping, query, unrolledFilter, transaction);
+            return MappingFeatureIteratorFactory.getInstance(store, mapping, query, unrolledFilter, transaction);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -198,18 +199,17 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      *
      * @see org.geotools.feature.FeatureCollection#getBounds()
      */
+    @Override
     public ReferencedEnvelope getBounds() {
-        FeatureIterator<Feature> features = features();
-        try {
+        try (FeatureIterator<Feature> features = features()) {
             Envelope newBBox = new Envelope();
             Envelope internal;
             Feature feature;
             while (features.hasNext()) {
                 feature = features.next();
-                final Geometry geometry =
-                        feature.getDefaultGeometryProperty() != null
-                                ? ((Geometry) feature.getDefaultGeometryProperty().getValue())
-                                : null;
+                final Geometry geometry = feature.getDefaultGeometryProperty() != null
+                        ? ((Geometry) feature.getDefaultGeometryProperty().getValue())
+                        : null;
                 if (geometry != null) {
                     internal = geometry.getEnvelopeInternal();
                     newBBox.expandToInclude(internal);
@@ -218,8 +218,6 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
             return ReferencedEnvelope.reference(newBBox);
         } catch (Exception e) {
             throw new RuntimeException("Exception occurred while computing bounds", e);
-        } finally {
-            features.close();
         }
     }
 
@@ -228,6 +226,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      *
      * @see org.geotools.feature.FeatureCollection#getID()
      */
+    @Override
     public String getID() {
         // TODO Auto-generated method stub
         return null;
@@ -238,6 +237,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      *
      * @see org.geotools.feature.FeatureCollection#getSchema()
      */
+    @Override
     public FeatureType getSchema() {
         return (FeatureType) mapping.getTargetFeature().getType();
     }
@@ -247,6 +247,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      *
      * @see org.geotools.feature.FeatureCollection#isEmpty()
      */
+    @Override
     public boolean isEmpty() {
         return size() == 0;
     }
@@ -316,17 +317,21 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      *
      * @see org.geotools.feature.FeatureCollection#size()
      */
+    @Override
     public int size() {
-        // VT: The only way to count the size of the feature is by building it and that becomes very
-        // inefficient.
-        return 0;
+        try {
+            return store.getCount(query);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /*
      * (non-Javadoc)
      *
-     * @see org.geotools.feature.FeatureCollection#sort(org.opengis.filter.sort.SortBy)
+     * @see org.geotools.feature.FeatureCollection#sort(org.geotools.api.filter.sort.SortBy)
      */
+    @Override
     public FeatureCollection<FeatureType, Feature> sort(SortBy order) {
         throw new UnsupportedOperationException();
     }
@@ -338,8 +343,9 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
     /*
      * (non-Javadoc)
      *
-     * @see org.geotools.feature.FeatureCollection#subCollection(org.opengis.filter.Filter)
+     * @see org.geotools.feature.FeatureCollection#subCollection(org.geotools.api.filter.Filter)
      */
+    @Override
     public FeatureCollection<FeatureType, Feature> subCollection(Filter filter) {
         throw new UnsupportedOperationException();
     }
@@ -349,6 +355,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      *
      * @see org.geotools.feature.FeatureCollection#toArray()
      */
+    @Override
     public Object[] toArray() {
         throw new UnsupportedOperationException();
     }
@@ -358,6 +365,7 @@ public class MappingFeatureCollection implements FeatureCollection<FeatureType, 
      *
      * @see org.geotools.feature.FeatureCollection#toArray(O[])
      */
+    @Override
     public <O> O[] toArray(O[] a) {
         throw new UnsupportedOperationException();
     }

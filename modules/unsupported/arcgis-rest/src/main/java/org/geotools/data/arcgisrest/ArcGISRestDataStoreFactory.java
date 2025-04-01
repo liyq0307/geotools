@@ -20,7 +20,6 @@ package org.geotools.data.arcgisrest;
 
 import java.awt.RenderingHints.Key;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -28,9 +27,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.Parameter;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.logging.Logging;
 
@@ -42,38 +41,33 @@ import org.geotools.util.logging.Logging;
 public class ArcGISRestDataStoreFactory implements DataStoreFactorySpi {
 
     /** Package's logger */
-    protected static final Logger LOGGER =
-            Logging.getLogger(ArcGISRestDataStoreFactory.class.getName());
+    protected static final Logger LOGGER = Logging.getLogger(ArcGISRestDataStoreFactory.class.getName());
 
     public static final String FACTORY_NAME = "ArcGIS ReST";
     public static final String FACTORY_DESCRIPTION = "ESRI ArcGIS ReST API data store";
 
-    private static List<Param> paramMetadata = new ArrayList<Param>(10);
+    private static final List<Param> paramMetadata = new ArrayList<>(10);
 
     public static final Param NAMESPACE_PARAM = new Param("namespace", String.class, "", true);
-    public static final Param URL_PARAM =
-            new Param(
-                    "Endpoint of the ArcGSI ReST API (either the data.json URL of an OpenData catalog, or the FeatureService URL of an ArcGIS Server API)",
-                    String.class,
-                    "",
-                    true);
-    public static final Param USER_PARAM =
-            new Param("Username of the endpoint", String.class, "", false, null);
-    public static final Param PASSWORD_PARAM =
-            new Param(
-                    "Password associated with the username.",
-                    String.class,
-                    "",
-                    false,
-                    null,
-                    Collections.singletonMap(Parameter.IS_PASSWORD, Boolean.TRUE));
-    public static final Param ISOPENDATA_PARAM =
-            new Param(
-                    "Endpoint is an OpenData catalog",
-                    Boolean.class,
-                    new SimpleInternationalString("is the data source an OpedData servive?"),
-                    true,
-                    false);
+    public static final Param URL_PARAM = new Param(
+            "Endpoint of the ArcGSI ReST API (either the data.json URL of an OpenData catalog, or the FeatureService URL of an ArcGIS Server API)",
+            String.class,
+            "",
+            true);
+    public static final Param USER_PARAM = new Param("Username of the endpoint", String.class, "", false, null);
+    public static final Param PASSWORD_PARAM = new Param(
+            "Password associated with the username.",
+            String.class,
+            "",
+            false,
+            null,
+            Collections.singletonMap(Parameter.IS_PASSWORD, Boolean.TRUE));
+    public static final Param ISOPENDATA_PARAM = new Param(
+            "Endpoint is an OpenData catalog",
+            Boolean.class,
+            new SimpleInternationalString("is the data source an OpedData servive?"),
+            true,
+            false);
 
     static {
         paramMetadata.add(NAMESPACE_PARAM);
@@ -84,13 +78,12 @@ public class ArcGISRestDataStoreFactory implements DataStoreFactorySpi {
     }
 
     @Override
-    public DataStore createNewDataStore(Map<String, Serializable> params)
-            throws UnsupportedOperationException {
+    public DataStore createNewDataStore(Map<String, ?> params) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public DataStore createDataStore(Map<String, Serializable> params) throws IOException {
+    public DataStore createDataStore(Map<String, ?> params) throws IOException {
         return new ArcGISRestDataStore(
                 (String) params.get(NAMESPACE_PARAM.key),
                 (String) params.get(URL_PARAM.key),
@@ -111,11 +104,11 @@ public class ArcGISRestDataStoreFactory implements DataStoreFactorySpi {
 
     @Override
     public Param[] getParametersInfo() {
-        return (Param[]) paramMetadata.toArray(new Param[paramMetadata.size()]);
+        return paramMetadata.toArray(new Param[paramMetadata.size()]);
     }
 
     @Override
-    public boolean canProcess(Map<String, Serializable> params) {
+    public boolean canProcess(Map<String, ?> params) {
 
         try {
             new URL((String) params.get(ArcGISRestDataStoreFactory.NAMESPACE_PARAM.key));

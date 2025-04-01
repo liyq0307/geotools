@@ -18,9 +18,9 @@ package org.geotools.map.legend;
 
 import java.awt.Color;
 import javax.swing.Icon;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.style.Rule;
 import org.geotools.map.Layer;
-import org.geotools.styling.Rule;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Used to draw the little pictures that appear in a Legend.
@@ -50,8 +50,7 @@ public interface GlyphFactory {
      * return glyphFactory.point( SLD.pointColor( symbolizer ), SLD.fillColor( symbolizer ) );
      * </code></pre>
      *
-     * <p>Implementations have the option of going into greater detail, picking up on
-     * TextSymbolizers and so on.
+     * <p>Implementations have the option of going into greater detail, picking up on TextSymbolizers and so on.
      *
      * @param rule Rule used to render a Point
      * @return Icon representing a Point
@@ -63,7 +62,6 @@ public interface GlyphFactory {
      *
      * @param line Line colour
      * @param width Line width
-     * @return
      */
     Icon line(Color line, int width);
 
@@ -77,8 +75,7 @@ public interface GlyphFactory {
      * return glyphFactory.point( SLD.lineColor( symbolizer ), SLD.lineWidth( symbolizer ) );
      * </code></pre>
      *
-     * <p>Implementations have the option of going into greater detail, picking up on
-     * TextSymbolizers and so on.
+     * <p>Implementations have the option of going into greater detail, picking up on TextSymbolizers and so on.
      *
      * @param rule Rule used to render a Point
      * @return Icon representing a Point
@@ -99,12 +96,7 @@ public interface GlyphFactory {
 
     Icon palette(Color[] colors);
 
-    /**
-     * Make a basic representation of the provided FeatureType.
-     *
-     * @param schema
-     * @return
-     */
+    /** Make a basic representation of the provided FeatureType. */
     Icon icon(SimpleFeatureType schema);
 
     /**
@@ -117,7 +109,6 @@ public interface GlyphFactory {
      *   <li>layer style, defaults will be used if not recognized
      * </ul>
      *
-     * @param layer
      * @return Icon For the provided layer
      */
     Icon icon(Layer layer);

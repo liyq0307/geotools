@@ -16,12 +16,11 @@
  */
 package org.geotools.filter.text.cql2;
 
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.text.commons.CompilerUtil;
 import org.geotools.filter.text.commons.Language;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Test Attribute
@@ -75,15 +74,10 @@ public class CQLAttributeNameTest {
     public void compoundAttributeName() throws CQLException {
         testAttribute("s11:p12:p13.s21:p22.s31:p32");
 
-        testAttribute(
-                "gmd:MD_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:abstract");
+        testAttribute("gmd:MD_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:abstract");
     }
 
-    /**
-     * Invalid attribute names
-     *
-     * @throws CQLException
-     */
+    /** Invalid attribute names */
     @Test(expected = CQLException.class)
     public void invalidAttribute() throws CQLException {
 
@@ -94,11 +88,7 @@ public class CQLAttributeNameTest {
         testAttribute("startpart part1");
     }
 
-    /**
-     * Using a CQL Keyword as property name
-     *
-     * @throws Exception
-     */
+    /** Using a CQL Keyword as property name */
     @Test
     public void keywordAsAttribute() throws CQLException {
 
@@ -109,11 +99,7 @@ public class CQLAttributeNameTest {
         testAttributeBetweenDoubleQuotes("\"OR\"");
     }
 
-    /**
-     * Using different local characters as property name.
-     *
-     * @throws Exception
-     */
+    /** Using different local characters as property name. */
     @Test
     public void localCharactersetInAttributeName() throws CQLException {
 
@@ -135,15 +121,9 @@ public class CQLAttributeNameTest {
         testAttributeBetweenDoubleQuotes("\"環境\"");
     }
 
-    private void testAttributeBetweenDoubleQuotes(final String attSample) throws CQLException {
-        PropertyIsLike result;
-        PropertyName attResult = null;
+    protected void testAttributeBetweenDoubleQuotes(final String attSample) throws CQLException {
 
-        result =
-                (PropertyIsLike)
-                        CompilerUtil.parseFilter(this.language, attSample + " LIKE 'abc%'");
-
-        attResult = (PropertyName) result.getExpression();
+        PropertyName attResult = parsePropertyName(attSample);
 
         String expected = attSample.replace('.', '/');
         expected = expected.substring(1, expected.length() - 1);
@@ -153,17 +133,14 @@ public class CQLAttributeNameTest {
     }
 
     private void testAttribute(final String attSample) throws CQLException {
-        PropertyIsLike result;
-        PropertyName attResult = null;
-
-        result =
-                (PropertyIsLike)
-                        CompilerUtil.parseFilter(this.language, attSample + " LIKE 'abc%'");
-
-        attResult = (PropertyName) result.getExpression();
+        PropertyName attResult = parsePropertyName(attSample);
 
         final String expected = attSample.replace('.', '/');
 
         Assert.assertEquals(expected, attResult.getPropertyName());
+    }
+
+    protected PropertyName parsePropertyName(String attSample) throws CQLException {
+        return (PropertyName) CompilerUtil.parseExpression(this.language, attSample);
     }
 }

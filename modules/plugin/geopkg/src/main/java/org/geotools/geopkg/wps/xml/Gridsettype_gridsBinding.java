@@ -45,6 +45,7 @@ import org.geotools.xsd.Node;
 public class Gridsettype_gridsBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GPKG.gridsettype_grids;
     }
@@ -56,6 +57,7 @@ public class Gridsettype_gridsBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return List.class;
     }
@@ -67,8 +69,9 @@ public class Gridsettype_gridsBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List<TileMatrix> matrices = new ArrayList<TileMatrix>();
+        List<TileMatrix> matrices = new ArrayList<>();
 
         for (Object child : node.getChildValues("grid")) {
             matrices.add((TileMatrix) child);

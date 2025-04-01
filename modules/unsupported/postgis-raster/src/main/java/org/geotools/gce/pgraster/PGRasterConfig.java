@@ -17,6 +17,7 @@
 package org.geotools.gce.pgraster;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.io.Closeable;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -61,7 +62,7 @@ import org.w3c.dom.NodeList;
  *     &lt;/pgraster>
  *   </pre>
  */
-class PGRasterConfig {
+class PGRasterConfig implements Closeable {
 
     static final Logger LOG = Logging.getLogger(PGRasterConfig.class);
 
@@ -97,28 +98,21 @@ class PGRasterConfig {
     PGRasterConfig(Document config) {
         Element root = config.getDocumentElement();
         if (!"pgraster".equalsIgnoreCase(root.getNodeName())) {
-            throw new IllegalArgumentException(
-                    "Not a postgis raster configuration, root element must be 'pgraster'");
+            throw new IllegalArgumentException("Not a postgis raster configuration, root element must be 'pgraster'");
         }
 
         this.name = first(root, "name").map(this::nodeValue).orElse(null);
         this.enableDrivers = first(root, "enableDrivers").map(this::nodeValue).orElse(null);
 
-        Element db =
-                first(config.getDocumentElement(), "database")
-                        .orElseThrow(
-                                () ->
-                                        new IllegalArgumentException(
-                                                "Config has no database element"));
+        Element db = first(config.getDocumentElement(), "database")
+                .orElseThrow(() -> new IllegalArgumentException("Config has no database element"));
 
         DataSource dataSource = null;
 
         String jndi = first(db, "jndi").map(this::nodeValue).orElse(null);
         if (jndi != null) {
             try {
-                dataSource =
-                        (DataSource)
-                                GeoTools.getInitialContext(GeoTools.getDefaultHints()).lookup(jndi);
+                dataSource = (DataSource) GeoTools.jndiLookup(jndi);
             } catch (NamingException e) {
                 throw new IllegalArgumentException("Error performing JNDI lookup for: " + jndi, e);
             }
@@ -130,16 +124,14 @@ class PGRasterConfig {
 
             String host = first(db, "host").map(this::nodeValue).orElse("localhost");
 
-            Integer port =
-                    first(db, "port").map(this::nodeValue).map(Integer::parseInt).orElse(5432);
+            Integer port = first(db, "port")
+                    .map(this::nodeValue)
+                    .map(Integer::parseInt)
+                    .orElse(5432);
 
-            String name =
-                    first(db, "name")
-                            .map(this::nodeValue)
-                            .orElseThrow(
-                                    () ->
-                                            new IllegalArgumentException(
-                                                    "database 'name' not specified"));
+            String name = first(db, "name")
+                    .map(this::nodeValue)
+                    .orElseThrow(() -> new IllegalArgumentException("database 'name' not specified"));
 
             source.setUrl("jdbc:postgresql://" + host + ":" + port + "/" + name);
 
@@ -147,53 +139,30 @@ class PGRasterConfig {
 
             first(db, "passwd").map(this::nodeValue).ifPresent(source::setPassword);
 
-            first(db, "pool")
-                    .ifPresent(
-                            p -> {
-                                first(p, "min")
-                                        .map(this::nodeValue)
-                                        .map(Integer::parseInt)
-                                        .ifPresent(source::setMinIdle);
-                                first(p, "max")
-                                        .map(this::nodeValue)
-                                        .map(Integer::parseInt)
-                                        .ifPresent(source::setMaxActive);
-                            });
+            first(db, "pool").ifPresent(p -> {
+                first(p, "min").map(this::nodeValue).map(Integer::parseInt).ifPresent(source::setMinIdle);
+                first(p, "max").map(this::nodeValue).map(Integer::parseInt).ifPresent(source::setMaxActive);
+            });
 
             dataSource = new PGRasterDataSource(source);
         }
 
         this.dataSource = dataSource;
 
-        Element ras =
-                first(config.getDocumentElement(), "raster")
-                        .orElseThrow(
-                                () ->
-                                        new IllegalArgumentException(
-                                                "Config has no 'raster' element"));
+        Element ras = first(config.getDocumentElement(), "raster")
+                .orElseThrow(() -> new IllegalArgumentException("Config has no 'raster' element"));
 
         this.schema = first(ras, "schema").map(this::nodeValue).orElse("public");
-        this.table =
-                first(ras, "table")
-                        .map(this::nodeValue)
-                        .orElseThrow(
-                                () ->
-                                        new IllegalArgumentException(
-                                                "column must specify a 'table' element"));
+        this.table = first(ras, "table")
+                .map(this::nodeValue)
+                .orElseThrow(() -> new IllegalArgumentException("column must specify a 'table' element"));
         this.column = first(ras, "column").map(this::nodeValue).orElse(null);
 
         // time
-        first(config.getDocumentElement(), "time")
-                .ifPresent(
-                        el -> {
-                            first(el, "enabled")
-                                    .map(this::nodeValue)
-                                    .map(Boolean::parseBoolean)
-                                    .ifPresent(it -> time.enabled = it);
-                            first(el, "column")
-                                    .map(this::nodeValue)
-                                    .ifPresent(it -> time.column = it);
-                        });
+        first(config.getDocumentElement(), "time").ifPresent(el -> {
+            first(el, "enabled").map(this::nodeValue).map(Boolean::parseBoolean).ifPresent(it -> time.enabled = it);
+            first(el, "column").map(this::nodeValue).ifPresent(it -> time.column = it);
+        });
     }
 
     @VisibleForTesting
@@ -211,6 +180,7 @@ class PGRasterConfig {
         return el.getFirstChild().getNodeValue();
     }
 
+    @Override
     public void close() {
         if (dataSource instanceof PGRasterDataSource) {
             try {

@@ -25,7 +25,7 @@ import net.opengis.wmts.v_1.ContentsType;
 import net.opengis.wmts.v_1.TileMatrixSetType;
 import net.opengis.wmts.v_1.wmtsv_1Factory;
 import org.geotools.wmts.WMTS;
-import org.geotools.xsd.AbstractComplexBinding;
+import org.geotools.xsd.AbstractComplexEMFBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
@@ -55,7 +55,7 @@ import org.geotools.xsd.Node;
  *
  * @generated
  */
-public class ContentsTypeBinding extends AbstractComplexBinding {
+public class ContentsTypeBinding extends AbstractComplexEMFBinding {
 
     wmtsv_1Factory factory;
 
@@ -65,6 +65,7 @@ public class ContentsTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WMTS.ContentsType;
     }
@@ -76,6 +77,7 @@ public class ContentsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return ContentsTypeBinding.class;
     }
@@ -87,6 +89,7 @@ public class ContentsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     @SuppressWarnings("unchecked")
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         ContentsType contents = factory.createContentsType();

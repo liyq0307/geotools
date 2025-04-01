@@ -25,37 +25,35 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
-import junit.framework.TestCase;
 import org.geotools.util.Converters;
 import org.geotools.xml.PrintHandler;
 import org.geotools.xml.schema.Element;
 import org.geotools.xml.schema.ElementValue;
 import org.geotools.xml.schema.SimpleType;
 import org.geotools.xml.schema.impl.ElementValueGT;
+import org.junit.Assert;
+import org.junit.Test;
 import org.mockito.Mockito;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 /** Tests for {@link XSISimpleTypes}. */
-public class XSISimpleTypesTest extends TestCase {
+public class XSISimpleTypesTest {
 
+    @Test
     public void testParseDate() throws Exception {
         SimpleType dateBinding = XSISimpleTypes.Date.getInstance();
 
         Element element = null;
         Attributes attrs = null;
-        Map<?, ?> hints = null;
-        ElementValue[] value;
-        Date expected;
-        String sval;
-        Object actual;
+        Map<String, Object> hints = null;
 
-        sval = "2012-02-14";
-        value = new ElementValue[] {new ElementValueGT(null, sval)};
-        actual = dateBinding.getValue(element, value, attrs, hints);
-        assertNotNull(actual);
-        expected = Converters.convert(sval, java.sql.Date.class);
-        assertEquals(
+        String sval = "2012-02-14";
+        ElementValue[] value = {new ElementValueGT(null, sval)};
+        Object actual = dateBinding.getValue(element, value, attrs, hints);
+        Assert.assertNotNull(actual);
+        Date expected = Converters.convert(sval, Date.class);
+        Assert.assertEquals(
                 expected.getClass().getName()
                         + "["
                         + expected
@@ -70,9 +68,9 @@ public class XSISimpleTypesTest extends TestCase {
         sval = "2012-02-14Z";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         actual = dateBinding.getValue(element, value, attrs, hints);
-        assertNotNull(actual);
+        Assert.assertNotNull(actual);
         expected = Converters.convert(sval, java.sql.Date.class);
-        assertEquals(
+        Assert.assertEquals(
                 expected.getClass().getName()
                         + "["
                         + expected
@@ -87,9 +85,9 @@ public class XSISimpleTypesTest extends TestCase {
         sval = "2011-10-24T10:53:24.200Z";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         actual = dateBinding.getValue(element, value, attrs, hints);
-        assertNotNull(actual);
+        Assert.assertNotNull(actual);
         expected = Converters.convert(sval, java.sql.Date.class);
-        assertEquals(
+        Assert.assertEquals(
                 expected.getClass().getName()
                         + "["
                         + expected
@@ -104,34 +102,31 @@ public class XSISimpleTypesTest extends TestCase {
         sval = "";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         actual = dateBinding.getValue(element, value, attrs, hints);
-        assertNull(actual);
+        Assert.assertNull(actual);
 
         sval = "10:53:24.255+03:00";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         try {
             dateBinding.getValue(element, value, attrs, hints);
         } catch (SAXException e) {
-            assertTrue(true);
+            Assert.assertTrue(true);
         }
     }
 
+    @Test
     public void testParseDateTime() throws Exception {
         SimpleType dateTimeBinding = XSISimpleTypes.DateTime.getInstance();
 
         Element element = null;
         Attributes attrs = null;
-        Map<?, ?> hints = null;
-        ElementValue[] value;
-        java.util.Date expected;
-        String sval;
-        Object actual;
+        Map<String, Object> hints = null;
 
-        sval = "2012-02-14";
-        value = new ElementValue[] {new ElementValueGT(null, sval)};
-        actual = dateTimeBinding.getValue(element, value, attrs, hints);
-        assertNotNull(actual);
-        expected = Converters.convert(sval, java.sql.Timestamp.class);
-        assertEquals(
+        String sval = "2012-02-14";
+        ElementValue[] value = {new ElementValueGT(null, sval)};
+        Object actual = dateTimeBinding.getValue(element, value, attrs, hints);
+        Assert.assertNotNull(actual);
+        java.util.Date expected = Converters.convert(sval, java.sql.Timestamp.class);
+        Assert.assertEquals(
                 expected.getClass().getName()
                         + "["
                         + expected
@@ -146,9 +141,9 @@ public class XSISimpleTypesTest extends TestCase {
         sval = "2012-02-14Z";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         actual = dateTimeBinding.getValue(element, value, attrs, hints);
-        assertNotNull(actual);
+        Assert.assertNotNull(actual);
         expected = Converters.convert(sval, java.sql.Timestamp.class);
-        assertEquals(
+        Assert.assertEquals(
                 expected.getClass().getName()
                         + "["
                         + expected
@@ -163,9 +158,9 @@ public class XSISimpleTypesTest extends TestCase {
         sval = "2011-10-24T10:53:24.200Z";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         actual = dateTimeBinding.getValue(element, value, attrs, hints);
-        assertNotNull(actual);
+        Assert.assertNotNull(actual);
         expected = Converters.convert(sval, java.sql.Timestamp.class);
-        assertEquals(
+        Assert.assertEquals(
                 expected.getClass().getName()
                         + "["
                         + expected
@@ -180,9 +175,9 @@ public class XSISimpleTypesTest extends TestCase {
         sval = "2011-10-24T00:00:00.200+03:00";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         actual = dateTimeBinding.getValue(element, value, attrs, hints);
-        assertNotNull(actual);
+        Assert.assertNotNull(actual);
         expected = Converters.convert(sval, java.sql.Timestamp.class);
-        assertEquals(
+        Assert.assertEquals(
                 expected.getClass().getName()
                         + "["
                         + expected
@@ -197,34 +192,31 @@ public class XSISimpleTypesTest extends TestCase {
         sval = "";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         actual = dateTimeBinding.getValue(element, value, attrs, hints);
-        assertNull(actual);
+        Assert.assertNull(actual);
 
         sval = "10:53:24.255+03:00";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         try {
             dateTimeBinding.getValue(element, value, attrs, hints);
         } catch (SAXException e) {
-            assertTrue(true);
+            Assert.assertTrue(true);
         }
     }
 
+    @Test
     public void testParseTime() throws Exception {
         SimpleType timeBinding = XSISimpleTypes.Time.getInstance();
 
         Element element = null;
         Attributes attrs = null;
-        Map<?, ?> hints = null;
-        ElementValue[] value;
-        java.util.Date expected;
-        String sval;
-        Object actual;
+        Map<String, Object> hints = null;
 
-        sval = "10:53:24Z";
-        value = new ElementValue[] {new ElementValueGT(null, sval)};
-        actual = timeBinding.getValue(element, value, attrs, hints);
-        assertNotNull(actual);
-        expected = Converters.convert(sval, java.sql.Time.class);
-        assertEquals(
+        String sval = "10:53:24Z";
+        ElementValue[] value = {new ElementValueGT(null, sval)};
+        Object actual = timeBinding.getValue(element, value, attrs, hints);
+        Assert.assertNotNull(actual);
+        java.util.Date expected = Converters.convert(sval, java.sql.Time.class);
+        Assert.assertEquals(
                 expected.getClass().getName()
                         + "["
                         + expected
@@ -239,9 +231,9 @@ public class XSISimpleTypesTest extends TestCase {
         sval = "10:53:24-03:00";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         actual = timeBinding.getValue(element, value, attrs, hints);
-        assertNotNull(actual);
+        Assert.assertNotNull(actual);
         expected = Converters.convert(sval, java.sql.Time.class);
-        assertEquals(
+        Assert.assertEquals(
                 expected.getClass().getName()
                         + "["
                         + expected
@@ -256,9 +248,9 @@ public class XSISimpleTypesTest extends TestCase {
         sval = "10:53:24.255+03:00";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         actual = timeBinding.getValue(element, value, attrs, hints);
-        assertNotNull(actual);
+        Assert.assertNotNull(actual);
         expected = Converters.convert(sval, java.sql.Time.class);
-        assertEquals(
+        Assert.assertEquals(
                 expected.getClass().getName()
                         + "["
                         + expected
@@ -273,38 +265,33 @@ public class XSISimpleTypesTest extends TestCase {
         sval = "";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         actual = timeBinding.getValue(element, value, attrs, hints);
-        assertNull(actual);
+        Assert.assertNull(actual);
 
         sval = "2012-02-14";
         value = new ElementValue[] {new ElementValueGT(null, sval)};
         try {
             timeBinding.getValue(element, value, attrs, hints);
         } catch (SAXException e) {
-            assertTrue(true);
+            Assert.assertTrue(true);
         }
     }
 
+    @Test
     public void testParseDuration() throws Exception {
         SimpleType durationBinding = XSISimpleTypes.Duration.getInstance();
 
         Element element = null;
-        Map<?, ?> hints = null;
+        Map<String, Object> hints = null;
         Attributes attrs = null;
-        ElementValue[] value;
         String sval = "";
-        Object actual;
 
-        value = new ElementValue[] {new ElementValueGT(null, sval)};
-        actual = durationBinding.getValue(element, value, attrs, hints);
-        assertNull(actual);
+        ElementValue[] value = {new ElementValueGT(null, sval)};
+        Object actual = durationBinding.getValue(element, value, attrs, hints);
+        Assert.assertNull(actual);
     }
 
-    /**
-     * Tests encoding of java.util.Date as {@link XSISimpleTypes.Date} and {@link
-     * XSISimpleTypes.DateTime}
-     *
-     * @throws Exception
-     */
+    /** Tests encoding of java.util.Date as {@link XSISimpleTypes.Date} and {@link XSISimpleTypes.DateTime} */
+    @Test
     public void testDateEncode() throws Exception {
         // given: 2016-09-02, 12:00h in GMT
         SimpleType dateType = XSISimpleTypes.Date.getInstance();

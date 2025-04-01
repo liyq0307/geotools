@@ -19,7 +19,18 @@ package org.geotools.data.db2;
 
 import java.io.IOException;
 import org.geotools.geometry.jts.JTS;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.CoordinateSequence;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.MultiPoint;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.io.ByteArrayInStream;
 import org.locationtech.jts.io.ByteOrderDataInStream;
 import org.locationtech.jts.io.ByteOrderValues;
@@ -45,8 +56,7 @@ public class DB2WKBReader {
 
         for (int i = 0; i < hex.length() / 2; i++) {
             int i2 = 2 * i;
-            if (i2 + 1 > hex.length())
-                throw new IllegalArgumentException("Hex string has odd length");
+            if (i2 + 1 > hex.length()) throw new IllegalArgumentException("Hex string has odd length");
 
             int nib1 = hexToInt(hex.charAt(i2));
             int nib0 = hexToInt(hex.charAt(i2 + 1));
@@ -103,8 +113,6 @@ public class DB2WKBReader {
      *
      * @param is the stream to read from
      * @return the Geometry read
-     * @throws IOException
-     * @throws ParseException
      */
     public Geometry read(InStream is) throws IOException, ParseException {
         dis.setInStream(is);
@@ -123,45 +131,33 @@ public class DB2WKBReader {
 
         if (DB2WKBConstants.zTypes.contains(geometryType)) {
             inputDimension = 3;
-            if (geometryType == DB2WKBConstants.wkbPointZ)
-                geometryType = DB2WKBConstants.wkbPoint2D;
-            if (geometryType == DB2WKBConstants.wkbOGCPointZ)
-                geometryType = DB2WKBConstants.wkbPoint2D;
+            if (geometryType == DB2WKBConstants.wkbPointZ) geometryType = DB2WKBConstants.wkbPoint2D;
+            if (geometryType == DB2WKBConstants.wkbOGCPointZ) geometryType = DB2WKBConstants.wkbPoint2D;
 
-            if (geometryType == DB2WKBConstants.wkbLineStringZ)
-                geometryType = DB2WKBConstants.wkbLineString2D;
-            if (geometryType == DB2WKBConstants.wkbOGCLineStringZ)
-                geometryType = DB2WKBConstants.wkbLineString2D;
+            if (geometryType == DB2WKBConstants.wkbLineStringZ) geometryType = DB2WKBConstants.wkbLineString2D;
+            if (geometryType == DB2WKBConstants.wkbOGCLineStringZ) geometryType = DB2WKBConstants.wkbLineString2D;
 
-            if (geometryType == DB2WKBConstants.wkbPolygonZ)
-                geometryType = DB2WKBConstants.wkbPolygon2D;
-            if (geometryType == DB2WKBConstants.wkbOGCPolygonZ)
-                geometryType = DB2WKBConstants.wkbPolygon2D;
+            if (geometryType == DB2WKBConstants.wkbPolygonZ) geometryType = DB2WKBConstants.wkbPolygon2D;
+            if (geometryType == DB2WKBConstants.wkbOGCPolygonZ) geometryType = DB2WKBConstants.wkbPolygon2D;
 
-            if (geometryType == DB2WKBConstants.wkbMultiPointZ)
-                geometryType = DB2WKBConstants.wkbMultiPoint2D;
-            if (geometryType == DB2WKBConstants.wkbOGCMultiPointZ)
-                geometryType = DB2WKBConstants.wkbMultiPoint2D;
+            if (geometryType == DB2WKBConstants.wkbMultiPointZ) geometryType = DB2WKBConstants.wkbMultiPoint2D;
+            if (geometryType == DB2WKBConstants.wkbOGCMultiPointZ) geometryType = DB2WKBConstants.wkbMultiPoint2D;
 
             if (geometryType == DB2WKBConstants.wkbMultiLineStringZ)
                 geometryType = DB2WKBConstants.wkbMultiLineString2D;
             if (geometryType == DB2WKBConstants.wkbOGCMultiLineStringZ)
                 geometryType = DB2WKBConstants.wkbMultiLineString2D;
 
-            if (geometryType == DB2WKBConstants.wkbMultiPolygonZ)
-                geometryType = DB2WKBConstants.wkbMultiPolygon2D;
-            if (geometryType == DB2WKBConstants.wkbOGCMultiPolygonZ)
-                geometryType = DB2WKBConstants.wkbMultiPolygon2D;
+            if (geometryType == DB2WKBConstants.wkbMultiPolygonZ) geometryType = DB2WKBConstants.wkbMultiPolygon2D;
+            if (geometryType == DB2WKBConstants.wkbOGCMultiPolygonZ) geometryType = DB2WKBConstants.wkbMultiPolygon2D;
 
-            if (geometryType == DB2WKBConstants.wkbGeomCollectionZ)
-                geometryType = DB2WKBConstants.wkbGeomCollection2D;
+            if (geometryType == DB2WKBConstants.wkbGeomCollectionZ) geometryType = DB2WKBConstants.wkbGeomCollection2D;
             if (geometryType == DB2WKBConstants.wkbOGCGeomCollectionZ)
                 geometryType = DB2WKBConstants.wkbGeomCollection2D;
         }
 
         // only allocate ordValues buffer if necessary
-        if (ordValues == null || ordValues.length < inputDimension)
-            ordValues = new double[inputDimension];
+        if (ordValues == null || ordValues.length < inputDimension) ordValues = new double[inputDimension];
 
         switch (geometryType) {
             case DB2WKBConstants.wkbPoint2D:
@@ -194,24 +190,24 @@ public class DB2WKBReader {
         return g;
     }
 
-    private Point readPoint() throws IOException {
+    private Point readPoint() throws IOException, ParseException {
         CoordinateSequence pts = readCoordinateSequence(1);
         return factory.createPoint(pts);
     }
 
-    private LineString readLineString() throws IOException {
+    private LineString readLineString() throws IOException, ParseException {
         int size = dis.readInt();
         CoordinateSequence pts = readCoordinateSequence(size);
         return factory.createLineString(pts);
     }
 
-    private LinearRing readLinearRing() throws IOException {
+    private LinearRing readLinearRing() throws IOException, ParseException {
         int size = dis.readInt();
         CoordinateSequence pts = readCoordinateSequence(size);
         return factory.createLinearRing(pts);
     }
 
-    private Polygon readPolygon() throws IOException {
+    private Polygon readPolygon() throws IOException, ParseException {
         int numRings = dis.readInt();
         LinearRing[] holes = null;
         if (numRings > 1) holes = new LinearRing[numRings - 1];
@@ -228,8 +224,7 @@ public class DB2WKBReader {
         Point[] geoms = new Point[numGeom];
         for (int i = 0; i < numGeom; i++) {
             Geometry g = readGeometry();
-            if (!(g instanceof Point))
-                throw new ParseException(INVALID_GEOM_TYPE_MSG + "MultiPoint");
+            if (!(g instanceof Point)) throw new ParseException(INVALID_GEOM_TYPE_MSG + "MultiPoint");
             geoms[i] = (Point) g;
         }
         return factory.createMultiPoint(geoms);
@@ -240,8 +235,7 @@ public class DB2WKBReader {
         LineString[] geoms = new LineString[numGeom];
         for (int i = 0; i < numGeom; i++) {
             Geometry g = readGeometry();
-            if (!(g instanceof LineString))
-                throw new ParseException(INVALID_GEOM_TYPE_MSG + "MultiLineString");
+            if (!(g instanceof LineString)) throw new ParseException(INVALID_GEOM_TYPE_MSG + "MultiLineString");
             geoms[i] = (LineString) g;
         }
         return factory.createMultiLineString(geoms);
@@ -252,8 +246,7 @@ public class DB2WKBReader {
         Polygon[] geoms = new Polygon[numGeom];
         for (int i = 0; i < numGeom; i++) {
             Geometry g = readGeometry();
-            if (!(g instanceof Polygon))
-                throw new ParseException(INVALID_GEOM_TYPE_MSG + "MultiPolygon");
+            if (!(g instanceof Polygon)) throw new ParseException(INVALID_GEOM_TYPE_MSG + "MultiPolygon");
             geoms[i] = (Polygon) g;
         }
         return factory.createMultiPolygon(geoms);
@@ -268,9 +261,8 @@ public class DB2WKBReader {
         return factory.createGeometryCollection(geoms);
     }
 
-    private CoordinateSequence readCoordinateSequence(int size) throws IOException {
-        CoordinateSequence seq =
-                JTS.createCS(factory.getCoordinateSequenceFactory(), size, inputDimension);
+    private CoordinateSequence readCoordinateSequence(int size) throws IOException, ParseException {
+        CoordinateSequence seq = JTS.createCS(factory.getCoordinateSequenceFactory(), size, inputDimension);
         int targetDim = seq.getDimension();
         if (targetDim > inputDimension) targetDim = inputDimension;
         for (int i = 0; i < size; i++) {
@@ -283,10 +275,10 @@ public class DB2WKBReader {
     }
 
     /**
-     * Reads a coordinate value with the specified dimensionality. Makes the X and Y ordinates
-     * precise according to the precision model in use.
+     * Reads a coordinate value with the specified dimensionality. Makes the X and Y ordinates precise according to the
+     * precision model in use.
      */
-    private void readCoordinate() throws IOException {
+    private void readCoordinate() throws IOException, ParseException {
         for (int i = 0; i < inputDimension; i++) {
             if (i <= 1) {
                 ordValues[i] = precisionModel.makePrecise(dis.readDouble());

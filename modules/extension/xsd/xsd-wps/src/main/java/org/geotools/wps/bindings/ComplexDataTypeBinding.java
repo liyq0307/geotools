@@ -18,7 +18,6 @@
 package org.geotools.wps.bindings;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import javax.xml.namespace.QName;
 import net.opengis.wps10.ComplexDataType;
@@ -32,11 +31,10 @@ import org.geotools.xsd.EncoderDelegate;
 import org.geotools.xsd.Node;
 
 /**
- * &lt;complexType name="ComplexDataType" mixed="true"> &lt;annotation> &lt;documentation>Complex
- * data (such as an image), including a definition of the complex value data structure (i.e.,
- * schema, format, and encoding). May be an ows:Manifest data structure.&lt;/documentation>
- * &lt;/annotation> &lt;complexContent mixed="true"> &lt;extension base="anyType">
- * &lt;attributeGroup ref="wps:ComplexDataEncoding"/> &lt;/extension> &lt;/complexContent>
+ * &lt;complexType name="ComplexDataType" mixed="true"> &lt;annotation> &lt;documentation>Complex data (such as an
+ * image), including a definition of the complex value data structure (i.e., schema, format, and encoding). May be an
+ * ows:Manifest data structure.&lt;/documentation> &lt;/annotation> &lt;complexContent mixed="true"> &lt;extension
+ * base="anyType"> &lt;attributeGroup ref="wps:ComplexDataEncoding"/> &lt;/extension> &lt;/complexContent>
  * &lt;/complexType>
  *
  * @author Justin Deoliveira, OpenGEO
@@ -48,18 +46,22 @@ public class ComplexDataTypeBinding extends AbstractComplexBinding {
         this.factory = factory;
     }
 
+    @Override
     public QName getTarget() {
         return WPS.ComplexDataType;
     }
 
+    @Override
     public Class<?> getType() {
         return ComplexDataType.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         ComplexDataType data = (ComplexDataType) object;
 
@@ -81,6 +83,8 @@ public class ComplexDataTypeBinding extends AbstractComplexBinding {
     /*
     	NodeImpl -> JTS.Polygon
     */
+    @Override
+    @SuppressWarnings("unchecked")
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         ComplexDataType data = factory.createComplexDataType();
 
@@ -94,8 +98,7 @@ public class ComplexDataTypeBinding extends AbstractComplexBinding {
             data.setEncoding(node.getAttributeValue("encoding").toString());
         }
 
-        for (Iterator i = node.getChildren().iterator(); i.hasNext(); ) {
-            Node c = (Node) i.next();
+        for (Node c : node.getChildren()) {
             data.getData().add(c.getValue());
         }
 
@@ -103,13 +106,12 @@ public class ComplexDataTypeBinding extends AbstractComplexBinding {
     }
 
     @Override
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         ComplexDataType complex = (ComplexDataType) object;
         if (!complex.getData().isEmpty() && complex.getData().get(0) instanceof EncoderDelegate) {
             EncoderDelegate delegate = (EncoderDelegate) complex.getData().get(0);
-            List properties = new ArrayList();
+            List<Object[]> properties = new ArrayList<>();
             properties.add(new Object[] {XS.ANYTYPE, delegate});
-
             return properties;
         }
 

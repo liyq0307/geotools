@@ -1,20 +1,23 @@
 package org.geotools.data.oracle;
 
+import static org.junit.Assert.assertEquals;
+
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.TimeZone;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.jdbc.JDBCDateOnlineTest;
 import org.geotools.jdbc.JDBCDateTestSetup;
 import org.geotools.jdbc.JDBCFeatureStore;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
+import org.junit.Test;
 
 public class OracleDateOnlineTest extends JDBCDateOnlineTest {
 
@@ -27,6 +30,7 @@ public class OracleDateOnlineTest extends JDBCDateOnlineTest {
      * Oracle has no concept of just "Time". Sigh...
      * @see org.geotools.jdbc.JDBCDateTest#testMappings()
      */
+    @Override
     public void testMappings() throws Exception {
         SimpleFeatureType ft = dataStore.getSchema(tname("dates"));
 
@@ -41,6 +45,8 @@ public class OracleDateOnlineTest extends JDBCDateOnlineTest {
         // not worth supporting it until someone has real time to deal with it
     }
 
+    @SuppressWarnings("PMD.UseTryWithResources") // need to rollback in catch
+    @Test
     public void testInsertTemporal() throws Exception {
         TimeZone originalTimeZone = TimeZone.getDefault();
         TimeZone gmtTimeZone = TimeZone.getTimeZone("GMT");
@@ -54,6 +60,7 @@ public class OracleDateOnlineTest extends JDBCDateOnlineTest {
             builder.add(new Timestamp(theTimestamp));
             SimpleFeature feature = builder.buildFeature(null);
 
+            @SuppressWarnings("PMD.UseTryWithResources") // need variable in catch
             Transaction t = new DefaultTransaction("add");
             JDBCFeatureStore fs = (JDBCFeatureStore) dataStore.getFeatureSource(timestampsTable, t);
             try {

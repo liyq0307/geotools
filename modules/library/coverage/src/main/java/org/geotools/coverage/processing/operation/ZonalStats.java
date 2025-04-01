@@ -26,20 +26,20 @@ import javax.media.jai.JAI;
 import javax.media.jai.OperationRegistry;
 import javax.media.jai.RenderedOp;
 import javax.media.jai.registry.RIFRegistry;
+import org.geotools.api.coverage.processing.OperationNotFoundException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.BaseStatisticsOperationJAI;
 import org.geotools.util.logging.Logging;
 import org.jaitools.media.jai.zonalstats.ZonalStatsDescriptor;
 import org.jaitools.media.jai.zonalstats.ZonalStatsRIF;
 import org.jaitools.numeric.Statistic;
-import org.opengis.coverage.processing.OperationNotFoundException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 /**
- * This operation simply wraps Jai-tools Zonalstats operations described by {@link
- * ZonalStatsDescriptor} inside a GeoTools operation in order to make it spatial-aware.
+ * This operation simply wraps Jai-tools Zonalstats operations described by {@link ZonalStatsDescriptor} inside a
+ * GeoTools operation in order to make it spatial-aware.
  *
  * @author Andrea Antonello (www.hydrologis.com)
  * @author Daniele Romagnoli, GeoSolutions SAS
@@ -78,8 +78,7 @@ public class ZonalStats extends BaseStatisticsOperationJAI {
     /** {@link String} key for getting the median vector. */
     public static final String GT_SYNTHETIC_PROPERTY_MEDIAN = Statistic.MEDIAN.toString();
     /** {@link String} key for getting the approx median vector. */
-    public static final String GT_SYNTHETIC_PROPERTY_APPROX_MEDIAN =
-            Statistic.APPROX_MEDIAN.toString();
+    public static final String GT_SYNTHETIC_PROPERTY_APPROX_MEDIAN = Statistic.APPROX_MEDIAN.toString();
     /** {@link String} key for getting the sum vector. */
     public static final String GT_SYNTHETIC_PROPERTY_SUM = Statistic.SUM.toString();
 
@@ -91,10 +90,10 @@ public class ZonalStats extends BaseStatisticsOperationJAI {
     /**
      * Prepare the properties for this ZonalStats operation.
      *
-     * @see OperationJAI#getProperties(RenderedImage, CoordinateReferenceSystem,
-     *     InternationalString, MathTransform, GridCoverage2D[],
-     *     org.geotools.coverage.processing.OperationJAI.Parameters),
+     * @see OperationJAI#getProperties(RenderedImage, CoordinateReferenceSystem, InternationalString, MathTransform,
+     *     GridCoverage2D[], org.geotools.coverage.processing.OperationJAI.Parameters),
      */
+    @Override
     protected Map<String, ?> getProperties(
             RenderedImage data,
             CoordinateReferenceSystem crs,
@@ -110,7 +109,7 @@ public class ZonalStats extends BaseStatisticsOperationJAI {
         // /////////////////////////////////////////////////////////////////////
         if (data instanceof RenderedOp) {
             final RenderedOp result = (RenderedOp) data;
-            final Map<String, Object> synthProp = new HashMap<String, Object>();
+            final Map<String, Object> synthProp = new HashMap<>();
 
             // get the properties
             final double[] minimums = (double[]) result.getProperty(GT_SYNTHETIC_PROPERTY_MIN);
@@ -127,10 +126,8 @@ public class ZonalStats extends BaseStatisticsOperationJAI {
             if (range != null) synthProp.put(GT_SYNTHETIC_PROPERTY_RANGE, range);
             final double[] median = (double[]) result.getProperty(GT_SYNTHETIC_PROPERTY_MEDIAN);
             if (median != null) synthProp.put(GT_SYNTHETIC_PROPERTY_MEDIAN, median);
-            final double[] approx_median =
-                    (double[]) result.getProperty(GT_SYNTHETIC_PROPERTY_APPROX_MEDIAN);
-            if (approx_median != null)
-                synthProp.put(GT_SYNTHETIC_PROPERTY_APPROX_MEDIAN, approx_median);
+            final double[] approx_median = (double[]) result.getProperty(GT_SYNTHETIC_PROPERTY_APPROX_MEDIAN);
+            if (approx_median != null) synthProp.put(GT_SYNTHETIC_PROPERTY_APPROX_MEDIAN, approx_median);
             final double[] sum = (double[]) result.getProperty(GT_SYNTHETIC_PROPERTY_SUM);
             if (sum != null) synthProp.put(GT_SYNTHETIC_PROPERTY_SUM, sum);
 

@@ -16,7 +16,6 @@
  */
 package org.geotools.graph.build.polygon;
 
-import java.util.Iterator;
 import java.util.List;
 import org.geotools.graph.build.GraphBuilder;
 import org.geotools.graph.build.GraphGenerator;
@@ -30,8 +29,8 @@ import org.locationtech.jts.index.quadtree.Quadtree;
 /**
  * An implementation of GraphGenerator used to build graphs from a set of polygons.
  *
- * <p>This graph generator takes {@link org.locationtech.jts.geom.Polygon} objects as input when
- * constructing a graph. The following code constructs a graph from a set of polygons.
+ * <p>This graph generator takes {@link org.locationtech.jts.geom.Polygon} objects as input when constructing a graph.
+ * The following code constructs a graph from a set of polygons.
  *
  * <pre>
  * 	<code>
@@ -59,11 +58,10 @@ import org.locationtech.jts.index.quadtree.Quadtree;
  * 	</code>
  * </pre>
  *
- * For each distinct polygon added to the graph, a node is created. If two polygons are considered
- * equal, only a single node is created. If two polygons are considered related, the associated
- * nodes share an edge. Equality and relationship is determined by {@link
- * org.geotools.graph.build.polygon.PolygonGraphGenerator.PolygonRelationship} interface. An
- * instance of this interface is passed to the generator at construction.
+ * For each distinct polygon added to the graph, a node is created. If two polygons are considered equal, only a single
+ * node is created. If two polygons are considered related, the associated nodes share an edge. Equality and
+ * relationship is determined by {@link org.geotools.graph.build.polygon.PolygonGraphGenerator.PolygonRelationship}
+ * interface. An instance of this interface is passed to the generator at construction.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -71,12 +69,7 @@ public class PolygonGraphGenerator implements GraphGenerator {
 
     /** Determines the relationship among two polygons. */
     public static interface PolygonRelationship {
-        /**
-         * Determines if two polygons are related in any way. Rel
-         *
-         * @param p1
-         * @param p2
-         */
+        /** Determines if two polygons are related in any way. Rel */
         boolean related(Polygon p1, Polygon p2);
 
         boolean equal(Polygon p1, Polygon p2);
@@ -96,6 +89,7 @@ public class PolygonGraphGenerator implements GraphGenerator {
         index = new Quadtree();
     }
 
+    @Override
     public Graphable add(Object obj) {
         Node node = (Node) get(obj);
         if (node == null) {
@@ -112,11 +106,13 @@ public class PolygonGraphGenerator implements GraphGenerator {
         return node;
     }
 
+    @Override
     public Graphable get(Object obj) {
         Polygon polygon = (Polygon) obj;
         return find(polygon);
     }
 
+    @Override
     public Graphable remove(Object obj) {
         Node node = (Node) get(obj);
         if (node != null) {
@@ -129,22 +125,25 @@ public class PolygonGraphGenerator implements GraphGenerator {
         return node;
     }
 
+    @Override
     public void setGraphBuilder(GraphBuilder builder) {
         this.builder = builder;
     }
 
+    @Override
     public GraphBuilder getGraphBuilder() {
         return builder;
     }
 
+    @Override
     public Graph getGraph() {
         return builder.getGraph();
     }
 
     protected Node find(Polygon polygon) {
         List close = index.query(polygon.getEnvelopeInternal());
-        for (Iterator itr = close.iterator(); itr.hasNext(); ) {
-            Node node = (Node) itr.next();
+        for (Object o : close) {
+            Node node = (Node) o;
             Polygon p = (Polygon) node.getObject();
 
             if (rel.equal(polygon, p)) {
@@ -159,8 +158,8 @@ public class PolygonGraphGenerator implements GraphGenerator {
         Polygon polygon = (Polygon) node.getObject();
         List close = index.query(polygon.getEnvelopeInternal());
 
-        for (Iterator itr = close.iterator(); itr.hasNext(); ) {
-            Node n = (Node) itr.next();
+        for (Object o : close) {
+            Node n = (Node) o;
             Polygon p = (Polygon) n.getObject();
 
             if (!rel.equal(polygon, p) && rel.related(polygon, p)) {

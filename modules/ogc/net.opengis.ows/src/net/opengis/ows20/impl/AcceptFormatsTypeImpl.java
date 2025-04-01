@@ -65,9 +65,10 @@ public class AcceptFormatsTypeImpl extends EObjectImpl implements AcceptFormatsT
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<String> getOutputFormat() {
     if (outputFormat == null) {
-      outputFormat = new EDataTypeEList<String>(String.class, this, Ows20Package.ACCEPT_FORMATS_TYPE__OUTPUT_FORMAT);
+      outputFormat = new EDataTypeEList<>(String.class, this, Ows20Package.ACCEPT_FORMATS_TYPE__OUTPUT_FORMAT);
     }
     return outputFormat;
   }

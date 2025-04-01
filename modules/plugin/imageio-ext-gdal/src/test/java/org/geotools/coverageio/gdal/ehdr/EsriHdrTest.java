@@ -21,12 +21,15 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
 import javax.media.jai.ImageLayout;
 import javax.media.jai.JAI;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -36,16 +39,12 @@ import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.coverageio.gdal.BaseGDALGridCoverage2DReader;
 import org.geotools.coverageio.gdal.GDALTestCase;
 import org.geotools.coverageio.gdal.ecw.ECWReader;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.referencing.operation.matrix.XAffineTransform;
 import org.geotools.test.TestData;
 import org.geotools.util.factory.Hints;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 
 /**
  * @author Alex Petkov, Missoula Fire Sciences Laboratory
@@ -57,28 +56,18 @@ public final class EsriHdrTest extends GDALTestCase {
     /** file name of a valid EHdr sample data to be used for tests. */
     private static final String fileName = "elggll.bil";
 
-    /**
-     * Creates a new instance of {@code EsriHdrTest}
-     *
-     * @param name
-     */
+    /** Creates a new instance of {@code EsriHdrTest} */
     public EsriHdrTest() {
         super("EHdr", new EsriHdrFormatFactory());
     }
 
     @Test
+    @SuppressWarnings("PMD.SimplifiableTestAssertion") // envelope test with tolerance
     public void test() throws Exception {
-        if (!testingEnabled()) {
-            return;
-        }
-
         File file = null;
         try {
             file = TestData.file(this, fileName);
-        } catch (FileNotFoundException fnfe) {
-            LOGGER.warning("test-data not found: " + fileName + "\nTests are skipped");
-            return;
-        } catch (IOException ioe) {
+        } catch (IOException fnfe) {
             LOGGER.warning("test-data not found: " + fileName + "\nTests are skipped");
             return;
         }
@@ -102,7 +91,7 @@ public final class EsriHdrTest extends GDALTestCase {
         // read once
         //
         // /////////////////////////////////////////////////////////////////////
-        GridCoverage2D gc = (GridCoverage2D) reader.read(null);
+        GridCoverage2D gc = reader.read(null);
         forceDataLoading(gc);
 
         // /////////////////////////////////////////////////////////////////////
@@ -111,48 +100,33 @@ public final class EsriHdrTest extends GDALTestCase {
         //
         // /////////////////////////////////////////////////////////////////////
         final double cropFactor = 2.0;
-        final int oldW = gc.getRenderedImage().getWidth();
-        final int oldH = gc.getRenderedImage().getHeight();
         final Rectangle range = ((GridEnvelope2D) reader.getOriginalGridRange());
-        final GeneralEnvelope oldEnvelope = reader.getOriginalEnvelope();
-        final GeneralEnvelope cropEnvelope =
-                new GeneralEnvelope(
-                        new double[] {
-                            oldEnvelope.getLowerCorner().getOrdinate(0)
-                                    + (oldEnvelope.getSpan(0) / cropFactor),
-                            oldEnvelope.getLowerCorner().getOrdinate(1)
-                                    + (oldEnvelope.getSpan(1) / cropFactor)
-                        },
-                        new double[] {
-                            oldEnvelope.getUpperCorner().getOrdinate(0),
-                            oldEnvelope.getUpperCorner().getOrdinate(1)
-                        });
+        final GeneralBounds oldEnvelope = reader.getOriginalEnvelope();
+        final GeneralBounds cropEnvelope = new GeneralBounds(
+                new double[] {
+                    oldEnvelope.getLowerCorner().getOrdinate(0) + (oldEnvelope.getSpan(0) / cropFactor),
+                    oldEnvelope.getLowerCorner().getOrdinate(1) + (oldEnvelope.getSpan(1) / cropFactor)
+                },
+                new double[] {
+                    oldEnvelope.getUpperCorner().getOrdinate(0),
+                    oldEnvelope.getUpperCorner().getOrdinate(1)
+                });
         cropEnvelope.setCoordinateReferenceSystem(reader.getCoordinateReferenceSystem());
 
-        final ParameterValue gg =
-                (ParameterValue)
-                        ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
-        gg.setValue(
-                new GridGeometry2D(
-                        new GridEnvelope2D(
-                                new Rectangle(
-                                        0,
-                                        0,
-                                        (int) (range.width / 4.0 / cropFactor),
-                                        (int) (range.height / 4.0 / cropFactor))),
-                        cropEnvelope));
-        gc = (GridCoverage2D) reader.read(new GeneralParameterValue[] {gg});
+        final ParameterValue gg = ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
+        gg.setValue(new GridGeometry2D(
+                new GridEnvelope2D(new Rectangle(
+                        0, 0, (int) (range.width / 4.0 / cropFactor), (int) (range.height / 4.0 / cropFactor))),
+                cropEnvelope));
+        gc = reader.read(new GeneralParameterValue[] {gg});
         Assert.assertNotNull(gc);
         // NOTE: in some cases might be too restrictive
-        Assert.assertTrue(
-                cropEnvelope.equals(
-                        gc.getEnvelope(),
-                        XAffineTransform.getScale(
-                                        ((AffineTransform)
-                                                ((GridGeometry2D) gc.getGridGeometry())
-                                                        .getGridToCRS2D()))
-                                / 2,
-                        true));
+        Assert.assertTrue(cropEnvelope.equals(
+                gc.getEnvelope(),
+                XAffineTransform.getScale(
+                                ((AffineTransform) gc.getGridGeometry().getGridToCRS2D()))
+                        / 2,
+                true));
 
         forceDataLoading(gc);
 
@@ -163,37 +137,27 @@ public final class EsriHdrTest extends GDALTestCase {
         // /////////////////////////////////////////////////////////////////////
         final double translate0 = oldEnvelope.getSpan(0) + 100;
         final double translate1 = oldEnvelope.getSpan(1) + 100;
-        final GeneralEnvelope wrongEnvelope =
-                new GeneralEnvelope(
-                        new double[] {
-                            oldEnvelope.getLowerCorner().getOrdinate(0) + translate0,
-                            oldEnvelope.getLowerCorner().getOrdinate(1) + translate1
-                        },
-                        new double[] {
-                            oldEnvelope.getUpperCorner().getOrdinate(0) + translate0,
-                            oldEnvelope.getUpperCorner().getOrdinate(1) + translate1
-                        });
+        final GeneralBounds wrongEnvelope = new GeneralBounds(
+                new double[] {
+                    oldEnvelope.getLowerCorner().getOrdinate(0) + translate0,
+                    oldEnvelope.getLowerCorner().getOrdinate(1) + translate1
+                },
+                new double[] {
+                    oldEnvelope.getUpperCorner().getOrdinate(0) + translate0,
+                    oldEnvelope.getUpperCorner().getOrdinate(1) + translate1
+                });
         wrongEnvelope.setCoordinateReferenceSystem(reader.getCoordinateReferenceSystem());
 
-        final ParameterValue gg2 =
-                (ParameterValue)
-                        ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
+        final ParameterValue gg2 = ((AbstractGridFormat) reader.getFormat()).READ_GRIDGEOMETRY2D.createValue();
         gg2.setValue(
-                new GridGeometry2D(
-                        new GridEnvelope2D(
-                                new Rectangle(0, 0, (int) (range.width), (int) (range.height))),
-                        wrongEnvelope));
+                new GridGeometry2D(new GridEnvelope2D(new Rectangle(0, 0, range.width, range.height)), wrongEnvelope));
 
-        gc = (GridCoverage2D) reader.read(new GeneralParameterValue[] {gg2});
+        gc = reader.read(new GeneralParameterValue[] {gg2});
         Assert.assertNull("Wrong envelope requested", gc);
     }
 
     @Test
     public void testIsAvailable() throws NoSuchAuthorityCodeException, FactoryException {
-        if (!testingEnabled()) {
-            return;
-        }
-
         GridFormatFinder.scanForPlugins();
 
         Iterator list = GridFormatFinder.getAvailableFormats().iterator();

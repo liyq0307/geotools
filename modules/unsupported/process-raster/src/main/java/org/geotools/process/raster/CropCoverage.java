@@ -18,18 +18,20 @@
 package org.geotools.process.raster;
 
 import java.io.IOException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.CoverageProcessor;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.image.ImageWorker;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
+import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.ProgressListener;
 
 /**
  * Crops the coverage along the specified
@@ -37,10 +39,7 @@ import org.opengis.util.ProgressListener;
  * @author Andrea Aime - GeoSolutions
  * @author ETj <etj at geo-solutions.it>
  */
-@DescribeProcess(
-    title = "Crop Coverage",
-    description = "Returns the portion of a raster bounded by a given geometry."
-)
+@DescribeProcess(title = "Crop Coverage", description = "Returns the portion of a raster bounded by a given geometry.")
 public class CropCoverage implements RasterProcess {
 
     private static final CoverageProcessor PROCESSOR = CoverageProcessor.getInstance();
@@ -48,10 +47,8 @@ public class CropCoverage implements RasterProcess {
 
     @DescribeResult(name = "result", description = "Cropped raster")
     public GridCoverage2D execute(
-            @DescribeParameter(name = "coverage", description = "Input raster")
-                    GridCoverage2D coverage,
-            @DescribeParameter(name = "cropShape", description = "Geometry used to crop the raster")
-                    Geometry cropShape,
+            @DescribeParameter(name = "coverage", description = "Input raster") GridCoverage2D coverage,
+            @DescribeParameter(name = "cropShape", description = "Geometry used to crop the raster") Geometry cropShape,
             ProgressListener progressListener)
             throws IOException {
         // get the bounds
@@ -62,8 +59,7 @@ public class CropCoverage implements RasterProcess {
             // assume the geometry is in the same crs
             crs = coverage.getCoordinateReferenceSystem();
         }
-        GeneralEnvelope bounds =
-                new GeneralEnvelope(new ReferencedEnvelope(cropShape.getEnvelopeInternal(), crs));
+        GeneralBounds bounds = new GeneralBounds(new ReferencedEnvelope(cropShape.getEnvelopeInternal(), crs));
 
         // force it to a collection if necessary
         GeometryCollection roi;
@@ -79,6 +75,10 @@ public class CropCoverage implements RasterProcess {
         param.parameter("Envelope").setValue(bounds);
         param.parameter("ROI").setValue(roi);
 
-        return (GridCoverage2D) PROCESSOR.doOperation(param);
+        Hints hints = null;
+        if (new ImageWorker(coverage.getRenderedImage()).getNoData() == null)
+            hints = new Hints(ImageWorker.FORCE_MOSAIC_ROI_PROPERTY, true);
+
+        return (GridCoverage2D) PROCESSOR.doOperation(param, hints);
     }
 }

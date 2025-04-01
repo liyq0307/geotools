@@ -36,8 +36,6 @@ public class KVP extends LinkedHashMap<String, Object> {
      * A linked HashMap set up for easy construction.
      *
      * <p>Example: <code>KVP map = new KVP("foo",1,"bar,2);</code>
-     *
-     * @param pairs
      */
     public KVP(Object... pairs) {
         if ((pairs.length & 1) != 0) {
@@ -49,12 +47,7 @@ public class KVP extends LinkedHashMap<String, Object> {
             add(key, value);
         }
     }
-    /**
-     * An additive version of put; will add additional values resulting in a list.
-     *
-     * @param key
-     * @param value
-     */
+    /** An additive version of put; will add additional values resulting in a list. */
     @SuppressWarnings("unchecked")
     public void add(String key, Object value) {
         if (containsKey(key)) {
@@ -63,7 +56,7 @@ public class KVP extends LinkedHashMap<String, Object> {
                 List<Object> list = (List<Object>) existing;
                 list.add(value);
             } else {
-                List<Object> list = new ArrayList<Object>();
+                List<Object> list = new ArrayList<>();
                 list.add(existing);
                 list.add(value);
                 put(key, list);

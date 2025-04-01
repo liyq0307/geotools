@@ -21,14 +21,16 @@ import java.net.MalformedURLException;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.Repository;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.Repository;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.feature.NameImpl;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.type.Name;
 
 /**
  * A catalog fetching the backing GeoTools data store from a {@link Repository} on demand
@@ -49,12 +51,13 @@ public class RepositoryDataStoreCatalog extends AbstractGTDataStoreGranuleCatalo
 
     public RepositoryDataStoreCatalog(
             Properties params,
+            final CatalogConfigurationBeans configurations,
             boolean create,
             Repository repository,
             String dataStoreName,
             DataStoreFactorySpi spi,
             Hints hints) {
-        super(params, create, spi, hints);
+        super(params, configurations, create, spi, hints);
         Utilities.ensureNonNull("repository", repository);
         Utilities.ensureNonNull("dataStoreName", repository);
         this.repository = repository;
@@ -89,7 +92,7 @@ public class RepositoryDataStoreCatalog extends AbstractGTDataStoreGranuleCatalo
         // nothing to do here, the store is provided on demand
         if (create) {
             // don't go looking for feature types, there are none
-            validTypeNames = new HashSet<String>();
+            validTypeNames = new HashSet<>();
         }
     }
 
@@ -110,7 +113,8 @@ public class RepositoryDataStoreCatalog extends AbstractGTDataStoreGranuleCatalo
         }
         if (dataStore == null) {
             // see if we can fall back on a data access exposing simple feature types
-            DataAccess access = repository.access(storeName);
+            @SuppressWarnings("unchecked")
+            DataAccess<FeatureType, Feature> access = (DataAccess<FeatureType, Feature>) repository.access(storeName);
             if (access != null) {
                 if (cachedWrapped != null && cachedWrapped.wraps(access)) {
                     return cachedWrapped;
@@ -120,8 +124,7 @@ public class RepositoryDataStoreCatalog extends AbstractGTDataStoreGranuleCatalo
                     dataStore = wrapper;
                 }
             } else {
-                throw new IllegalStateException(
-                        "Could not find a data store with name " + flatStoreName);
+                throw new IllegalStateException("Could not find a data store with name " + flatStoreName);
             }
         }
 
@@ -131,7 +134,7 @@ public class RepositoryDataStoreCatalog extends AbstractGTDataStoreGranuleCatalo
     @Override
     protected Set<String> getValidTypeNames() {
         if (validTypeNames == null) {
-            validTypeNames = new HashSet<String>();
+            validTypeNames = new HashSet<>();
             try {
                 initializeTypeNames(params);
             } catch (IOException e) {

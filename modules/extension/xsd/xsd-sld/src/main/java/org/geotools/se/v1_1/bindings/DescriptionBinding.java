@@ -17,14 +17,14 @@
 package org.geotools.se.v1_1.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.style.Description;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.util.InternationalString;
 import org.geotools.se.v1_1.SE;
-import org.geotools.styling.Description;
-import org.geotools.styling.StyleFactory;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.util.InternationalString;
 
 /**
  * Binding object for the element http://www.opengis.net/se:Description.
@@ -56,6 +56,7 @@ public class DescriptionBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.Description;
     }
@@ -67,6 +68,7 @@ public class DescriptionBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Description.class;
     }
@@ -78,6 +80,7 @@ public class DescriptionBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         InternationalString title = null, abstrct = null;

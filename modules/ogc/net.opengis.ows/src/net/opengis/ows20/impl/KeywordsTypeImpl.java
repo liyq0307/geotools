@@ -82,9 +82,10 @@ public class KeywordsTypeImpl extends EObjectImpl implements KeywordsType {
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<LanguageStringType> getKeyword() {
     if (keyword == null) {
-      keyword = new EObjectContainmentEList<LanguageStringType>(LanguageStringType.class, this, Ows20Package.KEYWORDS_TYPE__KEYWORD);
+      keyword = new EObjectContainmentEList<>(LanguageStringType.class, this, Ows20Package.KEYWORDS_TYPE__KEYWORD);
     }
     return keyword;
   }
@@ -94,6 +95,7 @@ public class KeywordsTypeImpl extends EObjectImpl implements KeywordsType {
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public CodeType getType() {
     return type;
   }
@@ -118,6 +120,7 @@ public class KeywordsTypeImpl extends EObjectImpl implements KeywordsType {
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setType(CodeType newType) {
     if (newType != type) {
       NotificationChain msgs = null;

@@ -48,6 +48,7 @@ import org.locationtech.jts.geom.Point;
  */
 public class PointArrayPropertyTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.PointArrayPropertyType;
     }
@@ -59,6 +60,7 @@ public class PointArrayPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Point[].class;
     }
@@ -70,9 +72,10 @@ public class PointArrayPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List points = node.getChildValues(Point.class);
+        List<Point> points = node.getChildValues(Point.class);
 
-        return (Point[]) points.toArray(new Point[points.size()]);
+        return points.toArray(new Point[points.size()]);
     }
 }

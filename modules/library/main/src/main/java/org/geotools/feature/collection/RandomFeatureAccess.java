@@ -17,18 +17,18 @@
 package org.geotools.feature.collection;
 
 import java.util.NoSuchElementException;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Access Feature content using Feature "Id".
  *
- * <p>Many SimpleFeatureCollection classes will make use of this API to avoid unnecessary caching of
- * content. Supporting this interface will allow SubCollections to occur based on FeatureIds, with a
- * suitable improvement in memory consumption.
+ * <p>Many SimpleFeatureCollection classes will make use of this API to avoid unnecessary caching of content. Supporting
+ * this interface will allow SubCollections to occur based on FeatureIds, with a suitable improvement in memory
+ * consumption.
  *
- * <p>For an addition improvement in memory comsumption SubCollections may use of a sparse
- * reprsentation where only (beginId,endId] ranges are kept in memory.
+ * <p>For an addition improvement in memory comsumption SubCollections may use of a sparse reprsentation where only
+ * (beginId,endId] ranges are kept in memory.
  *
  * @author Jody Garnett, Refractions Research Inc.
  */
@@ -36,7 +36,6 @@ public interface RandomFeatureAccess extends SimpleFeatureCollection {
     /**
      * Access Feature content by feature id.
      *
-     * @param id
      * @return Feature with the indicated or id
      * @throws NoSuchElementException if a Feature with the indicated id is not present
      */

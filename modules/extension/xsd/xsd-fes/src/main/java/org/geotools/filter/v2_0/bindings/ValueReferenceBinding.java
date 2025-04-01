@@ -17,13 +17,12 @@
 package org.geotools.filter.v2_0.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.v2_0.FES;
 import org.geotools.gml3.bindings.GML3EncodingUtils;
 import org.geotools.xsd.AbstractSimpleBinding;
 import org.geotools.xsd.InstanceComponent;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
@@ -52,6 +51,7 @@ public class ValueReferenceBinding extends AbstractSimpleBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return FES.ValueReference;
     }
@@ -63,6 +63,7 @@ public class ValueReferenceBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return PropertyName.class;
     }
@@ -74,9 +75,9 @@ public class ValueReferenceBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
-        return ((FilterFactory2) filterFactory)
-                .property(
-                        (String) value, GML3EncodingUtils.copyNamespaceSupport((namespaceSupport)));
+        return ((FilterFactory) filterFactory)
+                .property((String) value, GML3EncodingUtils.copyNamespaceSupport((namespaceSupport)));
     }
 }

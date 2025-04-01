@@ -16,10 +16,10 @@
  */
 package org.geotools.util.logging;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.util.logging.Level;
-import org.junit.*;
+import org.junit.Test;
 
 /**
  * Tests the {@link LoggingAdapter} class.
@@ -30,22 +30,21 @@ import org.junit.*;
  */
 public final class LoggingAdapterTest {
     /**
-     * Tests the {@link LoggerAdapter#log(Level,String)} method. This is of special interest because
-     * of the switch cases used in implementation.
+     * Tests the {@link LoggerAdapter#log(Level,String)} method. This is of special interest because of the switch cases
+     * used in implementation.
      */
     @Test
     public void testLog() {
         final DummyLogger logger = new DummyLogger();
-        final Object[] levels =
-                new Object[] {
-                    Level.FINE, "apple",
-                    Level.INFO, "orange",
-                    Level.FINEST, "yellow",
-                    Level.CONFIG, "yeti",
-                    Level.SEVERE, "ouch!",
-                    Level.WARNING, "caution",
-                    Level.FINEST, "don't mind",
-                };
+        final Object[] levels = {
+            Level.FINE, "apple",
+            Level.INFO, "orange",
+            Level.FINEST, "yellow",
+            Level.CONFIG, "yeti",
+            Level.SEVERE, "ouch!",
+            Level.WARNING, "caution",
+            Level.FINEST, "don't mind",
+        };
         for (int i = 0; i < levels.length; i++) {
             final Level level = (Level) levels[i];
             final String message = (String) levels[++i];

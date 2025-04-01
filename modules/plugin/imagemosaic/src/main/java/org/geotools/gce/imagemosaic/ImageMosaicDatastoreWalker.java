@@ -16,42 +16,45 @@
  */
 package org.geotools.gce.imagemosaic;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.gce.imagemosaic.Utils.Prop;
 import org.geotools.gce.imagemosaic.catalog.GranuleCatalog;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.gce.imagemosaic.catalog.index.IndexerUtils;
 
 /**
- * This class is responsible for walking through the target schema and check all the located
- * granules.
+ * This class is responsible for walking through the target schema and check all the located granules.
  *
- * <p>Its role is basically to simplify the construction of the mosaic by implementing a visitor
- * pattern for the files that we have to use for the index.
+ * <p>Its role is basically to simplify the construction of the mosaic by implementing a visitor pattern for the
+ * elements that we have to use for the index.
  *
  * @author Carlo Cancellieri - GeoSolutions SAS @TODO check the schema structure
  */
-class ImageMosaicDatastoreWalker extends ImageMosaicWalker {
+class ImageMosaicDatastoreWalker extends ImageMosaicWalker implements Runnable {
+
+    /** The datastore walker will provide SimpleFeatures to the consumer */
+    protected ImageMosaicElementConsumer<SimpleFeature> consumer;
 
     /** Default Logger * */
-    static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ImageMosaicDatastoreWalker.class);
+    static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ImageMosaicDatastoreWalker.class);
 
     public ImageMosaicDatastoreWalker(
-            ImageMosaicConfigHandler configHandler, ImageMosaicEventHandlers eventHandler) {
+            ImageMosaicConfigHandler configHandler,
+            ImageMosaicEventHandlers eventHandler,
+            ImageMosaicElementConsumer<SimpleFeature> consumer) {
         super(configHandler, eventHandler);
+        this.consumer = consumer;
     }
 
     /** run the walker on the store */
+    @Override
     public void run() {
-
-        SimpleFeatureIterator it = null;
         GranuleCatalog catalog = null;
         try {
 
@@ -60,118 +63,28 @@ class ImageMosaicDatastoreWalker extends ImageMosaicWalker {
 
             // start looking into catalog
             catalog = configHandler.getCatalog();
-            String locationAttrName =
-                    configHandler.getRunConfiguration().getParameter(Prop.LOCATION_ATTRIBUTE);
-            String requestedTypeName =
-                    configHandler.getRunConfiguration().getParameter(Prop.TYPENAME);
-            String location =
-                    configHandler.getRunConfiguration().getParameter(Prop.LOCATION_ATTRIBUTE);
-            for (String typeName : catalog.getTypeNames()) {
-                if (requestedTypeName != null && !requestedTypeName.equals(typeName)) {
-                    continue;
+            String locationAttrName = configHandler.getRunConfiguration().getParameter(Prop.LOCATION_ATTRIBUTE);
+            String requestedTypeName = configHandler.getRunConfiguration().getParameter(Prop.TYPENAME);
+
+            if (requestedTypeName != null) {
+                SimpleFeatureType type = catalog.getType(requestedTypeName);
+                if (!Utils.isValidMosaicSchema(type, locationAttrName)) {
+                    LOGGER.log(Level.FINE, "Skipping invalid mosaic index table " + requestedTypeName);
+                } else {
+                    processGranules(catalog, requestedTypeName);
                 }
-
-                if (!Utils.isValidMosaicSchema(catalog.getType(typeName), location)) {
-                    LOGGER.log(Level.FINE, "Skipping invalid mosaic index table " + typeName);
-                    continue;
-                }
-
-                // how many rows for this feature type?
-                final Query query = new Query(typeName);
-                int numFiles = catalog.getGranulesCount(query);
-                if (numFiles <= 0) {
-                    // empty table?
-                    LOGGER.log(Level.FINE, "No rows in the typeName: " + typeName);
-                    continue;
-                }
-                setNumFiles(numFiles);
-
-                // cool, now let's walk over the features
-                final SimpleFeatureCollection coll = catalog.getGranules(query);
-
-                SimpleFeatureType schema = coll.getSchema();
-                if (schema.getDescriptor(locationAttrName) == null) {
-                    LOGGER.fine(
-                            "Skipping feature type "
-                                    + typeName
-                                    + " as the location attribute "
-                                    + locationAttrName
-                                    + " is not part of the schema");
-                    continue;
-                } else if (schema.getGeometryDescriptor() == null) {
-                    LOGGER.fine(
-                            "Skipping feature type "
-                                    + typeName
-                                    + " as it does not have a footprint column");
-                    continue;
-                }
-
-                // create an iterator
-                it = coll.features();
-                // TODO setup index name
-
-                while (it.hasNext()) {
-                    // get next element
-                    final SimpleFeature feature = it.next();
-
-                    Object locationAttrObj = feature.getAttribute(locationAttrName);
-                    File file = null;
-                    if (locationAttrObj instanceof String) {
-                        final String path = (String) locationAttrObj;
-                        if (Boolean.getBoolean(
-                                configHandler
-                                        .getRunConfiguration()
-                                        .getParameter(Prop.ABSOLUTE_PATH))) {
-                            // absolute files
-                            file = new File(path);
-                            // check this is _really_ absolute
-                            if (!checkFile(file)) {
-                                file = null;
-                            }
-                        }
-                        if (file == null) {
-                            // relative files
-                            file =
-                                    new File(
-                                            configHandler
-                                                    .getRunConfiguration()
-                                                    .getParameter(Prop.ROOT_MOSAIC_DIR),
-                                            path);
-                            // check this is _really_ relative
-                            if (!(file.exists() && file.canRead() && file.isFile())) {
-                                // let's try for absolute, despite what the config says
-                                // absolute files
-                                file = new File(path);
-                                // check this is _really_ absolute
-                                if (!(checkFile(file))) {
-                                    file = null;
-                                }
-                            }
-                        }
-
-                        // final check
-                        if (file == null) {
-                            // SKIP and log
-                            // empty table?
-                            super.skipFile(path);
+            } else {
+                String[] typeNames = catalog.getTypeNames();
+                if (typeNames != null) {
+                    for (String typeName : typeNames) {
+                        if (!Utils.isValidMosaicSchema(catalog.getType(typeName), locationAttrName)) {
+                            LOGGER.log(Level.FINE, "Skipping invalid mosaic index table " + typeName);
                             continue;
                         }
-
-                    } else if (locationAttrObj instanceof File) {
-                        file = (File) locationAttrObj;
-                    } else {
-                        eventHandler.fireException(
-                                new IOException(
-                                        "Location attribute type not recognized for column name: "
-                                                + locationAttrName));
-                        stop();
-                        break;
+                        processGranules(catalog, typeName);
                     }
-
-                    // process this file
-                    handleFile(file);
                 }
-            } // next table
+            }
 
             // close transaction
             // did we cancel?
@@ -189,14 +102,6 @@ class ImageMosaicDatastoreWalker extends ImageMosaicWalker {
                 throw new IllegalStateException(e1);
             }
         } finally {
-            // close read iterator
-            if (it != null) {
-                try {
-                    it.close();
-                } catch (Exception e) {
-                    LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
-                }
-            }
             // close transaction
             try {
                 closeTransaction();
@@ -232,5 +137,30 @@ class ImageMosaicDatastoreWalker extends ImageMosaicWalker {
                 }
             }
         }
+    }
+
+    private void processGranules(GranuleCatalog catalog, String requestedTypeName) throws IOException {
+        // how many rows for this feature type?
+        final Query query = new Query(requestedTypeName);
+        Integer maxInitializationTiles = IndexerUtils.getParameterAsInteger(
+                Prop.MAX_INIT_TILES, configHandler.getRunConfiguration().getIndexer());
+        if (maxInitializationTiles != null) query.setMaxFeatures(maxInitializationTiles);
+
+        // cool, now let's walk over the features
+        final SimpleFeatureCollection coll = catalog.getGranules(query);
+
+        // create an iterator
+        int numFiles = 0;
+        try (SimpleFeatureIterator it = coll.features()) {
+            // TODO setup index name
+            while (it.hasNext()) {
+                // get next element
+                final SimpleFeature feature = it.next();
+                consumer.handleElement(feature, this);
+                numFiles++;
+                if (getStop()) break;
+            }
+        }
+        setNumElements(numFiles);
     }
 }

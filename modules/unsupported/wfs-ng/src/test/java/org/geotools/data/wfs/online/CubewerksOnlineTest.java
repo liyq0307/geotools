@@ -21,7 +21,6 @@ import static org.geotools.data.wfs.online.WFSOnlineTestSupport.doFeatureReader;
 import static org.geotools.data.wfs.online.WFSOnlineTestSupport.getDataStore;
 import static org.junit.Assert.assertEquals;
 
-import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -59,9 +58,8 @@ public class CubewerksOnlineTest {
         url_100 = new URL(SERVER_URL_100);
         url_110 = new URL(SERVER_URL_110);
         if (url_100 != null && url_100.toString().indexOf("localhost") != -1) {
-            InputStream stream = null;
             try {
-                stream = url_100.openStream();
+                url_100.openStream();
             } catch (Throwable t) {
                 // System.err.println("Server is not available. test disabled ");
                 url_100 = null;
@@ -75,8 +73,7 @@ public class CubewerksOnlineTest {
                 assertEquals("1.0.0", wfs100.getInfo().getVersion());
             } catch (Throwable t) {
                 url_100 = null;
-                Loggers.info(
-                        "Can't obtain 1.0.0 DataStore, 1.0.0 tests disabled: " + t.getMessage());
+                Loggers.info("Can't obtain 1.0.0 DataStore, 1.0.0 tests disabled: " + t.getMessage());
             }
         }
         if (url_110 != null) {
@@ -86,8 +83,7 @@ public class CubewerksOnlineTest {
                 assertEquals("1.1.0", wfs110.getInfo().getVersion());
             } catch (Exception t) {
                 url_110 = null;
-                Loggers.info(
-                        "Can't obtain 1.1.0 DataStore, 1.1.0 tests disabled: " + t.getMessage());
+                Loggers.info("Can't obtain 1.1.0 DataStore, 1.1.0 tests disabled: " + t.getMessage());
             }
         }
     }

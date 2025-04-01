@@ -16,9 +16,13 @@
  */
 package org.geotools.gml2.bindings;
 
+import static org.junit.Assert.assertNotNull;
+
 import org.geotools.gml2.GML;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
@@ -27,38 +31,36 @@ public class GMLPolygonPropertyTypeBindingTest extends AbstractGMLBindingTest {
     ElementInstance association;
     ElementInstance geometry;
 
-    protected void setUp() throws Exception {
+    @Override
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
 
-        association =
-                createElement(GML.NAMESPACE, "myPolygonProperty", GML.PolygonPropertyType, null);
+        association = createElement(GML.NAMESPACE, "myPolygonProperty", GML.PolygonPropertyType, null);
         geometry = createElement(GML.NAMESPACE, "myPolygon", GML.PolygonType, null);
     }
 
+    @Test
     public void testWithGeometry() throws Exception {
-        Node node =
-                createNode(
-                        association,
-                        new ElementInstance[] {geometry},
-                        new Object[] {
-                            new GeometryFactory()
-                                    .createPolygon(
-                                            new GeometryFactory()
-                                                    .createLinearRing(
-                                                            new Coordinate[] {
-                                                                new Coordinate(0, 0),
-                                                                new Coordinate(1, 1),
-                                                                new Coordinate(2, 2),
-                                                                new Coordinate(0, 0),
-                                                            }),
-                                            null)
-                        },
-                        null,
-                        null);
+        Node node = createNode(
+                association,
+                new ElementInstance[] {geometry},
+                new Object[] {
+                    new GeometryFactory()
+                            .createPolygon(
+                                    new GeometryFactory().createLinearRing(new Coordinate[] {
+                                        new Coordinate(0, 0),
+                                        new Coordinate(1, 1),
+                                        new Coordinate(2, 2),
+                                        new Coordinate(0, 0),
+                                    }),
+                                    null)
+                },
+                null,
+                null);
         GMLGeometryAssociationTypeBinding s =
                 (GMLGeometryAssociationTypeBinding) getBinding(GML.GeometryAssociationType);
-        GMLPolygonPropertyTypeBinding s1 =
-                (GMLPolygonPropertyTypeBinding) getBinding(GML.PolygonPropertyType);
+        GMLPolygonPropertyTypeBinding s1 = (GMLPolygonPropertyTypeBinding) getBinding(GML.PolygonPropertyType);
         Polygon p = (Polygon) s1.parse(association, node, s.parse(association, node, null));
         assertNotNull(p);
     }

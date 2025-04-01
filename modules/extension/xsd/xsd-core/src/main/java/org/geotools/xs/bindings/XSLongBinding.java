@@ -17,6 +17,7 @@
 package org.geotools.xs.bindings;
 
 import javax.xml.namespace.QName;
+import org.apache.commons.lang3.StringUtils;
 import org.geotools.xs.XS;
 import org.geotools.xsd.InstanceComponent;
 import org.geotools.xsd.SimpleBinding;
@@ -49,6 +50,7 @@ import org.geotools.xsd.SimpleBinding;
  */
 public class XSLongBinding implements SimpleBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.LONG;
     }
@@ -60,6 +62,7 @@ public class XSLongBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
@@ -72,6 +75,7 @@ public class XSLongBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Long.class;
     }
@@ -84,10 +88,11 @@ public class XSLongBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         String text = (String) value;
 
-        if (text == null || text.length() == 0) {
+        if (StringUtils.isBlank(text)) {
             return null;
         }
 
@@ -105,6 +110,7 @@ public class XSLongBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public String encode(Object object, String value) {
         Long l = (Long) object;
 

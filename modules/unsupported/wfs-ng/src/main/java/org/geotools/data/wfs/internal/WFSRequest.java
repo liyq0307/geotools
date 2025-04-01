@@ -23,13 +23,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.util.Properties;
 import java.util.logging.Level;
 import javax.xml.namespace.QName;
 import org.apache.commons.io.IOUtils;
 import org.geotools.data.ows.AbstractRequest;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Request;
+import org.geotools.http.HTTPResponse;
+import org.geotools.ows.ServiceException;
 import org.geotools.util.factory.FactoryNotFoundException;
 import org.geotools.util.logging.Logging;
 
@@ -49,10 +49,9 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
 
     private String handle;
 
-    public WFSRequest(
-            final WFSOperationType operation, final WFSConfig config, final WFSStrategy strategy) {
+    public WFSRequest(final WFSOperationType operation, final WFSConfig config, final WFSStrategy strategy) {
 
-        super(url(operation, config, strategy), (Properties) null);
+        super(url(operation, config, strategy), null);
         this.operation = operation;
         this.config = config;
         this.strategy = strategy;
@@ -72,9 +71,11 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
 
         this.outputFormat = strategy.getDefaultOutputFormat(operation);
 
-        setProperty(SERVICE, "WFS");
-        setProperty(VERSION, strategy.getVersion());
-        setProperty(REQUEST, operation.getName());
+        if (!this.doPost) {
+            setProperty(SERVICE, "WFS");
+            setProperty(VERSION, strategy.getVersion());
+            setProperty(REQUEST, operation.getName());
+        }
     }
 
     public String getOutputFormat() {
@@ -106,8 +107,7 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
         return strategy;
     }
 
-    private static URL url(
-            final WFSOperationType operation, final WFSConfig config, final WFSStrategy strategy) {
+    private static URL url(final WFSOperationType operation, final WFSConfig config, final WFSStrategy strategy) {
 
         final boolean suportsGet = strategy.supportsOperation(operation, GET);
         final boolean suportsPost = strategy.supportsOperation(operation, POST);
@@ -174,25 +174,19 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
     @Override
     public void performPostOutput(OutputStream outputStream) throws IOException {
 
-        InputStream in = strategy.getPostContents(this);
-        try {
+        try (InputStream in = strategy.getPostContents(this)) {
             IOUtils.copy(in, outputStream);
-        } finally {
-            in.close();
         }
     }
 
     @Override
-    public WFSResponse createResponse(HTTPResponse response) throws IOException {
+    public WFSResponse createResponse(HTTPResponse response) throws ServiceException, IOException {
 
         final String contentType = response.getContentType();
 
         if (contentType == null) {
             Logging.getLogger(WFSRequest.class)
-                    .warning(
-                            this.getOperation()
-                                    + " request returned null content type for URL "
-                                    + getFinalURL());
+                    .warning(this.getOperation() + " request returned null content type for URL " + getFinalURL());
         }
 
         WFSResponseFactory responseFactory;
@@ -202,7 +196,7 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
             Loggers.MODULE.log(Level.WARNING, fnf.getMessage());
             try {
                 if (contentType != null && contentType.startsWith("text")) {
-                    byte buff[] = new byte[1024];
+                    byte[] buff = new byte[1024];
                     response.getResponseStream().read(buff);
                     Loggers.MODULE.info("Failed response snippet: " + new String(buff));
                 }

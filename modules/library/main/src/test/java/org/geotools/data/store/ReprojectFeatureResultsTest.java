@@ -16,39 +16,44 @@
  */
 package org.geotools.data.store;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Iterator;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform2D;
 import org.geotools.data.crs.ReprojectFeatureResults;
 import org.geotools.geometry.jts.GeometryCoordinateSequenceTransformer;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform2D;
 
 public class ReprojectFeatureResultsTest extends FeatureCollectionWrapperTestSupport {
 
     CoordinateReferenceSystem target;
     GeometryCoordinateSequenceTransformer transformer;
 
-    protected void setUp() throws Exception {
+    @Override
+    @Before
+    public void setUp() throws Exception {
         super.setUp();
+        target = CRS.parseWKT(
+                "PROJCS[\"BC_Albers\",GEOGCS[\"GCS_North_American_1983\",DATUM[\"North_American_Datum_1983\",SPHEROID[\"GRS_1980\",6378137,298.257222101],TOWGS84[0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]],PROJECTION[\"Albers_Conic_Equal_Area\"],PARAMETER[\"False_Easting\",1000000],PARAMETER[\"False_Northing\",0],PARAMETER[\"Central_Meridian\",-126],PARAMETER[\"Standard_Parallel_1\",50],PARAMETER[\"Standard_Parallel_2\",58.5],PARAMETER[\"Latitude_Of_Origin\",45],UNIT[\"Meter\",1],AUTHORITY[\"EPSG\",\"42102\"]]");
 
-        target =
-                CRS.parseWKT(
-                        "PROJCS[\"BC_Albers\",GEOGCS[\"GCS_North_American_1983\",DATUM[\"North_American_Datum_1983\",SPHEROID[\"GRS_1980\",6378137,298.257222101],TOWGS84[0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]],PROJECTION[\"Albers_Conic_Equal_Area\"],PARAMETER[\"False_Easting\",1000000],PARAMETER[\"False_Northing\",0],PARAMETER[\"Central_Meridian\",-126],PARAMETER[\"Standard_Parallel_1\",50],PARAMETER[\"Standard_Parallel_2\",58.5],PARAMETER[\"Latitude_Of_Origin\",45],UNIT[\"Meter\",1],AUTHORITY[\"EPSG\",\"42102\"]]");
-
-        MathTransform2D tx =
-                (MathTransform2D)
-                        ReferencingFactoryFinder.getCoordinateOperationFactory(null)
-                                .createOperation(crs, target)
-                                .getMathTransform();
+        MathTransform2D tx = (MathTransform2D) ReferencingFactoryFinder.getCoordinateOperationFactory(null)
+                .createOperation(crs, target)
+                .getMathTransform();
         transformer = new GeometryCoordinateSequenceTransformer();
         transformer.setMathTransform(tx);
         transformer.setCoordinateReferenceSystem(target);
     }
 
+    @Test
     public void testNormal() throws Exception {
 
         Iterator reproject = new ReprojectFeatureResults(delegate, target).iterator();
@@ -81,6 +86,7 @@ public class ReprojectFeatureResultsTest extends FeatureCollectionWrapperTestSup
         }
     }
 
+    @Test
     public void testBounds() throws Exception {
         ReprojectFeatureResults rfr = new ReprojectFeatureResults(delegate, target);
         rfr.getBounds();

@@ -16,30 +16,22 @@
  */
 package org.geotools.temporal.object;
 
-import org.opengis.temporal.IndeterminateValue;
-import org.opengis.temporal.JulianDate;
-import org.opengis.temporal.TemporalReferenceSystem;
+import org.geotools.api.temporal.IndeterminateValue;
+import org.geotools.api.temporal.JulianDate;
+import org.geotools.api.temporal.TemporalReferenceSystem;
 
 /**
- * The Julian day numbering system is a temporal coordinate system that has its origin at noon on 1
- * January 4713 BCE in the Julian proleptic calendar. The Julian day number is an integer value; the
- * Julian date is a decimal value that allows greater resolution.
+ * The Julian day numbering system is a temporal coordinate system that has its origin at noon on 1 January 4713 BCE in
+ * the Julian proleptic calendar. The Julian day number is an integer value; the Julian date is a decimal value that
+ * allows greater resolution.
  *
  * @author Mehdi Sidhoum (Geomatys)
  */
 public class DefaultJulianDate extends DefaultTemporalCoordinate implements JulianDate {
 
-    /**
-     * Creates a new instance of JulianDate.
-     *
-     * @param frame
-     * @param indeterminatePosition
-     * @param coordinateValue
-     */
+    /** Creates a new instance of JulianDate. */
     public DefaultJulianDate(
-            TemporalReferenceSystem frame,
-            IndeterminateValue indeterminatePosition,
-            Number coordinateValue) {
+            TemporalReferenceSystem frame, IndeterminateValue indeterminatePosition, Number coordinateValue) {
         super(frame, indeterminatePosition, coordinateValue);
     }
 }

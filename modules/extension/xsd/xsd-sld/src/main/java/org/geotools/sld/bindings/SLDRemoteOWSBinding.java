@@ -16,10 +16,9 @@
  */
 package org.geotools.sld.bindings;
 
-import java.net.URI;
 import javax.xml.namespace.QName;
-import org.geotools.styling.RemoteOWS;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.style.RemoteOWS;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -58,6 +57,7 @@ public class SLDRemoteOWSBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.REMOTEOWS;
     }
@@ -69,6 +69,7 @@ public class SLDRemoteOWSBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -80,6 +81,7 @@ public class SLDRemoteOWSBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return RemoteOWS.class;
     }
@@ -91,6 +93,7 @@ public class SLDRemoteOWSBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -100,9 +103,10 @@ public class SLDRemoteOWSBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return styleFactory.createRemoteOWS(
                 (String) node.getChildValue("Service"),
-                ((URI) node.getChildValue("OnlineResource")).toString());
+                node.getChildValue("OnlineResource").toString());
     }
 }

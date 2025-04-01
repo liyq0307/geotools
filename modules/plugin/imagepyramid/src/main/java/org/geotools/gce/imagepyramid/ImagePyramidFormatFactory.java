@@ -19,8 +19,8 @@ package org.geotools.gce.imagepyramid;
 import java.awt.RenderingHints;
 import java.util.Collections;
 import java.util.Map;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the GridCoverageFormat service provider interface for arc grid files.
@@ -30,12 +30,13 @@ import org.opengis.coverage.grid.Format;
  */
 public final class ImagePyramidFormatFactory implements GridFormatFactorySpi {
     /**
-     * Tells us if this plugin is avaialble or not. Since usually coverage plugins depend on JAI and
-     * ImageIO classes this method is suitable for understanding if such a plugin is available or
-     * not, preventing users from having problems later on when trying to instantiate it.
+     * Tells us if this plugin is avaialble or not. Since usually coverage plugins depend on JAI and ImageIO classes
+     * this method is suitable for understanding if such a plugin is available or not, preventing users from having
+     * problems later on when trying to instantiate it.
      *
      * @return False if this plugin is not available true otherwise.
      */
+    @Override
     public boolean isAvailable() {
         boolean available = true;
 
@@ -54,6 +55,7 @@ public final class ImagePyramidFormatFactory implements GridFormatFactorySpi {
      *
      * @return an OpenGIS {@link Format} subclass for this coverage.
      */
+    @Override
     public ImagePyramidFormat createFormat() {
         return new ImagePyramidFormat();
     }
@@ -63,6 +65,7 @@ public final class ImagePyramidFormatFactory implements GridFormatFactorySpi {
      *
      * @return an empty map.
      */
+    @Override
     public Map<RenderingHints.Key, ?> getImplementationHints() {
         return Collections.emptyMap();
     }

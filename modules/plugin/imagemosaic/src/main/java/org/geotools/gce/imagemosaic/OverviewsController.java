@@ -22,32 +22,28 @@ import org.geotools.coverage.grid.io.OverviewPolicy;
 import org.geotools.util.Utilities;
 
 /**
- * A class to handle overviews resolution levels. It stores overviews resolution levels information
- * and suggests the level to be used depending on the current request and the {@link
- * OverviewPolicy}.
+ * A class to handle overviews resolution levels. It stores overviews resolution levels information and suggests the
+ * level to be used depending on the current request and the {@link OverviewPolicy}.
  *
  * @author Simone Giannecchini, GeoSolutions SAS
  * @author Daniele Romagnoli, GeoSolutions SAS
  */
 final class OverviewsController {
 
-    final ArrayList<OverviewLevel> resolutionsLevels = new ArrayList<OverviewLevel>();
+    final ArrayList<OverviewLevel> resolutionsLevels = new ArrayList<>();
 
     private int numberOfOverviews;
 
     /**
      * Constructor.
      *
-     * @param highestRes The resolution values for the finest level, <b>This is treated as level
-     *     0.</b>
+     * @param highestRes The resolution values for the finest level, <b>This is treated as level 0.</b>
      * @param numberOfOverviews number of overview levels.
-     * @param overviewsResolution resolutions for the various levels. <b>Implicitly, the index of
-     *     the resolution is the index of the corresponding level.</b>
+     * @param overviewsResolution resolutions for the various levels. <b>Implicitly, the index of the resolution is the
+     *     index of the corresponding level.</b>
      */
     public OverviewsController(
-            final double[] highestRes,
-            final int numberOfOverviews,
-            final double[][] overviewsResolution) {
+            final double[] highestRes, final int numberOfOverviews, final double[][] overviewsResolution) {
 
         // notice that we assume what follows:
         // -highest resolution image is at level 0.
@@ -58,29 +54,24 @@ final class OverviewsController {
         this.numberOfOverviews = numberOfOverviews;
         if (numberOfOverviews > 0) {
             for (int i = 0; i < overviewsResolution.length; i++) {
-                resolutionsLevels.add(
-                        new OverviewLevel(
-                                overviewsResolution[i][0] / highestRes[0],
-                                overviewsResolution[i][0],
-                                overviewsResolution[i][1],
-                                i + 1));
+                resolutionsLevels.add(new OverviewLevel(
+                        overviewsResolution[i][0] / highestRes[0],
+                        overviewsResolution[i][0],
+                        overviewsResolution[i][1],
+                        i + 1));
             }
             Collections.sort(resolutionsLevels);
         }
     }
 
     /**
-     * Given a specified {@link OverviewPolicy} and a {@link RasterLayerRequest}, suggest the proper
-     * overview level index.
+     * Given a specified {@link OverviewPolicy} and a {@link RasterLayerRequest}, suggest the proper overview level
+     * index.
      *
-     * @param policy
-     * @param request
      * @return the OverviewLevel index
      */
     int pickOverviewLevel(
-            final OverviewPolicy policy,
-            final double[] requestedResolution,
-            final double[] virtualNativeResolution) {
+            final OverviewPolicy policy, final double[] requestedResolution, final double[] virtualNativeResolution) {
 
         // //
         //
@@ -89,7 +80,7 @@ final class OverviewsController {
         // Future versions should use both.
         //
         // //
-        if (resolutionsLevels == null || resolutionsLevels.size() <= 0) return 0;
+        if (resolutionsLevels == null || resolutionsLevels.isEmpty()) return 0;
 
         // Now search for the best matching resolution.
         // Check also for the "perfect match"... unlikely in practice unless someone
@@ -97,7 +88,7 @@ final class OverviewsController {
         // the overviews, something a perf sensitive person might do in fact
 
         // requested scale factor for least reduced axis
-        final OverviewLevel max = (OverviewLevel) resolutionsLevels.get(0);
+        final OverviewLevel max = resolutionsLevels.get(0);
 
         // the requested resolutions (even virtual)
         boolean useVirtual = false;
@@ -106,8 +97,6 @@ final class OverviewsController {
         }
 
         // the requested resolutions
-        double requestedScaleFactorX;
-        double requestedScaleFactorY;
         double virtualRequestedScaleFactorX;
         double virtualRequestedScaleFactorY;
         double virtualRequestedScaleFactor = Double.NaN;
@@ -119,10 +108,9 @@ final class OverviewsController {
             if (useVirtual) {
                 virtualRequestedScaleFactorX = virtualNativeResolution[0] / max.resolutionX;
                 virtualRequestedScaleFactorY = virtualNativeResolution[1] / max.resolutionY;
-                virtualRequestedScaleFactor =
-                        (virtualRequestedScaleFactorX <= virtualRequestedScaleFactorY)
-                                ? virtualRequestedScaleFactorX
-                                : virtualRequestedScaleFactorY;
+                virtualRequestedScaleFactor = (virtualRequestedScaleFactorX <= virtualRequestedScaleFactorY)
+                        ? virtualRequestedScaleFactorX
+                        : virtualRequestedScaleFactorY;
             }
         }
         if (!useVirtual && requestedResolution == null) {
@@ -133,20 +121,18 @@ final class OverviewsController {
             return 0;
         }
 
-        requestedScaleFactorX = reqx / max.resolutionX;
-        requestedScaleFactorY = reqy / max.resolutionY;
+        double requestedScaleFactorX = reqx / max.resolutionX;
+        double requestedScaleFactorY = reqy / max.resolutionY;
 
         final int leastReduceAxis = requestedScaleFactorX <= requestedScaleFactorY ? 0 : 1;
-        final double requestedScaleFactor =
-                leastReduceAxis == 0 ? requestedScaleFactorX : requestedScaleFactorY;
+        final double requestedScaleFactor = leastReduceAxis == 0 ? requestedScaleFactorX : requestedScaleFactorY;
 
         // are we looking for a resolution even higher than the native one?
         if (requestedScaleFactor <= 1 && !useVirtual) {
             return max.imageChoice;
         }
 
-        final OverviewLevel min =
-                (OverviewLevel) resolutionsLevels.get(resolutionsLevels.size() - 1);
+        final OverviewLevel min = resolutionsLevels.get(resolutionsLevels.size() - 1);
         if (requestedScaleFactor >= min.scaleFactor) {
             // are we looking for a resolution even lower than the smallest overview?
             if (useVirtual && min.imageChoice != 0) {
@@ -213,8 +199,7 @@ final class OverviewsController {
                     }
                 } else if (policy == OverviewPolicy.SPEED) {
                     return curr.imageChoice;
-                } else if (requestedScaleFactor - prev.scaleFactor
-                        < curr.scaleFactor - requestedScaleFactor) {
+                } else if (requestedScaleFactor - prev.scaleFactor < curr.scaleFactor - requestedScaleFactor) {
                     return prev.imageChoice;
                 } else {
                     return curr.imageChoice;
@@ -255,23 +240,16 @@ final class OverviewsController {
 
         int imageChoice;
 
-        /**
-         * @param scaleFactor
-         * @param resolutionX
-         * @param resolutionY
-         * @param imageChoice
-         */
+        /** */
         public OverviewLevel(
-                final double scaleFactor,
-                final double resolutionX,
-                final double resolutionY,
-                final int imageChoice) {
+                final double scaleFactor, final double resolutionX, final double resolutionY, final int imageChoice) {
             this.scaleFactor = scaleFactor;
             this.resolutionX = resolutionX;
             this.resolutionY = resolutionY;
             this.imageChoice = imageChoice;
         }
 
+        @Override
         public int compareTo(final OverviewLevel other) {
             if (scaleFactor > other.scaleFactor) {
                 return 1;

@@ -29,15 +29,16 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.data.ows.URLCheckers;
 import org.geotools.image.io.ImageIOExt;
 import org.geotools.util.SoftValueHashMap;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.Feature;
-import org.opengis.filter.expression.Expression;
 
 /**
- * External graphic factory accepting an Expression that can be evaluated to a URL pointing to a
- * image file. The <code>format</code> must be one of the mime types supported by the current JDK.
+ * External graphic factory accepting an Expression that can be evaluated to a URL pointing to a image file. The <code>
+ * format</code> must be one of the mime types supported by the current JDK.
  *
  * @author Andrea Aime - TOPP
  */
@@ -47,13 +48,12 @@ public class ImageGraphicFactory implements ExternalGraphicFactory, GraphicCache
     private static final Logger LOGGER = Logging.getLogger(ImageGraphicFactory.class);
 
     /** Current way to load images */
-    static Map<URL, BufferedImage> imageCache =
-            Collections.synchronizedMap(new SoftValueHashMap<URL, BufferedImage>());
+    static Map<URL, BufferedImage> imageCache = Collections.synchronizedMap(new SoftValueHashMap<>());
 
     /** Holds the of graphic formats supported by the current jdk */
-    static Set<String> supportedGraphicFormats =
-            new HashSet<String>(Arrays.asList(ImageIO.getReaderMIMETypes()));
+    static Set<String> supportedGraphicFormats = new HashSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
 
+    @Override
     public Icon getIcon(Feature feature, Expression url, String format, int size) {
         // check we do support the format
         if (!supportedGraphicFormats.contains(format.toLowerCase())) return null;
@@ -61,8 +61,11 @@ public class ImageGraphicFactory implements ExternalGraphicFactory, GraphicCache
         // evaluate the location as a URL
         URL location = url.evaluate(feature, URL.class);
         if (location == null)
-            throw new IllegalArgumentException(
-                    "The provided expression cannot be evaluated to a URL");
+            throw new IllegalArgumentException("The provided expression cannot be evaluated to a URL");
+
+        // validate the icon can actually be fetched, it may go to a random
+        // local filesystem location, or a remote server
+        URLCheckers.confirm(location);
 
         // get the image from the cache, or load it
         BufferedImage image = imageCache.get(location);
@@ -78,7 +81,7 @@ public class ImageGraphicFactory implements ExternalGraphicFactory, GraphicCache
 
         // if scaling is needed, perform it
         if (size > 0 && image.getHeight() != size) {
-            double dsize = (double) size;
+            double dsize = size;
 
             double scaleY = dsize / image.getHeight(); // >1 if you're magnifying
             double scaleX = scaleY; // keep aspect ratio!
@@ -91,11 +94,7 @@ public class ImageGraphicFactory implements ExternalGraphicFactory, GraphicCache
         return new ImageIcon(image);
     }
 
-    /**
-     * Returs the set of mime types supported by this factory
-     *
-     * @return
-     */
+    /** Returs the set of mime types supported by this factory */
     public Set<String> getSupportedMimeTypes() {
         return Collections.unmodifiableSet(supportedGraphicFormats);
     }

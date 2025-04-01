@@ -16,20 +16,26 @@
  */
 package org.geotools.referencing.factory.epsg;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.util.Collection;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.ProjectedCRS;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.util.factory.Hints;
-import org.junit.*;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.ProjectedCRS;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests {@link FactoryUsingWKT}.
@@ -45,11 +51,8 @@ public final class FactoryUsingWktTest {
     /** Gets the authority factory for ESRI. */
     @Before
     public void setUp() {
-        factory =
-                (FactoryUsingWKT)
-                        ReferencingFactoryFinder.getCRSAuthorityFactory(
-                                "EPSG",
-                                new Hints(Hints.CRS_AUTHORITY_FACTORY, FactoryUsingWKT.class));
+        factory = (FactoryUsingWKT) ReferencingFactoryFinder.getCRSAuthorityFactory(
+                "EPSG", new Hints(Hints.CRS_AUTHORITY_FACTORY, FactoryUsingWKT.class));
     }
 
     /**
@@ -98,9 +101,8 @@ public final class FactoryUsingWktTest {
      */
     @Test
     public void test42101() throws FactoryException {
-        CoordinateReferenceSystem actual, expected;
-        expected = factory.createCoordinateReferenceSystem("42101");
-        actual = CRS.decode("EPSG:42101");
+        CoordinateReferenceSystem expected = factory.createCoordinateReferenceSystem("42101");
+        CoordinateReferenceSystem actual = CRS.decode("EPSG:42101");
         assertSame(expected, actual);
         assertTrue(actual instanceof ProjectedCRS);
         Collection ids = actual.getIdentifiers();

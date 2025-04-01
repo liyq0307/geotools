@@ -39,34 +39,36 @@ import java.util.stream.StreamSupport;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.Document;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.data.mongodb.complex.JsonSelectAllFunction;
+import org.geotools.data.mongodb.complex.JsonSelectFunction;
 import org.geotools.data.mongodb.data.SchemaStoreDirectoryProvider;
-import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.store.ContentState;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.filter.FilterCapabilities;
+import org.geotools.http.HTTPClient;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.Not;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Within;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 @SuppressWarnings("deprecation") // DB was replaced by MongoDatabase but API is not the same
 public class MongoDataStore extends ContentDataStore {
@@ -87,7 +89,6 @@ public class MongoDataStore extends ContentDataStore {
     // for reading schema from hosted files
     private HTTPClient httpClient;
 
-    @SuppressWarnings("deprecation")
     FilterCapabilities filterCapabilities;
 
     // parameters for precise schema generation from actual mongodb data
@@ -101,16 +102,12 @@ public class MongoDataStore extends ContentDataStore {
         this(dataStoreURI, schemaStoreURI, true);
     }
 
-    public MongoDataStore(
-            String dataStoreURI, String schemaStoreURI, boolean createDatabaseIfNeeded) {
+    public MongoDataStore(String dataStoreURI, String schemaStoreURI, boolean createDatabaseIfNeeded) {
         this(dataStoreURI, schemaStoreURI, createDatabaseIfNeeded, null, null);
     }
 
     public MongoDataStore(
-            String dataStoreURI,
-            String schemaStoreURI,
-            boolean createDatabaseIfNeeded,
-            HTTPClient httpClient) {
+            String dataStoreURI, String schemaStoreURI, boolean createDatabaseIfNeeded, HTTPClient httpClient) {
         // helpful for unit tests
         this(dataStoreURI, schemaStoreURI, createDatabaseIfNeeded, null, httpClient);
     }
@@ -124,9 +121,8 @@ public class MongoDataStore extends ContentDataStore {
 
         MongoClientURI dataStoreClientURI = createMongoClientURI(dataStoreURI);
         dataStoreClient = createMongoClient(dataStoreClientURI);
-        dataStoreDB =
-                createDB(
-                        dataStoreClient, dataStoreClientURI.getDatabase(), !createDatabaseIfNeeded);
+        dataStoreDB = createDB(dataStoreClient, dataStoreClientURI.getDatabase(), !createDatabaseIfNeeded);
+
         if (dataStoreDB == null) {
             dataStoreClient.close(); // This smells bad...
             throw new IllegalArgumentException(
@@ -138,8 +134,7 @@ public class MongoDataStore extends ContentDataStore {
         schemaStore = createSchemaStore(schemaStoreURI);
         if (schemaStore == null) {
             dataStoreClient.close(); // This smells bad too...
-            throw new IllegalArgumentException(
-                    "Unable to initialize schema store with URI \"" + schemaStoreURI + "\"");
+            throw new IllegalArgumentException("Unable to initialize schema store with URI \"" + schemaStoreURI + "\"");
         }
 
         filterCapabilities = createFilterCapabilties();
@@ -156,16 +151,20 @@ public class MongoDataStore extends ContentDataStore {
     private boolean isMongoVersionLessThan2_6(MongoClientURI dataStoreClientURI) {
         boolean deactivateOrAux = false;
         // check server version
-        Document result =
-                dataStoreClient
-                        .getDatabase(dataStoreClientURI.getDatabase())
-                        .runCommand(new BsonDocument("buildinfo", new BsonString("")));
-        if (result.containsKey("versionArray")) {
-            List<Integer> versionArray = (List<Integer>) result.get("versionArray");
-            // if MongoDB server version < 2.6.0 disable native $or operator
-            if (versionArray.get(0) < 2 || (versionArray.get(0) == 2 && versionArray.get(1) < 6)) {
-                deactivateOrAux = true;
+        if (dataStoreClient != null && dataStoreClientURI != null && dataStoreClientURI.getDatabase() != null) {
+            Document result = dataStoreClient
+                    .getDatabase(dataStoreClientURI.getDatabase())
+                    .runCommand(new BsonDocument("buildinfo", new BsonString("")));
+            if (result.containsKey("versionArray")) {
+                @SuppressWarnings("unchecked")
+                List<Integer> versionArray = (List) result.get("versionArray");
+                // if MongoDB server version < 2.6.0 disable native $or operator
+                if (versionArray.get(0) < 2 || (versionArray.get(0) == 2 && versionArray.get(1) < 6)) {
+                    deactivateOrAux = true;
+                }
             }
+        } else {
+            throw new IllegalArgumentException("Unknown Mongo Client");
         }
         return deactivateOrAux;
     }
@@ -204,19 +203,10 @@ public class MongoDataStore extends ContentDataStore {
         if (schemaStoreURI.startsWith("file:")) {
             try {
                 return new MongoSchemaFileStore(schemaStoreURI);
-            } catch (URISyntaxException e) {
+            } catch (URISyntaxException | IOException e) {
                 LOGGER.log(
                         Level.SEVERE,
-                        "Unable to create file-based schema store with URI \""
-                                + schemaStoreURI
-                                + "\"",
-                        e);
-            } catch (IOException e) {
-                LOGGER.log(
-                        Level.SEVERE,
-                        "Unable to create file-based schema store with URI \""
-                                + schemaStoreURI
-                                + "\"",
+                        "Unable to create file-based schema store with URI \"" + schemaStoreURI + "\"",
                         e);
             }
         } else if (schemaStoreURI.startsWith("mongodb:")) {
@@ -225,56 +215,41 @@ public class MongoDataStore extends ContentDataStore {
             } catch (IOException e) {
                 LOGGER.log(
                         Level.SEVERE,
-                        "Unable to create mongodb-based schema store with URI \""
-                                + schemaStoreURI
-                                + "\"",
+                        "Unable to create mongodb-based schema store with URI \"" + schemaStoreURI + "\"",
                         e);
             }
         } else if (schemaStoreURI.startsWith(MongoSchemaFileStore.PRE_FIX_HTTP)) {
             try {
 
-                File downloadedFile =
-                        MongoUtil.downloadSchemaFile(
-                                dataStoreDB.getName(),
-                                new URL(schemaStoreURI),
-                                httpClient,
-                                SchemaStoreDirectoryProvider.getHighestPriority());
+                File downloadedFile = MongoUtil.downloadSchemaFile(
+                        dataStoreDB.getName(),
+                        new URL(schemaStoreURI),
+                        httpClient,
+                        SchemaStoreDirectoryProvider.getHighestPriority());
                 if (MongoUtil.isZipFile(downloadedFile)) {
                     File extractedFileLocation =
-                            MongoUtil.extractZipFile(
-                                    downloadedFile.getParentFile(), downloadedFile);
+                            MongoUtil.extractZipFile(downloadedFile.getParentFile(), downloadedFile);
                     LOGGER.log(
                             Level.INFO,
-                            "Found Schema Files at "
-                                    + extractedFileLocation.toString()
-                                    + "after extracting ");
+                            "Found Schema Files at " + extractedFileLocation.toString() + "after extracting ");
                     return new MongoSchemaFileStore(extractedFileLocation.toURI());
-                } else return new MongoSchemaFileStore(downloadedFile.getParentFile().toURI());
+                } else
+                    return new MongoSchemaFileStore(
+                            downloadedFile.getParentFile().toURI());
 
             } catch (IOException e) {
                 LOGGER.log(
                         Level.SEVERE,
-                        "Unable to create file-based schema store with URI \""
-                                + schemaStoreURI
-                                + "\"",
+                        "Unable to create file-based schema store with URI \"" + schemaStoreURI + "\"",
                         e);
             }
         } else {
             try {
                 return new MongoSchemaFileStore("file:" + schemaStoreURI);
-            } catch (URISyntaxException e) {
+            } catch (URISyntaxException | IOException e) {
                 LOGGER.log(
                         Level.SEVERE,
-                        "Unable to create file-based schema store with URI \""
-                                + schemaStoreURI
-                                + "\"",
-                        e);
-            } catch (IOException e) {
-                LOGGER.log(
-                        Level.SEVERE,
-                        "Unable to create file-based schema store with URI \""
-                                + schemaStoreURI
-                                + "\"",
+                        "Unable to create file-based schema store with URI \"" + schemaStoreURI + "\"",
                         e);
             }
         }
@@ -282,7 +257,6 @@ public class MongoDataStore extends ContentDataStore {
         return null;
     }
 
-    @SuppressWarnings("deprecation")
     final FilterCapabilities createFilterCapabilties() {
         FilterCapabilities capabilities = new FilterCapabilities();
 
@@ -309,6 +283,8 @@ public class MongoDataStore extends ContentDataStore {
         capabilities.addType(Within.class);
 
         capabilities.addType(Id.class);
+        capabilities.addType(JsonSelectFunction.class);
+        capabilities.addType(JsonSelectAllFunction.class);
 
         /*
         capabilities.addType(IncludeFilter.class);
@@ -340,8 +316,7 @@ public class MongoDataStore extends ContentDataStore {
             incoming.getGeometryDescriptor().getCoordinateReferenceSystem();
         }
         if (!CRS.equalsIgnoreMetadata(incomingCRS, DefaultGeographicCRS.WGS84)) {
-            throw new IllegalArgumentException(
-                    "Unsupported coordinate reference system, only WGS84 supported");
+            throw new IllegalArgumentException("Unsupported coordinate reference system, only WGS84 supported");
         }
         // Need to generate FeatureType instance with proper namespace URI
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
@@ -383,13 +358,12 @@ public class MongoDataStore extends ContentDataStore {
     @Override
     protected List<Name> createTypeNames() throws IOException {
 
-        Set<String> collectionNames = new LinkedHashSet<String>(dataStoreDB.getCollectionNames());
-        Set<String> typeNameSet = new LinkedHashSet<String>();
+        Set<String> collectionNames = new LinkedHashSet<>(dataStoreDB.getCollectionNames());
+        Set<String> typeNameSet = new LinkedHashSet<>();
 
         for (String candidateTypeName : getSchemaStore().typeNames()) {
             try {
-                SimpleFeatureType candidateSchema =
-                        getSchemaStore().retrieveSchema(name(candidateTypeName));
+                SimpleFeatureType candidateSchema = getSchemaStore().retrieveSchema(name(candidateTypeName));
 
                 // extract collection that schema maps to either from user data attribute
                 // or, if that's missing, the schema type name.
@@ -398,16 +372,14 @@ public class MongoDataStore extends ContentDataStore {
                 // verify collection exists in db and has geometry index
                 if (collectionNames.contains(candidateCollectionName)) {
                     // verify geometry exists and has mapping.
-                    String geometryName = candidateSchema.getGeometryDescriptor().getLocalName();
-                    String geometryMapping =
-                            (String)
-                                    candidateSchema
-                                            .getDescriptor(geometryName)
-                                            .getUserData()
-                                            .get(KEY_mapping);
+                    String geometryName =
+                            candidateSchema.getGeometryDescriptor().getLocalName();
+                    String geometryMapping = (String) candidateSchema
+                            .getDescriptor(geometryName)
+                            .getUserData()
+                            .get(KEY_mapping);
                     if (geometryMapping != null) {
-                        DBCollection collection =
-                                dataStoreDB.getCollection(candidateCollectionName);
+                        DBCollection collection = dataStoreDB.getCollection(candidateCollectionName);
                         Set<String> geometryIndices = MongoUtil.findIndexedGeometries(collection);
                         // verify geometry mapping is indexed...
                         if (geometryIndices.contains(geometryMapping)) {
@@ -417,10 +389,7 @@ public class MongoDataStore extends ContentDataStore {
                                     Level.WARNING,
                                     "Ignoring type \"{0}\", the geometry attribute, \"{1}\", is mapped to document key \"{2}\" but it is not spatialy indexed in collection {3}",
                                     new Object[] {
-                                        name(candidateTypeName),
-                                        geometryName,
-                                        geometryMapping,
-                                        collection.getFullName()
+                                        name(candidateTypeName), geometryName, geometryMapping, collection.getFullName()
                                     });
                         }
                     } else {
@@ -433,11 +402,7 @@ public class MongoDataStore extends ContentDataStore {
                     LOGGER.log(
                             Level.WARNING,
                             "Ignoring type \"{0}\", the collection it maps \"{1}.{2}\" does not exist",
-                            new Object[] {
-                                name(candidateTypeName),
-                                dataStoreDB.getName(),
-                                candidateCollectionName
-                            });
+                            new Object[] {name(candidateTypeName), dataStoreDB.getName(), candidateCollectionName});
                 }
             } catch (IOException e) {
                 LOGGER.log(
@@ -448,7 +413,7 @@ public class MongoDataStore extends ContentDataStore {
         }
 
         // Create set of collections w/o named schema
-        Collection<String> collectionsToCheck = new LinkedList<String>(collectionNames);
+        Collection<String> collectionsToCheck = new LinkedList<>(collectionNames);
         collectionsToCheck.removeAll(typeNameSet);
 
         // Check collection set to see if we can use any of them
@@ -469,7 +434,7 @@ public class MongoDataStore extends ContentDataStore {
             }
         }
 
-        List<Name> typeNameList = new ArrayList<Name>();
+        List<Name> typeNameList = new ArrayList<>();
         for (String name : typeNameSet) {
             typeNameList.add(name(name));
         }

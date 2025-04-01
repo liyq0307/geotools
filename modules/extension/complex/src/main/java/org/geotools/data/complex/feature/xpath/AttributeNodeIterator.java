@@ -23,11 +23,11 @@ import java.util.List;
 import org.apache.commons.jxpath.ri.QName;
 import org.apache.commons.jxpath.ri.model.NodeIterator;
 import org.apache.commons.jxpath.ri.model.NodePointer;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
 
 /**
  * Special node iterator for {@link Attribute}.
@@ -51,7 +51,7 @@ public class AttributeNodeIterator implements NodeIterator {
     public AttributeNodeIterator(AttributeNodePointer pointer) {
         this.pointer = pointer;
         feature = (ComplexAttribute) pointer.getImmediateAttribute();
-        children = new ArrayList<Property>(feature.getValue());
+        children = new ArrayList<>(feature.getValue());
         position = 1;
     }
 
@@ -62,23 +62,26 @@ public class AttributeNodeIterator implements NodeIterator {
         AttributeDescriptor descriptor = feature.getDescriptor();
         Name attName = descriptor == null ? feature.getType().getName() : descriptor.getName();
         if (attName.equals(name)) {
-            children = Collections.<Property>singletonList(feature);
+            children = Collections.singletonList(feature);
         } else {
-            children = new ArrayList<Property>(feature.getProperties(name));
+            children = new ArrayList<>(feature.getProperties(name));
         }
 
-        position = children.size() > 0 ? 1 : 0;
+        position = children.isEmpty() ? 0 : 1;
     }
 
+    @Override
     public int getPosition() {
         return position;
     }
 
+    @Override
     public boolean setPosition(int position) {
         this.position = position;
         return position <= children.size();
     }
 
+    @Override
     public NodePointer getNodePointer() {
         Attribute attribute = (Attribute) children.get(position - 1);
         Name name = attribute.getDescriptor().getName();

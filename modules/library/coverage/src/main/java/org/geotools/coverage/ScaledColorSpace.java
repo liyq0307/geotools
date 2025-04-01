@@ -22,9 +22,8 @@ import org.geotools.util.Classes;
 /**
  * Color space for raster backed by floating point numbers ranging between two arbitrary values.
  *
- * <p><strong>NOTE:</strong> Current implementation is a copy of {@code
- * org.geotools.image.io.ScaledColorSpace}. Future implementation will be differents (interpolate in
- * a color table instead of computing grayscales).
+ * <p><strong>NOTE:</strong> Current implementation is a copy of {@code org.geotools.image.io.ScaledColorSpace}. Future
+ * implementation will be differents (interpolate in a color table instead of computing grayscales).
  *
  * @since 2.1
  * @version $Id$
@@ -55,8 +54,7 @@ final class ScaledColorSpace extends ColorSpace {
      * @param minimum La valeur géophysique minimale.
      * @param maximum La valeur géophysique maximale.
      */
-    public ScaledColorSpace(
-            final int band, final int numComponents, final double minimum, final double maximum) {
+    public ScaledColorSpace(final int band, final int numComponents, final double minimum, final double maximum) {
         super(TYPE_GRAY, numComponents);
         this.band = band;
         final double scale = (maximum - minimum) / (MAX_VALUE - MIN_VALUE);
@@ -66,6 +64,7 @@ final class ScaledColorSpace extends ColorSpace {
     }
 
     /** Retourne une couleur RGB en tons de gris pour le nombre réel spécifié. */
+    @Override
     public float[] toRGB(final float[] values) {
         float value = (values[band] - offset) / scale;
         if (Float.isNaN(value)) value = MIN_VALUE;
@@ -73,6 +72,7 @@ final class ScaledColorSpace extends ColorSpace {
     }
 
     /** Retourne une valeur réelle pour le ton de gris spécifié. */
+    @Override
     public float[] fromRGB(final float[] RGB) {
         final float[] values = new float[getNumComponents()];
         values[band] = (RGB[0] + RGB[1] + RGB[2]) / 3 * scale + offset;
@@ -80,6 +80,7 @@ final class ScaledColorSpace extends ColorSpace {
     }
 
     /** Convertit les valeurs en couleurs dans l'espace CIEXYZ. */
+    @Override
     public float[] toCIEXYZ(final float[] values) {
         float value = (values[band] - offset) / scale;
         if (Float.isNaN(value)) value = MIN_VALUE;
@@ -87,6 +88,7 @@ final class ScaledColorSpace extends ColorSpace {
     }
 
     /** Convertit les couleurs de l'espace CIEXYZ en valeurs. */
+    @Override
     public float[] fromCIEXYZ(final float[] RGB) {
         final float[] values = new float[getNumComponents()];
         values[band] = (RGB[0] / 0.9642f + RGB[1] + RGB[2] / 0.8249f) / 3 * scale + offset;
@@ -108,11 +110,6 @@ final class ScaledColorSpace extends ColorSpace {
     /** Returns a string representation of this color model. */
     @Override
     public String toString() {
-        return Classes.getShortClassName(this)
-                + '['
-                + getMinValue(band)
-                + ", "
-                + getMaxValue(band)
-                + ']';
+        return Classes.getShortClassName(this) + '[' + getMinValue(band) + ", " + getMaxValue(band) + ']';
     }
 }

@@ -50,10 +50,12 @@ import org.geotools.xsd.Node;
  */
 public class MLMailTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return ML.MAILTYPE;
     }
 
+    @Override
     public Class getType() {
         return Mail.class;
     }
@@ -65,13 +67,15 @@ public class MLMailTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Envelope envelope = (Envelope) node.getChildValue("envelope");
         String body = (String) node.getChildValue("body");
         BigInteger id = (BigInteger) node.getAttributeValue("id");
 
-        List atts = node.getChildValues("attachment");
-        Attachment[] attachments = (Attachment[]) atts.toArray(new Attachment[atts.size()]);
+        @SuppressWarnings("unchecked")
+        List<Attachment> atts = node.getChildValues("attachment");
+        Attachment[] attachments = atts.toArray(new Attachment[atts.size()]);
 
         return new Mail(id, body, envelope, attachments);
     }

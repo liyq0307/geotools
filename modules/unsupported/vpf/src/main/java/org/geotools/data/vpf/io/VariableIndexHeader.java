@@ -56,17 +56,18 @@ public class VariableIndexHeader implements VPFHeader {
      *
      * @return an <code>int</code> value of header length.
      */
+    @Override
     public int getLength() {
         return VARIABLE_INDEX_HEADER_LENGTH;
     }
 
     /**
-     * Method <code><code>getRecordSize</code></code> is used to return size in bytes of records
-     * stored in this table. If table keeps variable length records <code>-1</code> should be
-     * returned.
+     * Method <code><code>getRecordSize</code></code> is used to return size in bytes of records stored in this table.
+     * If table keeps variable length records <code>-1</code> should be returned.
      *
      * @return an <code><code>int</code></code> value
      */
+    @Override
     public int getRecordSize() {
         return VARIABLE_INDEX_ROW_SIZE;
     }

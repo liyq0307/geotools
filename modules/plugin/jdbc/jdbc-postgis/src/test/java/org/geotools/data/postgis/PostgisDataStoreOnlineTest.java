@@ -21,8 +21,17 @@ import org.geotools.jdbc.JDBCTestSetup;
 
 public class PostgisDataStoreOnlineTest extends JDBCDataStoreOnlineTest {
 
+    public PostgisDataStoreOnlineTest() {
+        this.forceLongitudeFirst = true;
+    }
+
     @Override
     protected JDBCTestSetup createTestSetup() {
         return new PostGISTestSetup();
+    }
+
+    @Override
+    protected String getCLOBTypeName() {
+        return "TEXT";
     }
 }

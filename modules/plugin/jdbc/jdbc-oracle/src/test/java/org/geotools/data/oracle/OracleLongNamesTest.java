@@ -17,23 +17,26 @@
 package org.geotools.data.oracle;
 
 import static org.geotools.filter.text.cql2.CQL.toFilter;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.logging.Logger;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Query;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.filter.text.cql2.CQLException;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.jdbc.JDBCTestSupport;
 import org.geotools.util.logging.Logging;
+import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** This is an Oracle specific test for Oracle 12c longer names support */
 public class OracleLongNamesTest extends JDBCTestSupport {
@@ -50,12 +53,7 @@ public class OracleLongNamesTest extends JDBCTestSupport {
         return new OracleLongNameTestSetup(new OracleTestSetup());
     }
 
-    /**
-     * This test makes sne
-     *
-     * @return
-     * @throws Exception
-     */
+    /** This test makes sne */
     @Override
     protected boolean isOnline() throws Exception {
         if (!super.isOnline()) {
@@ -66,7 +64,7 @@ public class OracleLongNamesTest extends JDBCTestSupport {
         // create it, to make things easy, we just directly try to do so, if this fails,
         // the test will be skipped
         JDBCTestSetup setup = createTestSetup();
-        setup.setFixture(fixture);
+        setup.setFixture(getFixture());
 
         try (Connection cx = setup.getDataSource().getConnection()) {
             atLeast12 = cx.getMetaData().getDatabaseMajorVersion() >= 12;
@@ -85,6 +83,7 @@ public class OracleLongNamesTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testSchema() throws IOException {
         if (!atLeast12) {
             return;
@@ -95,6 +94,7 @@ public class OracleLongNamesTest extends JDBCTestSupport {
         assertNotNull(fs.getSchema().getDescriptor(INT_NAME));
     }
 
+    @Test
     public void testAlphanumericQuery() throws IOException, CQLException {
         if (!atLeast12) {
             return;
@@ -106,6 +106,7 @@ public class OracleLongNamesTest extends JDBCTestSupport {
         assertEquals(1, fs.getCount(q));
     }
 
+    @Test
     public void testSpatialQuery() throws IOException, CQLException {
         if (!atLeast12) {
             return;
@@ -119,6 +120,7 @@ public class OracleLongNamesTest extends JDBCTestSupport {
         assertEquals(0, fs.getCount(q));
     }
 
+    @Test
     public void testModify() throws IOException, CQLException {
         if (!atLeast12) {
             return;
@@ -129,6 +131,7 @@ public class OracleLongNamesTest extends JDBCTestSupport {
         assertEquals(1, fs.getCount(new Query(TABLE_NAME, toFilter(INT_NAME + " = 345"))));
     }
 
+    @Test
     public void testInsert() throws IOException, CQLException, ParseException {
         if (!atLeast12) {
             return;
@@ -136,11 +139,8 @@ public class OracleLongNamesTest extends JDBCTestSupport {
 
         SimpleFeatureStore fs = (SimpleFeatureStore) dataStore.getFeatureSource(tname(TABLE_NAME));
         final Geometry point = new WKTReader().read("POINT( 2 2)");
-        final SimpleFeature feature =
-                SimpleFeatureBuilder.build(fs.getSchema(), new Object[] {point, 789}, null);
+        final SimpleFeature feature = SimpleFeatureBuilder.build(fs.getSchema(), new Object[] {point, 789}, null);
         fs.addFeatures(DataUtilities.collection(feature));
-        assertEquals(
-                1,
-                fs.getCount(new Query(TABLE_NAME, toFilter("BBOX(" + GEOM_NAME + ",1,1,10,10)"))));
+        assertEquals(1, fs.getCount(new Query(TABLE_NAME, toFilter("BBOX(" + GEOM_NAME + ",1,1,10,10)"))));
     }
 }

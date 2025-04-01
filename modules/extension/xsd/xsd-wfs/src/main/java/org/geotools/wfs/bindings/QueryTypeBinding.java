@@ -156,24 +156,24 @@ import org.geotools.xsd.AbstractComplexEMFBinding;
  *
  * @generated
  */
-@SuppressWarnings({"nls", "unchecked"})
 public class QueryTypeBinding extends AbstractComplexEMFBinding {
     public QueryTypeBinding(WfsFactory factory) {
         super(factory);
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WFS.QueryType;
     }
 
     /**
-     * Overrides to return the value of the "typeName" attribute as a single String instead of a
-     * List. Otherwise typeName gets encoded as the {@link QueryType#getTypeName()} toString's value
-     * which depends on the toString implementation of the internal java.util.List.
+     * Overrides to return the value of the "typeName" attribute as a single String instead of a List. Otherwise
+     * typeName gets encoded as the {@link QueryType#getTypeName()} toString's value which depends on the toString
+     * implementation of the internal java.util.List.
      *
-     * <p>Also, if the requested property is "SortBy" and the QueryType has an empty sortby list,
-     * returns null to avoid encoding an empty sortBy list
+     * <p>Also, if the requested property is "SortBy" and the QueryType has an empty sortby list, returns null to avoid
+     * encoding an empty sortBy list
      */
     @Override
     public Object getProperty(Object object, QName name) throws Exception {
@@ -199,7 +199,7 @@ public class QueryTypeBinding extends AbstractComplexEMFBinding {
         } else if ("SortBy".equals(name.getLocalPart())) {
             QueryType query = (QueryType) object;
             List sortBy = query.getSortBy();
-            if (sortBy != null && sortBy.size() == 0) {
+            if (sortBy != null && sortBy.isEmpty()) {
                 return null;
             }
         }

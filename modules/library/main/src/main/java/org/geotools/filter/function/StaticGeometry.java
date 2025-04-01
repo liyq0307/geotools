@@ -17,8 +17,10 @@
  */
 package org.geotools.filter.function;
 
+import com.google.re2j.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.locationtech.jts.algorithm.MinimumBoundingCircle;
 import org.locationtech.jts.algorithm.MinimumDiameter;
@@ -29,17 +31,16 @@ import org.locationtech.jts.geom.OctagonalEnvelope;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTReader;
-import org.opengis.filter.FilterFactory2;
 
 /** @author David Blasby (The Open Planning Project) */
 public class StaticGeometry {
 
     // Lazily created filter factory for updated numerical operations
-    private static FilterFactory2 ff;
+    private static FilterFactory ff;
 
-    private static FilterFactory2 getFilterFactory2() {
+    private static FilterFactory getFilterFactory() {
         if (ff == null) {
-            ff = CommonFactoryFinder.getFilterFactory2();
+            ff = CommonFactoryFinder.getFilterFactory();
         }
         return ff;
     }
@@ -478,7 +479,10 @@ public class StaticGeometry {
 
     public static boolean strMatches(String s1, String s2) {
         if (s1 == null || s2 == null) return false;
-        return s1.matches(s2);
+        if (s1.isEmpty() && s2.isEmpty()) return true;
+        if (s1.isEmpty() || s2.isEmpty()) return false;
+
+        return Pattern.matches(s2, s1);
     }
 
     public static String strReplace(String s1, String s2, String s3, Boolean bAll) {
@@ -535,7 +539,7 @@ public class StaticGeometry {
             return Long.parseLong(s);
         } catch (NumberFormatException e) // be nice for silly people!
         {
-            return (long) Math.round(parseDouble(s));
+            return Math.round(parseDouble(s));
         }
     }
 
@@ -594,40 +598,35 @@ public class StaticGeometry {
         return !(equalTo(o1, o2));
     }
 
-    /** Delegates to FilterFactory2 */
+    /** Delegates to FilterFactory */
     public static boolean lessThan(Object o1, Object o2) {
-        return getFilterFactory2().less(ff.literal(o1), ff.literal(o2)).evaluate(null);
+        return getFilterFactory().less(ff.literal(o1), ff.literal(o2)).evaluate(null);
     }
 
-    /** Delegates to FilterFactory2 */
+    /** Delegates to FilterFactory */
     public static boolean greaterThan(Object o1, Object o2) {
-        return getFilterFactory2().greater(ff.literal(o1), ff.literal(o2)).evaluate(null);
+        return getFilterFactory().greater(ff.literal(o1), ff.literal(o2)).evaluate(null);
     }
 
-    /** Delegates to FilterFactory2 */
+    /** Delegates to FilterFactory */
     public static boolean greaterEqualThan(Object o1, Object o2) {
-        return getFilterFactory2().greaterOrEqual(ff.literal(o1), ff.literal(o2)).evaluate(null);
+        return getFilterFactory().greaterOrEqual(ff.literal(o1), ff.literal(o2)).evaluate(null);
     }
 
-    /** Delegates to FilterFactory2 */
+    /** Delegates to FilterFactory */
     public static boolean lessEqualThan(Object o1, Object o2) {
-        return getFilterFactory2().lessOrEqual(ff.literal(o1), ff.literal(o2)).evaluate(null);
+        return getFilterFactory().lessOrEqual(ff.literal(o1), ff.literal(o2)).evaluate(null);
     }
 
     public static boolean isLike(String s1, String s2) {
         if (s1 == null || s2 == null) return false;
-        return s1.matches(s2); // this sucks, but hay...
+        return strMatches(s1, s2);
     }
 
     public static boolean isNull(Object o) {
         return o == null;
     }
-    /**
-     * @param value
-     * @param low
-     * @param high
-     * @return true if value is between low and high
-     */
+    /** @return true if value is between low and high */
     public static boolean between(Object o, Object o_low, Object o_high) {
 
         return StaticGeometry.greaterEqualThan(o, o_low) && StaticGeometry.lessEqualThan(o, o_high);
@@ -654,15 +653,10 @@ public class StaticGeometry {
     }
 
     public static boolean in5(Object s, Object s1, Object s2, Object s3, Object s4, Object s5) {
-        return (equalTo(s, s1)
-                || equalTo(s, s2)
-                || equalTo(s, s3)
-                || equalTo(s, s4)
-                || equalTo(s, s5));
+        return (equalTo(s, s1) || equalTo(s, s2) || equalTo(s, s3) || equalTo(s, s4) || equalTo(s, s5));
     }
 
-    public static boolean in6(
-            Object s, Object s1, Object s2, Object s3, Object s4, Object s5, Object s6) {
+    public static boolean in6(Object s, Object s1, Object s2, Object s3, Object s4, Object s5, Object s6) {
         return (equalTo(s, s1)
                 || equalTo(s, s2)
                 || equalTo(s, s3)
@@ -671,8 +665,7 @@ public class StaticGeometry {
                 || equalTo(s, s6));
     }
 
-    public static boolean in7(
-            Object s, Object s1, Object s2, Object s3, Object s4, Object s5, Object s6, Object s7) {
+    public static boolean in7(Object s, Object s1, Object s2, Object s3, Object s4, Object s5, Object s6, Object s7) {
         return (equalTo(s, s1)
                 || equalTo(s, s2)
                 || equalTo(s, s3)
@@ -683,15 +676,7 @@ public class StaticGeometry {
     }
 
     public static boolean in8(
-            Object s,
-            Object s1,
-            Object s2,
-            Object s3,
-            Object s4,
-            Object s5,
-            Object s6,
-            Object s7,
-            Object s8) {
+            Object s, Object s1, Object s2, Object s3, Object s4, Object s5, Object s6, Object s7, Object s8) {
         return (equalTo(s, s1)
                 || equalTo(s, s2)
                 || equalTo(s, s3)

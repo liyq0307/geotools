@@ -17,11 +17,11 @@
 
 package org.geotools.filter.text.cql2;
 
+import org.geotools.api.filter.Filter;
 import org.geotools.filter.text.commons.CompilerUtil;
 import org.geotools.filter.text.commons.Language;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.Filter;
 
 /**
  * Test CQL Null Predicate:
@@ -49,21 +49,18 @@ public class CQLNullPredicateTest {
         this.language = language;
     }
 
-    /**
-     * test the
-     *
-     * @param samplePredicate
-     * @param expected
-     * @throws Exception
-     */
-    protected void testNullPredicate(final String samplePredicate, Filter expected)
-            throws Exception {
+    /** test the */
+    protected void testNullPredicate(final String samplePredicate, Filter expected) throws Exception {
 
-        Filter actual = CompilerUtil.parseFilter(this.language, samplePredicate);
+        Filter actual = parseFilter(samplePredicate);
 
         Assert.assertNotNull("expects a not null filter", actual);
 
         Assert.assertEquals("Filter error", expected, actual);
+    }
+
+    protected Filter parseFilter(String samplePredicate) throws CQLException {
+        return CompilerUtil.parseFilter(this.language, samplePredicate);
     }
 
     /** Sample: ATTR1 IS NULL */
@@ -75,11 +72,7 @@ public class CQLNullPredicateTest {
         testNullPredicate(samplePredicate, expected);
     }
 
-    /**
-     * Sample: ATTR1 IS NOT NULL
-     *
-     * @throws Exception
-     */
+    /** Sample: ATTR1 IS NOT NULL */
     @Test
     public void propertyIsNotNull() throws Exception {
 

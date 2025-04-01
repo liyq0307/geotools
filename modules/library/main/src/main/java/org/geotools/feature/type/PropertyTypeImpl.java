@@ -20,12 +20,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyType;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
 
 public abstract class PropertyTypeImpl implements PropertyType {
 
@@ -54,8 +54,7 @@ public abstract class PropertyTypeImpl implements PropertyType {
                 // FIXME: This should be optional as the superType may have the required
                 // information?
                 throw new NullPointerException(
-                        "Binding to a Java class, did you mean to bind to "
-                                + superType.getBinding());
+                        "Binding to a Java class, did you mean to bind to " + superType.getBinding());
             }
             throw new NullPointerException("Binding to a Java class is required");
         }
@@ -71,39 +70,47 @@ public abstract class PropertyTypeImpl implements PropertyType {
 
         this.superType = superType;
         this.description = description;
-        this.userData = new HashMap<Object, Object>();
+        this.userData = new HashMap<>();
     }
 
+    @Override
     public Name getName() {
         return name;
     }
 
+    @Override
     public Class<?> getBinding() {
         return binding;
     }
 
+    @Override
     public boolean isAbstract() {
         return isAbstract;
     }
 
+    @Override
     public List<Filter> getRestrictions() {
         return restrictions;
     }
 
+    @Override
     public PropertyType getSuper() {
         return superType;
     }
 
+    @Override
     public InternationalString getDescription() {
         return description;
     }
 
+    @Override
     public int hashCode() {
         return getName().hashCode()
                 ^ getBinding().hashCode()
                 ^ (getDescription() != null ? getDescription().hashCode() : 17);
     }
 
+    @Override
     public boolean equals(Object other) {
         if (this == other) return true;
 
@@ -141,20 +148,22 @@ public abstract class PropertyTypeImpl implements PropertyType {
     }
 
     /**
-     * Convenience method for testing two lists for equality. One or both objects may be null, and
-     * considers null and emtpy list as equal
+     * Convenience method for testing two lists for equality. One or both objects may be null, and considers null and
+     * empty list as equal
      */
     private boolean equals(final List object1, final List object2) {
         if ((object1 == object2) || (object1 != null && object1.equals(object2))) return true;
-        if (object1 == null && object2.size() == 0) return true;
-        if (object2 == null && object1.size() == 0) return true;
+        if (object1 == null && object2.isEmpty()) return true;
+        if (object2 == null && object1.isEmpty()) return true;
         return false;
     }
 
+    @Override
     public Map<Object, Object> getUserData() {
         return userData;
     }
 
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer(Classes.getShortClassName(this));
         sb.append(" ");

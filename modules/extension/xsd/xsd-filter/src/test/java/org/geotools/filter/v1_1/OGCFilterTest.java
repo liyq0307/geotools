@@ -25,20 +25,22 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import javax.xml.parsers.DocumentBuilderFactory;
-import junit.framework.TestCase;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.Parser;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.DWithin;
+import org.junit.Assert;
+import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-public class OGCFilterTest extends TestCase {
+public class OGCFilterTest {
+    @Test
     public void testEncode() throws Exception {
         FilterFactory f = CommonFactoryFinder.getFilterFactory(null);
         Filter filter = f.equal(f.property("testString"), f.literal(2), false);
@@ -46,109 +48,141 @@ public class OGCFilterTest extends TestCase {
         File file = File.createTempFile("filter", "xml");
         file.deleteOnExit();
 
-        OutputStream output = new BufferedOutputStream(new FileOutputStream(file));
-        Encoder encoder = new Encoder(new OGCConfiguration());
+        try (OutputStream output = new BufferedOutputStream(new FileOutputStream(file))) {
+            Encoder encoder = new Encoder(new OGCConfiguration());
 
-        encoder.encode(filter, OGC.PropertyIsEqualTo, output);
-        output.flush();
-        output.close();
+            encoder.encode(filter, OGC.PropertyIsEqualTo, output);
+            output.flush();
+        }
 
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
         docFactory.setNamespaceAware(true);
 
         Document doc = docFactory.newDocumentBuilder().parse(file);
 
-        assertEquals("ogc:PropertyIsEqualTo", doc.getDocumentElement().getNodeName());
-        assertEquals(1, doc.getElementsByTagName("ogc:PropertyName").getLength());
-        assertEquals(1, doc.getElementsByTagName("ogc:Literal").getLength());
+        Assert.assertEquals("ogc:PropertyIsEqualTo", doc.getDocumentElement().getNodeName());
+        Assert.assertEquals(1, doc.getElementsByTagName("ogc:PropertyName").getLength());
+        Assert.assertEquals(1, doc.getElementsByTagName("ogc:Literal").getLength());
 
-        Element propertyName = (Element) doc.getElementsByTagName("ogc:PropertyName").item(0);
+        Element propertyName =
+                (Element) doc.getElementsByTagName("ogc:PropertyName").item(0);
         Element literal = (Element) doc.getElementsByTagName("ogc:Literal").item(0);
 
-        assertEquals("testString", propertyName.getFirstChild().getNodeValue());
-        assertEquals("2", literal.getFirstChild().getNodeValue());
+        Assert.assertEquals("testString", propertyName.getFirstChild().getNodeValue());
+        Assert.assertEquals("2", literal.getFirstChild().getNodeValue());
     }
 
+    @Test
     public void testParse() throws Exception {
         Parser parser = new Parser(new OGCConfiguration());
-        InputStream in = getClass().getResourceAsStream("test1.xml");
+        try (InputStream in = getClass().getResourceAsStream("test1.xml")) {
 
-        if (in == null) {
-            throw new FileNotFoundException(getClass().getResource("test1.xml").toExternalForm());
+            if (in == null) {
+                throw new FileNotFoundException(
+                        getClass().getResource("test1.xml").toExternalForm());
+            }
+
+            Object thing = parser.parse(in);
+            Assert.assertEquals(0, parser.getValidationErrors().size());
+
+            Assert.assertNotNull(thing);
+            Assert.assertTrue(thing instanceof PropertyIsEqualTo);
+
+            PropertyIsEqualTo equal = (PropertyIsEqualTo) thing;
+            Assert.assertTrue(equal.getExpression1() instanceof PropertyName);
+            Assert.assertTrue(equal.getExpression2() instanceof Literal);
+
+            PropertyName name = (PropertyName) equal.getExpression1();
+            Assert.assertEquals("testString", name.getPropertyName());
+
+            Literal literal = (Literal) equal.getExpression2();
+            Assert.assertEquals("2", literal.toString());
         }
-
-        Object thing = parser.parse(in);
-        assertEquals(0, parser.getValidationErrors().size());
-
-        assertNotNull(thing);
-        assertTrue(thing instanceof PropertyIsEqualTo);
-
-        PropertyIsEqualTo equal = (PropertyIsEqualTo) thing;
-        assertTrue(equal.getExpression1() instanceof PropertyName);
-        assertTrue(equal.getExpression2() instanceof Literal);
-
-        PropertyName name = (PropertyName) equal.getExpression1();
-        assertEquals("testString", name.getPropertyName());
-
-        Literal literal = (Literal) equal.getExpression2();
-        assertEquals("2", literal.toString());
     }
 
+    @Test
     public void testDWithinParse() throws Exception {
 
-        String xml =
-                "<Filter>"
-                        + "<DWithin>"
-                        + "<PropertyName>the_geom</PropertyName>"
-                        + "<Point>"
-                        + "<coordinates>-74.817265,40.5296504</coordinates>"
-                        + "</Point>"
-                        + "<Distance units=\"km\">200</Distance>"
-                        + "</DWithin>"
-                        + "</Filter>";
+        String xml = "<Filter>"
+                + "<DWithin>"
+                + "<PropertyName>the_geom</PropertyName>"
+                + "<Point>"
+                + "<coordinates>-74.817265,40.5296504</coordinates>"
+                + "</Point>"
+                + "<Distance units=\"km\">200</Distance>"
+                + "</DWithin>"
+                + "</Filter>";
 
         OGCConfiguration configuration = new OGCConfiguration();
 
         Parser parser = new Parser(configuration);
         DWithin filter = (DWithin) parser.parse(new ByteArrayInputStream(xml.getBytes()));
-        assertNotNull(filter);
+        Assert.assertNotNull(filter);
 
         // Asserting the Property Name
-        assertNotNull(filter.getExpression1());
+        Assert.assertNotNull(filter.getExpression1());
         PropertyName propName = (PropertyName) filter.getExpression1();
         String name = propName.getPropertyName();
-        assertEquals("the_geom", name);
+        Assert.assertEquals("the_geom", name);
 
         // Asserting the Geometry
-        assertNotNull(filter.getExpression2());
+        Assert.assertNotNull(filter.getExpression2());
         Literal geom = (Literal) filter.getExpression2();
-        assertEquals("POINT (-74.817265 40.5296504)", geom.toString());
+        Assert.assertEquals("POINT (-74.817265 40.5296504)", geom.toString());
 
         // Asserting the Distance
-        assertTrue(filter.getDistance() > 0);
+        Assert.assertTrue(filter.getDistance() > 0);
         Double dist = filter.getDistance();
-        assertEquals(200.0, dist);
+        Assert.assertEquals(200.0, dist, 0d);
 
         // Asserting the Distance Units
-        assertNotNull(filter.getDistanceUnits());
+        Assert.assertNotNull(filter.getDistanceUnits());
         String unit = filter.getDistanceUnits();
-        assertEquals("km", unit);
+        Assert.assertEquals("km", unit);
     }
 
+    @Test
+    public void testDWithinWithoutUnitsParse() throws Exception {
+
+        String xml = "<Filter>"
+                + "<DWithin>"
+                + "<PropertyName>the_geom</PropertyName>"
+                + "<Point>"
+                + "<coordinates>-74.817265,40.5296504</coordinates>"
+                + "</Point>"
+                + "<Distance>200</Distance>"
+                + "</DWithin>"
+                + "</Filter>";
+
+        OGCConfiguration configuration = new OGCConfiguration();
+
+        Parser parser = new Parser(configuration);
+        DWithin filter = (DWithin) parser.parse(new ByteArrayInputStream(xml.getBytes()));
+        Assert.assertNotNull(filter);
+
+        // Asserting the Distance
+        Assert.assertTrue(filter.getDistance() > 0);
+        Double dist = filter.getDistance();
+        Assert.assertEquals(200.0, dist, 0d);
+
+        // Asserting the Distance Units
+        Assert.assertNull(filter.getDistanceUnits());
+    }
+
+    @Test
     public void testBBOXValidateWithoutPropertyName() throws Exception {
-        String xml =
-                "<ogc:Filter xmlns:ogc='http://www.opengis.net/ogc'>"
-                        + "<ogc:BBOX>"
-                        + "<gml:Envelope xmlns:gml='http://www.opengis.net/gml'>"
-                        + "<gml:lowerCorner>36.986771000000005 -91.516129</gml:lowerCorner>"
-                        + "<gml:upperCorner>42.50936100000001 -87.507889</gml:upperCorner>"
-                        + "</gml:Envelope>"
-                        + "</ogc:BBOX>"
-                        + "</ogc:Filter>";
+        String xml = "<ogc:Filter xmlns:ogc='http://www.opengis.net/ogc'>"
+                + "<ogc:BBOX>"
+                + "<gml:Envelope xmlns:gml='http://www.opengis.net/gml'>"
+                + "<gml:lowerCorner>36.986771000000005 -91.516129</gml:lowerCorner>"
+                + "<gml:upperCorner>42.50936100000001 -87.507889</gml:upperCorner>"
+                + "</gml:Envelope>"
+                + "</ogc:BBOX>"
+                + "</ogc:Filter>";
 
         Parser p = new Parser(new OGCConfiguration());
         p.validate(new StringReader(xml));
 
-        assertTrue(p.getValidationErrors().isEmpty());
+        Assert.assertTrue(p.getValidationErrors().isEmpty());
     }
 }

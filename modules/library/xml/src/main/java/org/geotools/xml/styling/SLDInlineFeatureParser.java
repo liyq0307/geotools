@@ -18,8 +18,13 @@ package org.geotools.xml.styling;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Hashtable;
-import org.geotools.data.DataStore;
+import java.util.HashMap;
+import java.util.Map;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
@@ -28,10 +33,6 @@ import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.filter.ExpressionDOMParser;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -39,13 +40,12 @@ import org.w3c.dom.NodeList;
 public class SLDInlineFeatureParser {
 
     /** hash table that takes a epsg# to its definition* */
-    private static Hashtable<Integer, CoordinateReferenceSystem> SRSLookup =
-            new Hashtable<Integer, CoordinateReferenceSystem>();
+    private static Map<Integer, CoordinateReferenceSystem> SRSLookup = new HashMap<>();
 
     public SimpleFeatureType featureType = null;
     public DataStore dataStore = null;
     Node rootNode = null;
-    ArrayList<Feature> features = new ArrayList<Feature>();
+    ArrayList<Feature> features = new ArrayList<>();
     CoordinateReferenceSystem SRS = null; // default EPSG#.
 
     private static int uniqueNumber = 0;
@@ -71,16 +71,14 @@ public class SLDInlineFeatureParser {
                     "SLD InlineFeature Parser - couldnt determine a FeatureType.  See help for whats supported."); // shouldnt get here
 
         makeFeatures(root, isFeatureCollection);
-        if (features.size() == 0)
-            throw new Exception("SLD InlineFeature Parser - didnt find any features!");
+        if (features.isEmpty()) throw new Exception("SLD InlineFeature Parser - didnt find any features!");
 
         buildStore();
     }
 
     /**
-     * 1. we have a FeatureType (cf. makeFeatureType) 2. we iterate through either the
-     * SimpleFeatureCollection or the _Feature set 3. we build a Feature for each element of the set
-     * 4. we stick it in the features list
+     * 1. we have a FeatureType (cf. makeFeatureType) 2. we iterate through either the SimpleFeatureCollection or the
+     * _Feature set 3. we build a Feature for each element of the set 4. we stick it in the features list
      *
      * <p>For example:
      *
@@ -88,8 +86,8 @@ public class SLDInlineFeatureParser {
      *
      * <p>--- OR ----
      *
-     * <p><InlineFeature> <FeatureCollection> <featureMember> <Dave> ... </Dave> </featureMember>
-     * <featureMember> <Dave> ... </Dave> </featureMember> </FeatureCollection> </InlineFeature>
+     * <p><InlineFeature> <FeatureCollection> <featureMember> <Dave> ... </Dave> </featureMember> <featureMember> <Dave>
+     * ... </Dave> </featureMember> </FeatureCollection> </InlineFeature>
      *
      * @param root will point at either "<InlineFeature>" or "<FeatureCollection>
      */
@@ -114,8 +112,7 @@ public class SLDInlineFeatureParser {
                 child = descend(child);
             }
             if (child == null)
-                throw new Exception(
-                        "SLD inlineFeature Parser - couldnt extract a feature from the dom.");
+                throw new Exception("SLD inlineFeature Parser - couldnt extract a feature from the dom.");
 
             SimpleFeature f = parseFeature(child, featureType);
             features.add(f);
@@ -126,8 +123,6 @@ public class SLDInlineFeatureParser {
      * simple - child points to a <featureMember>, we want it to point to the element inside!
      *
      * <p>in general, this will find the 1st element node inside the node.
-     *
-     * @param child
      */
     private Node descend(Node root) {
         NodeList children = root.getChildNodes();
@@ -146,14 +141,11 @@ public class SLDInlineFeatureParser {
     /**
      * Parse the feature pointed to by this node.
      *
-     * <p>See the makeFeatureType() function - this is very similiar except it does a little
-     * parsing.
+     * <p>See the makeFeatureType() function - this is very similiar except it does a little parsing.
      *
      * @param feature - points to the actual feature ie. "<Person>"
-     * @param featureType
      */
-    private SimpleFeature parseFeature(Node feature, SimpleFeatureType featureType)
-            throws Exception {
+    private SimpleFeature parseFeature(Node feature, SimpleFeatureType featureType) throws Exception {
         Object[] nullAtts = new Object[featureType.getAttributeCount()]; // initialized to nulls
         SimpleFeature f = SimpleFeatureBuilder.build(featureType, nullAtts, null);
 
@@ -179,12 +171,7 @@ public class SLDInlineFeatureParser {
         return f;
     }
 
-    /**
-     * Given a node, determine if its a geometry or a string attribute return the corresponding
-     * value.
-     *
-     * @param child
-     */
+    /** Given a node, determine if its a geometry or a string attribute return the corresponding value. */
     private Object getValue(Node root) throws Exception {
         NodeList children = root.getChildNodes();
         StringBuffer strVal = new StringBuffer();
@@ -195,8 +182,7 @@ public class SLDInlineFeatureParser {
                 continue;
             }
             if (child.getNodeType() == Node.TEXT_NODE) {
-                strVal.append(
-                        child.getNodeValue()); // might get here multiple times -- see sax spec
+                strVal.append(child.getNodeValue()); // might get here multiple times -- see sax spec
             }
             // we have a nested element!  Assume its a geometry
             if (child.getNodeType() == Node.ELEMENT_NODE) {
@@ -228,15 +214,13 @@ public class SLDInlineFeatureParser {
                 parseSRS(srsName.getNodeValue());
             }
         }
-        ExpressionDOMParser parser =
-                new ExpressionDOMParser(CommonFactoryFinder.getFilterFactory2(null));
+        ExpressionDOMParser parser = new ExpressionDOMParser(CommonFactoryFinder.getFilterFactory(null));
         return parser.gml(root);
     }
 
     /**
-     * Checks to make sure we're not going to shoot ourselves in the foot. if InlineFeature has a
-     * FeatureCollection, then thats the only node ie. no set of FeatureCollections or
-     * SimpleFeatureCollection mixed with a set of Feature
+     * Checks to make sure we're not going to shoot ourselves in the foot. if InlineFeature has a FeatureCollection,
+     * then thats the only node ie. no set of FeatureCollections or SimpleFeatureCollection mixed with a set of Feature
      *
      * <p>Other stuff as we think of them.
      *
@@ -280,8 +264,7 @@ public class SLDInlineFeatureParser {
             }
         }
         if (foundFC > 1)
-            throw new Exception(
-                    "SLD - UserLayer, inline feature parser - found >1 FeatureCollection.  Not supported");
+            throw new Exception("SLD - UserLayer, inline feature parser - found >1 FeatureCollection.  Not supported");
         if ((foundFC > 0) && (foundFeature > 0))
             throw new Exception(
                     "SLD - UserLayer, inline feature parser - found  SimpleFeatureCollection and featureMembers.  Not supported");
@@ -309,10 +292,9 @@ public class SLDInlineFeatureParser {
                         "SLD - UserLayer, inline feature parser - found a node of type FeatureCollection.  Expected a featureMember - dont support nested collections.");
 
             } else if (!childName.equalsIgnoreCase("boundedBy")) {
-                throw new Exception(
-                        "SLD - UserLayer, inline feature parser - found a node of type '"
-                                + child.getLocalName()
-                                + "' and dont understand it.  Expected a featureMember.");
+                throw new Exception("SLD - UserLayer, inline feature parser - found a node of type '"
+                        + child.getLocalName()
+                        + "' and dont understand it.  Expected a featureMember.");
             }
         }
 
@@ -327,21 +309,18 @@ public class SLDInlineFeatureParser {
     }
 
     /**
-     * 1. get an actual Feature Node 2. go through each of its subtags 3. if that subtag contains a
-     * geometry, then it an attribute of type geometry, otherwise string
+     * 1. get an actual Feature Node 2. go through each of its subtags 3. if that subtag contains a geometry, then it an
+     * attribute of type geometry, otherwise string
      *
-     * <p>NOTE: we set the namespace to be "http://temp.inline.feature.sld.com" NOTE: we set the
-     * featuretype name to be whatever the enclosing tag is. For example: <FeatureCollection>
-     * <gml:featureMember> <tiger:point_landmark fid="point_landmark.490053"> <tiger:wkb_geometry>
-     * <gml:Point srsName="http://www.opengis.net/gml/srs/epsg.xml#4326"> <gml:coordinates
-     * decimal="." cs="," ts=" ">-73.983597,40.736308</gml:coordinates> </gml:Point>
-     * </tiger:wkb_geometry> <tiger:laname>Cabrini Medical Center</tiger:laname>
-     * </tiger:point_landmark> <gml:featureMember> </FeatureCollection>
+     * <p>NOTE: we set the namespace to be "http://temp.inline.feature.sld.com" NOTE: we set the featuretype name to be
+     * whatever the enclosing tag is. For example: <FeatureCollection> <gml:featureMember> <tiger:point_landmark
+     * fid="point_landmark.490053"> <tiger:wkb_geometry> <gml:Point
+     * srsName="http://www.opengis.net/gml/srs/epsg.xml#4326"> <gml:coordinates decimal="." cs="," ts="
+     * ">-73.983597,40.736308</gml:coordinates> </gml:Point> </tiger:wkb_geometry> <tiger:laname>Cabrini Medical
+     * Center</tiger:laname> </tiger:point_landmark> <gml:featureMember> </FeatureCollection>
      *
-     * <p>Would have a Featuretype name of "tiger:wkb_geometry" with 2 attributes: wkb_geometry --
-     * geometry laname -- string
-     *
-     * @param root
+     * <p>Would have a Featuretype name of "tiger:wkb_geometry" with 2 attributes: wkb_geometry -- geometry laname --
+     * string
      */
     private SimpleFeatureType makeFeatureType(Node root, boolean isCollection) throws Exception {
         Node feature = null;
@@ -414,11 +393,7 @@ public class SLDInlineFeatureParser {
         return build.buildFeatureType();
     }
 
-    /**
-     * looks for a nested attribute - assumes that this is a geometry. TODO: be much smarter
-     *
-     * @param child
-     */
+    /** looks for a nested attribute - assumes that this is a geometry. TODO: be much smarter */
     private boolean isGeometry(Node root) {
         NodeList children = root.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
@@ -432,13 +407,7 @@ public class SLDInlineFeatureParser {
         return false;
     }
 
-    /**
-     * Give a node and the name of a child of that node, find its (string) value. This doesnt do
-     * anything complex.
-     *
-     * @param parentNode
-     * @param wantedChildName
-     */
+    /** Give a node and the name of a child of that node, find its (string) value. This doesnt do anything complex. */
     public Node getNode(Node parentNode, String wantedChildName) {
         NodeList children = parentNode.getChildNodes();
 
@@ -459,15 +428,14 @@ public class SLDInlineFeatureParser {
         return null;
     }
 
-    public synchronized int getUID() {
-        return uniqueNumber++;
+    public int getUID() {
+        // use a static lock to protect a static variable
+        synchronized (SLDInlineFeatureParser.class) {
+            return uniqueNumber++;
+        }
     }
 
-    /**
-     * expected input: "http://www.opengis.net/gml/srs/epsg.xml#4326" NOTE: only supports epsg#s.
-     *
-     * @param srs
-     */
+    /** expected input: "http://www.opengis.net/gml/srs/epsg.xml#4326" NOTE: only supports epsg#s. */
     private void parseSRS(String srs) throws Exception {
         if (srs == null) return;
         String epsgCode = srs.substring(srs.indexOf('#') + 1);
@@ -476,14 +444,11 @@ public class SLDInlineFeatureParser {
     }
 
     /**
-     * simple way of getting epsg #. We cache them so that we dont have to keep reading the DB or
-     * the epsg.properties file. I cannot image a system with more than a dozen CRSs in it...
-     *
-     * @param epsg
+     * simple way of getting epsg #. We cache them so that we dont have to keep reading the DB or the epsg.properties
+     * file. I cannot image a system with more than a dozen CRSs in it...
      */
     private CoordinateReferenceSystem getSRS(int epsg) throws Exception {
-        CoordinateReferenceSystem result =
-                (CoordinateReferenceSystem) SRSLookup.get(Integer.valueOf(epsg));
+        CoordinateReferenceSystem result = SRSLookup.get(Integer.valueOf(epsg));
         if (result == null) {
             // make and add to hash
             result = CRS.decode("EPSG:" + epsg);

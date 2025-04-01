@@ -16,9 +16,9 @@
  */
 package org.geotools.brewer.styling.builder;
 
+import org.geotools.api.style.Extent;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.styling.Extent;
-import org.geotools.styling.StyleFactory;
 
 public class ExtentBuilder<P> implements Builder<Extent> {
     private StyleFactory sf = CommonFactoryFinder.getStyleFactory(null);
@@ -40,6 +40,7 @@ public class ExtentBuilder<P> implements Builder<Extent> {
         reset();
     }
 
+    @Override
     public Extent build() {
         if (unset) {
             return null;
@@ -52,6 +53,7 @@ public class ExtentBuilder<P> implements Builder<Extent> {
         return parent;
     }
 
+    @Override
     public ExtentBuilder<P> reset() {
         this.name = null;
         this.value = null;
@@ -59,6 +61,7 @@ public class ExtentBuilder<P> implements Builder<Extent> {
         return this;
     }
 
+    @Override
     public ExtentBuilder<P> reset(Extent extent) {
         if (extent == null) {
             return reset();
@@ -69,6 +72,7 @@ public class ExtentBuilder<P> implements Builder<Extent> {
         return this;
     }
 
+    @Override
     public ExtentBuilder<P> unset() {
         this.name = null;
         this.value = null;

@@ -24,8 +24,8 @@ import java.util.logging.Logger;
 import javax.sql.DataSource;
 
 /**
- * Fake data source working around a single user provided connection. Used to allow backwards
- * compatibility with the athority constructors taking a single connection
+ * Fake data source working around a single user provided connection. Used to allow backwards compatibility with the
+ * athority constructors taking a single connection
  *
  * @author Andrea Aime - OpenGeo
  */
@@ -37,38 +37,47 @@ class SingleConnectionDataSource implements DataSource {
         this.connection = connection;
     }
 
+    @Override
     public Connection getConnection() throws SQLException {
         return connection;
     }
 
+    @Override
     public Connection getConnection(String username, String password) throws SQLException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public PrintWriter getLogWriter() throws SQLException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public int getLoginTimeout() throws SQLException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void setLogWriter(PrintWriter out) throws SQLException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void setLoginTimeout(int seconds) throws SQLException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return false;
     }
 
+    @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
         throw new SQLException("Not wrapping an object implementing " + iface.getName());
     }
 
+    @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         throw new SQLFeatureNotSupportedException();
     }

@@ -20,6 +20,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
 import javax.xml.namespace.QName;
+import org.apache.commons.lang3.StringUtils;
 import org.geotools.util.Converters;
 import org.geotools.xml.impl.DatatypeConverterImpl;
 import org.geotools.xs.XS;
@@ -63,6 +64,7 @@ import org.geotools.xsd.SimpleBinding;
  */
 public class XSDateTimeBinding implements SimpleBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.DATETIME;
     }
@@ -74,6 +76,7 @@ public class XSDateTimeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
@@ -86,6 +89,7 @@ public class XSDateTimeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Timestamp.class;
     }
@@ -98,8 +102,11 @@ public class XSDateTimeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Timestamp parse(InstanceComponent instance, Object value) throws Exception {
-        Calendar calendar = DatatypeConverterImpl.getInstance().parseDateTime((String) value, true);
+        String str = (String) value;
+        if (StringUtils.isBlank(str)) return null;
+        Calendar calendar = DatatypeConverterImpl.getInstance().parseDateTime(str, true);
         Timestamp dateTime = new Timestamp(calendar.getTimeInMillis());
         return dateTime;
     }
@@ -111,6 +118,7 @@ public class XSDateTimeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public String encode(Object object, String value) {
         final Date timestamp = Converters.convert(object, Date.class);
         Calendar calendar = XSUtils.getConfiguredCalendar();

@@ -1,8 +1,14 @@
 package org.geotools.xsd.impl;
 
-import static org.easymock.EasyMock.*;
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.anyInt;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,17 +16,14 @@ import java.net.HttpURLConnection;
 import java.util.Collections;
 import org.eclipse.emf.common.util.URI;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class HTTPURIHandlerTest {
     HttpURLConnection conn;
     InputStream is;
     HTTPURIHandler handler;
-
-    @Rule public ExpectedException exception = ExpectedException.none();
 
     @Before
     public void setUp() throws Exception {
@@ -33,15 +36,14 @@ public class HTTPURIHandlerTest {
         expectLastCall().asStub();
         expect(conn.getInputStream()).andStubReturn(is);
 
-        handler =
-                new HTTPURIHandler() {
+        handler = new HTTPURIHandler() {
 
-                    @Override
-                    protected HttpURLConnection getConnection(URI uri) throws IOException {
-                        // TODO Auto-generated method stub
-                        return conn;
-                    }
-                };
+            @Override
+            protected HttpURLConnection getConnection(URI uri) throws IOException {
+                // TODO Auto-generated method stub
+                return conn;
+            }
+        };
 
         replay(conn, is);
     }
@@ -57,7 +59,7 @@ public class HTTPURIHandlerTest {
 
         assertThat(handler.canHandle(uri), is(true));
 
-        handler.createInputStream(uri, Collections.EMPTY_MAP);
+        handler.createInputStream(uri, Collections.emptyMap());
     }
 
     @Test
@@ -66,7 +68,7 @@ public class HTTPURIHandlerTest {
 
         assertThat(handler.canHandle(uri), is(true));
 
-        handler.createInputStream(uri, Collections.EMPTY_MAP);
+        handler.createInputStream(uri, Collections.emptyMap());
     }
 
     @Test
@@ -91,7 +93,7 @@ public class HTTPURIHandlerTest {
 
         URI uri = URI.createURI("http://example.com");
 
-        handler.createInputStream(uri, Collections.EMPTY_MAP);
+        handler.createInputStream(uri, Collections.emptyMap());
     }
 
     @Test
@@ -112,7 +114,7 @@ public class HTTPURIHandlerTest {
 
         URI uri = URI.createURI("http://example.com");
 
-        handler.createInputStream(uri, Collections.EMPTY_MAP);
+        handler.createInputStream(uri, Collections.emptyMap());
     }
 
     @Test
@@ -133,7 +135,7 @@ public class HTTPURIHandlerTest {
 
         URI uri = URI.createURI("http://example.com");
 
-        handler.createInputStream(uri, Collections.EMPTY_MAP);
+        handler.createInputStream(uri, Collections.emptyMap());
     }
 
     @Test
@@ -149,8 +151,6 @@ public class HTTPURIHandlerTest {
         replay(conn);
 
         URI uri = URI.createURI("http://example.com");
-
-        exception.expect(IOException.class);
-        handler.createInputStream(uri, Collections.EMPTY_MAP);
+        Assert.assertThrows(IOException.class, () -> handler.createInputStream(uri, Collections.EMPTY_MAP));
     }
 }

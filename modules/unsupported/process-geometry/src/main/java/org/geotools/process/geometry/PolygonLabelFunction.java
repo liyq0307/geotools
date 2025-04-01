@@ -19,23 +19,22 @@
 package org.geotools.process.geometry;
 
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.locationtech.jts.awt.PointShapeFactory.Point;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 public class PolygonLabelFunction implements Function {
-    static FunctionName NAME =
-            new FunctionNameImpl(
-                    "labelPoint",
-                    Point.class,
-                    FunctionNameImpl.parameter("polygon", Geometry.class),
-                    FunctionNameImpl.parameter("tolerance", double.class));
+    static FunctionName NAME = new FunctionNameImpl(
+            "labelPoint",
+            Point.class,
+            FunctionNameImpl.parameter("polygon", Geometry.class),
+            FunctionNameImpl.parameter("tolerance", Double.class));
 
     private final List<Expression> parameters;
 
@@ -45,46 +44,55 @@ public class PolygonLabelFunction implements Function {
         if (parameters == null) {
             throw new NullPointerException("parameters required");
         }
-        if (parameters.size() != 2) {
+        if (parameters.isEmpty() || parameters.size() > 2) {
             throw new IllegalArgumentException(
-                    "labelPoint((multi)polygon, tolerance) requires two parameters only");
+                    "labelPoint((multi)polygon, tolerance) requires one or two parameters (tolerance is optional)");
         }
         this.parameters = parameters;
         this.fallback = fallback;
     }
 
+    @Override
     public Object evaluate(Object object) {
         return evaluate(object, Point.class);
     }
 
+    @Override
     public <T> T evaluate(Object object, Class<T> context) {
         Expression geometryExpression = parameters.get(0);
         Geometry polygon = geometryExpression.evaluate(object, Geometry.class);
 
-        Expression toleranceExpression = parameters.get(1);
-        double tolerance = toleranceExpression.evaluate(object, double.class);
+        Double tolerance = null;
+        if (parameters.size() == 2) {
+            tolerance = parameters.get(1).evaluate(object, Double.class);
+        }
 
         Geometry point = PolyLabeller.getPolylabel(polygon, tolerance);
 
         return Converters.convert(point, context); // convert to requested format
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public String getName() {
         return NAME.getName();
     }
 
+    @Override
     public FunctionName getFunctionName() {
         return NAME;
     }
 
+    @Override
     public List<Expression> getParameters() {
         return parameters;
     }
 
+    @Override
     public Literal getFallbackValue() {
         return fallback;
     }

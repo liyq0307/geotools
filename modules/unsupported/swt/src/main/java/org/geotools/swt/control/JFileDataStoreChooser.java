@@ -27,8 +27,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
-import org.geotools.data.FileDataStoreFactorySpi;
-import org.geotools.data.FileDataStoreFinder;
+import org.geotools.api.data.FileDataStoreFactorySpi;
+import org.geotools.api.data.FileDataStoreFinder;
 
 /**
  * A file chooser dialog to get user choices for data stores.
@@ -63,7 +63,7 @@ public class JFileDataStoreChooser {
     }
 
     static Map<String, String> associations(List<String> extensions) {
-        Map<String, String> fileAssociations = new TreeMap<String, String>();
+        Map<String, String> fileAssociations = new TreeMap<>();
 
         for (String extension : extensions) {
             String ext = extension.toLowerCase().trim();

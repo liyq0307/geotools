@@ -16,8 +16,8 @@
  */
 package org.geotools.brewer.styling.builder;
 
-import org.geotools.styling.ShadedRelief;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ShadedRelief;
 
 public class ShadedReliefBuilder extends AbstractStyleBuilder<ShadedRelief> {
     private Expression factor;
@@ -53,6 +53,7 @@ public class ShadedReliefBuilder extends AbstractStyleBuilder<ShadedRelief> {
         return this;
     }
 
+    @Override
     public ShadedRelief build() {
         if (unset) {
             return null;
@@ -61,6 +62,7 @@ public class ShadedReliefBuilder extends AbstractStyleBuilder<ShadedRelief> {
         return relief;
     }
 
+    @Override
     public ShadedReliefBuilder reset() {
         factor = literal(0);
         brightnessOnly = false;
@@ -68,6 +70,7 @@ public class ShadedReliefBuilder extends AbstractStyleBuilder<ShadedRelief> {
         return this;
     }
 
+    @Override
     public ShadedReliefBuilder reset(ShadedRelief relief) {
         if (relief == null) {
             return reset();
@@ -78,6 +81,7 @@ public class ShadedReliefBuilder extends AbstractStyleBuilder<ShadedRelief> {
         return this;
     }
 
+    @Override
     public ShadedReliefBuilder unset() {
         return (ShadedReliefBuilder) super.unset();
     }

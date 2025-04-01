@@ -29,8 +29,8 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.map.event.MapBoundsEvent;
-import org.geotools.map.event.MapBoundsListener;
+import org.geotools.map.MapBoundsEvent;
+import org.geotools.map.MapBoundsListener;
 import org.geotools.swt.SwtMapPane;
 import org.geotools.swt.tool.InfoTool;
 import org.geotools.swt.utils.ImageCache;
@@ -77,7 +77,7 @@ public class DrawShapeAction extends MapAction implements MapBoundsListener {
     /**
      * Draws shapes on the map.
      *
-     * @param visibleRect the rectangle in teh screen space.
+     * @param visibleRect the rectangle in the screen space.
      * @param areaOfInterest the area of interest in world coordinates.
      */
     private void drawShapes(

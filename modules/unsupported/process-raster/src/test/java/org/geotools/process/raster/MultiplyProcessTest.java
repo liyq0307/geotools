@@ -6,6 +6,7 @@ import it.geosolutions.jaiext.JAIExt;
 import it.geosolutions.jaiext.range.NoDataContainer;
 import java.awt.image.Raster;
 import java.util.HashMap;
+import java.util.Map;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
@@ -28,29 +29,19 @@ public class MultiplyProcessTest {
 
     private void doTestMultiply() {
 
-        float[][] grid =
-                new float[][] {
-                    {1, 2, 3, 4},
-                    {5, 6, 8, 9},
-                    {10, 11, 12, 13},
-                    {14, 15, 16, 17},
-                };
+        float[][] grid = {
+            {1, 2, 3, 4},
+            {5, 6, 8, 9},
+            {10, 11, 12, 13},
+            {14, 15, 16, 17},
+        };
 
-        HashMap properties = new HashMap<>();
+        Map<String, Object> properties = new HashMap<>();
         CoverageUtilities.setNoDataProperty(properties, new NoDataContainer(2));
         GridCoverage2D cov =
-                covFactory.create(
-                        "test",
-                        grid,
-                        new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84));
-        GridCoverage2D coverageNoData =
-                covFactory.create(
-                        "nodata",
-                        cov.getRenderedImage(),
-                        cov.getEnvelope(),
-                        cov.getSampleDimensions(),
-                        null,
-                        properties);
+                covFactory.create("test", grid, new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84));
+        GridCoverage2D coverageNoData = covFactory.create(
+                "nodata", cov.getRenderedImage(), cov.getEnvelope(), cov.getSampleDimensions(), null, properties);
 
         MultiplyCoveragesProcess p = new MultiplyCoveragesProcess();
         GridCoverage2D norm = p.execute(cov, cov, null);

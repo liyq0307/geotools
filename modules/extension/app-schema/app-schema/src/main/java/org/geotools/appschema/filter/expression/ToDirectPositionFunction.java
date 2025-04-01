@@ -19,25 +19,25 @@ package org.geotools.appschema.filter.expression;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.geotools.geometry.DirectPosition1D;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position1D;
+import org.geotools.geometry.Position2D;
 import org.geotools.referencing.CRS;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * This function converts double values to DirectPosition geometry type. This is needed when the
- * data store doesn't have geometry type columns. This function expects:
+ * This function converts double values to DirectPosition geometry type. This is needed when the data store doesn't have
+ * geometry type columns. This function expects:
  *
  * <ol>
  *   <li>Literal: SRS_NAME (optional)
@@ -57,18 +57,17 @@ public class ToDirectPositionFunction implements Function {
     private static final String USAGE =
             "Usage: toDirectPosition('SRS_NAME'(optional), srsName(optional), point 1, point 2(optional))";
 
-    public static final FunctionName NAME =
-            new FunctionNameImpl(
-                    "toDirectPosition",
-                    FunctionNameImpl.parameter("return", DirectPosition.class),
-                    FunctionNameImpl.parameter("parameter", Object.class, 1, 4));
+    public static final FunctionName NAME = new FunctionNameImpl(
+            "toDirectPosition",
+            FunctionNameImpl.parameter("return", Position.class),
+            FunctionNameImpl.parameter("parameter", Object.class, 1, 4));
 
-    private static FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    private static FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     public static final Expression SRS_NAME = ff.literal("SRS_NAME");
 
     public ToDirectPositionFunction() {
-        this(new ArrayList<Expression>(), null);
+        this(new ArrayList<>(), null);
     }
 
     public ToDirectPositionFunction(List<Expression> parameters, Literal fallback) {
@@ -76,48 +75,54 @@ public class ToDirectPositionFunction implements Function {
         this.fallback = fallback;
     }
 
+    @Override
     public String getName() {
         return NAME.getName();
     }
 
+    @Override
     public FunctionName getFunctionName() {
         return NAME;
     }
 
+    @Override
     public List<Expression> getParameters() {
         return Collections.unmodifiableList(parameters);
     }
 
+    @Override
     public Literal getFallbackValue() {
         return fallback;
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public Object evaluate(Object object) {
-        return evaluate(object, DirectPosition.class);
+        return evaluate(object, Position.class);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public <T> T evaluate(Object object, Class<T> context) {
         Expression param1 = parameters.get(0);
         CoordinateReferenceSystem crs = null;
 
-        DirectPosition geom;
+        Position geom;
         if (param1.equals(SRS_NAME)) {
             // must be followed by srsName expression, and at least 1 point
             if (parameters.size() < 3 || parameters.size() > 4) {
-                throw new IllegalArgumentException(
-                        "Wrong number of parameters toDirectPosition function: "
-                                + parameters.toString()
-                                + ". "
-                                + USAGE);
+                throw new IllegalArgumentException("Wrong number of parameters toDirectPosition function: "
+                        + parameters.toString()
+                        + ". "
+                        + USAGE);
             }
             String srsName = parameters.get(1).evaluate(object, String.class);
             try {
-                crs = CRS.decode((String) srsName);
+                crs = CRS.decode(srsName);
             } catch (NoSuchAuthorityCodeException e) {
                 throw new IllegalArgumentException(
                         "Invalid or unsupported SRS name detected for toDirectPosition function: "
@@ -129,10 +134,10 @@ public class ToDirectPositionFunction implements Function {
             }
             if (parameters.size() == 3) {
                 // 1D
-                geom = new DirectPosition1D(crs);
+                geom = new Position1D(crs);
             } else {
                 // 2D
-                geom = new DirectPosition2D(crs);
+                geom = new Position2D(crs);
                 geom.setOrdinate(1, parameters.get(3).evaluate(object, Double.class));
             }
             geom.setOrdinate(0, parameters.get(2).evaluate(object, Double.class));
@@ -140,17 +145,14 @@ public class ToDirectPositionFunction implements Function {
             // should only have points, 1 for 1D, 2 for 2D
             if (parameters.size() > 2) {
                 throw new IllegalArgumentException(
-                        "Too many parameters for toDirectPosition function: "
-                                + parameters.toString()
-                                + ". "
-                                + USAGE);
+                        "Too many parameters for toDirectPosition function: " + parameters.toString() + ". " + USAGE);
             }
             if (parameters.size() == 1) {
                 // 1D
-                geom = new DirectPosition1D();
+                geom = new Position1D();
             } else {
                 // 2D
-                geom = new DirectPosition2D();
+                geom = new Position2D();
                 geom.setOrdinate(1, parameters.get(1).evaluate(object, Double.class));
             }
             geom.setOrdinate(0, param1.evaluate(object, Double.class));

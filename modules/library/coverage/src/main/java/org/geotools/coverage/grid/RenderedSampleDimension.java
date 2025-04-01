@@ -22,21 +22,19 @@ import java.awt.image.ColorModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
+import java.text.MessageFormat;
 import javax.measure.Unit;
-import javax.media.jai.iterator.RectIter;
-import javax.media.jai.iterator.RectIterFactory;
+import org.geotools.api.coverage.ColorInterpretation;
+import org.geotools.api.coverage.SampleDimensionType;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.Category;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.TypeMap;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.util.NumberRange;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.ColorInterpretation;
-import org.opengis.coverage.SampleDimensionType;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.util.InternationalString;
 
 /**
  * Describes the band values for a grid coverage.
@@ -65,8 +63,7 @@ final class RenderedSampleDimension extends GridSampleDimension {
      * @param image The image to be wrapped by {@link GridCoverage}.
      * @param bandNumber The band number.
      */
-    private RenderedSampleDimension(
-            final GridSampleDimension band, final RenderedImage image, final int bandNumber) {
+    private RenderedSampleDimension(final GridSampleDimension band, final RenderedImage image, final int bandNumber) {
         super(band);
         final SampleModel model = image.getSampleModel();
         this.band = bandNumber;
@@ -75,15 +72,15 @@ final class RenderedSampleDimension extends GridSampleDimension {
     }
 
     /**
-     * Creates a set of sample dimensions for the given image. The array length of both arguments
-     * must matches the number of bands in the supplied {@code image}.
+     * Creates a set of sample dimensions for the given image. The array length of both arguments must matches the
+     * number of bands in the supplied {@code image}.
      *
      * @param name The name for data (e.g. "Elevation").
      * @param image The image for which to create a set of sample dimensions.
      * @param src User-provided sample dimensions, or {@code null} if none.
      * @param dst The array where to put sample dimensions.
-     * @return {@code true} if all sample dimensions are geophysics (quantitative), or {@code false}
-     *     if all sample dimensions are non-geophysics (qualitative).
+     * @return {@code true} if all sample dimensions are geophysics (quantitative), or {@code false} if all sample
+     *     dimensions are non-geophysics (qualitative).
      * @throws IllegalArgumentException if geophysics and non-geophysics dimensions are mixed.
      */
     static boolean create(
@@ -93,20 +90,12 @@ final class RenderedSampleDimension extends GridSampleDimension {
             final GridSampleDimension[] dst) {
         final int numBands = image.getSampleModel().getNumBands();
         if (src != null && src.length != numBands) {
-            throw new IllegalArgumentException(
-                    Errors.format(
-                            ErrorKeys.NUMBER_OF_BANDS_MISMATCH_$3,
-                            numBands,
-                            src.length,
-                            "SampleDimension"));
+            throw new IllegalArgumentException(MessageFormat.format(
+                    ErrorKeys.NUMBER_OF_BANDS_MISMATCH_$3, numBands, src.length, "SampleDimension"));
         }
         if (dst.length != numBands) {
-            throw new IllegalArgumentException(
-                    Errors.format(
-                            ErrorKeys.NUMBER_OF_BANDS_MISMATCH_$3,
-                            numBands,
-                            dst.length,
-                            "SampleDimension"));
+            throw new IllegalArgumentException(MessageFormat.format(
+                    ErrorKeys.NUMBER_OF_BANDS_MISMATCH_$3, numBands, dst.length, "SampleDimension"));
         }
         /*
          * Now, we know that the number of bands and the array length are consistent.
@@ -125,16 +114,7 @@ final class RenderedSampleDimension extends GridSampleDimension {
                  */
                 if (defaultSD == null) {
                     defaultSD = new GridSampleDimension[numBands];
-                    create(
-                            name,
-                            RectIterFactory.create(image, null),
-                            image.getSampleModel(),
-                            null,
-                            null,
-                            null,
-                            null,
-                            defaultSD,
-                            null);
+                    create(name, image.getSampleModel(), null, null, null, null, defaultSD, null);
                 }
                 sd = defaultSD[i];
             }
@@ -145,7 +125,7 @@ final class RenderedSampleDimension extends GridSampleDimension {
         if (count == numBands) {
             return true;
         }
-        throw new IllegalArgumentException(Errors.format(ErrorKeys.MIXED_CATEGORIES));
+        throw new IllegalArgumentException(ErrorKeys.MIXED_CATEGORIES);
     }
 
     /**
@@ -156,14 +136,13 @@ final class RenderedSampleDimension extends GridSampleDimension {
      * @param min The minimal value for each bands, or {@code null} for computing it automatically.
      * @param max The maximal value for each bands, or {@code null} for computing it automatically.
      * @param units The units of sample values, or {@code null} if unknow.
-     * @param colors The colors to use for values from {@code min} to {@code max} for each bands, or
-     *     {@code null} for a default color palette. If non-null, each arrays {@code colors[b]} may
-     *     have any length; colors will be interpolated as needed.
-     * @param hints An optional set of rendering hints, or {@code null} if none. Those hints will
-     *     not affect the sample dimensions to be created. The optional hint {@link
-     *     Hints#SAMPLE_DIMENSION_TYPE} specifies the {@link SampleDimensionType} to be used at
-     *     rendering time, which can be one of {@link SampleDimensionType#UBYTE UBYTE} or {@link
-     *     SampleDimensionType#USHORT USHORT}.
+     * @param colors The colors to use for values from {@code min} to {@code max} for each bands, or {@code null} for a
+     *     default color palette. If non-null, each arrays {@code colors[b]} may have any length; colors will be
+     *     interpolated as needed.
+     * @param hints An optional set of rendering hints, or {@code null} if none. Those hints will not affect the sample
+     *     dimensions to be created. The optional hint {@link Hints#SAMPLE_DIMENSION_TYPE} specifies the
+     *     {@link SampleDimensionType} to be used at rendering time, which can be one of
+     *     {@link SampleDimensionType#UBYTE UBYTE} or {@link SampleDimensionType#USHORT USHORT}.
      * @return The sample dimension for the given raster.
      */
     static GridSampleDimension[] create(
@@ -175,42 +154,29 @@ final class RenderedSampleDimension extends GridSampleDimension {
             final Color[][] colors,
             final RenderingHints hints) {
         final GridSampleDimension[] dst = new GridSampleDimension[raster.getNumBands()];
-        create(
-                name,
-                (min == null || max == null) ? RectIterFactory.create(raster, null) : null,
-                raster.getSampleModel(),
-                min,
-                max,
-                units,
-                colors,
-                dst,
-                hints);
+        create(name, raster.getSampleModel(), min, max, units, colors, dst, hints);
         return dst;
     }
 
     /**
-     * Creates a set of sample dimensions for the data backing the given iterator.
+     * Creates a set of sample dimensions for the data
      *
      * @param name The name for data (e.g. "Elevation").
-     * @param iterator The iterator through the raster data, or {@code null}.
      * @param model The image or raster sample model.
      * @param min The minimal value, or {@code null} for computing it automatically.
      * @param max The maximal value, or {@code null} for computing it automatically.
      * @param units The units of sample values, or {@code null} if unknow.
-     * @param colors The colors to use for values from {@code min} to {@code max} for each bands, or
-     *     {@code null} for a default color palette. If non-null, each arrays {@code colors[b]} may
-     *     have any length; colors will be interpolated as needed.
-     * @param dst The array where to store sample dimensions. The array length must matches the
-     *     number of bands.
-     * @param hints An optional set of rendering hints, or {@code null} if none. Those hints will
-     *     not affect the sample dimensions to be created. The optional hint {@link
-     *     Hints#SAMPLE_DIMENSION_TYPE} specifies the {@link SampleDimensionType} to be used at
-     *     rendering time, which can be one of {@link SampleDimensionType#UBYTE UBYTE} or {@link
-     *     SampleDimensionType#USHORT USHORT}.
+     * @param colors The colors to use for values from {@code min} to {@code max} for each bands, or {@code null} for a
+     *     default color palette. If non-null, each arrays {@code colors[b]} may have any length; colors will be
+     *     interpolated as needed.
+     * @param dst The array where to store sample dimensions. The array length must matches the number of bands.
+     * @param hints An optional set of rendering hints, or {@code null} if none. Those hints will not affect the sample
+     *     dimensions to be created. The optional hint {@link Hints#SAMPLE_DIMENSION_TYPE} specifies the
+     *     {@link SampleDimensionType} to be used at rendering time, which can be one of
+     *     {@link SampleDimensionType#UBYTE UBYTE} or {@link SampleDimensionType#USHORT USHORT}.
      */
     private static void create(
             final CharSequence name,
-            final RectIter iterator,
             final SampleModel model,
             double[] min,
             double[] max,
@@ -221,21 +187,15 @@ final class RenderedSampleDimension extends GridSampleDimension {
         final int numBands = dst.length;
         if (min != null && min.length != numBands) {
             throw new IllegalArgumentException(
-                    Errors.format(
-                            ErrorKeys.NUMBER_OF_BANDS_MISMATCH_$3, numBands, min.length, "min[i]"));
+                    MessageFormat.format(ErrorKeys.NUMBER_OF_BANDS_MISMATCH_$3, numBands, min.length, "min[i]"));
         }
         if (max != null && max.length != numBands) {
             throw new IllegalArgumentException(
-                    Errors.format(
-                            ErrorKeys.NUMBER_OF_BANDS_MISMATCH_$3, numBands, max.length, "max[i]"));
+                    MessageFormat.format(ErrorKeys.NUMBER_OF_BANDS_MISMATCH_$3, numBands, max.length, "max[i]"));
         }
         if (colors != null && colors.length != numBands) {
             throw new IllegalArgumentException(
-                    Errors.format(
-                            ErrorKeys.NUMBER_OF_BANDS_MISMATCH_$3,
-                            numBands,
-                            colors.length,
-                            "colors[i]"));
+                    MessageFormat.format(ErrorKeys.NUMBER_OF_BANDS_MISMATCH_$3, numBands, colors.length, "colors[i]"));
         }
         /*
          * Arguments are know to be valids. We now need to compute two ranges:
@@ -259,7 +219,7 @@ final class RenderedSampleDimension extends GridSampleDimension {
             targetType = sourceType;
         }
         // Default setting: no scaling
-        NumberRange targetRange = TypeMap.getRange(targetType);
+        NumberRange<? extends Number> targetRange = TypeMap.getRange(targetType);
         Category[] categories = new Category[1];
         /*
          * Now, constructs the sample dimensions. We will inconditionnaly provides a "nodata"
@@ -276,8 +236,8 @@ final class RenderedSampleDimension extends GridSampleDimension {
     }
 
     /**
-     * Returns a code value indicating grid value data type. This will also indicate the number of
-     * bits for the data type.
+     * Returns a code value indicating grid value data type. This will also indicate the number of bits for the data
+     * type.
      *
      * @return a code value indicating grid value data type.
      */

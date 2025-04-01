@@ -17,8 +17,11 @@
  */
 package org.geotools.data.mongodb;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -34,10 +37,9 @@ public class MongoUtilTest {
     @Test
     public void set() {
         DBObject dbo = new BasicDBObject();
-        Object result;
 
         MongoUtil.setDBOValue(dbo, "root.child1", 1d);
-        result = MongoUtil.getDBOValue(dbo, "root.child1");
+        Object result = MongoUtil.getDBOValue(dbo, "root.child1");
 
         assertThat(result, is(CoreMatchers.instanceOf(Double.class)));
         assertThat((Double) result, is(equalTo(1d)));
@@ -65,5 +67,7 @@ public class MongoUtilTest {
         assertTrue(MongoUtil.extractFilesNameFromUrl(url3).equalsIgnoreCase("filename.json"));
         String url4 = "https://mock.url.com/filename.json";
         assertTrue(MongoUtil.extractFilesNameFromUrl(url4).equalsIgnoreCase("filename.json"));
+        String url5 = "https://mock.url.com/path1/path2/filename.json";
+        assertTrue(MongoUtil.extractFilesNameFromUrl(url5).equalsIgnoreCase("filename.json"));
     }
 }

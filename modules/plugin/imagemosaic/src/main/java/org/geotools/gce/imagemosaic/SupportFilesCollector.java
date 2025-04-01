@@ -18,7 +18,11 @@ package org.geotools.gce.imagemosaic;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FilenameUtils;
@@ -27,8 +31,7 @@ import org.geotools.util.logging.Logging;
 /**
  * A collector of supportFiles.
  *
- * <p>It will look for ancillary files having same name but different extension, trying from a set
- * of possible values.
+ * <p>It will look for ancillary files having same name but different extension, trying from a set of possible values.
  */
 public class SupportFilesCollector {
 
@@ -66,11 +69,11 @@ public class SupportFilesCollector {
 
     static {
         // Improve that, to be pluggable in future versions
-        COLLECTORS = new HashMap<String, SupportFilesCollector>();
-        String[] PNG_ = new String[] {WLD_, PRJ_, PGW_, WLD, PGW, PRJ};
-        String[] JPG_ = new String[] {WLD_, PRJ_, JGW_, WLD, JGW, PRJ};
-        String[] GIF_ = new String[] {WLD_, PRJ_, WLD, PRJ};
-        String[] TIF_ = new String[] {TFW_, PRJ_, WLD_, OVR_, MSK_, TFW, WLD, PRJ, OVR, MSK};
+        COLLECTORS = new HashMap<>();
+        String[] PNG_ = {WLD_, PRJ_, PGW_, WLD, PGW, PRJ};
+        String[] JPG_ = {WLD_, PRJ_, JGW_, WLD, JGW, PRJ};
+        String[] GIF_ = {WLD_, PRJ_, WLD, PRJ};
+        String[] TIF_ = {TFW_, PRJ_, WLD_, OVR_, MSK_, TFW, WLD, PRJ, OVR, MSK};
         SupportFilesCollector PNG = new SupportFilesCollector(PNG_);
         SupportFilesCollector JPG = new SupportFilesCollector(JPG_);
         SupportFilesCollector TIF = new SupportFilesCollector(TIF_);
@@ -84,8 +87,8 @@ public class SupportFilesCollector {
     }
 
     /**
-     * Gets the support file collector for the given file, or <code>null</code> if the file type is
-     * not known (the extension will be evaluated in a case insensitive way)
+     * Gets the support file collector for the given file, or <code>null</code> if the file type is not known (the
+     * extension will be evaluated in a case insensitive way)
      */
     public static SupportFilesCollector getCollectorFor(File file) {
         String extension = FilenameUtils.getExtension(file.getName());
@@ -98,12 +101,7 @@ public class SupportFilesCollector {
         this.supportingExtensions = supportingExtensions;
     }
 
-    /**
-     * Return supportFiles (if found) for the specified file
-     *
-     * @param filePath
-     * @return
-     */
+    /** Return supportFiles (if found) for the specified file */
     public List<File> getSupportFiles(String filePath) {
         LinkedHashSet<File> supportFiles = null;
         String parent = FilenameUtils.getFullPath(filePath);

@@ -23,8 +23,8 @@ import org.eclipse.emf.ecore.util.EObjectContainmentEList;
 import org.eclipse.emf.ecore.util.EObjectResolvingEList;
 import org.eclipse.emf.ecore.util.FeatureMap;
 import org.eclipse.emf.ecore.util.InternalEList;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 
 /**
  * <!-- begin-user-doc -->
@@ -170,6 +170,7 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public String getCoverageId() {
 		return coverageId;
 	}
@@ -179,6 +180,7 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public void setCoverageId(String newCoverageId) {
 		String oldCoverageId = coverageId;
 		coverageId = newCoverageId;
@@ -191,6 +193,7 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public FeatureMap getDimensionSubsetGroup() {
 		if (dimensionSubsetGroup == null) {
 			dimensionSubsetGroup = new BasicFeatureMap(this, Wcs20Package.GET_COVERAGE_TYPE__DIMENSION_SUBSET_GROUP);
@@ -203,6 +206,7 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public EList<DimensionSubsetType> getDimensionSubset() {
 		return getDimensionSubsetGroup().list(Wcs20Package.Literals.GET_COVERAGE_TYPE__DIMENSION_SUBSET);
 	}
@@ -212,6 +216,7 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public String getFormat() {
 		return format;
 	}
@@ -221,6 +226,7 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public void setFormat(String newFormat) {
 		String oldFormat = format;
 		format = newFormat;
@@ -233,6 +239,7 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public String getMediaType() {
 		return mediaType;
 	}
@@ -242,6 +249,7 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public void setMediaType(String newMediaType) {
 		String oldMediaType = mediaType;
 		mediaType = newMediaType;
@@ -254,6 +262,7 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public Filter getFilter() {
 		return filter;
 	}
@@ -263,6 +272,7 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
      * <!-- end-user-doc -->
 	 * @generated
 	 */
+    @Override
     public void setFilter(Filter newFilter) {
 		Filter oldFilter = filter;
 		filter = newFilter;
@@ -275,9 +285,10 @@ public class GetCoverageTypeImpl extends RequestBaseTypeImpl implements GetCover
 	 * <!-- end-user-doc -->
 	 * @generated
 	 */
-	public EList<SortBy> getSortBy() {
+	@Override
+    public EList<SortBy> getSortBy() {
 		if (sortBy == null) {
-			sortBy = new EDataTypeUniqueEList<SortBy>(SortBy.class, this, Wcs20Package.GET_COVERAGE_TYPE__SORT_BY);
+			sortBy = new EDataTypeUniqueEList<>(SortBy.class, this, Wcs20Package.GET_COVERAGE_TYPE__SORT_BY);
 		}
 		return sortBy;
 	}

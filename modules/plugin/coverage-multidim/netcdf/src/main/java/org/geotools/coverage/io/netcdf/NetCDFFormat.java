@@ -22,6 +22,10 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptor;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
@@ -31,15 +35,11 @@ import org.geotools.parameter.ParameterGroup;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.coverage.grid.GridCoverageWriter;
-import org.opengis.filter.Filter;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptor;
 
 public class NetCDFFormat extends AbstractGridFormat {
 
     public static final ParameterDescriptor<Filter> FILTER =
-            new DefaultParameterDescriptor<Filter>("Filter", Filter.class, null, null);
+            new DefaultParameterDescriptor<>("Filter", Filter.class, null, null);
 
     private static final Logger LOGGER = Logging.getLogger(NetCDFFormat.class);
 
@@ -50,7 +50,7 @@ public class NetCDFFormat extends AbstractGridFormat {
 
     /** Sets the metadata information. */
     private void setInfo() {
-        final HashMap<String, String> info = new HashMap<String, String>();
+        final HashMap<String, String> info = new HashMap<>();
         info.put("name", "NetCDF");
         info.put("description", "NetCDF store plugin");
         info.put("vendor", "Geotools");
@@ -60,23 +60,20 @@ public class NetCDFFormat extends AbstractGridFormat {
 
         // reading parameters
         readParameters =
-                new ParameterGroup(
-                        new DefaultParameterDescriptorGroup(
-                                mInfo,
-                                new GeneralParameterDescriptor[] {
-                                    READ_GRIDGEOMETRY2D,
-                                    //                        INPUT_TRANSPARENT_COLOR,
-                                    //                BACKGROUND_VALUES,
-                                    //                SUGGESTED_TILE_SIZE,
-                                    //                ALLOW_MULTITHREADING,
-                                    //                MAX_ALLOWED_TILES,
-                                    TIME,
-                                    ELEVATION,
-                                    FILTER,
-                                    //                SORT_BY,
-                                    //                MERGE_BEHAVIOR
-                                    BANDS
-                                }));
+                new ParameterGroup(new DefaultParameterDescriptorGroup(mInfo, new GeneralParameterDescriptor[] {
+                    READ_GRIDGEOMETRY2D,
+                    //                        INPUT_TRANSPARENT_COLOR,
+                    //                BACKGROUND_VALUES,
+                    //                SUGGESTED_TILE_SIZE,
+                    //                ALLOW_MULTITHREADING,
+                    //                MAX_ALLOWED_TILES,
+                    TIME,
+                    ELEVATION,
+                    FILTER,
+                    //                SORT_BY,
+                    //                MERGE_BEHAVIOR
+                    BANDS
+                }));
 
         // reading parameters
         writeParameters = null;
@@ -94,8 +91,7 @@ public class NetCDFFormat extends AbstractGridFormat {
             final NetCDFReader reader = new NetCDFReader(source, hints);
             return reader;
         } catch (IOException e) {
-            if (LOGGER.isLoggable(Level.WARNING))
-                LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
+            if (LOGGER.isLoggable(Level.WARNING)) LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
             return null;
         }
     }

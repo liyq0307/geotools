@@ -18,9 +18,9 @@ package org.geotools.kml.bindings;
 
 import java.awt.Color;
 import javax.xml.namespace.QName;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.kml.KML;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.styling.TextSymbolizer;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.ElementInstance;
@@ -56,6 +56,7 @@ public class LabelStyleTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.LabelStyleType;
     }
@@ -67,10 +68,12 @@ public class LabelStyleTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return TextSymbolizer.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return Binding.AFTER;
     }
@@ -82,6 +85,7 @@ public class LabelStyleTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Color color = (Color) value;
 

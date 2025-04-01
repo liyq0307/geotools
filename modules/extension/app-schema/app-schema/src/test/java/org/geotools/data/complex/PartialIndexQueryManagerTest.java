@@ -23,22 +23,19 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.complex.IndexQueryManager.PartialIndexQueryManager;
 import org.geotools.data.property.PropertyDataStore;
 import org.geotools.feature.FeatureCollection;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 
 /**
  * Tests PartialIndexQueryManager
@@ -49,12 +46,8 @@ public class PartialIndexQueryManagerTest extends IndexesTest {
 
     @Test
     public void testIndexQuery() throws IOException, URISyntaxException {
-        try (TestFeatureSource fsource =
-                new TestFeatureSource(
-                        "/test-data/index/",
-                        "stationsIndexed.xml",
-                        "http://www.stations.org/1.0",
-                        "stationsIndexed")) {
+        try (TestFeatureSource fsource = new TestFeatureSource(
+                "/test-data/index/", "stationsIndexed.xml", "http://www.stations.org/1.0", "stationsIndexed")) {
             Filter filter = partialIndexedFilter_2idxfilterResults();
             Query query = new Query("stationsIndexed", filter);
             PartialIndexQueryManager piqm =
@@ -64,7 +57,7 @@ public class PartialIndexQueryManagerTest extends IndexesTest {
             // Check expected indexOnlyFilter:
             List<Filter> filters = Arrays.asList(totallyIndexedFilter(), totallyIndexedFilter2());
             Filter expectedFilter = ff.and(filters);
-            assertTrue(expectedFilter.equals(indexQuery.getFilter()));
+            assertEquals(expectedFilter, indexQuery.getFilter());
 
             // check build new combined query:
             Query combQuery = piqm.buildCombinedQuery(indexFeatureCollection());
@@ -83,16 +76,14 @@ public class PartialIndexQueryManagerTest extends IndexesTest {
 
     private FeatureCollection<? extends FeatureType, ? extends Feature> indexFeatureCollection()
             throws IOException, URISyntaxException {
-        Map<String, Serializable> params = new HashMap<>();
         File dir = new File(getClass().getResource("/test-data/index/").toURI());
         PropertyDataStore datastore = new PropertyDataStore(dir);
         FilterFactory ff1 = datastore.getFilterFactory();
-        Query query =
-                new Query(
-                        "stationsIndex",
-                        ff1.or(
-                                ff1.equals(ff1.property("NAME"), ff1.literal("station2")),
-                                ff1.equals(ff1.property("NAME"), ff1.literal("station3"))));
+        Query query = new Query(
+                "stationsIndex",
+                ff1.or(
+                        ff1.equals(ff1.property("NAME"), ff1.literal("station2")),
+                        ff1.equals(ff1.property("NAME"), ff1.literal("station3"))));
         return datastore.getFeatureSource("stationsIndex").getFeatures(query);
     }
 }

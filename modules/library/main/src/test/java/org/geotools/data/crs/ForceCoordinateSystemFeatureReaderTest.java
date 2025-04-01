@@ -16,41 +16,42 @@
  */
 package org.geotools.data.crs;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertNotEquals;
+
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-public class ForceCoordinateSystemFeatureReaderTest extends TestCase {
+public class ForceCoordinateSystemFeatureReaderTest {
 
     private static final String FEATURE_TYPE_NAME = "testType";
 
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
+    @Before
+    public void setUp() throws Exception {}
 
     /**
      * create a feature collection with 1 feature in it.
      *
      * @param crs the CRS of the FeatureType
      * @param p the point to add, should be same CRS as crs
-     * @return
-     * @throws Exception
      */
-    private SimpleFeatureCollection createTestFeatureCollection(
-            CoordinateReferenceSystem crs, Point p) throws Exception {
+    private SimpleFeatureCollection createTestFeatureCollection(CoordinateReferenceSystem crs, Point p)
+            throws Exception {
 
         SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
         builder.setName(FEATURE_TYPE_NAME);
@@ -68,64 +69,61 @@ public class ForceCoordinateSystemFeatureReaderTest extends TestCase {
         return features;
     }
 
+    @Test
     public void testSameCRS() throws Exception {
         CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
         GeometryFactory fac = new GeometryFactory();
         Point p = fac.createPoint(new Coordinate(10, 10));
 
         SimpleFeatureCollection features = createTestFeatureCollection(crs, p);
-        FeatureReader<SimpleFeatureType, SimpleFeature> original = DataUtilities.reader(features);
-        // FeatureReader<SimpleFeatureType, SimpleFeature> original = new CollectionFeatureReader(
-        // features, features.getSchema() );
-
-        try (ForceCoordinateSystemFeatureReader modified =
-                new ForceCoordinateSystemFeatureReader(DataUtilities.reader(features), crs); ) {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> original = DataUtilities.reader(features);
+                ForceCoordinateSystemFeatureReader modified =
+                        new ForceCoordinateSystemFeatureReader(DataUtilities.reader(features), crs)) {
             SimpleFeature f1 = original.next();
             SimpleFeature f2 = modified.next();
 
-            assertEquals(f1, f2);
+            Assert.assertEquals(f1, f2);
 
-            assertFalse(original.hasNext());
-            assertFalse(modified.hasNext());
+            Assert.assertFalse(original.hasNext());
+            Assert.assertFalse(modified.hasNext());
 
-            assertSame(modified.builder.getFeatureType(), original.getFeatureType());
+            Assert.assertSame(modified.builder.getFeatureType(), original.getFeatureType());
         }
     }
 
+    @Test
     public void testDifferentCRS() throws Exception {
         CoordinateReferenceSystem srcCRS = DefaultGeographicCRS.WGS84;
         GeometryFactory fac = new GeometryFactory();
         Point p = fac.createPoint(new Coordinate(10, 10));
 
         SimpleFeatureCollection features = createTestFeatureCollection(srcCRS, p);
-        FeatureReader<SimpleFeatureType, SimpleFeature> original = DataUtilities.reader(features);
-
         CoordinateReferenceSystem destCRS = DefaultEngineeringCRS.CARTESIAN_2D;
-        try (ForceCoordinateSystemFeatureReader modified =
-                new ForceCoordinateSystemFeatureReader(DataUtilities.reader(features), destCRS); ) {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> original = DataUtilities.reader(features);
+                ForceCoordinateSystemFeatureReader modified =
+                        new ForceCoordinateSystemFeatureReader(DataUtilities.reader(features), destCRS); ) {
             SimpleFeature f1 = original.next();
             SimpleFeature f2 = modified.next();
 
-            assertEquals(
+            Assert.assertEquals(
                     ((Geometry) f1.getDefaultGeometry()).getCoordinate(),
                     ((Geometry) f2.getDefaultGeometry()).getCoordinate());
             SimpleFeatureType f1Type = f1.getFeatureType();
             SimpleFeatureType f2Type = f2.getFeatureType();
-            assertFalse(
-                    f1Type.getCoordinateReferenceSystem()
-                            .equals(f2Type.getCoordinateReferenceSystem()));
-            assertEquals(srcCRS, f1Type.getCoordinateReferenceSystem());
-            assertEquals(srcCRS, f1Type.getGeometryDescriptor().getCoordinateReferenceSystem());
-            assertEquals(destCRS, f2Type.getCoordinateReferenceSystem());
-            assertEquals(destCRS, f2Type.getGeometryDescriptor().getCoordinateReferenceSystem());
+            assertNotEquals(f1Type.getCoordinateReferenceSystem(), f2Type.getCoordinateReferenceSystem());
+            Assert.assertEquals(srcCRS, f1Type.getCoordinateReferenceSystem());
+            Assert.assertEquals(srcCRS, f1Type.getGeometryDescriptor().getCoordinateReferenceSystem());
+            Assert.assertEquals(destCRS, f2Type.getCoordinateReferenceSystem());
+            Assert.assertEquals(destCRS, f2Type.getGeometryDescriptor().getCoordinateReferenceSystem());
 
-            assertFalse(original.hasNext());
-            assertFalse(modified.hasNext());
+            Assert.assertFalse(original.hasNext());
+            Assert.assertFalse(modified.hasNext());
 
-            assertNotNull(modified.builder);
+            Assert.assertNotNull(modified.builder);
         }
     }
 
+    @Test
     public void testNullDestination() throws Exception {
         CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
         GeometryFactory fac = new GeometryFactory();
@@ -134,45 +132,42 @@ public class ForceCoordinateSystemFeatureReaderTest extends TestCase {
         SimpleFeatureCollection features = createTestFeatureCollection(crs, p);
 
         try {
-            new ForceCoordinateSystemFeatureReader(
-                    DataUtilities.reader(features), (CoordinateReferenceSystem) null);
-            fail(); // should throw a nullpointer exception.
+            new ForceCoordinateSystemFeatureReader(DataUtilities.reader(features), (CoordinateReferenceSystem) null);
+            Assert.fail(); // should throw a nullpointer exception.
         } catch (NullPointerException e) {
             // good
         }
     }
 
+    @Test
     public void testNullSource() throws Exception {
         CoordinateReferenceSystem srcCRS = null;
         GeometryFactory fac = new GeometryFactory();
         Point p = fac.createPoint(new Coordinate(10, 10));
 
         SimpleFeatureCollection features = createTestFeatureCollection(srcCRS, p);
-        FeatureReader<SimpleFeatureType, SimpleFeature> original = DataUtilities.reader(features);
-
         CoordinateReferenceSystem destCRS = DefaultEngineeringCRS.CARTESIAN_2D;
-        try (ForceCoordinateSystemFeatureReader modified =
-                new ForceCoordinateSystemFeatureReader(DataUtilities.reader(features), destCRS); ) {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> original = DataUtilities.reader(features);
+                ForceCoordinateSystemFeatureReader modified =
+                        new ForceCoordinateSystemFeatureReader(DataUtilities.reader(features), destCRS)) {
             SimpleFeature f1 = original.next();
             SimpleFeature f2 = modified.next();
 
-            assertEquals(
+            Assert.assertEquals(
                     ((Geometry) f1.getDefaultGeometry()).getCoordinate(),
                     ((Geometry) f2.getDefaultGeometry()).getCoordinate());
             SimpleFeatureType f1Type = f1.getFeatureType();
             SimpleFeatureType f2Type = f2.getFeatureType();
-            assertFalse(
-                    f2Type.getCoordinateReferenceSystem()
-                            .equals(f1Type.getCoordinateReferenceSystem()));
-            assertEquals(srcCRS, f1Type.getCoordinateReferenceSystem());
-            assertEquals(srcCRS, f1Type.getGeometryDescriptor().getCoordinateReferenceSystem());
-            assertEquals(destCRS, f2Type.getCoordinateReferenceSystem());
-            assertEquals(destCRS, f2Type.getGeometryDescriptor().getCoordinateReferenceSystem());
+            assertNotEquals(f2Type.getCoordinateReferenceSystem(), f1Type.getCoordinateReferenceSystem());
+            Assert.assertEquals(srcCRS, f1Type.getCoordinateReferenceSystem());
+            Assert.assertEquals(srcCRS, f1Type.getGeometryDescriptor().getCoordinateReferenceSystem());
+            Assert.assertEquals(destCRS, f2Type.getCoordinateReferenceSystem());
+            Assert.assertEquals(destCRS, f2Type.getGeometryDescriptor().getCoordinateReferenceSystem());
 
-            assertFalse(original.hasNext());
-            assertFalse(modified.hasNext());
+            Assert.assertFalse(original.hasNext());
+            Assert.assertFalse(modified.hasNext());
 
-            assertNotNull(modified.builder);
+            Assert.assertNotNull(modified.builder);
         }
     }
 }

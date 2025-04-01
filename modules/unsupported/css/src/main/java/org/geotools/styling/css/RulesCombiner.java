@@ -38,7 +38,6 @@ class RulesCombiner {
     }
 
     CssRule combineRules(List<CssRule> rules) {
-        CssRule combined;
         // build the main rule
         Selector combinedSelector = combineSelectors(rules);
 
@@ -50,7 +49,7 @@ class RulesCombiner {
                 PseudoClass ps = entry.getKey();
                 Map<String, Property> psProperties = properties.get(ps);
                 if (psProperties == null) {
-                    psProperties = new LinkedHashMap<String, Property>();
+                    psProperties = new LinkedHashMap<>();
                     properties.put(ps, psProperties);
                 }
                 for (Property p : entry.getValue()) {
@@ -60,8 +59,7 @@ class RulesCombiner {
                     // we also have to fill values for the pseudo classes owned by this one
                     for (PseudoClass containedClass : properties.keySet()) {
                         if (ps.contains(containedClass)) {
-                            Map<String, Property> containedProperties =
-                                    properties.get(containedClass);
+                            Map<String, Property> containedProperties = properties.get(containedClass);
                             for (Property p : entry.getValue()) {
                                 containedProperties.put(p.getName(), p);
                             }
@@ -74,10 +72,10 @@ class RulesCombiner {
         // build the new rule
         Map<PseudoClass, List<Property>> newProperties = new LinkedHashMap<>();
         for (Map.Entry<PseudoClass, Map<String, Property>> entry : properties.entrySet()) {
-            newProperties.put(entry.getKey(), new ArrayList<Property>(entry.getValue().values()));
+            newProperties.put(entry.getKey(), new ArrayList<>(entry.getValue().values()));
         }
         String comment = getCombinedComment(rules);
-        combined = new CssRule(combinedSelector, newProperties, comment);
+        CssRule combined = new CssRule(combinedSelector, newProperties, comment);
         combined.setAncestry(rules);
         return combined;
     }

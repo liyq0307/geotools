@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import org.geotools.xml.XSIElementHandler;
 import org.geotools.xml.schema.Attribute;
 import org.geotools.xml.schema.AttributeGroup;
@@ -46,7 +47,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
     private String name;
     private String ref;
     private AnyAttributeHandler anyAttribute;
-    private List attrDecs;
+    private List<XSIElementHandler> attrDecs;
     private int hashCodeOffset = getOffset();
     private AttributeGroup cache = null;
 
@@ -58,6 +59,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
     }
 
     /** @see java.lang.Object#hashCode() */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
         return (LOCALNAME.hashCode()
@@ -68,6 +70,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
+    @Override
     public XSIElementHandler getHandler(String namespaceURI, String localName) throws SAXException {
         if (SchemaHandler.namespaceURI.equalsIgnoreCase(namespaceURI)) {
             // child types
@@ -75,7 +78,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
             // attribute
             if (AttributeHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (attrDecs == null) {
-                    attrDecs = new LinkedList();
+                    attrDecs = new LinkedList<>();
                 }
 
                 AttributeHandler ah = new AttributeHandler();
@@ -87,7 +90,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
             // attributeGroup
             if (AttributeGroupHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (attrDecs == null) {
-                    attrDecs = new LinkedList();
+                    attrDecs = new LinkedList<>();
                 }
 
                 AttributeGroupHandler ah = new AttributeGroupHandler();
@@ -103,8 +106,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
                 if (anyAttribute == null) {
                     anyAttribute = sth;
                 } else {
-                    throw new SAXNotRecognizedException(
-                            LOCALNAME + " may only have one child declaration.");
+                    throw new SAXNotRecognizedException(LOCALNAME + " may only have one child declaration.");
                 }
 
                 return sth;
@@ -115,9 +117,9 @@ public class AttributeGroupHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
+    @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
         id = atts.getValue("", "id");
 
@@ -139,6 +141,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -148,12 +151,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
         return name;
     }
 
-    /**
-     * Reduces the memory imprint returning a smaller object
-     *
-     * @param parent
-     * @throws SAXException
-     */
+    /** Reduces the memory imprint returning a smaller object */
     protected AttributeGroup compress(SchemaHandler parent) throws SAXException {
         if (cache != null) {
             return cache;
@@ -164,7 +162,7 @@ public class AttributeGroupHandler extends XSIElementHandler {
 
         if (attrDecs != null) {
             Iterator i = attrDecs.iterator();
-            HashSet h = new HashSet();
+            Set<Attribute> h = new HashSet<>();
 
             while (i.hasNext()) {
                 Object o = i.next();
@@ -178,12 +176,12 @@ public class AttributeGroupHandler extends XSIElementHandler {
                     if ((ag != null) && (ag.getAttributes() != null)) {
                         Attribute[] aa = ag.getAttributes();
 
-                        for (int j = 0; j < aa.length; j++) h.add(aa[j]);
+                        for (Attribute attribute : aa) h.add(attribute);
                     }
                 }
             }
 
-            attributes = (Attribute[]) h.toArray(new Attribute[h.size()]);
+            attributes = h.toArray(new Attribute[h.size()]);
         }
 
         String name1 = this.name;
@@ -208,19 +206,19 @@ public class AttributeGroupHandler extends XSIElementHandler {
             attributes = ag.getAttributes();
         }
 
-        cache =
-                new AttributeGroupGT(
-                        id, name1, parent.getTargetNamespace(), attributes, anyAttributeNamespace);
+        cache = new AttributeGroupGT(id, name1, parent.getTargetNamespace(), attributes, anyAttributeNamespace);
 
         return cache;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandlerType() */
+    @Override
     public int getHandlerType() {
         return DEFAULT;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String) */
+    @Override
     public void endElement(String namespaceURI, String localName) {
         // do nothing
     }

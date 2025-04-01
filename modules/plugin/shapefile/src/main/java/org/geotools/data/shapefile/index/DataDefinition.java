@@ -29,12 +29,12 @@ public class DataDefinition {
     private ArrayList<Field> fields;
 
     public DataDefinition(String charset) {
-        fields = new ArrayList<Field>();
+        fields = new ArrayList<>();
         this.charset = Charset.forName(charset);
     }
 
     public final boolean isValid() {
-        return (this.charset != null) && (this.fields.size() > 0);
+        return (this.charset != null) && (!this.fields.isEmpty());
     }
 
     public int getFieldsCount() {
@@ -56,10 +56,8 @@ public class DataDefinition {
      *   <li>Double
      *   <li>Date
      * </ul>
-     *
-     * @param clazz
      */
-    public void addField(Class clazz) {
+    public void addField(Class<?> clazz) {
         if (clazz.isAssignableFrom(Short.class)) {
             this.fields.add(new Field(clazz, 2));
         } else if (clazz.isAssignableFrom(Integer.class)) {
@@ -72,16 +70,13 @@ public class DataDefinition {
         } else if (clazz.isAssignableFrom(Double.class)) {
             this.fields.add(new Field(clazz, 8));
         } else {
-            throw new IllegalArgumentException(
-                    "Unknow len of class " + clazz + "use addField(int)");
+            throw new IllegalArgumentException("Unknow len of class " + clazz + "use addField(int)");
         }
     }
 
     /**
-     * For classes with unknown length; this values will be threated as <code>String</code>s and
-     * truncated at the specified len
-     *
-     * @param len
+     * For classes with unknown length; this values will be threated as <code>String</code>s and truncated at the
+     * specified len
      */
     public void addField(int len) {
         this.fields.add(new Field(String.class, len));
@@ -98,8 +93,8 @@ public class DataDefinition {
 
         Field field = null;
 
-        for (int i = 0; i < this.fields.size(); i++) {
-            field = (Field) this.fields.get(i);
+        for (Field value : this.fields) {
+            field = value;
             len += field.getLen();
         }
 
@@ -107,16 +102,16 @@ public class DataDefinition {
     }
 
     /**
-     * Gets the len of this field after the encoding, this method may be different from getLen()
-     * only if exists strings in the definition
+     * Gets the len of this field after the encoding, this method may be different from getLen() only if exists strings
+     * in the definition
      */
     public int getEncodedLen() {
         int len = 0;
 
         Field field = null;
 
-        for (int i = 0; i < this.fields.size(); i++) {
-            field = (Field) this.fields.get(i);
+        for (Field value : this.fields) {
+            field = value;
             len += field.getEncodedLen();
         }
 
@@ -129,15 +124,15 @@ public class DataDefinition {
      * @author Tommaso Nolli
      */
     public class Field {
-        private Class clazz;
+        private Class<?> clazz;
         private int len;
 
-        public Field(Class clazz, int len) {
+        public Field(Class<?> clazz, int len) {
             this.clazz = clazz;
             this.len = len;
         }
 
-        public Class getFieldClass() {
+        public Class<?> getFieldClass() {
             return clazz;
         }
 

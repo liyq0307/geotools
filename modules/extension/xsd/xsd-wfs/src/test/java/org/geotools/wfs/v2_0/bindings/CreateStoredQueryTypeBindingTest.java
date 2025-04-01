@@ -16,21 +16,24 @@
  */
 package org.geotools.wfs.v2_0.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import net.opengis.wfs20.CreateStoredQueryType;
 import net.opengis.wfs20.DropStoredQueryType;
 import net.opengis.wfs20.QueryExpressionTextType;
 import net.opengis.wfs20.StoredQueryDescriptionType;
 import org.geotools.wfs.v2_0.WFS;
 import org.geotools.wfs.v2_0.WFSTestSupport;
+import org.junit.Test;
 
 public class CreateStoredQueryTypeBindingTest extends WFSTestSupport {
-
+    @Test
     public void testParse() throws Exception {
-        String xml =
-                "<wfs:DropStoredQuery "
-                        + "   xmlns:wfs='http://www.opengis.net/wfs/2.0' "
-                        + "   service='WFS' "
-                        + "   version='2.0.0' id='foobar'/> ";
+        String xml = "<wfs:DropStoredQuery "
+                + "   xmlns:wfs='http://www.opengis.net/wfs/2.0' "
+                + "   service='WFS' "
+                + "   version='2.0.0' id='foobar'/> ";
 
         buildDocument(xml);
 
@@ -40,30 +43,31 @@ public class CreateStoredQueryTypeBindingTest extends WFSTestSupport {
         assertEquals("foobar", dsq.getId());
     }
 
+    @Test
     public void testParseUnqualified() throws Exception {
-        String xml =
-                "<CreateStoredQuery xmlns=\"http://www.opengis.net/wfs/2.0\" service=\"WFS\" "
-                        + "version=\"2.0.0\">\n"
-                        + "  <StoredQueryDefinition xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
-                        + "                          id=\"urn:example:wfs2-query:GetFeatureByTypeName\">\n"
-                        + "      <Title>GetFeatureByTypeName</Title>\n"
-                        + "      <Abstract>Returns feature representations by type name.</Abstract>\n"
-                        + "      <Parameter name=\"typeName\" type=\"xsd:QName\">\n"
-                        + "         <Abstract>Qualified name of feature type (required).</Abstract>\n"
-                        + "      </Parameter>\n"
-                        + "      <QueryExpressionText isPrivate=\"false\"\n"
-                        + "                           language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFSQueryExpression\"\n"
-                        + "                           returnFeatureTypes=\"\">\n"
-                        + "         <Query typeNames=\"${typeName}\"/>\n"
-                        + "      </QueryExpressionText>\n"
-                        + "</StoredQueryDefinition>\n"
-                        + "</CreateStoredQuery>";
+        String xml = "<CreateStoredQuery xmlns=\"http://www.opengis.net/wfs/2.0\" service=\"WFS\" "
+                + "version=\"2.0.0\">\n"
+                + "  <StoredQueryDefinition xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
+                + "                          id=\"urn:example:wfs2-query:GetFeatureByTypeName\">\n"
+                + "      <Title>GetFeatureByTypeName</Title>\n"
+                + "      <Abstract>Returns feature representations by type name.</Abstract>\n"
+                + "      <Parameter name=\"typeName\" type=\"xsd:QName\">\n"
+                + "         <Abstract>Qualified name of feature type (required).</Abstract>\n"
+                + "      </Parameter>\n"
+                + "      <QueryExpressionText isPrivate=\"false\"\n"
+                + "                           language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFSQueryExpression\"\n"
+                + "                           returnFeatureTypes=\"\">\n"
+                + "         <Query typeNames=\"${typeName}\"/>\n"
+                + "      </QueryExpressionText>\n"
+                + "</StoredQueryDefinition>\n"
+                + "</CreateStoredQuery>";
         buildDocument(xml);
 
         CreateStoredQueryType csq = (CreateStoredQueryType) parse(WFS.StoredQueryDescriptionType);
         assertNotNull(csq);
 
-        StoredQueryDescriptionType queryDefinition = csq.getStoredQueryDefinition().get(0);
+        StoredQueryDescriptionType queryDefinition =
+                csq.getStoredQueryDefinition().get(0);
         assertEquals(1, queryDefinition.getQueryExpressionText().size());
         QueryExpressionTextType text = queryDefinition.getQueryExpressionText().get(0);
         assertEquals(
@@ -73,43 +77,44 @@ public class CreateStoredQueryTypeBindingTest extends WFSTestSupport {
                 text.getValue().trim());
     }
 
+    @Test
     public void testParseRepeatedNamespaces() throws Exception {
-        String xml =
-                "<CreateStoredQuery xmlns=\"http://www.opengis.net/wfs/2.0\" service=\"WFS\" "
-                        + "version=\"2.0.0\">\n"
-                        + "  <StoredQueryDefinition xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
-                        + "                          id=\"urn:example:wfs2-query:GetFeatureByTypeName\">\n"
-                        + "      <Title>GetFeatureByTypeName</Title>\n"
-                        + "      <Abstract>Returns feature representations by type name.</Abstract>\n"
-                        + "      <Parameter name=\"typeName\" type=\"xsd:QName\">\n"
-                        + "         <Abstract>Qualified name of feature type (required).</Abstract>\n"
-                        + "      </Parameter>\n"
-                        + "      <QueryExpressionText isPrivate=\"false\"\n"
-                        + "                           language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFSQueryExpression\"\n"
-                        + "                           returnFeatureTypes=\"\">\n"
-                        + "         <Query typeNames=\"${typeName}\"/>\n"
-                        + "      </QueryExpressionText>\n"
-                        + "</StoredQueryDefinition>\n"
-                        + "  <StoredQueryDefinition xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
-                        + "                          id=\"urn:example:wfs2-query:GetFeatureByTypeName\">\n"
-                        + "      <Title>GetFeatureByTypeName</Title>\n"
-                        + "      <Abstract>Returns feature representations by type name.</Abstract>\n"
-                        + "      <Parameter name=\"typeName\" type=\"xsd:QName\">\n"
-                        + "         <Abstract>Qualified name of feature type (required).</Abstract>\n"
-                        + "      </Parameter>\n"
-                        + "      <QueryExpressionText isPrivate=\"false\"\n"
-                        + "                           language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFSQueryExpression\"\n"
-                        + "                           returnFeatureTypes=\"\">\n"
-                        + "         <Query typeNames=\"${typeName}\"/>\n"
-                        + "      </QueryExpressionText>\n"
-                        + "</StoredQueryDefinition>\n"
-                        + "</CreateStoredQuery>";
+        String xml = "<CreateStoredQuery xmlns=\"http://www.opengis.net/wfs/2.0\" service=\"WFS\" "
+                + "version=\"2.0.0\">\n"
+                + "  <StoredQueryDefinition xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
+                + "                          id=\"urn:example:wfs2-query:GetFeatureByTypeName\">\n"
+                + "      <Title>GetFeatureByTypeName</Title>\n"
+                + "      <Abstract>Returns feature representations by type name.</Abstract>\n"
+                + "      <Parameter name=\"typeName\" type=\"xsd:QName\">\n"
+                + "         <Abstract>Qualified name of feature type (required).</Abstract>\n"
+                + "      </Parameter>\n"
+                + "      <QueryExpressionText isPrivate=\"false\"\n"
+                + "                           language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFSQueryExpression\"\n"
+                + "                           returnFeatureTypes=\"\">\n"
+                + "         <Query typeNames=\"${typeName}\"/>\n"
+                + "      </QueryExpressionText>\n"
+                + "</StoredQueryDefinition>\n"
+                + "  <StoredQueryDefinition xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
+                + "                          id=\"urn:example:wfs2-query:GetFeatureByTypeName\">\n"
+                + "      <Title>GetFeatureByTypeName</Title>\n"
+                + "      <Abstract>Returns feature representations by type name.</Abstract>\n"
+                + "      <Parameter name=\"typeName\" type=\"xsd:QName\">\n"
+                + "         <Abstract>Qualified name of feature type (required).</Abstract>\n"
+                + "      </Parameter>\n"
+                + "      <QueryExpressionText isPrivate=\"false\"\n"
+                + "                           language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFSQueryExpression\"\n"
+                + "                           returnFeatureTypes=\"\">\n"
+                + "         <Query typeNames=\"${typeName}\"/>\n"
+                + "      </QueryExpressionText>\n"
+                + "</StoredQueryDefinition>\n"
+                + "</CreateStoredQuery>";
         buildDocument(xml);
 
         CreateStoredQueryType csq = (CreateStoredQueryType) parse(WFS.StoredQueryDescriptionType);
         assertNotNull(csq);
 
-        StoredQueryDescriptionType queryDefinition = csq.getStoredQueryDefinition().get(0);
+        StoredQueryDescriptionType queryDefinition =
+                csq.getStoredQueryDefinition().get(0);
         assertEquals(1, queryDefinition.getQueryExpressionText().size());
         QueryExpressionTextType text = queryDefinition.getQueryExpressionText().get(0);
         assertEquals(
@@ -128,44 +133,45 @@ public class CreateStoredQueryTypeBindingTest extends WFSTestSupport {
                 text.getValue().trim());
     }
 
+    @Test
     public void testParseRepeatedNamespacesWithFilters() throws Exception {
-        String xml =
-                "<CreateStoredQuery xmlns=\"http://www.opengis.net/wfs/2.0\" service=\"WFS\" "
-                        + "version=\"2.0.0\">\n"
-                        + "  <StoredQueryDefinition xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
-                        + "                          id=\"urn:example:wfs2-query:GetFeatureByTypeName\">\n"
-                        + "      <Title>GetFeatureByTypeName</Title>\n"
-                        + "      <Abstract>Returns feature representations by type name.</Abstract>\n"
-                        + "      <Parameter name=\"typeName\" type=\"xsd:QName\">\n"
-                        + "         <Abstract>Qualified name of feature type (required).</Abstract>\n"
-                        + "      </Parameter>\n"
-                        + "      <QueryExpressionText isPrivate=\"false\"\n"
-                        + "                           language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFSQueryExpression\"\n"
-                        + "                           returnFeatureTypes=\"\">\n"
-                        + "         <Query typeNames=\"${typeName}\"><Filter><ResourceId rid='InWaterA_1M.1234'/></Filter>"
-                        + "</Query>\n"
-                        + "      </QueryExpressionText>\n"
-                        + "</StoredQueryDefinition>\n"
-                        + "  <StoredQueryDefinition xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
-                        + "                          id=\"urn:example:wfs2-query:GetFeatureByTypeName\">\n"
-                        + "      <Title>GetFeatureByTypeName</Title>\n"
-                        + "      <Abstract>Returns feature representations by type name.</Abstract>\n"
-                        + "      <Parameter name=\"typeName\" type=\"xsd:QName\">\n"
-                        + "         <Abstract>Qualified name of feature type (required).</Abstract>\n"
-                        + "      </Parameter>\n"
-                        + "      <QueryExpressionText isPrivate=\"false\"\n"
-                        + "                           language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFSQueryExpression\"\n"
-                        + "                           returnFeatureTypes=\"\">\n"
-                        + "         <Query typeNames=\"${typeName}\"/>\n"
-                        + "      </QueryExpressionText>\n"
-                        + "</StoredQueryDefinition>\n"
-                        + "</CreateStoredQuery>";
+        String xml = "<CreateStoredQuery xmlns=\"http://www.opengis.net/wfs/2.0\" service=\"WFS\" "
+                + "version=\"2.0.0\">\n"
+                + "  <StoredQueryDefinition xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
+                + "                          id=\"urn:example:wfs2-query:GetFeatureByTypeName\">\n"
+                + "      <Title>GetFeatureByTypeName</Title>\n"
+                + "      <Abstract>Returns feature representations by type name.</Abstract>\n"
+                + "      <Parameter name=\"typeName\" type=\"xsd:QName\">\n"
+                + "         <Abstract>Qualified name of feature type (required).</Abstract>\n"
+                + "      </Parameter>\n"
+                + "      <QueryExpressionText isPrivate=\"false\"\n"
+                + "                           language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFSQueryExpression\"\n"
+                + "                           returnFeatureTypes=\"\">\n"
+                + "         <Query typeNames=\"${typeName}\"><Filter><ResourceId rid='InWaterA_1M.1234'/></Filter>"
+                + "</Query>\n"
+                + "      </QueryExpressionText>\n"
+                + "</StoredQueryDefinition>\n"
+                + "  <StoredQueryDefinition xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
+                + "                          id=\"urn:example:wfs2-query:GetFeatureByTypeName\">\n"
+                + "      <Title>GetFeatureByTypeName</Title>\n"
+                + "      <Abstract>Returns feature representations by type name.</Abstract>\n"
+                + "      <Parameter name=\"typeName\" type=\"xsd:QName\">\n"
+                + "         <Abstract>Qualified name of feature type (required).</Abstract>\n"
+                + "      </Parameter>\n"
+                + "      <QueryExpressionText isPrivate=\"false\"\n"
+                + "                           language=\"urn:ogc:def:queryLanguage:OGC-WFS::WFSQueryExpression\"\n"
+                + "                           returnFeatureTypes=\"\">\n"
+                + "         <Query typeNames=\"${typeName}\"/>\n"
+                + "      </QueryExpressionText>\n"
+                + "</StoredQueryDefinition>\n"
+                + "</CreateStoredQuery>";
         buildDocument(xml);
 
         CreateStoredQueryType csq = (CreateStoredQueryType) parse(WFS.StoredQueryDescriptionType);
         assertNotNull(csq);
 
-        StoredQueryDescriptionType queryDefinition = csq.getStoredQueryDefinition().get(0);
+        StoredQueryDescriptionType queryDefinition =
+                csq.getStoredQueryDefinition().get(0);
         assertEquals(1, queryDefinition.getQueryExpressionText().size());
         QueryExpressionTextType text = queryDefinition.getQueryExpressionText().get(0);
         assertEquals(

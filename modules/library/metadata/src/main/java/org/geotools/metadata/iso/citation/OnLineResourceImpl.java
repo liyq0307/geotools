@@ -21,14 +21,15 @@ package org.geotools.metadata.iso.citation;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import net.opengis.ows11.OnlineResourceType;
+import org.geotools.api.metadata.citation.OnLineFunction;
+import org.geotools.api.metadata.citation.OnLineResource;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.MetadataEntity;
-import org.opengis.metadata.citation.OnLineFunction;
-import org.opengis.metadata.citation.OnLineResource;
-import org.opengis.util.InternationalString;
 
 /**
- * Information about on-line sources from which the dataset, specification, or community profile
- * name and extended metadata elements can be obtained.
+ * Information about on-line sources from which the dataset, specification, or community profile name and extended
+ * metadata elements can be obtained.
  *
  * @since 2.1
  * @version $Id$
@@ -40,8 +41,8 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
     private static final long serialVersionUID = 5412370008274334799L;
 
     /**
-     * The online resources for the <A HREF="http://www.opengeospatial.org">Open Geospatial
-     * Consortium</A>. "Open Geospatial consortium" is the new name for "OpenGIS consortium".
+     * The online resources for the <A HREF="http://www.opengeospatial.org">Open Geospatial Consortium</A>. "Open
+     * Geospatial consortium" is the new name for "OpenGIS consortium".
      *
      * @see #OPEN_GIS
      */
@@ -54,8 +55,8 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
     }
 
     /**
-     * The online resources for the <A HREF="http://www.opengis.org">OpenGIS consortium</A>.
-     * "OpenGIS consortium" is the old name for "Open Geospatial consortium".
+     * The online resources for the <A HREF="http://www.opengis.org">OpenGIS consortium</A>. "OpenGIS consortium" is the
+     * old name for "Open Geospatial consortium".
      *
      * @see #OGC
      */
@@ -67,10 +68,7 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
         r.freeze();
     }
 
-    /**
-     * The online resources for the <A HREF="http://www.epsg.org">European Petroleum Survey
-     * Group</A>.
-     */
+    /** The online resources for the <A HREF="http://www.epsg.org">European Petroleum Survey Group</A>. */
     public static final OnLineResource EPSG;
 
     static {
@@ -79,10 +77,7 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
         r.freeze();
     }
 
-    /**
-     * The online resources for the <A
-     * HREF="http://www.remotesensing.org/geotiff/geotiff.html">GeoTIFF</A> group.
-     */
+    /** The online resources for the <A HREF="http://www.remotesensing.org/geotiff/geotiff.html">GeoTIFF</A> group. */
     public static final OnLineResource GEOTIFF;
 
     static {
@@ -97,6 +92,15 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
     static {
         final OnLineResourceImpl r;
         ESRI = r = new OnLineResourceImpl("http://www.esri.com");
+        r.freeze();
+    }
+
+    /** The online resources for <A HREF="https://www.iau.org">IAU</A>. */
+    public static final OnLineResource IAU;
+
+    static {
+        final OnLineResourceImpl r;
+        IAU = r = new OnLineResourceImpl("https://www.iau.org");
         r.freeze();
     }
 
@@ -122,9 +126,18 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
         r.freeze();
     }
 
+    /** The online resources for <A HREF="https://proj.org">PROJ</A>. */
+    public static final OnLineResource PROJ;
+
+    static {
+        final OnLineResourceImpl r;
+        PROJ = r = new OnLineResourceImpl("https://proj.org");
+        r.freeze();
+    }
+
     /**
-     * The online resources for <A HREF="http://java.sun.com/">Sun Microsystems</A>. This online
-     * resources point to the Java developper site.
+     * The online resources for <A HREF="http://java.sun.com/">Sun Microsystems</A>. This online resources point to the
+     * Java developper site.
      *
      * @since 2.2
      */
@@ -146,9 +159,9 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
     }
 
     /**
-     * The download link for <A HREF="http://portal.opengis.org/files/?artifact_id=5316">Web Map
-     * Service</A> specification. The download link may change in future Geotools versions in order
-     * to point toward the latest specification.
+     * The download link for <A HREF="http://portal.opengis.org/files/?artifact_id=5316">Web Map Service</A>
+     * specification. The download link may change in future Geotools versions in order to point toward the latest
+     * specification.
      *
      * @since 2.2
      */
@@ -171,8 +184,8 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
     private OnLineFunction function;
 
     /**
-     * Location (address) for on-line access using a Uniform Resource Locator address or similar
-     * addressing scheme such as http://www.statkart.no/isotc211.
+     * Location (address) for on-line access using a Uniform Resource Locator address or similar addressing scheme such
+     * as http://www.statkart.no/isotc211.
      */
     private URI linkage;
 
@@ -192,10 +205,9 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
     }
 
     /**
-     * Creates an on line resource initialized to the given URI. This method is private for now
-     * since, if this constructor was public, some users may expect a string argument to be for the
-     * description text instead. Furthermore, a public method should not catch the {@link
-     * URISyntaxException} and should not set a function.
+     * Creates an on line resource initialized to the given URI. This method is private for now since, if this
+     * constructor was public, some users may expect a string argument to be for the description text instead.
+     * Furthermore, a public method should not catch the {@link URISyntaxException} and should not set a function.
      */
     private OnLineResourceImpl(final String linkage) {
         try {
@@ -211,10 +223,16 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
         setLinkage(linkage);
     }
 
+    public OnLineResourceImpl(OnlineResourceType onlineResource) {
+
+        this(onlineResource.getHref());
+    }
+
     /**
-     * Returns the name of an application profile that can be used with the online resource. Returns
-     * {@code null} if none.
+     * Returns the name of an application profile that can be used with the online resource. Returns {@code null} if
+     * none.
      */
+    @Override
     public String getApplicationProfile() {
         return applicationProfile;
     }
@@ -230,6 +248,7 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
      *
      * @since 2.4
      */
+    @Override
     public String getName() {
         return name;
     }
@@ -244,10 +263,8 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
         name = newValue;
     }
 
-    /**
-     * Returns the detailed text description of what the online resource is/does. Returns {@code
-     * null} if none.
-     */
+    /** Returns the detailed text description of what the online resource is/does. Returns {@code null} if none. */
+    @Override
     public InternationalString getDescription() {
         return description;
     }
@@ -258,10 +275,8 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
         description = newValue;
     }
 
-    /**
-     * Returns the code for function performed by the online resource. Returns {@code null} if
-     * unspecified.
-     */
+    /** Returns the code for function performed by the online resource. Returns {@code null} if unspecified. */
+    @Override
     public OnLineFunction getFunction() {
         return function;
     }
@@ -273,16 +288,17 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
     }
 
     /**
-     * Returns the location (address) for on-line access using a Uniform Resource Locator address or
-     * similar addressing scheme such as http://www.statkart.no/isotc211.
+     * Returns the location (address) for on-line access using a Uniform Resource Locator address or similar addressing
+     * scheme such as http://www.statkart.no/isotc211.
      */
+    @Override
     public URI getLinkage() {
         return linkage;
     }
 
     /**
-     * Set the location (address) for on-line access using a Uniform Resource Locator address or
-     * similar addressing scheme such as http://www.statkart.no/isotc211.
+     * Set the location (address) for on-line access using a Uniform Resource Locator address or similar addressing
+     * scheme such as http://www.statkart.no/isotc211.
      */
     public void setLinkage(final URI newValue) {
         checkWritePermission();
@@ -290,6 +306,7 @@ public class OnLineResourceImpl extends MetadataEntity implements OnLineResource
     }
 
     /** Returns the connection protocol to be used. Returns {@code null} if none. */
+    @Override
     public String getProtocol() {
         final URI linkage = this.linkage;
         return (linkage != null) ? linkage.getScheme() : null;

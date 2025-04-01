@@ -99,6 +99,7 @@ public class TupleValidator extends StatefulValidator implements Cloneable {
         }
     }
 
+    @Override
     @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
     public TupleValidator clone() {
         return new TupleValidator(this.subValidators);
@@ -110,8 +111,7 @@ public class TupleValidator extends StatefulValidator implements Cloneable {
             state = State.NEW;
             valuesValidated = 0;
         } else {
-            throw new IllegalStateException(
-                    "TupleValidator.reset() called in invalid state: " + state.toString());
+            throw new IllegalStateException("TupleValidator.reset() called in invalid state: " + state.toString());
         }
     }
 
@@ -128,9 +128,7 @@ public class TupleValidator extends StatefulValidator implements Cloneable {
                 valuesValidated++;
                 break;
             default:
-                context.error(
-                        String.format("Unexpected alias '%s'", evt.getAnchor()),
-                        evt.getStartMark());
+                context.error(String.format("Unexpected alias '%s'", evt.getAnchor()), evt.getStartMark());
                 break;
         }
     }

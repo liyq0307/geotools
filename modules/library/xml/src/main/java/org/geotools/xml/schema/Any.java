@@ -30,14 +30,16 @@ public interface Any extends ElementGrouping {
     public String getId();
 
     /** @see org.geotools.xml.xsi.ElementGrouping#getMaxOccurs() */
+    @Override
     public int getMaxOccurs();
 
     /** @see org.geotools.xml.xsi.ElementGrouping#getMinOccurs() */
+    @Override
     public int getMinOccurs();
 
     /**
-     * Returns the namespace attribute of the 'any' contruct that an instance of this interface is
-     * representing within an XML Schema.
+     * Returns the namespace attribute of the 'any' contruct that an instance of this interface is representing within
+     * an XML Schema.
      */
     public URI getNamespace();
 }

@@ -18,12 +18,16 @@ package org.geotools.styling;
 
 // OpenGIS dependencies
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.filter.ConstantExpression;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.GeoTools;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.util.Cloneable;
 
 /**
  * Direct implementation of AnchorPoint.
@@ -31,32 +35,64 @@ import org.opengis.util.Cloneable;
  * @author Ian Turton, CCG
  * @version $Id$
  */
-public class AnchorPointImpl implements AnchorPoint, Cloneable {
+public class AnchorPointImpl implements org.geotools.api.style.AnchorPoint, Cloneable {
 
+    /**
+     * get the x coordinate of the anchor point
+     *
+     * @return the expression which represents the X coordinate
+     */
+    static final FilterFactory ff = CommonFactoryFinder.getFilterFactory();
+
+    static final AnchorPoint DEFAULT =
+            new AnchorPointImpl(ff, ConstantExpression.constant(0.5), ConstantExpression.constant(0.5)) {
+                private void cannotModifyConstant() {
+                    throw new UnsupportedOperationException("Constant Stroke may not be modified");
+                }
+
+                @Override
+                public void accept(StyleVisitor visitor) {
+                    visitor.visit(this);
+                }
+
+                @Override
+                public Object accept(TraversingStyleVisitor visitor, Object data) {
+                    cannotModifyConstant();
+                    return null;
+                }
+
+                @Override
+                public Expression getAnchorPointX() {
+                    return ConstantExpression.constant(0.5);
+                }
+
+                @Override
+                public void setAnchorPointX(Expression x) {
+                    cannotModifyConstant();
+                }
+
+                @Override
+                public Expression getAnchorPointY() {
+                    return ConstantExpression.constant(0.5);
+                }
+
+                @Override
+                public void setAnchorPointY(Expression y) {
+                    cannotModifyConstant();
+                }
+            };
     /** The logger for the default core module. */
     private static final java.util.logging.Logger LOGGER =
             org.geotools.util.logging.Logging.getLogger(AnchorPointImpl.class);
 
-    private FilterFactory filterFactory;
+    private final FilterFactory filterFactory;
     private Expression anchorPointX = null;
     private Expression anchorPointY = null;
-
-    static AnchorPointImpl cast(org.opengis.style.AnchorPoint anchor) {
-        if (anchor == null) {
-            return null;
-        } else if (anchor instanceof AnchorPointImpl) {
-            return (AnchorPointImpl) anchor;
-        } else {
-            AnchorPointImpl copy = new AnchorPointImpl();
-            copy.setAnchorPointX(anchor.getAnchorPointX());
-            copy.setAnchorPointY(anchor.getAnchorPointY());
-            return copy;
-        }
-    }
 
     public AnchorPointImpl() {
         this(CommonFactoryFinder.getFilterFactory(GeoTools.getDefaultHints()));
     }
+
     /** Creates a new instance of DefaultAnchorPoint */
     public AnchorPointImpl(FilterFactory filterFactory) {
         this.filterFactory = filterFactory;
@@ -73,11 +109,26 @@ public class AnchorPointImpl implements AnchorPoint, Cloneable {
         anchorPointX = x;
         anchorPointY = y;
     }
+
+    static AnchorPointImpl cast(org.geotools.api.style.AnchorPoint anchor) {
+        if (anchor == null) {
+            return null;
+        } else if (anchor instanceof AnchorPointImpl) {
+            return (AnchorPointImpl) anchor;
+        } else {
+            AnchorPointImpl copy = new AnchorPointImpl();
+            copy.setAnchorPointX(anchor.getAnchorPointX());
+            copy.setAnchorPointY(anchor.getAnchorPointY());
+            return copy;
+        }
+    }
+
     /**
      * Getter for property anchorPointX.
      *
      * @return Value of property anchorPointX.
      */
+    @Override
     public Expression getAnchorPointX() {
         return anchorPointX;
     }
@@ -87,16 +138,9 @@ public class AnchorPointImpl implements AnchorPoint, Cloneable {
      *
      * @param anchorPointX New value of property anchorPointX.
      */
+    @Override
     public void setAnchorPointX(Expression anchorPointX) {
         this.anchorPointX = anchorPointX;
-    }
-    /**
-     * Define the anchor point.
-     *
-     * @param x Literal value of property anchorPointX
-     */
-    public void setAnchorPointX(double x) {
-        this.anchorPointX = filterFactory.literal(x);
     }
 
     /**
@@ -104,7 +148,9 @@ public class AnchorPointImpl implements AnchorPoint, Cloneable {
      *
      * @return Value of property anchorPointY.
      */
+    @Override
     public Expression getAnchorPointY() {
+
         return anchorPointY;
     }
 
@@ -113,6 +159,7 @@ public class AnchorPointImpl implements AnchorPoint, Cloneable {
      *
      * @param anchorPointY New value of property anchorPointY.
      */
+    @Override
     public void setAnchorPointY(Expression anchorPointY) {
         this.anchorPointY = anchorPointY;
     }
@@ -126,17 +173,19 @@ public class AnchorPointImpl implements AnchorPoint, Cloneable {
         this.anchorPointY = filterFactory.literal(x);
     }
 
-    public void accept(StyleVisitor visitor) {
-        visitor.visit(this);
-    }
-
-    public Object accept(org.opengis.style.StyleVisitor visitor, Object data) {
+    @Override
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
+    @Override
+    public void accept(StyleVisitor visitor) {
+        visitor.visit(this);
+    }
     /* (non-Javadoc)
      * @see Cloneable#clone()
      */
+    @Override
     public Object clone() {
         try {
             return super.clone();
@@ -148,6 +197,7 @@ public class AnchorPointImpl implements AnchorPoint, Cloneable {
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -166,6 +216,7 @@ public class AnchorPointImpl implements AnchorPoint, Cloneable {
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode() {
         final int PRIME = 37;
         int result = 17;

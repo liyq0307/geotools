@@ -17,6 +17,7 @@
 package org.geotools.sld.v1_1;
 
 import org.geotools.se.v1_1.SEConfiguration;
+import org.geotools.se.v1_1.bindings.FillBinding;
 import org.geotools.sld.v1_1.bindings.NamedLayerBinding;
 import org.geotools.sld.v1_1.bindings.NamedStyleBinding;
 import org.geotools.sld.v1_1.bindings.RemoteOWSBinding;
@@ -49,14 +50,15 @@ public class SLDConfiguration extends Configuration {
      *
      * @generated
      */
+    @Override
     protected final void registerBindings(MutablePicoContainer container) {
         // Elements
         container.registerComponentImplementation(SLD.NamedLayer, NamedLayerBinding.class);
         container.registerComponentImplementation(SLD.NamedStyle, NamedStyleBinding.class);
         container.registerComponentImplementation(SLD.RemoteOWS, RemoteOWSBinding.class);
-        container.registerComponentImplementation(
-                SLD.StyledLayerDescriptor, StyledLayerDescriptorBinding.class);
+        container.registerComponentImplementation(SLD.StyledLayerDescriptor, StyledLayerDescriptorBinding.class);
         container.registerComponentImplementation(SLD.UserLayer, UserLayerBinding.class);
         container.registerComponentImplementation(SLD.UserStyle, UserStyleBinding.class);
+        container.registerComponentImplementation(SLD.Background, FillBinding.class);
     }
 }

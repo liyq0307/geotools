@@ -17,18 +17,19 @@
 package org.geotools.geojson.feature;
 
 import java.io.IOException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geojson.HandlerBase;
 import org.geotools.geojson.IContentHandler;
 import org.geotools.referencing.CRS;
 import org.json.simple.parser.ParseException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class CRSHandler extends HandlerBase implements IContentHandler<CoordinateReferenceSystem> {
 
     CoordinateReferenceSystem crs;
     int state = 0;
 
+    @Override
     public boolean startObjectEntry(String key) throws ParseException, IOException {
         if ("properties".equals(key)) {
             state = 1;
@@ -38,6 +39,7 @@ public class CRSHandler extends HandlerBase implements IContentHandler<Coordinat
         return true;
     }
 
+    @Override
     public boolean primitive(Object value) throws ParseException, IOException {
         if (state == 2) {
             try {
@@ -53,8 +55,7 @@ public class CRSHandler extends HandlerBase implements IContentHandler<Coordinat
                     }
                 }
             } catch (Exception e) {
-                throw (IOException)
-                        new IOException("Error parsing " + value + " as crs id").initCause(e);
+                throw (IOException) new IOException("Error parsing " + value + " as crs id").initCause(e);
             }
             state = -1;
         }
@@ -62,6 +63,7 @@ public class CRSHandler extends HandlerBase implements IContentHandler<Coordinat
         return true;
     }
 
+    @Override
     public CoordinateReferenceSystem getValue() {
         return crs;
     }

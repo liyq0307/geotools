@@ -16,8 +16,8 @@
  */
 package org.geotools.ows.wmts;
 
-import static junit.framework.TestCase.assertNotNull;
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileReader;
@@ -37,9 +37,7 @@ public class WMTSTestUtils {
         Parser parser = new Parser(new WMTSConfiguration());
 
         Object object = parser.parse(new FileReader(getCaps));
-        assertTrue(
-                "Capabilities failed to parse " + object.getClass(),
-                object instanceof CapabilitiesType);
+        assertTrue("Capabilities failed to parse " + object.getClass(), object instanceof CapabilitiesType);
 
         WMTSCapabilities capabilities = new WMTSCapabilities((CapabilitiesType) object);
         return capabilities;

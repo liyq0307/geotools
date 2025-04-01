@@ -1,18 +1,21 @@
 package org.geotools.jdbc;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.IOException;
 import java.util.logging.Logger;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.util.logging.Logging;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.DWithin;
 
 public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
 
@@ -22,6 +25,7 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
 
     static final Logger LOGGER = Logging.getLogger(JDBCFunctionOnlineTest.class);
 
+    @Test
     public void testDWithinGeographicKm() throws IOException {
         double pointDistance = 111d * Math.sqrt(2); // ft1 points are in diagonal
         assertDWithinFilter(0, pointDistance * 0.1, "km");
@@ -31,6 +35,7 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         assertDWithinFilter(3, pointDistance * 3.1, "km");
     }
 
+    @Test
     public void testDWithinGeographicMeter() throws IOException {
         double pointDistance = 111000 * Math.sqrt(2); // ft1 points are in diagonal
         assertDWithinFilter(0, pointDistance * 0.1, "m");
@@ -40,6 +45,7 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         assertDWithinFilter(3, pointDistance * 3.1, "m");
     }
 
+    @Test
     public void testDWithinGeographicMile() throws IOException {
         double pointDistance = 69 * Math.sqrt(2); // ft1 points are in diagonal
         assertDWithinFilter(0, pointDistance * 0.1, "mi");
@@ -49,6 +55,7 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         assertDWithinFilter(3, pointDistance * 3.1, "mi");
     }
 
+    @Test
     public void testDWithinGeographicFeet() throws IOException {
         double pointDistance = 5280 * 69 * Math.sqrt(2); // ft1 points are in diagonal
         assertDWithinFilter(0, pointDistance * 0.1, "ft");
@@ -58,6 +65,7 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         assertDWithinFilter(3, pointDistance * 3.1, "ft");
     }
 
+    @Test
     public void testBeyondGeographicKm() throws IOException {
         double pointDistance = 111d * Math.sqrt(2); // ft1 points are in diagonal
         assertBeyondFilter(3, pointDistance * 0.1, "km");
@@ -67,6 +75,7 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         assertBeyondFilter(0, pointDistance * 3.1, "km");
     }
 
+    @Test
     public void testBeyondGeographicMeter() throws IOException {
         double pointDistance = 111000 * Math.sqrt(2); // ft1 points are in diagonal
         assertBeyondFilter(3, pointDistance * 0.1, "m");
@@ -76,6 +85,7 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         assertBeyondFilter(0, pointDistance * 3.1, "m");
     }
 
+    @Test
     public void testBeyondGeographicMile() throws IOException {
         double pointDistance = 69 * Math.sqrt(2); // ft1 points are in diagonal
         assertBeyondFilter(3, pointDistance * 0.1, "mi");
@@ -85,6 +95,7 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         assertBeyondFilter(0, pointDistance * 3.1, "mi");
     }
 
+    @Test
     public void testBeyondGeographicFeet() throws IOException {
         double pointDistance = 5280 * 69 * Math.sqrt(2); // ft1 points are in diagonal
         assertBeyondFilter(3, pointDistance * 0.1, "ft");
@@ -94,19 +105,14 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         assertBeyondFilter(0, pointDistance * 3.1, "ft");
     }
 
-    /**
-     * Subclasses testing for "proper" distance calculations should return true
-     *
-     * @return
-     */
+    /** Subclasses testing for "proper" distance calculations should return true */
     protected boolean areDistanceUnitsSupported() {
         LOGGER.info("Skipping dWithin with unit of measure calculation tests");
         return false;
     }
 
-    private void assertDWithinFilter(int expectedMatches, double distance, String unit)
-            throws IOException {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    private void assertDWithinFilter(int expectedMatches, double distance, String unit) throws IOException {
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         final PropertyName geomProperty = ff.property(aname("geometry"));
         final ContentFeatureSource features = dataStore.getFeatureSource(tname("ft1"));
 
@@ -116,9 +122,8 @@ public abstract class JDBCDistanceFiltersTest extends JDBCTestSupport {
         assertEquals(expectedMatches, fc.size());
     }
 
-    private void assertBeyondFilter(int expectedMatches, double distance, String unit)
-            throws IOException {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    private void assertBeyondFilter(int expectedMatches, double distance, String unit) throws IOException {
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         final PropertyName geomProperty = ff.property(aname("geometry"));
         final ContentFeatureSource features = dataStore.getFeatureSource(tname("ft1"));
 

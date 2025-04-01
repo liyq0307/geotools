@@ -17,8 +17,12 @@
 package org.geotools.data.vpf.util;
 
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.data.vpf.io.RowField;
 import org.geotools.data.vpf.io.TableRow;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.util.logging.Logging;
 
 /*
  * PrimitiveDataFactory.java
@@ -30,6 +34,8 @@ import org.opengis.feature.simple.SimpleFeatureType;
  */
 /** @source $URL$ */
 public class PrimitiveDataFactory {
+    static final Logger LOGGER = Logging.getLogger(PrimitiveDataFactory.class);
+
     protected EdgeData readEdge(TableRow edge) {
         EdgeData ed = null;
 
@@ -44,14 +50,14 @@ public class PrimitiveDataFactory {
             ed.put("left_edge", edge.get("left_edge"));
             ed.put("coordinates", edge.get("coordinates"));
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "", e);
         }
 
         return ed;
     }
 
-    protected HashMap readFeature(TableRow line, SimpleFeatureType type) {
-        HashMap tmp = new HashMap();
+    protected HashMap<String, RowField> readFeature(TableRow line, SimpleFeatureType type) {
+        HashMap<String, RowField> tmp = new HashMap<>();
 
         String name = null;
 
@@ -63,11 +69,11 @@ public class PrimitiveDataFactory {
         return tmp;
     }
 
-    protected HashMap readFace(TableRow face) {
-        HashMap fd = new HashMap();
+    protected HashMap<String, Object> readFace(TableRow face) {
+        HashMap<String, Object> fd = new HashMap<>();
         fd.put("id", face.get("id").toString());
-        fd.put("ext_id", Integer.valueOf(face.get(1).intValue()));
-        fd.put("ring_ptr", Integer.valueOf(face.get("ring_ptr").intValue()));
+        fd.put("ext_id", face.get(1).intValue());
+        fd.put("ring_ptr", face.get("ring_ptr").intValue());
 
         return fd;
     }
@@ -80,11 +86,11 @@ public class PrimitiveDataFactory {
         return pd;
     }
 
-    protected HashMap readRing(TableRow ring) {
-        HashMap rd = new HashMap();
+    protected HashMap<String, Object> readRing(TableRow ring) {
+        HashMap<String, Object> rd = new HashMap<>();
         rd.put("id", ring.get("id").toString());
-        rd.put("face_id", Integer.valueOf(ring.get("face_id").intValue()));
-        rd.put("start_edge", Integer.valueOf(ring.get("start_edge").intValue()));
+        rd.put("face_id", ring.get("face_id").intValue());
+        rd.put("start_edge", ring.get("start_edge").intValue());
 
         return rd;
     }

@@ -17,17 +17,21 @@
 
 package org.geotools.data.sqlserver;
 
+import static org.junit.Assume.assumeTrue;
+
 import java.util.logging.Logger;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.jdbc.JDBCJNDIDataSourceOnlineTest;
 import org.geotools.jdbc.JDBCJNDIDataStoreFactory;
 import org.geotools.jdbc.JDBCJNDITestSetup;
 import org.geotools.util.logging.Logging;
+import org.junit.Before;
 
 public class SQLServerJNDIDataSourceOnlineTest extends JDBCJNDIDataSourceOnlineTest {
 
     static final Logger LOGGER = Logging.getLogger(SQLServerJNDIDataSourceOnlineTest.class);
 
+    @Override
     protected JDBCJNDITestSetup createTestSetup() {
         return new JDBCJNDITestSetup(new SQLServerTestSetup());
     }
@@ -42,26 +46,18 @@ public class SQLServerJNDIDataSourceOnlineTest extends JDBCJNDIDataSourceOnlineT
         return new SQLServerDataStoreFactory();
     }
 
-    @Override
-    protected void runTest() throws Throwable {
-        if (isMicrosoftDriverAvailable()) {
-            super.runTest();
-        } else {
-            LOGGER.info(
-                    "Skipping SQLServerJNDIDataSourceOnlineTest test as the Microsoft driver is not available");
-        }
+    @Before
+    public void checkMicrosoftDriverAvailable() {
+        assumeTrue(isMicrosoftDriverAvailable());
     }
 
-    /**
-     * Returns true if the Microsoft JDBC Driver is available in the classpath, false otherwise
-     *
-     * @return
-     */
+    /** Returns true if the Microsoft JDBC Driver is available in the classpath, false otherwise */
     private boolean isMicrosoftDriverAvailable() {
         try {
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             return true;
         } catch (ClassNotFoundException e) {
+            LOGGER.info("Skipping SQLServerJNDIDataSourceOnlineTest test as the Microsoft driver is not available");
             return false;
         }
     }

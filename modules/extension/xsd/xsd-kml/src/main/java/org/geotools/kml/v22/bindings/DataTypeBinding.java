@@ -20,11 +20,11 @@ package org.geotools.kml.v22.bindings;
 
 import java.util.Map;
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.type.Name;
 import org.geotools.kml.v22.KML;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.feature.type.Name;
 
 /**
  * Binding object for the type http://www.opengis.net/kml/2.2:DataType.
@@ -54,6 +54,7 @@ import org.opengis.feature.type.Name;
 public class DataTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.DataType;
     }
@@ -65,6 +66,7 @@ public class DataTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Map.Entry.class;
     }
@@ -76,13 +78,16 @@ public class DataTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         // TODO: implement and remove call to super
         return super.parse(instance, node, value);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
+        @SuppressWarnings("unchecked")
         Map.Entry<Name, Object> data = (Map.Entry<Name, Object>) object;
 
         if ("name".equals(name.getLocalPart())) {

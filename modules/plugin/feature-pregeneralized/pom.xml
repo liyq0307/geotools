@@ -7,18 +7,14 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                               http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>plugin</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
-
 
   <!-- =========================================================== -->
   <!--     Module Description                                      -->
@@ -27,12 +23,8 @@
   <artifactId>gt-feature-pregeneralized</artifactId>
   <packaging>jar</packaging>
   <name>Feature-Pregeneralized</name>
-  
 
-
-  <description>
-	Feature Source with prebuild generalizations
-  </description>
+  <description>Feature Source with prebuild generalizations</description>
 
   <licenses>
     <license>
@@ -42,14 +34,13 @@
     </license>
   </licenses>
 
-
   <!-- =========================================================== -->
   <!--     Developers and Contributors                             -->
   <!-- =========================================================== -->
   <developers>
     <developer>
-      <name>Christian Mueller</name>
       <id>christian.mueller@nvoe.at</id>
+      <name>Christian Mueller</name>
       <email>christian.mueller@nvoe.at</email>
       <organization>TOPP</organization>
       <roles>
@@ -59,15 +50,15 @@
     </developer>
   </developers>
   <dependencies>
-    <dependency>                                                     
-        <groupId>org.geotools</groupId>                                 
-        <artifactId>gt-main</artifactId>
-        <version>${project.version}</version>                           
-    </dependency>                                                  
     <dependency>
-        <groupId>org.geotools</groupId>
-        <artifactId>gt-metadata</artifactId>
-        <version>${project.version}</version>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-main</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-metadata</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
@@ -75,12 +66,6 @@
       <version>${project.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.geotools</groupId>
-      <artifactId>gt-referencing</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-sample-data</artifactId>
@@ -99,10 +84,15 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
-  
-     <!-- =========================================================== -->
+
+  <!-- =========================================================== -->
   <!--     Build Configuration                                     -->
   <!-- =========================================================== -->
   <build>
@@ -121,5 +111,5 @@
       </plugin>
     </plugins>
   </build>
-  
+
 </project>

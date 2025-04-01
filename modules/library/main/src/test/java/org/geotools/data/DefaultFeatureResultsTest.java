@@ -21,36 +21,42 @@ import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 
-import junit.framework.TestCase;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class DefaultFeatureResultsTest extends TestCase {
+public class DefaultFeatureResultsTest {
 
+    @Test
     public void testMaxFeatureOptimized() throws Exception {
         Query q = new Query("roads");
         q.setMaxFeatures(10);
 
         // mock up the feature source so that it'll return a count of 20
-        SimpleFeatureType type =
-                DataUtilities.createType("roads", "_=the_geom:Point,FID:String,NAME:String");
+        SimpleFeatureType type = DataUtilities.createType("roads", "_=the_geom:Point,FID:String,NAME:String");
         SimpleFeatureSource fs = createMock(SimpleFeatureSource.class);
         expect(fs.getSchema()).andReturn(type).anyTimes();
         expect(fs.getCount(q)).andReturn(20);
         replay(fs);
 
         DefaultFeatureResults results = new DefaultFeatureResults(fs, q);
-        assertEquals(10, results.size());
+        Assert.assertEquals(10, results.size());
     }
 
+    @Test
     public void testMaxfeaturesHandCount() throws Exception {
         Query q = new Query("roads");
         q.setMaxFeatures(1);
 
-        // mock up the feature source so that it'll return a count of -1 (too
-        // expensive)
+        // mock up the feature source so that it'll return a count of -1 (too expensive)
         // and then will return a reader
+        @SuppressWarnings("PMD.CloseResource")
         FeatureReader<SimpleFeatureType, SimpleFeature> fr = createNiceMock(FeatureReader.class);
         expect(fr.hasNext()).andReturn(true).times(2).andReturn(false);
         replay(fr);
@@ -59,8 +65,7 @@ public class DefaultFeatureResultsTest extends TestCase {
         expect(ds.getFeatureReader(q, Transaction.AUTO_COMMIT)).andReturn(fr);
         replay(ds);
 
-        SimpleFeatureType type =
-                DataUtilities.createType("roads", "_=the_geom:Point,FID:String,NAME:String");
+        SimpleFeatureType type = DataUtilities.createType("roads", "_=the_geom:Point,FID:String,NAME:String");
         SimpleFeatureSource fs = createMock(SimpleFeatureSource.class);
         expect(fs.getSchema()).andReturn(type).anyTimes();
         expect(fs.getCount(q)).andReturn(-1);
@@ -68,6 +73,6 @@ public class DefaultFeatureResultsTest extends TestCase {
         replay(fs);
 
         DefaultFeatureResults results = new DefaultFeatureResults(fs, q);
-        assertEquals(1, results.size());
+        Assert.assertEquals(1, results.size());
     }
 }

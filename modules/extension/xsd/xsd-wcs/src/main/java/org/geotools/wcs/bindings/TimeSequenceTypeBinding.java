@@ -27,15 +27,15 @@ import net.opengis.gml.TimePositionType;
 import net.opengis.wcs10.TimePeriodType;
 import net.opengis.wcs10.TimeSequenceType;
 import net.opengis.wcs10.Wcs10Factory;
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.Period;
+import org.geotools.api.temporal.Position;
 import org.geotools.gml3.GML;
 import org.geotools.temporal.object.DefaultInstant;
 import org.geotools.wcs.WCS;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.Period;
-import org.opengis.temporal.Position;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -64,6 +64,7 @@ import org.w3c.dom.Element;
 public class TimeSequenceTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WCS.TimeSequenceType;
     }
@@ -75,6 +76,7 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return TimeSequenceType.class;
     }
@@ -86,6 +88,8 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
+    @SuppressWarnings("unchecked")
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         List<Node> timePositions = node.getChildren("timePosition");
         TimeSequenceType results = Wcs10Factory.eINSTANCE.createTimeSequenceType();
@@ -103,19 +107,15 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
             List<Node> timePeriods = node.getChildren("timePeriod");
             if (timePeriods != null && !timePeriods.isEmpty()) {
                 for (Node timePeriodNode : timePeriods) {
-                    Instant begining =
-                            new DefaultInstant(
-                                    (Position) timePeriodNode.getChild("beginPosition").getValue());
-                    Instant ending =
-                            new DefaultInstant(
-                                    (Position) timePeriodNode.getChild("endPosition").getValue());
+                    Instant begining = new DefaultInstant(
+                            (Position) timePeriodNode.getChild("beginPosition").getValue());
+                    Instant ending = new DefaultInstant(
+                            (Position) timePeriodNode.getChild("endPosition").getValue());
 
                     // Period timePeriod = new DefaultPeriod(begining, ending);
                     TimePeriodType timePeriod = Wcs10Factory.eINSTANCE.createTimePeriodType();
-                    TimePositionType beginPosition =
-                            Gml4wcsFactory.eINSTANCE.createTimePositionType();
-                    TimePositionType endPosition =
-                            Gml4wcsFactory.eINSTANCE.createTimePositionType();
+                    TimePositionType beginPosition = Gml4wcsFactory.eINSTANCE.createTimePositionType();
+                    TimePositionType endPosition = Gml4wcsFactory.eINSTANCE.createTimePositionType();
 
                     beginPosition.setValue(begining.getPosition().getDate());
                     endPosition.setValue(ending.getPosition().getDate());
@@ -150,6 +150,7 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
         return null;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) {
         List timeSequence = (List) object;
 
@@ -162,9 +163,11 @@ public class TimeSequenceTypeBinding extends AbstractComplexBinding {
         }
 
         if (name.getLocalPart().equals("timePosition") && timeSequence.get(0) instanceof Position) {
-            List<Position> result = new LinkedList<Position>();
+            List<Position> result = new LinkedList<>();
 
-            for (Position position : (List<Position>) timeSequence) result.add(position);
+            @SuppressWarnings("unchecked")
+            List<Position> cast = timeSequence;
+            for (Position position : cast) result.add(position);
 
             return result;
         }

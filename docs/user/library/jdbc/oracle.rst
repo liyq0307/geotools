@@ -69,6 +69,21 @@ Advanced
 |                       | the bounds are configured right in the tables  |
 |                       | default is false                               |
 +-----------------------+------------------------------------------------+
+|  ``Login timemout``   | Specifies the timeout for opening              |
+|                       | an Oracle JDBC connection (seconds)            |
++-----------------------+------------------------------------------------+
+|  ``Socket connection``| Specifies the timeout when connecting          |
+|      ``timeout``      | a socket to the database listener              |
+|                       | (milliseconds)                                 |
++-----------------------+------------------------------------------------+
+|``Outbound connection``| Specifies the timeout when negotiating         |
+|     ``timeout``       | a session with the database listener           |
+|                       | (milliseconds)                                 |
++-----------------------+------------------------------------------------+
+|``Get remarks``        | Boolean flag specifies whether REMARKS         |
+|                       | metadata will be returned.                     |
++-----------------------+------------------------------------------------+
+
 
 Example use::
   
@@ -112,11 +127,6 @@ to be classified, and fall back on the ``MDSYS`` views only if such table does n
 
 Setup
 ^^^^^
-
-* JDBC Driver
-  
-  GeoTools is unable to ship the Oracle JDBC driver with the standard
-  distribution. It must be downloaded from oracle separately.
 
 * JDBC vs JDBC-NG
   

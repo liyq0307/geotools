@@ -16,8 +16,15 @@
  */
 package org.geotools.gml3.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import org.geotools.gml3.GML;
 import org.geotools.gml3.GML3TestSupport;
+import org.geotools.referencing.CRS;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
@@ -27,7 +34,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 public class MultiPolygonTypeBindingTest extends GML3TestSupport {
-
+    @Test
     public void test() throws Exception {
         GML3MockData.multiPolygon(document, document);
 
@@ -36,6 +43,7 @@ public class MultiPolygonTypeBindingTest extends GML3TestSupport {
         assertEquals(2, multiPolygon.getNumGeometries());
     }
 
+    @Test
     public void test3D() throws Exception {
         GML3MockData.multiPolygon3D(document, document);
 
@@ -50,16 +58,38 @@ public class MultiPolygonTypeBindingTest extends GML3TestSupport {
         assertTrue(new Coordinate(1d, 2d, 10d).equals3D(interior.getCoordinateN(0)));
     }
 
+    @Test
     public void testEncode() throws Exception {
         Geometry geometry = GML3MockData.multiPolygon();
         GML3EncodingUtils.setID(geometry, "geometry");
         Document dom = encode(geometry, GML.MultiPolygon);
         // print(dom);
         assertEquals("geometry", getID(dom.getDocumentElement()));
-        assertEquals(2, dom.getElementsByTagNameNS(GML.NAMESPACE, "polygonMember").getLength());
+        assertEquals(
+                2, dom.getElementsByTagNameNS(GML.NAMESPACE, "polygonMember").getLength());
         NodeList children = dom.getElementsByTagNameNS(GML.NAMESPACE, GML.Polygon.getLocalPart());
         assertEquals(2, children.getLength());
         assertEquals("geometry.1", getID(children.item(0)));
         assertEquals("geometry.2", getID(children.item(1)));
+    }
+
+    @Test
+    public void testEncodePolygon() throws Exception {
+        Geometry geometry = GML3MockData.polygon();
+        geometry.setUserData(CRS.decode("EPSG:4326"));
+        GML3EncodingUtils.setID(geometry, "geometry");
+        Document dom = encode(geometry, GML.MultiPolygon);
+        // print(dom);
+        assertEquals(
+                "urn:x-ogc:def:crs:EPSG:4326",
+                dom.getElementsByTagNameNS(GML.NAMESPACE, "MultiPolygon")
+                        .item(0)
+                        .getAttributes()
+                        .getNamedItem("srsName")
+                        .getTextContent());
+        assertNull(dom.getElementsByTagNameNS(GML.NAMESPACE, "Polygon")
+                .item(0)
+                .getAttributes()
+                .getNamedItem("srsName"));
     }
 }

@@ -27,27 +27,25 @@ import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import javax.swing.Icon;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.geometry.jts.GeometryBuilder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.LiteShape;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.geotools.renderer.VendorOptionParser;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.Mark;
-import org.geotools.styling.Symbolizer;
 import org.locationtech.jts.algorithm.MinimumDiameter;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.index.quadtree.Quadtree;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * Helper class that helps building (and caching) a texture fill built off a random symbol
- * distribution
+ * Helper class that helps building (and caching) a texture fill built off a random symbol distribution
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -69,8 +67,7 @@ class RandomFillBuilder {
         FREE
     }
 
-    private static final int MAX_RANDOM_COUNT =
-            Integer.getInteger("org.geotools.render.random.maxCount", 1024);
+    private static final int MAX_RANDOM_COUNT = Integer.getInteger("org.geotools.render.random.maxCount", 1024);
 
     private static final int MAX_RANDOM_ATTEMPTS_MULTIPLIER =
             Integer.getInteger("org.geotools.render.random.maxAttemptsMultiplier", 5);
@@ -87,35 +84,18 @@ class RandomFillBuilder {
         this.factory = factory;
     }
 
-    /**
-     * Builds a image with a random distribution of the graphic/mark
-     *
-     * @param symbolizer
-     * @param graphicSize
-     * @param gs
-     * @param mark
-     * @return
-     */
+    /** Builds a image with a random distribution of the graphic/mark */
     BufferedImage buildRandomTilableImage(
-            Symbolizer symbolizer,
-            Graphic gr,
-            Icon icon,
-            Mark mark,
-            Shape shape,
-            double markSize,
-            Object feature) {
+            Symbolizer symbolizer, Graphic gr, Icon icon, Mark mark, Shape shape, double markSize, Object feature) {
         // grab the random generation options
         PositionRandomizer randomizer =
-                (PositionRandomizer)
-                        voParser.getEnumOption(symbolizer, "random", PositionRandomizer.NONE);
+                (PositionRandomizer) voParser.getEnumOption(symbolizer, "random", PositionRandomizer.NONE);
         int seed = voParser.getIntOption(symbolizer, "random-seed", 0);
         int tileSize = voParser.getIntOption(symbolizer, "random-tile-size", 256);
         int count = voParser.getIntOption(symbolizer, "random-symbol-count", 16);
         int spaceAround = voParser.getIntOption(symbolizer, "random-space-around", 0);
         RotationRandomizer rotation =
-                (RotationRandomizer)
-                        voParser.getEnumOption(
-                                symbolizer, "random-rotation", RotationRandomizer.NONE);
+                (RotationRandomizer) voParser.getEnumOption(symbolizer, "random-rotation", RotationRandomizer.NONE);
         boolean randomRotation = rotation == RotationRandomizer.FREE;
 
         // minimum validation
@@ -129,13 +109,12 @@ class RandomFillBuilder {
                             + ". You can override this limit by setting the org.geotools.render.random.maxCount system property");
         }
         if (icon != null && (icon.getIconWidth() > tileSize || icon.getIconHeight() > tileSize)) {
-            throw new IllegalArgumentException(
-                    "Cannot perform random image disposition, image size "
-                            + icon.getIconWidth()
-                            + "x"
-                            + icon.getIconHeight()
-                            + " exceeds randomized tile size: "
-                            + tileSize);
+            throw new IllegalArgumentException("Cannot perform random image disposition, image size "
+                    + icon.getIconWidth()
+                    + "x"
+                    + icon.getIconHeight()
+                    + " exceeds randomized tile size: "
+                    + tileSize);
         }
 
         // prepare the rendering surface
@@ -159,16 +138,13 @@ class RandomFillBuilder {
         if (randomizer == PositionRandomizer.GRID) {
             ps = new GridBasedPositionGenerator(random, rac, count, targetArea, randomRotation);
         } else {
-            ps =
-                    new FullyRandomizedPositionGenerator(
-                            random, rac, count, targetArea, randomRotation);
+            ps = new FullyRandomizedPositionGenerator(random, rac, count, targetArea, randomRotation);
         }
 
         // if we are going to paint rotated images, better set the interpolation to bicubic
         Object oldInterpolationValue = g2d.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
         if (randomRotation && icon != null) {
-            g2d.setRenderingHint(
-                    RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         }
         AffineTransform originalTransform = g2d.getTransform();
         try {
@@ -179,7 +155,7 @@ class RandomFillBuilder {
                 while ((p = ps.getNextPosition()) != null) {
                     at.setToTranslation(p.x, p.y);
                     at.rotate(Math.toRadians(p.rotation));
-                    List<AffineTransform2D> transforms = new ArrayList<AffineTransform2D>();
+                    List<AffineTransform2D> transforms = new ArrayList<>();
                     AffineTransform2D at2d = new AffineTransform2D(at);
                     transforms.add(at2d);
 
@@ -198,8 +174,7 @@ class RandomFillBuilder {
                                 at.rotate(Math.toRadians(p.rotation));
                                 AffineTransform2D tx2d = new AffineTransform2D(at);
                                 Geometry translatedBounds = JTS.transform(bounds, tx2d);
-                                if (tileBounds.intersects(translatedBounds)
-                                        || tileBounds.contains(translatedBounds)) {
+                                if (tileBounds.intersects(translatedBounds) || tileBounds.contains(translatedBounds)) {
                                     // System.out.println("Adding  " + translatedBounds);
                                     transforms.add(tx2d);
                                 }
@@ -235,8 +210,7 @@ class RandomFillBuilder {
                     ps.lastPositionResults(false);
                 }
             } catch (TransformException e) {
-                throw new RuntimeException(
-                        "Unexpected error happened while paining the random symbols", e);
+                throw new RuntimeException("Unexpected error happened while paining the random symbols", e);
             }
         } finally {
             g2d.setTransform(originalTransform);
@@ -276,8 +250,7 @@ class RandomFillBuilder {
         return conflictBounds;
     }
 
-    private Geometry getGeometryBounds(
-            Icon icon, Mark mark, Shape shape, double markSize, Object feature) {
+    private Geometry getGeometryBounds(Icon icon, Mark mark, Shape shape, double markSize, Object feature) {
         Geometry bounds;
         if (icon != null) {
             bounds = new GeometryBuilder().box(0, 0, icon.getIconWidth(), icon.getIconHeight());
@@ -351,7 +324,7 @@ class RandomFillBuilder {
         @Override
         public boolean checkAndReserve(List<AffineTransform2D> transforms)
                 throws MismatchedDimensionException, TransformException {
-            List<Geometry> transformedConflictBounds = new ArrayList<Geometry>();
+            List<Geometry> transformedConflictBounds = new ArrayList<>();
             boolean conflict = false;
             for (AffineTransform2D tx2d : transforms) {
                 if (conflict) {
@@ -360,8 +333,8 @@ class RandomFillBuilder {
                 Geometry cbTransformed = JTS.transform(conflictBounds, tx2d);
                 transformedConflictBounds.add(cbTransformed);
                 List results = qt.query(cbTransformed.getEnvelopeInternal());
-                for (Iterator it = results.iterator(); it.hasNext(); ) {
-                    Geometry candidate = (Geometry) it.next();
+                for (Object result : results) {
+                    Geometry candidate = (Geometry) result;
                     if (candidate.intersects(cbTransformed)) {
                         // location conflict
                         conflict = true;
@@ -444,8 +417,7 @@ class RandomFillBuilder {
 
         @Override
         public Position getNextPosition() {
-            if (attempts > targetSymbolCount * MAX_RANDOM_ATTEMPTS_MULTIPLIER
-                    || symbols > targetSymbolCount) {
+            if (attempts > targetSymbolCount * MAX_RANDOM_ATTEMPTS_MULTIPLIER || symbols > targetSymbolCount) {
                 return null;
             }
 
@@ -526,18 +498,8 @@ class RandomFillBuilder {
 
             // System.out.println("Grid position: " + c + ", " + r + ", deltas: " + deltaX + "," +
             // deltaY + " target area: " + targetArea);
-            position.x =
-                    (int)
-                            Math.round(
-                                    targetArea.getMinX()
-                                            + c * deltaX
-                                            + random.nextDouble() * deltaX);
-            position.y =
-                    (int)
-                            Math.round(
-                                    targetArea.getMinY()
-                                            + r * deltaY
-                                            + random.nextDouble() * deltaY);
+            position.x = (int) Math.round(targetArea.getMinX() + c * deltaX + random.nextDouble() * deltaX);
+            position.y = (int) Math.round(targetArea.getMinY() + r * deltaY + random.nextDouble() * deltaY);
             if (randomRotation) {
                 position.rotation = random.nextDouble() * 360;
             }

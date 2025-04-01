@@ -24,10 +24,10 @@ import org.apache.commons.jxpath.ri.compiler.NodeTest;
 import org.apache.commons.jxpath.ri.compiler.NodeTypeTest;
 import org.apache.commons.jxpath.ri.model.NodeIterator;
 import org.apache.commons.jxpath.ri.model.NodePointer;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
 import org.geotools.data.complex.util.ComplexFeatureConstants;
 import org.geotools.feature.type.Types;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
 
 /**
  * Special node pointer for {@link org.geotools.feature.Feature}.
@@ -52,26 +52,32 @@ public class AttributeNodePointer extends NodePointer {
         this.feature = feature;
     }
 
+    @Override
     public boolean isLeaf() {
         return !(feature instanceof ComplexAttribute);
     }
 
+    @Override
     public boolean isCollection() {
         return false;
     }
 
+    @Override
     public int getLength() {
         return 1;
     }
 
+    @Override
     public QName getName() {
         return name;
     }
 
+    @Override
     public Object getBaseValue() {
         return null;
     }
 
+    @Override
     public Object getImmediateNode() {
         return ComplexFeatureConstants.unpack(feature);
     }
@@ -80,15 +86,18 @@ public class AttributeNodePointer extends NodePointer {
         return feature;
     }
 
+    @Override
     public void setValue(Object value) {
         feature = (Attribute) value;
     }
 
+    @Override
     public int compareChildNodePointers(NodePointer pointer1, NodePointer pointer2) {
 
         return 0;
     }
 
+    @Override
     public NodeIterator childIterator(NodeTest test, boolean reverse, NodePointer startWith) {
         if (test instanceof NodeNameTest) {
             NodeNameTest nodeNameTest = (NodeNameTest) test;
@@ -114,11 +123,9 @@ public class AttributeNodePointer extends NodePointer {
         return super.childIterator(test, reverse, startWith);
     }
 
+    @Override
     public NodeIterator attributeIterator(QName qname) {
         return new XmlAttributeNodeIterator(
-                this,
-                Types.typeName(
-                        getNamespaceResolver().getNamespaceURI(qname.getPrefix()),
-                        qname.getName()));
+                this, Types.typeName(getNamespaceResolver().getNamespaceURI(qname.getPrefix()), qname.getName()));
     }
 }

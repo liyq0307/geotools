@@ -16,14 +16,17 @@
  */
 package org.geotools.util.factory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
- * Tests {@link org.geotools.util.factory.FactoryIteratorProvider} addition in {@link
- * org.geotools.util.factory.FactoryIteratorProviders}.
+ * Tests {@link org.geotools.util.factory.FactoryIteratorProvider} addition in
+ * {@link org.geotools.util.factory.FactoryIteratorProviders}.
  *
  * @version $Id$
  * @author Martin Desruisseaux
@@ -42,11 +45,9 @@ public final class FactoryIteratorProviderTest {
      * Returns a factory from the specified registry.
      *
      * @throws org.geotools.util.factory.FactoryNotFoundException if no factory was found.
-     * @throws org.geotools.util.factory.FactoryRegistryException if a factory can't be returned for
-     *     some other reason.
+     * @throws org.geotools.util.factory.FactoryRegistryException if a factory can't be returned for some other reason.
      */
-    private static DummyFactory getFactory(
-            final FactoryRegistry registry, final Class<? extends DummyFactory> type)
+    private static DummyFactory getFactory(final FactoryRegistry registry, final Class<? extends DummyFactory> type)
             throws FactoryRegistryException {
         Hints hints = null;
         if (type != null) {
@@ -55,10 +56,7 @@ public final class FactoryIteratorProviderTest {
         return registry.getFactory(DummyFactory.class, null, hints, DummyFactory.DUMMY_FACTORY);
     }
 
-    /**
-     * Tests the registration of {@link DummyFactory} instances from {@link
-     * DummyFactoryIteratorProvider}.
-     */
+    /** Tests the registration of {@link DummyFactory} instances from {@link DummyFactoryIteratorProvider}. */
     @Test
     public void testRegistration() {
         /*
@@ -77,9 +75,8 @@ public final class FactoryIteratorProviderTest {
         try {
             FactoryIteratorProviders.addFactoryIteratorProvider(provider1);
             assertNotNull(getFactory(registry, null));
-            DummyFactory factory;
 
-            factory = getFactory(registry, DummyFactory.Example1.class);
+            DummyFactory factory = getFactory(registry, DummyFactory.Example1.class);
             assertEquals(DummyFactory.Example1.class, factory.getClass());
             factory = getFactory(registry, DummyFactory.Example2.class);
             assertEquals(DummyFactory.Example2.class, factory.getClass());

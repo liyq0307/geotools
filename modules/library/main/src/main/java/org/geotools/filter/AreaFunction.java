@@ -19,8 +19,9 @@
 
 package org.geotools.filter;
 
-import static org.geotools.filter.capability.FunctionNameImpl.*;
+import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -29,7 +30,6 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * Area of provided geometry.
@@ -39,17 +39,16 @@ import org.opengis.filter.capability.FunctionName;
 public class AreaFunction extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "Area", parameter("area", Double.class), parameter("geometry", Geometry.class));
+            new FunctionNameImpl("Area", parameter("area", Double.class), parameter("geometry", Geometry.class));
 
     /** Creates a new instance of AreaFunction */
     public AreaFunction() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
-        org.opengis.filter.expression.Expression geom;
-        geom = (org.opengis.filter.expression.Expression) getParameters().get(0);
+        org.geotools.api.filter.expression.Expression geom = getParameters().get(0);
         Geometry g = (Geometry) geom.evaluate(feature);
 
         return Double.valueOf(getArea(g));
@@ -91,10 +90,9 @@ public class AreaFunction extends FunctionExpressionImpl {
 
     /**
      * Calculates and returns the area of the specified geometry.<br>
-     * For Polygons, this is the total area inside the external ring less the total of any contained
-     * by interior rings. GeometryCollections (including MultiPolygons) are iterated through so the
-     * result is the sum of all polygons anywhere within the collection. Any geometry other than
-     * Polgyon or a collection returns 0;
+     * For Polygons, this is the total area inside the external ring less the total of any contained by interior rings.
+     * GeometryCollections (including MultiPolygons) are iterated through so the result is the sum of all polygons
+     * anywhere within the collection. Any geometry other than Polgyon or a collection returns 0;
      *
      * @param geometry The Geometry to calculate the area of.
      * @return The total area of the Geometry.
@@ -115,10 +113,9 @@ public class AreaFunction extends FunctionExpressionImpl {
 
     /**
      * Calculates and returns the perimeter of the specified geometry.<br>
-     * For Polygons, this is the total length of the exterior ring and all internal rings. For
-     * LineStrings the total line length is returned. GeometryCollections are iterated through so
-     * the result is the sum of all Polygon and Line geometries anywhere within the collection. Any
-     * point geometries return a value of 0;
+     * For Polygons, this is the total length of the exterior ring and all internal rings. For LineStrings the total
+     * line length is returned. GeometryCollections are iterated through so the result is the sum of all Polygon and
+     * Line geometries anywhere within the collection. Any point geometries return a value of 0;
      *
      * @param geometry The Geometry to calculate the area of.
      * @return The total area of the Geometry.
@@ -187,22 +184,18 @@ public class AreaFunction extends FunctionExpressionImpl {
         double maxx = Double.NEGATIVE_INFINITY;
         double miny = Double.POSITIVE_INFINITY;
         double maxy = Double.NEGATIVE_INFINITY;
-        for (int i = 0; i < numberOfExteriorRingCoordinates; i++) {
-            minx = Math.min(minx, exteriorRingCoordinates[i].x);
-            maxx = Math.max(maxx, exteriorRingCoordinates[i].x);
-            miny = Math.min(miny, exteriorRingCoordinates[i].y);
-            maxy = Math.max(maxy, exteriorRingCoordinates[i].y);
+        for (Coordinate exteriorRingCoordinate : exteriorRingCoordinates) {
+            minx = Math.min(minx, exteriorRingCoordinate.x);
+            maxx = Math.max(maxx, exteriorRingCoordinate.x);
+            miny = Math.min(miny, exteriorRingCoordinate.y);
+            maxy = Math.max(maxy, exteriorRingCoordinate.y);
         }
         // Calculate area of each trapezoid formed by dropping lines from
         // each pair of coordinates in exteriorRingCoordinates to the x-axis.
         // x[i]<x[i-1] will contribute a negative area
         for (int i = 0; i < (numberOfExteriorRingCoordinates - 1); i++) {
-            area +=
-                    (((exteriorRingCoordinates[i + 1].x - minx)
-                                    - (exteriorRingCoordinates[i].x - minx))
-                            * (((exteriorRingCoordinates[i + 1].y - miny)
-                                            + (exteriorRingCoordinates[i].y - miny))
-                                    / 2d));
+            area += (((exteriorRingCoordinates[i + 1].x - minx) - (exteriorRingCoordinates[i].x - minx))
+                    * (((exteriorRingCoordinates[i + 1].y - miny) + (exteriorRingCoordinates[i].y - miny)) / 2d));
         }
         area = Math.abs(area);
         // Calculate area of each trapezoid formed by dropping lines
@@ -225,12 +218,8 @@ public class AreaFunction extends FunctionExpressionImpl {
                 maxy = Math.max(maxy, interiorRingCoordinates[j].y);
             }
             for (int j = 0; j < (numberOfInteriorRingCoordinates - 1); j++) {
-                interiorArea +=
-                        (((interiorRingCoordinates[j + 1].x - minx)
-                                        - (interiorRingCoordinates[j].x - minx))
-                                * (((interiorRingCoordinates[j + 1].y - miny)
-                                                + (interiorRingCoordinates[j].y - miny))
-                                        / 2d));
+                interiorArea += (((interiorRingCoordinates[j + 1].x - minx) - (interiorRingCoordinates[j].x - minx))
+                        * (((interiorRingCoordinates[j + 1].y - miny) + (interiorRingCoordinates[j].y - miny)) / 2d));
             }
             area -= Math.abs(interiorArea);
         }

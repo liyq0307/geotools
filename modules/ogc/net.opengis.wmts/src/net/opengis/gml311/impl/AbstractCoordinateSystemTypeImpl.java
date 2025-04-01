@@ -93,9 +93,10 @@ public abstract class AbstractCoordinateSystemTypeImpl extends AbstractCoordinat
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<IdentifierType> getCsID() {
         if (csID == null) {
-            csID = new EObjectContainmentEList<IdentifierType>(IdentifierType.class, this, Gml311Package.ABSTRACT_COORDINATE_SYSTEM_TYPE__CS_ID);
+            csID = new EObjectContainmentEList<>(IdentifierType.class, this, Gml311Package.ABSTRACT_COORDINATE_SYSTEM_TYPE__CS_ID);
         }
         return csID;
     }
@@ -105,6 +106,7 @@ public abstract class AbstractCoordinateSystemTypeImpl extends AbstractCoordinat
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public StringOrRefType getRemarks() {
         return remarks;
     }
@@ -129,6 +131,7 @@ public abstract class AbstractCoordinateSystemTypeImpl extends AbstractCoordinat
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setRemarks(StringOrRefType newRemarks) {
         if (newRemarks != remarks) {
             NotificationChain msgs = null;
@@ -148,9 +151,10 @@ public abstract class AbstractCoordinateSystemTypeImpl extends AbstractCoordinat
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<CoordinateSystemAxisRefType> getUsesAxis() {
         if (usesAxis == null) {
-            usesAxis = new EObjectContainmentEList<CoordinateSystemAxisRefType>(CoordinateSystemAxisRefType.class, this, Gml311Package.ABSTRACT_COORDINATE_SYSTEM_TYPE__USES_AXIS);
+            usesAxis = new EObjectContainmentEList<>(CoordinateSystemAxisRefType.class, this, Gml311Package.ABSTRACT_COORDINATE_SYSTEM_TYPE__USES_AXIS);
         }
         return usesAxis;
     }

@@ -16,9 +16,15 @@
  */
 package org.geotools.wfs.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.net.URL;
+import java.util.Map;
 import net.opengis.wfs.FeatureCollectionType;
 import net.opengis.wfs.WfsFactory;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
@@ -28,11 +34,11 @@ import org.geotools.test.TestData;
 import org.geotools.wfs.WFS;
 import org.geotools.wfs.WFSTestSupport;
 import org.geotools.xsd.Binding;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -44,9 +50,14 @@ public class FeatureCollectionTypeBindingTest extends WFSTestSupport {
     }
 
     @Override
-    public void testEncode() throws Exception {
+    protected Map<String, String> getNamespaces() {
+        return namespaces(Namespace("geotools", "http://geotools.org"));
+    }
 
-        namespaceMappings.put("geotools", "http://geotools.org");
+    @Override
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testEncode() throws Exception {
 
         DefaultFeatureCollection features = new DefaultFeatureCollection(null, null);
 
@@ -82,6 +93,7 @@ public class FeatureCollectionTypeBindingTest extends WFSTestSupport {
     }
 
     @Override
+    @Test
     public void testParse() throws Exception {
         final URL resource = TestData.getResource(this, "FeatureCollectionTypeBindingTest.xml");
         buildDocument(resource);
@@ -92,19 +104,13 @@ public class FeatureCollectionTypeBindingTest extends WFSTestSupport {
         FeatureCollection features = (FeatureCollection) fc.getFeature().get(0);
         assertEquals(2, features.size());
 
-        FeatureIterator fi = features.features();
-        try {
+        try (FeatureIterator fi = features.features()) {
             assertTrue(fi.hasNext());
             SimpleFeature f = (SimpleFeature) fi.next();
 
             assertEquals("feature", f.getType().getTypeName());
             assertTrue(f.getDefaultGeometry() instanceof LineString);
             assertEquals("1", f.getAttribute("integer").toString());
-
-        } finally {
-            if (fi != null) {
-                fi.close();
-            }
         }
     }
 }

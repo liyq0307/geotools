@@ -17,13 +17,13 @@
 package org.geotools.se.v1_1.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.style.Description;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.se.v1_1.SE;
 import org.geotools.sld.bindings.SLDRuleBinding;
-import org.geotools.styling.Rule;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.style.Description;
 
 /**
  * Binding object for the element http://www.opengis.net/se:Rule.
@@ -53,6 +53,7 @@ public class RuleBinding extends SLDRuleBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.Rule;
     }
@@ -64,6 +65,7 @@ public class RuleBinding extends SLDRuleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Rule rule = (Rule) super.parse(instance, node, value);
 

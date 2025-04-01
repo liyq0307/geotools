@@ -38,27 +38,25 @@ public class MySQLJoinTestSetup extends JDBCJoinTestSetup {
         sb = new StringBuffer();
         sb.append("INSERT INTO ftjoin VALUES (")
                 .append(
-                        "0, 'zero', GeometryFromText('POLYGON ((-0.1 -0.1, -0.1 0.1, 0.1 0.1, 0.1 -0.1, -0.1 -0.1))',4326), 0);");
+                        "0, 'zero', ST_GeomFromText('POLYGON ((-0.1 -0.1, -0.1 0.1, 0.1 0.1, 0.1 -0.1, -0.1 -0.1))',4326), 0);");
         run(sb.toString());
 
         sb = new StringBuffer();
         sb.append("INSERT INTO ftjoin VALUES (")
                 .append(
-                        "1, 'one', GeometryFromText('POLYGON ((-1.1 -1.1, -1.1 1.1, 1.1 1.1, 1.1 -1.1, -1.1 -1.1))',4326), 1);");
+                        "1, 'one', ST_GeomFromText('POLYGON ((-1.1 -1.1, -1.1 1.1, 1.1 1.1, 1.1 -1.1, -1.1 -1.1))',4326), 1);");
         run(sb.toString());
 
         sb = new StringBuffer();
         sb.append("INSERT INTO ftjoin VALUES (")
-                .append(
-                        "2, 'two', GeometryFromText('POLYGON ((-10 -10, -10 10, 10 10, 10 -10, -10 -10))',4326), 2);");
+                .append("2, 'two', ST_GeomFromText('POLYGON ((-10 -10, -10 10, 10 10, 10 -10, -10 -10))',4326), 2);");
         run(sb.toString());
 
         sb = new StringBuffer();
         sb.append("INSERT INTO ftjoin VALUES (").append("3, 'three', NULL, 3);");
         run(sb.toString());
 
-        run(
-                "CREATE TABLE ftjoin2(id int PRIMARY KEY, join2intProperty int, stringProperty2 varchar(255))");
+        run("CREATE TABLE ftjoin2(id int PRIMARY KEY, join2intProperty int, stringProperty2 varchar(255))");
         run("INSERT INTO ftjoin2 VALUES (0, 0, '2nd zero')");
         run("INSERT INTO ftjoin2 VALUES (1, 1, '2nd one')");
         run("INSERT INTO ftjoin2 VALUES (2, 2, '2nd two')");

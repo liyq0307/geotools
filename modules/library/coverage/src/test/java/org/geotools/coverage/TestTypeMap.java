@@ -16,12 +16,14 @@
  */
 package org.geotools.coverage;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.SampleModel;
+import org.geotools.api.coverage.SampleDimensionType;
 import org.junit.Test;
-import org.opengis.coverage.SampleDimensionType;
 
 /**
  * Testing {@link TypeMap} class.
@@ -33,8 +35,7 @@ public class TestTypeMap {
     @Test
     public void testGetSampleDimensionTypeSampleModel() {
 
-        final SampleModel sm =
-                new BufferedImage(512, 512, BufferedImage.TYPE_USHORT_555_RGB).getSampleModel();
+        final SampleModel sm = new BufferedImage(512, 512, BufferedImage.TYPE_USHORT_555_RGB).getSampleModel();
         assertSame(SampleDimensionType.UNSIGNED_8BITS, TypeMap.getSampleDimensionType(sm, 0));
         assertSame(SampleDimensionType.UNSIGNED_8BITS, TypeMap.getSampleDimensionType(sm, 1));
         assertSame(SampleDimensionType.UNSIGNED_8BITS, TypeMap.getSampleDimensionType(sm, 2));

@@ -16,6 +16,9 @@
  */
 package org.geotools.wfs.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.math.BigInteger;
 import java.net.URL;
 import java.util.List;
@@ -23,24 +26,22 @@ import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.PropertyType;
 import net.opengis.wfs.TransactionType;
 import net.opengis.wfs.UpdateElementType;
+import org.geotools.api.filter.Id;
 import org.geotools.test.TestData;
 import org.geotools.wfs.WFS;
 import org.geotools.wfs.WFSTestSupport;
 import org.geotools.xsd.Binding;
-import org.opengis.filter.Id;
+import org.junit.Test;
 import org.w3c.dom.Document;
 
-/**
- * Unit test suite for {@link TransactionTypeBinding}
- *
- * @author Daniel Leib
- */
 public class TransactionTypeBindingTest extends WFSTestSupport {
     public TransactionTypeBindingTest() {
         super(WFS.TransactionType, TransactionType.class, Binding.OVERRIDE);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
+    @Test
     public void testEncode() throws Exception {
         GetFeatureType getFeature = factory.createGetFeatureType();
         getFeature.setHandle("handle");
@@ -54,6 +55,8 @@ public class TransactionTypeBindingTest extends WFSTestSupport {
         assertEquals(2, getElementsByQName(dom, WFS.Query).getLength());
     }
 
+    @Override
+    @Test
     public void testParse() throws Exception {
         final URL resource = TestData.getResource(this, "TransactionTypeBindingTest.xml");
         buildDocument(resource);

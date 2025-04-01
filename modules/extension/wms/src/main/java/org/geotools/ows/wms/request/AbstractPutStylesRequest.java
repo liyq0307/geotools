@@ -24,24 +24,23 @@ import java.util.Properties;
  *
  * @author Richard Gould
  */
-public abstract class AbstractPutStylesRequest extends AbstractWMSRequest
-        implements PutStylesRequest {
+public abstract class AbstractPutStylesRequest extends AbstractWMSRequest implements PutStylesRequest {
 
-    /**
-     * @param onlineResource
-     * @param properties
-     */
+    /** */
     public AbstractPutStylesRequest(URL onlineResource, Properties properties) {
         super(onlineResource, properties);
     }
 
+    @Override
     protected void initRequest() {
         setProperty(REQUEST, "PutStyles");
     }
 
+    @Override
     protected abstract void initVersion();
 
     /** @see PutStylesRequest#setMode(java.lang.String) */
+    @Override
     public void setMode(String mode) {
         setProperty(MODE, mode);
     }
@@ -49,6 +48,7 @@ public abstract class AbstractPutStylesRequest extends AbstractWMSRequest
     /* (non-Javadoc)
      * @see PutStylesRequest#setSLD(java.lang.String)
      */
+    @Override
     public void setSLD(String sld) {
         setProperty(SLD, sld);
     }
@@ -56,6 +56,7 @@ public abstract class AbstractPutStylesRequest extends AbstractWMSRequest
     /* (non-Javadoc)
      * @see PutStylesRequest#setSLDBody(java.lang.String)
      */
+    @Override
     public void setSLDBody(String sldBody) {
         setProperty(SLD_BODY, sldBody);
     }

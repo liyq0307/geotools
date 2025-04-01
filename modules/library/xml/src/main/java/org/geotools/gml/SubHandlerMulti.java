@@ -16,9 +16,9 @@
  */
 package org.geotools.gml;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Vector;
 import java.util.logging.Logger;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -31,8 +31,7 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
 /**
- * Creates a MultiPoint, MultiLineString, or MultiPolygon geometry as required by the internal
- * functions.
+ * Creates a MultiPoint, MultiLineString, or MultiPolygon geometry as required by the internal functions.
  *
  * @author Ian Turton, CCG
  * @author Rob Hranac, Vision for New York
@@ -40,12 +39,11 @@ import org.locationtech.jts.geom.Polygon;
  */
 public class SubHandlerMulti extends SubHandler {
     /** The logger for the GML module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(SubHandlerMulti.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(SubHandlerMulti.class);
 
     /** Remembers the list of all possible sub (base) types for this multi type. */
-    private static final Collection BASE_GEOMETRY_TYPES =
-            new Vector(java.util.Arrays.asList(new String[] {"Point", "LineString", "Polygon"}));
+    private static final Collection<String> BASE_GEOMETRY_TYPES =
+            new ArrayList<>(java.util.Arrays.asList(new String[] {"Point", "LineString", "Polygon"}));
 
     /** Geometry factory to return the multi type. */
     private GeometryFactory geometryFactory = new GeometryFactory();
@@ -57,7 +55,7 @@ public class SubHandlerMulti extends SubHandler {
     private SubHandler currentHandler;
 
     /** Stores list of all sub types. */
-    private List geometries = new Vector();
+    private List<Geometry> geometries = new ArrayList<>();
 
     /** Remembers the current sub type (ie. Line, Polygon, Point). */
     private String internalType;
@@ -74,6 +72,7 @@ public class SubHandlerMulti extends SubHandler {
      * @param message The sub geometry type found.
      * @param type Whether or not it is at a start or end.
      */
+    @Override
     public void subGeometry(String message, int type) {
         LOGGER.fine("subGeometry message = " + message + " type = " + type);
 
@@ -108,6 +107,7 @@ public class SubHandlerMulti extends SubHandler {
      *
      * @param coordinate The coordinate.
      */
+    @Override
     public void addCoordinate(Coordinate coordinate) {
         currentHandler.addCoordinate(coordinate);
     }
@@ -117,6 +117,7 @@ public class SubHandlerMulti extends SubHandler {
      *
      * @param message The geometry element that prompted this check.
      */
+    @Override
     public boolean isComplete(String message) {
         if (message.equals("Multi" + internalType)) {
             return true;
@@ -131,6 +132,7 @@ public class SubHandlerMulti extends SubHandler {
      * @param geometryFactory The factory this method should use to create the multi type.
      * @return Appropriate multi geometry type.
      */
+    @Override
     public Geometry create(GeometryFactory geometryFactory) {
         if (internalType.equals("Point")) {
             Point[] pointArray = geometryFactory.toPointArray(geometries);
@@ -142,8 +144,7 @@ public class SubHandlerMulti extends SubHandler {
             return multiPoint;
         } else if (internalType.equals("LineString")) {
             LineString[] lineStringArray = geometryFactory.toLineStringArray(geometries);
-            MultiLineString multiLineString =
-                    geometryFactory.createMultiLineString(lineStringArray);
+            MultiLineString multiLineString = geometryFactory.createMultiLineString(lineStringArray);
             multiLineString.setUserData(getSRS());
             multiLineString.setSRID(getSRID());
             LOGGER.fine("created " + multiLineString);

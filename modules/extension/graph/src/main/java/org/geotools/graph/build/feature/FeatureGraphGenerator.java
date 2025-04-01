@@ -16,13 +16,13 @@
  */
 package org.geotools.graph.build.feature;
 
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.graph.build.GraphBuilder;
 import org.geotools.graph.build.GraphGenerator;
 import org.geotools.graph.build.basic.BasicGraphGenerator;
 import org.geotools.graph.structure.Graph;
 import org.geotools.graph.structure.Graphable;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Builds a graph from {@link org.geotools.feature.Feature} objects.
@@ -41,10 +41,12 @@ public class FeatureGraphGenerator extends BasicGraphGenerator {
         this.decorated = decorated;
     }
 
+    @Override
     public Graph getGraph() {
         return decorated.getGraph();
     }
 
+    @Override
     public GraphBuilder getGraphBuilder() {
         return decorated.getGraphBuilder();
     }
@@ -53,6 +55,7 @@ public class FeatureGraphGenerator extends BasicGraphGenerator {
         return decorated;
     }
 
+    @Override
     public Graphable add(Object obj) {
         SimpleFeature feature = (SimpleFeature) obj;
         Graphable g = decorated.add(feature.getDefaultGeometry());
@@ -63,11 +66,13 @@ public class FeatureGraphGenerator extends BasicGraphGenerator {
         return g;
     }
 
+    @Override
     public Graphable remove(Object obj) {
         SimpleFeature feature = (SimpleFeature) obj;
         return decorated.remove(feature.getDefaultGeometry());
     }
 
+    @Override
     public Graphable get(Object obj) {
         SimpleFeature feature = (SimpleFeature) obj;
         return decorated.get(feature.getDefaultGeometry());

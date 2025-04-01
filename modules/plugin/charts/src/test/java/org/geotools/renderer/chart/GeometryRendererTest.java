@@ -21,48 +21,54 @@ import java.awt.HeadlessException;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
-import junit.framework.TestCase;
 import org.geotools.test.TestData;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.XYPlot;
+import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTReader;
 
-public class GeometryRendererTest extends TestCase {
+public class GeometryRendererTest {
 
     WKTReader wkt = new WKTReader();
 
+    @Test
     public void testPoint() throws Exception {
         render(wkt.read("POINT(6 10)"));
     }
 
+    @Test
     public void testLineString() throws Exception {
         render(wkt.read("LINESTRING(3 4,10 50,20 25)"));
     }
 
+    @Test
     public void testPolygon() throws Exception {
         render(wkt.read("POLYGON((1 1,5 1,5 5,1 5,1 1))"));
     }
 
+    @Test
     public void testPolygonWithHole() throws Exception {
         render(wkt.read("POLYGON((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2))"));
     }
 
+    @Test
     public void testMultiPoint() throws Exception {
         render(wkt.read("MULTIPOINT((3.5 5.6),(4.8 10.5))"));
     }
 
+    @Test
     public void testMultiLineString() throws Exception {
         render(wkt.read("MULTILINESTRING((3 4,10 50,20 25),(-5 -8,-10 -8,-15 -4))"));
     }
 
+    @Test
     public void testMultiPolygon() throws Exception {
-        render(
-                wkt.read(
-                        "MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((6 3,9 2,9 4,6 3)))"));
+        render(wkt.read("MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((6 3,9 2,9 4,6 3)))"));
     }
 
+    @Test
     public void testMulipleGeometries() throws Exception {
         render(
                 wkt.read("POINT(6 10)"),
@@ -86,13 +92,13 @@ public class GeometryRendererTest extends TestCase {
         final String headless = System.getProperty("java.awt.headless", "false");
         if (!headless.equalsIgnoreCase("true") && TestData.isInteractiveTest()) {
             try {
-                JFrame frame = new JFrame(getName());
-                frame.addWindowListener(
-                        new WindowAdapter() {
-                            public void windowClosing(WindowEvent e) {
-                                e.getWindow().dispose();
-                            }
-                        });
+                JFrame frame = new JFrame(getClass().getName());
+                frame.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        e.getWindow().dispose();
+                    }
+                });
                 frame.setContentPane(panel);
                 frame.setSize(new Dimension(500, 500));
                 frame.setVisible(true);

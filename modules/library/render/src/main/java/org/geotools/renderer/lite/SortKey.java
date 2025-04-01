@@ -19,8 +19,8 @@ package org.geotools.renderer.lite;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 
 /**
  * Sort key used to find the next feature to draw in a cross-layer z-ordering setup
@@ -29,23 +29,11 @@ import org.opengis.filter.sort.SortOrder;
  */
 class SortKey {
 
-    private static java.util.Comparator<Comparable> FORWARD_COMPARATOR =
-            new java.util.Comparator<Comparable>() {
-
-                @Override
-                public int compare(Comparable o1, Comparable o2) {
-                    return o1.compareTo(o2);
-                }
-            };
+    @SuppressWarnings("unchecked")
+    private static java.util.Comparator<Comparable> FORWARD_COMPARATOR = (o1, o2) -> o1.compareTo(o2);
 
     private static java.util.Comparator<Comparable> REVERSE_COMPARATOR =
-            new java.util.Comparator<Comparable>() {
-
-                @Override
-                public int compare(Comparable o1, Comparable o2) {
-                    return -FORWARD_COMPARATOR.compare(o1, o2);
-                }
-            };
+            (o1, o2) -> -FORWARD_COMPARATOR.compare(o1, o2);
 
     Object[] components;
 
@@ -107,11 +95,7 @@ class SortKey {
         }
     }
 
-    /**
-     * Copies from another SortKey
-     *
-     * @param reference
-     */
+    /** Copies from another SortKey */
     public void copy(SortKey reference) {
         for (int i = 0; i < components.length; i++) {
             components[i] = reference.components[i];
@@ -128,12 +112,7 @@ class SortKey {
         return "SortKey [components=" + Arrays.toString(components) + "]";
     }
 
-    /**
-     * Builds a SortKey Comparator from a SortBy array
-     *
-     * @param sortBy
-     * @return
-     */
+    /** Builds a SortKey Comparator from a SortBy array */
     static Comparator buildComparator(SortBy[] sortBy) {
         // sanity check
         if (sortBy == SortBy.UNSORTED || sortBy == null) {
@@ -141,7 +120,7 @@ class SortKey {
         }
 
         // build a list of comparators
-        List<java.util.Comparator<?>> comparators = new ArrayList<java.util.Comparator<?>>();
+        List<java.util.Comparator<?>> comparators = new ArrayList<>();
         for (SortBy sb : sortBy) {
             if (sb.getSortOrder() == SortOrder.ASCENDING) {
                 comparators.add(FORWARD_COMPARATOR);
@@ -150,6 +129,9 @@ class SortKey {
             }
         }
 
-        return new Comparator(comparators.toArray(new java.util.Comparator[comparators.size()]));
+        @SuppressWarnings("unchecked")
+        java.util.Comparator<Object>[] componentComparators =
+                comparators.toArray(new java.util.Comparator[comparators.size()]);
+        return new Comparator(componentComparators);
     }
 }

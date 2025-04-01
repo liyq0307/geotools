@@ -42,15 +42,14 @@ public abstract class AbstractRequest implements Request {
     /**
      * Creates an AbstractRequest.
      *
-     * <p>If properties isn't <code>null</code>, it will use them instead of creating a new
-     * Properties object.
+     * <p>If properties isn't <code>null</code>, it will use them instead of creating a new Properties object.
      *
-     * <p>This constructor will strip all the query parameters off of onlineResource and put them in
-     * the properties map. This allows clients to provide their own parameters and have them saved
-     * and used along with the OWS specific ones.
+     * <p>This constructor will strip all the query parameters off of onlineResource and put them in the properties map.
+     * This allows clients to provide their own parameters and have them saved and used along with the OWS specific
+     * ones.
      *
-     * <p>However, certain parameters will be over-written by individual requests themselves.
-     * Examples of such parameters include, but are not limited to:
+     * <p>However, certain parameters will be over-written by individual requests themselves. Examples of such
+     * parameters include, but are not limited to:
      *
      * <ul>
      *   <li>WMTVER
@@ -87,8 +86,7 @@ public abstract class AbstractRequest implements Request {
             // Doing this preserves all of the query parameters while
             // enforcing the mandatory ones
             if (onlineResource.getQuery() != null) {
-                StringTokenizer tokenizer =
-                        new StringTokenizer(onlineResource.getQuery(), "&"); // $NON-NLS-1$
+                StringTokenizer tokenizer = new StringTokenizer(onlineResource.getQuery(), "&"); // $NON-NLS-1$
 
                 while (tokenizer.hasMoreTokens()) {
                     String token = tokenizer.nextToken();
@@ -108,7 +106,7 @@ public abstract class AbstractRequest implements Request {
                             }
                         } else {
                             value = param[1];
-                            setProperty(key.toUpperCase(), value);
+                            setProperty(processKey(key), value);
                         }
                     }
                 }
@@ -132,6 +130,7 @@ public abstract class AbstractRequest implements Request {
     }
 
     /** @see org.geotools.data.wms.request.Request#getFinalURL() */
+    @Override
     public URL getFinalURL() {
         if (isFileUrl(onlineResource)) {
             return onlineResource;
@@ -174,11 +173,10 @@ public abstract class AbstractRequest implements Request {
     }
 
     /**
-     * Some Open Web Servers do not abide by the fact that parameter keys should be case
-     * insensitive.
+     * Some Open Web Servers do not abide by the fact that parameter keys should be case insensitive.
      *
-     * <p>This method will allow a specification to determine the way that the parameter keys should
-     * be encoded in requests made by the server.
+     * <p>This method will allow a specification to determine the way that the parameter keys should be encoded in
+     * requests made by the server.
      *
      * @param key the key to be processed
      * @return the key, after being processed. (made upper case, for example)
@@ -187,6 +185,7 @@ public abstract class AbstractRequest implements Request {
         return key;
     }
 
+    @Override
     public void setProperty(String name, String value) {
         if (value == null) {
             properties.remove(name);
@@ -196,6 +195,7 @@ public abstract class AbstractRequest implements Request {
     }
 
     /** @return a copy of this request's properties */
+    @Override
     public Properties getProperties() {
         return (Properties) properties.clone();
     }
@@ -203,26 +203,25 @@ public abstract class AbstractRequest implements Request {
     protected abstract void initRequest();
 
     /**
-     * Implementing subclass requests must specify their own "SERVICE" value. Example:
-     * setProperty("SERVICE", "WFS");
+     * Implementing subclass requests must specify their own "SERVICE" value. Example: setProperty("SERVICE", "WFS");
      */
     protected abstract void initService();
 
-    /**
-     * Sets up the version number for this request. Typically something like setProperty("VERSION",
-     * "1.1.1");
-     */
+    /** Sets up the version number for this request. Typically something like setProperty("VERSION", "1.1.1"); */
     protected abstract void initVersion();
 
     /** Default POST content type is xml */
+    @Override
     public String getPostContentType() {
         return "application/xml";
     }
 
     /** Default to not requiring POST. Implementors can override if they need to. */
+    @Override
     public void performPostOutput(OutputStream outputStream) throws IOException {}
 
     /** Default to not requiring POST. Implementors can override if they need to. */
+    @Override
     public boolean requiresPost() {
         return false;
     }

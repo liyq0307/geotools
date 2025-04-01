@@ -16,12 +16,13 @@
  */
 package org.geotools.referencing.cs;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
-import org.junit.*;
-import org.opengis.referencing.cs.AxisDirection;
-import org.opengis.referencing.cs.CoordinateSystemAxis;
+import org.geotools.api.referencing.cs.AxisDirection;
+import org.geotools.api.referencing.cs.CoordinateSystemAxis;
+import org.junit.Test;
 import si.uom.SI;
 
 /**
@@ -63,8 +64,7 @@ public final class ComparableAxisWrapperTest {
     public void testSortDirections() {
         // A plausible CS.
         assertOrdered(
-                new AxisDirection[] {AxisDirection.NORTH, AxisDirection.UP, AxisDirection.EAST},
-                new AxisDirection[] {
+                new AxisDirection[] {AxisDirection.NORTH, AxisDirection.UP, AxisDirection.EAST}, new AxisDirection[] {
                     AxisDirection.EAST, // Right handed-rule
                     AxisDirection.NORTH, // Right handed-rule
                     AxisDirection.UP
@@ -90,8 +90,7 @@ public final class ComparableAxisWrapperTest {
 
         // An other plausible CS.
         assertOrdered(
-                new AxisDirection[] {AxisDirection.SOUTH, AxisDirection.DOWN, AxisDirection.WEST},
-                new AxisDirection[] {
+                new AxisDirection[] {AxisDirection.SOUTH, AxisDirection.DOWN, AxisDirection.WEST}, new AxisDirection[] {
                     AxisDirection.WEST, // Right handed-rule
                     AxisDirection.SOUTH, // Right handed-rule
                     AxisDirection.DOWN
@@ -99,8 +98,7 @@ public final class ComparableAxisWrapperTest {
 
         // An other plausible CS.
         assertOrdered(
-                new AxisDirection[] {AxisDirection.SOUTH, AxisDirection.DOWN, AxisDirection.EAST},
-                new AxisDirection[] {
+                new AxisDirection[] {AxisDirection.SOUTH, AxisDirection.DOWN, AxisDirection.EAST}, new AxisDirection[] {
                     AxisDirection.SOUTH, // Right handed-rule
                     AxisDirection.EAST, // Right handed-rule
                     AxisDirection.DOWN
@@ -108,16 +106,14 @@ public final class ComparableAxisWrapperTest {
     }
 
     /** Sorts the specified axis and compares against the expected result. */
-    private static void assertOrdered(
-            final CoordinateSystemAxis[] toTest, final CoordinateSystemAxis[] expected) {
+    private static void assertOrdered(final CoordinateSystemAxis[] toTest, final CoordinateSystemAxis[] expected) {
         final boolean same = Arrays.equals(toTest, expected);
         assertEquals(!same, ComparableAxisWrapper.sort(toTest));
-        assertTrue(Arrays.equals(toTest, expected));
+        assertArrayEquals(toTest, expected);
     }
 
     /** Sorts the specified directions and compares against the expected result. */
-    private static void assertOrdered(
-            final AxisDirection[] toTest, final AxisDirection[] expected) {
+    private static void assertOrdered(final AxisDirection[] toTest, final AxisDirection[] expected) {
         assertOrdered(toAxis(toTest), toAxis(expected));
     }
 

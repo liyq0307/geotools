@@ -16,61 +16,66 @@
  */
 package org.geotools.wfs.v2_0.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import net.opengis.wfs20.CreateStoredQueryType;
 import net.opengis.wfs20.ParameterExpressionType;
 import net.opengis.wfs20.QueryExpressionTextType;
 import net.opengis.wfs20.StoredQueryDescriptionType;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.wfs.v2_0.WFSTestSupport;
+import org.junit.Test;
 
 public class DropStoredQueryTypeBindingTest extends WFSTestSupport {
-
+    @Test
     public void testParse() throws Exception {
-        String xml =
-                "<wfs:CreateStoredQuery "
-                        + "   xmlns:wfs='http://www.opengis.net/wfs/2.0' "
-                        + "   xmlns:fes='http://www.opengis.org/fes/2.0' "
-                        + "   xmlns:gml='http://www.opengis.net/gml/3.2' "
-                        + "   xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
-                        + "   xmlns:myns='http://www.someserver.com/myns' "
-                        + "   xsi:schemaLocation='http://www.opengis.net/wfs/2.0 ../../wfs.xsd' "
-                        + "   service='WFS' "
-                        + "   version='2.0.0'> "
-                        + "   <wfs:StoredQueryDefinition id='urn:StoredQueries:FeaturesInPolygon'> "
-                        + "      <wfs:Title>Features In Polygon</wfs:Title> "
-                        + "      <wfs:Abstract>Find all the features in a Polygon.</wfs:Abstract> "
-                        + "      <wfs:Parameter name='AreaOfInterest' type='gml:Polygon'/> "
-                        + "      <wfs:QueryExpressionText "
-                        + "           returnFeatureTypes='myns:Parks myns:Lakes myns:Rivers' "
-                        + "           language='urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression' "
-                        + "           isPrivate='false'> "
-                        + "         <wfs:Query typeNames='myns:Parks'> "
-                        + "            <fes:Filter> "
-                        + "               <fes:Within> "
-                        + "                  <fes:ValueReference>geometry</fes:ValueReference> "
-                        + "                  ${AreaOfInterest} "
-                        + "               </fes:Within> "
-                        + "            </fes:Filter> "
-                        + "         </wfs:Query> "
-                        + "         <wfs:Query typeNames='myns:Lakes'> "
-                        + "            <fes:Filter> "
-                        + "               <fes:Within> "
-                        + "                  <fes:ValueReference>region</fes:ValueReference> "
-                        + "                  ${AreaOfInterest} "
-                        + "               </fes:Within> "
-                        + "            </fes:Filter> "
-                        + "         </wfs:Query> "
-                        + "         <wfs:Query typeNames='myns:Rivers'> "
-                        + "            <fes:Filter> "
-                        + "               <fes:Within> "
-                        + "                  <fes:ValueReference>region</fes:ValueReference> "
-                        + "                  ${AreaOfInterest} "
-                        + "               </fes:Within> "
-                        + "            </fes:Filter> "
-                        + "         </wfs:Query> "
-                        + "      </wfs:QueryExpressionText> "
-                        + "   </wfs:StoredQueryDefinition> "
-                        + "</wfs:CreateStoredQuery> ";
+        String xml = "<wfs:CreateStoredQuery "
+                + "   xmlns:wfs='http://www.opengis.net/wfs/2.0' "
+                + "   xmlns:fes='http://www.opengis.org/fes/2.0' "
+                + "   xmlns:gml='http://www.opengis.net/gml/3.2' "
+                + "   xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' "
+                + "   xmlns:myns='http://www.someserver.com/myns' "
+                + "   xsi:schemaLocation='http://www.opengis.net/wfs/2.0 ../../wfs.xsd' "
+                + "   service='WFS' "
+                + "   version='2.0.0'> "
+                + "   <wfs:StoredQueryDefinition id='urn:StoredQueries:FeaturesInPolygon'> "
+                + "      <wfs:Title>Features In Polygon</wfs:Title> "
+                + "      <wfs:Abstract>Find all the features in a Polygon.</wfs:Abstract> "
+                + "      <wfs:Parameter name='AreaOfInterest' type='gml:Polygon'/> "
+                + "      <wfs:QueryExpressionText "
+                + "           returnFeatureTypes='myns:Parks myns:Lakes myns:Rivers' "
+                + "           language='urn:ogc:def:queryLanguage:OGC-WFS::WFS_QueryExpression' "
+                + "           isPrivate='false'> "
+                + "         <wfs:Query typeNames='myns:Parks'> "
+                + "            <fes:Filter> "
+                + "               <fes:Within> "
+                + "                  <fes:ValueReference>geometry</fes:ValueReference> "
+                + "                  ${AreaOfInterest} "
+                + "               </fes:Within> "
+                + "            </fes:Filter> "
+                + "         </wfs:Query> "
+                + "         <wfs:Query typeNames='myns:Lakes'> "
+                + "            <fes:Filter> "
+                + "               <fes:Within> "
+                + "                  <fes:ValueReference>region</fes:ValueReference> "
+                + "                  ${AreaOfInterest} "
+                + "               </fes:Within> "
+                + "            </fes:Filter> "
+                + "         </wfs:Query> "
+                + "         <wfs:Query typeNames='myns:Rivers'> "
+                + "            <fes:Filter> "
+                + "               <fes:Within> "
+                + "                  <fes:ValueReference>region</fes:ValueReference> "
+                + "                  ${AreaOfInterest} "
+                + "               </fes:Within> "
+                + "            </fes:Filter> "
+                + "         </wfs:Query> "
+                + "      </wfs:QueryExpressionText> "
+                + "   </wfs:StoredQueryDefinition> "
+                + "</wfs:CreateStoredQuery> ";
         buildDocument(xml);
 
         CreateStoredQueryType csq = (CreateStoredQueryType) parse();

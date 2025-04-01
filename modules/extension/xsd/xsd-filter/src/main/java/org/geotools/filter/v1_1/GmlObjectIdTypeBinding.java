@@ -17,11 +17,11 @@
 package org.geotools.filter.v1_1;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.GmlObjectId;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.GmlObjectId;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:GmlObjectIdType.
@@ -51,6 +51,7 @@ public class GmlObjectIdTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.GmlObjectIdType;
     }
@@ -62,6 +63,7 @@ public class GmlObjectIdTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return GmlObjectId.class;
     }
@@ -73,11 +75,13 @@ public class GmlObjectIdTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // &lt;xsd:attribute ref="gml:id" use="required"/&gt;
         return filterfactory.gmlObjectId((String) node.getAttributeValue("id"));
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("id".equals(name.getLocalPart())) {
             GmlObjectId id = (GmlObjectId) object;

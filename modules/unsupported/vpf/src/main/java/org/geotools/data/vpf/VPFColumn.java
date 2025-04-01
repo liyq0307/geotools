@@ -16,14 +16,27 @@
  */
 package org.geotools.data.vpf;
 
-import static org.geotools.data.vpf.ifc.DataTypesDefinition.*;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_2_COORD_F;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_2_COORD_R;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_3_COORD_F;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_3_COORD_R;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_LEVEL1_TEXT;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_LEVEL2_TEXT;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_LEVEL3_TEXT;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_LONG_FLOAT;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_LONG_INTEGER;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_NULL_FIELD;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_SHORT_FLOAT;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_SHORT_INTEGER;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_TEXT;
+import static org.geotools.data.vpf.ifc.DataTypesDefinition.DATA_TRIPLET_ID;
 
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
 import org.geotools.data.vpf.io.TripletId;
 import org.geotools.data.vpf.util.DataUtils;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
 
 /**
  * A column in a VPF File.
@@ -32,10 +45,7 @@ import org.opengis.feature.type.GeometryDescriptor;
  * @source $URL$
  */
 public class VPFColumn {
-    /**
-     * If the value is a short integer, that often means it has an accompanying value in a string
-     * lookup table.
-     */
+    /** If the value is a short integer, that often means it has an accompanying value in a string lookup table. */
     private boolean attemptLookup = false;
 
     /** Attribute descriptor generated from this column definition. */
@@ -58,18 +68,7 @@ public class VPFColumn {
     /** Describe variable <code>valDescTableName</code> here. */
     private final String valDescTableName;
 
-    /**
-     * Constructor with all of the elements of a VPF column
-     *
-     * @param name
-     * @param type
-     * @param elementsNumber
-     * @param keyType
-     * @param colDesc
-     * @param valDescTableName
-     * @param thematicIdx
-     * @param narrTable
-     */
+    /** Constructor with all of the elements of a VPF column */
     public VPFColumn(
             String name,
             char type,
@@ -88,13 +87,12 @@ public class VPFColumn {
         this.thematicIdx = thematicIdx;
         this.narrTable = narrTable;
         // VPFLogger.log("buildDescriptor: " + name);
-        descriptor =
-                new AttributeTypeBuilder()
-                        .length(getColumnSize())
-                        .description(colDesc)
-                        .binding(getColumnClass())
-                        .nillable(true)
-                        .buildDescriptor(name);
+        descriptor = new AttributeTypeBuilder()
+                .length(getColumnSize())
+                .description(colDesc)
+                .binding(getColumnClass())
+                .nillable(true)
+                .buildDescriptor(name);
         descriptor.getUserData().put("column", this);
     }
 

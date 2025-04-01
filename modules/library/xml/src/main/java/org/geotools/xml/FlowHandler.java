@@ -19,9 +19,8 @@ package org.geotools.xml;
 import java.util.Map;
 
 /**
- * Provides a mechanism to indicate that the XMLSAXHandler should stop parsing. It will periodically
- * call shouldStop(), passing in its hints object. If shouldStop() returns true, if will abort
- * parsing.
+ * Provides a mechanism to indicate that the XMLSAXHandler should stop parsing. It will periodically call shouldStop(),
+ * passing in its hints object. If shouldStop() returns true, if will abort parsing.
  *
  * @author Richard Gould
  */
@@ -32,5 +31,5 @@ public interface FlowHandler {
      * @param hints the hints that were passed into the XML parser
      * @return true if the XML parser should abort parsing
      */
-    public boolean shouldStop(Map hints);
+    public boolean shouldStop(Map<String, Object> hints);
 }

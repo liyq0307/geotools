@@ -23,15 +23,14 @@ import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.logging.Logger;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.logging.Logging;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
 
 /**
- * Formats a number into a string given a certain pattern (specified in the format accepted by
- * {@link DecimalFormat}}
+ * Formats a number into a string given a certain pattern (specified in the format accepted by {@link DecimalFormat}}
  *
  * @author Andrea Aime - OpenGeo
  */
@@ -40,26 +39,24 @@ public class FilterFunction_numberFormat extends FunctionExpressionImpl {
 
     static HashSet<String> languages = new HashSet<>();
 
-    Locale locale = Locale.ENGLISH;
-
     static {
         for (Locale loc : Locale.getAvailableLocales()) {
             languages.add(loc.getLanguage());
         }
     }
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "numberFormat",
-                    String.class,
-                    parameter("format", String.class),
-                    parameter("number", Number.class),
-                    parameter("language", String.class, 0, 1));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "numberFormat",
+            String.class,
+            parameter("format", String.class),
+            parameter("number", Number.class),
+            parameter("language", String.class, 0, 1));
 
     public FilterFunction_numberFormat() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
         String format;
         Double number;
@@ -95,16 +92,18 @@ public class FilterFunction_numberFormat extends FunctionExpressionImpl {
             throw new IllegalArgumentException(
                     "Filter Function problem for function NumberFormat argument #2 - expected type String");
         }
+        Locale locale = null;
         if (languages.contains(localeString)) {
             if (localeString != null && !localeString.isEmpty()) {
                 locale = Locale.forLanguageTag(localeString);
             }
 
         } else {
-            throw new IllegalArgumentException(
-                    "Unknown language code '" + localeString + "' in numberFormat function");
+            throw new IllegalArgumentException("Unknown language code '" + localeString + "' in numberFormat function");
         }
-
+        if (locale == null) {
+            locale = Locale.getDefault();
+        }
         DecimalFormatSymbols decimalFormatSymbols = DecimalFormatSymbols.getInstance(locale);
 
         DecimalFormat numberFormat = new DecimalFormat(format, decimalFormatSymbols);

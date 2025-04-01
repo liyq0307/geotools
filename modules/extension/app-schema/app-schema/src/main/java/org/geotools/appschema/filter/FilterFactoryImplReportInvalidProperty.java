@@ -17,14 +17,15 @@
 
 package org.geotools.appschema.filter;
 
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.AttributeExpressionImpl;
 import org.geotools.filter.FilterFactoryImpl;
-import org.opengis.filter.expression.PropertyName;
 
 /** @author Niels Charlier (Curtin University of Technology) */
 public class FilterFactoryImplReportInvalidProperty extends FilterFactoryImpl {
 
     // @Override
+    @Override
     public PropertyName property(String name) {
         AttributeExpressionImpl att = new AttributeExpressionImpl(name);
         att.setLenient(false);

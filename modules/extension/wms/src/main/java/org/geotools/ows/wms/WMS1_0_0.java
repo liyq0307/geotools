@@ -17,19 +17,22 @@
 package org.geotools.ows.wms;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import org.geotools.data.ows.AbstractGetCapabilitiesRequest;
 import org.geotools.data.ows.AbstractRequest;
 import org.geotools.data.ows.GetCapabilitiesRequest;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Response;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
-import org.geotools.ows.wms.request.*;
+import org.geotools.ows.wms.request.AbstractGetFeatureInfoRequest;
+import org.geotools.ows.wms.request.AbstractGetMapRequest;
+import org.geotools.ows.wms.request.AbstractGetStylesRequest;
+import org.geotools.ows.wms.request.DescribeLayerRequest;
+import org.geotools.ows.wms.request.GetLegendGraphicRequest;
+import org.geotools.ows.wms.request.GetStylesRequest;
+import org.geotools.ows.wms.request.PutStylesRequest;
 import org.geotools.ows.wms.response.GetFeatureInfoResponse;
 import org.geotools.ows.wms.response.GetMapResponse;
 import org.geotools.ows.wms.response.GetStylesResponse;
@@ -38,22 +41,20 @@ import org.geotools.ows.wms.response.WMSGetCapabilitiesResponse;
 /**
  * Provides support for the Web Map Server 1.0 Specification.
  *
- * <p>WMS1_0_0 provides both name and version information that may be checked against a
- * GetCapabilities document during version negotiation.
+ * <p>WMS1_0_0 provides both name and version information that may be checked against a GetCapabilities document during
+ * version negotiation.
  *
  * @author Jody Garnett, Refractions Research
  * @author rgould
  */
 public class WMS1_0_0 extends WMSSpecification {
-    static final Map formatMimeTypes = new HashMap();
-    static final Map exceptionMimeTypes = new HashMap();
+    static final Map<String, String> formatMimeTypes = new HashMap<>();
+    static final Map<String, String> exceptionMimeTypes = new HashMap<>();
 
     static {
         exceptionMimeTypes.put("WMS_XML", "application/vnd.ogc.se_xml");
-        exceptionMimeTypes.put(
-                "INIMAGE", "application/vnd.ogc.se_inimage"); // $NON-NLS-1$ //$NON-NLS-2$
-        exceptionMimeTypes.put(
-                "BLANK", "application/vnd.ogc.se_blank"); // $NON-NLS-1$ //$NON-NLS-2$
+        exceptionMimeTypes.put("INIMAGE", "application/vnd.ogc.se_inimage"); // $NON-NLS-1$ //$NON-NLS-2$
+        exceptionMimeTypes.put("BLANK", "application/vnd.ogc.se_blank"); // $NON-NLS-1$ //$NON-NLS-2$
     }
 
     static {
@@ -61,8 +62,7 @@ public class WMS1_0_0 extends WMSSpecification {
         formatMimeTypes.put("PNG", "image/png"); // $NON-NLS-1$ //$NON-NLS-2$
         formatMimeTypes.put("JPEG", "image/jpeg"); // $NON-NLS-1$ //$NON-NLS-2$
         formatMimeTypes.put("BMP", "image/bmp"); // $NON-NLS-1$ //$NON-NLS-2$
-        formatMimeTypes.put(
-                "WebCGM", "image/cgm;Version=4;ProfileId=WebCGM"); // $NON-NLS-1$ //$NON-NLS-2$
+        formatMimeTypes.put("WebCGM", "image/cgm;Version=4;ProfileId=WebCGM"); // $NON-NLS-1$ //$NON-NLS-2$
         formatMimeTypes.put("SVG", "image/svg+xml"); // $NON-NLS-1$ //$NON-NLS-2$
         formatMimeTypes.put("GML.1", "text/xml"); // $NON-NLS-1$ //$NON-NLS-2$
         formatMimeTypes.put("GML.2", "text/xml"); // $NON-NLS-1$ //$NON-NLS-2$
@@ -70,8 +70,7 @@ public class WMS1_0_0 extends WMSSpecification {
         formatMimeTypes.put("WBMP", "image/vnd.wap.wbmp"); // $NON-NLS-1$ //$NON-NLS-2$
         formatMimeTypes.put("WMS_XML", "application/vnd.ogc.wms_xml"); // $NON-NLS-1$ //$NON-NLS-2$
         formatMimeTypes.put("MIME", "mime"); // $NON-NLS-1$ //$NON-NLS-2$
-        formatMimeTypes.put(
-                "INIMAGE", "application/vnd.ogc.se_inimage"); // $NON-NLS-1$ //$NON-NLS-2$
+        formatMimeTypes.put("INIMAGE", "application/vnd.ogc.se_inimage"); // $NON-NLS-1$ //$NON-NLS-2$
         formatMimeTypes.put("TIFF", "image/tiff"); // $NON-NLS-1$ //$NON-NLS-2$
         formatMimeTypes.put("GeoTIFF", "image/tiff"); // $NON-NLS-1$ //$NON-NLS-2$
         formatMimeTypes.put("PPM", "image/x-portable-pixmap"); // $NON-NLS-1$ //$NON-NLS-2$
@@ -87,6 +86,7 @@ public class WMS1_0_0 extends WMSSpecification {
      *
      * @return the expect version value for this specification
      */
+    @Override
     public String getVersion() {
         return "1.0.0"; // $NON-NLS-1$
     }
@@ -94,12 +94,11 @@ public class WMS1_0_0 extends WMSSpecification {
     /**
      * Provides mapping from well known format to MIME type.
      *
-     * <p>WebMapServer api uses mime type internally for format information (indeed WMS 1.0.0 is the
-     * only WMS specifcation not to use MIME type directly).
+     * <p>WebMapServer api uses mime type internally for format information (indeed WMS 1.0.0 is the only WMS
+     * specifcation not to use MIME type directly).
      *
      * <p>
      *
-     * @param format
      * @return MIME type for format
      */
     public static final String toFormatMIME(String format) {
@@ -107,8 +106,8 @@ public class WMS1_0_0 extends WMSSpecification {
     }
 
     /**
-     * The WMS 1.0.0 specification uses a mapping of mimetypes to values to use as parameter values
-     * in requests. This will take a parameter value and convert it to its according mime type.
+     * The WMS 1.0.0 specification uses a mapping of mimetypes to values to use as parameter values in requests. This
+     * will take a parameter value and convert it to its according mime type.
      *
      * @param exception an exceptions parameter value, such as "WMS_XML"
      * @return a mimeType, such as "application/vnd.ogc.se_xml"
@@ -128,8 +127,8 @@ public class WMS1_0_0 extends WMSSpecification {
     /**
      * Provides mapping from MIME type to WMS 1.0.0 Format.
      *
-     * <p>WebMapServer api uses mime type internally for format information (indeed WMS 1.0.0 is the
-     * only WMS specifcation not to use MIME type directly).
+     * <p>WebMapServer api uses mime type internally for format information (indeed WMS 1.0.0 is the only WMS
+     * specifcation not to use MIME type directly).
      *
      * <p>
      *
@@ -141,9 +140,8 @@ public class WMS1_0_0 extends WMSSpecification {
     }
 
     /**
-     * The WMS 1.0.0 specification uses internal mappings in the parameter value instead of direct
-     * mime types. This will map a given mime type to its proper parameter value according to the
-     * spec.
+     * The WMS 1.0.0 specification uses internal mappings in the parameter value instead of direct mime types. This will
+     * map a given mime type to its proper parameter value according to the spec.
      *
      * @param mimeType the mimeType to use, such as "application/vnd.ogc.se_xml"
      * @return the proper parameter value, such as "WMS_XML"
@@ -153,8 +151,8 @@ public class WMS1_0_0 extends WMSSpecification {
     }
 
     private static final String getParameterValue(String mimeType, Map map) {
-        for (Iterator i = map.entrySet().iterator(); i.hasNext(); ) {
-            Map.Entry entry = (Map.Entry) i.next();
+        for (Object o : map.entrySet()) {
+            Map.Entry entry = (Map.Entry) o;
 
             if (mimeType.equals(entry.getValue())) {
                 return (String) entry.getKey();
@@ -171,6 +169,7 @@ public class WMS1_0_0 extends WMSSpecification {
      * @param server a URL that points to the 1.0.0 server
      * @return a AbstractGetCapabilitiesRequest object that can provide a valid request
      */
+    @Override
     public GetCapabilitiesRequest createGetCapabilitiesRequest(URL server) {
         return new GetCapsRequest(server);
     }
@@ -197,27 +196,31 @@ public class WMS1_0_0 extends WMSSpecification {
             super(urlGetCapabilities);
         }
 
+        @Override
         protected void initVersion() {
-            setProperty("WMTVER", "1.0.0"); // $NON-NLS-1$ //$NON-NLS-2$
-            properties.remove("VERSION");
+            setProperty(processKey("WMTVER"), "1.0.0"); // $NON-NLS-1$ //$NON-NLS-2$
+            properties.remove(processKey("VERSION"));
         }
 
+        @Override
         protected void initRequest() {
-            setProperty("REQUEST", "capabilities"); // $NON-NLS-1$ //$NON-NLS-2$
+            setProperty(processKey("REQUEST"), "capabilities"); // $NON-NLS-1$ //$NON-NLS-2$
         }
 
+        @Override
         protected void initService() {
             // The 1.0.0 specification does not use the service property
         }
         /*
          * @see org.geotools.data.wms.request.AbstractRequest#processKey(java.lang.String)
          */
+        @Override
         protected String processKey(String key) {
             return WMS1_0_0.processKey(key);
         }
 
-        public Response createResponse(HTTPResponse httpResponse)
-                throws ServiceException, IOException {
+        @Override
+        public Response createResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
             return new WMSGetCapabilitiesResponse(httpResponse, hints);
         }
     }
@@ -233,42 +236,37 @@ public class WMS1_0_0 extends WMSSpecification {
             super(onlineResource, null);
         }
 
+        @Override
         protected void initRequest() {
-            setProperty("REQUEST", "map"); // $NON-NLS-1$ //$NON-NLS-2$
+            setProperty(processKey("REQUEST"), "map"); // $NON-NLS-1$ //$NON-NLS-2$
 
             /*
              * A 1.0.0 WMS server has been encountered that has EXCEPTIONS as
              * a required parameter. It does not hurt to explicitly ask for
              * this, anyway.
              */
-            setProperty("EXCEPTIONS", AbstractRequest.EXCEPTION_XML);
+            setProperty(processKey("EXCEPTIONS"), AbstractRequest.EXCEPTION_XML);
         }
 
+        @Override
         protected void initVersion() {
-            setProperty(VERSION, "1.0.0");
+            setProperty(processKey(VERSION), "1.0.0");
         }
 
+        @Override
         public void setProperty(String name, String value) {
-            if (name.equals(FORMAT)) {
+            if (name.equalsIgnoreCase(FORMAT)) {
                 value = getRequestFormat(value);
-            } else if (name.equals(EXCEPTIONS)) {
+            } else if (name.equalsIgnoreCase(EXCEPTIONS)) {
                 value = getRequestException(value);
             }
 
             super.setProperty(name, value);
         }
 
-        public void setFormat(String value) {
-            try {
-                value = URLEncoder.encode(value, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException("Could not url encode the format", e);
-            }
-            super.setFormat(value);
-        }
-
+        @Override
         public void setExceptions(String exceptions) {
-            setProperty(EXCEPTIONS, exceptions);
+            setProperty(processKey(EXCEPTIONS), exceptions);
         }
 
         protected String getRequestException(String exception) {
@@ -279,50 +277,48 @@ public class WMS1_0_0 extends WMSSpecification {
             return getFormatValue(format);
         }
 
+        @Override
         protected String processKey(String key) {
             return WMS1_0_0.processKey(key);
         }
 
-        public Response createResponse(HTTPResponse httpResponse)
-                throws ServiceException, IOException {
+        @Override
+        public Response createResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
             return new GetMapResponse(httpResponse);
         }
     }
 
     /** A GetFeatureInfoRequest for a 1.0.0 server */
     public static class GetFeatureInfoRequest extends AbstractGetFeatureInfoRequest {
-        /**
-         * @param onlineResource
-         * @param request
-         */
-        public GetFeatureInfoRequest(
-                URL onlineResource, org.geotools.ows.wms.request.GetMapRequest request) {
+        /** */
+        public GetFeatureInfoRequest(URL onlineResource, org.geotools.ows.wms.request.GetMapRequest request) {
             super(onlineResource, request);
         }
 
+        @Override
         protected void initVersion() {
-            setProperty("WMTVER", "1.0.0");
+            setProperty(processKey("WMTVER"), "1.0.0");
         }
 
+        @Override
         protected String processKey(String key) {
             return WMS1_0_0.processKey(key);
         }
 
-        public Response createResponse(HTTPResponse httpResponse)
-                throws ServiceException, IOException {
+        @Override
+        public Response createResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
             return new GetFeatureInfoResponse(httpResponse);
         }
     }
 
     /** @see WMSSpecification#createGetMapRequest(java.net.URL) */
+    @Override
     public org.geotools.ows.wms.request.GetMapRequest createGetMapRequest(URL get) {
         return new GetMapRequest(get);
     }
 
-    /**
-     * @see WMSSpecification#createGetFeatureInfoRequest(java.net.URL,
-     *     org.geotools.ows.wms.request.GetMapRequest)
-     */
+    /** @see WMSSpecification#createGetFeatureInfoRequest(java.net.URL, org.geotools.ows.wms.request.GetMapRequest) */
+    @Override
     public org.geotools.ows.wms.request.GetFeatureInfoRequest createGetFeatureInfoRequest(
             URL onlineResource, org.geotools.ows.wms.request.GetMapRequest getMapRequest) {
         return new GetFeatureInfoRequest(onlineResource, getMapRequest);
@@ -333,8 +329,8 @@ public class WMS1_0_0 extends WMSSpecification {
      *
      * @see WMSSpecification#createDescribeLayerRequest(java.net.URL)
      */
-    public DescribeLayerRequest createDescribeLayerRequest(URL onlineResource)
-            throws UnsupportedOperationException {
+    @Override
+    public DescribeLayerRequest createDescribeLayerRequest(URL onlineResource) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("WMS 1.0.0 does not support DescribeLayer");
     }
 
@@ -343,14 +339,15 @@ public class WMS1_0_0 extends WMSSpecification {
      *
      * @see WMSSpecification#createGetLegendGraphicRequest(java.net.URL)
      */
+    @Override
     public GetLegendGraphicRequest createGetLegendGraphicRequest(URL onlineResource)
             throws UnsupportedOperationException {
         throw new UnsupportedOperationException("WMS 1.0.0 does not support GetLegendGraphic");
     }
 
     /** @see WMSSpecification#createGetStylesRequest(java.net.URL) */
-    public GetStylesRequest createGetStylesRequest(URL onlineResource)
-            throws UnsupportedOperationException {
+    @Override
+    public GetStylesRequest createGetStylesRequest(URL onlineResource) throws UnsupportedOperationException {
         return new InternalGetStylesRequest(onlineResource);
     }
 
@@ -364,12 +361,13 @@ public class WMS1_0_0 extends WMSSpecification {
         /* (non-Javadoc)
          * @see AbstractGetStylesRequest#initVersion()
          */
+        @Override
         protected void initVersion() {
-            setProperty(VERSION, "1.1.0");
+            setProperty(processKey(VERSION), "1.1.0");
         }
 
-        public Response createResponse(HTTPResponse httpResponse)
-                throws ServiceException, IOException {
+        @Override
+        public Response createResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
             return new GetStylesResponse(httpResponse);
         }
     }
@@ -379,8 +377,8 @@ public class WMS1_0_0 extends WMSSpecification {
      *
      * @see WMSSpecification#createPutStylesRequest(java.net.URL)
      */
-    public PutStylesRequest createPutStylesRequest(URL onlineResource)
-            throws UnsupportedOperationException {
+    @Override
+    public PutStylesRequest createPutStylesRequest(URL onlineResource) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("WMS 1.0.0 does not support PutStyles");
     }
 }

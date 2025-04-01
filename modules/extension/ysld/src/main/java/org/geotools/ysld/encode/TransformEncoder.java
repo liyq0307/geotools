@@ -25,10 +25,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.ysld.ProcessUtil;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
 
 /** Encodes a Rendering Transform, represented by an {@link Expression} as YSLD. */
 public class TransformEncoder extends YsldEncodeHandler<Expression> {
@@ -52,8 +52,7 @@ public class TransformEncoder extends YsldEncodeHandler<Expression> {
         }
 
         if (!(tx instanceof Function)) {
-            FeatureStyleEncoder.LOG.warning(
-                    "Skipping transform, expected a function but got: " + tx);
+            FeatureStyleEncoder.LOG.warning("Skipping transform, expected a function but got: " + tx);
             return;
         }
 
@@ -61,20 +60,18 @@ public class TransformEncoder extends YsldEncodeHandler<Expression> {
         Map<String, Parameter<?>> paramInfo = loadProcessInfo(processName(ftx.getName()));
 
         if (paramInfo == null) {
-            FeatureStyleEncoder.LOG.warning(
-                    "Skipping transform, unable to locate process named: " + ftx.getName());
+            FeatureStyleEncoder.LOG.warning("Skipping transform, unable to locate process named: " + ftx.getName());
             return;
         }
         boolean wmsParams = ProcessUtil.hasWMSParams(paramInfo);
 
         put("name", ftx.getName());
 
-        Map<String, Object> simpleParams = new LinkedHashMap<String, Object>();
+        Map<String, Object> simpleParams = new LinkedHashMap<>();
         String input = null;
         for (Expression expr : ftx.getParameters()) {
             if (!(expr instanceof Function)) {
-                FeatureStyleEncoder.LOG.warning(
-                        "Skipping parameter, expected a function but got: " + expr);
+                FeatureStyleEncoder.LOG.warning("Skipping parameter, expected a function but got: " + expr);
                 continue;
             }
 
@@ -95,7 +92,7 @@ public class TransformEncoder extends YsldEncodeHandler<Expression> {
             } else if (fexpr.getParameters().size() == 2) {
                 paramValue = intermediateExpression(fexpr.getParameters().get(1));
             } else {
-                List<Object> l = new ArrayList<Object>();
+                List<Object> l = new ArrayList<>();
                 for (int i = 1; i < fexpr.getParameters().size(); i++) {
                     l.add(intermediateExpression(fexpr.getParameters().get(i)));
                 }
@@ -118,10 +115,8 @@ public class TransformEncoder extends YsldEncodeHandler<Expression> {
 
     private boolean isDefaultWMSParam(String paramName, final Object paramValue) {
         if (paramName.equals("outputBBOX") && paramValue.equals("${env('wms_bbox')}")) return true;
-        if (paramName.equals("outputWidth") && paramValue.equals("${env('wms_width')}"))
-            return true;
-        if (paramName.equals("outputHeight") && paramValue.equals("${env('wms_height')}"))
-            return true;
+        if (paramName.equals("outputWidth") && paramValue.equals("${env('wms_width')}")) return true;
+        if (paramName.equals("outputHeight") && paramValue.equals("${env('wms_height')}")) return true;
         return false;
     }
 

@@ -16,26 +16,29 @@
  */
 package org.geotools.filter;
 
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
 
 public class IsNullImpl extends CompareFilterImpl implements PropertyIsNull {
 
-    public IsNullImpl(org.opengis.filter.expression.Expression expression) {
+    public IsNullImpl(org.geotools.api.filter.expression.Expression expression) {
         super(expression, null);
     }
 
+    @Override
     public boolean evaluate(Object feature) {
         Expression expr = getExpression();
         Object value = eval(expr, feature);
         return value == null;
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public Expression getExpression() {
         return getExpression1();
     }

@@ -17,10 +17,10 @@
  */
 package org.geotools.filter.temporal;
 
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.temporal.RelativePosition;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.temporal.RelativePosition;
 
 public class MetByImpl extends BinaryTemporalOperatorImpl implements MetBy {
 
@@ -37,6 +37,7 @@ public class MetByImpl extends BinaryTemporalOperatorImpl implements MetBy {
         return pos == RelativePosition.MET_BY;
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }

@@ -17,9 +17,21 @@
  */
 package org.geotools.process.raster;
 
+import static org.geotools.referencing.crs.DefaultGeographicCRS.WGS84;
+import static org.geotools.renderer.lite.RendererUtilities.worldToScreenTransform;
+import static org.junit.Assert.assertNotEquals;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
+import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.media.jai.Interpolation;
 import javax.media.jai.InterpolationBicubic;
 import javax.media.jai.InterpolationBilinear;
@@ -27,34 +39,81 @@ import javax.media.jai.InterpolationNearest;
 import javax.media.jai.iterator.RandomIter;
 import javax.media.jai.iterator.RandomIterFactory;
 import org.geotools.TestData;
+import org.geotools.api.coverage.grid.GridCoverageReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.metadata.spatial.PixelOrientation;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
+import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.coverage.processing.CoverageProcessor;
+import org.geotools.coverage.util.FeatureUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.filter.function.EnvFunction;
+import org.geotools.gce.geotiff.GeoTiffFormat;
+import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.jts.JTS;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.image.test.ImageAssert;
+import org.geotools.map.MapContent;
+import org.geotools.map.RasterLayer;
 import org.geotools.process.ProcessException;
 import org.geotools.referencing.CRS;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.geotools.renderer.lite.StreamingRenderer;
 import org.geotools.util.factory.GeoTools;
+import org.geotools.xml.styling.SLDParser;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.opengis.coverage.grid.GridCoverageReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.metadata.spatial.PixelOrientation;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.TransformException;
 
 public class RasterAsPointCollectionProcessTest {
 
+    static class GridCoverageReaderLayer extends RasterLayer {
+
+        GridCoverage2DReader reader;
+        GeneralParameterValue[] params;
+
+        public GridCoverageReaderLayer(GridCoverage2DReader reader, Style style, GeneralParameterValue[] params) {
+            super(style);
+            this.params = params;
+            this.reader = reader;
+        }
+
+        @Override
+        public SimpleFeatureCollection toFeatureCollection() {
+            SimpleFeatureCollection collection;
+            try {
+                collection = FeatureUtilities.wrapGridCoverageReader(reader, params);
+                return collection;
+            } catch (Exception e) {
+                return null;
+            }
+        }
+
+        @Override
+        public ReferencedEnvelope getBounds() {
+            return new ReferencedEnvelope(reader.getOriginalEnvelope());
+        }
+    }
+
     private static final String NORTH = "N";
+
+    private static final String SOUTH = "S";
+
+    private static CoverageProcessor processor;
 
     private static GridCoverage2D coverage;
 
@@ -77,17 +136,16 @@ public class RasterAsPointCollectionProcessTest {
         // Read the input Coverage
         inputCoverage = (GridCoverage2D) reader.read(null);
         // Reproject to the default WGS84 CRS
-        final CoverageProcessor processor =
-                CoverageProcessor.getInstance(GeoTools.getDefaultHints());
+        processor = CoverageProcessor.getInstance(GeoTools.getDefaultHints());
         final ParameterValueGroup param = processor.getOperation("Resample").getParameters();
         param.parameter("Source").setValue(inputCoverage);
-        param.parameter("CoordinateReferenceSystem").setValue(DefaultGeographicCRS.WGS84);
+        param.parameter("CoordinateReferenceSystem").setValue(WGS84);
         coverage = (GridCoverage2D) processor.doOperation(param);
         // Reader disposal
         reader.dispose();
         // Definition of the Image Size
-        pixelNumber =
-                coverage.getRenderedImage().getHeight() * coverage.getRenderedImage().getWidth();
+        pixelNumber = coverage.getRenderedImage().getHeight()
+                * coverage.getRenderedImage().getWidth();
         // Definition of the process
         process = new RasterAsPointCollectionProcess();
         // Definition of the Name of the unique GridSampleDimension
@@ -110,12 +168,10 @@ public class RasterAsPointCollectionProcessTest {
     }
 
     @Test
-    public void testCoverageWithHemisphere()
-            throws MismatchedDimensionException, TransformException {
+    public void testCoverageWithHemisphere() throws MismatchedDimensionException, TransformException {
         // Execution of the RasterAsPointCollectionProcess setting hemisphere to true
         boolean hemisphere = true;
-        SimpleFeatureCollection collection =
-                process.execute(coverage, null, null, null, hemisphere);
+        SimpleFeatureCollection collection = process.execute(coverage, null, null, null, hemisphere);
         // Check if the points are exactly as the number of pixel number
         Assert.assertEquals(pixelNumber, collection.size());
         // Check if each Point Attribute contains the same values of the Input coverage
@@ -123,13 +179,11 @@ public class RasterAsPointCollectionProcessTest {
     }
 
     @Test
-    public void testCoverageWithScaleFactor()
-            throws MismatchedDimensionException, TransformException {
+    public void testCoverageWithScaleFactor() throws MismatchedDimensionException, TransformException {
         // Execution of the RasterAsPointCollectionProcess setting hemisphere and scaleFactor
         boolean hemisphere = true;
         float scaleFactor = 2.0f;
-        SimpleFeatureCollection collection =
-                process.execute(coverage, null, scaleFactor, null, hemisphere);
+        SimpleFeatureCollection collection = process.execute(coverage, null, scaleFactor, null, hemisphere);
         // Check if the points are exactly as the number of pixel number
         Assert.assertEquals((int) (pixelNumber * scaleFactor * scaleFactor), collection.size());
         // Check if each Point Attribute contains the same values of the Input coverage
@@ -137,13 +191,11 @@ public class RasterAsPointCollectionProcessTest {
     }
 
     @Test
-    public void testCoverageWithSmallScaleFactor()
-            throws MismatchedDimensionException, TransformException {
+    public void testCoverageWithSmallScaleFactor() throws MismatchedDimensionException, TransformException {
         // Execution of the RasterAsPointCollectionProcess setting hemisphere and scaleFactor
         boolean hemisphere = true;
         float scaleFactor = 1f / 18;
-        SimpleFeatureCollection collection =
-                process.execute(coverage, null, scaleFactor, null, hemisphere);
+        SimpleFeatureCollection collection = process.execute(coverage, null, scaleFactor, null, hemisphere);
         // Check if the points are exactly as the number of pixel number
         Assert.assertEquals(1, collection.size());
         // Check if each Point Attribute contains the same values of the Input coverage
@@ -151,15 +203,13 @@ public class RasterAsPointCollectionProcessTest {
     }
 
     @Test
-    public void testCoverageWithNearestInterp()
-            throws MismatchedDimensionException, TransformException {
+    public void testCoverageWithNearestInterp() throws MismatchedDimensionException, TransformException {
         // Execution of the RasterAsPointCollectionProcess setting hemisphere, scaleFactor and
         // nearest interpolation
         boolean hemisphere = true;
         float scaleFactor = 2.0f;
         Interpolation interp = new InterpolationNearest();
-        SimpleFeatureCollection collection =
-                process.execute(coverage, null, scaleFactor, interp, hemisphere);
+        SimpleFeatureCollection collection = process.execute(coverage, null, scaleFactor, interp, hemisphere);
         // Check if the points are exactly as the number of pixel number
         Assert.assertEquals((int) (pixelNumber * scaleFactor * scaleFactor), collection.size());
         // Check if each Point Attribute contains the same values of the Input coverage
@@ -167,15 +217,13 @@ public class RasterAsPointCollectionProcessTest {
     }
 
     @Test
-    public void testCoverageWithBilinearInterp()
-            throws MismatchedDimensionException, TransformException {
+    public void testCoverageWithBilinearInterp() throws MismatchedDimensionException, TransformException {
         // Execution of the RasterAsPointCollectionProcess setting hemisphere, scaleFactor and
         // bilinear interpolation
         boolean hemisphere = true;
         float scaleFactor = 2.0f;
         Interpolation interp = new InterpolationBilinear();
-        SimpleFeatureCollection collection =
-                process.execute(coverage, null, scaleFactor, interp, hemisphere);
+        SimpleFeatureCollection collection = process.execute(coverage, null, scaleFactor, interp, hemisphere);
         // Check if the points are exactly as the number of pixel number
         Assert.assertEquals((int) (pixelNumber * scaleFactor * scaleFactor), collection.size());
         // Check if each Point Attribute contains the same values of the Input coverage
@@ -183,15 +231,13 @@ public class RasterAsPointCollectionProcessTest {
     }
 
     @Test
-    public void testCoverageWithBicubicInterp()
-            throws MismatchedDimensionException, TransformException {
+    public void testCoverageWithBicubicInterp() throws MismatchedDimensionException, TransformException {
         // Execution of the RasterAsPointCollectionProcess setting hemisphere, scaleFactor and
         // bicubic interpolation
         boolean hemisphere = true;
         float scaleFactor = 2.0f;
         Interpolation interp = new InterpolationBicubic(8);
-        SimpleFeatureCollection collection =
-                process.execute(coverage, null, scaleFactor, interp, hemisphere);
+        SimpleFeatureCollection collection = process.execute(coverage, null, scaleFactor, interp, hemisphere);
         // Check if the points are exactly as the number of pixel number
         Assert.assertEquals((int) (pixelNumber * scaleFactor * scaleFactor), collection.size());
         // Check if each Point Attribute contains the same values of the Input coverage
@@ -199,28 +245,25 @@ public class RasterAsPointCollectionProcessTest {
     }
 
     @Test
-    public void testCoverageWithTargetCRS()
-            throws MismatchedDimensionException, TransformException, FactoryException {
+    public void testCoverageWithTargetCRS() throws MismatchedDimensionException, TransformException, FactoryException {
         // Execution of the RasterAsPointCollectionProcess setting hemisphere, scaleFactor, nearest
         // interpolation and targetCRS
         boolean hemisphere = true;
         float scaleFactor = 2.0f;
         Interpolation interp = new InterpolationNearest();
         // Selection of the Lambert Conformal Conic CRS
-        String wkt =
-                "PROJCS[\"Lambert_Conformal_Conic\","
-                        + "GEOGCS[\"GCS_unknown\",DATUM[\"D_unknown\","
-                        + "SPHEROID[\"Sphere\",6367470,0]],PRIMEM[\"Greenwich\",0],"
-                        + "UNIT[\"Degree\",0.017453292519943295]],"
-                        + "PROJECTION[\"Lambert_Conformal_Conic_1SP\"],"
-                        + "PARAMETER[\"latitude_of_origin\",38.5],"
-                        + "PARAMETER[\"central_meridian\",-97.5],"
-                        + "PARAMETER[\"scale_factor\",1],"
-                        + "PARAMETER[\"false_easting\",0],"
-                        + "PARAMETER[\"false_northing\",0],UNIT[\"m\",1.0]]";
+        String wkt = "PROJCS[\"Lambert_Conformal_Conic\","
+                + "GEOGCS[\"GCS_unknown\",DATUM[\"D_unknown\","
+                + "SPHEROID[\"Sphere\",6367470,0]],PRIMEM[\"Greenwich\",0],"
+                + "UNIT[\"Degree\",0.017453292519943295]],"
+                + "PROJECTION[\"Lambert_Conformal_Conic_1SP\"],"
+                + "PARAMETER[\"latitude_of_origin\",38.5],"
+                + "PARAMETER[\"central_meridian\",-97.5],"
+                + "PARAMETER[\"scale_factor\",1],"
+                + "PARAMETER[\"false_easting\",0],"
+                + "PARAMETER[\"false_northing\",0],UNIT[\"m\",1.0]]";
         CoordinateReferenceSystem targetCRS = CRS.parseWKT(wkt);
-        SimpleFeatureCollection collection =
-                process.execute(coverage, targetCRS, scaleFactor, interp, hemisphere);
+        SimpleFeatureCollection collection = process.execute(coverage, targetCRS, scaleFactor, interp, hemisphere);
         // Check if the points are exactly as the number of pixel number
         Assert.assertEquals((int) (pixelNumber * scaleFactor * scaleFactor), collection.size());
         // Check if each Point Attribute contains the same values of the Input coverage
@@ -228,33 +271,129 @@ public class RasterAsPointCollectionProcessTest {
     }
 
     @Test
-    public void testCoverageDifferentCRS()
-            throws MismatchedDimensionException, TransformException, FactoryException {
+    public void testCoverageDifferentCRS() throws MismatchedDimensionException, TransformException, FactoryException {
         // Execution of the RasterAsPointCollectionProcess setting hemisphere, scaleFactor, nearest
         // interpolation and targetCRS
         boolean hemisphere = true;
         float scaleFactor = 2.0f;
         Interpolation interp = new InterpolationNearest();
         // Selection of the Lambert Conformal Conic CRS
-        String wkt =
-                "PROJCS[\"Lambert_Conformal_Conic\","
-                        + "GEOGCS[\"GCS_unknown\",DATUM[\"D_unknown\","
-                        + "SPHEROID[\"Sphere\",6367470,0]],PRIMEM[\"Greenwich\",0],"
-                        + "UNIT[\"Degree\",0.017453292519943295]],"
-                        + "PROJECTION[\"Lambert_Conformal_Conic_1SP\"],"
-                        + "PARAMETER[\"latitude_of_origin\",38.5],"
-                        + "PARAMETER[\"central_meridian\",-97.5],"
-                        + "PARAMETER[\"scale_factor\",1],"
-                        + "PARAMETER[\"false_easting\",0],"
-                        + "PARAMETER[\"false_northing\",0],UNIT[\"m\",1.0]]";
+        String wkt = "PROJCS[\"Lambert_Conformal_Conic\","
+                + "GEOGCS[\"GCS_unknown\",DATUM[\"D_unknown\","
+                + "SPHEROID[\"Sphere\",6367470,0]],PRIMEM[\"Greenwich\",0],"
+                + "UNIT[\"Degree\",0.017453292519943295]],"
+                + "PROJECTION[\"Lambert_Conformal_Conic_1SP\"],"
+                + "PARAMETER[\"latitude_of_origin\",38.5],"
+                + "PARAMETER[\"central_meridian\",-97.5],"
+                + "PARAMETER[\"scale_factor\",1],"
+                + "PARAMETER[\"false_easting\",0],"
+                + "PARAMETER[\"false_northing\",0],UNIT[\"m\",1.0]]";
         CoordinateReferenceSystem targetCRS = CRS.parseWKT(wkt);
         // The input coverage is not in the Default WGS84 CRS
-        SimpleFeatureCollection collection =
-                process.execute(inputCoverage, targetCRS, scaleFactor, interp, hemisphere);
+        SimpleFeatureCollection collection = process.execute(inputCoverage, targetCRS, scaleFactor, interp, hemisphere);
         // Check if the points are exactly as the number of pixel number
         Assert.assertEquals((int) (pixelNumber * scaleFactor * scaleFactor), collection.size());
         // Check if each Point Attribute contains the same values of the Input coverage
         checkCollectionPoints(collection, hemisphere, scaleFactor, targetCRS);
+    }
+
+    @Test
+    public void testCoverageInNorthEastCoordinatesNorthern() throws Exception {
+        // Load the test coverage cropped to the northern hemisphere and
+        // reprojected to LatLon coordinates
+        String wkt = "GEOGCS[\"WGS 84\","
+                + "DATUM[\"World Geodetic System 1984\","
+                + "SPHEROID[\"WGS 84\", 6378137.0, 298.257223563, AUTHORITY[\"EPSG\",\"7030\"]],"
+                + "AUTHORITY[\"EPSG\",\"6326\"]],"
+                + "PRIMEM[\"Greenwich\", 0.0, AUTHORITY[\"EPSG\",\"8901\"]],"
+                + "UNIT[\"degree\", 0.017453292519943295],"
+                + "AXIS[\"Geodetic latitude\", NORTH],"
+                + "AXIS[\"Geodetic longitude\", EAST],"
+                + "AUTHORITY[\"EPSG\",\"4326\"]]";
+        CoordinateReferenceSystem crs = CRS.parseWKT(wkt);
+        GridCoverage2D coverage = readCropAndResampleCoverage(-180, 180, 0, 90, crs);
+        // Execution of the RasterAsPointCollectionProcess setting hemisphere
+        SimpleFeatureCollection collection = process.execute(coverage, null, null, null, true);
+        // Check if each point is in the northern hemisphere
+        assertPointsInHemisphere(coverage, collection, NORTH);
+    }
+
+    @Test
+    public void testCoverageInNorthEastCoordinatesSouthern() throws Exception {
+        // Load the test coverage cropped to the southern hemisphere and
+        // reprojected to LatLon coordinates
+        String wkt = "GEOGCS[\"WGS 84\","
+                + "DATUM[\"World Geodetic System 1984\","
+                + "SPHEROID[\"WGS 84\", 6378137.0, 298.257223563, AUTHORITY[\"EPSG\",\"7030\"]],"
+                + "AUTHORITY[\"EPSG\",\"6326\"]],"
+                + "PRIMEM[\"Greenwich\", 0.0, AUTHORITY[\"EPSG\",\"8901\"]],"
+                + "UNIT[\"degree\", 0.017453292519943295],"
+                + "AXIS[\"Geodetic latitude\", NORTH],"
+                + "AXIS[\"Geodetic longitude\", EAST],"
+                + "AUTHORITY[\"EPSG\",\"4326\"]]";
+        CoordinateReferenceSystem crs = CRS.parseWKT(wkt);
+        GridCoverage2D coverage = readCropAndResampleCoverage(-180, 180, -90, -1, crs);
+        // Execution of the RasterAsPointCollectionProcess setting hemisphere
+        SimpleFeatureCollection collection = process.execute(coverage, null, null, null, true);
+        // Check if each point is in the southern hemisphere
+        assertPointsInHemisphere(coverage, collection, SOUTH);
+    }
+
+    @Test
+    public void testCoverageInPolarStereographicProjectionsNorthern() throws Exception {
+        // Load the test coverage cropped to the northern hemisphere polar stereographic
+        // projection area of validity and reprojected to the projection
+        CoordinateReferenceSystem crs = CRS.decode("EPSG:5041");
+        GridCoverage2D coverage = readCropAndResampleCoverage(-180, 180, 60, 90, crs);
+        // Execution of the RasterAsPointCollectionProcess setting hemisphere
+        SimpleFeatureCollection collection = process.execute(coverage, null, null, null, true);
+        // Check if each point is in the northern hemisphere
+        assertPointsInHemisphere(coverage, collection, NORTH);
+    }
+
+    @Test
+    public void testCoverageInPolarStereographicProjectionsSouthern() throws Exception {
+        // Load the test coverage cropped to the southern hemisphere polar stereographic
+        // projection area of validity and reprojected to the projection
+        CoordinateReferenceSystem crs = CRS.decode("EPSG:5042");
+        GridCoverage2D coverage = readCropAndResampleCoverage(-180, 180, -90, -60, crs);
+        // Execution of the RasterAsPointCollectionProcess setting hemisphere
+        SimpleFeatureCollection collection = process.execute(coverage, null, null, null, true);
+        // Check if each point is in the southern hemisphere
+        assertPointsInHemisphere(coverage, collection, SOUTH);
+    }
+
+    private GridCoverage2D readCropAndResampleCoverage(
+            double x1, double x2, double y1, double y2, CoordinateReferenceSystem outCRS) throws IOException {
+        // Read the global coverage in LonLat coordinates
+        GeoTiffReader reader = new GeoTiffReader(TestData.file(this, "current.tif"));
+        GridCoverage2D coverage = reader.read(null);
+        reader.dispose();
+        // Crop the global coverage to the specified envelope
+        CoordinateReferenceSystem inCRS = coverage.getCoordinateReferenceSystem();
+        ParameterValueGroup param = processor.getOperation("CoverageCrop").getParameters();
+        param.parameter("Source").setValue(coverage);
+        param.parameter("Envelope").setValue(new ReferencedEnvelope(x1, x2, y1, y2, inCRS));
+        // Resample the coverage to to the specified coordinate system
+        coverage = (GridCoverage2D) processor.doOperation(param);
+        param = processor.getOperation("Resample").getParameters();
+        param.parameter("Source").setValue(coverage);
+        param.parameter("CoordinateReferenceSystem").setValue(outCRS);
+        return (GridCoverage2D) processor.doOperation(param);
+    }
+
+    private static void assertPointsInHemisphere(
+            GridCoverage2D coverage, SimpleFeatureCollection collection, String hemisphere) {
+        // Check if the points are exactly as the number of pixel number
+        int pixelNumber = coverage.getRenderedImage().getHeight()
+                * coverage.getRenderedImage().getWidth();
+        Assert.assertEquals(pixelNumber, collection.size());
+        // Check if each point is in the correct hemisphere
+        try (SimpleFeatureIterator it = collection.features()) {
+            while (it.hasNext()) {
+                Assert.assertEquals(hemisphere, it.next().getAttribute("emisphere"));
+            }
+        }
     }
 
     private void checkCollectionPoints(
@@ -264,16 +403,14 @@ public class RasterAsPointCollectionProcessTest {
             CoordinateReferenceSystem targetCRS)
             throws MismatchedDimensionException, TransformException {
         // World2Grid transform associated to the coverage
-        MathTransform2D w2g =
-                coverage.getGridGeometry().getCRSToGrid2D(PixelOrientation.UPPER_LEFT);
+        MathTransform2D w2g = coverage.getGridGeometry().getCRSToGrid2D(PixelOrientation.UPPER_LEFT);
         // Iterator on the FeatureCollection
-        SimpleFeatureIterator it = collection.features();
         // Iterator on the input image
-        RandomIter imageIterator = RandomIterFactory.create(coverage.getRenderedImage(), null);
         // Boolean indicating that the TargetCRS is not null
-        boolean crsExists = targetCRS != null;
         // Cycle on the Collection
-        try {
+        try (SimpleFeatureIterator it = collection.features()) {
+            RandomIter imageIterator = RandomIterFactory.create(coverage.getRenderedImage(), null);
+            boolean crsExists = targetCRS != null;
             while (it.hasNext()) {
                 // Selection of the feature
                 SimpleFeature ft = it.next();
@@ -299,13 +436,126 @@ public class RasterAsPointCollectionProcessTest {
                 // Check the GridConvergenceAngle
                 if (crsExists) {
                     double angle = (double) ft.getAttribute("gridConvergenceAngleCorrection");
-                    Assert.assertTrue(angle != 0);
+                    Assert.assertNotEquals(0, angle);
                 }
             }
-        } finally {
-            if (it != null) {
-                it.close();
+        }
+    }
+
+    @Test
+    public void testRasterToTransformVectorWrapping() throws Exception {
+        Style style = parseStyle("arrows.sld");
+
+        GeoTiffReader reader = new GeoTiffReader(TestData.file(this, "current.tif"));
+
+        MapContent mc = new MapContent();
+        ParameterValue<String> suggestedTileSize = GeoTiffFormat.SUGGESTED_TILE_SIZE.createValue();
+        suggestedTileSize.setValue("512,512");
+
+        mc.addLayer(new GridCoverageReaderLayer(reader, style, new GeneralParameterValue[] {suggestedTileSize}));
+
+        StreamingRenderer renderer = new StreamingRenderer();
+        Map<Object, Object> rendererParams = new HashMap<>();
+        rendererParams.put(StreamingRenderer.ADVANCED_PROJECTION_HANDLING_KEY, true);
+        rendererParams.put(StreamingRenderer.CONTINUOUS_MAP_WRAPPING, true);
+        renderer.setRendererHints(rendererParams);
+        renderer.setMapContent(mc);
+
+        // Request a region a couple of times away from the classic 180° dateline, spanning the
+        // world several times
+        ReferencedEnvelope reWgs84 = new ReferencedEnvelope(800, 1880, -35, 35, CRS.decode("EPSG:4326", true));
+        ReferencedEnvelope re = reWgs84.transform(CRS.decode("EPSG:3857"), true);
+
+        final int w = 1080;
+        final int h = 70;
+        final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics g = image.getGraphics();
+        g.setColor(Color.white);
+        g.fillRect(0, 0, w, h);
+        Rectangle paintArea = new Rectangle(0, 0, w, h);
+
+        renderer.paint((Graphics2D) g, paintArea, re, worldToScreenTransform(re, paintArea));
+        final int reducedWidth = 360;
+        final int reducedHeight = h;
+        final int minX = w - reducedWidth;
+
+        Raster raster = image.getData(new Rectangle(minX, 0, reducedWidth, reducedHeight));
+
+        int blackSamples = 0;
+        int graySamples = 0;
+        for (int i = 0; i < reducedWidth; i++) {
+            for (int j = 0; j < reducedHeight; j++) {
+                blackSamples += raster.getSample(minX + i, j, 0) == 0 ? 1 : 0;
+                graySamples += raster.getSample(minX + i, j, 0) == 128 ? 1 : 0;
             }
         }
+        // Check that we aren't getting a whole white image on a big part of the rightern
+        // side of the image. this was happening before the fix on wrapping on rendering
+        // transformation since it was only rendering a smaller area (NO wrapping at all)
+        assertNotEquals(0, blackSamples);
+        // Confirm that the NODATA values (-32767.0 in the test image) were preserved
+        // by checking for samples in the image that are not black (non-NODATA values)
+        // or white (background).
+        assertNotEquals(0, graySamples);
+    }
+
+    private Style parseStyle(String styleName) throws IOException {
+        StyleFactory factory = CommonFactoryFinder.getStyleFactory(null);
+        java.net.URL surl = TestData.getResource(this, styleName);
+        SLDParser stylereader = new SLDParser(factory, surl);
+        Style style = stylereader.readXML()[0];
+        return style;
+    }
+
+    @Test
+    public void testTileScale1() throws IOException {
+        ReferencedEnvelope envelope = new ReferencedEnvelope(-90, -45, 0, 45, WGS84);
+        testPlusesWithScale(envelope, "rapc-scale1.png", "pluses.sld");
+    }
+
+    @Test
+    public void testTileScale025() throws IOException {
+        EnvFunction.setLocalValue("scale", "0.25");
+        try {
+            ReferencedEnvelope envelope = new ReferencedEnvelope(-90, -45, 0, 45, WGS84);
+            testPlusesWithScale(envelope, "rapc-scale025.png", "pluses.sld");
+        } finally {
+            EnvFunction.clearLocalValues();
+        }
+    }
+
+    @Test
+    public void testOversample() throws IOException {
+        // one pixel every 20, but of the screen ones (oversampling enabled)
+        EnvFunction.setLocalValue("scale", "0.05");
+        try {
+            ReferencedEnvelope envelope = new ReferencedEnvelope(-90, -45, 0, 45, WGS84);
+            testPlusesWithScale(envelope, "rapc-oversample-scale005.png", "pluses-oversample.sld");
+        } finally {
+            EnvFunction.clearLocalValues();
+        }
+    }
+
+    private void testPlusesWithScale(ReferencedEnvelope envelope, String testFile, String styleName)
+            throws IOException {
+        GeoTiffReader reader = new GeoTiffReader(TestData.file(this, "current.tif"));
+        MapContent mc = new MapContent();
+        mc.addLayer(new GridCoverageReaderLayer(reader, parseStyle(styleName), null));
+
+        StreamingRenderer renderer = new StreamingRenderer();
+        renderer.setMapContent(mc);
+
+        // Request an area in the atlantic
+        final int tileSize = 256;
+        final BufferedImage image = new BufferedImage(tileSize, tileSize, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = (Graphics2D) image.getGraphics();
+        g.setColor(Color.white);
+        g.fillRect(0, 0, tileSize, tileSize);
+        Rectangle paintArea = new Rectangle(0, 0, tileSize, tileSize);
+
+        renderer.paint(g, paintArea, envelope, worldToScreenTransform(envelope, paintArea));
+
+        File expected = new File("src/test/resources/org/geotools/process/raster/test-data/" + testFile);
+        ImageAssert.assertEquals(expected, image, 0);
     }
 }

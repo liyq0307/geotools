@@ -17,33 +17,29 @@
 package org.geotools.temporal.object;
 
 import java.util.Collection;
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.Period;
+import org.geotools.api.temporal.Position;
 import org.geotools.util.Utilities;
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.Period;
-import org.opengis.temporal.Position;
 
 /**
- * A zero-dimensional geometric primitive that represents position in time, equivalent to a point in
- * space.
+ * A zero-dimensional geometric primitive that represents position in time, equivalent to a point in space.
  *
  * @author Mehdi Sidhoum (Geomatys)
  */
 public class DefaultInstant extends DefaultTemporalGeometricPrimitive implements Instant {
 
     /**
-     * This is the Collection of temporal {@link Period}s, for which this Instant is the beginning.
-     * The collection may be empty.
+     * This is the Collection of temporal {@link Period}s, for which this Instant is the beginning. The collection may
+     * be empty.
      */
     private Collection<Period> begunBy;
     /**
-     * This is the Collection of temporal {@link Period}s, for which this Instant is the end. The
-     * collection may be empty.
+     * This is the Collection of temporal {@link Period}s, for which this Instant is the end. The collection may be
+     * empty.
      */
     private Collection<Period> endBy;
-    /**
-     * This is the position of this TM_Instant, it shall be associated with a single temporal
-     * reference system.
-     */
+    /** This is the position of this TM_Instant, it shall be associated with a single temporal reference system. */
     private Position position;
 
     public DefaultInstant(Position position) {
@@ -51,26 +47,28 @@ public class DefaultInstant extends DefaultTemporalGeometricPrimitive implements
     }
 
     /** Get the position of this instant. */
+    @Override
     public Position getPosition() {
         return position;
     }
 
     /**
-     * Get the Collection of temporal {@link Period}s, for which this Instant is the beginning. The
-     * collection may be empty.
+     * Get the Collection of temporal {@link Period}s, for which this Instant is the beginning. The collection may be
+     * empty.
      *
      * @see Period#begin
      */
+    @Override
     public Collection<Period> getBegunBy() {
         return begunBy;
     }
 
     /**
-     * Get the Collection of temporal {@link Period}s, for which this Instant is the end. The
-     * collection may be empty.
+     * Get the Collection of temporal {@link Period}s, for which this Instant is the end. The collection may be empty.
      *
      * @see Period#end
      */
+    @Override
     public Collection<Period> getEndedBy() {
         return endBy;
     }

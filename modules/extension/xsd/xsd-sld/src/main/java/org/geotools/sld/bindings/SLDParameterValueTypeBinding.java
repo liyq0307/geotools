@@ -17,15 +17,14 @@
 package org.geotools.sld.bindings;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.geotools.xsd.Text;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -60,6 +59,7 @@ public class SLDParameterValueTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.PARAMETERVALUETYPE;
     }
@@ -71,6 +71,7 @@ public class SLDParameterValueTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
@@ -82,6 +83,7 @@ public class SLDParameterValueTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Expression.class;
     }
@@ -93,24 +95,24 @@ public class SLDParameterValueTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
      *
      * <!-- begin-user-doc -->
-     * Even though the spec allows an instance of ParamterValueType to have multiple expressions as
-     * children, it is more often that there is only one. Therefore this binding returns the first
-     * expression it finds or null. If a subtype needs multiple expressions they should ovveride.
+     * Even though the spec allows an instance of ParamterValueType to have multiple expressions as children, it is more
+     * often that there is only one. Therefore this binding returns the first expression it finds or null. If a subtype
+     * needs multiple expressions they should ovveride.
      * <!-- end-user-doc -->
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
-        List<Expression> expressions = new ArrayList();
-        for (Iterator itr = node.getChildren().iterator(); itr.hasNext(); ) {
-            Node child = (Node) itr.next();
-
+        List<Expression> expressions = new ArrayList<>();
+        for (Node child : node.getChildren()) {
             if (child.getValue() instanceof Expression) {
                 expressions.add((Expression) child.getValue());
             } else if (child.getValue() instanceof Text) {
@@ -121,7 +123,7 @@ public class SLDParameterValueTypeBinding extends AbstractComplexBinding {
         if (expressions.isEmpty()) {
             return null;
         }
-        if (expressions.size() == 1) return (Expression) expressions.get(0);
+        if (expressions.size() == 1) return expressions.get(0);
 
         Expression e = expressions.get(0);
         for (int i = 1; i < expressions.size(); i++) {

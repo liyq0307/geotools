@@ -19,19 +19,19 @@ package org.geotools.data.memory;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import org.geotools.data.DataSourceException;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureImpl;
 import org.geotools.filter.identity.FeatureIdImpl;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.identity.FeatureId;
 
 /** Update contents of MemoryDataStore. */
 public class MemoryFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleFeature> {
@@ -53,10 +53,12 @@ public class MemoryFeatureWriter implements FeatureWriter<SimpleFeatureType, Sim
         iterator = entry.getMemory().values().iterator();
     }
 
+    @Override
     public SimpleFeatureType getFeatureType() {
         return state.getFeatureType();
     }
 
+    @Override
     public SimpleFeature next() throws IOException, NoSuchElementException {
         if (hasNext()) {
             // existing content
@@ -81,6 +83,7 @@ public class MemoryFeatureWriter implements FeatureWriter<SimpleFeatureType, Sim
         return current;
     }
 
+    @Override
     public void remove() throws IOException {
         if (iterator == null) {
             throw new IOException("FeatureWriter has been closed");
@@ -101,6 +104,7 @@ public class MemoryFeatureWriter implements FeatureWriter<SimpleFeatureType, Sim
         }
     }
 
+    @Override
     public void write() throws IOException {
         if (iterator == null) {
             throw new IOException("FeatureWriter has been closed");
@@ -114,9 +118,7 @@ public class MemoryFeatureWriter implements FeatureWriter<SimpleFeatureType, Sim
             if (current.getUserData().containsKey(Hints.PROVIDED_FID)) {
                 String fid = (String) current.getUserData().get(Hints.PROVIDED_FID);
                 FeatureId id = new FeatureIdImpl(fid);
-                current =
-                        new SimpleFeatureImpl(
-                                current.getAttributes(), current.getFeatureType(), id);
+                current = new SimpleFeatureImpl(current.getAttributes(), current.getFeatureType(), id);
             }
         }
 
@@ -133,10 +135,7 @@ public class MemoryFeatureWriter implements FeatureWriter<SimpleFeatureType, Sim
                     live.setAttributes(current.getAttributes());
                 } catch (Exception e) {
                     throw new DataSourceException(
-                            "Unable to accept modifications to "
-                                    + live.getID()
-                                    + " on "
-                                    + typeName);
+                            "Unable to accept modifications to " + live.getID() + " on " + typeName);
                 }
 
                 ReferencedEnvelope bounds = new ReferencedEnvelope();
@@ -153,6 +152,7 @@ public class MemoryFeatureWriter implements FeatureWriter<SimpleFeatureType, Sim
         }
     }
 
+    @Override
     public boolean hasNext() throws IOException {
         if (iterator == null) {
             throw new IOException("FeatureWriter has been closed");
@@ -160,6 +160,7 @@ public class MemoryFeatureWriter implements FeatureWriter<SimpleFeatureType, Sim
         return (iterator != null) && iterator.hasNext();
     }
 
+    @Override
     public void close() {
         if (iterator != null) {
             iterator = null;

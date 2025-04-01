@@ -66,9 +66,10 @@ public class GeometricComplexTypeImpl extends AbstractGeometryTypeImpl implement
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<GeometricPrimitivePropertyType> getElement() {
         if (element == null) {
-            element = new EObjectContainmentEList<GeometricPrimitivePropertyType>(GeometricPrimitivePropertyType.class, this, Gml311Package.GEOMETRIC_COMPLEX_TYPE__ELEMENT);
+            element = new EObjectContainmentEList<>(GeometricPrimitivePropertyType.class, this, Gml311Package.GEOMETRIC_COMPLEX_TYPE__ELEMENT);
         }
         return element;
     }

@@ -1,6 +1,7 @@
 package org.geotools.renderer.lite;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -24,8 +25,7 @@ import org.junit.Test;
 /** @author michael */
 public class StreamingRendererDirectLayerTest {
 
-    private static final ReferencedEnvelope WORLD =
-            new ReferencedEnvelope(0, 1, 0, 1, DefaultGeographicCRS.WGS84);
+    private static final ReferencedEnvelope WORLD = new ReferencedEnvelope(0, 1, 0, 1, DefaultGeographicCRS.WGS84);
 
     private static final Rectangle SCREEN = new Rectangle(200, 200);
 
@@ -43,12 +43,8 @@ public class StreamingRendererDirectLayerTest {
             localGraphics.setPaint(Color.WHITE);
             localGraphics.fill(SCREEN);
 
-            Rectangle inner =
-                    new Rectangle(
-                            SCREEN.x + SCREEN.width / 4,
-                            SCREEN.y + SCREEN.height / 4,
-                            SCREEN.width / 2,
-                            SCREEN.height / 2);
+            Rectangle inner = new Rectangle(
+                    SCREEN.x + SCREEN.width / 4, SCREEN.y + SCREEN.height / 4, SCREEN.width / 2, SCREEN.height / 2);
             localGraphics.setPaint(Color.BLACK);
             localGraphics.fill(inner);
         }
@@ -67,8 +63,7 @@ public class StreamingRendererDirectLayerTest {
         StreamingRenderer renderer = new StreamingRenderer();
         renderer.setMapContent(mapContent);
 
-        BufferedImage image =
-                new BufferedImage(SCREEN.width, SCREEN.height, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage image = new BufferedImage(SCREEN.width, SCREEN.height, BufferedImage.TYPE_INT_ARGB);
         mapContent.getViewport().setScreenArea(SCREEN);
 
         Graphics2D destGraphics = image.createGraphics();
@@ -82,8 +77,7 @@ public class StreamingRendererDirectLayerTest {
         assertTrue(colorFreq.containsKey(Color.BLACK.getRGB()));
         assertTrue(colorFreq.containsKey(Color.WHITE.getRGB()));
 
-        double ratio =
-                (double) colorFreq.get(Color.BLACK.getRGB()) / colorFreq.get(Color.WHITE.getRGB());
+        double ratio = (double) colorFreq.get(Color.BLACK.getRGB()) / colorFreq.get(Color.WHITE.getRGB());
 
         assertTrue(ratio > 0.95 && ratio < 1.05);
 
@@ -102,7 +96,7 @@ public class StreamingRendererDirectLayerTest {
      * TODO: replace this with a PerceptualDiff check or something
      */
     private Map<Integer, Integer> getColorFreq(BufferedImage image) {
-        Map<Integer, Integer> colorFreq = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> colorFreq = new HashMap<>();
         for (int y = image.getMinY(), ny = 0; ny < image.getHeight(); y++, ny++) {
             for (int x = image.getMinX(), nx = 0; nx < image.getWidth(); x++, nx++) {
                 int rgb = image.getRGB(x, y);
@@ -118,14 +112,10 @@ public class StreamingRendererDirectLayerTest {
     }
 
     private void displayImage(final BufferedImage image, final CountDownLatch latch) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        TestImageFrame frame = new TestImageFrame(image, latch);
-                        frame.setVisible(true);
-                    }
-                });
+        SwingUtilities.invokeLater(() -> {
+            TestImageFrame frame = new TestImageFrame(image, latch);
+            frame.setVisible(true);
+        });
     }
 
     private static class TestImageFrame extends ImageFrame {
@@ -135,13 +125,12 @@ public class StreamingRendererDirectLayerTest {
             super(image, "Rendered image");
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
-            addWindowListener(
-                    new WindowAdapter() {
-                        @Override
-                        public void windowClosed(WindowEvent e) {
-                            latch.countDown();
-                        }
-                    });
+            addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    latch.countDown();
+                }
+            });
 
             setSize(image.getWidth(), image.getHeight() + 21);
         }

@@ -16,8 +16,8 @@
  */
 package org.geotools.renderer.label;
 
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.renderer.style.TextStyle2D;
-import org.geotools.styling.TextSymbolizer.PolygonAlignOptions;
 import org.locationtech.jts.algorithm.MinimumDiameter;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
@@ -25,8 +25,8 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 
 /**
- * Helper class that keeps the state of the alternate polygon labelling angle to avoid its (sometime
- * expensive) computation as the labeller tries different labelling positions
+ * Helper class that keeps the state of the alternate polygon labelling angle to avoid its (sometime expensive)
+ * computation as the labeller tries different labelling positions
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -42,20 +42,20 @@ class TextStyle2DExt extends TextStyle2D {
     }
 
     void setupPolygonAlign(PreparedGeometry pg) {
-        if (item.getPolygonAlign() == PolygonAlignOptions.NONE) return;
+        if (item.getPolygonAlign() == TextSymbolizer.PolygonAlignOptions.NONE) return;
     }
 
     boolean flipRotation(Geometry geometry) {
-        if (item.getPolygonAlign() == PolygonAlignOptions.NONE) {
+        if (item.getPolygonAlign() == TextSymbolizer.PolygonAlignOptions.NONE) {
             return false;
         }
 
         // lazily compute rotation
         if (alternateRotation == null) {
             double radians = 0;
-            if (item.getPolygonAlign() == PolygonAlignOptions.ORTHO) {
+            if (item.getPolygonAlign() == TextSymbolizer.PolygonAlignOptions.ORTHO) {
                 radians = calcPolygonAlignOrthoAngle(geometry);
-            } else if (item.getPolygonAlign() == PolygonAlignOptions.MBR) {
+            } else if (item.getPolygonAlign() == TextSymbolizer.PolygonAlignOptions.MBR) {
                 radians = calcPolygonAlignMBRAngle(geometry);
             }
 

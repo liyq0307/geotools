@@ -16,12 +16,14 @@
  */
 package org.geotools.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import java.util.Locale;
+import java.util.ResourceBundle;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.metadata.i18n.VocabularyKeys;
-import org.junit.*;
+import org.junit.Test;
 
 /**
  * Tests the {@link ResourceBundle} class, especially {@link Vocabulary}.
@@ -33,9 +35,8 @@ public final class ResourceBundleTest {
     /** Tests some simple vocabulary words. */
     @Test
     public void testVocabulary() {
-        Vocabulary resources;
 
-        resources = Vocabulary.getResources(Locale.ENGLISH);
+        Vocabulary resources = Vocabulary.getResources(Locale.ENGLISH);
         assertSame(resources, Vocabulary.getResources(Locale.US));
         assertSame(resources, Vocabulary.getResources(Locale.UK));
         assertSame(resources, Vocabulary.getResources(Locale.CANADA));

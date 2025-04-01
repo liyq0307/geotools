@@ -19,13 +19,14 @@ package org.geotools.graph;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import org.geotools.graph.build.GraphBuilder;
 import org.geotools.graph.build.GraphGenerator;
 import org.geotools.graph.build.opt.OptDirectedGraphBuilder;
 import org.geotools.graph.build.opt.OptGraphBuilder;
 import org.geotools.graph.structure.Edge;
-import org.geotools.graph.structure.GraphVisitor;
 import org.geotools.graph.structure.Graphable;
 import org.geotools.graph.structure.Node;
 import org.geotools.graph.structure.opt.OptDirectedNode;
@@ -34,15 +35,15 @@ import org.geotools.graph.structure.opt.OptNode;
 public class GraphTestUtil {
 
     /**
-     * Builds a graph with no bifurcations made up of a specified number of nodes. Nodes are
-     * numbered from 0 to (# of nodes - 1).<br>
+     * Builds a graph with no bifurcations made up of a specified number of nodes. Nodes are numbered from 0 to (# of
+     * nodes - 1).<br>
      * <br>
      * O----O----O--...--O----O----O
      *
      * @param builder Builder to use to construct graph.
      * @param nnodes Number of nodes in graph.
-     * @return 2 element object array containing references to the end points of the graph. (The
-     *     nodes of degree 1 at the end of the graph.
+     * @return 2 element object array containing references to the end points of the graph. (The nodes of degree 1 at
+     *     the end of the graph.
      */
     public static Node[] buildNoBifurcations(GraphBuilder builder, int nnodes) {
         Node n1 = builder.buildNode();
@@ -86,8 +87,8 @@ public class GraphTestUtil {
 
     public static Object[] buildNoBifurcations(OptGraphBuilder builder, int nnodes) {
         // use maps for id since optimized graphable doesn't use id's
-        HashMap node2id = new HashMap();
-        HashMap edge2id = new HashMap();
+        Map<Node, Integer> node2id = new HashMap<>();
+        Map<Edge, Integer> edge2id = new HashMap<>();
 
         OptNode n1 = (OptNode) builder.buildNode();
         n1.setDegree(1);
@@ -119,8 +120,8 @@ public class GraphTestUtil {
 
     public static Object[] buildNoBifurcations(OptDirectedGraphBuilder builder, int nnodes) {
         // use maps for id since optimized graphable doesn't use id's
-        HashMap node2id = new HashMap();
-        HashMap edge2id = new HashMap();
+        Map<Node, Integer> node2id = new HashMap<>();
+        Map<Edge, Integer> edge2id = new HashMap<>();
 
         OptDirectedNode n1 = (OptDirectedNode) builder.buildNode();
         n1.setInDegree(0);
@@ -156,39 +157,33 @@ public class GraphTestUtil {
         return (new Object[] {first, n1, node2id, edge2id});
     }
 
-    public static Node[] buildSingleBifurcation(
-            final GraphBuilder builder, int nnodes, final int bifurcation) {
+    public static Node[] buildSingleBifurcation(final GraphBuilder builder, int nnodes, final int bifurcation) {
         Node[] ends = buildNoBifurcations(builder, nnodes - 1);
         final Node n = builder.buildNode();
-        final ArrayList bif = new ArrayList();
+        final List<Graphable> bif = new ArrayList<>();
 
-        builder.getGraph()
-                .visitNodes(
-                        new GraphVisitor() {
-                            @Override
-                            public int visit(Graphable component) {
-                                if (component.getID() == bifurcation) {
-                                    bif.add(component);
-                                }
+        builder.getGraph().visitNodes(component -> {
+            if (component.getID() == bifurcation) {
+                bif.add(component);
+            }
 
-                                return (0);
-                            }
-                        });
+            return (0);
+        });
 
         Edge e = builder.buildEdge(n, (Node) bif.get(0));
         builder.addNode(n);
         builder.addEdge(e);
 
-        Node[] bifends = new Node[] {ends[0], ends[1], (Node) bif.get(0)};
+        Node[] bifends = {ends[0], ends[1], (Node) bif.get(0)};
         return (bifends);
     }
 
     /**
-     * Creates a balanced binary tree consisting of a specefied number of levels. Each node created
-     * contains a string representing the nodes location in the tree.<br>
+     * Creates a balanced binary tree consisting of a specefied number of levels. Each node created contains a string
+     * representing the nodes location in the tree.<br>
      * <br>
-     * locstring(root) = "0"; locstring(node) = locstring(parent) + ".0" (if left child);
-     * locstring(node) = locstring(parent) + ".1" (if right child);
+     * locstring(root) = "0"; locstring(node) = locstring(parent) + ".0" (if left child); locstring(node) =
+     * locstring(parent) + ".1" (if right child);
      *
      * @param builder Builder to construct graph with
      * @param levels Number of levels in the tree.
@@ -199,7 +194,7 @@ public class GraphTestUtil {
 
         // a balanced binary tree
         Node root = builder.buildNode();
-        root.setObject(new String("0"));
+        root.setObject("0");
         id2node.put(root.getObject(), root);
 
         builder.addNode(root);

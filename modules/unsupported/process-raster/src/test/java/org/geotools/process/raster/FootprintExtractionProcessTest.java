@@ -40,12 +40,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.data.DataStoreFactorySpi;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.FeatureStore;
-import org.geotools.data.Transaction;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
@@ -73,9 +77,6 @@ import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKBWriter;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Tests for the raster to vector FootprintExtractionProcess.
@@ -102,12 +103,10 @@ public class FootprintExtractionProcessTest {
     static enum WritingFormat {
         WKB {
             @Override
-            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs)
-                    throws IOException {
+            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs) throws IOException {
                 final WKBWriter wkbWriter = new WKBWriter(2);
                 try (final OutputStream outputStream = new FileOutputStream(outputFile);
-                        final BufferedOutputStream bufferedStream =
-                                new BufferedOutputStream(outputStream)) {
+                        final BufferedOutputStream bufferedStream = new BufferedOutputStream(outputStream)) {
                     final OutStream outStream = new OutputStreamOutStream(bufferedStream);
                     wkbWriter.write(geometry, outStream);
                 }
@@ -115,8 +114,7 @@ public class FootprintExtractionProcessTest {
         },
         WKT {
             @Override
-            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs)
-                    throws IOException {
+            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs) throws IOException {
                 final WKTWriter wktWriter = new WKTWriter(2);
                 final StringWriter wkt = new StringWriter();
 
@@ -125,8 +123,7 @@ public class FootprintExtractionProcessTest {
                 }
                 // write to file
                 if (outputFile != null) {
-                    try (BufferedWriter bufferedWriter =
-                            new BufferedWriter(new FileWriter(outputFile))) {
+                    try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputFile))) {
                         bufferedWriter.write(wkt.toString());
                     }
                 }
@@ -134,8 +131,7 @@ public class FootprintExtractionProcessTest {
         },
         SHAPEFILE {
             @Override
-            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs)
-                    throws IOException {
+            void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs) throws IOException {
 
                 // create feature type
                 final SimpleFeatureTypeBuilder featureTypeBuilder = new SimpleFeatureTypeBuilder();
@@ -151,7 +147,7 @@ public class FootprintExtractionProcessTest {
 
                 // Creating the feature
                 final SimpleFeatureBuilder featureBuilder = new SimpleFeatureBuilder(featureType);
-                final Object[] values = new Object[] {geometry, 0};
+                final Object[] values = {geometry, 0};
                 featureBuilder.addAll(values);
                 final SimpleFeature feature = featureBuilder.buildFeature(typeName + '.' + 0);
 
@@ -162,12 +158,11 @@ public class FootprintExtractionProcessTest {
                 final DataStoreFactorySpi factory = new ShapefileDataStoreFactory();
 
                 // Preparing creation param
-                final Map<String, Serializable> params = new HashMap<String, Serializable>();
+                final Map<String, Serializable> params = new HashMap<>();
                 params.put(CREATE_SPATIAL_INDEX, Boolean.TRUE);
                 params.put("url", URLs.fileToUrl(outputFile));
 
-                final ShapefileDataStore ds =
-                        (ShapefileDataStore) factory.createNewDataStore(params);
+                final ShapefileDataStore ds = (ShapefileDataStore) factory.createNewDataStore(params);
                 ds.createSchema(featureType);
                 if (crs != null) {
                     ds.forceSchemaCRS(crs);
@@ -176,13 +171,13 @@ public class FootprintExtractionProcessTest {
                 // Write the features to the shapefile
                 Transaction transaction = new DefaultTransaction("create");
 
-                FeatureSource source = ds.getFeatureSource(ds.getTypeNames()[0]);
+                SimpleFeatureSource source = ds.getFeatureSource(ds.getTypeNames()[0]);
 
-                if (source instanceof FeatureStore) {
-                    FeatureStore store = (FeatureStore) source;
+                if (source instanceof SimpleFeatureStore) {
+                    SimpleFeatureStore store = (SimpleFeatureStore) source;
 
                     store.setTransaction(transaction);
-                    try {
+                    try { // NOPMD Catch needs transaction
                         store.addFeatures(collection);
                         transaction.commit();
 
@@ -201,8 +196,7 @@ public class FootprintExtractionProcessTest {
             }
         };
 
-        abstract void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs)
-                throws IOException;
+        abstract void write(Geometry geometry, File outputFile, CoordinateReferenceSystem crs) throws IOException;
     }
 
     @Before
@@ -234,24 +228,17 @@ public class FootprintExtractionProcessTest {
     @Test
     public void cloudExtractionTest() throws Exception {
         GeoTiffReader reader = null;
-        FeatureIterator<SimpleFeature> iter = null;
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
             cov = reader.read(null);
-            SimpleFeatureCollection fc =
-                    process.execute(cov, null, 10d, false, null, true, true, null, null);
+            SimpleFeatureCollection fc = process.execute(cov, null, 10d, false, null, true, true, null, null);
             assertEquals(1, fc.size());
 
-            iter = fc.features();
-
-            SimpleFeature feature = iter.next();
+            SimpleFeature feature = DataUtilities.first(fc);
             MultiPolygon geometry = (MultiPolygon) feature.getDefaultGeometry();
             assertTrue(referenceGeometry.equalsExact(geometry, TOLERANCE));
         } finally {
-            if (iter != null) {
-                iter.close();
-            }
             if (reader != null) {
                 try {
                     reader.dispose();
@@ -272,33 +259,29 @@ public class FootprintExtractionProcessTest {
     @Test
     public void cloudExtractionSimplified() throws Exception {
         GeoTiffReader reader = null;
-        FeatureIterator<SimpleFeature> iter = null;
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
             cov = reader.read(null);
-            SimpleFeatureCollection fc =
-                    process.execute(cov, null, 10d, true, 4d, true, true, null, null);
+            SimpleFeatureCollection fc = process.execute(cov, null, 10d, true, 4d, true, true, null, null);
             assertEquals(2, fc.size());
-            iter = fc.features();
+            try (FeatureIterator<SimpleFeature> iter = fc.features()) {
 
-            // Getting the main Footprint
-            SimpleFeature feature = iter.next();
-            Geometry geometry = (Geometry) feature.getDefaultGeometry();
-            double fullArea = geometry.getArea();
+                // Getting the main Footprint
+                SimpleFeature feature = iter.next();
+                Geometry geometry = (Geometry) feature.getDefaultGeometry();
+                double fullArea = geometry.getArea();
 
-            // Getting to the simplified Footprint
-            feature = (SimpleFeature) iter.next();
-            geometry = (Geometry) feature.getDefaultGeometry();
-            double simplifiedArea = geometry.getArea();
+                // Getting to the simplified Footprint
+                feature = iter.next();
+                geometry = (Geometry) feature.getDefaultGeometry();
+                double simplifiedArea = geometry.getArea();
 
-            // area are different and polygons are different too
-            assertTrue(Math.abs(simplifiedArea - fullArea) > 0);
-            assertFalse(referenceGeometry.equalsExact(geometry, TOLERANCE));
-        } finally {
-            if (iter != null) {
-                iter.close();
+                // area are different and polygons are different too
+                assertTrue(Math.abs(simplifiedArea - fullArea) > 0);
+                assertFalse(referenceGeometry.equalsExact(geometry, TOLERANCE));
             }
+        } finally {
             if (reader != null) {
                 try {
                     reader.dispose();
@@ -319,19 +302,15 @@ public class FootprintExtractionProcessTest {
     @Test
     public void cloudExtractionNoRemoveCollinear() throws Exception {
         GeoTiffReader reader = null;
-        FeatureIterator<SimpleFeature> iter = null;
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
             cov = reader.read(null);
-            SimpleFeatureCollection fc =
-                    process.execute(cov, null, 10d, false, null, false, true, null, null);
-            iter = fc.features();
+            SimpleFeatureCollection fc = process.execute(cov, null, 10d, false, null, false, true, null, null);
 
-            SimpleFeature feature = iter.next();
+            SimpleFeature feature = DataUtilities.first(fc);
             Geometry geometry = (Geometry) feature.getDefaultGeometry();
-            final int removeCollinearLength =
-                    referenceGeometry.getGeometryN(0).getCoordinates().length;
+            final int removeCollinearLength = referenceGeometry.getGeometryN(0).getCoordinates().length;
             assertEquals(133, removeCollinearLength);
 
             // The computed polygon should have more vertices due to collinear point not being
@@ -340,9 +319,6 @@ public class FootprintExtractionProcessTest {
             assertTrue(length > removeCollinearLength);
             assertFalse(referenceGeometry.equalsExact(geometry, TOLERANCE));
         } finally {
-            if (iter != null) {
-                iter.close();
-            }
             if (reader != null) {
                 try {
                     reader.dispose();
@@ -363,7 +339,6 @@ public class FootprintExtractionProcessTest {
     @Test
     public void cloudExtractionWithoutDarkPixels() throws Exception {
         GeoTiffReader reader = null;
-        FeatureIterator<SimpleFeature> iter = null;
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
@@ -372,13 +347,11 @@ public class FootprintExtractionProcessTest {
             // Exclude pixels with luminance less than 20.
             final int referenceLuminance = 10;
             List<Range<Integer>> exclusionRanges =
-                    Collections.singletonList(
-                            new Range<Integer>(Integer.class, 0, referenceLuminance));
+                    Collections.singletonList(new Range<>(Integer.class, 0, referenceLuminance));
             SimpleFeatureCollection fc =
                     process.execute(cov, exclusionRanges, 10d, false, null, true, true, null, null);
-            iter = fc.features();
 
-            SimpleFeature feature = iter.next();
+            SimpleFeature feature = DataUtilities.first(fc);
             Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
             Raster raster = cov.getRenderedImage().getData();
@@ -386,25 +359,20 @@ public class FootprintExtractionProcessTest {
 
             // These positions identify a couple of dark pixels of the cloud edge
             raster.getPixel(9, 13, darkPixel);
-            double luminance =
-                    ImageUtilities.RGB_TO_GRAY_MATRIX[0][0] * darkPixel[0]
-                            + ImageUtilities.RGB_TO_GRAY_MATRIX[0][1] * darkPixel[1]
-                            + ImageUtilities.RGB_TO_GRAY_MATRIX[0][2] * darkPixel[2];
+            double luminance = ImageUtilities.RGB_TO_GRAY_MATRIX[0][0] * darkPixel[0]
+                    + ImageUtilities.RGB_TO_GRAY_MATRIX[0][1] * darkPixel[1]
+                    + ImageUtilities.RGB_TO_GRAY_MATRIX[0][2] * darkPixel[2];
             assertTrue(luminance < referenceLuminance);
 
             raster.getPixel(15, 7, darkPixel);
-            luminance =
-                    ImageUtilities.RGB_TO_GRAY_MATRIX[0][0] * darkPixel[0]
-                            + ImageUtilities.RGB_TO_GRAY_MATRIX[0][1] * darkPixel[1]
-                            + ImageUtilities.RGB_TO_GRAY_MATRIX[0][2] * darkPixel[2];
+            luminance = ImageUtilities.RGB_TO_GRAY_MATRIX[0][0] * darkPixel[0]
+                    + ImageUtilities.RGB_TO_GRAY_MATRIX[0][1] * darkPixel[1]
+                    + ImageUtilities.RGB_TO_GRAY_MATRIX[0][2] * darkPixel[2];
             assertTrue(luminance < referenceLuminance);
 
             // The computed polygon should have different shape due to dark pixels being excluded
             assertFalse(referenceGeometry.equalsExact(geometry, TOLERANCE));
         } finally {
-            if (iter != null) {
-                iter.close();
-            }
             if (reader != null) {
                 try {
                     reader.dispose();
@@ -425,29 +393,22 @@ public class FootprintExtractionProcessTest {
     @Test
     public void islandPolygonExtractionWithoutDarkPixelsAndWhiteClouds() throws Exception {
         GeoTiffReader reader = null;
-        FeatureIterator<SimpleFeature> iter = null;
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(islandFile);
             cov = reader.read(null);
 
             // Test removing black areas and clouds
-            List<Range<Integer>> exclusionRanges = new ArrayList<Range<Integer>>();
-            exclusionRanges.add(new Range<Integer>(Integer.class, 0, 10));
-            exclusionRanges.add(new Range<Integer>(Integer.class, 253, 255));
+            List<Range<Integer>> exclusionRanges = new ArrayList<>();
+            exclusionRanges.add(new Range<>(Integer.class, 0, 10));
+            exclusionRanges.add(new Range<>(Integer.class, 253, 255));
             SimpleFeatureCollection fc =
                     process.execute(cov, exclusionRanges, 10d, false, null, true, true, null, null);
-            iter = fc.features();
-
-            SimpleFeature feature = iter.next();
+            SimpleFeature feature = DataUtilities.first(fc);
             Geometry geometry = (Geometry) feature.getDefaultGeometry();
             Geometry islandWkt = wktRead(TestData.file(this, "island.wkt"));
             assertTrue(islandWkt.equalsExact(geometry, TOLERANCE));
-
         } finally {
-            if (iter != null) {
-                iter.close();
-            }
             if (reader != null) {
                 try {
                     reader.dispose();
@@ -468,34 +429,27 @@ public class FootprintExtractionProcessTest {
     @Test
     public void emptyPolygonExtractionTest() throws Exception {
         GeoTiffReader reader = null;
-        FeatureIterator<SimpleFeature> iter = null;
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
             cov = reader.read(null);
             BandSelectProcess select = new BandSelectProcess();
             cov = select.execute(cov, new int[] {0}, null);
-            List<Range<Integer>> exclusionRange = new ArrayList<Range<Integer>>();
+            List<Range<Integer>> exclusionRange = new ArrayList<>();
 
             // Exclude any value so the process will not find anything
-            exclusionRange.add(new Range<Integer>(Integer.class, 0, 255));
-            SimpleFeatureCollection fc =
-                    process.execute(cov, exclusionRange, 10d, false, null, true, true, null, null);
+            exclusionRange.add(new Range<>(Integer.class, 0, 255));
+            SimpleFeatureCollection fc = process.execute(cov, exclusionRange, 10d, false, null, true, true, null, null);
             assertEquals(1, fc.size());
 
-            iter = fc.features();
-
             // Check no results are returned as an empty MultiPolygon
-            SimpleFeature feature = iter.next();
+            SimpleFeature feature = DataUtilities.first(fc);
             Object geom = feature.getDefaultGeometry();
             assertTrue(geom instanceof MultiPolygon);
             MultiPolygon geometry = (MultiPolygon) geom;
             assertTrue(geometry.isEmpty());
 
         } finally {
-            if (iter != null) {
-                iter.close();
-            }
             if (reader != null) {
                 try {
                     reader.dispose();
@@ -525,18 +479,14 @@ public class FootprintExtractionProcessTest {
     @Test
     public void cloudExtractionWriteToDisk() throws Exception {
         GeoTiffReader reader = null;
-        FeatureIterator<SimpleFeature> iter = null;
         GridCoverage2D cov = null;
         try {
             reader = new GeoTiffReader(cloudFile);
             cov = reader.read(null);
-            SimpleFeatureCollection fc =
-                    process.execute(cov, null, 10d, false, null, true, true, null, null);
+            SimpleFeatureCollection fc = process.execute(cov, null, 10d, false, null, true, true, null, null);
             assertEquals(1, fc.size());
 
-            iter = fc.features();
-
-            SimpleFeature feature = iter.next();
+            SimpleFeature feature = DataUtilities.first(fc);
             Geometry geometry = (Geometry) feature.getDefaultGeometry();
             assertTrue(referenceGeometry.equalsExact(geometry, TOLERANCE));
             final File wktFile = TestData.temp(this, "cloudWkt.wkt");
@@ -554,9 +504,6 @@ public class FootprintExtractionProcessTest {
             assertTrue(referenceGeometry.equalsExact(wkbRead(wkbFile), TOLERANCE));
 
         } finally {
-            if (iter != null) {
-                iter.close();
-            }
             if (reader != null) {
                 try {
                     reader.dispose();

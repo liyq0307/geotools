@@ -26,9 +26,9 @@ import java.util.logging.Logger;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.xml.namespace.QName;
-import org.geotools.data.Base64;
 import org.geotools.image.io.ImageIOExt;
 import org.geotools.se.v1_1.SE;
+import org.geotools.util.Base64;
 import org.geotools.util.logging.Logging;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
@@ -78,6 +78,7 @@ public class InlineContentBinding extends AbstractComplexBinding {
     private static final Logger LOGGER = Logging.getLogger(InlineContentBinding.class);
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.InlineContent;
     }
@@ -89,6 +90,7 @@ public class InlineContentBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Icon.class;
     }
@@ -100,6 +102,7 @@ public class InlineContentBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         String encoding = (String) node.getAttributeValue("encoding");
         //        if ("xml".equalsIgnoreCase(encoding)) {

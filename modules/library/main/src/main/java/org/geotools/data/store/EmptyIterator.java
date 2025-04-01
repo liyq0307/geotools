@@ -23,15 +23,18 @@ import java.util.Iterator;
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
-public class EmptyIterator implements Iterator {
+public class EmptyIterator<T> implements Iterator<T> {
 
+    @Override
     public void remove() {}
 
+    @Override
     public boolean hasNext() {
         return false;
     }
 
-    public Object next() {
+    @Override
+    public T next() {
         return null;
     }
 }

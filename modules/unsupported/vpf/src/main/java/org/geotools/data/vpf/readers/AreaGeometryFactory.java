@@ -19,9 +19,11 @@ package org.geotools.data.vpf.readers;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Vector;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.vpf.VPFFeatureClass;
 import org.geotools.data.vpf.VPFFeatureType;
 import org.geotools.data.vpf.VPFLibrary;
@@ -35,8 +37,6 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Creates Geometries for area objects
@@ -49,6 +49,7 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
     /* (non-Javadoc)
      * @see com.ionicsoft.wfs.jdbc.geojdbc.module.vpf.VPFGeometryFactory#createGeometry(java.lang.String, int, int)
      */
+    @Override
     public synchronized void createGeometry(VPFFeatureType featureType, SimpleFeature values)
             throws SQLException, IOException, IllegalAttributeException {
 
@@ -60,6 +61,7 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
     /* (non-Javadoc)
      * @see com.ionicsoft.wfs.jdbc.geojdbc.module.vpf.VPFGeometryFactory#buildGeometry(java.lang.String, int, int)
      */
+    @Override
     public synchronized Geometry buildGeometry(VPFFeatureClass featureClass, SimpleFeature values)
             throws SQLException, IOException, IllegalAttributeException {
 
@@ -67,11 +69,11 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
         boolean isLeft = false;
         Coordinate previousCoordinate = null;
         Coordinate coordinate = null;
-        List coordinates = null;
+        List<Coordinate> coordinates = null;
         Polygon result = null;
         GeometryFactory geometryFactory = new GeometryFactory();
         LinearRing outerRing = null;
-        List innerRings = new Vector();
+        List<LinearRing> innerRings = new ArrayList<>();
 
         // Get face information
         // TODO: turn these column names into constants
@@ -83,16 +85,18 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
 
         // If the primitive table is there, this coverage is not tiled
         if (!new File(tileDirectory.concat(File.separator).concat(FACE_PRIMITIVE)).exists()) {
-            Short tileId =
-                    Short.valueOf(Short.parseShort(values.getAttribute("tile_id").toString()));
+            Short tileId = Short.valueOf(
+                    Short.parseShort(values.getAttribute("tile_id").toString()));
 
             VPFLibrary vpf = featureClass.getCoverage().getLibrary();
-            String tileName = (String) vpf.getTileMap().get(tileId);
+            String tileName = vpf.getTileMap().get(tileId);
 
             if (tileName != null) {
 
-                tileDirectory =
-                        tileDirectory.concat(File.separator).concat(tileName.toUpperCase()).trim();
+                tileDirectory = tileDirectory
+                        .concat(File.separator)
+                        .concat(tileName.toUpperCase())
+                        .trim();
             }
         }
 
@@ -118,14 +122,13 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
 
         while (faceFeature != null) {
             if (faceFeature.getAttribute("id").equals(Integer.valueOf(faceId))) {
-                coordinates = new LinkedList();
+                coordinates = new LinkedList<>();
 
-                int ringId = Integer.parseInt(faceFeature.getAttribute("ring_ptr").toString());
+                int ringId =
+                        Integer.parseInt(faceFeature.getAttribute("ring_ptr").toString());
 
                 // Get the starting edge
-                int startEdgeId =
-                        ((Number) ringFile.getRowFromId("id", ringId).getAttribute("start_edge"))
-                                .intValue();
+                int startEdgeId = ((Number) ringFile.getRowFromId("id", ringId).getAttribute("start_edge")).intValue();
                 int nextEdgeId = startEdgeId;
                 int prevNodeId = -1;
 
@@ -179,16 +182,8 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
                             // at the left and right edges to see which has a start node
                             // that's the same as this edge's end node.  Hopefully someone
                             // smarter can come up with a better solution.
-                            int leftEdgeStartNode =
-                                    ((Integer)
-                                                    edgeFile.getRowFromId("id", leftEdge)
-                                                            .getAttribute("start_node"))
-                                            .intValue();
-                            int rightEdgeStartNode =
-                                    ((Integer)
-                                                    edgeFile.getRowFromId("id", rightEdge)
-                                                            .getAttribute("start_node"))
-                                            .intValue();
+                            int leftEdgeStartNode = getNode(edgeFile, leftEdge, "start_node");
+                            int rightEdgeStartNode = getNode(edgeFile, rightEdge, "start_node");
 
                             if (leftEdgeStartNode == endNode) {
                                 isLeft = true;
@@ -224,8 +219,7 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
                                 coordinate =
                                         edgeGeometry.getCoordinateSequence().getCoordinate(inx);
 
-                                if ((previousCoordinate == null)
-                                        || (!coordinate.equals3D(previousCoordinate))) {
+                                if ((previousCoordinate == null) || (!coordinate.equals3D(previousCoordinate))) {
                                     coordinates.add(coordinate);
                                     previousCoordinate = coordinate;
                                 }
@@ -235,19 +229,16 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
                                 coordinate =
                                         edgeGeometry.getCoordinateSequence().getCoordinate(inx);
 
-                                if ((previousCoordinate == null)
-                                        || (!coordinate.equals3D(previousCoordinate))) {
+                                if ((previousCoordinate == null) || (!coordinate.equals3D(previousCoordinate))) {
                                     coordinates.add(coordinate);
                                     previousCoordinate = coordinate;
                                 }
                             }
                         }
                     } else {
-                        coordinate =
-                                edgeGeometry
-                                        .getCoordinateSequence()
-                                        .getCoordinate(
-                                                isLeft ? 0 : edgeGeometry.getNumPoints() - 1);
+                        coordinate = edgeGeometry
+                                .getCoordinateSequence()
+                                .getCoordinate(isLeft ? 0 : edgeGeometry.getNumPoints() - 1);
                     }
 
                     tempEdgeId = isLeft ? leftEdge : rightEdge;
@@ -260,7 +251,7 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
                     }
                 }
 
-                // The dorks at JTS insist that you explicitly close your rings. Ugh.
+                // Close ring
                 if (!coordinate.equals(coordinates.get(0))) {
                     coordinates.add(coordinates.get(0));
                 }
@@ -268,12 +259,10 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
                 Coordinate[] coordinateArray = new Coordinate[coordinates.size()];
 
                 for (int cnx = 0; cnx < coordinates.size(); cnx++) {
-                    coordinateArray[cnx] = (Coordinate) coordinates.get(cnx);
+                    coordinateArray[cnx] = coordinates.get(cnx);
                 }
 
-                LinearRing ring = null;
-
-                ring = geometryFactory.createLinearRing(coordinateArray);
+                LinearRing ring = geometryFactory.createLinearRing(coordinateArray);
 
                 if (outerRing == null) {
                     outerRing = ring;
@@ -297,12 +286,16 @@ public class AreaGeometryFactory extends VPFGeometryFactory implements FileConst
             LinearRing[] ringArray = new LinearRing[innerRings.size()];
 
             for (int cnx = 0; cnx < innerRings.size(); cnx++) {
-                ringArray[cnx] = (LinearRing) innerRings.get(cnx);
+                ringArray[cnx] = innerRings.get(cnx);
             }
 
             result = geometryFactory.createPolygon(outerRing, ringArray);
         }
 
         return result;
+    }
+
+    private int getNode(VPFFile edgeFile, int id, String node) {
+        return ((Integer) edgeFile.getRowFromId("id", id).getAttribute(node)).intValue();
     }
 }

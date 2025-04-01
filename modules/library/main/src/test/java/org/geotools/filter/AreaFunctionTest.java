@@ -18,22 +18,22 @@ package org.geotools.filter;
 
 import java.util.Arrays;
 import java.util.logging.Logger;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Unit test for expressions. This is a complimentary test suite with the filter test suite.
@@ -41,11 +41,10 @@ import org.opengis.filter.expression.PropertyName;
  * @author James MacGill, CCG
  * @author Rob Hranac, TOPP
  */
-public class AreaFunctionTest extends TestCase {
+public class AreaFunctionTest {
 
     /** Standard logging instance */
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(AreaFunctionTest.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(AreaFunctionTest.class);
     /** Feature on which to preform tests */
     private static SimpleFeature testFeature = null;
 
@@ -53,31 +52,6 @@ public class AreaFunctionTest extends TestCase {
     private static SimpleFeatureType testSchema = null;
 
     boolean setup = false;
-    /** Test suite for this test case */
-    TestSuite suite = null;
-
-    /** Constructor with test name. */
-    public AreaFunctionTest(String testName) {
-        super(testName);
-        // BasicConfigurator.configure();
-
-    }
-
-    /** Main for test runner. */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(suite());
-    }
-
-    /**
-     * Required suite builder.
-     *
-     * @return A test suite for this unit test.
-     */
-    public static Test suite() {
-
-        TestSuite suite = new TestSuite(AreaFunctionTest.class);
-        return suite;
-    }
 
     /**
      * Sets up a schema and a test feature.
@@ -85,7 +59,8 @@ public class AreaFunctionTest extends TestCase {
      * @throws SchemaException If there is a problem setting up the schema.
      * @throws IllegalFeatureException If problem setting up the feature.
      */
-    protected void setUp() throws SchemaException, IllegalAttributeException {
+    @Before
+    public void setUp() throws SchemaException, IllegalAttributeException {
         if (setup) {
             return;
         }
@@ -133,7 +108,7 @@ public class AreaFunctionTest extends TestCase {
         GeometryFactory gf = new GeometryFactory(new PrecisionModel());
         LinearRing ring = gf.createLinearRing(coords);
         attributes[0] = gf.createPolygon(ring, null);
-        attributes[1] = Boolean.valueOf(true);
+        attributes[1] = Boolean.TRUE;
         attributes[2] = Character.valueOf('t');
         attributes[3] = Byte.valueOf("10");
         attributes[4] = Short.valueOf("101");
@@ -150,16 +125,16 @@ public class AreaFunctionTest extends TestCase {
         // _log.getLoggerRepository().setThreshold(Level.DEBUG);
     }
 
-    static org.opengis.filter.FilterFactory filterFactory =
-            CommonFactoryFinder.getFilterFactory(null);
+    static org.geotools.api.filter.FilterFactory filterFactory = CommonFactoryFinder.getFilterFactory(null);
 
     /** Tests the min function expression. */
+    @Test
     public void testAreaFunction() throws IllegalFilterException {
 
         PropertyName a = filterFactory.property("testGeometry");
 
         AreaFunction area = new AreaFunction();
-        area.setParameters(Arrays.asList(new org.opengis.filter.expression.Expression[] {a}));
-        assertEquals(100d, ((Double) area.evaluate(testFeature)).doubleValue(), 0);
+        area.setParameters(Arrays.asList(new org.geotools.api.filter.expression.Expression[] {a}));
+        Assert.assertEquals(100d, ((Double) area.evaluate(testFeature)).doubleValue(), 0);
     }
 }

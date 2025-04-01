@@ -20,8 +20,8 @@ import java.io.Serializable;
 import org.geotools.graph.structure.Graphable;
 
 /**
- * Root of class hierarchy for optimized implementation of graph components. The optimizations
- * reduce the space taken up by graph components: <br>
+ * Root of class hierarchy for optimized implementation of graph components. The optimizations reduce the space taken up
+ * by graph components: <br>
  *
  * <UL>
  *   <LI>Counter implemented as byte
@@ -41,10 +41,7 @@ public abstract class OptGraphable implements Graphable, Serializable {
     /** counter * */
     private byte m_count;
 
-    /**
-     * Constructs a new optimized graphable object. Visited flag it set to false and counter set to
-     * -1.
-     */
+    /** Constructs a new optimized graphable object. Visited flag it set to false and counter set to -1. */
     public OptGraphable() {
         m_visited = false;
         m_count = -1;
@@ -55,6 +52,7 @@ public abstract class OptGraphable implements Graphable, Serializable {
      *
      * @see Graphable#setID(int)
      */
+    @Override
     public void setID(int id) {}
 
     /**
@@ -62,31 +60,35 @@ public abstract class OptGraphable implements Graphable, Serializable {
      *
      * @see Graphable#getID()
      */
+    @Override
     public int getID() {
         return 0;
     }
 
     /** @see Graphable#setVisited(boolean) */
+    @Override
     public void setVisited(boolean visited) {
         m_visited = visited;
     }
 
     /** @see Graphable#isVisited() */
+    @Override
     public boolean isVisited() {
         return (m_visited);
     }
 
     /**
-     * To minimize space, the counter is stored as a byte. Therefore the counter can take on values
-     * from -128 to 127.
+     * To minimize space, the counter is stored as a byte. Therefore the counter can take on values from -128 to 127.
      *
      * @see Graphable#setCount(int)
      */
+    @Override
     public void setCount(int count) {
         m_count = (byte) count;
     }
 
     /** @see Graphable#getCount() */
+    @Override
     public int getCount() {
         return (m_count);
     }
@@ -96,6 +98,7 @@ public abstract class OptGraphable implements Graphable, Serializable {
      *
      * @see Graphable#setObject(Object)
      */
+    @Override
     public void setObject(Object obj) {}
 
     /**
@@ -103,6 +106,7 @@ public abstract class OptGraphable implements Graphable, Serializable {
      *
      * @see Graphable#getObject()
      */
+    @Override
     public Object getObject() {
         return null;
     }

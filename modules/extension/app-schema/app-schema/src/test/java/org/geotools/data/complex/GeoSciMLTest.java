@@ -17,6 +17,7 @@
 
 package org.geotools.data.complex;
 
+import static org.geotools.data.util.FeatureStreams.toFeatureStream;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -25,14 +26,24 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Logger;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
+import java.util.stream.Stream;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.complex.config.AppSchemaDataAccessConfigurator;
 import org.geotools.data.complex.config.AppSchemaDataAccessDTO;
 import org.geotools.data.complex.config.AppSchemaFeatureTypeRegistry;
@@ -45,34 +56,23 @@ import org.geotools.test.AppSchemaTestSupport;
 import org.geotools.xsd.SchemaIndex;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * @author Rob Atkinson
  * @since 2.4
  */
 public class GeoSciMLTest extends AppSchemaTestSupport {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(GeoSciMLTest.class);
-
     private static final String GSMLNS = "http://www.cgi-iugs.org/xml/GeoSciML/2";
-
-    private static final String GMLNS = "http://www.opengis.net/gml";
 
     private static final String schemaBase = "/test-data/";
 
     private static EmfComplexFeatureReader reader;
 
-    private FeatureSource source;
-
     private static DataAccess<FeatureType, Feature> mappingDataStore;
 
     @BeforeClass
     public static void oneTimeSetUp() throws IOException {
-        final Map<String, Serializable> dsParams = new HashMap<String, Serializable>();
+        final Map<String, Serializable> dsParams = new HashMap<>();
         final URL url = GeoSciMLTest.class.getResource(schemaBase + "mappedPolygons.xml");
         dsParams.put("dbtype", "app-schema");
         dsParams.put("url", url.toExternalForm());
@@ -82,10 +82,7 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
         // Logging.GEOTOOLS.forceMonolineConsoleOutput(Level.FINEST);
     }
 
-    /**
-     * @param location schema location path discoverable through getClass().getResource()
-     * @return
-     */
+    /** @param location schema location path discoverable through getClass().getResource() */
     private SchemaIndex loadSchema(String location) throws IOException {
         URL catalogLocation = getClass().getResource(schemaBase + "mappedPolygons.oasis.xml");
         reader.setResolver(catalogLocation);
@@ -93,10 +90,8 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Tests if the schema-to-FM parsing code developed for complex datastore configuration loading
-     * can parse the GeoSciML types
-     *
-     * @throws Exception
+     * Tests if the schema-to-FM parsing code developed for complex datastore configuration loading can parse the
+     * GeoSciML types
      */
     @Test
     public void testParseSchema() throws Exception {
@@ -192,23 +187,20 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
             FeatureType boreholeType = mappingDataStore.getSchema(typeName);
             assertNotNull(boreholeType);
 
-            FeatureSource fSource = (FeatureSource) mappingDataStore.getFeatureSource(typeName);
-
             final int EXPECTED_RESULT_COUNT = 2;
+            FeatureCollection<?, ?> features =
+                    mappingDataStore.getFeatureSource(typeName).getFeatures();
 
-            FeatureCollection features = (FeatureCollection) fSource.getFeatures();
-
-            int resultCount = getCount(features);
+            int resultCount = DataUtilities.count(features);
             assertEquals(EXPECTED_RESULT_COUNT, resultCount);
 
-            Feature feature;
             int count = 0;
-            FeatureIterator it = features.features();
-            for (; it.hasNext(); ) {
-                feature = (Feature) it.next();
-                count++;
+            try (FeatureIterator it = features.features()) {
+                while (it.hasNext()) {
+                    it.next();
+                    count++;
+                }
             }
-            it.close();
 
             assertEquals(EXPECTED_RESULT_COUNT, count);
         } catch (Exception e) {
@@ -217,11 +209,7 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
         }
     }
 
-    /**
-     * Test that getting features from a feature source with a query honours the namespace.
-     *
-     * @throws Exception
-     */
+    /** Test that getting features from a feature source with a query honours the namespace. */
     @Test
     public void testFeatureSourceHonoursQueryNamespace() throws Exception {
         final Name typeName = Types.typeName(GSMLNS, "MappedFeature");
@@ -231,33 +219,41 @@ public class GeoSciMLTest extends AppSchemaTestSupport {
         query.setTypeName(typeName.getLocalPart());
         FeatureCollection<FeatureType, Feature> features = source.getFeatures(query);
         assertNotNull(features);
-        assertEquals(2, size(features));
+        assertEquals(2, DataUtilities.count(features));
     }
 
-    private int size(FeatureCollection<FeatureType, Feature> features) {
-        int size = 0;
-        FeatureIterator<Feature> i = features.features();
-        try {
-            for (; i.hasNext(); i.next()) {
-                size++;
-            }
-        } finally {
-            i.close();
+    /**
+     * Checks that declared namespaces are included on FeatureType's userData Map for the complex features collection.
+     */
+    @Test
+    public void testComplexFeatureNamespaces() throws Exception {
+        final Name typeName = Types.typeName(GSMLNS, "MappedFeature");
+        FeatureSource<FeatureType, Feature> source = mappingDataStore.getFeatureSource(typeName);
+        Query query = new Query();
+        query.setNamespace(new URI(typeName.getNamespaceURI()));
+        query.setTypeName(typeName.getLocalPart());
+        FeatureCollection<FeatureType, Feature> features = source.getFeatures(query);
+        assertNotNull(features);
+        try (final Stream<Feature> featureStream = toFeatureStream(features)) {
+            Optional<Feature> first = featureStream.findFirst();
+            @SuppressWarnings("unchecked")
+            Optional<Map<String, String>> mapOpt = first.map(Feature::getDescriptor)
+                    .map(AttributeDescriptor::getType)
+                    .map(AttributeType::getUserData)
+                    .map(m -> m.get(Types.DECLARED_NAMESPACES_MAP))
+                    .filter(v -> v instanceof Map)
+                    .map(x -> (Map<String, String>) x);
+            assertTrue(mapOpt.isPresent());
+            final Map<String, String> namespacesMap = mapOpt.get();
+            assertEquals(3, namespacesMap.keySet().size());
+            assertTrue(getExpectedNamespaces().stream().allMatch(ns -> namespacesMap.containsValue(ns)));
         }
-        return size;
     }
 
-    private int getCount(FeatureCollection features) {
-        FeatureIterator iterator = features.features();
-        int count = 0;
-        try {
-            while (iterator.hasNext()) {
-                iterator.next();
-                count++;
-            }
-        } finally {
-            iterator.close();
-        }
-        return count;
+    private List<String> getExpectedNamespaces() {
+        return Arrays.asList(
+                "http://www.w3.org/XML/1998/namespace",
+                "http://www.opengis.net/gml",
+                "http://www.cgi-iugs.org/xml/GeoSciML/2");
     }
 }

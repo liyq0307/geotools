@@ -16,17 +16,16 @@
  */
 package org.geotools.sld.bindings;
 
-import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.sld.CssParameter;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -66,6 +65,7 @@ public class SLDLineSymbolizerBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.LINESYMBOLIZER;
     }
@@ -77,6 +77,7 @@ public class SLDLineSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -88,6 +89,7 @@ public class SLDLineSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return LineSymbolizer.class;
     }
@@ -99,6 +101,7 @@ public class SLDLineSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -108,6 +111,7 @@ public class SLDLineSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         LineSymbolizer ls = styleFactory.createLineSymbolizer();
 
@@ -124,13 +128,12 @@ public class SLDLineSymbolizerBinding extends AbstractComplexBinding {
 
         // &lt;xsd:element ref="sld:Stroke" minOccurs="0"/&gt;
         if (node.hasChild(Stroke.class)) {
-            ls.setStroke((Stroke) node.getChildValue(Stroke.class));
+            ls.setStroke(node.getChildValue(Stroke.class));
         }
 
         // &lt;xsd:element ref="sld:VendorOption" minOccurs="0" maxOccurs="unbounded"/&gt;
-        for (CssParameter param : (List<CssParameter>) node.getChildValues(CssParameter.class)) {
-            ls.getOptions()
-                    .put(param.getName(), param.getExpression().evaluate(null, String.class));
+        for (CssParameter param : node.getChildValues(CssParameter.class)) {
+            ls.getOptions().put(param.getName(), param.getExpression().evaluate(null, String.class));
         }
 
         return ls;

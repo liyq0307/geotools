@@ -24,19 +24,18 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.Factory;
 import org.geotools.metadata.i18n.Vocabulary;
 import org.geotools.metadata.i18n.VocabularyKeys;
 import org.geotools.util.Classes;
 import org.geotools.util.TableWriter;
 import org.geotools.util.factory.FactoryRegistry;
-import org.opengis.metadata.Identifier;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.Factory;
 
 /**
- * Prints a list of factory. This is used for {@link ReferencingFactoryFinder#listProviders}
- * implementation only.
+ * Prints a list of factory. This is used for {@link ReferencingFactoryFinder#listProviders} implementation only.
  *
  * @version $Id$
  * @author Desruisseaux
@@ -45,27 +44,24 @@ final class FactoryPrinter implements Comparator<Class<?>> {
     /** Constructs a default instance of this printer. */
     public FactoryPrinter() {}
 
-    /**
-     * Compares two factories for order. This is used for sorting out the factories before to
-     * display them.
-     */
+    /** Compares two factories for order. This is used for sorting out the factories before to display them. */
+    @Override
     public int compare(final Class<?> factory1, final Class<?> factory2) {
         // Or sort by name
         return Classes.getShortName(factory1).compareToIgnoreCase(Classes.getShortName(factory2));
     }
 
     /**
-     * Lists all available factory implementations in a tabular format. For each factory interface,
-     * the first implementation listed is the default one. This method provides a way to check the
-     * state of a system, usually for debugging purpose.
+     * Lists all available factory implementations in a tabular format. For each factory interface, the first
+     * implementation listed is the default one. This method provides a way to check the state of a system, usually for
+     * debugging purpose.
      *
      * @param registry Where the factories are registered.
      * @param out The output stream where to format the list.
      * @param locale The locale for the list, or {@code null}.
      * @throws IOException if an error occurs while writing to {@code out}.
      */
-    public void list(final FactoryRegistry registry, final Writer out, final Locale locale)
-            throws IOException {
+    public void list(final FactoryRegistry registry, final Writer out, final Locale locale) throws IOException {
         /*
          * Gets the categories in some sorted order.
          */
@@ -89,17 +85,17 @@ final class FactoryPrinter implements Comparator<Class<?>> {
         table.nextLine(TableWriter.DOUBLE_HORIZONTAL_LINE);
         final StringBuilder vendors = new StringBuilder();
         final StringBuilder implementations = new StringBuilder();
-        for (final Iterator<Class<?>> it = categories.iterator(); it.hasNext(); ) {
+        for (final Class<?> category : categories) {
             /*
              * Writes the category name (CRSFactory, DatumFactory, etc.)
              */
-            final Class<?> category = it.next();
             table.write(Classes.getShortName(category));
             table.nextColumn();
             /*
              * Writes the authorities in a single cell. Same for vendors and implementations.
              */
-            final Iterator<?> providers = registry.getFactories(category, null, null).iterator();
+            final Iterator<?> providers =
+                    registry.getFactories(category, null, null).iterator();
             while (providers.hasNext()) {
                 if (implementations.length() != 0) {
                     table.write('\n');
@@ -114,10 +110,9 @@ final class FactoryPrinter implements Comparator<Class<?>> {
                     final Citation authority = ((AuthorityFactory) provider).getAuthority();
                     final Iterator<? extends Identifier> identifiers =
                             authority.getIdentifiers().iterator();
-                    final String identifier =
-                            identifiers.hasNext()
-                                    ? identifiers.next().getCode().toString()
-                                    : authority.getTitle().toString(locale);
+                    final String identifier = identifiers.hasNext()
+                            ? identifiers.next().getCode().toString()
+                            : authority.getTitle().toString(locale);
                     table.write(identifier);
                 }
             }

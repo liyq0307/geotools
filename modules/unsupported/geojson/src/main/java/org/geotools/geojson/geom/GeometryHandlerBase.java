@@ -29,8 +29,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 
-public class GeometryHandlerBase<G extends Geometry> extends HandlerBase
-        implements IContentHandler<G> {
+public class GeometryHandlerBase<G extends Geometry> extends HandlerBase implements IContentHandler<G> {
 
     protected GeometryFactory factory;
     protected List<Object> ordinates;
@@ -40,6 +39,7 @@ public class GeometryHandlerBase<G extends Geometry> extends HandlerBase
         this.factory = factory;
     }
 
+    @Override
     public G getValue() {
         return value;
     }
@@ -48,10 +48,11 @@ public class GeometryHandlerBase<G extends Geometry> extends HandlerBase
         return createCoordinate(ordinates);
     }
 
-    protected Coordinate[] coordinates(List coordinates) {
+    protected Coordinate[] coordinates(List<Coordinate> coordinates) {
         return createCoordinates(coordinates);
     }
 
+    @Override
     public boolean primitive(Object value) throws ParseException, IOException {
         // we could be receiving the "type" attribute value
         if (value instanceof Number) {

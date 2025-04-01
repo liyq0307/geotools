@@ -16,15 +16,19 @@
  */
 package org.geotools.filter.visitor;
 
+import static org.geotools.api.filter.Filter.EXCLUDE;
+import static org.geotools.api.filter.Filter.INCLUDE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.Arrays;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.function.math.FilterFunction_abs;
+import org.geotools.filter.function.math.FilterFunction_max;
 import org.junit.Test;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Test case where only specific functions are supported.
@@ -32,9 +36,7 @@ import org.opengis.filter.expression.Expression;
  * @author Jesse
  * @author ported from PostPreProcessFilterSplittingVisitor at 2.5.2 by Gabriel Roldan
  */
-@SuppressWarnings({"nls", "unchecked"})
-public class CapabilitiesFilterSplitterFunctionTest
-        extends AbstractCapabilitiesFilterSplitterTests {
+public class CapabilitiesFilterSplitterFunctionTest extends AbstractCapabilitiesFilterSplitterTests {
 
     CapabilitiesFilterSplitter visitor;
 
@@ -80,7 +82,8 @@ public class CapabilitiesFilterSplitterFunctionTest
         Filter filter = ff.and(filter1, filter2);
 
         Capabilities filterCapabilitiesMask = new Capabilities();
-        filterCapabilitiesMask.addName(testFunction.getName(), testFunction.getParameters().size());
+        filterCapabilitiesMask.addName(
+                testFunction.getName(), testFunction.getParameters().size());
         filterCapabilitiesMask.addAll(Capabilities.SIMPLE_COMPARISONS_OPENGIS);
         filterCapabilitiesMask.addAll(Capabilities.LOGICAL_OPENGIS);
         visitor = newVisitor(filterCapabilitiesMask);
@@ -89,5 +92,29 @@ public class CapabilitiesFilterSplitterFunctionTest
 
         assertEquals(filter1, visitor.getFilterPre());
         assertEquals(filter2, visitor.getFilterPost());
+    }
+
+    @Test
+    public void testFunctionParameters() throws Exception {
+
+        FilterFunction_max filterFunction_max = new FilterFunction_max();
+        filterFunction_max.setParameters(Arrays.asList(ff.property("name"), ff.literal(1.0)));
+        PropertyIsEqualTo filter1 = ff.equals(ff.property("name"), filterFunction_max);
+
+        Capabilities filterCapabilitiesMask = new Capabilities();
+        filterCapabilitiesMask.addAll(Capabilities.SIMPLE_COMPARISONS_OPENGIS);
+        filterCapabilitiesMask.addAll(Capabilities.LOGICAL_OPENGIS);
+        filterCapabilitiesMask.addName(filterFunction_max.getName());
+        visitor = newVisitor(filterCapabilitiesMask);
+
+        // pre-flight to ensure post stack size is bigger than params size at visit(Function,...)
+        assertFalse(filterCapabilitiesMask.supports(Filter.EXCLUDE));
+        // Produces "IndexOutOfBoundsException: Index: 3, Size: 2" as of GEOT-6717
+        Filter filter = ff.or(Arrays.asList(EXCLUDE, EXCLUDE, EXCLUDE, filter1));
+
+        filter.accept(visitor, null);
+
+        assertEquals(INCLUDE, visitor.getFilterPre());
+        assertEquals(filter, visitor.getFilterPost());
     }
 }

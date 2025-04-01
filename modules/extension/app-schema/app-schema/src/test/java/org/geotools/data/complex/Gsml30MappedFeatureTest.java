@@ -23,9 +23,13 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.NameImpl;
@@ -35,11 +39,6 @@ import org.geotools.gml3.v3_2.gmd.GMD;
 import org.geotools.test.AppSchemaTestSupport;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * Test app-schema with GeoSciML 3.0rc1, a GML 3.2 application schema.
@@ -58,7 +57,7 @@ public class Gsml30MappedFeatureTest extends AppSchemaTestSupport {
 
     @Test
     public void features() throws Exception {
-        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        Map<String, Serializable> params = new HashMap<>();
         params.put("dbtype", "app-schema");
         URL url = getClass().getResource(TEST_DATA + "Gsml30MappedFeature.xml");
         Assert.assertNotNull(url);
@@ -69,63 +68,37 @@ public class Gsml30MappedFeatureTest extends AppSchemaTestSupport {
             Assert.assertNotNull(dataAccess);
             FeatureType mappedFeatureType = dataAccess.getSchema(MAPPED_FEATURE);
             Assert.assertNotNull(mappedFeatureType);
-            FeatureSource<FeatureType, Feature> source =
-                    dataAccess.getFeatureSource(MAPPED_FEATURE);
+            FeatureSource<FeatureType, Feature> source = dataAccess.getFeatureSource(MAPPED_FEATURE);
             FeatureCollection<FeatureType, Feature> features = source.getFeatures();
-            FeatureIterator<Feature> iterator = features.features();
-            Map<String, Feature> featureMap = new LinkedHashMap<String, Feature>();
-            try {
+            Map<String, Feature> featureMap = new LinkedHashMap<>();
+            try (FeatureIterator<Feature> iterator = features.features()) {
                 while (iterator.hasNext()) {
                     Feature f = iterator.next();
                     featureMap.put(f.getIdentifier().getID(), f);
                 }
-            } finally {
-                iterator.close();
             }
             Assert.assertEquals(2, featureMap.size());
             // test gml:name
             Assert.assertEquals(
                     "First",
-                    ((ComplexAttribute)
-                                    featureMap
-                                            .get("mf.1")
-                                            .getProperty(new NameImpl(GML.NAMESPACE, "name")))
+                    ((ComplexAttribute) featureMap.get("mf.1").getProperty(new NameImpl(GML.NAMESPACE, "name")))
                             .getProperty(new NameImpl("simpleContent"))
                             .getValue());
             Assert.assertEquals(
                     "Second",
-                    ((ComplexAttribute)
-                                    featureMap
-                                            .get("mf.2")
-                                            .getProperty(new NameImpl(GML.NAMESPACE, "name")))
+                    ((ComplexAttribute) featureMap.get("mf.2").getProperty(new NameImpl(GML.NAMESPACE, "name")))
                             .getProperty(new NameImpl("simpleContent"))
                             .getValue());
             // test gsml:resolutionScale/gmd:MD_RepresentativeFraction/gmd:denominator/gco:Integer
             for (int i = 1; i <= 2; i++) {
                 Assert.assertEquals(
                         BigInteger.valueOf(250000),
-                        ((Attribute)
-                                        ((ComplexAttribute)
-                                                        ((ComplexAttribute)
-                                                                        ((ComplexAttribute)
-                                                                                        featureMap
-                                                                                                .get(
-                                                                                                        "mf."
-                                                                                                                + i)
-                                                                                                .getProperty(
-                                                                                                        new NameImpl(
-                                                                                                                GSML,
-                                                                                                                "resolutionScale")))
-                                                                                .getProperty(
-                                                                                        new NameImpl(
-                                                                                                GMD.NAMESPACE,
-                                                                                                "MD_RepresentativeFraction")))
-                                                                .getProperty(
-                                                                        new NameImpl(
-                                                                                GMD.NAMESPACE,
-                                                                                "denominator")))
-                                                .getProperty(
-                                                        new NameImpl(GCO.NAMESPACE, "Integer")))
+                        ((ComplexAttribute) ((ComplexAttribute) ((ComplexAttribute) featureMap
+                                                        .get("mf." + i)
+                                                        .getProperty(new NameImpl(GSML, "resolutionScale")))
+                                                .getProperty(new NameImpl(GMD.NAMESPACE, "MD_RepresentativeFraction")))
+                                        .getProperty(new NameImpl(GMD.NAMESPACE, "denominator")))
+                                .getProperty(new NameImpl(GCO.NAMESPACE, "Integer"))
                                 .getValue());
             }
         } finally {

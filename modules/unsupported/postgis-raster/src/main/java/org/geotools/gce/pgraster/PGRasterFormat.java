@@ -23,14 +23,14 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
+import org.geotools.api.coverage.grid.GridCoverageWriter;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.imageio.GeoToolsWriteParams;
 import org.geotools.parameter.DefaultParameterDescriptorGroup;
 import org.geotools.parameter.ParameterGroup;
 import org.geotools.util.factory.Hints;
 import org.geotools.util.logging.Logging;
-import org.opengis.coverage.grid.GridCoverageWriter;
-import org.opengis.parameter.GeneralParameterDescriptor;
 
 /**
  * Coverage format for rasters stored in a PostGIS database as described by the <a
@@ -41,7 +41,7 @@ public class PGRasterFormat extends AbstractGridFormat {
     static final Logger LOG = Logging.getLogger(PGRasterFormat.class);
 
     public PGRasterFormat() {
-        final HashMap<String, String> info = new HashMap<String, String>();
+        final HashMap<String, String> info = new HashMap<>();
         info.put("name", "PGRaster");
         info.put("description", "PostGIS Raster Mosaic Plugin");
         info.put("vendor", "OpenNRM");
@@ -49,13 +49,8 @@ public class PGRasterFormat extends AbstractGridFormat {
         info.put("version", "1.0");
         mInfo = info;
 
-        readParameters =
-                new ParameterGroup(
-                        new DefaultParameterDescriptorGroup(
-                                mInfo,
-                                new GeneralParameterDescriptor[] {
-                                    READ_GRIDGEOMETRY2D, TIME, OVERVIEW_POLICY
-                                }));
+        readParameters = new ParameterGroup(new DefaultParameterDescriptorGroup(
+                mInfo, new GeneralParameterDescriptor[] {READ_GRIDGEOMETRY2D, TIME, OVERVIEW_POLICY}));
 
         writeParameters = null;
     }

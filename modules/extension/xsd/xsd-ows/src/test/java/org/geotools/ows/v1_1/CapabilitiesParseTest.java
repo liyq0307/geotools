@@ -1,14 +1,20 @@
 package org.geotools.ows.v1_1;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Map;
 import net.opengis.ows11.DomainType;
 import net.opengis.ows11.OperationType;
 import net.opengis.ows11.OperationsMetadataType;
 import net.opengis.ows11.ValueType;
 import org.geotools.xsd.Parser;
+import org.junit.Test;
 
 public class CapabilitiesParseTest extends OWSTestSupport_1_1 {
-
+    @Test
     public void testParseCapabilities() throws Exception {
         Parser p = new Parser(createConfiguration());
         Object o = p.parse(getClass().getResourceAsStream("exampleCapabilities1.xml"));
@@ -37,6 +43,7 @@ public class CapabilitiesParseTest extends OWSTestSupport_1_1 {
         assertEquals("text/xml", v.getValue());
     }
 
+    @Test
     public void testConstraints() throws Exception {
         Parser p = new Parser(createConfiguration());
         Object o = p.parse(getClass().getResourceAsStream("exampleCapabilities1.xml"));
@@ -61,7 +68,10 @@ public class CapabilitiesParseTest extends OWSTestSupport_1_1 {
         assertEquals(1, maximumHeightConstraint.getAllowedValues().getValue().size());
         assertEquals(
                 "4000",
-                ((ValueType) maximumHeightConstraint.getAllowedValues().getValue().get(0))
+                ((ValueType) maximumHeightConstraint
+                                .getAllowedValues()
+                                .getValue()
+                                .get(0))
                         .getValue());
 
         DomainType noValuesAllowedConstraint = (DomainType) om.getConstraint().get(3);

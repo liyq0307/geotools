@@ -1,18 +1,18 @@
 package org.geotools.filter.function.string;
 
-import junit.framework.TestCase;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Function;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class StringFunctionsTest extends TestCase {
+public class StringFunctionsTest {
 
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
+    @Test
     public void testConcatenate() throws Exception {
-        Function function =
-                ff.function(
-                        "Concatenate", ff.literal("hello"), ff.literal(" "), ff.literal("world"));
-        assertEquals("hello world", function.evaluate(null, String.class));
+        Function function = ff.function("Concatenate", ff.literal("hello"), ff.literal(" "), ff.literal("world"));
+        Assert.assertEquals("hello world", function.evaluate(null, String.class));
     }
 }

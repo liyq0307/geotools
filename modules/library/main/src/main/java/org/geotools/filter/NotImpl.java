@@ -17,9 +17,9 @@
 package org.geotools.filter;
 
 import java.util.ArrayList;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Not;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Not;
 
 /** @author jdeolive */
 public class NotImpl extends LogicFilterImpl implements Not {
@@ -29,8 +29,9 @@ public class NotImpl extends LogicFilterImpl implements Not {
         this.children.add(filter);
     }
 
+    @Override
     public Filter getFilter() {
-        return (Filter) children.get(0);
+        return children.get(0);
     }
 
     public void setFilter(Filter filter) {
@@ -42,10 +43,12 @@ public class NotImpl extends LogicFilterImpl implements Not {
     }
 
     // @Override
+    @Override
     public boolean evaluate(Object feature) {
         return !getFilter().evaluate(feature);
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }

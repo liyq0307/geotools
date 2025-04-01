@@ -39,26 +39,30 @@ public final class WCSEO extends XSD {
     /** private constructor */
     private WCSEO() {}
 
-    protected void addDependencies(Set dependencies) {
+    @Override
+    protected void addDependencies(Set<XSD> dependencies) {
         dependencies.add(WCS.getInstance());
     }
 
     /** Returns 'http://www.opengis.net/wcs/2.0'. */
+    @Override
     public String getNamespaceURI() {
         return NAMESPACE;
     }
 
     /** Returns the location of 'wcsAll.xsd.'. */
+    @Override
     public String getSchemaLocation() {
-        return getClass().getResource("wcseo/v1_0/wcsEODescribeEOCoverageSet.xsd").toString();
+        return getClass()
+                .getResource("wcseo/v1_0/wcsEODescribeEOCoverageSet.xsd")
+                .toString();
     }
 
     /** @generated */
     public static final String NAMESPACE = "http://www.opengis.net/wcseo/1.0";
 
     /** @generated */
-    public static final QName DescribeEOCoverageSetType =
-            new QName(NAMESPACE, "DescribeEOCoverageSetType");
+    public static final QName DescribeEOCoverageSetType = new QName(NAMESPACE, "DescribeEOCoverageSetType");
 
     /** @generated */
     public static final QName Sections = new QName(NAMESPACE, "Sections");

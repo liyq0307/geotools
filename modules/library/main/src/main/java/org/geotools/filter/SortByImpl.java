@@ -16,9 +16,9 @@
  */
 package org.geotools.filter;
 
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 
 public class SortByImpl implements SortBy {
 
@@ -31,6 +31,7 @@ public class SortByImpl implements SortBy {
         this.sortOrder = sortOrder;
     }
 
+    @Override
     public PropertyName getPropertyName() {
         return propertyName;
     }
@@ -39,6 +40,7 @@ public class SortByImpl implements SortBy {
         this.propertyName = propertyName;
     }
 
+    @Override
     public SortOrder getSortOrder() {
         return sortOrder;
     }

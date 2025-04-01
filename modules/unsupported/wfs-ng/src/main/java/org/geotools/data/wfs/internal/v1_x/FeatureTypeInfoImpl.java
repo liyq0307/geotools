@@ -23,23 +23,25 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.XMLConstants;
 import net.opengis.ows10.KeywordsType;
 import net.opengis.ows10.WGS84BoundingBoxType;
 import net.opengis.wfs.FeatureTypeType;
 import net.opengis.wfs.OutputFormatListType;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.data.wfs.internal.FeatureTypeInfo;
 import org.geotools.data.wfs.internal.Loggers;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
+import org.geotools.util.logging.Logging;
 
 public class FeatureTypeInfoImpl implements FeatureTypeInfo {
-
+    public static final Logger RESPONSES = Logging.getLogger(Loggers.class);
     private final FeatureTypeType eType;
 
     private final WFSConfig config;
@@ -62,7 +64,7 @@ public class FeatureTypeInfoImpl implements FeatureTypeInfo {
         if (keywords == null) {
             ret = Collections.emptySet();
         } else {
-            ret = new HashSet<String>();
+            ret = new HashSet<>();
             for (KeywordsType k : keywords) {
                 ret.addAll(k.getKeyword());
             }
@@ -102,17 +104,8 @@ public class FeatureTypeInfoImpl implements FeatureTypeInfo {
         ReferencedEnvelope nativeBounds;
         try {
             nativeBounds = wgs84Bounds.transform(crs, true);
-        } catch (TransformException e) {
-            Loggers.MODULE.log(
-                    Level.WARNING,
-                    "Can't transform bounds of " + getName() + " to " + getDefaultSRS(),
-                    e);
-            nativeBounds = new ReferencedEnvelope(crs);
-        } catch (FactoryException e) {
-            Loggers.MODULE.log(
-                    Level.WARNING,
-                    "Can't transform bounds of " + getName() + " to " + getDefaultSRS(),
-                    e);
+        } catch (TransformException | FactoryException e) {
+            Loggers.MODULE.log(Level.WARNING, "Can't transform bounds of " + getName() + " to " + getDefaultSRS(), e);
             nativeBounds = new ReferencedEnvelope(crs);
         }
         return nativeBounds;
@@ -132,7 +125,8 @@ public class FeatureTypeInfoImpl implements FeatureTypeInfo {
                 boolean forceLongitudFirst = defaultSRS.startsWith("EPSG:");
                 crs = CRS.decode(defaultSRS, forceLongitudFirst);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                RESPONSES.log(Level.WARNING, "Unable to process CRS " + defaultSRS + " proceeding with CRS:80");
+                crs = DefaultGeographicCRS.WGS84;
             }
         }
         return crs;
@@ -143,24 +137,24 @@ public class FeatureTypeInfoImpl implements FeatureTypeInfo {
 
         @SuppressWarnings("unchecked")
         List<WGS84BoundingBoxType> bboxList = eType.getWGS84BoundingBox();
-        if (bboxList != null && bboxList.size() > 0) {
+        if (bboxList == null || bboxList.isEmpty()) {
+            return null;
+        } else {
             WGS84BoundingBoxType bboxType = bboxList.get(0);
             @SuppressWarnings("unchecked")
             List<Double> lowerCorner = bboxType.getLowerCorner();
             @SuppressWarnings("unchecked")
             List<Double> upperCorner = bboxType.getUpperCorner();
-            double minLon = (Double) lowerCorner.get(0);
-            double minLat = (Double) lowerCorner.get(1);
-            double maxLon = (Double) upperCorner.get(0);
-            double maxLat = (Double) upperCorner.get(1);
+            double minLon = lowerCorner.get(0);
+            double minLat = lowerCorner.get(1);
+            double maxLon = upperCorner.get(0);
+            double maxLat = upperCorner.get(1);
 
             ReferencedEnvelope latLonBounds =
-                    new ReferencedEnvelope(
-                            minLon, maxLon, minLat, maxLat, DefaultGeographicCRS.WGS84);
+                    new ReferencedEnvelope(minLon, maxLon, minLat, maxLat, DefaultGeographicCRS.WGS84);
 
             return latLonBounds;
         }
-        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -182,7 +176,7 @@ public class FeatureTypeInfoImpl implements FeatureTypeInfo {
             return Collections.emptySet();
         }
 
-        return new HashSet<String>(ftypeDeclaredFormats);
+        return new HashSet<>(ftypeDeclaredFormats);
     }
 
     @Override

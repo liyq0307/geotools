@@ -32,13 +32,13 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 
 /**
- * This object contains factory methods for each Java content interface and Java element interface
- * generated in the org.geotools.coverageio.netcdf.cf package.
+ * This object contains factory methods for each Java content interface and Java element interface generated in the
+ * org.geotools.coverageio.netcdf.cf package.
  *
- * <p>An ObjectFactory allows you to programatically construct new instances of the Java
- * representation for XML content. The Java representation of XML content can consist of schema
- * derived interfaces and classes representing the binding of schema type definitions, element
- * declarations and model groups. Factory methods for each of these are provided in this class.
+ * <p>An ObjectFactory allows you to programatically construct new instances of the Java representation for XML content.
+ * The Java representation of XML content can consist of schema derived interfaces and classes representing the binding
+ * of schema type definitions, element declarations and model groups. Factory methods for each of these are provided in
+ * this class.
  */
 @XmlRegistry
 public class ObjectFactory {
@@ -54,8 +54,8 @@ public class ObjectFactory {
     private static final QName _Institution_QNAME = new QName("", "institution");
 
     /**
-     * Create a new ObjectFactory that can be used to create new instances of schema derived classes
-     * for package: org.geotools.coverageio.netcdf.cf
+     * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package:
+     * org.geotools.coverageio.netcdf.cf
      */
     public ObjectFactory() {}
 
@@ -78,57 +78,54 @@ public class ObjectFactory {
     @XmlElementDecl(namespace = "", name = "entry_id")
     @XmlIDREF
     public JAXBElement<Object> createEntryId(Object value) {
-        return new JAXBElement<Object>(_EntryId_QNAME, Object.class, null, value);
+        return new JAXBElement<>(_EntryId_QNAME, Object.class, null, value);
     }
 
-    /**
-     * Create an instance of {@link JAXBElement }{@code <}{@link XMLGregorianCalendar }{@code >}}
-     */
+    /** Create an instance of {@link JAXBElement }{@code <}{@link XMLGregorianCalendar }{@code >}} */
     @XmlElementDecl(namespace = "", name = "last_modified")
     public JAXBElement<XMLGregorianCalendar> createLastModified(XMLGregorianCalendar value) {
-        return new JAXBElement<XMLGregorianCalendar>(
-                _LastModified_QNAME, XMLGregorianCalendar.class, null, value);
+        return new JAXBElement<>(_LastModified_QNAME, XMLGregorianCalendar.class, null, value);
     }
 
     /** Create an instance of {@link JAXBElement }{@code <}{@link String }{@code >}} */
     @XmlElementDecl(namespace = "", name = "canonical_units")
     public JAXBElement<String> createCanonicalUnits(String value) {
-        return new JAXBElement<String>(_CanonicalUnits_QNAME, String.class, null, value);
+        return new JAXBElement<>(_CanonicalUnits_QNAME, String.class, null, value);
     }
 
     /** Create an instance of {@link JAXBElement }{@code <}{@link String }{@code >}} */
     @XmlElementDecl(namespace = "", name = "description")
     public JAXBElement<String> createDescription(String value) {
-        return new JAXBElement<String>(_Description_QNAME, String.class, null, value);
+        return new JAXBElement<>(_Description_QNAME, String.class, null, value);
     }
 
     /** Create an instance of {@link JAXBElement }{@code <}{@link String }{@code >}} */
     @XmlElementDecl(namespace = "", name = "version_number")
     public JAXBElement<String> createVersionNumber(String value) {
-        return new JAXBElement<String>(_VersionNumber_QNAME, String.class, null, value);
+        return new JAXBElement<>(_VersionNumber_QNAME, String.class, null, value);
     }
 
     /** Create an instance of {@link JAXBElement }{@code <}{@link String }{@code >}} */
     @XmlElementDecl(namespace = "", name = "amip")
     public JAXBElement<String> createAmip(String value) {
-        return new JAXBElement<String>(_Amip_QNAME, String.class, null, value);
+        return new JAXBElement<>(_Amip_QNAME, String.class, null, value);
     }
 
     /** Create an instance of {@link JAXBElement }{@code <}{@link String }{@code >}} */
     @XmlElementDecl(namespace = "", name = "grib")
     public JAXBElement<String> createGrib(String value) {
-        return new JAXBElement<String>(_Grib_QNAME, String.class, null, value);
+        return new JAXBElement<>(_Grib_QNAME, String.class, null, value);
     }
 
     /** Create an instance of {@link JAXBElement }{@code <}{@link String }{@code >}} */
     @XmlElementDecl(namespace = "", name = "contact")
     public JAXBElement<String> createContact(String value) {
-        return new JAXBElement<String>(_Contact_QNAME, String.class, null, value);
+        return new JAXBElement<>(_Contact_QNAME, String.class, null, value);
     }
 
     /** Create an instance of {@link JAXBElement }{@code <}{@link String }{@code >}} */
     @XmlElementDecl(namespace = "", name = "institution")
     public JAXBElement<String> createInstitution(String value) {
-        return new JAXBElement<String>(_Institution_QNAME, String.class, null, value);
+        return new JAXBElement<>(_Institution_QNAME, String.class, null, value);
     }
 }

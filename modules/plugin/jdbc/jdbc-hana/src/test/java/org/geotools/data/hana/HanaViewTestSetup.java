@@ -27,16 +27,16 @@ public class HanaViewTestSetup extends JDBCViewTestSetup {
     private static final String VIEW = "lakesview";
 
     protected HanaViewTestSetup() {
-        super(new HanaTestSetup());
+        super(new HanaTestSetupPSPooling());
     }
 
     @Override
     protected void createLakesTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.createTestSchema();
 
-            String cols[][] = {
+            String[][] cols = {
                 {"fid", "INT PRIMARY KEY"},
                 {"id", "INT"},
                 {"geom", "ST_Geometry(1000004326)"},
@@ -45,18 +45,14 @@ public class HanaViewTestSetup extends JDBCViewTestSetup {
             htu.createTestTable(TABLE, cols);
 
             htu.insertIntoTestTable(
-                    TABLE,
-                    0,
-                    0,
-                    htu.geometry("POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))", 1000004326),
-                    "muddy");
+                    TABLE, 0, 0, htu.geometry("POLYGON((12 6, 14 8, 16 6, 16 4, 14 4, 12 6))", 1000004326), "muddy");
         }
     }
 
     @Override
     protected void dropLakesTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.dropTestTableCascade(TABLE);
         }
     }
@@ -64,7 +60,7 @@ public class HanaViewTestSetup extends JDBCViewTestSetup {
     @Override
     protected void createLakesView() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.createTestView(VIEW, TABLE);
         }
     }
@@ -72,7 +68,7 @@ public class HanaViewTestSetup extends JDBCViewTestSetup {
     @Override
     protected void dropLakesView() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.dropTestView(VIEW);
         }
     }

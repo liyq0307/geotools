@@ -18,7 +18,10 @@
 package org.geotools.xml.resolver;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import org.geotools.test.OnlineTestSupport;
 import org.geotools.util.URLs;
 import org.junit.After;
@@ -37,14 +40,13 @@ public class SchemaCacheOnlineTest extends OnlineTestSupport {
     private static final String HTTPS_PROTOCOLS = "https.protocols";
 
     /**
-     * Downloaded files are stored in this directory. We intentionally use a non-canonical cache
-     * directory to test that resolved locations are canonical.
+     * Downloaded files are stored in this directory. We intentionally use a non-canonical cache directory to test that
+     * resolved locations are canonical.
      */
     private static final File CACHE_DIRECTORY = new File("target/schema-cache/../schema-cache");
 
     /** Schema that is downloaded. */
-    private static final String SCHEMA_LOCATION =
-            "http://www.geosciml.org/geosciml/2.0/xsd/geosciml.xsd";
+    private static final String SCHEMA_LOCATION = "http://www.geosciml.org/geosciml/2.0/xsd/geosciml.xsd";
 
     /** Filename of the schema. */
     private static final String SCHEMA_FILENAME;
@@ -104,11 +106,7 @@ public class SchemaCacheOnlineTest extends OnlineTestSupport {
         // the test server renegotiates to TLSv1.2?
         System.setProperty(HTTPS_PROTOCOLS, "TLSv1.2");
         // test HTTPS download
-        check(
-                SchemaCache.download(
-                        new URI(
-                                "https://www.seegrid.csiro.au"
-                                        + "/subversion/GeoSciML/tags/2.0.0/schema/GeoSciML/geosciml.xsd")));
+        check(SchemaCache.download(new URI("https://geosciml.org/geosciml/2.0/xsd/geosciml.xsd")));
         // restore original system property
         if (httpsProtocols == null) {
             System.clearProperty(HTTPS_PROTOCOLS);
@@ -158,10 +156,9 @@ public class SchemaCacheOnlineTest extends OnlineTestSupport {
             Assert.assertTrue(location.endsWith(SCHEMA_FILENAME));
             Assert.assertTrue(URLs.urlToFile((new URI(location)).toURL()).exists());
             // test that cache path is not canonical
-            Assert.assertFalse(
-                    CACHE_DIRECTORY
-                            .toString()
-                            .equals(CACHE_DIRECTORY.getCanonicalFile().toString()));
+            Assert.assertNotEquals(
+                    CACHE_DIRECTORY.toString(),
+                    CACHE_DIRECTORY.getCanonicalFile().toString());
             // test that resolved location is canonical, despite cache directory not being canonical
             Assert.assertEquals(
                     location,
@@ -170,5 +167,24 @@ public class SchemaCacheOnlineTest extends OnlineTestSupport {
                             .toURI()
                             .toString());
         }
+    }
+
+    /** Test that redirection is followed. */
+    @Test
+    public void downloadWithRedirect() throws IOException {
+        URL url = new URL("http://wms.geo.admin.ch");
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        // this url has the header with a redirect
+        Assert.assertNotNull(conn.getHeaderField("Location"));
+        byte[] responseBody = SchemaCache.download("http://wms.geo.admin.ch");
+        Assert.assertNotNull(responseBody);
+        Assert.assertTrue(responseBody.length > 0);
+    }
+
+    /** Test that a failed download does not throw an exception. */
+    @Test
+    public void downloadFails() {
+        byte[] responseBody = SchemaCache.download("https://www.google.com/404");
+        Assert.assertNull(responseBody);
     }
 }

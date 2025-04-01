@@ -17,19 +17,20 @@
 package org.geotools.sld.bindings;
 
 import javax.xml.namespace.QName;
-import org.geotools.styling.ChannelSelection;
-import org.geotools.styling.ColorMap;
-import org.geotools.styling.ContrastEnhancement;
-import org.geotools.styling.ImageOutline;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.ShadedRelief;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.ChannelSelection;
+import org.geotools.api.style.ColorMap;
+import org.geotools.api.style.ContrastEnhancement;
+import org.geotools.api.style.ImageOutline;
+import org.geotools.api.style.OverlapBehaviorEnum;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.ShadedRelief;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.sld.CssParameter;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.style.OverlapBehavior;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -76,6 +77,7 @@ public class SLDRasterSymbolizerBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.RASTERSYMBOLIZER;
     }
@@ -87,6 +89,7 @@ public class SLDRasterSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -98,6 +101,7 @@ public class SLDRasterSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return RasterSymbolizer.class;
     }
@@ -109,6 +113,7 @@ public class SLDRasterSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -118,6 +123,7 @@ public class SLDRasterSymbolizerBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         RasterSymbolizer rs = styleFactory.createRasterSymbolizer();
 
@@ -144,7 +150,7 @@ public class SLDRasterSymbolizerBinding extends AbstractComplexBinding {
 
         // &lt;xsd:element ref="sld:OverlapBehavior" minOccurs="0"/&gt;
         if (node.hasChild("OverlapBehavior")) {
-            rs.setOverlapBehavior((OverlapBehavior) node.getChildValue("OverlapBehavior"));
+            rs.setOverlapBehavior((OverlapBehaviorEnum) node.getChildValue("OverlapBehavior"));
         }
 
         // &lt;xsd:element ref="sld:ColorMap" minOccurs="0"/&gt;
@@ -154,8 +160,7 @@ public class SLDRasterSymbolizerBinding extends AbstractComplexBinding {
 
         // &lt;xsd:element ref="sld:ContrastEnhancement" minOccurs="0"/&gt;
         if (node.hasChild("ContrastEnhancement")) {
-            rs.setContrastEnhancement(
-                    (ContrastEnhancement) node.getChildValue("ContrastEnhancement"));
+            rs.setContrastEnhancement((ContrastEnhancement) node.getChildValue("ContrastEnhancement"));
         }
 
         // &lt;xsd:element ref="sld:ShadedRelief" minOccurs="0"/&gt;
@@ -167,6 +172,11 @@ public class SLDRasterSymbolizerBinding extends AbstractComplexBinding {
         if (node.hasChild("ImageOutline")) {
             ImageOutline imageOutput = (ImageOutline) node.getChildValue("ImageOutline");
             rs.setImageOutline(imageOutput.getSymbolizer());
+        }
+
+        // &lt;xsd:element ref="sld:VendorOption" minOccurs="0" maxOccurs="unbounded"/&gt;
+        for (CssParameter param : node.getChildValues(CssParameter.class)) {
+            rs.getOptions().put(param.getName(), param.getExpression().evaluate(null, String.class));
         }
 
         return rs;

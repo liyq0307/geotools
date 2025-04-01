@@ -17,35 +17,28 @@
 package org.geotools.temporal.reference;
 
 import java.util.Date;
+import org.geotools.api.metadata.extent.Extent;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.temporal.TemporalCoordinate;
+import org.geotools.api.temporal.TemporalCoordinateSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.temporal.object.DefaultTemporalCoordinate;
 import org.geotools.util.Utilities;
-import org.opengis.metadata.extent.Extent;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.temporal.TemporalCoordinate;
-import org.opengis.temporal.TemporalCoordinateSystem;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultTemporalCoordinateSystem extends DefaultTemporalReferenceSystem
         implements TemporalCoordinateSystem {
 
-    /**
-     * The origin of the scale, it must be specified in the Gregorian calendar with time of day in
-     * UTC.
-     */
+    /** The origin of the scale, it must be specified in the Gregorian calendar with time of day in UTC. */
     private Date origin;
     /**
-     * The name of a single unit of measure used as the base interval for the scale. it shall be one
-     * of those units of measure for time specified by ISO 31-1, or a multiple of one of those
-     * units, as specified by ISO 1000.
+     * The name of a single unit of measure used as the base interval for the scale. it shall be one of those units of
+     * measure for time specified by ISO 31-1, or a multiple of one of those units, as specified by ISO 1000.
      */
     private InternationalString interval;
 
     public DefaultTemporalCoordinateSystem(
-            ReferenceIdentifier name,
-            Extent domainOfValidity,
-            Date origin,
-            InternationalString interval) {
+            ReferenceIdentifier name, Extent domainOfValidity, Date origin, InternationalString interval) {
         super(name, domainOfValidity);
         this.origin = origin;
         this.interval = interval;
@@ -59,21 +52,21 @@ public class DefaultTemporalCoordinateSystem extends DefaultTemporalReferenceSys
         this.interval = interval;
     }
 
+    @Override
     public Date getOrigin() {
         return origin;
     }
 
+    @Override
     public InternationalString getInterval() {
         return interval;
     }
 
     /**
-     * Returns the equivalent Date in the Gregorian calendar and UTC of a coordinate value defined
-     * in this temporal coordinate system.
-     *
-     * @param c_value
-     * @return
+     * Returns the equivalent Date in the Gregorian calendar and UTC of a coordinate value defined in this temporal
+     * coordinate system.
      */
+    @Override
     public Date transformCoord(TemporalCoordinate c_value) {
         Date response;
         final long yearMS = 31536000000L;
@@ -114,20 +107,13 @@ public class DefaultTemporalCoordinateSystem extends DefaultTemporalReferenceSys
                 return null;
             }
         } else {
-            throw new IllegalArgumentException(
-                    "The TemporalCoordinate argument must be a TemporalCoordinate ! ");
+            throw new IllegalArgumentException("The TemporalCoordinate argument must be a TemporalCoordinate ! ");
         }
     }
 
-    /**
-     * Returns the equivalent TemporalCoordinate of a Date in Gregorian Calendar. Default of unit is
-     * millisecond.
-     *
-     * @param dateTime
-     * @return
-     */
+    /** Returns the equivalent TemporalCoordinate of a Date in Gregorian Calendar. Default of unit is millisecond. */
+    @Override
     public TemporalCoordinate transformDateTime(Date dateTime) {
-        TemporalCoordinate response;
         final long yearMS = 31536000000L;
         final long monthMS = 2628000000L;
         final long weekMS = 604800000L;
@@ -152,7 +138,7 @@ public class DefaultTemporalCoordinateSystem extends DefaultTemporalReferenceSys
         } else if (interval.toString().equals("second")) {
             coordinateValue = (float) coordinateValue.longValue() / (float) secondMS;
         }
-        response = new DefaultTemporalCoordinate(this, null, coordinateValue);
+        TemporalCoordinate response = new DefaultTemporalCoordinate(this, null, coordinateValue);
         return response;
     }
 
@@ -163,11 +149,9 @@ public class DefaultTemporalCoordinateSystem extends DefaultTemporalReferenceSys
         }
         if (object instanceof DefaultTemporalCoordinateSystem && super.equals(object)) {
             if (object instanceof DefaultTemporalCoordinateSystem) {
-                final DefaultTemporalCoordinateSystem that =
-                        (DefaultTemporalCoordinateSystem) object;
+                final DefaultTemporalCoordinateSystem that = (DefaultTemporalCoordinateSystem) object;
 
-                return Utilities.equals(this.interval, that.interval)
-                        && Utilities.equals(this.origin, that.origin);
+                return Utilities.equals(this.interval, that.interval) && Utilities.equals(this.origin, that.origin);
             }
         }
         return false;

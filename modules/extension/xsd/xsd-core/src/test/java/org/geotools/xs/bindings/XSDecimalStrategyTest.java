@@ -17,7 +17,7 @@
 package org.geotools.xs.bindings;
 
 import java.math.BigDecimal;
-import junit.framework.TestCase;
+import javax.xml.namespace.QName;
 import org.eclipse.xsd.XSDElementDeclaration;
 import org.eclipse.xsd.XSDMaxExclusiveFacet;
 import org.eclipse.xsd.XSDMaxInclusiveFacet;
@@ -32,14 +32,24 @@ import org.eclipse.xsd.impl.XSDMinExclusiveFacetImpl;
 import org.eclipse.xsd.impl.XSDMinInclusiveFacetImpl;
 import org.eclipse.xsd.impl.XSDSimpleTypeDefinitionImpl;
 import org.eclipse.xsd.impl.XSDTotalDigitsFacetImpl;
+import org.geotools.xs.TestSchema;
+import org.geotools.xs.XS;
 import org.geotools.xsd.ElementInstance;
-import org.geotools.xsd.Node;
 import org.geotools.xsd.impl.ElementImpl;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class XSDecimalStrategyTest extends TestCase {
+public class XSDecimalStrategyTest extends TestSchema {
+
+    @Override
+    protected QName getQName() {
+        return XS.DECIMAL;
+    }
+
     /*
      * Test method for 'org.geotools.xml.strategies.xs.XSDecimalStrategy.parse(Element, Node[], Object)'
      */
+    @Test
     public void testParse() throws Exception {
         // Valid values
         validateValues("50", 5, 0, 0, 100, 100);
@@ -87,33 +97,31 @@ public class XSDecimalStrategyTest extends TestCase {
         //		}
     }
 
+    /** GEOT-7072: Non-comformant WFS implementations tend to send empty elements (e.g. {@code <value></value>}) */
+    @Test
+    public void testParseEmptyStringAsNull() throws Exception {
+        validateValues("", null);
+        validateValues("\t", null);
+    }
+
     public void validateValues(
-            String elementText,
-            int totalDigits,
-            double minExc,
-            double minInc,
-            double maxInc,
-            double maxExc)
+            String elementText, int totalDigits, double minExc, double minInc, double maxInc, double maxExc)
             throws Exception {
         XSDecimalBinding strat = new XSDecimalBinding();
 
-        XSDElementDeclaration declaration =
-                makeDeclaration(
-                        totalDigits,
-                        new BigDecimal(minExc),
-                        new BigDecimal(minInc),
-                        new BigDecimal(maxInc),
-                        new BigDecimal(maxExc));
+        XSDElementDeclaration declaration = makeDeclaration(
+                totalDigits,
+                BigDecimal.valueOf(minExc),
+                BigDecimal.valueOf(minInc),
+                BigDecimal.valueOf(maxInc),
+                BigDecimal.valueOf(maxExc));
 
         ElementInstance element = new ElementImpl(declaration);
         element.setText(elementText);
 
-        Node[] children = new Node[] {};
-        Object value = null;
-
         BigDecimal decimal = (BigDecimal) strat.parse(element, element.getText().trim());
 
-        assertNotNull(decimal);
+        Assert.assertNotNull(decimal);
     }
 
     private XSDElementDeclaration makeDeclaration(
@@ -123,42 +131,53 @@ public class XSDecimalStrategyTest extends TestCase {
             final BigDecimal maxInc,
             final BigDecimal maxExc) {
         return new XSDElementDeclarationImpl() {
+            @Override
             public XSDTypeDefinition getTypeDefinition() {
                 return new XSDSimpleTypeDefinitionImpl() {
+                    @Override
                     public XSDTotalDigitsFacet getTotalDigitsFacet() {
                         return new XSDTotalDigitsFacetImpl() {
+                            @Override
                             public int getValue() {
                                 return digits;
                             }
                         };
                     }
 
+                    @Override
                     public XSDMinInclusiveFacet getMinInclusiveFacet() {
                         return new XSDMinInclusiveFacetImpl() {
+                            @Override
                             public Object getValue() {
                                 return minInc;
                             }
                         };
                     }
 
+                    @Override
                     public XSDMinExclusiveFacet getMinExclusiveFacet() {
                         return new XSDMinExclusiveFacetImpl() {
+                            @Override
                             public Object getValue() {
                                 return minExc;
                             }
                         };
                     }
 
+                    @Override
                     public XSDMaxInclusiveFacet getMaxInclusiveFacet() {
                         return new XSDMaxInclusiveFacetImpl() {
+                            @Override
                             public Object getValue() {
                                 return maxInc;
                             }
                         };
                     }
 
+                    @Override
                     public XSDMaxExclusiveFacet getMaxExclusiveFacet() {
                         return new XSDMaxExclusiveFacetImpl() {
+                            @Override
                             public Object getValue() {
                                 return maxExc;
                             }

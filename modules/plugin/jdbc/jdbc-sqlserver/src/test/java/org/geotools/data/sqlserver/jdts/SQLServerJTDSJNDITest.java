@@ -16,12 +16,12 @@
  */
 package org.geotools.data.sqlserver.jdts;
 
-import static junit.framework.TestCase.fail;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.Properties;
-import org.geotools.data.DataStoreFinder;
-import org.geotools.jdbc.JDBCDataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.data.DataUtilities;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,11 +38,10 @@ public class SQLServerJTDSJNDITest {
     }
 
     /**
-     * This test should fail with an IOException because there is actually no such JNDI to connect
-     * to, but the factory lookup will have succeeded before throwing the exception.
+     * This test should fail with an IOException because there is actually no such JNDI to connect to, but the factory
+     * lookup will have succeeded before throwing the exception.
      *
-     * @throws IOException always with the message: "Cannot find JNDI data source:
-     *     java:comp/env/jdbc/geotools"
+     * @throws IOException always with the message: "Cannot find JNDI data source: java:comp/env/jdbc/geotools"
      */
     @Test(expected = IOException.class)
     public void testCanGetJTDSdataStore() throws IOException {
@@ -50,16 +49,15 @@ public class SQLServerJTDSJNDITest {
 
         // this will fail with the message: "Cannot find JNDI data source:
         // java:comp/env/jdbc/geotools"
-        JDBCDataStore dataStore = (JDBCDataStore) DataStoreFinder.getDataStore(jndiProps);
+        DataStoreFinder.getDataStore(DataUtilities.toConnectionParameters(jndiProps));
         fail("Expected exception was not thrown");
     }
 
     /**
-     * This test should fail with an IOException because there is actually no such JNDI to connect
-     * to, but the factory lookup will have succeeded before * throwing the exception.
+     * This test should fail with an IOException because there is actually no such JNDI to connect to, but the factory
+     * lookup will have succeeded before * throwing the exception.
      *
-     * @throws IOException always with the message: "Cannot find JNDI data source:
-     *     java:comp/env/jdbc/geotools"
+     * @throws IOException always with the message: "Cannot find JNDI data source: java:comp/env/jdbc/geotools"
      */
     @Test(expected = IOException.class)
     public void testCanGetMSdataStore() throws IOException {
@@ -67,7 +65,7 @@ public class SQLServerJTDSJNDITest {
 
         // this will fail with the message: "Cannot find JNDI data source:
         // java:comp/env/jdbc/geotools"
-        JDBCDataStore dataStore = (JDBCDataStore) DataStoreFinder.getDataStore(jndiProps);
+        DataStoreFinder.getDataStore(DataUtilities.toConnectionParameters(jndiProps));
         fail("Expected exception was not thrown");
     }
 }

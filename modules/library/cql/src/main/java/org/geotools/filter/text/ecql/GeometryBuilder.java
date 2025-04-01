@@ -21,19 +21,18 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.filter.text.commons.BuildResultStack;
 import org.geotools.filter.text.commons.Result;
 import org.geotools.filter.text.cql2.CQLException;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Builds Geometry
  *
- * <p>This builder is responsible to make the geometry using the elements pushed in the parsing
- * process in the stack.
+ * <p>This builder is responsible to make the geometry using the elements pushed in the parsing process in the stack.
  *
  * @author Mauricio Pazos (Axios Engineering)
  * @since 2.6
@@ -47,7 +46,6 @@ abstract class GeometryBuilder {
      * New instance of geometry builder
      *
      * @param statement the statement that is parsing
-     * @param resultStack
      */
     public GeometryBuilder(final String statement, final BuildResultStack resultStack) {
         assert statement != null;
@@ -73,11 +71,7 @@ abstract class GeometryBuilder {
         throw new UnsupportedOperationException("should be implemented by subclass");
     }
 
-    /**
-     * @param idNode Node's identifier specified in the grammar
-     * @return
-     * @throws CQLException
-     */
+    /** @param idNode Node's identifier specified in the grammar */
     public Geometry build(final int idNode) throws CQLException {
         throw new UnsupportedOperationException("should be implemented by subclass");
     }
@@ -88,7 +82,7 @@ abstract class GeometryBuilder {
         Coordinate[] coordinates = new Coordinate[size];
         int i = 0;
         while (!stack.empty()) {
-            coordinates[i++] = (Coordinate) stack.pop();
+            coordinates[i++] = stack.pop();
         }
         return coordinates;
     }
@@ -96,12 +90,10 @@ abstract class GeometryBuilder {
     /**
      * Makes an stack with the geometries indeed by the typeGeom
      *
-     * @param geomNode
      * @return an Stack with the required geometries
-     * @throws CQLException
      */
     protected Stack<Coordinate> popCoordinatesOf(int geomNode) throws CQLException {
-        Stack<Coordinate> stack = new Stack<Coordinate>();
+        Stack<Coordinate> stack = new Stack<>();
         while (!getResultStack().empty()) {
 
             Result result = getResultStack().peek();
@@ -123,12 +115,10 @@ abstract class GeometryBuilder {
      *
      * @param geometryNode geometry required
      * @return a list of indeed geometries
-     * @throws CQLException
      */
-    protected List<Geometry> popGeometry(final int geometryNode)
-            throws org.geotools.filter.text.cql2.CQLException {
+    protected List<Geometry> popGeometry(final int geometryNode) throws org.geotools.filter.text.cql2.CQLException {
 
-        List<Geometry> geomList = new LinkedList<Geometry>();
+        List<Geometry> geomList = new LinkedList<>();
         while (!getResultStack().empty()) {
 
             Result result = getResultStack().peek();
@@ -150,11 +140,10 @@ abstract class GeometryBuilder {
      *
      * @param geometryNode geometry required
      * @return a list of indeed geometries
-     * @throws CQLException
      */
     protected List<Geometry> popGeometryLiteral(final int geometryNode) throws CQLException {
 
-        List<Geometry> geomList = new LinkedList<Geometry>();
+        List<Geometry> geomList = new LinkedList<>();
         while (!getResultStack().empty()) {
 
             Result result = getResultStack().peek();

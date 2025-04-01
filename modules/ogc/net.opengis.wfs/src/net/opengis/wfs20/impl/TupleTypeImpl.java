@@ -72,9 +72,10 @@ public class TupleTypeImpl extends EObjectImpl implements TupleType {
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<MemberPropertyType> getMember() {
     if (member == null) {
-      member = new EObjectContainmentEList<MemberPropertyType>(MemberPropertyType.class, this, Wfs20Package.TUPLE_TYPE__MEMBER);
+      member = new EObjectContainmentEList<>(MemberPropertyType.class, this, Wfs20Package.TUPLE_TYPE__MEMBER);
     }
     return member;
   }

@@ -16,17 +16,17 @@
  */
 package org.geotools.filter.visitor;
 
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 
 /**
  * Filter that can be applied to determine if a Filter contains any spatial filter
@@ -38,11 +38,7 @@ public class SpatialFilterVisitor extends DefaultFilterVisitor {
 
     boolean hasSpatialFilter = false;
 
-    /**
-     * True if the filter had a spatial filter, false otherwise
-     *
-     * @return
-     */
+    /** True if the filter had a spatial filter, false otherwise */
     public boolean hasSpatialFilter() {
         return hasSpatialFilter;
     }
@@ -52,56 +48,67 @@ public class SpatialFilterVisitor extends DefaultFilterVisitor {
         hasSpatialFilter = false;
     }
 
+    @Override
     public Object visit(final BBOX filter, Object data) {
         hasSpatialFilter = true;
         return data;
     }
 
+    @Override
     public Object visit(Beyond filter, Object data) {
         hasSpatialFilter = true;
         return data;
     }
 
+    @Override
     public Object visit(Contains filter, Object data) {
         hasSpatialFilter = true;
         return data;
     }
 
+    @Override
     public Object visit(Crosses filter, Object data) {
         hasSpatialFilter = true;
         return data;
     }
 
+    @Override
     public Object visit(Disjoint filter, Object data) {
         hasSpatialFilter = true;
         return data;
     }
 
+    @Override
     public Object visit(DWithin filter, Object data) {
         hasSpatialFilter = true;
         return data;
     }
 
+    @Override
     public Object visit(Equals filter, Object data) {
         hasSpatialFilter = true;
         return data;
     }
 
+    @Override
     public Object visit(Intersects filter, Object data) {
         hasSpatialFilter = true;
         return data;
     }
 
+    @Override
     public Object visit(Overlaps filter, Object data) {
         hasSpatialFilter = true;
         return data;
     }
 
+    @Override
     public Object visit(Touches filter, Object data) {
         hasSpatialFilter = true;
         return data;
     }
 
+    @Override
     public Object visit(Within filter, Object data) {
         hasSpatialFilter = true;
         return data;

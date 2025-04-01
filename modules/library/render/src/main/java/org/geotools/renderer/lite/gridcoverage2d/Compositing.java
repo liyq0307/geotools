@@ -27,30 +27,28 @@ import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import javax.media.jai.Interpolation;
 import javax.media.jai.PlanarImage;
+import org.geotools.api.coverage.grid.GridCoverage;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.TypeMap;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
-import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.image.ImageWorker;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.geotools.renderer.composite.BlendComposite;
 import org.geotools.renderer.composite.BlendComposite.BlendingMode;
-import org.opengis.coverage.grid.GridCoverage;
 
 /**
  * A compositing element used in rendering.
  *
- * <p>It may specify a Simple {@link BlendComposite} instance to define the type of compositing to
- * be applied to the coverage holding this property. It may also specify a compositing image to be
- * drawn on the current rendering as part of the compositing process.
+ * <p>It may specify a Simple {@link BlendComposite} instance to define the type of compositing to be applied to the
+ * coverage holding this property. It may also specify a compositing image to be drawn on the current rendering as part
+ * of the compositing process.
  *
  * @author Daniele Romagnoli, GeoSolutions SAS
  */
 class Compositing {
 
-    private static final Composite DEFAULT_COMPOSITE =
-            BlendComposite.getInstance(BlendingMode.MULTIPLY, 1.0f);
+    private static final Composite DEFAULT_COMPOSITE = BlendComposite.getInstance(BlendingMode.MULTIPLY, 1.0f);
 
     /** IDENTITY */
     private static final AffineTransform IDENTITY = AffineTransform2D.getTranslateInstance(0, 0);
@@ -66,17 +64,11 @@ class Compositing {
         this.composite = DEFAULT_COMPOSITE;
     }
 
-    /**
-     * Compose this {@link Compositing} element with the source GridCoverage.
-     *
-     * @param source
-     * @param factory
-     * @return
-     */
+    /** Compose this {@link Compositing} element with the source GridCoverage. */
     public GridCoverage2D composeGridCoverage(GridCoverage2D source, GridCoverageFactory factory) {
         if (compositingImage != null) {
             // Make sure to transform the compositingImage to RGB
-            RenderedImage applyImage = forceToRGB((RenderedImage) compositingImage, true);
+            RenderedImage applyImage = forceToRGB(compositingImage, true);
             RenderedImage sourceImage = forceToRGB(source.getRenderedImage(), true);
 
             // TODO: Setup a JAI operation to do the composition without need
@@ -86,7 +78,7 @@ class Compositing {
                     PlanarImage.wrapRenderedImage(sourceImage).getAsBufferedImage();
 
             // prepare for composition
-            Graphics2D graphics = (Graphics2D) composedImage.createGraphics();
+            Graphics2D graphics = composedImage.createGraphics();
             graphics.setComposite(composite);
 
             // BufferedImage always have minX,minY = 0,0
@@ -104,20 +96,14 @@ class Compositing {
             int numBands = composedImage.getSampleModel().getNumBands();
             GridSampleDimension[] sd = new GridSampleDimension[numBands];
             for (int i = 0; i < numBands; i++) {
-                sd[i] =
-                        new GridSampleDimension(
-                                TypeMap.getColorInterpretation(composedImage.getColorModel(), i)
-                                        .name());
+                sd[i] = new GridSampleDimension(TypeMap.getColorInterpretation(composedImage.getColorModel(), i)
+                        .name());
             }
             RenderedImage gridCoverageImage = composedImage;
             if (translate) {
                 AffineTransform tx = AffineTransform2D.getTranslateInstance(minX, minY);
-                ImageWorker worker =
-                        new ImageWorker(composedImage)
-                                .affine(
-                                        tx,
-                                        Interpolation.getInstance(Interpolation.INTERP_NEAREST),
-                                        null);
+                ImageWorker worker = new ImageWorker(composedImage)
+                        .affine(tx, Interpolation.getInstance(Interpolation.INTERP_NEAREST), null);
                 gridCoverageImage = worker.getRenderedImage();
                 gridCoverageImage.getMinX();
             }
@@ -125,7 +111,7 @@ class Compositing {
             return factory.create(
                     source.getName().toString(),
                     gridCoverageImage,
-                    (GridGeometry2D) source.getGridGeometry(),
+                    source.getGridGeometry(),
                     sd,
                     new GridCoverage[] {source},
                     source.getProperties());
@@ -133,12 +119,7 @@ class Compositing {
         return source;
     }
 
-    /**
-     * BlendCompositing requires the images to be composed are RGB
-     *
-     * @param finalImage
-     * @return
-     */
+    /** BlendCompositing requires the images to be composed are RGB */
     public static RenderedImage forceToRGB(RenderedImage finalImage, boolean asByte) {
         if (finalImage != null) {
             SampleModel sm = finalImage.getSampleModel();

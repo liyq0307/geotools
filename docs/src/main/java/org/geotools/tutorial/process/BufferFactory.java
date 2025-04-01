@@ -1,31 +1,26 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2008, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.tutorial.process;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.NameImpl;
 import org.geotools.process.Process;
 import org.geotools.process.impl.SingleProcessFactory;
 import org.geotools.text.Text;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.util.InternationalString;
 
 /**
  * A Buffer process used on a geometry object.
@@ -38,24 +33,13 @@ public class BufferFactory extends SingleProcessFactory {
     // making parameters available as static constants to help java programmers
     /** Geometry for operation */
     static final Parameter<Geometry> GEOM1 =
-            new Parameter<>(
-                    "geom1",
-                    Geometry.class,
-                    Text.text("Geometry"),
-                    Text.text("Geometry to buffer"));
+            new Parameter<>("geom1", Geometry.class, Text.text("Geometry"), Text.text("Geometry to buffer"));
 
     /** Buffer amount */
-    static final Parameter<Double> BUFFER =
-            new Parameter<>(
-                    "buffer",
-                    Double.class,
-                    Text.text("Buffer Amount"),
-                    Text.text("Amount to buffer the geometry by"));
+    static final Parameter<Double> BUFFER = new Parameter<>(
+            "buffer", Double.class, Text.text("Buffer Amount"), Text.text("Amount to buffer the geometry by"));
 
-    /**
-     * Map used for getParameterInfo; used to describe operation requirements for user interface
-     * creation.
-     */
+    /** Map used for getParameterInfo; used to describe operation requirements for user interface creation. */
     static final Map<String, Parameter<?>> prameterInfo = new TreeMap<>();
 
     static {
@@ -63,12 +47,8 @@ public class BufferFactory extends SingleProcessFactory {
         prameterInfo.put(BUFFER.key, BUFFER);
     }
 
-    static final Parameter<Geometry> RESULT =
-            new Parameter<>(
-                    "result",
-                    Geometry.class,
-                    Text.text("Result"),
-                    Text.text("Result of Geometry.getBuffer( Buffer )"));
+    static final Parameter<Geometry> RESULT = new Parameter<>(
+            "result", Geometry.class, Text.text("Result"), Text.text("Result of Geometry.getBuffer( Buffer )"));
 
     /** Map used to describe operation results. */
     static final Map<String, Parameter<?>> resultInfo = new TreeMap<>();
@@ -93,8 +73,7 @@ public class BufferFactory extends SingleProcessFactory {
         return Collections.unmodifiableMap(prameterInfo);
     }
 
-    public Map<String, Parameter<?>> getResultInfo(Map<String, Object> parameters)
-            throws IllegalArgumentException {
+    public Map<String, Parameter<?>> getResultInfo(Map<String, Object> parameters) throws IllegalArgumentException {
         return Collections.unmodifiableMap(resultInfo);
     }
 

@@ -16,17 +16,24 @@
  */
 package org.geotools.jdbc;
 
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.junit.Test;
 
 public abstract class JDBCEmptyOnlineTest extends JDBCTestSupport {
 
     @Override
     protected abstract JDBCEmptyTestSetup createTestSetup();
 
+    @Test
     public void testFeatureSource() throws Exception {
 
         FeatureSource fs = dataStore.getFeatureSource(tname("empty"));
@@ -39,6 +46,7 @@ public abstract class JDBCEmptyOnlineTest extends JDBCTestSupport {
         assertEquals(0, count);
     }
 
+    @Test
     public void testFeatureCollection() throws Exception {
         FeatureSource fs = dataStore.getFeatureSource(tname("empty"));
         FeatureCollection features = fs.getFeatures();

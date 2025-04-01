@@ -17,40 +17,39 @@
 package org.geotools.feature.type;
 
 import java.util.Map;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.Name;
 
 public class AttributeDescriptorImpl extends PropertyDescriptorImpl implements AttributeDescriptor {
 
     protected final Object defaultValue;
 
     public AttributeDescriptorImpl(
-            AttributeType type,
-            Name name,
-            int min,
-            int max,
-            boolean isNillable,
-            Object defaultValue) {
+            AttributeType type, Name name, int min, int max, boolean isNillable, Object defaultValue) {
         super(type, name, min, max, isNillable);
 
         this.defaultValue = defaultValue;
     }
 
+    @Override
     public AttributeType getType() {
         return (AttributeType) super.getType();
     }
 
+    @Override
     public Object getDefaultValue() {
         return defaultValue;
     }
 
+    @Override
     public int hashCode() {
         return super.hashCode() ^ (defaultValue != null ? defaultValue.hashCode() : 0);
     }
 
+    @Override
     public boolean equals(Object o) {
         if (!(o instanceof AttributeDescriptorImpl)) return false;
 
@@ -59,6 +58,7 @@ public class AttributeDescriptorImpl extends PropertyDescriptorImpl implements A
         return super.equals(o) && Utilities.deepEquals(defaultValue, d.defaultValue);
     }
 
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer(Classes.getShortClassName(this));
         sb.append(" ");
@@ -96,6 +96,7 @@ public class AttributeDescriptorImpl extends PropertyDescriptorImpl implements A
         return sb.toString();
     }
 
+    @Override
     public String getLocalName() {
         return getName().getLocalPart();
     }

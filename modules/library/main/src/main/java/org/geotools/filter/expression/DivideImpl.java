@@ -16,12 +16,13 @@
  */
 package org.geotools.filter.expression;
 
+import java.util.Collection;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
 import org.geotools.filter.Filters;
 import org.geotools.filter.MathExpressionImpl;
 import org.geotools.util.Utilities;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
 
 /**
  * Implementation of divide expression.
@@ -34,15 +35,23 @@ public class DivideImpl extends MathExpressionImpl implements Divide {
         super(expr1, expr2);
     }
 
+    @Override
     public Object evaluate(Object feature) throws IllegalArgumentException {
         ensureOperandsSet();
 
-        double leftDouble = Filters.number(getExpression1().evaluate(feature));
-        double rightDouble = Filters.number(getExpression2().evaluate(feature));
+        Object eval1 = getExpression1().evaluate(feature);
+        Object eval2 = getExpression2().evaluate(feature);
+        if (eval1 instanceof Collection || eval2 instanceof Collection) {
+            return handleCollection(eval1, eval2);
+        } else {
+            double leftDouble = Filters.number(getExpression1().evaluate(feature, Number.class));
+            double rightDouble = Filters.number(getExpression2().evaluate(feature, Number.class));
 
-        return number(leftDouble / rightDouble);
+            return doArithmeticOperation(leftDouble, rightDouble);
+        }
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
@@ -53,6 +62,7 @@ public class DivideImpl extends MathExpressionImpl implements Divide {
      * @param obj - the object to compare this expression against.
      * @return true if specified object is equal to this expression; false otherwise.
      */
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof DivideImpl) {
             DivideImpl other = (DivideImpl) obj;
@@ -69,6 +79,7 @@ public class DivideImpl extends MathExpressionImpl implements Divide {
      *
      * @return a hash code value for this divide expression.
      */
+    @Override
     public int hashCode() {
         int result = 23;
 
@@ -78,7 +89,13 @@ public class DivideImpl extends MathExpressionImpl implements Divide {
         return result;
     }
 
+    @Override
     public String toString() {
         return "(" + getExpression1().toString() + "/" + getExpression2().toString() + ")";
+    }
+
+    @Override
+    protected Object doArithmeticOperation(Double operand1, Double operand2) {
+        return number(operand1 / operand2);
     }
 }

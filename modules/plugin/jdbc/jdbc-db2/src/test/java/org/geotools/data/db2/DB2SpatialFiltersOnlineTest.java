@@ -16,8 +16,16 @@
  */
 package org.geotools.data.db2;
 
-import java.util.HashMap;
-import org.geotools.data.Query;
+import static org.junit.Assert.assertEquals;
+
+import java.util.Map;
+import org.geotools.api.data.Query;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
@@ -28,13 +36,6 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.DWithin;
 
 public class DB2SpatialFiltersOnlineTest extends JDBCSpatialFiltersOnlineTest {
 
@@ -49,6 +50,7 @@ public class DB2SpatialFiltersOnlineTest extends JDBCSpatialFiltersOnlineTest {
         dataStore.setDatabaseSchema("geotools");
     }
 
+    @Override
     public void testGeometryCollection() throws Exception {
         PrecisionModel precisionModel = new PrecisionModel();
 
@@ -67,25 +69,26 @@ public class DB2SpatialFiltersOnlineTest extends JDBCSpatialFiltersOnlineTest {
         // For DB2, we must use the following line of code
         MultiLineString ml = gf.createMultiLineString(geometries);
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
         PropertyName p = ff.property(aname("geom"));
         Literal collect = ff.literal(ml);
 
-        DWithin dwithinGeomCo = ((FilterFactory2) ff).dwithin(p, collect, 5, "meter");
+        DWithin dwithinGeomCo = ff.dwithin(p, collect, 5, "meter");
         Query dq = new Query(tname("road"), dwithinGeomCo);
         SimpleFeatureCollection features =
                 dataStore.getFeatureSource(tname("road")).getFeatures(dq);
         int numFeatures = features.size();
         assertEquals(2, numFeatures);
 
-        Beyond beyondGeomCo = ((FilterFactory2) ff).beyond(p, collect, 5, "meter");
+        Beyond beyondGeomCo = ff.beyond(p, collect, 5, "meter");
         dq = new Query(tname("road"), beyondGeomCo);
         features = dataStore.getFeatureSource(tname("road")).getFeatures(dq);
         numFeatures = features.size();
         assertEquals(1, numFeatures);
     }
 
+    @Override
     public void testBboxFilter() throws Exception {
         FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         // should  match  "r2" and "r3"
@@ -94,6 +97,7 @@ public class DB2SpatialFiltersOnlineTest extends JDBCSpatialFiltersOnlineTest {
         assertEquals(2, features.size());
     }
 
+    @Override
     public void testBboxFilterDefault() throws Exception {
         FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         // should  match  "r2" and "r3"
@@ -103,8 +107,8 @@ public class DB2SpatialFiltersOnlineTest extends JDBCSpatialFiltersOnlineTest {
     }
 
     @Override
-    protected HashMap createDataStoreFactoryParams() throws Exception {
-        HashMap params = super.createDataStoreFactoryParams();
+    protected Map<String, Object> createDataStoreFactoryParams() throws Exception {
+        Map<String, Object> params = super.createDataStoreFactoryParams();
         params.put(DB2NGDataStoreFactory.USE_SELECTIVITY.key, true);
         return params;
     }

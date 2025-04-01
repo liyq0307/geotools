@@ -17,17 +17,16 @@
 package org.geotools.data.ogr;
 
 import java.io.IOException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.filter.identity.FeatureIdImpl;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
- * OGR feature writer leveraging OGR capabilities to rewrite a file using random access and in place
- * deletes
+ * OGR feature writer leveraging OGR capabilities to rewrite a file using random access and in place deletes
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -53,13 +52,7 @@ class OGRDirectFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleF
 
     private OGR ogr;
 
-    /**
-     * Creates a new direct OGR feature writer
-     *
-     * @param reader
-     * @param featureType
-     * @param layer
-     */
+    /** Creates a new direct OGR feature writer */
     public OGRDirectFeatureWriter(
             OGRDataSource dataSource,
             Object layer,
@@ -77,6 +70,8 @@ class OGRDirectFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleF
         this.ogr = ogr;
     }
 
+    @Override
+    @SuppressWarnings("PMD.UseTryWithResources") // closing field
     public void close() throws IOException {
         if (reader != null) {
             try {
@@ -96,14 +91,17 @@ class OGRDirectFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleF
         }
     }
 
+    @Override
     public SimpleFeatureType getFeatureType() {
         return featureType;
     }
 
+    @Override
     public boolean hasNext() throws IOException {
         return reader.hasNext();
     }
 
+    @Override
     public SimpleFeature next() throws IOException {
         if (live != null) {
             write();
@@ -120,6 +118,7 @@ class OGRDirectFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleF
         return live;
     }
 
+    @Override
     public void remove() throws IOException {
         long ogrId = mapper.convertGTFID(original);
         if (!ogr.LayerDeleteFeature(layer, ogrId)) {
@@ -128,6 +127,7 @@ class OGRDirectFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleF
         deletedFeatures = true;
     }
 
+    @Override
     public void write() throws IOException {
         if (live == null) throw new IOException("No current feature to write");
 

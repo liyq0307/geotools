@@ -22,6 +22,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 
 /**
@@ -41,8 +42,8 @@ public interface Request {
     public static final String SERVICE = "SERVICE";
 
     /**
-     * Once the properties of the request are configured, this will return the URL that points to
-     * the server and contains all of the appropriate name/value parameters.
+     * Once the properties of the request are configured, this will return the URL that points to the server and
+     * contains all of the appropriate name/value parameters.
      *
      * @return a URL that can be used to issue the request
      */
@@ -51,11 +52,11 @@ public interface Request {
     /**
      * Sets the name/value property for this request.
      *
-     * <p>Note that when using this method, it is up to the programmer to provide their own encoding
-     * of <code>value</code> according to the OWS specifications! The code will not do this for you.
+     * <p>Note that when using this method, it is up to the programmer to provide their own encoding of <code>value
+     * </code> according to the OWS specifications! The code will not do this for you.
      *
-     * <p>Different OWS specifications define different ways to do this. There are notorious
-     * differences between WMS 1.1.1 (section 6.2.1) and WMS 1.3.0 (section 6.3.2) for example.
+     * <p>Different OWS specifications define different ways to do this. There are notorious differences between WMS
+     * 1.1.1 (section 6.2.1) and WMS 1.3.0 (section 6.3.2) for example.
      *
      * <p>If value is null, "name" is removed from the properties table.
      *
@@ -68,27 +69,27 @@ public interface Request {
     public Properties getProperties();
 
     /**
-     * Each Request must know how to create it's counterpart Response. Given the content type and
-     * input stream (containin the response data), this method must return an appropriate Response
-     * object.
-     *
-     * @throws ServiceException
-     * @throws IOException
+     * Each Request must know how to create it's counterpart Response. Given the content type and input stream
+     * (containin the response data), this method must return an appropriate Response object.
      */
-    Response createResponse(HTTPResponse response) throws ServiceException, IOException;
+    default Response createResponse(HTTPResponse response) throws ServiceException, IOException {
+        throw new UnsupportedOperationException(String.format(
+                "%s doesn't implement createResponse with org.geotools.http.HTTPResponse.",
+                this.getClass().getName()));
+    }
 
     /**
-     * This method indicates whether this request needs to transmit some data to the server using
-     * POST. If this returns true, performPostOutput() will be called during the connection,
-     * allowing the data to be written out to the server.
+     * This method indicates whether this request needs to transmit some data to the server using POST. If this returns
+     * true, performPostOutput() will be called during the connection, allowing the data to be written out to the
+     * server.
      *
      * @return true if this request needs POST support, false otherwise.
      */
     boolean requiresPost();
 
     /**
-     * If this request uses POST, it must specify the content type of the data that is to be written
-     * out during performPostOutput().
+     * If this request uses POST, it must specify the content type of the data that is to be written out during
+     * performPostOutput().
      *
      * <p>For open web services, this is usually "application/xml".
      *
@@ -97,21 +98,15 @@ public interface Request {
     String getPostContentType();
 
     /**
-     * This is called during the connection to the server, allowing this request to write out data
-     * to the server by using the provided outputStream.
+     * This is called during the connection to the server, allowing this request to write out data to the server by
+     * using the provided outputStream.
      *
-     * <p>Implementors of this method do not need to call outputStream.flush() or
-     * outputStream.close(). The framework will call them immediately after calling this method.
-     *
-     * @param outputStream
+     * <p>Implementors of this method do not need to call outputStream.flush() or outputStream.close(). The framework
+     * will call them immediately after calling this method.
      */
     void performPostOutput(OutputStream outputStream) throws IOException;
 
-    /**
-     * Sets hints that might be driving how the request is performed
-     *
-     * @param hints
-     */
+    /** Sets hints that might be driving how the request is performed */
     default void setRequestHints(Map<String, Object> hints) {
         // nothing to do
     }

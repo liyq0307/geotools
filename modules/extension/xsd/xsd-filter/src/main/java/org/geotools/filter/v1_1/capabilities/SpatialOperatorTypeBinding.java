@@ -17,13 +17,13 @@
 package org.geotools.filter.v1_1.capabilities;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.GeometryOperand;
+import org.geotools.api.filter.capability.SpatialOperator;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.GeometryOperand;
-import org.opengis.filter.capability.SpatialOperator;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:SpatialOperatorType.
@@ -52,6 +52,7 @@ public class SpatialOperatorTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.SpatialOperatorType;
     }
@@ -63,6 +64,7 @@ public class SpatialOperatorTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return SpatialOperator.class;
     }
@@ -74,15 +76,17 @@ public class SpatialOperatorTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // &lt;xsd:element minOccurs="0" name="GeometryOperands"
         // type="ogc:GeometryOperandsType"/&gt;
-        GeometryOperand[] gos = (GeometryOperand[]) node.getChildValue(GeometryOperand[].class);
+        GeometryOperand[] gos = node.getChildValue(GeometryOperand[].class);
 
         // &lt;xsd:attribute name="name" type="ogc:SpatialOperatorNameType"/&gt;
         return factory.spatialOperator((String) node.getAttributeValue("name"), gos);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         SpatialOperator sop = (SpatialOperator) object;
 

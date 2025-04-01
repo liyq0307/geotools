@@ -18,18 +18,17 @@ package org.geotools.process.raster;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.CoverageProcessor;
 import org.geotools.process.factory.DescribeParameter;
 import org.geotools.process.factory.DescribeProcess;
 import org.geotools.process.factory.DescribeResult;
 import org.geotools.util.Converters;
-import org.opengis.parameter.ParameterValueGroup;
 
 @DescribeProcess(
-    title = "Normalize Coverage",
-    description = "Normalizes a coverage by dividing values by the max value"
-)
+        title = "Normalize Coverage",
+        description = "Normalizes a coverage by dividing values by the max value")
 public class NormalizeCoverageProcess implements RasterProcess {
 
     private final CoverageProcessor PROCESSOR = new CoverageProcessor();

@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import javax.xml.namespace.QName;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.gml2.FeatureTypeCache;
 import org.geotools.gml2.GML;
 import org.geotools.xsd.AbstractComplexBinding;
@@ -29,7 +30,6 @@ import org.geotools.xsd.Configuration;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.geotools.xsd.SchemaIndex;
-import org.opengis.feature.simple.SimpleFeature;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -88,6 +88,7 @@ public class GMLAbstractFeatureTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.AbstractFeatureType;
     }
@@ -99,6 +100,7 @@ public class GMLAbstractFeatureTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return SimpleFeature.class;
     }
@@ -110,6 +112,7 @@ public class GMLAbstractFeatureTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return GML2ParsingUtils.parseFeature(instance, node, value, ftCache, bwFactory);
     }
@@ -120,12 +123,12 @@ public class GMLAbstractFeatureTypeBinding extends AbstractComplexBinding {
     }
 
     @Override
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         return GML2EncodingUtils.AbstractFeatureType_getProperties(
                 object,
                 element,
                 schemaIndex,
-                new HashSet<String>(Arrays.asList("name", "description", "boundedBy")),
+                new HashSet<>(Arrays.asList("name", "description", "boundedBy")),
                 configuration);
     }
 }

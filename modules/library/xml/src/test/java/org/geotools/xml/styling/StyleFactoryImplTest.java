@@ -19,231 +19,241 @@ package org.geotools.xml.styling;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Random;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-import junit.framework.TestCase;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.Halo;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.PointPlacement;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.Symbol;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
 import org.geotools.filter.function.EnvFunction;
-import org.geotools.styling.AnchorPoint;
-import org.geotools.styling.Displacement;
-import org.geotools.styling.ExternalGraphic;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Font;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.Halo;
-import org.geotools.styling.LinePlacement;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Mark;
-import org.geotools.styling.PointPlacement;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.Rule;
-import org.geotools.styling.SelectedChannelType;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.TextSymbolizer;
+import org.geotools.styling.FillImpl;
 import org.geotools.styling.visitor.DuplicatingStyleVisitor;
+import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
 
 /**
- * Capture the default values produce by the style factory in order to capture any regressions as we
- * move forward to SE 1.1 interfaces.
+ * Capture the default values produce by the style factory in order to capture any regressions as we move forward to SE
+ * 1.1 interfaces.
  *
  * @author iant
  */
-public class StyleFactoryImplTest extends TestCase {
+public class StyleFactoryImplTest {
     static StyleFactory styleFactory = CommonFactoryFinder.getStyleFactory(null);
     static FilterFactory filterFactory = CommonFactoryFinder.getFilterFactory(null);
     static SimpleFeature feature;
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(StyleFactoryImplTest.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(StyleFactoryImplTest.class);
 
+    @Test
     public void testCommonFactoryFinder() {
         LOGGER.finer("testCreateStyle");
 
-        assertNotNull("Failed to build styleFactory", styleFactory);
+        Assert.assertNotNull("Failed to build styleFactory", styleFactory);
     }
 
     /** Test of createPointSymbolizer method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreatePointSymbolizer() {
         LOGGER.finer("testCreatePointSymbolizer");
 
         PointSymbolizer ps = styleFactory.createPointSymbolizer();
 
-        assertNotNull("Failed to create PointSymbolizer", ps);
+        Assert.assertNotNull("Failed to create PointSymbolizer", ps);
     }
 
     /** Test of createPolygonSymbolizer method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreatePolygonSymbolizer() {
         LOGGER.finer("testCreatePolygonSymbolizer");
 
         PolygonSymbolizer ps = styleFactory.createPolygonSymbolizer();
 
-        assertNotNull("Failed to create PolygonSymbolizer", ps);
+        Assert.assertNotNull("Failed to create PolygonSymbolizer", ps);
     }
 
     /** Test of createLineSymbolizer method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateLineSymbolizer() {
         LOGGER.finer("testCreateLineSymbolizer");
 
         LineSymbolizer ls = styleFactory.createLineSymbolizer();
 
-        assertNotNull("Failed to create PolygonSymbolizer", ls);
+        Assert.assertNotNull("Failed to create PolygonSymbolizer", ls);
     }
 
     /** Test of createTextSymbolizer method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateTextSymbolizer() {
         LOGGER.finer("testCreateTextSymbolizer");
 
         TextSymbolizer ts = styleFactory.createTextSymbolizer();
 
-        assertNotNull("Failed to create TextSymbolizer", ts);
+        Assert.assertNotNull("Failed to create TextSymbolizer", ts);
     }
 
     /** Test of createFeatureTypeStyle method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateFeatureTypeStyle() {
         LOGGER.finer("testCreateFeatureTypeStyle");
 
         FeatureTypeStyle fts = styleFactory.createFeatureTypeStyle();
 
-        assertNotNull("failed to create featureTypeStyle", fts);
+        Assert.assertNotNull("failed to create featureTypeStyle", fts);
     }
 
     /** Test of createRule method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateRule() {
         LOGGER.finer("testCreateRule");
 
         Rule r = styleFactory.createRule();
 
-        assertNotNull("failed to create Rule", r);
+        Assert.assertNotNull("failed to create Rule", r);
     }
 
     /** Test of createStroke method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateStroke() {
         LOGGER.finer("testCreateStroke");
 
-        Stroke s =
-                styleFactory.createStroke(
-                        filterFactory.literal("#000000"), filterFactory.literal(2.0));
+        Stroke s = styleFactory.createStroke(filterFactory.literal("#000000"), filterFactory.literal(2.0));
 
-        assertNotNull("Failed to build stroke ", s);
+        Assert.assertNotNull("Failed to build stroke ", s);
 
-        s =
-                styleFactory.createStroke(
-                        filterFactory.literal("#000000"),
-                        filterFactory.literal(2.0),
-                        filterFactory.literal(0.5));
+        s = styleFactory.createStroke(
+                filterFactory.literal("#000000"), filterFactory.literal(2.0), filterFactory.literal(0.5));
 
-        assertNotNull("Failed to build stroke ", s);
+        Assert.assertNotNull("Failed to build stroke ", s);
 
-        s =
-                styleFactory.createStroke(
-                        filterFactory.literal("#000000"),
-                        filterFactory.literal(2.0),
-                        filterFactory.literal(0.5),
-                        filterFactory.literal("bevel"),
-                        filterFactory.literal("square"),
-                        new float[] {1.1f, 2.1f, 6f, 2.1f, 1.1f, 5f},
-                        filterFactory.literal(3),
-                        null,
-                        null);
+        s = styleFactory.createStroke(
+                filterFactory.literal("#000000"),
+                filterFactory.literal(2.0),
+                filterFactory.literal(0.5),
+                filterFactory.literal("bevel"),
+                filterFactory.literal("square"),
+                new float[] {1.1f, 2.1f, 6f, 2.1f, 1.1f, 5f},
+                filterFactory.literal(3),
+                null,
+                null);
 
-        assertNotNull("Failed to build stroke ", s);
+        Assert.assertNotNull("Failed to build stroke ", s);
 
-        assertEquals("Wrong color ", "#000000", s.getColor().evaluate(feature).toString());
-        assertEquals("Wrong width ", "2.0", s.getWidth().evaluate(feature).toString());
-        assertEquals("Wrong opacity ", "0.5", s.getOpacity().evaluate(feature).toString());
-        assertEquals("Wrong linejoin ", "bevel", s.getLineJoin().evaluate(feature).toString());
-        assertEquals("Wrong linejoin ", "square", s.getLineCap().evaluate(feature).toString());
-        assertEquals("Broken dash array", 2.1f, s.getDashArray()[1], 0.001f);
-        assertEquals("Wrong dash offset ", "3", s.getDashOffset().evaluate(feature).toString());
+        Assert.assertEquals(
+                "Wrong color ", "#000000", s.getColor().evaluate(feature).toString());
+        Assert.assertEquals(
+                "Wrong width ", "2.0", s.getWidth().evaluate(feature).toString());
+        Assert.assertEquals(
+                "Wrong opacity ", "0.5", s.getOpacity().evaluate(feature).toString());
+        Assert.assertEquals(
+                "Wrong linejoin ", "bevel", s.getLineJoin().evaluate(feature).toString());
+        Assert.assertEquals(
+                "Wrong linejoin ", "square", s.getLineCap().evaluate(feature).toString());
+        Assert.assertEquals("Broken dash array", 2.1f, s.getDashArray()[1], 0.001f);
+        Assert.assertEquals(
+                "Wrong dash offset ", "3", s.getDashOffset().evaluate(feature).toString());
     }
 
     /** Test of createFill method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateFill() {
         LOGGER.finer("testCreateFill");
 
         Fill f = styleFactory.createFill(filterFactory.literal("#808080"));
 
-        assertNotNull("Failed to build fill", f);
+        Assert.assertNotNull("Failed to build fill", f);
 
         f = styleFactory.createFill(filterFactory.literal("#808080"), filterFactory.literal(1.0));
-        assertNotNull("Failed to build fill", f);
+        Assert.assertNotNull("Failed to build fill", f);
 
         f = styleFactory.createFill(null);
-        assertEquals(f.getColor(), Fill.DEFAULT.getColor());
-        assertSame(f.getColor(), Fill.DEFAULT.getColor());
+        Assert.assertEquals(f.getColor(), FillImpl.DEFAULT.getColor());
+        Assert.assertSame(f.getColor(), FillImpl.DEFAULT.getColor());
     }
 
     /** Test of createMark method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateMark() {
         LOGGER.finer("testCreateMark");
 
         Mark m = styleFactory.createMark();
 
-        assertNotNull("Failed to build mark ", m);
+        Assert.assertNotNull("Failed to build mark ", m);
     }
 
     /** Test of getSquareMark method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testGetNamedMarks() {
         LOGGER.finer("testGetNamedMarks");
 
         Mark m;
         String[] names = {"Square", "Circle", "Triangle", "Star", "X", "Cross"};
 
-        for (int i = 0; i < names.length; i++) {
+        for (String name : names) {
             try {
-                Class target = styleFactory.getClass();
+                Class<?> target = styleFactory.getClass();
 
                 //                LOGGER.finer("About to load get"+names[i]+"Mark");
-                Method method = target.getMethod("get" + names[i] + "Mark", (Class[]) null);
+                Method method = target.getMethod("get" + name + "Mark", (Class<?>[]) null);
 
                 //                LOGGER.finer("got method back " + method.toString());
                 m = (Mark) method.invoke(styleFactory, (Object[]) null);
-                assertNotNull("Failed to get " + names[i] + " mark ", m);
+                Assert.assertNotNull("Failed to get " + name + " mark ", m);
 
-                Expression exp = filterFactory.literal(names[i]);
-                assertEquals("Wrong sort of mark returned ", exp, m.getWellKnownName());
+                Expression exp = filterFactory.literal(name);
+                Assert.assertEquals("Wrong sort of mark returned ", exp, m.getWellKnownName());
             } catch (InvocationTargetException ite) {
-                ite.getTargetException().printStackTrace();
-                fail("InvocationTargetException " + ite.getTargetException());
+                Logger.getGlobal().log(Level.SEVERE, "", ite);
+                Assert.fail("InvocationTargetException " + ite.getTargetException());
             } catch (Exception e) {
-                java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
-                fail("Exception " + e.toString());
+                Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
+                Assert.fail("Exception " + e.toString());
             }
         }
     }
 
     /** Test of createGraphic method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateGraphic() {
         LOGGER.finer("testCreateGraphic");
 
-        ExternalGraphic[] externalGraphics =
-                new ExternalGraphic[] {
-                    styleFactory.createExternalGraphic(
-                            "http://www.ccg.leeds.ac.uk/ian/geotools/icons/rail.gif", "image/gif")
-                };
-        Mark[] marks = new Mark[] {styleFactory.getCircleMark()};
+        ExternalGraphic[] externalGraphics = {
+            styleFactory.createExternalGraphic("http://www.ccg.leeds.ac.uk/ian/geotools/icons/rail.gif", "image/gif")
+        };
+        Mark[] marks = {styleFactory.getCircleMark()};
         Mark[] symbols = new Mark[0];
         Expression opacity = filterFactory.literal(0.5);
         Expression size = filterFactory.literal(10);
         Expression rotation = filterFactory.literal(145.0);
-        Graphic g =
-                styleFactory.createGraphic(
-                        externalGraphics, marks, symbols, opacity, size, rotation);
+        Graphic g = styleFactory.createGraphic(externalGraphics, marks, (Symbol[]) symbols, opacity, size, rotation);
 
-        assertNotNull("failed to build graphic ", g);
+        Assert.assertNotNull("failed to build graphic ", g);
     }
 
     /** Test of createFont method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateFont() {
         LOGGER.finer("testCreateFont");
 
@@ -253,72 +263,80 @@ public class StyleFactoryImplTest extends TestCase {
         Expression fontSize = filterFactory.literal("12");
         Font f = styleFactory.createFont(fontFamily, fontStyle, fontWeight, fontSize);
 
-        assertNotNull("Failed to build font", f);
+        Assert.assertNotNull("Failed to build font", f);
 
-        assertEquals(
-                "Wrong font type ", "Times", f.getFamily().get(0).evaluate(feature).toString());
-        assertEquals("Wrong font Style ", "Italic", f.getStyle().evaluate(feature).toString());
-        assertEquals("Wrong font weight ", "Bold", f.getWeight().evaluate(feature).toString());
-        assertEquals("Wrong font size ", "12", f.getSize().evaluate(feature).toString());
+        Assert.assertEquals(
+                "Wrong font type ",
+                "Times",
+                f.getFamily().get(0).evaluate(feature).toString());
+        Assert.assertEquals(
+                "Wrong font Style ", "Italic", f.getStyle().evaluate(feature).toString());
+        Assert.assertEquals(
+                "Wrong font weight ", "Bold", f.getWeight().evaluate(feature).toString());
+        Assert.assertEquals(
+                "Wrong font size ", "12", f.getSize().evaluate(feature).toString());
     }
 
     /** Test of createLinePlacement method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateLinePlacement() {
         LOGGER.finer("testCreateLinePlacement");
 
         LinePlacement lp = styleFactory.createLinePlacement(filterFactory.literal(10));
 
-        assertNotNull("failed to create LinePlacement", lp);
+        Assert.assertNotNull("failed to create LinePlacement", lp);
     }
 
     /** Test of createPointPlacement method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreatePointPlacement() {
         LOGGER.finer("testCreatePointPlacement");
 
         AnchorPoint anchorPoint =
-                styleFactory.createAnchorPoint(
-                        filterFactory.literal(1.0), filterFactory.literal(0.5));
+                styleFactory.createAnchorPoint(filterFactory.literal(1.0), filterFactory.literal(0.5));
         Displacement displacement =
-                styleFactory.createDisplacement(
-                        filterFactory.literal(10.0), filterFactory.literal(5.0));
+                styleFactory.createDisplacement(filterFactory.literal(10.0), filterFactory.literal(5.0));
         Expression rotation = filterFactory.literal(90.0);
         PointPlacement pp = styleFactory.createPointPlacement(anchorPoint, displacement, rotation);
 
-        assertNotNull("failed to create PointPlacement", pp);
+        Assert.assertNotNull("failed to create PointPlacement", pp);
 
-        assertEquals(
+        Assert.assertEquals(
                 "Wrong X anchorPoint ",
                 "1.0",
                 pp.getAnchorPoint().getAnchorPointX().evaluate(feature).toString());
-        assertEquals(
+        Assert.assertEquals(
                 "Wrong Y anchorPoint ",
                 "0.5",
                 pp.getAnchorPoint().getAnchorPointY().evaluate(feature).toString());
-        assertEquals(
+        Assert.assertEquals(
                 "Wrong X displacement ",
                 "10.0",
                 pp.getDisplacement().getDisplacementX().evaluate(feature).toString());
-        assertEquals(
+        Assert.assertEquals(
                 "Wrong Y displacement ",
                 "5.0",
                 pp.getDisplacement().getDisplacementY().evaluate(feature).toString());
-        assertEquals("Wrong Rotation ", "90.0", pp.getRotation().evaluate(feature).toString());
+        Assert.assertEquals(
+                "Wrong Rotation ", "90.0", pp.getRotation().evaluate(feature).toString());
     }
 
     /** Test of createHalo method, of class org.geotools.styling.StyleFactoryImpl. */
+    @Test
     public void testCreateHalo() {
         LOGGER.finer("testCreateHalo");
 
         Halo h = styleFactory.createHalo(styleFactory.getDefaultFill(), filterFactory.literal(4));
 
-        assertNotNull("Failed to build halo", h);
+        Assert.assertNotNull("Failed to build halo", h);
 
-        assertEquals("Wrong radius", 4, ((Number) h.getRadius().evaluate(feature)).intValue());
+        Assert.assertEquals("Wrong radius", 4, ((Number) h.getRadius().evaluate(feature)).intValue());
     }
 
+    @Test
     public void testBuggyStyleCopy() throws Exception {
         StyleFactory sf = CommonFactoryFinder.getStyleFactory(null);
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         Random rand = new Random();
 
         Stroke stroke = sf.createStroke(ff.literal("#8024d0"), ff.literal(rand.nextInt(10) + 1));
@@ -341,43 +359,39 @@ public class StyleFactoryImplTest extends TestCase {
 
         DuplicatingStyleVisitor duplicator = new DuplicatingStyleVisitor();
         namedStyle.accept(duplicator);
-        Style namedStyle2 = (Style) duplicator.getCopy();
-
         SLDTransformer writer = new SLDTransformer();
         String out = writer.transform(style);
 
-        assertNotNull(out);
+        Assert.assertNotNull(out);
     }
 
-    /**
-     * Test comparing the behaviors of styleFactory.createFill() with a null color and the DEFAULT
-     * fill.
-     */
+    /** Test comparing the behaviors of styleFactory.createFill() with a null color and the DEFAULT fill. */
+    @Test
     public void testCreateFillVsDefaultFill() {
         Fill f1 = styleFactory.createFill(null);
         Fill f2 = styleFactory.getDefaultFill();
-        assertEquals(f1, f2);
+        Assert.assertEquals(f1, f2);
     }
 
+    @Test
     public void testRasterSymbolizerNoGeometry() {
         RasterSymbolizer rs = styleFactory.getDefaultRasterSymbolizer();
-        assertNull(rs.getGeometryPropertyName());
-        assertNull(rs.getGeometry());
+        Assert.assertNull(rs.getGeometryPropertyName());
+        Assert.assertNull(rs.getGeometry());
     }
 
     // Test Expression usage in SelectedChannel for styleFactory
     @Test
     public void testSelectedChannelExpression() {
-        SelectedChannelType sct =
-                styleFactory.selectedChannelType(
-                        filterFactory.function(
-                                "env", filterFactory.literal("B1"), filterFactory.literal("1")),
-                        null);
+        SelectedChannelType sct = styleFactory.selectedChannelType(
+                filterFactory.function("env", filterFactory.literal("B1"), filterFactory.literal("1")), null);
         final String b1 = "B1";
         EnvFunction.removeLocalValue("B1");
-        assertEquals(1, sct.getChannelName().evaluate(null, Integer.class).intValue());
+        Assert.assertEquals(
+                1, sct.getChannelName().evaluate(null, Integer.class).intValue());
         EnvFunction.setLocalValue(b1, "20");
-        assertEquals(20, sct.getChannelName().evaluate(null, Integer.class).intValue());
+        Assert.assertEquals(
+                20, sct.getChannelName().evaluate(null, Integer.class).intValue());
         EnvFunction.removeLocalValue("B1");
     }
 }

@@ -19,8 +19,8 @@
  */
 package org.geotools.metadata.iso.extent;
 
+import org.geotools.api.metadata.extent.GeographicExtent;
 import org.geotools.metadata.iso.MetadataEntity;
-import org.opengis.metadata.extent.GeographicExtent;
 
 /**
  * Base class for geographic area of the dataset.
@@ -35,8 +35,8 @@ public class GeographicExtentImpl extends MetadataEntity implements GeographicEx
     private static final long serialVersionUID = -8844015895495563161L;
 
     /**
-     * Indication of whether the bounding polygon encompasses an area covered by the data
-     * (<cite>inclusion</cite>) or an area where data is not present (<cite>exclusion</cite>).
+     * Indication of whether the bounding polygon encompasses an area covered by the data (<cite>inclusion</cite>) or an
+     * area where data is not present (<cite>exclusion</cite>).
      */
     private Boolean inclusion;
 
@@ -58,18 +58,19 @@ public class GeographicExtentImpl extends MetadataEntity implements GeographicEx
     }
 
     /**
-     * Indication of whether the bounding polygon encompasses an area covered by the data
-     * (<cite>inclusion</cite>) or an area where data is not present (<cite>exclusion</cite>).
+     * Indication of whether the bounding polygon encompasses an area covered by the data (<cite>inclusion</cite>) or an
+     * area where data is not present (<cite>exclusion</cite>).
      *
      * @return {@code true} for inclusion, or {@code false} for exclusion.
      */
+    @Override
     public Boolean getInclusion() {
         return inclusion;
     }
 
     /**
-     * Set whether the bounding polygon encompasses an area covered by the data
-     * (<cite>inclusion</cite>) or an area where data is not present (<cite>exclusion</cite>).
+     * Set whether the bounding polygon encompasses an area covered by the data (<cite>inclusion</cite>) or an area
+     * where data is not present (<cite>exclusion</cite>).
      */
     public void setInclusion(final Boolean newValue) {
         checkWritePermission();

@@ -16,16 +16,23 @@
  */
 package org.geotools.styling;
 
+import org.geotools.api.style.ImageOutline;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.util.Utilities;
 
 public class ImageOutlineImpl implements ImageOutline {
 
     Symbolizer symbolizer;
 
+    @Override
     public Symbolizer getSymbolizer() {
         return symbolizer;
     }
 
+    @Override
     public void setSymbolizer(Symbolizer symbolizer) {
         if (symbolizer instanceof LineSymbolizer || symbolizer instanceof PolygonSymbolizer) {
             this.symbolizer = symbolizer;
@@ -34,6 +41,7 @@ public class ImageOutlineImpl implements ImageOutline {
         }
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -47,6 +55,7 @@ public class ImageOutlineImpl implements ImageOutline {
         return false;
     }
 
+    @Override
     public int hashCode() {
         final int PRIME = 1000003;
         int result = 0;
@@ -58,6 +67,7 @@ public class ImageOutlineImpl implements ImageOutline {
         return result;
     }
 
+    @Override
     public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }

@@ -19,13 +19,13 @@ package org.geotools.gml2.bindings;
 import java.net.URI;
 import java.util.logging.Logger;
 import javax.xml.namespace.QName;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.gml2.GML;
 import org.geotools.referencing.CRS;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Binding object for the type http://www.opengis.net/gml:AbstractGeometryType.
@@ -62,6 +62,7 @@ public class GMLAbstractGeometryTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.AbstractGeometryType;
     }
@@ -73,6 +74,7 @@ public class GMLAbstractGeometryTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
@@ -84,6 +86,7 @@ public class GMLAbstractGeometryTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Geometry.class;
     }
@@ -95,6 +98,7 @@ public class GMLAbstractGeometryTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         if (value instanceof Geometry) {
             Geometry geometry = (Geometry) value;
@@ -117,6 +121,7 @@ public class GMLAbstractGeometryTypeBinding extends AbstractComplexBinding {
         return value;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("srsName".equals(name.getLocalPart())) {
             Geometry geometry = (Geometry) object;

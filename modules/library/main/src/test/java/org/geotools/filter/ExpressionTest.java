@@ -16,10 +16,18 @@
  */
 package org.geotools.filter;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.logging.Logger;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -29,18 +37,13 @@ import org.geotools.filter.expression.AddImpl;
 import org.geotools.filter.expression.DivideImpl;
 import org.geotools.filter.expression.MultiplyImpl;
 import org.geotools.filter.expression.SubtractImpl;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.PrecisionModel;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Unit test for expressions. This is a complimentary test suite with the filter test suite.
@@ -48,10 +51,9 @@ import org.opengis.filter.expression.PropertyName;
  * @author James MacGill, CCG
  * @author Rob Hranac, TOPP
  */
-public class ExpressionTest extends TestCase {
+public class ExpressionTest {
     /** Standard logging instance */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ExpressionTest.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ExpressionTest.class);
 
     /** Feature on which to preform tests */
     private static SimpleFeature testFeature = null;
@@ -59,37 +61,9 @@ public class ExpressionTest extends TestCase {
     /** Schema on which to preform tests */
     private static SimpleFeatureType testSchema = null;
 
-    static FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    static FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     boolean set = false;
-
-    /** Test suite for this test case */
-    TestSuite suite = null;
-
-    /** Constructor with test name. */
-    public ExpressionTest(String testName) {
-        super(testName);
-    }
-
-    /**
-     * Main for test runner.
-     *
-     * @param args arguments to run main
-     */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(suite());
-    }
-
-    /**
-     * Required suite builder.
-     *
-     * @return A test suite for this unit test.
-     */
-    public static Test suite() {
-        TestSuite suite = new TestSuite(ExpressionTest.class);
-
-        return suite;
-    }
 
     /**
      * Sets up a schema and a test feature.
@@ -97,7 +71,8 @@ public class ExpressionTest extends TestCase {
      * @throws SchemaException If there is a problem setting up the schema.
      * @throws IllegalFeatureException If problem setting up the feature.
      */
-    protected void setUp() throws SchemaException, IllegalAttributeException {
+    @Before
+    public void setUp() throws SchemaException, IllegalAttributeException {
         if (set) {
             return;
         }
@@ -120,6 +95,8 @@ public class ExpressionTest extends TestCase {
         ftb.add("testDouble", Double.class);
         ftb.add("testString", String.class);
         ftb.add("testZeroDouble", Double.class);
+        ftb.add("testList", Collection.class);
+        ftb.add("testList2", Collection.class);
         ftb.setName("testSchema");
         testSchema = ftb.buildFeatureType();
 
@@ -133,7 +110,7 @@ public class ExpressionTest extends TestCase {
         Object[] attributes = new Object[10];
         GeometryFactory gf = new GeometryFactory(new PrecisionModel());
         attributes[0] = gf.createLineString(coords);
-        attributes[1] = Boolean.valueOf(true);
+        attributes[1] = Boolean.TRUE;
         attributes[2] = Character.valueOf('t');
         attributes[3] = Byte.valueOf("10");
         attributes[4] = Short.valueOf("101");
@@ -146,6 +123,8 @@ public class ExpressionTest extends TestCase {
         // Creates the feature itself
         // FlatFeatureFactory factory = new FlatFeatureFactory(testSchema);
         testFeature = SimpleFeatureBuilder.build(testSchema, attributes, null);
+        // support for properties with lists
+        testFeature.setAttribute("testList", Arrays.asList(1, 2, 3, 4));
         LOGGER.finer("...feature created");
     }
 
@@ -154,16 +133,17 @@ public class ExpressionTest extends TestCase {
      *
      * @throws IllegalFilterException if filters mess up.
      */
+    @Test
     public void testAttribute() throws IllegalFilterException {
         // Test integer attribute
         Expression testAttribute = new AttributeExpressionImpl(testSchema, "testInteger");
         LOGGER.fine("integer attribute expression equals: " + testAttribute.evaluate(testFeature));
-        assertEquals(Integer.valueOf(1002), testAttribute.evaluate(testFeature));
+        Assert.assertEquals(Integer.valueOf(1002), testAttribute.evaluate(testFeature));
 
         // Test string attribute
         testAttribute = new AttributeExpressionImpl(testSchema, "testString");
         LOGGER.fine("string attribute expression equals: " + testAttribute.evaluate(testFeature));
-        assertEquals("test string data", testAttribute.evaluate(testFeature));
+        Assert.assertEquals("test string data", testAttribute.evaluate(testFeature));
     }
 
     /**
@@ -171,19 +151,19 @@ public class ExpressionTest extends TestCase {
      *
      * @throws IllegalFilterException if filters mess up.
      */
+    @Test
     public void testAttributeObject() throws IllegalFilterException {
         MockDataObject testFeature = new MockDataObject(10, "diez");
 
         // Test integer attribute
-        org.opengis.filter.expression.Expression testAttribute =
-                new AttributeExpressionImpl("intVal");
+        org.geotools.api.filter.expression.Expression testAttribute = new AttributeExpressionImpl("intVal");
 
-        assertEquals(Integer.valueOf(10), testAttribute.evaluate(testFeature));
+        Assert.assertEquals(Integer.valueOf(10), testAttribute.evaluate(testFeature));
 
         // Test string attribute
         testAttribute = new AttributeExpressionImpl("stringVal");
 
-        assertEquals("diez", testAttribute.evaluate(testFeature));
+        Assert.assertEquals("diez", testAttribute.evaluate(testFeature));
     }
 
     /**
@@ -191,16 +171,17 @@ public class ExpressionTest extends TestCase {
      *
      * @throws IllegalFilterException if there are problems
      */
+    @Test
     public void testLiteral() throws IllegalFilterException {
         // Test integer attribute
         Expression testLiteral = new LiteralExpressionImpl(Integer.valueOf(1002));
         LOGGER.fine("integer literal expression equals: " + testLiteral.evaluate(testFeature));
-        assertEquals(Integer.valueOf(1002), testLiteral.evaluate(testFeature));
+        Assert.assertEquals(Integer.valueOf(1002), testLiteral.evaluate(testFeature));
 
         // Test string attribute
         testLiteral = new LiteralExpressionImpl("test string data");
         LOGGER.fine("string literal expression equals: " + testLiteral.evaluate(testFeature));
-        assertEquals("test string data", testLiteral.evaluate(testFeature));
+        Assert.assertEquals("test string data", testLiteral.evaluate(testFeature));
     }
 
     /**
@@ -208,26 +189,27 @@ public class ExpressionTest extends TestCase {
      *
      * @throws IllegalFilterException if there are problems
      */
+    @Test
     public void testLiteralObject() throws IllegalFilterException {
         MockDataObject testObj = new MockDataObject(1000, "mil");
 
         // Test integer attribute
-        org.opengis.filter.expression.Expression testLiteral =
-                new LiteralExpressionImpl(Integer.valueOf(1002));
+        org.geotools.api.filter.expression.Expression testLiteral = new LiteralExpressionImpl(Integer.valueOf(1002));
 
-        assertEquals(Integer.valueOf(1002), testLiteral.evaluate(testObj));
+        Assert.assertEquals(Integer.valueOf(1002), testLiteral.evaluate(testObj));
 
         // Test string attribute
         testLiteral = new LiteralExpressionImpl("test string data");
 
-        assertEquals("test string data", testLiteral.evaluate(testObj));
+        Assert.assertEquals("test string data", testLiteral.evaluate(testObj));
     }
 
+    @Test
     public void testMinFunction() {
         PropertyName a = ff.property("testInteger");
         Literal b = ff.literal(1004.0);
         Function min = ff.function("min", a, b);
-        assertNotNull(min);
+        Assert.assertNotNull(min);
     }
 
     /**
@@ -235,35 +217,36 @@ public class ExpressionTest extends TestCase {
      *
      * @throws IllegalFilterException if filter problems
      */
+    @Test
     public void testMinFunctionOld() throws IllegalFilterException {
-        org.opengis.filter.expression.Expression a, b;
-        a = new AttributeExpressionImpl(testSchema, "testInteger");
-        b = new LiteralExpressionImpl(Double.valueOf(1004));
+        Expression a = new AttributeExpressionImpl(testSchema, "testInteger");
+        Expression b = new LiteralExpressionImpl(Double.valueOf(1004));
 
         Function min = ff.function("min", a, b);
 
         Object value = min.evaluate(testFeature);
-        assertEquals(1002d, ((Double) value).doubleValue(), 0);
+        Assert.assertEquals(1002d, ((Double) value).doubleValue(), 0);
 
         b = ff.literal(Double.valueOf(-100.001));
         min = ff.function("min", a, b);
 
         value = min.evaluate(testFeature);
-        assertEquals(-100.001, ((Double) value).doubleValue(), 0);
+        Assert.assertEquals(-100.001, ((Double) value).doubleValue(), 0);
     }
 
+    @Test
     public void testNonExistentFunction() {
         try {
-            Function nochance =
-                    ff.function("%$#%$%#%#$@#%@", (org.opengis.filter.expression.Expression) null);
-            assertNull(nochance);
+            Function nochance = ff.function("%$#%$%#%#$@#%@", (org.geotools.api.filter.expression.Expression) null);
+            Assert.assertNull(nochance);
         } catch (RuntimeException re) {
         }
     }
 
+    @Test
     public void testFunctionNameTrim() throws IllegalFilterException {
         Function min = ff.function("minFunction", ff.literal(2), ff.literal(3));
-        assertTrue(min != null);
+        Assert.assertNotNull(min);
     }
 
     /**
@@ -271,17 +254,17 @@ public class ExpressionTest extends TestCase {
      *
      * @throws IllegalFilterException if filter problems
      */
+    @Test
     public void testMaxFunction() throws IllegalFilterException {
-        org.opengis.filter.expression.Expression a, b;
-        a = new AttributeExpressionImpl(testSchema, "testInteger");
-        b = new LiteralExpressionImpl(Double.valueOf(1004));
+        Expression a = new AttributeExpressionImpl(testSchema, "testInteger");
+        Expression b = new LiteralExpressionImpl(Double.valueOf(1004));
 
         Function max = ff.function("max", a, b);
-        assertEquals(1004d, ((Double) max.evaluate(testFeature)).doubleValue(), 0);
+        Assert.assertEquals(1004d, ((Double) max.evaluate(testFeature)).doubleValue(), 0);
 
         b = new LiteralExpressionImpl(Double.valueOf(-100.001));
         max = ff.function("max", a, b);
-        assertEquals(1002d, ((Double) max.evaluate(testFeature)).doubleValue(), 0);
+        Assert.assertEquals(1002d, ((Double) max.evaluate(testFeature)).doubleValue(), 0);
     }
 
     /**
@@ -289,26 +272,27 @@ public class ExpressionTest extends TestCase {
      *
      * @throws IllegalFilterException if filter problems
      */
+    @Test
     public void testMaxFunctionObject() throws IllegalFilterException {
         MockDataObject testObj = new MockDataObject(10, "diez");
-        org.opengis.filter.expression.Expression a = new AttributeExpressionImpl("intVal");
-        org.opengis.filter.expression.Expression b =
-                new LiteralExpressionImpl(Double.valueOf(1004));
+        org.geotools.api.filter.expression.Expression a = new AttributeExpressionImpl("intVal");
+        org.geotools.api.filter.expression.Expression b = new LiteralExpressionImpl(Double.valueOf(1004));
 
         Function max = ff.function("max", a, b);
-        assertEquals("max", max.getName());
+        Assert.assertEquals("max", max.getName());
 
         Object maxValue = max.evaluate(testObj);
-        assertEquals(1004d, ((Double) maxValue).doubleValue(), 0);
+        Assert.assertEquals(1004d, ((Double) maxValue).doubleValue(), 0);
 
         b = new LiteralExpressionImpl(Double.valueOf(-100.001));
 
         max = ff.function("max", a, b);
         maxValue = max.evaluate(testObj);
 
-        assertEquals(10, ((Double) maxValue).doubleValue(), 0);
+        Assert.assertEquals(10, ((Double) maxValue).doubleValue(), 0);
     }
 
+    @Test
     public void testIncompleteMathExpression() throws IllegalFilterException {
         Expression testAttribute1 = new LiteralExpressionImpl(Integer.valueOf(4));
 
@@ -316,14 +300,14 @@ public class ExpressionTest extends TestCase {
         mathTest.setExpression1(testAttribute1);
         try {
             mathTest.evaluate(testFeature);
-            fail("math expressions should not work if right hand side is not set");
+            Assert.fail("math expressions should not work if right hand side is not set");
         } catch (IllegalArgumentException ife) {
         }
         mathTest = new AddImpl(null, null);
         mathTest.setExpression2(testAttribute1);
         try {
             mathTest.evaluate(testFeature);
-            fail("math expressions should not work if left hand side is not set");
+            Assert.fail("math expressions should not work if left hand side is not set");
         } catch (IllegalArgumentException ife) {
         }
     }
@@ -333,6 +317,7 @@ public class ExpressionTest extends TestCase {
      *
      * @throws IllegalFilterException if filter problems
      */
+    @Test
     public void testMath() throws IllegalFilterException {
         // Test integer attribute
         Expression testAttribute1 = new LiteralExpressionImpl(Integer.valueOf(4));
@@ -342,53 +327,49 @@ public class ExpressionTest extends TestCase {
         MathExpressionImpl mathTest = new AddImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
-        LOGGER.fine(
-                "math test: "
-                        + testAttribute1.evaluate(testFeature)
-                        + " + "
-                        + testAttribute2.evaluate(testFeature)
-                        + " = "
-                        + mathTest.evaluate(testFeature));
-        assertEquals(Integer.valueOf(6), mathTest.evaluate(testFeature, Integer.class));
+        LOGGER.fine("math test: "
+                + testAttribute1.evaluate(testFeature)
+                + " + "
+                + testAttribute2.evaluate(testFeature)
+                + " = "
+                + mathTest.evaluate(testFeature));
+        Assert.assertEquals(Integer.valueOf(6), mathTest.evaluate(testFeature, Integer.class));
 
         // Test subtraction
         mathTest = new SubtractImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
-        LOGGER.fine(
-                "math test: "
-                        + testAttribute1.evaluate(testFeature)
-                        + " - "
-                        + testAttribute2.evaluate(testFeature)
-                        + " = "
-                        + mathTest.evaluate(testFeature));
-        assertEquals(Integer.valueOf(2), mathTest.evaluate(testFeature, Integer.class));
+        LOGGER.fine("math test: "
+                + testAttribute1.evaluate(testFeature)
+                + " - "
+                + testAttribute2.evaluate(testFeature)
+                + " = "
+                + mathTest.evaluate(testFeature));
+        Assert.assertEquals(Integer.valueOf(2), mathTest.evaluate(testFeature, Integer.class));
 
         // Test multiplication
         mathTest = new MultiplyImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
-        LOGGER.fine(
-                "math test: "
-                        + testAttribute1.evaluate(testFeature)
-                        + " * "
-                        + testAttribute2.evaluate(testFeature)
-                        + " = "
-                        + mathTest.evaluate(testFeature));
-        assertEquals(Integer.valueOf(8), mathTest.evaluate(testFeature, Integer.class));
+        LOGGER.fine("math test: "
+                + testAttribute1.evaluate(testFeature)
+                + " * "
+                + testAttribute2.evaluate(testFeature)
+                + " = "
+                + mathTest.evaluate(testFeature));
+        Assert.assertEquals(Integer.valueOf(8), mathTest.evaluate(testFeature, Integer.class));
 
         // Test division
         mathTest = new DivideImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
-        LOGGER.fine(
-                "math test: "
-                        + testAttribute1.evaluate(testFeature)
-                        + " / "
-                        + testAttribute2.evaluate(testFeature)
-                        + " = "
-                        + mathTest.evaluate(testFeature));
-        assertEquals(Double.valueOf(2), mathTest.evaluate(testFeature));
+        LOGGER.fine("math test: "
+                + testAttribute1.evaluate(testFeature)
+                + " / "
+                + testAttribute2.evaluate(testFeature)
+                + " = "
+                + mathTest.evaluate(testFeature));
+        Assert.assertEquals(Double.valueOf(2), mathTest.evaluate(testFeature));
     }
 
     /**
@@ -396,41 +377,66 @@ public class ExpressionTest extends TestCase {
      *
      * @throws IllegalFilterException if filter problems
      */
+    @Test
     public void testMathObject() throws IllegalFilterException {
         MockDataObject testObject = new MockDataObject(10, "diez");
 
         // Test integer attribute
-        org.opengis.filter.expression.Expression testAttribute1 =
-                new LiteralExpressionImpl(Integer.valueOf(4));
-        org.opengis.filter.expression.Expression testAttribute2 =
-                new LiteralExpressionImpl(Integer.valueOf(2));
+        org.geotools.api.filter.expression.Expression testAttribute1 = new LiteralExpressionImpl(Integer.valueOf(4));
+        org.geotools.api.filter.expression.Expression testAttribute2 = new LiteralExpressionImpl(Integer.valueOf(2));
 
         // Test addition
         MathExpressionImpl mathTest = new AddImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
 
-        assertEquals(Integer.valueOf(6), mathTest.evaluate(testObject, Integer.class));
+        Assert.assertEquals(Integer.valueOf(6), mathTest.evaluate(testObject, Integer.class));
 
         // Test subtraction
         mathTest = new SubtractImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
 
-        assertEquals(Integer.valueOf(2), mathTest.evaluate(testObject, Integer.class));
+        Assert.assertEquals(Integer.valueOf(2), mathTest.evaluate(testObject, Integer.class));
 
         // Test multiplication
         mathTest = new MultiplyImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
 
-        assertEquals(Integer.valueOf(8), mathTest.evaluate(testObject, Integer.class));
+        Assert.assertEquals(Integer.valueOf(8), mathTest.evaluate(testObject, Integer.class));
 
         // Test division
         mathTest = new DivideImpl(null, null);
         mathTest.setExpression1(testAttribute1);
         mathTest.setExpression2(testAttribute2);
 
-        assertEquals(Double.valueOf(2), mathTest.evaluate(testObject));
+        Assert.assertEquals(Double.valueOf(2), mathTest.evaluate(testObject));
+    }
+
+    @Test
+    public void testMathObjectwithLists() throws IllegalFilterException {
+        FilterFactory ff = new FilterFactoryImpl();
+        // Multiply Test
+        // list x 2
+        MathExpressionImpl mathExpression = new MultiplyImpl(ff.property("testList"), ff.literal(Integer.valueOf(2)));
+        List scaledList = (List) mathExpression.evaluate(testFeature);
+        // verify multiplication
+        Assert.assertEquals(Double.valueOf(2), scaledList.get(0));
+
+        // list - 1
+        mathExpression = new SubtractImpl(ff.property("testList"), ff.literal(Integer.valueOf(1)));
+        List subtractedList = (List) mathExpression.evaluate(testFeature);
+        Assert.assertEquals(Double.valueOf(0), subtractedList.get(0));
+
+        // list + 1
+        mathExpression = new AddImpl(ff.literal(Integer.valueOf(1)), ff.property("testList"));
+        List addedList = (List) mathExpression.evaluate(testFeature);
+        Assert.assertEquals(Double.valueOf(2), addedList.get(0));
+
+        // list / 2
+        mathExpression = new DivideImpl(ff.literal(Integer.valueOf(2)), ff.property("testList"));
+        List dividedList = (List) mathExpression.evaluate(testFeature);
+        Assert.assertEquals(Double.valueOf(0.5), dividedList.get(0));
     }
 }

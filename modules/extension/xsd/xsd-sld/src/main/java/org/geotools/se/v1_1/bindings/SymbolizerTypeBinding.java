@@ -16,15 +16,14 @@
  */
 package org.geotools.se.v1_1.bindings;
 
-import java.net.URI;
 import javax.xml.namespace.QName;
+import org.geotools.api.style.Description;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.se.v1_1.SE;
-import org.geotools.styling.Symbolizer;
 import org.geotools.styling.UomOgcMapping;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.style.Description;
 
 /**
  * Binding object for the type http://www.opengis.net/se:SymbolizerType.
@@ -58,6 +57,7 @@ import org.opengis.style.Description;
 public class SymbolizerTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.SymbolizerType;
     }
@@ -69,6 +69,7 @@ public class SymbolizerTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Symbolizer.class;
     }
@@ -80,6 +81,7 @@ public class SymbolizerTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         Symbolizer sym = (Symbolizer) value;
@@ -97,7 +99,7 @@ public class SymbolizerTypeBinding extends AbstractComplexBinding {
             sym.setDescription((Description) node.getChildValue("Description"));
         }
         if (node.hasAttribute("uom")) {
-            String uom = ((URI) node.getAttributeValue("uom")).toString();
+            String uom = node.getAttributeValue("uom").toString();
             if (UomOgcMapping.get(uom) == null) {
                 throw new IllegalArgumentException("uom " + uom + " not supported");
             }

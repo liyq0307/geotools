@@ -20,27 +20,27 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_endAngle extends FunctionExpressionImpl {
 
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "endAngle", Double.class, parameter("linestring", LineString.class));
+            new FunctionNameImpl("endAngle", Double.class, parameter("linestring", LineString.class));
 
     public FilterFunction_endAngle() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
         LineString ls;
 
         try { // attempt to get value and perform conversion
-            ls = (LineString) getExpression(0).evaluate(feature, LineString.class);
+            ls = getExpression(0).evaluate(feature, LineString.class);
         } catch (Exception e) {
             // probably a type error
             throw new IllegalArgumentException(

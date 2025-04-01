@@ -16,6 +16,7 @@
  */
 package org.geotools.data.view;
 
+import java.awt.RenderingHints;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -24,46 +25,44 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
-import org.geotools.data.DataSourceException;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureListener;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.QueryCapabilities;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureListener;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
-import org.geotools.data.QueryCapabilities;
-import org.geotools.data.ResourceInfo;
 import org.geotools.data.crs.ForceCoordinateSystemFeatureResults;
 import org.geotools.data.crs.ReprojectFeatureResults;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.SchemaException;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Wrapper for SimpleFeatureSource constrained by a Query.
  *
- * <p>Support SimpleFeatureSource decorator that takes care of mapping a Query & SimpleFeatureSource
- * with the schema and definition query configured for it.
+ * <p>Support SimpleFeatureSource decorator that takes care of mapping a Query & SimpleFeatureSource with the schema and
+ * definition query configured for it.
  *
- * <p>Because GeoServer requires that attributes always be returned in the same order we need a way
- * to smoothly inforce this. Could we use this class to do so?
+ * <p>Because GeoServer requires that attributes always be returned in the same order we need a way to smoothly inforce
+ * this. Could we use this class to do so?
  *
- * <p>WARNING: this class is a placeholder for ideas right now - it may not always impement
- * FeatureSource.
+ * <p>WARNING: this class is a placeholder for ideas right now - it may not always impement FeatureSource.
  *
  * @author Gabriel Roldï¿½n
  */
 public class DefaultView implements SimpleFeatureSource {
 
     /** Shared package logger */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(DefaultView.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(DefaultView.class);
 
     /** SimpleFeatureSource being served up */
     protected SimpleFeatureSource source;
@@ -83,15 +82,13 @@ public class DefaultView implements SimpleFeatureSource {
      *   <li>cs - only used if client does not supply
      *   <li>csForce - only used if client does not supply
      *   <li>filter - combined with client filter
-     *   <li>propertyNames - combined with client filter (indicate property names that *must* be
-     *       included)
+     *   <li>propertyNames - combined with client filter (indicate property names that *must* be included)
      * </ul>
      *
      * Schema is generated based on this information.
      *
      * @param source a FeatureSource
      * @param query Filter used to limit results
-     * @throws SchemaException
      */
     public DefaultView(SimpleFeatureSource source, Query query) throws SchemaException {
         this.source = source;
@@ -105,15 +102,14 @@ public class DefaultView implements SimpleFeatureSource {
         } else if (query.getCoordinateSystem() != null) {
             cs = query.getCoordinateSystem();
         }
-        schema =
-                DataUtilities.createSubType(
-                        origionalType, query.getPropertyNames(), cs, query.getTypeName(), null);
+        schema = DataUtilities.createSubType(origionalType, query.getPropertyNames(), cs, query.getTypeName(), null);
     }
 
     /**
      * @see FeatureSource#getName()
      * @since 2.5
      */
+    @Override
     public Name getName() {
         return getSchema().getName();
     }
@@ -121,30 +117,24 @@ public class DefaultView implements SimpleFeatureSource {
     /**
      * Factory that make the correct decorator for the provided featureSource.
      *
-     * <p>This factory method is public and will be used to create all required subclasses. By
-     * comparison the constructors for this class have package visibiliy. TODO: revisit this - I am
-     * not sure I want write access to views (especially if they do reprojection).
-     *
-     * @param source
-     * @param query
-     * @return @throws SchemaException
+     * <p>This factory method is public and will be used to create all required subclasses. By comparison the
+     * constructors for this class have package visibiliy. TODO: revisit this - I am not sure I want write access to
+     * views (especially if they do reprojection).
      */
-    public static SimpleFeatureSource create(SimpleFeatureSource source, Query query)
-            throws SchemaException {
+    public static SimpleFeatureSource create(SimpleFeatureSource source, Query query) throws SchemaException {
         return new DefaultView(source, query);
     }
 
     /**
-     * Takes a query and adapts it to match re definitionQuery filter configured for a feature type.
-     * It won't handle coordinate system changes
+     * Takes a query and adapts it to match re definitionQuery filter configured for a feature type. It won't handle
+     * coordinate system changes
      *
      * <p>Grabs the following from query:
      *
      * <ul>
      *   <li>typeName - only used if client does not supply
      *   <li>filter - combined with client filter
-     *   <li>propertyNames - combined with client filter (indicate property names that *must* be
-     *       included)
+     *   <li>propertyNames - combined with client filter (indicate property names that *must* be included)
      * </ul>
      *
      * @param query Query against this DataStore
@@ -185,19 +175,17 @@ public class DefaultView implements SimpleFeatureSource {
             return Query;
         } catch (Exception ex) {
             throw new DataSourceException(
-                    "Could not restrict the query to the definition criteria: " + ex.getMessage(),
-                    ex);
+                    "Could not restrict the query to the definition criteria: " + ex.getMessage(), ex);
         }
     }
 
     /**
      * List of allowed attributes.
      *
-     * <p>Creates a list of FeatureTypeInfo's attribute names based on the attributes requested by
-     * <code>query</code> and making sure they not contain any non exposed attribute.
+     * <p>Creates a list of FeatureTypeInfo's attribute names based on the attributes requested by <code>query</code>
+     * and making sure they not contain any non exposed attribute.
      *
-     * <p>Exposed attributes are those configured in the "attributes" element of the
-     * FeatureTypeInfo's configuration
+     * <p>Exposed attributes are those configured in the "attributes" element of the FeatureTypeInfo's configuration
      *
      * @param query User's origional query
      * @return List of allowed attribute types
@@ -213,30 +201,25 @@ public class DefaultView implements SimpleFeatureSource {
             }
         } else {
             String[] queriedAtts = query.getPropertyNames();
-            int queriedAttCount = queriedAtts.length;
-            List allowedAtts = new LinkedList();
+            List<String> allowedAtts = new LinkedList<>();
 
-            for (int i = 0; i < queriedAttCount; i++) {
-                if (schema.getDescriptor(queriedAtts[i]) != null) {
-                    allowedAtts.add(queriedAtts[i]);
+            for (String queriedAtt : queriedAtts) {
+                if (schema.getDescriptor(queriedAtt) != null) {
+                    allowedAtts.add(queriedAtt);
                 } else {
-                    LOGGER.info(
-                            "queried a not allowed property: "
-                                    + queriedAtts[i]
-                                    + ". Ommitting it from query");
+                    LOGGER.info("queried a not allowed property: " + queriedAtt + ". Ommitting it from query");
                 }
             }
 
-            propNames = (String[]) allowedAtts.toArray(new String[allowedAtts.size()]);
+            propNames = allowedAtts.toArray(new String[allowedAtts.size()]);
         }
 
         return propNames;
     }
 
     /**
-     * If a definition query has been configured for the FeatureTypeInfo, makes and return a new
-     * Filter that contains both the query's filter and the layer's definition one, by logic AND'ing
-     * them.
+     * If a definition query has been configured for the FeatureTypeInfo, makes and return a new Filter that contains
+     * both the query's filter and the layer's definition one, by logic AND'ing them.
      *
      * @param filter Origional user supplied Filter
      * @return Filter adjusted to the limitations of definitionQuery
@@ -263,6 +246,7 @@ public class DefaultView implements SimpleFeatureSource {
      *
      * @return @see org.geotools.data.FeatureSource#getDataStore()
      */
+    @Override
     public DataStore getDataStore() {
         return (DataStore) source.getDataStore();
     }
@@ -272,9 +256,9 @@ public class DefaultView implements SimpleFeatureSource {
      *
      * <p>Description ...
      *
-     * @param listener
      * @see org.geotools.data.FeatureSource#addFeatureListener(org.geotools.data.FeatureListener)
      */
+    @Override
     public void addFeatureListener(FeatureListener listener) {
         source.addFeatureListener(listener);
     }
@@ -284,9 +268,9 @@ public class DefaultView implements SimpleFeatureSource {
      *
      * <p>Description ...
      *
-     * @param listener
      * @see org.geotools.data.FeatureSource#removeFeatureListener(org.geotools.data.FeatureListener)
      */
+    @Override
     public void removeFeatureListener(FeatureListener listener) {
         source.removeFeatureListener(listener);
     }
@@ -296,10 +280,9 @@ public class DefaultView implements SimpleFeatureSource {
      *
      * <p>Description ...
      *
-     * @param query
-     * @return @throws IOException
      * @see org.geotools.data.FeatureSource#getFeatures(org.geotools.data.Query)
      */
+    @Override
     public SimpleFeatureCollection getFeatures(Query query) throws IOException {
         Query mergedQuery = makeDefinitionQuery(query);
         SimpleFeatureCollection results = source.getFeatures(mergedQuery);
@@ -329,8 +312,7 @@ public class DefaultView implements SimpleFeatureSource {
                 // mergedQuery.setCoordinateSystem(cCs);
                 // mergedQuery.setCoordinateSystemReproject(cCsr);
                 try {
-                    if (cCs != null)
-                        results = new ForceCoordinateSystemFeatureResults(results, cCs);
+                    if (cCs != null) results = new ForceCoordinateSystemFeatureResults(results, cCs);
                     results = new ReprojectFeatureResults(source.getFeatures(mergedQuery), cCsr);
 
                     results = new ForceCoordinateSystemFeatureResults(results, qCs);
@@ -348,18 +330,14 @@ public class DefaultView implements SimpleFeatureSource {
                 CoordinateReferenceSystem forcedCS = qCs != null ? qCs : cCs;
                 CoordinateReferenceSystem reprojectCS = qCsr != null ? qCsr : cCsr;
 
-                if (forcedCS != null)
-                    results = new ForceCoordinateSystemFeatureResults(results, forcedCS);
-                if (reprojectCS != null)
-                    results = new ReprojectFeatureResults(results, reprojectCS);
+                if (forcedCS != null) results = new ForceCoordinateSystemFeatureResults(results, forcedCS);
+                if (reprojectCS != null) results = new ReprojectFeatureResults(results, reprojectCS);
             }
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
             throw new DataSourceException(
-                    "A problem occurred while handling forced "
-                            + "coordinate systems and reprojection",
-                    e);
+                    "A problem occurred while handling forced " + "coordinate systems and reprojection", e);
         }
 
         return results;
@@ -369,10 +347,8 @@ public class DefaultView implements SimpleFeatureSource {
      * Implement getFeatures.
      *
      * <p>Description ...
-     *
-     * @param filter
-     * @return @throws IOException
      */
+    @Override
     public SimpleFeatureCollection getFeatures(Filter filter) throws IOException {
         return getFeatures(new Query(schema.getTypeName(), filter));
     }
@@ -382,9 +358,9 @@ public class DefaultView implements SimpleFeatureSource {
      *
      * <p>Description ...
      *
-     * @return @throws IOException
      * @see org.geotools.data.FeatureSource#getFeatures()
      */
+    @Override
     public SimpleFeatureCollection getFeatures() throws IOException {
         return getFeatures(Query.ALL);
     }
@@ -396,13 +372,15 @@ public class DefaultView implements SimpleFeatureSource {
      *
      * @return @see org.geotools.data.FeatureSource#getSchema()
      */
+    @Override
     public SimpleFeatureType getSchema() {
         return schema;
     }
 
+    @Override
     public ResourceInfo getInfo() {
         return new ResourceInfo() {
-            final Set<String> words = new HashSet<String>();
+            final Set<String> words = new HashSet<>();
 
             {
                 words.add("features");
@@ -410,6 +388,7 @@ public class DefaultView implements SimpleFeatureSource {
                 words.add(DefaultView.this.getSchema().getTypeName());
             }
 
+            @Override
             public ReferencedEnvelope getBounds() {
                 try {
                     return DefaultView.this.getBounds();
@@ -418,22 +397,27 @@ public class DefaultView implements SimpleFeatureSource {
                 }
             }
 
+            @Override
             public CoordinateReferenceSystem getCRS() {
                 return DefaultView.this.getSchema().getCoordinateReferenceSystem();
             }
 
+            @Override
             public String getDescription() {
                 return null;
             }
 
+            @Override
             public Set<String> getKeywords() {
                 return words;
             }
 
+            @Override
             public String getName() {
                 return DefaultView.this.getSchema().getTypeName();
             }
 
+            @Override
             public URI getSchema() {
                 Name name = DefaultView.this.getSchema().getName();
                 URI namespace;
@@ -445,6 +429,7 @@ public class DefaultView implements SimpleFeatureSource {
                 }
             }
 
+            @Override
             public String getTitle() {
                 Name name = DefaultView.this.getSchema().getName();
                 return name.getLocalPart();
@@ -460,6 +445,7 @@ public class DefaultView implements SimpleFeatureSource {
      * @return Extent of this FeatureSource, or <code>null</code> if no optimizations exist.
      * @throws IOException If bounds of definitionQuery
      */
+    @Override
     public ReferencedEnvelope getBounds() throws IOException {
         if (constraintQuery.getCoordinateSystemReproject() == null) {
             if (constraintQuery.getFilter() == null
@@ -478,16 +464,17 @@ public class DefaultView implements SimpleFeatureSource {
     /**
      * Retrive the extent of the Query.
      *
-     * <p>This method provides access to an optimized getBounds opperation. If no optimized
-     * opperation is available <code>null</code> will be returned.
+     * <p>This method provides access to an optimized getBounds opperation. If no optimized opperation is available
+     * <code>null</code> will be returned.
      *
-     * <p>You may still make use of getFeatures( Query ).getCount() which will return the correct
-     * answer (even if it has to itterate through all the results to do so.
+     * <p>You may still make use of getFeatures( Query ).getCount() which will return the correct answer (even if it has
+     * to itterate through all the results to do so.
      *
      * @param query User's query
      * @return Extend of Query or <code>null</code> if no optimization is available
      * @throws IOException If a problem is encountered with source
      */
+    @Override
     public ReferencedEnvelope getBounds(Query query) throws IOException {
         if (constraintQuery.getCoordinateSystemReproject() == null) {
             try {
@@ -507,15 +494,16 @@ public class DefaultView implements SimpleFeatureSource {
     /**
      * Adjust query and forward to source.
      *
-     * <p>This method provides access to an optimized getCount opperation. If no optimized
-     * opperation is available <code>-1</code> will be returned.
+     * <p>This method provides access to an optimized getCount opperation. If no optimized opperation is available
+     * <code>-1</code> will be returned.
      *
-     * <p>You may still make use of getFeatures( Query ).getCount() which will return the correct
-     * answer (even if it has to itterate through all the results to do so).
+     * <p>You may still make use of getFeatures( Query ).getCount() which will return the correct answer (even if it has
+     * to itterate through all the results to do so).
      *
      * @param query User's query.
      * @return Number of Features for Query, or -1 if no optimization is available.
      */
+    @Override
     public int getCount(Query query) {
         try {
             query = makeDefinitionQuery(query);
@@ -529,10 +517,12 @@ public class DefaultView implements SimpleFeatureSource {
         }
     }
 
-    public Set getSupportedHints() {
+    @Override
+    public Set<RenderingHints.Key> getSupportedHints() {
         return source.getSupportedHints();
     }
 
+    @Override
     public QueryCapabilities getQueryCapabilities() {
         return source.getQueryCapabilities();
     }

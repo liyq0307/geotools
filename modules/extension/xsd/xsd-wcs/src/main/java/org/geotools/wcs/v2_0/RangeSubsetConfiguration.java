@@ -45,24 +45,18 @@ public class RangeSubsetConfiguration extends Configuration {
      *
      * @generated
      */
+    @Override
     @SuppressWarnings("unchecked")
     protected final void registerBindings(Map bindings) {
         // manually setup bindings
         bindings.put(
                 RangeSubset.rangeSubsetType,
-                new ComplexEMFBinding(
-                        Wcs20Factory.eINSTANCE,
-                        RangeSubset.rangeSubsetType,
-                        RangeSubsetType.class));
+                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, RangeSubset.rangeSubsetType, RangeSubsetType.class));
         bindings.put(
                 RangeSubset.rangeIntervalType,
-                new ComplexEMFBinding(
-                        Wcs20Factory.eINSTANCE,
-                        RangeSubset.rangeIntervalType,
-                        RangeIntervalType.class));
+                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, RangeSubset.rangeIntervalType, RangeIntervalType.class));
         bindings.put(
                 RangeSubset.rangeItemType,
-                new ComplexEMFBinding(
-                        Wcs20Factory.eINSTANCE, RangeSubset.rangeItemType, RangeItemType.class));
+                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, RangeSubset.rangeItemType, RangeItemType.class));
     }
 }

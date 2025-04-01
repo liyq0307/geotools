@@ -18,10 +18,10 @@
 package org.geotools.appschema.util;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Scanner;
 import org.apache.commons.jxpath.JXPathContext;
+import org.geotools.xsd.impl.jxpath.JXPathUtils;
 import org.jdom2.Document;
 import org.xml.sax.helpers.NamespaceSupport;
 
@@ -39,9 +39,8 @@ public class XmlXpathUtilites {
      * @param doc xml to search
      * @return a list of values matching the xpath in the xml supplied
      */
-    public static List<String> getXPathValues(
-            NamespaceSupport ns, String xpathString, Document doc) {
-        JXPathContext context = initialiseContext(ns, doc);
+    public static List<String> getXPathValues(NamespaceSupport ns, String xpathString, Document doc) {
+        JXPathContext context = JXPathUtils.newSafeContext(doc, true, ns, false);
         return getXPathValues(xpathString, context);
     }
 
@@ -66,33 +65,15 @@ public class XmlXpathUtilites {
      * @param doc xml to search
      * @return the (single) value matching the xpath in the xml supplied
      */
-    public static String getSingleXPathValue(
-            NamespaceSupport ns, String xpathString, Document doc) {
+    public static String getSingleXPathValue(NamespaceSupport ns, String xpathString, Document doc) {
         String id = null;
-        JXPathContext context = initialiseContext(ns, doc);
         try {
-            Object ob = context.getValue(xpathString);
+            Object ob = JXPathUtils.newSafeContext(doc, true, ns, false).getValue(xpathString);
             id = (String) ob;
         } catch (RuntimeException e) {
             throw new RuntimeException("Error reading xpath " + xpathString, e);
         }
         return id;
-    }
-
-    private static JXPathContext initialiseContext(NamespaceSupport ns, Document doc) {
-        JXPathContext context = JXPathContext.newContext(doc);
-        addNamespaces(ns, context);
-        context.setLenient(true);
-        return context;
-    }
-
-    private static void addNamespaces(NamespaceSupport ns, JXPathContext context) {
-        Enumeration<String> prefixes = ns.getPrefixes();
-        while (prefixes.hasMoreElements()) {
-            String prefix = prefixes.nextElement();
-            String uri = ns.getURI(prefix);
-            context.registerNamespace(prefix, uri);
-        }
     }
 
     /**
@@ -116,10 +97,11 @@ public class XmlXpathUtilites {
 
             if (start > -1) {
                 int end = step.indexOf(']');
-                Scanner scanner = new Scanner(step.substring(start + 1, end));
-                if (scanner.hasNextInt()) {
-                    // remove index and the brackets
-                    step = step.substring(0, start);
+                try (Scanner scanner = new Scanner(step.substring(start + 1, end))) {
+                    if (scanner.hasNextInt()) {
+                        // remove index and the brackets
+                        step = step.substring(0, start);
+                    }
                 }
             }
             buf.append(step);
@@ -141,11 +123,10 @@ public class XmlXpathUtilites {
 
         List<String> ls = null;
         if (values == null) {
-            ls = new ArrayList<String>();
+            ls = new ArrayList<>();
         } else {
-            ls = new ArrayList<String>(values.size());
-            for (int i = 0; i < values.size(); i++) {
-                Object value = values.get(i);
+            ls = new ArrayList<>(values.size());
+            for (Object value : values) {
                 String unwrappedValue = "";
                 if (value instanceof org.jdom2.Attribute) {
                     unwrappedValue = ((org.jdom2.Attribute) value).getValue();

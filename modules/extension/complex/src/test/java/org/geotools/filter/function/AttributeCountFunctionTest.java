@@ -16,7 +16,17 @@
  */
 package org.geotools.filter.function;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.ArrayList;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.complex.expression.FeaturePropertyAccessorFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.AttributeImpl;
@@ -28,14 +38,8 @@ import org.geotools.feature.type.AttributeDescriptorImpl;
 import org.geotools.feature.type.FeatureTypeImpl;
 import org.geotools.filter.AttributeExpressionImpl;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.Feature;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.FilterFactory2;
+import org.junit.Before;
+import org.junit.Test;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
@@ -47,50 +51,31 @@ public class AttributeCountFunctionTest extends FunctionTestSupport {
 
     Feature complexFeature;
 
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
-
-    /** @param testName */
-    public AttributeCountFunctionTest(String testName) {
-        super(testName);
-    }
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory();
 
     @Override
+    @Before
     public void setUp() throws Exception {
         // set up simple features
         super.setUp();
 
         // nested feature type
-        ArrayList<PropertyDescriptor> childSchema = new ArrayList<PropertyDescriptor>();
+        ArrayList<PropertyDescriptor> childSchema = new ArrayList<>();
         Name attOne = new NameImpl("ns", "att1");
         AttributeDescriptor attOneDescriptor =
                 new AttributeDescriptorImpl(FakeTypes.STRING_TYPE, attOne, 0, -1, false, null);
         childSchema.add(attOneDescriptor);
         FeatureType childType =
-                new FeatureTypeImpl(
-                        new NameImpl("ns", "childType"),
-                        childSchema,
-                        null,
-                        false,
-                        null,
-                        null,
-                        null);
+                new FeatureTypeImpl(new NameImpl("ns", "childType"), childSchema, null, false, null, null, null);
 
         // parent feature type
-        ArrayList<PropertyDescriptor> parentSchema = new ArrayList<PropertyDescriptor>();
+        ArrayList<PropertyDescriptor> parentSchema = new ArrayList<>();
         parentSchema.add(attOneDescriptor);
         Name attTwo = new NameImpl("ns", "att2");
-        AttributeDescriptor attTwoDescriptor =
-                new AttributeDescriptorImpl(childType, attTwo, 1, -1, false, null);
+        AttributeDescriptor attTwoDescriptor = new AttributeDescriptorImpl(childType, attTwo, 1, -1, false, null);
         parentSchema.add(attTwoDescriptor);
         FeatureType parentType =
-                new FeatureTypeImpl(
-                        new NameImpl("ns", "parentType"),
-                        parentSchema,
-                        null,
-                        false,
-                        null,
-                        null,
-                        null);
+                new FeatureTypeImpl(new NameImpl("ns", "parentType"), parentSchema, null, false, null, null, null);
 
         // build complex feature
         ComplexFeatureBuilder builder = new ComplexFeatureBuilder(childType);
@@ -101,12 +86,13 @@ public class AttributeCountFunctionTest extends FunctionTestSupport {
         Feature childFeature = builder.buildFeature("childFeature");
 
         builder = new ComplexFeatureBuilder(parentType);
-        ArrayList<Property> childFeatures = new ArrayList<Property>();
+        ArrayList<Property> childFeatures = new ArrayList<>();
         childFeatures.add(childFeature);
         builder.append(attTwo, new ComplexAttributeImpl(childFeatures, attTwoDescriptor, null));
         complexFeature = builder.buildFeature("parentFeature");
     }
 
+    @Test
     public void testComplexFeature() {
         // have to pass on namespaceSupport to enable FeaturePropertyAccessor
         NamespaceSupport ns = new NamespaceSupport();
@@ -124,12 +110,12 @@ public class AttributeCountFunctionTest extends FunctionTestSupport {
         assertEquals(1, ff.function("attributeCount", att2).evaluate(complexFeature));
 
         // check att2/childType/att1
-        AttributeExpressionImpl nestedPath =
-                new AttributeExpressionImpl("ns:att2/ns:childType/ns:att1", hints);
+        AttributeExpressionImpl nestedPath = new AttributeExpressionImpl("ns:att2/ns:childType/ns:att1", hints);
         ff.function("attributeCount", nestedPath);
         assertEquals(2, ff.function("attributeCount", nestedPath).evaluate(complexFeature));
     }
 
+    @Test
     public void testSimpleFeature() {
         SimpleFeature f = featureCollection.features().next();
 

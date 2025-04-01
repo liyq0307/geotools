@@ -16,8 +16,13 @@
  */
 package org.geotools.gml3.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import org.geotools.gml3.GML;
 import org.geotools.gml3.GML3TestSupport;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
@@ -26,7 +31,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 public class MultiLineStringTypeBindingTest extends GML3TestSupport {
-
+    @Test
     public void test() throws Exception {
         GML3MockData.multiLineString(document, document);
 
@@ -36,6 +41,7 @@ public class MultiLineStringTypeBindingTest extends GML3TestSupport {
         assertEquals(2, multiLineString.getNumGeometries());
     }
 
+    @Test
     public void test3D() throws Exception {
         GML3MockData.multiLineString3D(document, document);
 
@@ -49,15 +55,16 @@ public class MultiLineStringTypeBindingTest extends GML3TestSupport {
         assertTrue(new Coordinate(3d, 4d, 20d).equals3D(line.getPointN(1).getCoordinate()));
     }
 
+    @Test
     public void testEncode() throws Exception {
         Geometry geometry = GML3MockData.multiLineString();
         GML3EncodingUtils.setID(geometry, "geometry");
         Document dom = encode(geometry, GML.MultiLineString);
         // print(dom);
         assertEquals("geometry", getID(dom.getDocumentElement()));
-        assertEquals(2, dom.getElementsByTagNameNS(GML.NAMESPACE, "lineStringMember").getLength());
-        NodeList children =
-                dom.getElementsByTagNameNS(GML.NAMESPACE, GML.LineString.getLocalPart());
+        assertEquals(
+                2, dom.getElementsByTagNameNS(GML.NAMESPACE, "lineStringMember").getLength());
+        NodeList children = dom.getElementsByTagNameNS(GML.NAMESPACE, GML.LineString.getLocalPart());
         assertEquals(2, children.getLength());
         assertEquals("geometry.1", getID(children.item(0)));
         assertEquals("geometry.2", getID(children.item(1)));

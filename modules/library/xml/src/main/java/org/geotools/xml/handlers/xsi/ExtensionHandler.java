@@ -37,17 +37,17 @@ public class ExtensionHandler extends XSIElementHandler {
     //    private AnyAttributeHandler anyAttribute;
     // TODO USE the anyAttribute !
     private Object child;
-    private List attributeDec;
+    private List<XSIElementHandler> attributeDec;
 
     /** @see java.lang.Object#hashCode() */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return LOCALNAME.hashCode()
-                * ((base == null) ? 1 : base.hashCode())
-                * ((child == null) ? 1 : child.hashCode());
+        return LOCALNAME.hashCode() * ((base == null) ? 1 : base.hashCode()) * ((child == null) ? 1 : child.hashCode());
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
+    @Override
     public XSIElementHandler getHandler(String namespaceURI, String localName) throws SAXException {
         if (SchemaHandler.namespaceURI.equalsIgnoreCase(namespaceURI)) {
             // child types
@@ -62,17 +62,14 @@ public class ExtensionHandler extends XSIElementHandler {
                     child = ah;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + AllHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + AllHandler.LOCALNAME + "' declaration.");
                 }
 
                 return ah;
             }
             if (AttributeHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (attributeDec == null) {
-                    attributeDec = new LinkedList();
+                    attributeDec = new LinkedList<>();
                 }
 
                 AttributeHandler ah = new AttributeHandler();
@@ -84,7 +81,7 @@ public class ExtensionHandler extends XSIElementHandler {
             // attributeGroup
             if (AttributeGroupHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (attributeDec == null) {
-                    attributeDec = new LinkedList();
+                    attributeDec = new LinkedList<>();
                 }
 
                 AttributeGroupHandler ah = new AttributeGroupHandler();
@@ -101,10 +98,7 @@ public class ExtensionHandler extends XSIElementHandler {
                     child = ah;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + ChoiceHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + ChoiceHandler.LOCALNAME + "' declaration.");
                 }
 
                 return ah;
@@ -118,10 +112,7 @@ public class ExtensionHandler extends XSIElementHandler {
                     child = ah;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + GroupHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + GroupHandler.LOCALNAME + "' declaration.");
                 }
                 return ah;
             }
@@ -134,10 +125,7 @@ public class ExtensionHandler extends XSIElementHandler {
                     child = ah;
                 } else {
                     throw new SAXNotRecognizedException(
-                            getLocalName()
-                                    + " may only have one '"
-                                    + SequenceHandler.LOCALNAME
-                                    + "' declaration.");
+                            getLocalName() + " may only have one '" + SequenceHandler.LOCALNAME + "' declaration.");
                 }
 
                 return ah;
@@ -150,14 +138,15 @@ public class ExtensionHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
+    @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
         base = atts.getValue("", "base");
 
@@ -184,11 +173,13 @@ public class ExtensionHandler extends XSIElementHandler {
     /* (non-Javadoc)
      * @see schema.XSIElementHandler#getHandlerType()
      */
+    @Override
     public int getHandlerType() {
         return DEFAULT;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String) */
+    @Override
     public void endElement(String namespaceURI, String localName) {
         // do nothing
     }

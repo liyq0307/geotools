@@ -16,10 +16,13 @@
  */
 package org.geotools.referencing.factory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
-import org.junit.*;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.junit.Test;
 
 /**
  * Tests the {@link URN_Parser} class.
@@ -49,6 +52,14 @@ public final class URN_ParserTest {
         assertNull(parser.version);
         assertEquals("4326", parser.code);
         assertEquals("EPSG:4326", parser.getAuthorityCode());
+
+        final URN_Parser emptyVersionParser = URN_Parser.buildParser("urn:ogc:def:crs:EPSG::4326");
+        assertNotNull(emptyVersionParser.toString());
+        assertEquals("crs", emptyVersionParser.type.name);
+        assertEquals("EPSG", emptyVersionParser.authority);
+        assertNull(emptyVersionParser.version);
+        assertEquals("4326", emptyVersionParser.code);
+        assertEquals("EPSG:4326", emptyVersionParser.getAuthorityCode());
     }
 
     /** Parses an invalid URN. */

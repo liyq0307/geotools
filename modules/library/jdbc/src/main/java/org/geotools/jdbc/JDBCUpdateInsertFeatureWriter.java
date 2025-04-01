@@ -21,29 +21,25 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
-import org.geotools.data.Query;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 public class JDBCUpdateInsertFeatureWriter extends JDBCUpdateFeatureWriter {
 
     JDBCInsertFeatureWriter inserter;
 
-    public JDBCUpdateInsertFeatureWriter(
-            String sql, Connection cx, JDBCFeatureSource featureSource, Query query)
+    public JDBCUpdateInsertFeatureWriter(String sql, Connection cx, JDBCFeatureSource featureSource, Query query)
             throws SQLException, IOException {
         super(sql, cx, featureSource, query);
     }
 
     public JDBCUpdateInsertFeatureWriter(
-            PreparedStatement ps,
-            Connection cx,
-            JDBCFeatureSource featureSource,
-            String[] attributeNames,
-            Query query)
+            PreparedStatement ps, Connection cx, JDBCFeatureSource featureSource, String[] attributeNames, Query query)
             throws SQLException, IOException {
         super(ps, cx, featureSource, query);
     }
 
+    @Override
     public boolean hasNext() throws IOException {
         if (inserter != null) {
             return inserter.hasNext();
@@ -60,8 +56,8 @@ public class JDBCUpdateInsertFeatureWriter extends JDBCUpdateFeatureWriter {
         return hasNext;
     }
 
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    @Override
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         if (inserter != null) {
             return inserter.next();
         }
@@ -69,6 +65,7 @@ public class JDBCUpdateInsertFeatureWriter extends JDBCUpdateFeatureWriter {
         return super.next();
     }
 
+    @Override
     public void remove() throws IOException {
         if (inserter != null) {
             inserter.remove();
@@ -78,6 +75,7 @@ public class JDBCUpdateInsertFeatureWriter extends JDBCUpdateFeatureWriter {
         super.remove();
     }
 
+    @Override
     public void write() throws IOException {
         if (inserter != null) {
             inserter.write();
@@ -87,6 +85,7 @@ public class JDBCUpdateInsertFeatureWriter extends JDBCUpdateFeatureWriter {
         super.write();
     }
 
+    @Override
     public void close() throws IOException {
         if (inserter != null) {
             // JD: do not call close because the inserter borrowed all of its state

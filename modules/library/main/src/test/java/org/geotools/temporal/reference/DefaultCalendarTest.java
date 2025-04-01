@@ -16,11 +16,20 @@
  */
 package org.geotools.temporal.reference;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import org.geotools.api.temporal.Calendar;
+import org.geotools.api.temporal.CalendarDate;
+import org.geotools.api.temporal.CalendarEra;
+import org.geotools.api.temporal.Clock;
+import org.geotools.api.temporal.ClockTime;
+import org.geotools.api.temporal.DateAndTime;
+import org.geotools.api.temporal.IndeterminateValue;
+import org.geotools.api.temporal.JulianDate;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.object.DefaultCalendarDate;
@@ -34,14 +43,6 @@ import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.Calendar;
-import org.opengis.temporal.CalendarDate;
-import org.opengis.temporal.CalendarEra;
-import org.opengis.temporal.Clock;
-import org.opengis.temporal.ClockTime;
-import org.opengis.temporal.DateAndTime;
-import org.opengis.temporal.IndeterminateValue;
-import org.opengis.temporal.JulianDate;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultCalendarTest {
@@ -67,16 +68,12 @@ public class DefaultCalendarTest {
     @Test
     public void testDateTrans_CalendarDate_ClockTime() {
         int[] cal = {2012, 9, 10};
-        CalendarDate calendarDate =
-                new DefaultCalendarDate(
-                        calendar1,
-                        IndeterminateValue.NOW,
-                        new SimpleInternationalString("new Era"),
-                        cal);
+        CalendarDate calendarDate = new DefaultCalendarDate(
+                calendar1, IndeterminateValue.NOW, new SimpleInternationalString("new Era"), cal);
         Number[] clock = {12, 10, 5.488};
         ClockTime clockTime = new DefaultClockTime(calendar1, IndeterminateValue.NOW, clock);
         JulianDate result = calendar1.dateTrans(calendarDate, clockTime);
-        assertTrue(calendar2.dateTrans(calendarDate, clockTime).equals(result));
+        assertEquals(calendar2.dateTrans(calendarDate, clockTime), result);
     }
 
     /** Test of dateTrans method, of class DefaultCalendar. */
@@ -86,7 +83,7 @@ public class DefaultCalendarTest {
         Number[] clock = {12, 10, 5.488};
         DateAndTime dateAndTime = new DefaultDateAndTime(calendar1, null, null, cal, clock);
         JulianDate result = ((DefaultCalendar) calendar1).dateTrans(dateAndTime);
-        assertTrue(((DefaultCalendar) calendar1).dateTrans(dateAndTime).equals(result));
+        assertEquals(((DefaultCalendar) calendar1).dateTrans(dateAndTime), result);
     }
 
     /** Test of julTrans method, of class DefaultCalendar. */
@@ -114,24 +111,18 @@ public class DefaultCalendarTest {
     public void testSetBasis() throws ParseException {
         Collection<CalendarEra> result = calendar1.getBasis();
         int[] calendarDate = {1, 1, 1};
-        CalendarEra calendarEra =
-                new DefaultCalendarEra(
-                        new SimpleInternationalString("Babylonian calendar"),
-                        new SimpleInternationalString(
-                                "Ascension of Nebuchadnezzar II to the throne of Babylon"),
-                        new DefaultCalendarDate(calendar1, null, null, calendarDate),
-                        new DefaultJulianDate(calendar1, null, 1721423.25),
-                        new DefaultPeriod(
-                                new DefaultInstant(
-                                        new DefaultPosition(
-                                                new DefaultJulianDate(calendar1, null, 2087769))),
-                                new DefaultInstant(
-                                        new DefaultPosition(
-                                                new DefaultJulianDate(calendar1, null, 2299160)))));
-        Collection<CalendarEra> collection = new ArrayList<CalendarEra>();
+        CalendarEra calendarEra = new DefaultCalendarEra(
+                new SimpleInternationalString("Babylonian calendar"),
+                new SimpleInternationalString("Ascension of Nebuchadnezzar II to the throne of Babylon"),
+                new DefaultCalendarDate(calendar1, null, null, calendarDate),
+                new DefaultJulianDate(calendar1, null, 1721423.25),
+                new DefaultPeriod(
+                        new DefaultInstant(new DefaultPosition(new DefaultJulianDate(calendar1, null, 2087769))),
+                        new DefaultInstant(new DefaultPosition(new DefaultJulianDate(calendar1, null, 2299160)))));
+        Collection<CalendarEra> collection = new ArrayList<>();
         collection.add(calendarEra);
         ((DefaultCalendar) calendar1).setBasis(collection);
-        assertFalse(calendar1.getBasis().equals(result));
+        assertNotEquals(calendar1.getBasis(), result);
     }
 
     /** Test of setClock method, of class DefaultCalendar. */
@@ -145,22 +136,22 @@ public class DefaultCalendarTest {
     /** Test of equals method, of class DefaultCalendar. */
     @Test
     public void testEquals() {
-        assertFalse(calendar1.equals(null));
+        assertNotEquals(null, calendar1);
         assertEquals(calendar1, calendar1);
-        assertFalse(calendar1.equals(calendar2));
+        assertNotEquals(calendar1, calendar2);
     }
 
     /** Test of hashCode method, of class DefaultCalendar. */
     @Test
     public void testHashCode() {
         int result = calendar1.hashCode();
-        assertFalse(calendar2.hashCode() == result);
+        assertNotEquals(calendar2.hashCode(), result);
     }
 
     /** Test of toString method, of class DefaultCalendar. */
     @Test
     public void testToString() {
         String result = calendar1.toString();
-        assertFalse(calendar2.toString().equals(result));
+        assertNotEquals(calendar2.toString(), result);
     }
 }

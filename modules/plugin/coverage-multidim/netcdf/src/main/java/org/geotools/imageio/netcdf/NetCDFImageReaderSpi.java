@@ -43,10 +43,9 @@ import org.geotools.util.logging.Logging;
  */
 public class NetCDFImageReaderSpi extends ImageReaderSpi {
 
-    public static final Class<?>[] STANDARD_INPUT_TYPES =
-            new Class[] {
-                AccessibleStream.class, ImageInputStream.class, File.class, URL.class, URI.class
-            };
+    public static final Class<?>[] STANDARD_INPUT_TYPES = {
+        AccessibleStream.class, ImageInputStream.class, File.class, URL.class, URI.class
+    };
 
     public static final String VENDOR_NAME = "GeoTools";
 
@@ -91,20 +90,16 @@ public class NetCDFImageReaderSpi extends ImageReaderSpi {
     static {
         // If Grib Library is available, then the GRIB extension must be added to support.
         // If NC4 C Library is available, then the proper MIME Types must be added to support.
-        List<String> suffixesList = new ArrayList<String>();
+        List<String> suffixesList = new ArrayList<>();
         Collections.addAll(suffixesList, "nc", "NC");
         Collections.addAll(suffixesList, "ncml", "NCML");
 
-        List<String> formatNamesList = new ArrayList<String>();
+        List<String> formatNamesList = new ArrayList<>();
         Collections.addAll(formatNamesList, "netcdf", "NetCDF", NetCDFUtilities.NETCDF_3);
 
-        List<String> mimeTypesList = new ArrayList<String>();
+        List<String> mimeTypesList = new ArrayList<>();
         Collections.addAll(
-                mimeTypesList,
-                NetCDFUtilities.NETCDF3_MIMETYPE,
-                "image/netcdf",
-                "image/x-netcdf",
-                "image/x-nc");
+                mimeTypesList, NetCDFUtilities.NETCDF3_MIMETYPE, "image/netcdf", "image/x-netcdf", "image/x-nc");
 
         if (NetCDFUtilities.isGribAvailable()) {
             Collections.addAll(suffixesList, "grib", "grib2", "grb", "grb2");
@@ -155,7 +150,9 @@ public class NetCDFImageReaderSpi extends ImageReaderSpi {
     /** @see javax.imageio.spi.IIOServiceProvider#getDescription(java.util.Locale) */
     @Override
     public String getDescription(Locale locale) {
-        return new StringBuffer("NetCDF-CF Image Reader, version ").append(version).toString();
+        return new StringBuffer("NetCDF-CF Image Reader, version ")
+                .append(version)
+                .toString();
     }
 
     @Override

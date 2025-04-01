@@ -16,16 +16,15 @@
  */
 package org.geotools.sld.bindings;
 
-import java.util.Iterator;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.sld.CssParameter;
-import org.geotools.styling.Font;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -64,6 +63,7 @@ public class SLDFontBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.FONT;
     }
@@ -75,6 +75,7 @@ public class SLDFontBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -86,6 +87,7 @@ public class SLDFontBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Font.class;
     }
@@ -97,6 +99,7 @@ public class SLDFontBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -106,13 +109,12 @@ public class SLDFontBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Font font = styleFactory.getDefaultFont();
 
         boolean familyFound = false;
-        for (Iterator i = node.getChildValues(CssParameter.class).iterator(); i.hasNext(); ) {
-            CssParameter css = (CssParameter) i.next();
-
+        for (CssParameter css : node.getChildValues(CssParameter.class)) {
             Expression exp = css.getExpression();
             if (exp == null) {
                 continue;

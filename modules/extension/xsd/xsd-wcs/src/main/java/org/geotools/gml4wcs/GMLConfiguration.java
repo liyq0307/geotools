@@ -65,7 +65,7 @@ public class GMLConfiguration extends Configuration {
     }
 
     @Override
-    protected void registerBindings(Map bindings) {
+    protected void registerBindings(Map<QName, Object> bindings) {
         super.registerBindings(bindings);
 
         final EFactory gmlFactory = Gml4wcsFactory.eINSTANCE;
@@ -77,8 +77,7 @@ public class GMLConfiguration extends Configuration {
         register(bindings, gmlFactory, GML._Ring);
         register(bindings, gmlFactory, GML._Surface);
 
-        bindings.put(
-                GML.AbstractGeometricPrimitiveType, new AbstractGeometricPrimitiveTypeBinding());
+        bindings.put(GML.AbstractGeometricPrimitiveType, new AbstractGeometricPrimitiveTypeBinding());
         bindings.put(GML.AbstractGeometryBaseType, new AbstractGeometryBaseTypeBinding());
         bindings.put(GML.AbstractGeometryType, new AbstractGeometryTypeBinding());
 
@@ -111,7 +110,7 @@ public class GMLConfiguration extends Configuration {
         // register(bindings, gmlFactory, GML.GridType);
     }
 
-    private void register(Map bindings, EFactory factory, QName qname) {
+    private void register(Map<QName, Object> bindings, EFactory factory, QName qname) {
         bindings.put(qname, new ComplexEMFBinding(factory, qname));
     }
 
@@ -188,14 +187,14 @@ public class GMLConfiguration extends Configuration {
      *   <li>{@link GeometryFactory}
      * </ul>
      */
+    @Override
     public void configureContext(MutablePicoContainer container) {
         container.registerComponentInstance(Gml4wcsFactory.eINSTANCE);
 
         container.registerComponentInstance(new FeatureTypeCache());
 
         // factories
-        container.registerComponentInstance(
-                CoordinateSequenceFactory.class, CoordinateArraySequenceFactory.instance());
+        container.registerComponentInstance(CoordinateSequenceFactory.class, CoordinateArraySequenceFactory.instance());
         container.registerComponentImplementation(GeometryFactory.class);
     }
 }

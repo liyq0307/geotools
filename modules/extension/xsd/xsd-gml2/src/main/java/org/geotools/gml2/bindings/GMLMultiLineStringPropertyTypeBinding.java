@@ -56,6 +56,7 @@ import org.locationtech.jts.geom.MultiLineString;
  */
 public class GMLMultiLineStringPropertyTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MultiLineStringPropertyType;
     }
@@ -67,6 +68,7 @@ public class GMLMultiLineStringPropertyTypeBinding extends AbstractComplexBindin
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return MultiLineString.class;
     }
@@ -78,18 +80,18 @@ public class GMLMultiLineStringPropertyTypeBinding extends AbstractComplexBindin
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return node.getChildValue(MultiLineString.class);
     }
 
     @Override
     public Object getProperty(Object object, QName name) throws Exception {
-        return GML2EncodingUtils.GeometryPropertyType_getProperty(
-                (MultiLineString) object, name, false);
+        return GML2EncodingUtils.GeometryPropertyType_getProperty((MultiLineString) object, name, false);
     }
 
     @Override
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         return GML2EncodingUtils.GeometryPropertyType_getProperties((MultiLineString) object);
     }
 }

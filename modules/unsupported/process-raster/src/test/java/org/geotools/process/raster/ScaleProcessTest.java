@@ -38,6 +38,7 @@ import javax.media.jai.ROI;
 import javax.media.jai.ROIShape;
 import javax.media.jai.iterator.RandomIter;
 import org.geotools.TestData;
+import org.geotools.api.coverage.grid.GridCoverageReader;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
@@ -47,7 +48,6 @@ import org.geotools.image.ImageWorker;
 import org.geotools.util.factory.GeoTools;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.coverage.grid.GridCoverageReader;
 
 public class ScaleProcessTest {
 
@@ -91,50 +91,46 @@ public class ScaleProcessTest {
         // Read the input Coverage
         coverage = (GridCoverage2D) reader.read(null);
         // Coverage properties
-        Map properties = coverage.getProperties();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> properties = coverage.getProperties();
         if (properties == null) {
             properties = new HashMap<>();
         }
         GridCoverageFactory gcf = new GridCoverageFactory(GeoTools.getDefaultHints());
 
         // Same coverage with NoData Property
-        Map properties1 = new HashMap(properties);
-        CoverageUtilities.setNoDataProperty(
-                properties1, RangeFactory.create((short) -1, (short) 1));
-        coverageNoData =
-                gcf.create(
-                        "nodata",
-                        coverage.getRenderedImage(),
-                        coverage.getEnvelope(),
-                        coverage.getSampleDimensions(),
-                        null,
-                        properties1);
+        Map<String, Object> properties1 = new HashMap<>(properties);
+        CoverageUtilities.setNoDataProperty(properties1, RangeFactory.create((short) -1, (short) 1));
+        coverageNoData = gcf.create(
+                "nodata",
+                coverage.getRenderedImage(),
+                coverage.getEnvelope(),
+                coverage.getSampleDimensions(),
+                null,
+                properties1);
         // Same Coverage with ROI Property
-        Map properties2 = new HashMap(properties);
+        Map<String, Object> properties2 = new HashMap<>(properties);
         roi = new ROIShape(new Rectangle(8, 8, 2, 2));
         CoverageUtilities.setROIProperty(properties2, roi);
-        coverageROI =
-                gcf.create(
-                        "roi",
-                        coverage.getRenderedImage(),
-                        coverage.getEnvelope(),
-                        coverage.getSampleDimensions(),
-                        null,
-                        properties2);
+        coverageROI = gcf.create(
+                "roi",
+                coverage.getRenderedImage(),
+                coverage.getEnvelope(),
+                coverage.getSampleDimensions(),
+                null,
+                properties2);
 
         // Same Coverage with ROI and NoData Property
-        Map properties3 = new HashMap(properties);
-        CoverageUtilities.setNoDataProperty(
-                properties3, RangeFactory.create((short) -1, (short) -1));
+        Map<String, Object> properties3 = new HashMap<>(properties);
+        CoverageUtilities.setNoDataProperty(properties3, RangeFactory.create((short) -1, (short) -1));
         CoverageUtilities.setROIProperty(properties3, roi);
-        coverageNoDataROI =
-                gcf.create(
-                        "roiNoData",
-                        coverage.getRenderedImage(),
-                        coverage.getEnvelope(),
-                        coverage.getSampleDimensions(),
-                        null,
-                        properties3);
+        coverageNoDataROI = gcf.create(
+                "roiNoData",
+                coverage.getRenderedImage(),
+                coverage.getEnvelope(),
+                coverage.getSampleDimensions(),
+                null,
+                properties3);
 
         // Reader disposal
         reader.dispose();
@@ -354,15 +350,7 @@ public class ScaleProcessTest {
         }
     }
 
-    /**
-     * Check if the Coverage is correctly transformed.
-     *
-     * @param result
-     * @param m00
-     * @param m11
-     * @param m02
-     * @param m12
-     */
+    /** Check if the Coverage is correctly transformed. */
     private void ensureCorrectTransformation(GridCoverage2D result, double m00, double m11) {
         // Selection of the RenderedImages associated to the coverages
         RenderedImage inputImage = coverage.getRenderedImage();

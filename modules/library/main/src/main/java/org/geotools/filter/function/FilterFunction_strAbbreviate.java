@@ -20,40 +20,35 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_strAbbreviate extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "strAbbreviate",
-                    parameter("string", String.class),
-                    parameter(
-                            "string",
-                            String.class,
-                            "Input String",
-                            "String to abbreviate, if null null is returned"),
-                    parameter("lower", Integer.class, "Lower", "The lower limit"),
-                    parameter(
-                            "upper", Integer.class, "Upper", "The upper limit of returned length"),
-                    parameter(
-                            "appendTo",
-                            String.class,
-                            "",
-                            "String to be appended to end of abbreviated string (can be null or empty)"));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "strAbbreviate",
+            parameter("string", String.class),
+            parameter("string", String.class, "Input String", "String to abbreviate, if null null is returned"),
+            parameter("lower", Integer.class, "Lower", "The lower limit"),
+            parameter("upper", Integer.class, "Upper", "The upper limit of returned length"),
+            parameter(
+                    "appendTo",
+                    String.class,
+                    "",
+                    "String to be appended to end of abbreviated string (can be null or empty)"));
 
     public FilterFunction_strAbbreviate() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
         String in;
         String append = "";
         Integer upper, lower;
         try { // attempt to get value and perform conversion
-            in = (String) getExpression(0).evaluate(feature, String.class); // extra
+            in = getExpression(0).evaluate(feature, String.class); // extra
             // protection
             // for
             // strings
@@ -77,7 +72,7 @@ public class FilterFunction_strAbbreviate extends FunctionExpressionImpl {
                     "Filter Function problem for function strAbbreviate argument #2 - expected type Integer");
         }
         try {
-            append = (String) getExpression(3).evaluate(feature, String.class);
+            append = getExpression(3).evaluate(feature, String.class);
         } catch (Exception e) // probably a type error
         {
             throw new IllegalArgumentException(

@@ -22,16 +22,14 @@ import java.util.Arrays;
 import java.util.List;
 import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.util.NullProgressListener;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
- * A Swing {@code TableModel} to retrieve attribute values from each feature in a feature collection
- * and cache them for a {@code JTable}
+ * A Swing {@code TableModel} to retrieve attribute values from each feature in a feature collection and cache them for
+ * a {@code JTable}
  *
  * <p>
  */
@@ -40,13 +38,13 @@ public class FeatureCollectionTableModel extends AbstractTableModel {
 
     private SimpleFeatureType schema;
 
-    List<Object[]> cache = new ArrayList<Object[]>();
+    List<Object[]> cache = new ArrayList<>();
 
     public IOException exception;
 
     /**
-     * A worker class to get the attributes of each feature and load them into the {@code
-     * TableModel}. The work is performed on a background thread.
+     * A worker class to get the attributes of each feature and load them into the {@code TableModel}. The work is
+     * performed on a background thread.
      */
     class TableWorker extends SwingWorker<List<Object[]>, Object[]> {
         SimpleFeatureCollection features;
@@ -61,23 +59,21 @@ public class FeatureCollectionTableModel extends AbstractTableModel {
         }
 
         /** {@code SwingWorker} method to visit each feature and retrieve its attributes */
+        @Override
         public List<Object[]> doInBackground() {
-            List<Object[]> list = new ArrayList<Object[]>();
+            List<Object[]> list = new ArrayList<>();
 
             final NullProgressListener listener = new NullProgressListener();
             try {
                 features.accepts(
-                        new FeatureVisitor() {
-                            public void visit(Feature feature) {
-                                SimpleFeature simple = (SimpleFeature) feature;
-                                Object[] values = simple.getAttributes().toArray();
-                                ArrayList<Object> row =
-                                        new ArrayList<Object>(Arrays.asList(values));
-                                row.add(0, simple.getID());
-                                publish(row.toArray());
+                        feature -> {
+                            SimpleFeature simple = (SimpleFeature) feature;
+                            Object[] values = simple.getAttributes().toArray();
+                            ArrayList<Object> row = new ArrayList<>(Arrays.asList(values));
+                            row.add(0, simple.getID());
+                            publish(row.toArray());
 
-                                if (isCancelled()) listener.setCanceled(true);
-                            }
+                            if (isCancelled()) listener.setCanceled(true);
                         },
                         listener);
             } catch (IOException e) {
@@ -137,6 +133,7 @@ public class FeatureCollectionTableModel extends AbstractTableModel {
      *
      * @return the number of columns
      */
+    @Override
     public int getColumnCount() {
         if (exception != null) {
             return 1;
@@ -149,6 +146,7 @@ public class FeatureCollectionTableModel extends AbstractTableModel {
      *
      * @return the number of rows
      */
+    @Override
     public int getRowCount() {
         if (exception != null) {
             return 1;
@@ -163,9 +161,10 @@ public class FeatureCollectionTableModel extends AbstractTableModel {
      * @param columnIndex the column index
      * @return the table entry
      */
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
         if (rowIndex < cache.size()) {
-            Object row[] = cache.get(rowIndex);
+            Object[] row = cache.get(rowIndex);
             return row[columnIndex];
         }
         return null;

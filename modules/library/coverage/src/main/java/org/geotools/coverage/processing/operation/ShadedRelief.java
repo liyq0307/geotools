@@ -20,13 +20,13 @@ import it.geosolutions.jaiext.JAIExt;
 import java.awt.image.RenderedImage;
 import java.util.Map;
 import javax.media.jai.ParameterBlockJAI;
+import org.geotools.api.coverage.processing.OperationNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.util.InternationalString;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.processing.OperationJAI;
-import org.opengis.coverage.processing.OperationNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.InternationalString;
 
 /**
  * A simple wrapper for the jai-ext ShadedRelief operation.
@@ -145,9 +145,7 @@ public class ShadedRelief extends OperationJAI {
     public static final String PARAM_AZIMUTH = "azimuth";
     public static final String PARAM_ALGORITHM = "algorithm";
 
-    public static final String CUSTOMIZABLE_PARAMS[] = {
-        PARAM_ALTITUDE, PARAM_AZIMUTH, PARAM_ALGORITHM
-    };
+    public static final String[] CUSTOMIZABLE_PARAMS = {PARAM_ALTITUDE, PARAM_AZIMUTH, PARAM_ALGORITHM};
 
     public ShadedRelief() throws OperationNotFoundException {
         super("ShadedRelief", getOperationDescriptor(JAIExt.getOperationName("ShadedRelief")));
@@ -175,6 +173,7 @@ public class ShadedRelief extends OperationJAI {
         }
     }
 
+    @Override
     protected Map<String, ?> getProperties(
             RenderedImage data,
             CoordinateReferenceSystem crs,
@@ -182,7 +181,6 @@ public class ShadedRelief extends OperationJAI {
             MathTransform gridToCRS,
             GridCoverage2D[] sources,
             OperationJAI.Parameters parameters) {
-        return handleROINoDataProperties(
-                null, parameters.parameters, sources[0], "ShadedRelief", 0, 1, 2);
+        return handleROINoDataProperties(null, parameters.parameters, sources[0], "ShadedRelief", 0, 1, 2);
     }
 }

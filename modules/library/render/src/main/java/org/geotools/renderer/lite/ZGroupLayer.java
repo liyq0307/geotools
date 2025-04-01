@@ -25,27 +25,32 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
-import org.geotools.data.FeatureSource;
+import java.util.stream.Stream;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.sort.SortedFeatureReader;
 import org.geotools.data.util.DefaultProgressListener;
+import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.SchemaException;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.FeatureLayer;
 import org.geotools.map.Layer;
 import org.geotools.renderer.style.SLDStyleFactory;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Style;
 import org.geotools.styling.visitor.DuplicatingStyleVisitor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.util.ProgressListener;
 
 /**
  * A special layer owning multiple feature sources and styles, all in the same z-group
@@ -67,9 +72,9 @@ class ZGroupLayer extends Layer {
         addLayer(layer);
     }
 
+    @SuppressWarnings({"PMD.CloseResource", "PMD.UseTryWithResources"}) // assured closed in the finally method
     public void drawFeatures(Graphics2D graphics, final StreamingRenderer renderer, String layerId)
-            throws IOException, FactoryException, NoninvertibleTransformException, SchemaException,
-                    TransformException {
+            throws IOException, FactoryException, NoninvertibleTransformException, SchemaException, TransformException {
         // 1) init all the readers and the lfts associated to them (one at a time to avoid deadlock)
         // and create one RenderableFeature for each
         // 2) process all the features one z-level at a time, backtracking if there are multiple
@@ -77,12 +82,13 @@ class ZGroupLayer extends Layer {
 
         // a listener passed around to stop data reading/painting if rendering stop request is
         // issued
-        ProgressListener cancellationListener =
-                new DefaultProgressListener() {
-                    public boolean isCanceled() {
-                        return renderer.renderingStopRequested;
-                    };
-                };
+        ProgressListener cancellationListener = new DefaultProgressListener() {
+            @Override
+            public boolean isCanceled() {
+                return renderer.renderingStopRequested;
+            }
+            ;
+        };
 
         List<ZGroupLayerPainter> painters = null;
         try {
@@ -101,15 +107,15 @@ class ZGroupLayer extends Layer {
                 if (previousKey == null) {
                     previousKey = smallestKey;
                 } else if (comparator.compare(previousKey, smallestKey) >= 0) {
-                    throw new IllegalStateException(
-                            "The sorted rendering moved from a set of "
-                                    + "sort attributes, to one that's equal or greater, this is unexpected, "
-                                    + "bailing out to avoid an infinite loop");
+                    throw new IllegalStateException("The sorted rendering moved from a set of "
+                            + "sort attributes, to one that's equal or greater, this is unexpected, "
+                            + "bailing out to avoid an infinite loop");
                 } else {
                     previousKey = smallestKey;
                 }
 
                 for (Iterator it = painters.iterator(); it.hasNext(); ) {
+                    @SuppressWarnings("PMD.CloseResource") // assured closed in the finally method
                     ZGroupLayerPainter painter = (ZGroupLayerPainter) it.next();
                     painter.paintKey(smallestKey);
                     // if the painter is done, close it
@@ -128,8 +134,8 @@ class ZGroupLayer extends Layer {
         }
     }
 
-    private SortKey getSmallestKey(
-            List<ZGroupLayerPainter> painters, Comparator<SortKey> comparator) {
+    @SuppressWarnings("PMD.CloseResource") // painters not managed here
+    private SortKey getSmallestKey(List<ZGroupLayerPainter> painters, Comparator<SortKey> comparator) {
         SortKey smallest = null;
         for (ZGroupLayerPainter painter : painters) {
             SortKey key = painter.getCurrentKey();
@@ -143,13 +149,10 @@ class ZGroupLayer extends Layer {
         return new SortKey(smallest);
     }
 
+    @SuppressWarnings({"PMD.CloseResource", "PMD.UseTryWithResources"}) // assured closed in the finally method
     private List<ZGroupLayerPainter> buildLayerPainters(
-            Graphics2D graphics,
-            StreamingRenderer renderer,
-            String layerId,
-            ProgressListener cancellationListener)
-            throws IOException, FactoryException, NoninvertibleTransformException, SchemaException,
-                    TransformException {
+            Graphics2D graphics, StreamingRenderer renderer, String layerId, ProgressListener cancellationListener)
+            throws IOException, FactoryException, NoninvertibleTransformException, SchemaException, TransformException {
         List<ZGroupLayerPainter> painters = new ArrayList<>();
         boolean closePainters = true;
         try {
@@ -157,8 +160,7 @@ class ZGroupLayer extends Layer {
                 // get the LiteFeatureTypeStyle for this layer
                 final FeatureSource featureSource = layer.getFeatureSource();
                 if (featureSource == null) {
-                    throw new IllegalArgumentException(
-                            "The layer does not contain a feature source");
+                    throw new IllegalArgumentException("The layer does not contain a feature source");
                 }
                 final FeatureType schema = featureSource.getSchema();
 
@@ -168,8 +170,7 @@ class ZGroupLayer extends Layer {
                     continue;
                 } else {
                     if (LOGGER.isLoggable(Level.FINE)) {
-                        LOGGER.fine(
-                                "Processing " + lfts.size() + " stylers for " + schema.getName());
+                        LOGGER.fine("Processing " + lfts.size() + " stylers for " + schema.getName());
                     }
                 }
 
@@ -184,14 +185,14 @@ class ZGroupLayer extends Layer {
                 // but we'd have to delay opening the MarkFeatureIterator to recognize the
                 // situation
                 int maxFeatures = SortedFeatureReader.getMaxFeaturesInMemory(layer.getQuery());
-                MarkFeatureIterator fi =
-                        MarkFeatureIterator.create(features, maxFeatures, cancellationListener);
+
+                @SuppressWarnings("PMD.CloseResource")
+                // iterator will be closed after drawing when painter is closed
+                MarkFeatureIterator fi = MarkFeatureIterator.create(features, maxFeatures, cancellationListener);
                 if (fi.hasNext()) {
-                    ZGroupLayerPainter painter =
-                            new ZGroupLayerPainter(fi, lfts, renderer, layerId);
+                    @SuppressWarnings("PMD.CloseResource") // returned
+                    ZGroupLayerPainter painter = new ZGroupLayerPainter(fi, lfts, renderer, layerId);
                     painters.add(painter);
-                } else {
-                    fi.close();
                 }
             }
 
@@ -205,8 +206,7 @@ class ZGroupLayer extends Layer {
                     try {
                         painter.close();
                     } catch (Exception e) {
-                        LOGGER.log(
-                                Level.FINE, "Failed to close cleanly layer painter " + painter, e);
+                        LOGGER.log(Level.FINE, "Failed to close cleanly layer painter " + painter, e);
                     }
                 }
             }
@@ -216,17 +216,16 @@ class ZGroupLayer extends Layer {
     }
 
     /**
-     * Ensures that all SortBy are meaningful for a cross layer z-order. We need the SortKey for all
-     * the layers to have the same structure, be comparable, and be class compatible with each other
-     * (and of course, exist in the first place)
-     *
-     * @param painters
+     * Ensures that all SortBy are meaningful for a cross layer z-order. We need the SortKey for all the layers to have
+     * the same structure, be comparable, and be class compatible with each other (and of course, exist in the first
+     * place)
      */
     private void validateSortBy(List<ZGroupLayerPainter> painters) {
         Class[] referenceClasses = null;
         SortOrder[] referenceOrders = null;
         LiteFeatureTypeStyle reference = null;
-        for (ZGroupLayerPainter painter : painters) {
+        for (@SuppressWarnings("PMD.CloseResource") // painters not managed here
+        ZGroupLayerPainter painter : painters) {
             for (LiteFeatureTypeStyle style : painter.lfts) {
                 Class[] styleClasses = getSortByAttributeClasses(style);
                 SortOrder[] styleOrders = getSortOrders(style);
@@ -236,55 +235,50 @@ class ZGroupLayer extends Layer {
                     reference = style;
                     for (int i = 0; i < referenceClasses.length; i++) {
                         if (!Comparable.class.isAssignableFrom(referenceClasses[i])) {
-                            throw new IllegalArgumentException(
-                                    "Found non comparable attribute in z group "
-                                            + groupId
-                                            + ": "
-                                            + sortByToString(
-                                                    style, getSortByAttributeClasses(style))
-                                            + " at position "
-                                            + (i + 1));
+                            throw new IllegalArgumentException("Found non comparable attribute in z group "
+                                    + groupId
+                                    + ": "
+                                    + sortByToString(style, getSortByAttributeClasses(style))
+                                    + " at position "
+                                    + (i + 1));
                         }
                     }
                 } else {
                     if (styleClasses.length != referenceClasses.length) {
-                        throw new IllegalArgumentException(
-                                "Found two sortBy clauses with different number "
-                                        + "of attributes in group "
+                        throw new IllegalArgumentException("Found two sortBy clauses with different number "
+                                + "of attributes in group "
+                                + groupId
+                                + ": "
+                                + sortByToString(reference, referenceClasses)
+                                + " vs "
+                                + sortByToString(style, styleClasses));
+                    } else {
+                        for (int i = 0; i < styleClasses.length; i++) {
+                            Class<?> currClass = styleClasses[i];
+                            Class<?> referenceClass = referenceClasses[i];
+                            if (!currClass.equals(referenceClass)
+                                    && !currClass.isAssignableFrom(referenceClass)
+                                    && !referenceClass.isAssignableFrom(currClass)) {
+                                throw new IllegalArgumentException("Found two incompatible classes at position "
+                                        + (i + 1)
+                                        + " of the sortBy clauses in group "
                                         + groupId
                                         + ": "
                                         + sortByToString(reference, referenceClasses)
                                         + " vs "
                                         + sortByToString(style, styleClasses));
-                    } else {
-                        for (int i = 0; i < styleClasses.length; i++) {
-                            Class currClass = styleClasses[i];
-                            Class referenceClass = referenceClasses[i];
-                            if (!currClass.equals(referenceClass)
-                                    && !currClass.isAssignableFrom(referenceClass)
-                                    && !referenceClass.isAssignableFrom(currClass)) {
-                                throw new IllegalArgumentException(
-                                        "Found two incompatible classes at position "
-                                                + (i + 1)
-                                                + " of the sortBy clauses in group "
-                                                + groupId
-                                                + ": "
-                                                + sortByToString(reference, referenceClasses)
-                                                + " vs "
-                                                + sortByToString(style, styleClasses));
                             }
                             SortOrder currOrder = styleOrders[i];
                             SortOrder referenceOrder = referenceOrders[i];
                             if (!currOrder.equals(referenceOrder)) {
-                                throw new IllegalArgumentException(
-                                        "Found two different sort orders at position "
-                                                + (i + 1)
-                                                + " of the sortBy clauses in group "
-                                                + groupId
-                                                + ": "
-                                                + sortByToString(reference, referenceClasses)
-                                                + " vs "
-                                                + sortByToString(style, styleClasses));
+                                throw new IllegalArgumentException("Found two different sort orders at position "
+                                        + (i + 1)
+                                        + " of the sortBy clauses in group "
+                                        + groupId
+                                        + ": "
+                                        + sortByToString(reference, referenceClasses)
+                                        + " vs "
+                                        + sortByToString(style, styleClasses));
                             }
                         }
                     }
@@ -305,13 +299,12 @@ class ZGroupLayer extends Layer {
             } else {
                 PropertyDescriptor pd = property.evaluate(schema, null);
                 if (pd == null) {
-                    throw new IllegalArgumentException(
-                            "Property "
-                                    + property
-                                    + " could not be found in feature type "
-                                    + schema.getName()
-                                    + " in layer "
-                                    + style.layer.getTitle());
+                    throw new IllegalArgumentException("Property "
+                            + property
+                            + " could not be found in feature type "
+                            + schema.getName()
+                            + " in layer "
+                            + style.layer.getTitle());
                 }
                 classes[i] = pd.getType().getBinding();
             }
@@ -331,7 +324,8 @@ class ZGroupLayer extends Layer {
     }
 
     private String sortByToString(LiteFeatureTypeStyle style, Class[] classes) {
-        StringBuilder sb = new StringBuilder("Layer ").append(style.layer.getTitle()).append("[");
+        StringBuilder sb =
+                new StringBuilder("Layer ").append(style.layer.getTitle()).append("[");
         SortBy[] sortBy = style.sortBy;
         for (int i = 0; i < sortBy.length; i++) {
             SortBy curr = sortBy[i];
@@ -378,7 +372,7 @@ class ZGroupLayer extends Layer {
         boolean cleanupStyle = false;
         for (FeatureTypeStyle fts : featureTypeStyles) {
             Map<String, String> options = fts.getOptions();
-            String compositingBaseDefinition = options.get(FeatureTypeStyle.COMPOSITE_BASE);
+            String compositingBaseDefinition = options.get(org.geotools.api.style.FeatureTypeStyle.COMPOSITE_BASE);
             if ("true".equalsIgnoreCase(compositingBaseDefinition)) {
                 this.compositingBase = true;
             }
@@ -392,21 +386,48 @@ class ZGroupLayer extends Layer {
         // compositing is now handled at the ZGroupLayer level, remove it from the
         // inner layer
         if (cleanupStyle) {
-            DuplicatingStyleVisitor cleaner =
-                    new DuplicatingStyleVisitor() {
-                        @Override
-                        public void visit(FeatureTypeStyle fts) {
-                            super.visit(fts);
-                            FeatureTypeStyle copy = (FeatureTypeStyle) pages.peek();
-                            copy.getOptions().remove(FeatureTypeStyle.COMPOSITE);
-                            copy.getOptions().remove(FeatureTypeStyle.COMPOSITE_BASE);
-                        }
-                    };
+            DuplicatingStyleVisitor cleaner = new DuplicatingStyleVisitor() {
+                @Override
+                public void visit(FeatureTypeStyle fts) {
+                    super.visit(fts);
+                    FeatureTypeStyle copy = (FeatureTypeStyle) pages.peek();
+                    copy.getOptions().remove(org.geotools.api.style.FeatureTypeStyle.COMPOSITE);
+                    copy.getOptions().remove(org.geotools.api.style.FeatureTypeStyle.COMPOSITE_BASE);
+                }
+            };
             layer.getStyle().accept(cleaner);
             Style cleaned = (Style) cleaner.getCopy();
             layer.setStyle(cleaned);
         }
 
         layers.add(layer);
+    }
+
+    @Override
+    public synchronized Style getStyle() {
+        // using user data to cache this placeholder so we don't have to create it each time
+        Style style = (Style) getUserData().get("style");
+        if (style == null) {
+            StyleFactory sf = CommonFactoryFinder.getStyleFactory(null);
+
+            // create a style that does nothing, but matching the "right" background
+            List<org.geotools.api.style.FeatureTypeStyle> featureTypeStyles = new ArrayList<>();
+            style = sf.style(title, null, false, featureTypeStyles, null);
+            style.setBackground(getBackgroundFromLayers());
+
+            getUserData().put("style", style);
+        }
+        return style;
+    }
+
+    private Fill getBackgroundFromLayers() {
+        // pick the first non null background specification
+        return layers.stream()
+                .flatMap(l -> Optional.ofNullable(l.getStyle())
+                        .map(s -> s.getBackground())
+                        .map(Stream::of)
+                        .orElseGet(Stream::empty))
+                .findFirst()
+                .orElse(null);
     }
 }

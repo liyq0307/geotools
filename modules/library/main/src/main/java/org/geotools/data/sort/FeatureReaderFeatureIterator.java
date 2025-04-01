@@ -18,9 +18,9 @@ package org.geotools.data.sort;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureReader;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** A simple feature iterator wrapping a feature reader */
 class FeatureReaderFeatureIterator implements SimpleFeatureIterator {
@@ -30,6 +30,7 @@ class FeatureReaderFeatureIterator implements SimpleFeatureIterator {
         this.reader = reader;
     }
 
+    @Override
     public boolean hasNext() {
         try {
             return reader.hasNext();
@@ -38,6 +39,7 @@ class FeatureReaderFeatureIterator implements SimpleFeatureIterator {
         }
     }
 
+    @Override
     public SimpleFeature next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
@@ -49,6 +51,7 @@ class FeatureReaderFeatureIterator implements SimpleFeatureIterator {
         }
     }
 
+    @Override
     public void close() {
         try {
             reader.close();

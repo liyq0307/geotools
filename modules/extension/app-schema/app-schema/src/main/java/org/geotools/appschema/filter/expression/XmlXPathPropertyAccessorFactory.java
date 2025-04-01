@@ -18,18 +18,18 @@
 package org.geotools.appschema.filter.expression;
 
 import java.util.List;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.IllegalAttributeException;
 import org.geotools.appschema.util.XmlXpathUtilites;
 import org.geotools.data.complex.xml.XmlXpathFilterData;
 import org.geotools.filter.expression.PropertyAccessor;
 import org.geotools.filter.expression.PropertyAccessorFactory;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.Feature;
-import org.opengis.feature.IllegalAttributeException;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
- * PropertyAccessorFactory used to create property accessors which can handle xpath expressions
- * against instances of {@link Feature}.
+ * PropertyAccessorFactory used to create property accessors which can handle xpath expressions against instances of
+ * {@link Feature}.
  *
  * @author Russell Petty (GeoScience Victoria)
  * @author Rini Angreani (CSIRO Earth Science and Resource Engineering)
@@ -38,8 +38,8 @@ public class XmlXPathPropertyAccessorFactory implements PropertyAccessorFactory 
     /** Namespace support hint */
     public static Hints.Key NAMESPACE_SUPPORT = new Hints.Key(NamespaceSupport.class);
 
-    public PropertyAccessor createPropertyAccessor(
-            Class type, String xpath, Class target, Hints hints) {
+    @Override
+    public PropertyAccessor createPropertyAccessor(Class type, String xpath, Class target, Hints hints) {
         if (XmlXpathFilterData.class.isAssignableFrom(type)) {
             return new XmlXPathPropertyAcessor();
         }
@@ -48,27 +48,28 @@ public class XmlXPathPropertyAccessorFactory implements PropertyAccessorFactory 
     }
 
     static class XmlXPathPropertyAcessor implements PropertyAccessor {
+        @Override
         public boolean canHandle(Object object, String xpath, Class target) {
             // TODO: some better check for a valid xpath expression
             return (xpath != null) && !"".equals(xpath.trim());
         }
 
-        public Object get(Object object, String xpath, Class target) {
+        @Override
+        public <T> T get(Object object, String xpath, Class<T> target) throws IllegalArgumentException {
 
             XmlXpathFilterData xmlResponse = (XmlXpathFilterData) object;
             String indexXpath = createIndexedXpath(xmlResponse, xpath);
 
             List<String> ls =
-                    XmlXpathUtilites.getXPathValues(
-                            xmlResponse.getNamespaces(), indexXpath, xmlResponse.getDoc());
+                    XmlXpathUtilites.getXPathValues(xmlResponse.getNamespaces(), indexXpath, xmlResponse.getDoc());
             if (ls != null && !ls.isEmpty()) {
-                return ls.get(0);
+                return target.cast(ls.get(0));
             }
             return null;
         }
 
-        public void set(Object object, String xpath, Object value, Class target)
-                throws IllegalAttributeException {
+        @Override
+        public void set(Object object, String xpath, Object value, Class target) throws IllegalAttributeException {
             throw new UnsupportedOperationException("Do not support updating.");
             // context(object).setValue(xpath, value);
         }
@@ -83,12 +84,11 @@ public class XmlXPathPropertyAccessorFactory implements PropertyAccessorFactory 
             String unindexedXpath = XmlXpathUtilites.removeIndexes(itemXpath);
             int position = xpathString.indexOf(unindexedXpath);
             if (position != 0) {
-                throw new RuntimeException(
-                        "xpath passed in does not begin with itemXpath"
-                                + "/n xpathString ="
-                                + xpathString
-                                + "/n itemXpath ="
-                                + itemXpath);
+                throw new RuntimeException("xpath passed in does not begin with itemXpath"
+                        + "/n xpathString ="
+                        + xpathString
+                        + "/n itemXpath ="
+                        + itemXpath);
             }
 
             StringBuffer sb = new StringBuffer(itemXpath);

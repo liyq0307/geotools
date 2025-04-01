@@ -20,40 +20,40 @@ import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
+import org.geotools.util.Converters;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateFilter;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.impl.CoordinateArraySequence;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_vertices extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "vertices",
-                    parameter("vertices", MultiPoint.class),
-                    parameter("geometry", Geometry.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "vertices", parameter("vertices", MultiPoint.class), parameter("geometry", Geometry.class));
 
     public FilterFunction_vertices() {
         super(NAME);
     }
 
-    public Object evaluate(Object feature, Class context) {
+    @Override
+    public <T> T evaluate(Object feature, Class<T> context) {
         Geometry g = getExpression(0).evaluate(feature, Geometry.class);
         if (g == null) return null;
 
         MultiPointExtractor filter = new MultiPointExtractor();
         g.apply(filter);
-        return filter.getMultiPoint();
+        return Converters.convert(filter.getMultiPoint(), context);
     }
 
     static class MultiPointExtractor implements CoordinateFilter {
-        List<Coordinate> coordinates = new ArrayList();
+        List<Coordinate> coordinates = new ArrayList<>();
 
+        @Override
         public void filter(Coordinate c) {
             coordinates.add(c);
         }

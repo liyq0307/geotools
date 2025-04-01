@@ -20,26 +20,25 @@
  */
 package org.geotools.referencing.operation.projection;
 
-import static java.lang.Math.*;
+import static java.lang.Math.abs;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
 
 import java.awt.geom.Point2D;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Eckert IV projection
  *
- * @see <A HREF="http://mathworld.wolfram.com/EckertIVProjection.html">Robinson projection on
- *     MathWorld</A>
- * @see <A HREF="http://www.equal-area-maps.com/info_eckert.php">"Eckert IV" on the Equal Area Maps
- *     web site</A>
- * @see <A HREF="http://www.remotesensing.org/geotiff/proj_list/eckert_iv.html">"Robinson" on
- *     RemoteSensing.org</A>
+ * @see <A HREF="http://mathworld.wolfram.com/EckertIVProjection.html">Robinson projection on MathWorld</A>
+ * @see <A HREF="http://www.equal-area-maps.com/info_eckert.php">"Eckert IV" on the Equal Area Maps web site</A>
+ * @see <A HREF="http://www.remotesensing.org/geotiff/proj_list/eckert_iv.html">"Robinson" on RemoteSensing.org</A>
  * @since 2.7.0
  * @author Andrea Aime
  */
@@ -68,16 +67,17 @@ public class EckertIV extends MapProjection {
     }
 
     /** {@inheritDoc} */
+    @Override
     public ParameterDescriptorGroup getParameterDescriptors() {
         return Provider.PARAMETERS;
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
-    protected Point2D transformNormalized(double lam, double phi, Point2D ptDst)
-            throws ProjectionException {
+    @Override
+    protected Point2D transformNormalized(double lam, double phi, Point2D ptDst) throws ProjectionException {
 
         double p = C_p * sin(phi);
         double V = phi * phi;
@@ -102,12 +102,9 @@ public class EckertIV extends MapProjection {
         return ptDst;
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
-    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
+    @Override
+    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
 
         double phi = aasin(y / C_y);
         double c = cos(phi);
@@ -137,8 +134,8 @@ public class EckertIV extends MapProjection {
     // ////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for the Eckert IV projection (not part of the EPSG database).
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for the Eckert
+     * IV projection (not part of the EPSG database).
      *
      * @since 2.7.0
      * @author Andrea Aime
@@ -149,13 +146,13 @@ public class EckertIV extends MapProjection {
         private static final long serialVersionUID = 1136453952351519284L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.GEOTOOLS, "Eckert_IV"),
-                            new NamedIdentifier(Citations.ESRI, "Eckert_IV")
-                        },
-                        new ParameterDescriptor[] {SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN});
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.GEOTOOLS, "Eckert_IV"),
+                    new NamedIdentifier(Citations.ESRI, "Eckert_IV"),
+                    new NamedIdentifier(Citations.PROJ, "eck4")
+                },
+                new ParameterDescriptor[] {SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN});
 
         /** Constructs a new provider. */
         public Provider() {
@@ -169,6 +166,7 @@ public class EckertIV extends MapProjection {
          * @return The created math transform.
          * @throws ParameterNotFoundException if a required parameter was not found.
          */
+        @Override
         protected MathTransform createMathTransform(final ParameterValueGroup parameters)
                 throws ParameterNotFoundException {
             parameters

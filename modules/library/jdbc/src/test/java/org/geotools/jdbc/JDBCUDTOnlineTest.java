@@ -16,20 +16,28 @@
  */
 package org.geotools.jdbc;
 
-import java.util.HashMap;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.Map;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.junit.Test;
 
 public abstract class JDBCUDTOnlineTest extends JDBCTestSupport {
 
     @Override
     protected abstract JDBCUDTTestSetup createTestSetup();
 
+    @Test
     public void testSchema() throws Exception {
         SimpleFeatureType type = dataStore.getSchema(tname("udt"));
         assertNotNull(type);
@@ -38,10 +46,10 @@ public abstract class JDBCUDTOnlineTest extends JDBCTestSupport {
         assertEquals(String.class, type.getDescriptor(aname("ut")).getType().getBinding());
     }
 
+    @Test
     public void testRead() throws Exception {
-        SimpleFeatureType type = dataStore.getSchema(tname("udt"));
-
-        SimpleFeatureCollection features = dataStore.getFeatureSource(tname("udt")).getFeatures();
+        SimpleFeatureCollection features =
+                dataStore.getFeatureSource(tname("udt")).getFeatures();
         try (SimpleFeatureIterator fi = features.features()) {
             assertTrue(fi.hasNext());
             assertEquals("12ab", fi.next().getAttribute(aname("ut")));
@@ -49,11 +57,11 @@ public abstract class JDBCUDTOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testWrite() throws Exception {
         int count = dataStore.getFeatureSource(tname("udt")).getCount(Query.ALL);
 
-        try (FeatureWriter w =
-                dataStore.getFeatureWriterAppend(tname("udt"), Transaction.AUTO_COMMIT)) {
+        try (FeatureWriter w = dataStore.getFeatureWriterAppend(tname("udt"), Transaction.AUTO_COMMIT)) {
             w.hasNext();
 
             SimpleFeature f = (SimpleFeature) w.next();
@@ -71,8 +79,8 @@ public abstract class JDBCUDTOnlineTest extends JDBCTestSupport {
     }
 
     @Override
-    protected HashMap createDataStoreFactoryParams() throws Exception {
-        HashMap params = super.createDataStoreFactoryParams();
+    protected Map<String, Object> createDataStoreFactoryParams() throws Exception {
+        Map<String, Object> params = super.createDataStoreFactoryParams();
         // Set the batch insert size in order to be sure the failures happens while write is called.
         params.put(JDBCDataStoreFactory.BATCH_INSERT_SIZE.key, 1);
         return params;

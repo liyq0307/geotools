@@ -19,18 +19,19 @@ package org.geotools.filter.v2_0.bindings;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.DistanceBufferOperator;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
+import org.geotools.filter.v1_0.DistanceUnits;
 import org.geotools.filter.v2_0.FES;
 import org.geotools.gml3.v3_2.GML;
 import org.geotools.xsd.Node;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.DistanceBufferOperator;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
 
 /**
  * Utility class for FES bindings.
@@ -41,7 +42,7 @@ public class FESParseEncodeUtil {
 
     /** Parses the two operands for a binary temporal filter. */
     static Expression[] temporal(Node node, FilterFactory factory) {
-        PropertyName name = (PropertyName) node.getChildValue(PropertyName.class);
+        PropertyName name = node.getChildValue(PropertyName.class);
         Object other = null;
         for (Object o : node.getChildValues(Object.class)) {
             if (o == name) {
@@ -74,12 +75,13 @@ public class FESParseEncodeUtil {
         return getProperty(op.getExpression1(), op.getExpression2(), name);
     }
 
-    static List getProperties(DistanceBufferOperator op) {
-        List l = new ArrayList();
+    static List<Object[]> getProperties(DistanceBufferOperator op) {
+        List<Object[]> l = new ArrayList<>();
         l.add(distanceBufferOpProperty(op.getExpression1()));
         l.add(distanceBufferOpProperty(op.getExpression2()));
-
-        l.add(new Object[] {new QName(FES.NAMESPACE, "Distance"), op.getDistance()});
+        l.add(new Object[] {
+            new QName(FES.NAMESPACE, "Distance"), DistanceUnits.of(op.getDistance(), op.getDistanceUnits())
+        });
         return l;
     }
 

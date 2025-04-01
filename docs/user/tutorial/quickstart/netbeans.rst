@@ -41,39 +41,17 @@ Imaging and Java Image IO section – both of these libraries are used by GeoToo
 
 #. Download the latest JDK from the java.sun.com website:
 
-   http://java.sun.com/javase/downloads/index.jsp
+   https://adoptium.net/
    
 #. At the time of writing the latest JDK was:
    
-   ``jdk-8u91-windows-i586.exe``
+   ``OpenJDK11U-jdk_x64_windows_hotspot_11.0.17_8.msi``
    
 #. Click through the installer you will need to set an acceptance a license agreement and so forth.
    By default this will install to:     
    
-   ``C:\\Program Files\\Java\\jdk1.8.0_91\\``
-     
-#. **Optional**: Java Advanced Imaging is used by GeoTools for raster support. If you install JAI 1.1.3 
-   performance will be improved:   
-   
-   http://www.oracle.com/technetwork/java/javase/tech/jai-142803.html
-   
-   Both a JDK and JRE installer are available:
-   
-   * ``jai-1_1_3-lib-windows-i586-jdk.exe``
-   * ``jai-1_1_3-lib-windows-i586-jre.exe``
-     
-#. **Optional**: ImageIO Is used to read and write raster files. GeoTools uses version 1_1 of the
-   ImageIO library:
-   
-  https://docs.oracle.com/javase/6/docs/technotes/guides/imageio/index.html
-   
-   Both a JDK and JRE installer are available:   
-   
-   * ``jai_imageio-1_1-lib-windows-i586-jdk.exe``
-   * ``jai_imageio-1_1-lib-windows-i586-jre.exe``
-   
-For more details of how to install these packages see `this page <http://docs.geoserver.org/latest/en/user/production/java.html#install-native-jai-and-imageio-extensions>`_
-   
+   ``C:\\Program Files\\Eclipse Adoptium\\jdk-11.0.17.8-hotspot``
+      
 NetBeans Install
 ================
 
@@ -180,7 +158,7 @@ such as GeoTools publish their work.
    
    For production a stable release of |branch| should be used for `geotools.version`:
     
-   .. literalinclude:: artifacts/pom.xml
+   .. literalinclude:: /../../tutorials/quickstart/pom.xml
         :language: xml
         :start-after: <url>http://maven.apache.org</url>
         :end-before: <dependencies>
@@ -213,12 +191,12 @@ such as GeoTools publish their work.
 
    .. note:: Note the snapshot repository above is only required if you are using a nightly build (such as |branch|-SNAPSHOT)
 
-5. If you'd like to use Java 8 language level features (e.g. lambdas), you need to tell Maven to use the 1.8 source level
+5. GeoTools requires Java 11, you need to tell Maven to use the 11 source level
 
-   .. literalinclude:: artifacts/pom2.xml
+   .. literalinclude:: /../../tutorials/quickstart/pom.xml
       :language: xml
       :start-after: </repositories>
-      :end-before: </project>
+      :end-before: <profiles>
     
 6. You can now right click on Libraries in the Projects window, then Download missing Dependencies
    from the pop-up menu. When downloading it will check the repositories we have listed
@@ -228,12 +206,16 @@ such as GeoTools publish their work.
 
 8. Here is what the completed :file:`pom.xml` looks like:
 
-   .. literalinclude:: artifacts/pom.xml
+   .. literalinclude:: /../../tutorials/quickstart/pom.xml
         :language: xml
+        :end-before: <profiles>
+        :append: </project>
    
-   * You may find cutting and pasting from the documentation to be easier then typing.
+   * Recommend cutting and pasting the above to avoid mistakes when typing
    
-   * You may also :download:`download this file <artifacts/pom.xml>`
+   * You may also download :download:`pom.xml </../../tutorials/quickstart/pom.xml>`, if this opens in your browser use :command:`Save As` to save to disk.
+   
+     The download has an optional quality assurance profile you can safely ignore. 
 
 Quickstart Application
 -----------------------
@@ -244,10 +226,14 @@ Now that your environment is setup we can put together a simple Quickstart. This
 
 #. Create the ``org.geotools.tutorial.quickstart.Quickstart`` class using your IDE.
    
-#. Fill in the following code:
+#. Fill in the following code :file:`Quickstart.java`:
 
-   .. literalinclude:: /../src/main/java/org/geotools/tutorial/quickstart/Quickstart.java
+   .. literalinclude:: /../../tutorials/quickstart/src/main/java/org/geotools/tutorial/quickstart/Quickstart.java
         :language: java
+        
+   * You may find cutting and pasting from the documentation to be easier then typing.
+   
+   * You may also download :download:`Quickstart.java </../../tutorials/quickstart/src/main/java/org/geotools/tutorial/quickstart/Quickstart.java>`
 
 #. Build the application and check that all is well in the Output window.
 
@@ -283,73 +269,11 @@ Running the Application
    
    * We are using a very basic display style here that just shows feature outlines. In the examples that follow we will see how to specify more sophisticated styles.
 
-   
 Things to Try
 =============
 
-Each tutorial consists of very detailed steps followed by a series of extra questions. If you get
-stuck at any point please ask your instructor; or sign up to the geotools-users_ email list.
+.. include:: try.txt
 
-.. _geotools-users: http://docs.geotools.org/latest/developer/communication.html
-
-Here are some additional challenges for you to try:
-
-* Try out the different sample data sets
-
-* You can zoom in, zoom out and show the full extents and Use the select tool to examine individual
-  countries in the sample ``countries.shp`` file
-
-* Download the largest shapefile you can find and see how quickly it can be rendered. You should
-  find that the very first time it will take a while as a spatial index is generated. After that
-  performance should be very good when zoomed in.
-  
-* Fast: We know that one of the ways people select a spatial library is based on speed. By design
-  GeoTools does not load the above shapefile into memory (instead it streams it off of disk
-  each time it is drawn using a spatial index to only bring the content required for display).
-  
-  If you would like to ask GeoTools to cache the shapefile in memory try the following code:
-
-  .. literalinclude:: /../src/main/java/org/geotools/tutorial/quickstart/QuickstartCache.java
-     :language: java
-     :start-after: // docs start cache
-     :end-before:  // docs end cache
-  
-
-  For the above example to compile you will need to add the necessary imports.
-
-     
-* Try and sort out what all the different "side car" files are – and what they are for. The sample
-  data set includes ``shp``, ``dbf`` and ``shx``. How many other side car files are there?
-
-  .. This exercise asks users to locate the geotools user guide or wikipedia
-  
-* Advanced: The use of ``FileDataStoreFinder`` allows us to work easily with files. The other way to do
-  things is with a map of connection parameters. This techniques gives us a little more control over
-  how we work with a shapefile and also allows us to connect to databases and web feature servers.
-
-  .. literalinclude:: /../src/main/java/org/geotools/tutorial/quickstart/QuickstartNotes.java
-     :language: java
-     :start-after: // start datastore
-     :end-before:  // end datastore
-     
-
-* Important: GeoTools is an active open source project – you can quickly use maven to try out the
-  latest nightly build by changing your ``pom.xml`` file to use a "SNAPSHOT" release.
-  
-  At the time of writing |branch|-SNAPSHOT is under active development.
-  
-  .. literalinclude:: artifacts/pom2.xml
-     :language: xml
-     :start-after: <url>http://maven.apache.org</url>
-     :end-before: <dependencies>
-    
-  You will also need to change your ``pom.xml`` file to include the following snapshot repository:
-  
-  .. literalinclude:: artifacts/pom2.xml
-     :language: xml
-     :start-after: </dependencies>
-     :end-before: </project>
-        
 * NetBeans has an interesting feature to show how the dependency system works - Right click on
   Libraries and choose Show Dependency
   
@@ -389,8 +313,7 @@ To start with we will obtain GeoTools from the website:
    The EPSG database is distributed as an Access database and has been converted into the pure java
    database HSQL for our use.
    
-   * ``gt-epsg-h2``
-   * ``gt-epsg-oracle``
+   * ``gt-epsg-hsql``
    * ``gt-epsg-postgresql``
    * ``gt-epsg-wkt-2.6``
 
@@ -399,8 +322,6 @@ To start with we will obtain GeoTools from the website:
 
    For now remove the following plugins from the Library Manager:
 
-   * ``gt-arcsde``
-   * ``gt-arcsde-common``
    * ``gt-db2``
    * ``gt-jdbc-db2``
    * ``gt-oracle-spatial``

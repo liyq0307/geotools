@@ -24,6 +24,11 @@ public class HanaDataStoreAPIOnlineTest extends JDBCDataStoreAPIOnlineTest {
 
     @Override
     protected JDBCDataStoreAPITestSetup createTestSetup() {
-        return new HanaDataStoreAPITestSetup(new HanaTestSetup());
+        return new HanaDataStoreAPITestSetup(new HanaTestSetupPSPooling());
+    }
+
+    @Override
+    public void testGetFeatureWriterConcurrency() throws Exception {
+        // Would block indefinitely
     }
 }

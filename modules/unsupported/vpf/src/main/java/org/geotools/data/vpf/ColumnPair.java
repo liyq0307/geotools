@@ -17,9 +17,8 @@
 package org.geotools.data.vpf;
 
 /**
- * This class encapsulates a join between two columns. It was originally intended to join two
- * VPFColumn types, but there should not be anything about it which constrains it to those two
- * types.
+ * This class encapsulates a join between two columns. It was originally intended to join two VPFColumn types, but there
+ * should not be anything about it which constrains it to those two types.
  *
  * @author <a href="mailto:jeff@ionicenterprise.com">Jeff Yutzler</a>
  * @source $URL$
@@ -44,6 +43,7 @@ class ColumnPair {
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()
      */
+    @Override
     public int hashCode() {
         int result = 78236951;
         if (column1 != null) result = result * 37 + column1.hashCode();
@@ -55,6 +55,7 @@ class ColumnPair {
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)
      */
+    @Override
     public boolean equals(Object arg0) {
         boolean result = false;
 

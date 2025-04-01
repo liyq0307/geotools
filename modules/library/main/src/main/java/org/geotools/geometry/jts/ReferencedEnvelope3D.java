@@ -16,28 +16,28 @@
  */
 package org.geotools.geometry.jts;
 
-import org.geotools.geometry.DirectPosition3D;
-import org.geotools.geometry.GeneralEnvelope;
+import java.text.MessageFormat;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.geometry.BoundingBox3D;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.CoordinateOperation;
+import org.geotools.api.referencing.operation.CoordinateOperationFactory;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.GeneralBounds;
+import org.geotools.geometry.Position3D;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.geometry.BoundingBox3D;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.CoordinateOperation;
-import org.opengis.referencing.operation.CoordinateOperationFactory;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * A 3D envelope associated with a {@linkplain CoordinateReferenceSystem coordinate reference
- * system}. In addition, this JTS envelope also implements the GeoAPI {@linkplain
- * org.opengis.geometry.Envelope envelope} interface for interoperability with GeoAPI.
+ * A 3D envelope associated with a {@linkplain CoordinateReferenceSystem coordinate reference system}. In addition, this
+ * JTS envelope also implements the GeoAPI {@linkplain Bounds envelope} interface for interoperability with GeoAPI.
  *
  * @version $Id$
  * @author Niels Charlier
@@ -100,6 +100,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     private double maxz;
 
     /** Initialize to a null <code>Envelope</code>. */
+    @Override
     public void init() {
         setToNull();
     }
@@ -131,6 +132,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * @param p1 the first Coordinate
      * @param p2 the second Coordinate
      */
+    @Override
     public void init(Coordinate p1, Coordinate p2) {
         init(p1.x, p2.x, p1.y, p2.y, p1.getZ(), p2.getZ());
     }
@@ -140,6 +142,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      *
      * @param p the coordinate
      */
+    @Override
     public void init(Coordinate p) {
         init(p.x, p.x, p.y, p.y, p.getZ(), p.getZ());
     }
@@ -164,10 +167,8 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
         this.maxz = env.maxz;
     }
 
-    /**
-     * Makes this <code>Envelope</code> a "null" envelope, that is, the envelope of the empty
-     * geometry.
-     */
+    /** Makes this <code>Envelope</code> a "null" envelope, that is, the envelope of the empty geometry. */
+    @Override
     public void setToNull() {
         super.setToNull();
         minz = 0;
@@ -187,21 +188,23 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /**
-     * Returns the <code>Envelope</code>s minimum z-value. min z > max z indicates that this is a
-     * null <code>Envelope</code>.
+     * Returns the <code>Envelope</code>s minimum z-value. min z > max z indicates that this is a null <code>Envelope
+     * </code>.
      *
      * @return the minimum z-coordinate
      */
+    @Override
     public double getMinZ() {
         return minz;
     }
 
     /**
-     * Returns the <code>Envelope</code>s maximum z-value. min z > max z indicates that this is a
-     * null <code>Envelope</code>.
+     * Returns the <code>Envelope</code>s maximum z-value. min z > max z indicates that this is a null <code>Envelope
+     * </code>.
      *
      * @return the maximum z-coordinate
      */
+    @Override
     public double getMaxZ() {
         return maxz;
     }
@@ -220,6 +223,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      *
      * @return the minimum extent of this envelope
      */
+    @Override
     public double minExtent() {
         if (isNull()) return 0.0;
         return Math.min(getWidth(), Math.min(getHeight(), getDepth()));
@@ -230,34 +234,35 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      *
      * @return the maximum extent of this envelope
      */
+    @Override
     public double maxExtent() {
         if (isNull()) return 0.0;
         return Math.max(getWidth(), Math.max(getHeight(), getDepth()));
     }
 
     /**
-     * Enlarges this <code>Envelope</code> so that it contains the given {@link Coordinate}. Has no
-     * effect if the point is already on or within the envelope.
+     * Enlarges this <code>Envelope</code> so that it contains the given {@link Coordinate}. Has no effect if the point
+     * is already on or within the envelope.
      *
      * @param p the Coordinate to expand to include
      */
+    @Override
     public void expandToInclude(Coordinate p) {
         expandToInclude(p.x, p.y, p.getZ());
     }
 
     /**
-     * Expands this envelope by a given distance in all directions. Both positive and negative
-     * distances are supported.
+     * Expands this envelope by a given distance in all directions. Both positive and negative distances are supported.
      *
      * @param distance the distance to expand the envelope
      */
+    @Override
     public void expandBy(double distance) {
         expandBy(distance, distance, distance);
     }
 
     /**
-     * Expands this envelope by a given distance in all directions. Both positive and negative
-     * distances are supported.
+     * Expands this envelope by a given distance in all directions. Both positive and negative distances are supported.
      *
      * @param deltaX the distance to expand the envelope along the the X axis
      * @param deltaY the distance to expand the envelope along the the Y axis
@@ -274,8 +279,8 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /**
-     * Enlarges this <code>Envelope</code> so that it contains the given point. Has no effect if the
-     * point is already on or within the envelope.
+     * Enlarges this <code>Envelope</code> so that it contains the given point. Has no effect if the point is already on
+     * or within the envelope.
      *
      * @param x the value to lower the minimum x to or to raise the maximum x to
      * @param y the value to lower the minimum y to or to raise the maximum y to
@@ -298,7 +303,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     @Override
-    public void expandToInclude(DirectPosition pt) {
+    public void expandToInclude(Position pt) {
         double x = pt.getOrdinate(0);
         double y = pt.getOrdinate(1);
         double z = pt.getDimension() >= 3 ? pt.getOrdinate(2) : Double.NaN;
@@ -329,20 +334,17 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      *
      * @return the centre coordinate of this envelope <code>null</code> if the envelope is null
      */
+    @Override
     public Coordinate centre() {
         if (isNull()) return null;
         return new Coordinate(
-                (getMinX() + getMaxX()) / 2.0,
-                (getMinY() + getMaxY()) / 2.0,
-                (getMinZ() + getMaxZ()) / 2.0);
+                (getMinX() + getMaxX()) / 2.0, (getMinY() + getMaxY()) / 2.0, (getMinZ() + getMaxZ()) / 2.0);
     }
 
     /**
-     * Check if the region defined by <code>other</code> overlaps (intersects) the region of this
-     * <code>Envelope</code>.
+     * Check if the region defined by <code>other</code> overlaps (intersects) the region of this <code>Envelope</code>.
      *
-     * @param other the <code>Envelope</code> which this <code>Envelope</code> is being checked for
-     *     overlapping
+     * @param other the <code>Envelope</code> which this <code>Envelope</code> is being checked for overlapping
      * @return <code>true</code> if the <code>Envelope</code>s overlap
      */
     public boolean intersects(ReferencedEnvelope3D other) {
@@ -359,11 +361,13 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * @param p the <code>Coordinate</code> to be tested
      * @return <code>true</code> if the point overlaps this <code>Envelope</code>
      */
+    @Override
     public boolean intersects(Coordinate p) {
         return intersects(p.x, p.y, p.getZ());
     }
 
     /** @deprecated Use #intersects instead. */
+    @Override
     @SuppressWarnings("deprecation")
     public boolean overlaps(Coordinate p) {
         return intersects(p);
@@ -386,14 +390,15 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     /**
      * Tests if the given point lies in or on the envelope.
      *
-     * <p>Note that this is <b>not</b> the same definition as the SFS <tt>contains</tt>, which would
-     * exclude the envelope boundary.
+     * <p>Note that this is <b>not</b> the same definition as the SFS <tt>contains</tt>, which would exclude the
+     * envelope boundary.
      *
      * @param p the point which this <code>Envelope</code> is being checked for containing
      * @return <code>true</code> if the point lies in the interior or on the boundary of this <code>
      *     Envelope</code>.
      * @see #covers(Coordinate)
      */
+    @Override
     public boolean contains(Coordinate p) {
         return covers(p);
     }
@@ -401,17 +406,16 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     /**
      * Tests if the given point lies in or on the envelope.
      *
-     * <p>Note that this is <b>not</b> the same definition as the SFS <tt>contains</tt>, which would
-     * exclude the envelope boundary.
+     * <p>Note that this is <b>not</b> the same definition as the SFS <tt>contains</tt>, which would exclude the
+     * envelope boundary.
      *
-     * @param x the x-coordinate of the point which this <code>Envelope</code> is being checked for
-     *     containing
-     * @param y the y-coordinate of the point which this <code>Envelope</code> is being checked for
-     *     containing
-     * @return <code>true</code> if <code>(x, y)</code> lies in the interior or on the boundary of
-     *     this <code>Envelope</code>.
+     * @param x the x-coordinate of the point which this <code>Envelope</code> is being checked for containing
+     * @param y the y-coordinate of the point which this <code>Envelope</code> is being checked for containing
+     * @return <code>true</code> if <code>(x, y)</code> lies in the interior or on the boundary of this <code>Envelope
+     *     </code>.
      * @see #covers(double, double)
      */
+    @Override
     public boolean contains(double x, double y, double z) {
         return covers(x, y, z);
     }
@@ -419,12 +423,10 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     /**
      * Tests if the given point lies in or on the envelope.
      *
-     * @param x the x-coordinate of the point which this <code>Envelope</code> is being checked for
-     *     containing
-     * @param y the y-coordinate of the point which this <code>Envelope</code> is being checked for
-     *     containing
-     * @return <code>true</code> if <code>(x, y)</code> lies in the interior or on the boundary of
-     *     this <code>Envelope</code>.
+     * @param x the x-coordinate of the point which this <code>Envelope</code> is being checked for containing
+     * @param y the y-coordinate of the point which this <code>Envelope</code> is being checked for containing
+     * @return <code>true</code> if <code>(x, y)</code> lies in the interior or on the boundary of this <code>Envelope
+     *     </code>.
      */
     public boolean covers(double x, double y, double z) {
         if (isNull()) return false;
@@ -438,13 +440,14 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * @return <code>true</code> if the point lies in the interior or on the boundary of this <code>
      *     Envelope</code>.
      */
+    @Override
     public boolean covers(Coordinate p) {
         return covers(p.x, p.y, p.getZ());
     }
 
     /**
-     * Tests if the <code>Envelope other</code> lies wholely inside this <code>Envelope</code>
-     * (inclusive of the boundary).
+     * Tests if the <code>Envelope other</code> lies wholely inside this <code>Envelope</code> (inclusive of the
+     * boundary).
      *
      * @param other the <code>Envelope</code> to check
      * @return true if this <code>Envelope</code> covers the <code>other</code>
@@ -457,9 +460,8 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /**
-     * Computes the distance between this and another <code>Envelope</code>. The distance between
-     * overlapping Envelopes is 0. Otherwise, the distance is the Euclidean distance between the
-     * closest points.
+     * Computes the distance between this and another <code>Envelope</code>. The distance between overlapping Envelopes
+     * is 0. Otherwise, the distance is the Euclidean distance between the closest points.
      */
     public double distance(ReferencedEnvelope3D env) {
         if (intersects(env)) return 0;
@@ -498,52 +500,64 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
                     null) {
                 private static final long serialVersionUID = -3188702602373537164L;
 
+                @Override
                 public boolean contains(BoundingBox bbox) {
                     return true;
                 }
 
+                @Override
                 public boolean contains(Coordinate p) {
                     return true;
                 }
 
-                public boolean contains(DirectPosition pos) {
+                @Override
+                public boolean contains(Position pos) {
                     return true;
                 }
 
+                @Override
                 public boolean contains(double x, double y, double z) {
                     return true;
                 }
 
+                @Override
                 public boolean isEmpty() {
                     return false;
                 }
 
+                @Override
                 public boolean isNull() {
                     return true;
                 }
 
+                @Override
                 public double getArea() {
                     // return super.getArea();
                     return Double.POSITIVE_INFINITY;
                 }
 
+                @Override
                 public double getVolume() {
                     // return super.getArea();
                     return Double.POSITIVE_INFINITY;
                 }
 
+                @Override
                 public void setBounds(BoundingBox3D arg0) {
                     throw new IllegalStateException("Cannot modify ReferencedEnvelope.EVERYTHING");
                 }
 
+                @Override
                 public Coordinate centre() {
                     return new Coordinate();
                 }
 
+                @Override
                 public void setToNull() {
                     // um ignore this as we are already "null"
                 }
 
+                @Override
                 public boolean equals(Object obj) {
                     if (obj == EVERYTHING) {
                         return true;
@@ -563,6 +577,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
                     return super.equals(obj);
                 }
 
+                @Override
                 public String toString() {
                     return "ReferencedEnvelope.EVERYTHING";
                 }
@@ -616,8 +631,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * @param envelope The envelope to initialize from
      * @throws MismatchedDimensionException if the CRS dimension is not valid.
      */
-    public ReferencedEnvelope3D(final ReferencedEnvelope3D envelope)
-            throws MismatchedDimensionException {
+    public ReferencedEnvelope3D(final ReferencedEnvelope3D envelope) throws MismatchedDimensionException {
         init(envelope);
         crs = envelope.getCoordinateReferenceSystem();
         checkCoordinateReferenceSystemDimension();
@@ -626,9 +640,9 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     /**
      * Creates a new envelope from an existing bounding box.
      *
-     * <p>NOTE: if the bounding box is empty, the resulting ReferencedEnvelope will not be. In case
-     * this is needed use {@link #create(org.opengis.geometry.Envelope, CoordinateReferenceSystem)
-     * ReferencedEnvelope.create(bbox, bbox.getCoordinateReferenceSystem())}
+     * <p>NOTE: if the bounding box is empty, the resulting ReferencedEnvelope will not be. In case this is needed use
+     * {@link #create(Bounds, CoordinateReferenceSystem) ReferencedEnvelope.create(bbox,
+     * bbox.getCoordinateReferenceSystem())}
      *
      * @param bbox The bounding box to initialize from.
      * @throws MismatchedDimensionException if the CRS dimension is not valid.
@@ -663,15 +677,14 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     /**
      * Creates a new envelope from an existing OGC envelope.
      *
-     * <p>NOTE: if the envelope is empty, the resulting ReferencedEnvelope will not be. In case this
-     * is needed use {@link #create(org.opengis.geometry.Envelope, CoordinateReferenceSystem)
-     * ReferencedEnvelope.create(envelope, envelope.getCoordinateReferenceSystem())}
+     * <p>NOTE: if the envelope is empty, the resulting ReferencedEnvelope will not be. In case this is needed use
+     * {@link #create(Bounds, CoordinateReferenceSystem) ReferencedEnvelope.create(envelope,
+     * envelope.getCoordinateReferenceSystem())}
      *
      * @param envelope The envelope to initialize from.
      * @throws MismatchedDimensionException if the CRS dimension is not valid.
      */
-    public ReferencedEnvelope3D(final org.opengis.geometry.Envelope envelope)
-            throws MismatchedDimensionException {
+    public ReferencedEnvelope3D(final Bounds envelope) throws MismatchedDimensionException {
         init(
                 envelope.getMinimum(0),
                 envelope.getMaximum(0),
@@ -690,8 +703,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * @param crs The coordinate reference system.
      * @throws MismatchedDimensionExceptionif the CRS dimension is not valid.
      */
-    public ReferencedEnvelope3D(
-            final ReferencedEnvelope3D envelope, final CoordinateReferenceSystem crs)
+    public ReferencedEnvelope3D(final ReferencedEnvelope3D envelope, final CoordinateReferenceSystem crs)
             throws MismatchedDimensionException {
         init(envelope);
         this.crs = crs;
@@ -699,6 +711,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /** Sets this envelope to the specified bounding box. */
+    @Override
     public void init(BoundingBox bounds) {
         init(
                 bounds.getMinimum(0),
@@ -722,11 +735,13 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /** Returns the number of dimensions. */
+    @Override
     public int getDimension() {
         return 3;
     }
 
     /** Returns the minimal ordinate along the specified dimension. */
+    @Override
     public double getMinimum(final int dimension) {
         switch (dimension) {
             case 0:
@@ -744,6 +759,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /** Returns the maximal ordinate along the specified dimension. */
+    @Override
     public double getMaximum(final int dimension) {
         switch (dimension) {
             case 0:
@@ -761,6 +777,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /** Returns the center ordinate along the specified dimension. */
+    @Override
     public double getMedian(final int dimension) {
         switch (dimension) {
             case 0:
@@ -778,9 +795,10 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /**
-     * Returns the envelope length along the specified dimension. This length is equals to the
-     * maximum ordinate minus the minimal ordinate.
+     * Returns the envelope length along the specified dimension. This length is equals to the maximum ordinate minus
+     * the minimal ordinate.
      */
+    @Override
     public double getSpan(final int dimension) {
         switch (dimension) {
             case 0:
@@ -798,28 +816,32 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /**
-     * A coordinate position consisting of all the minimal ordinates for each dimension for all
-     * points within the {@code Envelope}.
+     * A coordinate position consisting of all the minimal ordinates for each dimension for all points within the
+     * {@code Envelope}.
      */
-    public DirectPosition getLowerCorner() {
-        return new DirectPosition3D(crs, getMinX(), getMinY(), getMinZ());
+    @Override
+    public Position getLowerCorner() {
+        return new Position3D(crs, getMinX(), getMinY(), getMinZ());
     }
 
     /**
-     * A coordinate position consisting of all the maximal ordinates for each dimension for all
-     * points within the {@code Envelope}.
+     * A coordinate position consisting of all the maximal ordinates for each dimension for all points within the
+     * {@code Envelope}.
      */
-    public DirectPosition getUpperCorner() {
-        return new DirectPosition3D(crs, getMaxX(), getMaxY(), getMaxZ());
+    @Override
+    public Position getUpperCorner() {
+        return new Position3D(crs, getMaxX(), getMaxY(), getMaxZ());
     }
 
     /** Returns {@code true} if lengths along all dimension are zero. */
+    @Override
     public boolean isEmpty() {
         return super.isNull();
     }
 
     /** Returns {@code true} if the provided location is contained by this bounding box. */
-    public boolean contains(DirectPosition pos) {
+    @Override
+    public boolean contains(Position pos) {
         ensureCompatibleReferenceSystem(pos);
         return contains(pos.getOrdinate(0), pos.getOrdinate(1), pos.getOrdinate(2));
     }
@@ -842,8 +864,8 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * Computes the intersection of two {@link Envelope}s.
      *
      * @param env the envelope to intersect with
-     * @return a new Envelope representing the intersection of the envelopes (this will be the null
-     *     envelope if either argument is null, or they do not intersect
+     * @return a new Envelope representing the intersection of the envelopes (this will be the null envelope if either
+     *     argument is null, or they do not intersect
      */
     public ReferencedEnvelope3D intersection(ReferencedEnvelope3D env) {
         ensureCompatibleReferenceSystem(env);
@@ -858,13 +880,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
         double intMaxZ = maxz < env.maxz ? maxz : env.maxz;
 
         return new ReferencedEnvelope3D(
-                intMinX,
-                intMaxX,
-                intMinY,
-                intMaxY,
-                intMinZ,
-                intMaxZ,
-                env.getCoordinateReferenceSystem());
+                intMinX, intMaxX, intMinY, intMaxY, intMinZ, intMaxZ, env.getCoordinateReferenceSystem());
     }
 
     /** Include the provided bounding box, expanding as necessary. */
@@ -876,8 +892,8 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /**
-     * Enlarges this <code>Envelope</code> so that it contains the <code>other</code> Envelope. Has
-     * no effect if <code>other</code> is wholly on or within the envelope.
+     * Enlarges this <code>Envelope</code> so that it contains the <code>other</code> Envelope. Has no effect if <code>
+     * other</code> is wholly on or within the envelope.
      *
      * @param other the <code>Envelope</code> to expand to include
      */
@@ -903,6 +919,7 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /** Include the provided coordinates, expanding as necessary. */
+    @Override
     public void include(double x, double y, double z) {
         expandToInclude(x, y, z);
     }
@@ -918,11 +935,11 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /**
-     * Returns a new bounding box which contains the transformed shape of this bounding box. This is
-     * a convenience method that delegate its work to the {@link #transform transform} method.
+     * Returns a new bounding box which contains the transformed shape of this bounding box. This is a convenience
+     * method that delegate its work to the {@link #transform transform} method.
      */
-    public BoundingBox toBounds(final CoordinateReferenceSystem targetCRS)
-            throws TransformException {
+    @Override
+    public BoundingBox toBounds(final CoordinateReferenceSystem targetCRS) throws TransformException {
         try {
             return transform(targetCRS, true);
         } catch (FactoryException e) {
@@ -933,42 +950,42 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     /**
      * Transforms the referenced envelope to the specified coordinate reference system.
      *
-     * <p>This method can handle the case where the envelope contains the North or South pole, or
-     * when it cross the &plusmn;180ï¿½ longitude.
+     * <p>This method can handle the case where the envelope contains the North or South pole, or when it cross the
+     * &plusmn;180ï¿½ longitude.
      *
      * @param targetCRS The target coordinate reference system.
-     * @param lenient {@code true} if datum shift should be applied even if there is insuffisient
-     *     information. Otherwise (if {@code false}), an exception is thrown in such case.
+     * @param lenient {@code true} if datum shift should be applied even if there is insuffisient information. Otherwise
+     *     (if {@code false}), an exception is thrown in such case.
      * @return The transformed envelope.
      * @throws FactoryException if the math transform can't be determined.
      * @throws TransformException if at least one coordinate can't be transformed.
-     * @see CRS#transform(CoordinateOperation, org.opengis.geometry.Envelope)
+     * @see CRS#transform(CoordinateOperation, Bounds)
      */
+    @Override
     public ReferencedEnvelope transform(CoordinateReferenceSystem targetCRS, boolean lenient)
             throws TransformException, FactoryException {
         return transform(targetCRS, lenient, 5);
     }
 
     /**
-     * Transforms the referenced envelope to the specified coordinate reference system using the
-     * specified amount of points.
+     * Transforms the referenced envelope to the specified coordinate reference system using the specified amount of
+     * points.
      *
-     * <p>This method can handle the case where the envelope contains the North or South pole, or
-     * when it cross the &plusmn;180ï¿½ longitude.
+     * <p>This method can handle the case where the envelope contains the North or South pole, or when it cross the
+     * &plusmn;180ï¿½ longitude.
      *
      * @param targetCRS The target coordinate reference system.
-     * @param lenient {@code true} if datum shift should be applied even if there is insuffisient
-     *     information. Otherwise (if {@code false}), an exception is thrown in such case.
+     * @param lenient {@code true} if datum shift should be applied even if there is insuffisient information. Otherwise
+     *     (if {@code false}), an exception is thrown in such case.
      * @param numPointsForTransformation The number of points to use for sampling the envelope.
      * @return The transformed envelope.
      * @throws FactoryException if the math transform can't be determined.
      * @throws TransformException if at least one coordinate can't be transformed.
-     * @see CRS#transform(CoordinateOperation, org.opengis.geometry.Envelope)
+     * @see CRS#transform(CoordinateOperation, Bounds)
      */
+    @Override
     public ReferencedEnvelope transform(
-            final CoordinateReferenceSystem targetCRS,
-            final boolean lenient,
-            final int numPointsForTransformation)
+            final CoordinateReferenceSystem targetCRS, final boolean lenient, final int numPointsForTransformation)
             throws TransformException, FactoryException {
         // TODO: implement 3D behaviour for this method
         // falls back on 2D behaviour (3rd coordinate is preserved!)
@@ -988,23 +1005,21 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
             if (lenient) {
                 return JTS.transformTo2D(this, targetCRS, lenient, numPointsForTransformation);
             } else {
+                final Object arg0 = crs.getName().getCode();
+                final Object arg1 = Integer.valueOf(getDimension());
+                final Object arg2 =
+                        Integer.valueOf(targetCRS.getCoordinateSystem().getDimension());
                 throw new MismatchedDimensionException(
-                        Errors.format(
-                                ErrorKeys.MISMATCHED_DIMENSION_$3,
-                                crs.getName().getCode(),
-                                Integer.valueOf(getDimension()),
-                                Integer.valueOf(targetCRS.getCoordinateSystem().getDimension())));
+                        MessageFormat.format(ErrorKeys.MISMATCHED_DIMENSION_$3, arg0, arg1, arg2));
             }
         }
         // Gets a first estimation using an algorithm capable to take singularity in account
         // (North pole, South pole, 180ï¿½ longitude). We will expand this initial box later.
 
-        CoordinateOperationFactory coordinateOperationFactory =
-                CRS.getCoordinateOperationFactory(lenient);
+        CoordinateOperationFactory coordinateOperationFactory = CRS.getCoordinateOperationFactory(lenient);
 
-        final CoordinateOperation operation =
-                coordinateOperationFactory.createOperation(crs, targetCRS);
-        final GeneralEnvelope transformed = CRS.transform(operation, this);
+        final CoordinateOperation operation = coordinateOperationFactory.createOperation(crs, targetCRS);
+        final GeneralBounds transformed = CRS.transform(operation, this);
         transformed.setCoordinateReferenceSystem(targetCRS);
 
         // Now expands the box using the usual utility methods.
@@ -1020,8 +1035,8 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
     }
 
     /**
-     * Returns a hash value for this envelope. This value need not remain consistent between
-     * different implementations of the same class.
+     * Returns a hash value for this envelope. This value need not remain consistent between different implementations
+     * of the same class.
      */
     @Override
     public int hashCode() {
@@ -1048,13 +1063,9 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
         if (isNull()) {
             return otherEnvelope.isNull();
         }
-        if (super.equals(other)
-                && minz == otherEnvelope.getMinZ()
-                && maxz == otherEnvelope.getMaxZ()) {
+        if (super.equals(other) && minz == otherEnvelope.getMinZ() && maxz == otherEnvelope.getMaxZ()) {
             final CoordinateReferenceSystem otherCRS =
-                    (other instanceof ReferencedEnvelope3D)
-                            ? ((ReferencedEnvelope3D) other).crs
-                            : null;
+                    (other instanceof ReferencedEnvelope3D) ? ((ReferencedEnvelope3D) other).crs : null;
 
             return CRS.equalsIgnoreMetadata(crs, otherCRS);
         }
@@ -1073,11 +1084,11 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
      * </ul>
      *
      * @param other other envelope
-     * @param eps a small tolerance factor (e.g. 1.0e-6d) which will be scaled relative to this
-     *     envlope's width and height
+     * @param eps a small tolerance factor (e.g. 1.0e-6d) which will be scaled relative to this envlope's width and
+     *     height
      * @return true if all bounding coordinates are equal within the set tolerance; false otherwise
      */
-    public boolean boundsEquals3D(final org.opengis.geometry.Envelope other, double eps) {
+    public boolean boundsEquals3D(final Bounds other, double eps) {
         eps *= 0.5 * (getWidth() + getHeight());
 
         double[] delta = new double[6];
@@ -1088,12 +1099,12 @@ public class ReferencedEnvelope3D extends ReferencedEnvelope implements Bounding
         delta[4] = getMinimum(2) - other.getMinimum(2);
         delta[5] = getMaximum(2) - other.getMaximum(2);
 
-        for (int i = 0; i < delta.length; i++) {
+        for (double v : delta) {
             /*
              * As per Envelope2D#boundsEquals we use ! here to
              * catch any NaN values
              */
-            if (!(Math.abs(delta[i]) <= eps)) {
+            if (!(Math.abs(v) <= eps)) {
                 return false;
             }
         }

@@ -81,9 +81,10 @@ public class MultiPointTypeImpl extends AbstractGeometricAggregateTypeImpl imple
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<PointPropertyType> getPointMember() {
         if (pointMember == null) {
-            pointMember = new EObjectContainmentEList<PointPropertyType>(PointPropertyType.class, this, Gml311Package.MULTI_POINT_TYPE__POINT_MEMBER);
+            pointMember = new EObjectContainmentEList<>(PointPropertyType.class, this, Gml311Package.MULTI_POINT_TYPE__POINT_MEMBER);
         }
         return pointMember;
     }
@@ -93,6 +94,7 @@ public class MultiPointTypeImpl extends AbstractGeometricAggregateTypeImpl imple
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public PointArrayPropertyType getPointMembers() {
         return pointMembers;
     }
@@ -117,6 +119,7 @@ public class MultiPointTypeImpl extends AbstractGeometricAggregateTypeImpl imple
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setPointMembers(PointArrayPropertyType newPointMembers) {
         if (newPointMembers != pointMembers) {
             NotificationChain msgs = null;

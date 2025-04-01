@@ -19,7 +19,6 @@ package org.geotools.xsd;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,19 +30,20 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.xsd.XSDSchema;
 import org.eclipse.xsd.util.XSDResourceImpl;
+import org.eclipse.xsd.util.XSDSchemaLocationResolver;
 import org.eclipse.xsd.util.XSDSchemaLocator;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.Schema;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.type.SchemaImpl;
 import org.geotools.xs.XS;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.Schema;
 
 /**
  * Xml Schema for a particular namespace.
  *
- * <p>This class should is subclasses for the xs, gml, filter, sld, etc... schemas. Subclasses
- * should be implemented as singletons.
+ * <p>This class should is subclasses for the xs, gml, filter, sld, etc... schemas. Subclasses should be implemented as
+ * singletons.
  *
  * @author Justin Deoliveira, The Open Planning Project
  * @since 2.5
@@ -72,7 +72,7 @@ public abstract class XSD {
 
     /** Sets up a profile which uniquely maps a set of java classes to a schema element. */
     protected Schema buildTypeMappingProfile(Schema typeSchema) {
-        return typeSchema.profile(Collections.EMPTY_SET);
+        return typeSchema.profile(Collections.emptySet());
     }
 
     /**
@@ -96,10 +96,7 @@ public abstract class XSD {
         return typeSchema;
     }
 
-    /**
-     * Returns the sbuset of {@link #getTypeSchema()} which maintains a unique java class to xml
-     * type mapping.
-     */
+    /** Returns the subset of {@link #getTypeSchema()} which maintains a unique java class to xml type mapping. */
     public final Schema getTypeMappingProfile() {
         if (typeMappingProfile == null) {
             synchronized (this) {
@@ -109,12 +106,9 @@ public abstract class XSD {
         return typeMappingProfile;
     }
 
-    /**
-     * Transitively returns the type mapping profile for this schema and all schemas that this
-     * schema depends on.
-     */
+    /** Transitively returns the type mapping profile for this schema and all schemas that this schema depends on. */
     public final List<Schema> getAllTypeMappingProfiles() {
-        LinkedList profiles = new LinkedList();
+        List<Schema> profiles = new LinkedList<>();
         for (XSD xsd : getAllDependencies()) {
             Schema profile = xsd.getTypeMappingProfile();
             if (!profile.isEmpty()) {
@@ -136,7 +130,7 @@ public abstract class XSD {
         if (dependencies == null) {
             synchronized (this) {
                 if (dependencies == null) {
-                    Set<XSD> newDeps = new LinkedHashSet();
+                    Set<XSD> newDeps = new LinkedHashSet<>();
 
                     // bootstrap, every xsd depends on XS
                     newDeps.add(XS.getInstance());
@@ -156,14 +150,14 @@ public abstract class XSD {
         return allDependencies();
     }
 
-    protected List allDependencies() {
-        LinkedList unpacked = new LinkedList();
+    protected List<XSD> allDependencies() {
+        LinkedList<XSD> unpacked = new LinkedList<>();
 
-        Stack stack = new Stack();
+        Stack<XSD> stack = new Stack<>();
         stack.addAll(getDependencies());
 
         while (!stack.isEmpty()) {
-            XSD xsd = (XSD) stack.pop();
+            XSD xsd = stack.pop();
 
             if (!equals(xsd) && !unpacked.contains(xsd)) {
                 unpacked.addFirst(xsd);
@@ -175,12 +169,23 @@ public abstract class XSD {
     }
 
     /** Subclass hook to add additional dependencies. */
-    protected void addDependencies(Set dependencies) {}
+    protected void addDependencies(Set<XSD> dependencies) {}
 
     /** Returns the XSD object representing the contents of the schema. */
     public final XSDSchema getSchema() throws IOException {
         if (schema == null) {
-            synchronized (this) {
+            // buildSchema in general will need to parse dependencies, which through
+            // schema locators will circle back to XSD.getSchema(), potentially causing
+            // a deadlock, if this synchronization uses synchronized(this). Example:
+            // 1) t1 loads OGC, holding a lock on it, and parses its own schema
+            //    holding a lock on Schemas.classes
+            // 2) t2 starts loading GML, holding a lock on it, and tries to parse its schema
+            //    waiting on Schemas.classes lock
+            // 3) t1 parsing finds an import from OGC filters to GML, the locators bring it
+            //    to call GML.getSchema(), and we have the deadlock.
+            // So the old synchronized(this) was replaced with synchronized(Schemas.class)
+            // to avert the possibility of the above cited lock
+            synchronized (Schemas.class) {
                 if (schema == null) {
                     LOGGER.fine("building schema for schema: " + getNamespaceURI());
                     schema = buildSchema();
@@ -199,11 +204,10 @@ public abstract class XSD {
     protected XSDSchema buildSchema() throws IOException {
         // grab all the dependencies and create schema locators from the build
         // schemas
-        List locators = new ArrayList();
-        List resolvers = new ArrayList();
+        List<XSDSchemaLocator> locators = new ArrayList<>();
+        List<XSDSchemaLocationResolver> resolvers = new ArrayList<>();
 
-        for (Iterator d = allDependencies().iterator(); d.hasNext(); ) {
-            XSD dependency = (XSD) d.next();
+        for (XSD dependency : allDependencies()) {
             SchemaLocator locator = dependency.createSchemaLocator();
 
             if (locator != null) {
@@ -252,6 +256,7 @@ public abstract class XSD {
     }
 
     /** Implementation of equals, equality is based soley on {@link #getNamespaceURI()}. */
+    @Override
     public final boolean equals(Object obj) {
         if (obj instanceof XSD) {
             XSD other = (XSD) obj;
@@ -262,17 +267,19 @@ public abstract class XSD {
         return false;
     }
 
+    @Override
     public final int hashCode() {
         return getNamespaceURI().hashCode();
     }
 
+    @Override
     public String toString() {
         return getNamespaceURI();
     }
 
     /**
-     * Optionally, a schema locator that helps locating (other) schema's used for includes/imports
-     * that might already exist but are not in dependencies
+     * Optionally, a schema locator that helps locating (other) schema's used for includes/imports that might already
+     * exist but are not in dependencies
      *
      * @return Schema Locator
      */
@@ -281,9 +288,9 @@ public abstract class XSD {
     }
 
     /**
-     * Remove all references to this schema, and all schemas built in the same resource set It is
-     * important to call this method for every dynamic schema created that is not needed anymore,
-     * because references in the static schema's will otherwise keep it alive forever
+     * Remove all references to this schema, and all schemas built in the same resource set It is important to call this
+     * method for every dynamic schema created that is not needed anymore, because references in the static schema's
+     * will otherwise keep it alive forever
      */
     public void dispose() {
         if (schema != null) {

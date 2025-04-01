@@ -1,11 +1,13 @@
 /*
- * GeoTools - The Open Source Java GIS Toolkit
- * http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- * (C) 2010-2014, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- * This file is hereby placed into the Public Domain. This means anyone is
- * free to do whatever they wish with this file. Use it well and enjoy!
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.tutorial.csv2;
 
@@ -16,17 +18,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.referencing.cs.AxisDirection;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
 import org.geotools.data.store.ContentState;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.referencing.cs.AxisDirection;
 
 /**
  * Iterator supporting writing of feature content.
@@ -54,12 +56,11 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
     private boolean appending = false;
 
     /** flag to keep track of lat/lon order */
-    private boolean latlon =
-            DefaultGeographicCRS.WGS84
-                    .getCoordinateSystem()
-                    .getAxis(0)
-                    .getDirection()
-                    .equals(AxisDirection.NORTH);
+    private boolean latlon = DefaultGeographicCRS.WGS84
+            .getCoordinateSystem()
+            .getAxis(0)
+            .getDirection()
+            .equals(AxisDirection.NORTH);
 
     int latIndex = 0;
     int lngIndex = 0;
@@ -112,8 +113,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
 
     // next start
     @Override
-    public SimpleFeature next()
-            throws IOException, IllegalArgumentException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalArgumentException, NoSuchElementException {
         if (csvWriter == null) {
             throw new IOException("FeatureWriter has been closed");
         }
@@ -131,7 +131,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
             }
             SimpleFeatureType featureType = state.getFeatureType();
             String fid = featureType.getTypeName() + "." + nextRow;
-            Object values[] = DataUtilities.defaultValues(featureType);
+            Object[] values = DataUtilities.defaultValues(featureType);
 
             this.currentFeature = SimpleFeatureBuilder.build(featureType, values, fid);
             return this.currentFeature;
@@ -142,10 +142,7 @@ public class CSVFeatureWriter implements FeatureWriter<SimpleFeatureType, Simple
     // next end
 
     // remove start
-    /**
-     * Mark our {@link #currentFeature} feature as null, it will be skipped when written effectively
-     * removing it.
-     */
+    /** Mark our {@link #currentFeature} feature as null, it will be skipped when written effectively removing it. */
     public void remove() throws IOException {
         this.currentFeature = null; // just mark it done which means it will not get written out.
     }

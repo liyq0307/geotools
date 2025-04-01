@@ -18,9 +18,15 @@ package org.geotools.util.factory;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.net.MalformedURLException;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
@@ -40,9 +46,8 @@ import org.junit.Test;
  */
 public final class FactoryRegistryTest {
     /**
-     * Ensures that class {@link org.geotools.util.factory.Hints} is loaded before {@link
-     * DummyFactory}. It is not needed for normal execution, but Maven seems to mess with class
-     * loaders.
+     * Ensures that class {@link org.geotools.util.factory.Hints} is loaded before {@link DummyFactory}. It is not
+     * needed for normal execution, but Maven seems to mess with class loaders.
      */
     @Before
     public void ensureHintsLoaded() {
@@ -50,25 +55,20 @@ public final class FactoryRegistryTest {
     }
 
     /**
-     * Creates the factory registry to test. The tests performed in this method are more J2SE tests
-     * than Geotools implementation tests. We basically just ensure that we have setup the service
-     * registry properly.
+     * Creates the factory registry to test. The tests performed in this method are more J2SE tests than Geotools
+     * implementation tests. We basically just ensure that we have setup the service registry properly.
      *
-     * <p>Factories are specified in arguments as {@link org.geotools.util.factory.Factory} objects
-     * in order to avoid the {@link DummyClass} to be initialized before {@link
-     * org.geotools.util.factory.Hints}. This is not a problem for normal execution, but Maven seems
-     * to mess with class loaders.
+     * <p>Factories are specified in arguments as {@link org.geotools.util.factory.Factory} objects in order to avoid
+     * the {@link DummyClass} to be initialized before {@link org.geotools.util.factory.Hints}. This is not a problem
+     * for normal execution, but Maven seems to mess with class loaders.
      *
-     * @param creator {@code true} if the registry should be an instance of {@link
-     *     org.geotools.util.factory.FactoryCreator}.
+     * @param creator {@code true} if the registry should be an instance of
+     *     {@link org.geotools.util.factory.FactoryCreator}.
      */
+    @SuppressWarnings("PMD.UnusedPrivateMethod") // PMD getting confused here?
     private FactoryRegistry getRegistry(
-            final boolean creator,
-            final Factory factory1,
-            final Factory factory2,
-            final Factory factory3) {
-        @SuppressWarnings("unchecked")
-        final Set<Class<?>> categories = (Set) Collections.singleton(DummyFactory.class);
+            final boolean creator, final Factory factory1, final Factory factory2, final Factory factory3) {
+        final Set<Class<?>> categories = Collections.singleton(DummyFactory.class);
         // The above line fails without the cast, I don't know why...
         final FactoryRegistry registry;
         if (creator) {
@@ -79,15 +79,9 @@ public final class FactoryRegistryTest {
         registry.registerFactory(factory1);
         registry.registerFactory(factory2);
         registry.registerFactory(factory3);
-        assertTrue(
-                registry.setOrdering(
-                        DummyFactory.class, (DummyFactory) factory1, (DummyFactory) factory2));
-        assertTrue(
-                registry.setOrdering(
-                        DummyFactory.class, (DummyFactory) factory2, (DummyFactory) factory3));
-        assertTrue(
-                registry.setOrdering(
-                        DummyFactory.class, (DummyFactory) factory1, (DummyFactory) factory3));
+        assertTrue(registry.setOrdering(DummyFactory.class, (DummyFactory) factory1, (DummyFactory) factory2));
+        assertTrue(registry.setOrdering(DummyFactory.class, (DummyFactory) factory2, (DummyFactory) factory3));
+        assertTrue(registry.setOrdering(DummyFactory.class, (DummyFactory) factory1, (DummyFactory) factory3));
 
         final List<?> factories =
                 registry.getFactories(DummyFactory.class, null, null).collect(toList());
@@ -100,14 +94,13 @@ public final class FactoryRegistryTest {
     }
 
     /**
-     * Tests the {@link org.geotools.util.factory.FactoryRegistry#getProvider} method. Note that the
-     * tested method do not create any new factory. If no registered factory matching the hints is
-     * found, an exception is expected. <br>
+     * Tests the {@link org.geotools.util.factory.FactoryRegistry#getProvider} method. Note that the tested method do
+     * not create any new factory. If no registered factory matching the hints is found, an exception is expected. <br>
      * <br>
      * Three factories are initially registered: factory #1, #2 and #3.
      *
-     * <p>Factory #1 has no dependency. Factory #2 uses factory #1. Factory #3 uses factory #2,
-     * which implies an indirect dependency to factory #1.
+     * <p>Factory #1 has no dependency. Factory #2 uses factory #1. Factory #3 uses factory #2, which implies an
+     * indirect dependency to factory #1.
      *
      * <p>Additionnaly, factory #1 uses a KEY_INTERPOLATION hint.
      */
@@ -118,16 +111,14 @@ public final class FactoryRegistryTest {
         final DummyFactory factory2 = new DummyFactory.Example2();
         final DummyFactory factory3 = new DummyFactory.Example3();
         final FactoryRegistry registry = getRegistry(false, factory1, factory2, factory3);
-        Hints hints;
-        DummyFactory factory;
         // ------------------------------------------------
         //     PART 1: SIMPLE HINT (not a Factory hint)
         // ------------------------------------------------
         /*
          * No hints. The fist factory should be selected.
          */
-        hints = null;
-        factory = registry.getFactory(DummyFactory.class, null, hints, key);
+        Hints hints = null;
+        DummyFactory factory = registry.getFactory(DummyFactory.class, null, hints, key);
         assertSame("No preferences; should select the first factory. ", factory1, factory);
         /*
          * A hint compatible with one of our factories. Factory #1 declares explicitly that it uses
@@ -179,10 +170,8 @@ public final class FactoryRegistryTest {
         /*
          * Same as above, but with classes specified in an array.
          */
-        hints =
-                new Hints(
-                        DummyFactory.DUMMY_FACTORY,
-                        new Class<?>[] {DummyFactory.Example3.class, DummyFactory.Example2.class});
+        hints = new Hints(
+                DummyFactory.DUMMY_FACTORY, new Class<?>[] {DummyFactory.Example3.class, DummyFactory.Example2.class});
         factory = registry.getFactory(DummyFactory.class, null, hints, key);
         assertSame("Factory of class #3 were requested. ", factory3, factory);
         /*
@@ -208,10 +197,8 @@ public final class FactoryRegistryTest {
          * In the particular case of this test suite, this extra step would not be needed
          * neither if factory #1 was last in the ordering rather than first.
          */
-        final Hints implementations =
-                new Hints(
-                        DummyFactory.DUMMY_FACTORY,
-                        new Class[] {DummyFactory.Example2.class, DummyFactory.Example3.class});
+        final Hints implementations = new Hints(
+                DummyFactory.DUMMY_FACTORY, new Class[] {DummyFactory.Example2.class, DummyFactory.Example3.class});
         /*
          * Now search NOT for factory #1, but rather for a factory using #1 internally.
          * This is the case of factory #2.
@@ -223,10 +210,9 @@ public final class FactoryRegistryTest {
     }
 
     /**
-     * Tests the {@link org.geotools.util.factory.FactoryCreator#getProvider} method. This test
-     * tries again the cases that was expected to throws an exception in {@link #testGetProvider}.
-     * But now, those cases are expected to creates automatically new factory instances instead of
-     * throwing an exception.
+     * Tests the {@link org.geotools.util.factory.FactoryCreator#getProvider} method. This test tries again the cases
+     * that was expected to throws an exception in {@link #testGetProvider}. But now, those cases are expected to
+     * creates automatically new factory instances instead of throwing an exception.
      */
     @Test
     public void testCreateProvider() {
@@ -235,14 +221,12 @@ public final class FactoryRegistryTest {
         final DummyFactory factory2 = new DummyFactory.Example2();
         final DummyFactory factory3 = new DummyFactory.Example3();
         final FactoryRegistry registry = getRegistry(true, factory1, factory2, factory3);
-        Hints hints;
-        DummyFactory factory;
         /*
          * Same tests than above (at least some of them).
          * See comments in 'testGetProvider()' for explanation.
          */
-        hints = new Hints(Hints.KEY_INTERPOLATION, Hints.VALUE_INTERPOLATION_BILINEAR);
-        factory = registry.getFactory(DummyFactory.class, null, hints, key);
+        Hints hints = new Hints(Hints.KEY_INTERPOLATION, Hints.VALUE_INTERPOLATION_BILINEAR);
+        DummyFactory factory = registry.getFactory(DummyFactory.class, null, hints, key);
         assertSame("First factory matches; it should be selected. ", factory1, factory);
 
         hints = new Hints(DummyFactory.DUMMY_FACTORY, DummyFactory.Example2.class);
@@ -257,10 +241,7 @@ public final class FactoryRegistryTest {
         hints = new Hints(Hints.KEY_INTERPOLATION, Hints.VALUE_INTERPOLATION_BICUBIC);
         try {
             factory = registry.getFactory(DummyFactory.class, null, hints, key);
-            fail(
-                    "Found or created factory "
-                            + factory
-                            + ", while it should not have been allowed.");
+            fail("Found or created factory " + factory + ", while it should not have been allowed.");
         } catch (FactoryNotFoundException exception) {
             // This is the expected exception. Continue...
         }
@@ -275,10 +256,7 @@ public final class FactoryRegistryTest {
         registry.registerFactory(factory5);
         assertTrue(registry.setOrdering(DummyFactory.class, factory1, factory5));
         factory = registry.getFactory(DummyFactory.class, null, hints, key);
-        assertSame(
-                "An instance of Factory #5 should have been created.",
-                factory5.getClass(),
-                factory.getClass());
+        assertSame("An instance of Factory #5 should have been created.", factory5.getClass(), factory.getClass());
         assertNotSame("A NEW instance of Factory #5 should have been created", factory5, factory);
         /*
          * Tries again with a class explicitly specified as an implementation hint.
@@ -287,13 +265,12 @@ public final class FactoryRegistryTest {
         hints.put(DummyFactory.DUMMY_FACTORY, DummyFactory.Example4.class);
         factory = registry.getFactory(DummyFactory.class, null, hints, key);
         assertEquals(
-                "An instance of Factory #4 should have been created.",
-                DummyFactory.Example4.class,
-                factory.getClass());
+                "An instance of Factory #4 should have been created.", DummyFactory.Example4.class, factory.getClass());
     }
 
     @Ignore
-    public void testLookupWithExtendedClasspath() {
+    @Test
+    public void testLookupWithExtendedClasspath() throws IOException {
         URL url = getClass().getResource("foo.jar");
         assertNotNull(url);
 
@@ -301,50 +278,48 @@ public final class FactoryRegistryTest {
         Stream<DummyInterface> factories = reg.getFactories(DummyInterface.class, false);
         assertFalse(factories.findAny().isPresent());
 
-        URLClassLoader cl = new URLClassLoader(new URL[] {url});
-        GeoTools.addClassLoader(cl);
-        reg.scanForPlugins();
+        try (URLClassLoader cl = new URLClassLoader(new URL[] {url})) {
+            GeoTools.addClassLoader(cl);
+            reg.scanForPlugins();
 
-        Set<String> classes =
-                reg.getFactories(DummyInterface.class, false)
-                        .map(factory -> factory.getClass().getName())
-                        .collect(toSet());
+            Set<String> classes = reg.getFactories(DummyInterface.class, false)
+                    .map(factory -> factory.getClass().getName())
+                    .collect(toSet());
 
-        assertEquals(2, classes.size());
-        assertTrue(classes.contains("pkg.Foo"));
-        assertTrue(classes.contains("org.geotools.util.factory.DummyInterfaceImpl"));
+            assertEquals(2, classes.size());
+            assertTrue(classes.contains("pkg.Foo"));
+            assertTrue(classes.contains("org.geotools.util.factory.DummyInterfaceImpl"));
+        }
     }
 
-    /**
-     * Tests for GEOT-2817
-     *
-     * @throws MalformedURLException
-     * @throws ClassNotFoundException
-     */
+    /** Tests for GEOT-2817 */
     @Test
-    public void testLookupWithSameFactoryInTwoClassLoaders()
-            throws MalformedURLException, ClassNotFoundException {
+    public void testLookupWithSameFactoryInTwoClassLoaders() throws IOException, ClassNotFoundException {
         // create url to this project's classes
         URL projectClasses = getClass().getResource("/");
         // create 2 classloaders with parent null to avoid delegation to the system class loader !
         // this occurs in reality with split class loader hierarchies (e.g. GWT plugin and
         // some application servers)
-        URLClassLoader cl1 = new URLClassLoader(new URL[] {projectClasses}, null);
-        URLClassLoader cl2 = new URLClassLoader(new URL[] {projectClasses}, null);
-        // extend with both class loaders
-        GeoTools.addClassLoader(cl1);
-        GeoTools.addClassLoader(cl2);
-        // code below was throwing ClassCastException (before java 7) prior to adding
-        // isAssignableFrom() check (line 862)
-        for (int i = 0; i < 2; i++) {
-            ClassLoader loader = (i == 0 ? cl1 : cl2);
-            Class dummy = loader.loadClass("org.geotools.util.factory.DummyInterface");
-            FactoryRegistry reg = new FactoryCreator(dummy);
-            reg.scanForPlugins();
-            Optional factory = reg.getFactories(dummy, false).findFirst();
-            assertTrue(factory.isPresent());
-            // factory class should have same class loader as interface
-            assertSame(loader, factory.get().getClass().getClassLoader());
+        try (URLClassLoader cl1 = new URLClassLoader(new URL[] {projectClasses}, null);
+                URLClassLoader cl2 = new URLClassLoader(new URL[] {projectClasses}, null)) {
+            // extend with both class loaders
+            GeoTools.addClassLoader(cl1);
+            GeoTools.addClassLoader(cl2);
+            // code below was throwing ClassCastException (before java 7) prior to adding
+            // isAssignableFrom() check (line 862)
+            for (int i = 0; i < 2; i++) {
+                ClassLoader loader = (i == 0 ? cl1 : cl2);
+                Class dummy = loader.loadClass("org.geotools.util.factory.DummyInterface");
+                FactoryRegistry reg = new FactoryCreator(dummy);
+                reg.scanForPlugins();
+                // we are mocking with two class loaders, trying to make it type safe will make
+                // the factory fail to load the factory
+                @SuppressWarnings("unchecked")
+                Optional factory = reg.getFactories(dummy, false).findFirst();
+                assertTrue(factory.isPresent());
+                // factory class should have same class loader as interface
+                assertSame(loader, factory.get().getClass().getClassLoader());
+            }
         }
     }
 }

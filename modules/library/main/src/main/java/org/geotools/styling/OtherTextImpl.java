@@ -16,7 +16,8 @@
  */
 package org.geotools.styling;
 
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.OtherText;
 
 public class OtherTextImpl implements OtherText {
 
@@ -24,18 +25,22 @@ public class OtherTextImpl implements OtherText {
 
     Expression text;
 
+    @Override
     public String getTarget() {
         return location;
     }
 
+    @Override
     public void setTarget(String location) {
         this.location = location;
     }
 
+    @Override
     public Expression getText() {
         return text;
     }
 
+    @Override
     public void setText(Expression text) {
         this.text = text;
     }

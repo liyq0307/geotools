@@ -16,6 +16,8 @@
  */
 package org.geotools.data.wps;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -42,6 +44,7 @@ import org.geotools.ows.ServiceException;
 import org.geotools.process.Process;
 import org.geotools.process.ProcessException;
 import org.geotools.test.OnlineTestCase;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assume;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
@@ -55,8 +58,7 @@ import org.locationtech.jts.io.WKTReader;
  * @author GDavis
  */
 public class WPSFactoryOnlineTest extends OnlineTestCase {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(WPSFactoryOnlineTest.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(WPSFactoryOnlineTest.class);
 
     private WebProcessingService wps;
 
@@ -73,9 +75,7 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
     @Override
     protected Properties createExampleFixture() {
         Properties example = new Properties();
-        example.put(
-                "service",
-                "http://localhost:8080/geoserver/ows?service=wps&version=1.0.0&request=GetCapabilities");
+        example.put("service", "http://localhost:8080/geoserver/ows?service=wps&version=1.0.0&request=GetCapabilities");
         example.put("processId", "buffer");
 
         return example;
@@ -121,16 +121,9 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         wps = new WebProcessingService(url /*capabilities*/);
     }
 
-    /**
-     * run multiple buffer tests with various geometry types
-     *
-     * @throws ParseException
-     * @throws IOException
-     * @throws ServiceException
-     */
+    /** run multiple buffer tests with various geometry types */
     @Test
-    public void testExecuteProcessBufferLocal()
-            throws ParseException, ServiceException, IOException, ProcessException {
+    public void testExecuteProcessBufferLocal() throws ParseException, ServiceException, IOException, ProcessException {
         if (fixture == null) {
             return;
         }
@@ -140,13 +133,10 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         Geometry geom1 = reader.read("POLYGON((20 10, 30 0, 40 10, 30 20, 20 10))");
         Geometry geom2 = reader.read("POINT (160 200)");
         Geometry geom3 = reader.read("LINESTRING (100 240, 220 140, 380 240, 480 220)");
-        Geometry geom4 =
-                reader.read(
-                        "MULTILINESTRING ((140 280, 180 180, 400 260), (340 120, 160 100, 80 200))");
+        Geometry geom4 = reader.read("MULTILINESTRING ((140 280, 180 180, 400 260), (340 120, 160 100, 80 200))");
         Geometry geom5 = reader.read("MULTIPOINT (180 180, 260 280, 340 200)");
-        Geometry geom6 =
-                reader.read(
-                        "MULTIPOLYGON (((160 320, 120 140, 360 140, 320 340, 160 320), (440 260, 580 140, 580 240, 440 260)))");
+        Geometry geom6 = reader.read(
+                "MULTIPOLYGON (((160 320, 120 140, 360 140, 320 340, 160 320), (440 260, 580 140, 580 240, 440 260)))");
 
         // run the local buffer execute test for each geom input
         runExecuteProcessBufferLocal(geom1);
@@ -197,12 +187,8 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         execRequest.addInput("buffer", Arrays.asList(wps.createLiteralInputValue("350")));
         execRequest.addInput(
                 "geom1",
-                Arrays.asList(
-                        wps.createBoundingBoxInputValue(
-                                "EPSG:4326",
-                                2,
-                                Arrays.asList(-180.0, -90.0),
-                                Arrays.asList(-180.0, -90.0))));
+                Arrays.asList(wps.createBoundingBoxInputValue(
+                        "EPSG:4326", 2, Arrays.asList(-180.0, -90.0), Arrays.asList(-180.0, -90.0))));
 
         ResponseDocumentType respDoc = wps.createResponseDocumentType(false, true, true, "result");
 
@@ -225,7 +211,7 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         Process process = wpsfactory.create();
 
         // setup the inputs
-        Map<String, Object> map = new TreeMap<String, Object>();
+        Map<String, Object> map = new TreeMap<>();
         map.put("buffer", 350);
         map.put("geom1", geom1);
 
@@ -240,20 +226,12 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         assertNotNull(result);
         // System.out.println(expected);
         // System.out.println(result);
-        // assertTrue(expected.equals(result));
-
+        assertEquals(expected, result);
     }
 
-    /**
-     * Do some more local process tests, such as union
-     *
-     * @throws ServiceException
-     * @throws IOException
-     * @throws ParseException
-     */
+    /** Do some more local process tests, such as union */
     @Test
-    public void testExecuteLocalUnion()
-            throws ServiceException, IOException, ParseException, ProcessException {
+    public void testExecuteLocalUnion() throws ServiceException, IOException, ParseException, ProcessException {
         if (fixture == null) {
             return;
         }
@@ -298,9 +276,9 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         Process process = wpsfactory.create();
 
         // setup the inputs
-        Map<String, Object> map = new TreeMap<String, Object>();
+        Map<String, Object> map = new TreeMap<>();
         WKTReader reader = new WKTReader(new GeometryFactory());
-        List<Geometry> list = new ArrayList<Geometry>();
+        List<Geometry> list = new ArrayList<>();
         Geometry geom1 = reader.read("POLYGON((20 10, 30 0, 40 10, 30 20, 20 10))");
         Geometry geom2 = reader.read("POLYGON((20 30, 30 0, 20 20, 80 20, 20 30))");
         Geometry geom3 = reader.read("POLYGON((177 10, 30 88, 40 70, 46 20, 177 10))");
@@ -327,16 +305,9 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
 
     }
 
-    /**
-     * Do some more local union test that should return an exception
-     *
-     * @throws ServiceException
-     * @throws IOException
-     * @throws ParseException
-     */
+    /** Do some more local union test that should return an exception */
     @Test
-    public void testBADExecuteLocalUnion()
-            throws ServiceException, IOException, ParseException, ProcessException {
+    public void testBADExecuteLocalUnion() throws ServiceException, IOException, ParseException, ProcessException {
         if (fixture == null) {
             return;
         }
@@ -381,7 +352,7 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         Process process = wpsfactory.create();
 
         // setup the inputs as empty (which should return an exception)
-        Map<String, Object> map = new TreeMap<String, Object>();
+        Map<String, Object> map = new TreeMap<>();
 
         // execute/send-request for the process
         Map<String, Object> results = process.execute(map, null);
@@ -390,16 +361,9 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         assertNull(results);
     }
 
-    /**
-     * Do some more local process tests, such as double addition
-     *
-     * @throws ServiceException
-     * @throws IOException
-     * @throws ParseException
-     */
+    /** Do some more local process tests, such as double addition */
     @Test
-    public void testExecuteLocalAdd()
-            throws ServiceException, IOException, ParseException, ProcessException {
+    public void testExecuteLocalAdd() throws ServiceException, IOException, ParseException, ProcessException {
         if (fixture == null) {
             return;
         }
@@ -444,7 +408,7 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         Process process = wpsfactory.create();
 
         // setup the inputs
-        Map<String, Object> map = new TreeMap<String, Object>();
+        Map<String, Object> map = new TreeMap<>();
         Double d1 = 77.84;
         Double d2 = 40039.229;
         map.put("input_a", d1);
@@ -480,6 +444,7 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         WPSCapabilitiesType capabilities = wps.getCapabilities();
 
         ProcessOfferingsType processOfferings = capabilities.getProcessOfferings();
+        @SuppressWarnings("unchecked")
         List<ProcessBriefType> processes = processOfferings.getProcess();
 
         // does the server contain the specific process I want
@@ -500,9 +465,7 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
 
         DescribeProcessResponse descResponse = wps.issueRequest(descRequest);
         ProcessDescriptionsType processDesc = descResponse.getProcessDesc();
-        ProcessDescriptionType pdt =
-                (ProcessDescriptionType) processDesc.getProcessDescription().get(0);
-        WPSFactory wpsfactory = new WPSFactory(pdt, this.url);
+        assertThat(processDesc.getProcessDescription().get(0), CoreMatchers.instanceOf(ProcessDescriptionType.class));
     }
 
     /** GEOT-4364 [2]: parsing LiteralOutput/DataType with null ows:reference */
@@ -522,6 +485,7 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
         WPSCapabilitiesType capabilities = wps.getCapabilities();
 
         ProcessOfferingsType processOfferings = capabilities.getProcessOfferings();
+        @SuppressWarnings("unchecked")
         List<ProcessBriefType> processes = processOfferings.getProcess();
 
         // does the server contain the specific process I want
@@ -542,8 +506,6 @@ public class WPSFactoryOnlineTest extends OnlineTestCase {
 
         DescribeProcessResponse descResponse = wps.issueRequest(descRequest);
         ProcessDescriptionsType processDesc = descResponse.getProcessDesc();
-        ProcessDescriptionType pdt =
-                (ProcessDescriptionType) processDesc.getProcessDescription().get(0);
-        WPSFactory wpsfactory = new WPSFactory(pdt, this.url);
+        assertThat(processDesc.getProcessDescription().get(0), CoreMatchers.instanceOf(ProcessDescriptionType.class));
     }
 }

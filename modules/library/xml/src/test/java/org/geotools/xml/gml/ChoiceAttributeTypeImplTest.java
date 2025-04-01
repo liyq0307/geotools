@@ -16,7 +16,7 @@
  */
 package org.geotools.xml.gml;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.geotools.feature.NameImpl;
 import org.junit.Test;
@@ -25,16 +25,8 @@ public class ChoiceAttributeTypeImplTest {
 
     public static final int MIN = 0;
     public static final int MAX = 10;
-    ChoiceAttributeTypeImpl choice =
-            new ChoiceAttributeTypeImpl(
-                    new NameImpl("test"),
-                    new Class[] {Integer.class, Double.class},
-                    Integer.class,
-                    true,
-                    MIN,
-                    MAX,
-                    null,
-                    null);
+    ChoiceAttributeTypeImpl choice = new ChoiceAttributeTypeImpl(
+            new NameImpl("test"), new Class[] {Integer.class, Double.class}, Integer.class, true, MIN, MAX, null, null);
 
     @Test
     public void testMin() {

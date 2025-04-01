@@ -26,7 +26,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,16 +43,17 @@ import java.util.logging.Logger;
  */
 public class FontCache {
     /** The logger for the rendering module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(FontCache.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(FontCache.class);
 
     static volatile FontCache defaultInstance;
 
     /** Set containing the font families known of this machine */
-    Set<String> systemFonts = new HashSet<String>();
+    volatile Set<String> systemFonts = new HashSet<>();
 
     /** Fonts already loaded */
-    Map<String, Font> loadedFonts = new ConcurrentHashMap<String, Font>();
+    Map<String, Font> loadedFonts = new ConcurrentHashMap<>();
+
+    Map<String, List<String>> alternatives = new ConcurrentHashMap<>();
 
     /**
      * Returns the default, system wide font cache
@@ -63,7 +67,7 @@ public class FontCache {
         return defaultInstance;
     }
 
-    public synchronized Font getFont(String requestedFont) {
+    public Font getFont(String requestedFont) {
         // see if the font has already been loaded
         java.awt.Font javaFont = null;
         if (LOGGER.isLoggable(Level.FINEST)) {
@@ -100,20 +104,45 @@ public class FontCache {
         return javaFont;
     }
 
-    /**
-     * Tries to load the specified font name as a URL
-     *
-     * @param fontUrl
-     * @return
-     */
-    java.awt.Font loadFromUrl(String fontUrl) {
+    /** Tries to load the specified font name as a URL. Does not cache the result. */
+    public static java.awt.Font loadFromUrl(String fontUrl) {
         // may be its a file or url
-        InputStream is = null;
+        try (InputStream is = getInputStream(fontUrl)) {
+            // make sure we have anything to load
+            if (is == null) {
+                if (LOGGER.isLoggable(Level.INFO)) {
+                    LOGGER.info("null input stream, could not load the font");
+                }
 
-        if (fontUrl.startsWith("http") || fontUrl.startsWith("file:")) {
+                return null;
+            }
+
+            if (LOGGER.isLoggable(Level.FINEST)) {
+                LOGGER.finest("about to load");
+            }
+
+            return java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, is);
+        } catch (FontFormatException ffe) {
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.info("Font format error in FontCache " + fontUrl + "\n" + ffe);
+            }
+
+            return null;
+        } catch (IOException ioe) {
+            // we'll ignore this for the moment
+            if (LOGGER.isLoggable(Level.INFO)) {
+                LOGGER.info("IO error in FontCache " + fontUrl + "\n" + ioe);
+            }
+
+            return null;
+        }
+    }
+
+    private static InputStream getInputStream(String fontUrl) {
+        if (fontUrl.startsWith("http") || fontUrl.startsWith("file:") || fontUrl.startsWith("jar:")) {
             try {
                 URL url = new URL(fontUrl);
-                is = url.openStream();
+                return url.openStream();
             } catch (MalformedURLException mue) {
                 // this may be ok - but we should mention it
                 if (LOGGER.isLoggable(Level.INFO)) {
@@ -134,7 +163,7 @@ public class FontCache {
 
             if (file.exists()) {
                 try {
-                    is = new FileInputStream(file);
+                    return new FileInputStream(file);
                 } catch (FileNotFoundException fne) {
                     // this may be ok - but we should mention it
                     if (LOGGER.isLoggable(Level.INFO)) {
@@ -143,60 +172,18 @@ public class FontCache {
                 }
             }
         }
-
-        // make sure we have anything to load
-        if (is == null) {
-            if (LOGGER.isLoggable(Level.INFO)) {
-                LOGGER.info("null input stream, could not load the font");
-            }
-
-            return null;
-        }
-
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            LOGGER.finest("about to load");
-        }
-
-        try {
-            return java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, is);
-        } catch (FontFormatException ffe) {
-            if (LOGGER.isLoggable(Level.INFO)) {
-                LOGGER.info("Font format error in FontCache " + fontUrl + "\n" + ffe);
-            }
-
-            return null;
-        } catch (IOException ioe) {
-            // we'll ignore this for the moment
-            if (LOGGER.isLoggable(Level.INFO)) {
-                LOGGER.info("IO error in FontCache " + fontUrl + "\n" + ioe);
-            }
-
-            return null;
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    LOGGER.info("IO error in FontCache" + fontUrl + "\n" + e);
-                }
-            }
-        }
+        return null;
     }
 
     /**
-     * Adds the specified font in the font cache. Useful if you want to load fonts that are not
-     * installed in the Operating System and cannot provide a full path to fonts either.
-     *
-     * @param f
+     * Adds the specified font in the font cache. Useful if you want to load fonts that are not installed in the
+     * Operating System and cannot provide a full path to fonts either.
      */
     public void registerFont(Font f) {
         loadedFonts.put(f.getName(), f);
     }
 
-    /**
-     * Resets the font loading cache. If any font was manually registered, it will have to be
-     * registered again
-     */
+    /** Resets the font loading cache. If any font was manually registered, it will have to be registered again */
     public synchronized void resetCache() {
         if (systemFonts != null) {
             systemFonts.clear();
@@ -204,20 +191,19 @@ public class FontCache {
         if (loadedFonts != null) {
             loadedFonts.clear();
         }
+        if (alternatives != null) {
+            alternatives.clear();
+        }
     }
 
-    /**
-     * Lazily loads up the system fonts cache
-     *
-     * @return
-     */
+    /** Lazily loads up the system fonts cache */
     private Set<String> getSystemFonts() {
         // make sure we load the known font families once.
-        if (systemFonts.size() == 0) {
+        if (systemFonts.isEmpty()) {
             synchronized (systemFonts) {
-                if (systemFonts.size() == 0) {
+                if (systemFonts.isEmpty()) {
                     GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                    Set<String> fontset = new HashSet<String>();
+                    Set<String> fontset = new HashSet<>();
 
                     // register both faces and families
                     Font[] fonts = ge.getAllFonts();
@@ -239,17 +225,66 @@ public class FontCache {
     }
 
     /**
-     * Returns the set of font families and font faces available in the system and those manually
-     * loaded into the cache
-     *
-     * @return
+     * Returns the set of font families and font faces available in the system and those manually loaded into the cache
      */
     public Set<String> getAvailableFonts() {
-        Set<String> availableFonts = new HashSet<String>();
+        Set<String> availableFonts = new HashSet<>();
 
         availableFonts.addAll(getSystemFonts());
         availableFonts.addAll(loadedFonts.keySet());
 
         return availableFonts;
+    }
+
+    /**
+     * Given a font name, returns alternatives for other scripts, based on the assumption they start with the same base
+     * name, e.g., "Noto Sans" also has a number of alternative fonts dedicated to specific scripts, like "Noti Sans
+     * Urdu", "Noto Sans Arabic", "Noto Sans Javanese" and so on. The code will not return style alterations like "Noto
+     * Sans Bold" or "Noto Sans Bold Italic" thought (strips all font names containing "bold" and "italic", case
+     * insesitive).
+     *
+     * @return A list of font names with the same base name
+     */
+    public List<String> getAlternatives(String name) {
+        List<String> result = alternatives.get(name);
+        if (result == null) {
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            result = new ArrayList<>();
+            // load first local fonts
+            for (Font font : loadedFonts.values()) {
+                collectAlternative(name, font.getName(), result);
+            }
+            // then system fonts
+            Font[] fonts = ge.getAllFonts();
+            for (Font font : fonts) {
+                collectAlternative(name, font.getName(), result);
+            }
+            // leave further altered fonts down the line, base ones first
+            Collections.sort(result);
+            alternatives.put(name, result);
+        }
+
+        return result;
+    }
+
+    /**
+     * Collects alternatives to font names, skipping the ones that are related to rendering
+     *
+     * @param name
+     * @param fontName
+     * @param result
+     */
+    static void collectAlternative(String name, String fontName, List<String> result) {
+        if (fontName.startsWith(name)) {
+            String lowExtension = fontName.substring(name.length()).toLowerCase();
+            // skip all alterations
+            if (!lowExtension.contains("black")
+                    && !lowExtension.contains("medium")
+                    && !lowExtension.contains("bold")
+                    && !lowExtension.contains("italic")
+                    && !lowExtension.contains("thin")
+                    && !lowExtension.contains("condensed")
+                    && !lowExtension.contains("light")) result.add(fontName);
+        }
     }
 }

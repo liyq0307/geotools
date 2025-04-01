@@ -7,15 +7,14 @@
                                                                                 
         Version: $Id: pom.xml 34196 2009-10-22 13:32:49Z groldan $              
      ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>geotools</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
-
 
   <!-- =========================================================== -->
   <!--     Module Description                                      -->
@@ -33,14 +32,13 @@
     </license>
   </licenses>
 
-
   <!-- =========================================================== -->
   <!--     Developers and Contributors                             -->
   <!-- =========================================================== -->
   <developers>
     <developer>
-      <name>Jody Garnett</name>
       <id>jive</id>
+      <name>Jody Garnett</name>
       <email>jgarnett@gmail.com</email>
       <organization>Open Source Geospatial Foundation</organization>
       <roles>
@@ -49,6 +47,10 @@
     </developer>
   </developers>
 
+  <properties>
+    <target>full</target>
+    <checkstyle.file>checkstyle-cc0.xml</checkstyle.file>
+  </properties>
 
   <!-- =========================================================== -->
   <!--     Dependency Management                                   -->
@@ -101,12 +103,22 @@
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
+      <artifactId>gt-imagemosaic</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
       <artifactId>gt-epsg-hsql</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-wms</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-wmts</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -166,11 +178,6 @@
     </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
-      <artifactId>gt-validation</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.geotools</groupId>
       <artifactId>gt-sample-data</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -191,7 +198,7 @@
     <dependency>
       <groupId>org.apache.xmlgraphics</groupId>
       <artifactId>batik-codec</artifactId>
-      <!-- The version number is specified in the parent POM. --> 
+      <!-- The version number is specified in the parent POM. -->
     </dependency>
     <dependency>
       <groupId>org.apache.xmlgraphics</groupId>
@@ -199,9 +206,9 @@
       <!-- The version number is specified in the parent POM. -->
     </dependency>
     <dependency>
-        <groupId>net.sourceforge.javacsv</groupId>
-        <artifactId>javacsv</artifactId>
-        <version>2.0</version>
+      <groupId>net.sourceforge.javacsv</groupId>
+      <artifactId>javacsv</artifactId>
+      <version>2.0</version>
     </dependency>
     <dependency>
       <groupId>javax.xml.bind</groupId>
@@ -214,12 +221,16 @@
       <!-- The version number is specified in the parent POM. -->
     </dependency>
     <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <scope>provided</scope>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.opencsv</groupId>
+      <artifactId>opencsv</artifactId>
+      <version>5.0</version>
     </dependency>
   </dependencies>
-
 
   <build>
     <plugins>
@@ -227,9 +238,9 @@
         <artifactId>maven-antrun-plugin</artifactId>
         <dependencies>
           <dependency>
-            <groupId>ant</groupId>
+            <groupId>org.apache.ant</groupId>
             <artifactId>ant</artifactId>
-            <version>1.6.5</version>
+            <version>1.10.12</version>
           </dependency>
           <dependency>
             <groupId>ant-contrib</groupId>
@@ -239,19 +250,19 @@
         </dependencies>
         <executions>
           <execution>
-            <id>compile</id>
+            <id>sphinx</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
             <phase>compile</phase>
             <configuration>
               <tasks>
                 <ant antfile="build.xml" dir="${basedir}" target="${target}">
-                  <property name="build.directory" value="${project.build.directory}"/>
-                  <property name="project.version" value="${project.version}"/>
+                  <property name="build.directory" value="${project.build.directory}"></property>
+                  <property name="project.version" value="${project.version}"></property>
                 </ant>
               </tasks>
             </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>
@@ -259,20 +270,23 @@
         <!-- Disable PMD in this module, the code is a set of examples, too many System.out -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-pmd-plugin</artifactId>
+        <version>${maven.pmd.plugin.version}</version>
         <executions>
-            <execution>
-                <phase>none</phase>
-            </execution>
+          <execution>
+            <phase>none</phase>
+          </execution>
         </executions>
-    </plugin>
+      </plugin>
+      <plugin>
+        <!-- do not deploy tutorial examples -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
-
-
-  <properties>
-     <target>full</target>
-  </properties>
-
 
   <profiles>
     <profile>
@@ -298,6 +312,14 @@
       <properties>
         <target>developer</target>
       </properties>
+    </profile>
+    <profile>
+      <id>checkstyle</id>
+      <activation>
+        <property>
+          <name>qa</name>
+        </property>
+      </activation>
     </profile>
   </profiles>
 

@@ -22,15 +22,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataAccessFinder;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.feature.type.Name;
 import org.geotools.feature.NameImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.type.Name;
 
 public class HiddenDataAccessDisposalTest extends AbstractHiddenDataAccessDisposalTest {
 
@@ -40,16 +41,11 @@ public class HiddenDataAccessDisposalTest extends AbstractHiddenDataAccessDispos
 
     AppSchemaDataAccess mfDataAccess;
 
-    /**
-     * Load all the data accesses.
-     *
-     * @return
-     * @throws Exception
-     */
+    /** Load all the data accesses. */
     @Before
     public void loadDataAccesses() throws Exception {
         /** Load mapped feature data access */
-        Map dsParams = new HashMap();
+        Map<String, Serializable> dsParams = new HashMap<>();
         URL url = getClass().getResource(schemaBase + "MappedFeaturePropertyfile.xml");
         assertNotNull(url);
 

@@ -21,8 +21,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for EHdr files.
@@ -34,14 +34,14 @@ import org.opengis.coverage.grid.Format;
  */
 public final class EsriHdrFormatFactory implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(EsriHdrFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(EsriHdrFormatFactory.class);
 
     /**
      * Tells me if the coverage plugin to access EHdr is available or not.
      *
      * @return {@code true} if the plugin is available, {@code false} otherwise.
      */
+    @Override
     public boolean isAvailable() {
         boolean available = true;
 
@@ -56,8 +56,7 @@ public final class EsriHdrFormatFactory implements GridFormatFactorySpi {
                 else LOGGER.fine("EsriHdrFormatFactory is not available.");
             }
         } catch (ClassNotFoundException cnf) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.fine("EsriHdrFormatFactory is not available.");
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("EsriHdrFormatFactory is not available.");
 
             available = false;
         }
@@ -70,12 +69,14 @@ public final class EsriHdrFormatFactory implements GridFormatFactorySpi {
      *
      * @return A {@link EsriHdrFormat}
      */
+    @Override
     public EsriHdrFormat createFormat() {
         return new EsriHdrFormat();
     }
 
     /** Returns the implementation hints. The default implementation returns en empty map. */
-    public Map getImplementationHints() {
-        return Collections.EMPTY_MAP;
+    @Override
+    public Map<java.awt.RenderingHints.Key, ?> getImplementationHints() {
+        return Collections.emptyMap();
     }
 }

@@ -19,7 +19,7 @@ import org.eclipse.emf.ecore.InternalEObject;
 
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.eclipse.emf.ecore.impl.EObjectImpl;
-import org.opengis.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.PropertyName;
 
 /**
  * <!-- begin-user-doc -->
@@ -90,6 +90,7 @@ public class PropertyTypeImpl extends EObjectImpl implements PropertyType {
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public ValueReferenceType getValueReference() {
     if (valueReference != null && valueReference.eIsProxy()) {
       InternalEObject oldValueReference = (InternalEObject)valueReference;
@@ -116,6 +117,7 @@ public class PropertyTypeImpl extends EObjectImpl implements PropertyType {
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setValueReference(ValueReferenceType newValueReference) {
     ValueReferenceType oldValueReference = valueReference;
     valueReference = newValueReference;
@@ -128,6 +130,7 @@ public class PropertyTypeImpl extends EObjectImpl implements PropertyType {
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public Object getValue() {
     return value;
   }
@@ -137,6 +140,7 @@ public class PropertyTypeImpl extends EObjectImpl implements PropertyType {
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setValue(Object newValue) {
     Object oldValue = value;
     value = newValue;

@@ -16,13 +16,17 @@
  */
 package org.geotools.styling;
 
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.Style;
+
 /**
  * A style object is quite hard to set up, involving fills, strokes, symbolizers and rules.
  *
  * @author James Macgill, CCG
  * @version $Id$
  */
-public class BasicLineStyle extends StyleImpl implements org.geotools.styling.Style {
+public class BasicLineStyle extends StyleImpl implements Style {
     /** Creates a new instance of BasicPolygonStyle */
     public BasicLineStyle() {
         this(new StrokeImpl());
@@ -37,13 +41,14 @@ public class BasicLineStyle extends StyleImpl implements org.geotools.styling.St
 
         FeatureTypeStyleImpl fts = new FeatureTypeStyleImpl();
         fts.rules().add(rule);
-        this.featureTypeStyles().add(fts);
+        this.featureTypeStyles().add((FeatureTypeStyle) fts);
     }
 
     public String getAbstract() {
         return "A simple line style";
     }
 
+    @Override
     public String getName() {
         return "default line style";
     }

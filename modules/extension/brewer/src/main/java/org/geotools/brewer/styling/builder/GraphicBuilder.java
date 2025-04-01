@@ -20,16 +20,16 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.Symbol;
 import org.geotools.metadata.iso.citation.OnLineResourceImpl;
-import org.geotools.styling.ExternalGraphic;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.Mark;
-import org.geotools.styling.Symbol;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.GraphicalSymbol;
 
-public class GraphicBuilder extends AbstractStyleBuilder<org.opengis.style.Graphic> {
-    List<Builder<? extends Symbol>> symbols = new ArrayList<Builder<? extends Symbol>>();
+public class GraphicBuilder extends AbstractStyleBuilder<org.geotools.api.style.Graphic> {
+    List<Builder<? extends Symbol>> symbols = new ArrayList<>();
 
     Expression opacity;
 
@@ -134,15 +134,16 @@ public class GraphicBuilder extends AbstractStyleBuilder<org.opengis.style.Graph
         return displacement;
     }
 
+    @Override
     public Graphic build() {
         if (unset) {
             return null;
         }
-        if (symbols.size() == 0) {
+        if (symbols.isEmpty()) {
             // add the default mark
             mark();
         }
-        List<GraphicalSymbol> list = new ArrayList<GraphicalSymbol>();
+        List<GraphicalSymbol> list = new ArrayList<>();
         for (Builder<? extends Symbol> symbol : symbols) {
             list.add(symbol.build());
         }
@@ -159,12 +160,14 @@ public class GraphicBuilder extends AbstractStyleBuilder<org.opengis.style.Graph
         sb.featureTypeStyle().rule().point().graphic().init(this);
     }
 
+    @Override
     public GraphicBuilder unset() {
         displacement.unset();
         anchor.unset();
         return (GraphicBuilder) super.unset();
     }
 
+    @Override
     public GraphicBuilder reset() {
         unset = false;
         symbols.clear();
@@ -176,7 +179,8 @@ public class GraphicBuilder extends AbstractStyleBuilder<org.opengis.style.Graph
         return this;
     }
 
-    public GraphicBuilder reset(org.opengis.style.Graphic graphic) {
+    @Override
+    public GraphicBuilder reset(org.geotools.api.style.Graphic graphic) {
         if (graphic == null || graphic.graphicalSymbols().size() == 0) {
             return unset();
         }
@@ -187,12 +191,11 @@ public class GraphicBuilder extends AbstractStyleBuilder<org.opengis.style.Graph
                 Symbol symbol = (Symbol) graphicalSymbol;
                 Builder<? extends Symbol> builder;
                 if (symbol instanceof Mark) {
-                    builder = new MarkBuilder(this).reset((Mark) symbol);
+                    builder = (Builder<? extends Symbol>) new MarkBuilder(this).reset((Mark) symbol);
                 } else if (symbol instanceof ExternalGraphic) {
                     builder = new ExternalGraphicBuilder(this).reset((ExternalGraphic) symbol);
                 } else {
-                    throw new IllegalArgumentException(
-                            "Unrecognized symbol type: " + symbol.getClass());
+                    throw new IllegalArgumentException("Unrecognized symbol type: " + symbol.getClass());
                 }
                 if (builder != null) {
                     symbols.add(builder);

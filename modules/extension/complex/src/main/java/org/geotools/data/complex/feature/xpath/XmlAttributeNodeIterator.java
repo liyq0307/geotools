@@ -19,8 +19,8 @@ package org.geotools.data.complex.feature.xpath;
 
 import org.apache.commons.jxpath.ri.model.NodeIterator;
 import org.apache.commons.jxpath.ri.model.NodePointer;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.type.Name;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.type.Name;
 
 /**
  * Special node iterator for {@link Attribute}.
@@ -48,16 +48,19 @@ public class XmlAttributeNodeIterator implements NodeIterator {
     }
 
     /** Always return 1, only a single property. */
+    @Override
     public int getPosition() {
         return position;
     }
 
     /** Return true if position == 1. */
+    @Override
     public boolean setPosition(int position) {
         this.position = position;
         return position < 2;
     }
 
+    @Override
     public NodePointer getNodePointer() {
         return new XmlAttributeNodePointer(pointer, feature, name);
     }

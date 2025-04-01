@@ -19,12 +19,12 @@ package org.geotools.brewer.styling.builder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Style;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Style;
 import org.geotools.util.SimpleInternationalString;
 
 public class StyleBuilder extends AbstractStyleBuilder<Style> {
-    List<FeatureTypeStyleBuilder> fts = new ArrayList<FeatureTypeStyleBuilder>();
+    List<FeatureTypeStyleBuilder> fts = new ArrayList<>();
 
     String name;
 
@@ -34,6 +34,8 @@ public class StyleBuilder extends AbstractStyleBuilder<Style> {
 
     boolean isDefault;
 
+    FillBuilder background;
+
     public StyleBuilder() {
         super(null);
         reset();
@@ -42,6 +44,11 @@ public class StyleBuilder extends AbstractStyleBuilder<Style> {
     StyleBuilder(AbstractSLDBuilder<?> parent) {
         super(parent);
         reset();
+    }
+
+    public StyleBuilder defaultStyle() {
+        isDefault = true;
+        return this;
     }
 
     public StyleBuilder name(String name) {
@@ -67,45 +74,59 @@ public class StyleBuilder extends AbstractStyleBuilder<Style> {
         return ftsBuilder;
     }
 
+    public FillBuilder background() {
+        this.unset = false;
+        this.background = new FillBuilder();
+
+        return background;
+    }
+
+    @Override
     public Style build() {
         if (unset) {
             return null;
         }
 
         Style s;
-        if (fts.size() == 0) {
+        if (fts.isEmpty()) {
             s = sf.createNamedStyle();
             s.setName(name);
         } else {
             s = sf.createStyle();
             s.setName(name);
-            if (styleAbstract != null)
-                s.getDescription().setAbstract(new SimpleInternationalString(styleAbstract));
+            if (styleAbstract != null) s.getDescription().setAbstract(new SimpleInternationalString(styleAbstract));
             if (title != null) s.getDescription().setTitle(new SimpleInternationalString(title));
             for (FeatureTypeStyleBuilder builder : fts) {
                 s.featureTypeStyles().add(builder.build());
             }
             s.setDefault(isDefault);
         }
+        if (background != null) {
+            s.setBackground(background.build());
+        }
 
         reset();
         return s;
     }
 
+    @Override
     public StyleBuilder unset() {
         return (StyleBuilder) super.unset();
     }
 
+    @Override
     public StyleBuilder reset() {
         fts.clear();
         name = null;
         styleAbstract = null;
         title = null;
         isDefault = false;
+        background = null;
         unset = false;
         return this;
     }
 
+    @Override
     public StyleBuilder reset(Style style) {
         if (style == null) {
             return unset();
@@ -115,15 +136,14 @@ public class StyleBuilder extends AbstractStyleBuilder<Style> {
             fts.add(new FeatureTypeStyleBuilder(this).reset(ft));
         }
         name = style.getName();
-        styleAbstract =
-                Optional.ofNullable(style.getDescription().getAbstract())
-                        .map(Object::toString)
-                        .orElse(null);
-        title =
-                Optional.ofNullable(style.getDescription().getTitle())
-                        .map(Object::toString)
-                        .orElse(null);
+        styleAbstract = Optional.ofNullable(style.getDescription().getAbstract())
+                .map(Object::toString)
+                .orElse(null);
+        title = Optional.ofNullable(style.getDescription().getTitle())
+                .map(Object::toString)
+                .orElse(null);
         isDefault = style.isDefault();
+        background = new FillBuilder().reset(style.getBackground());
         unset = false;
         return this;
     }

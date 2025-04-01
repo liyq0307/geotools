@@ -16,14 +16,14 @@
  */
 package org.geotools.ows.wms.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import org.geotools.data.ows.HTTPResponse;
-import org.geotools.ows.MockHttpClient;
-import org.geotools.ows.MockHttpResponse;
+import org.geotools.http.HTTPResponse;
+import org.geotools.http.MockHttpClient;
+import org.geotools.http.MockHttpResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wms.WebMapServer;
 import org.geotools.ows.wms.request.GetMapRequest;
@@ -41,20 +41,19 @@ public class Geot5777Test {
     @Test
     public void test() throws ServiceException, MalformedURLException, IOException {
         // prepare the responses
-        MockHttpClient client =
-                new MockHttpClient() {
+        MockHttpClient client = new MockHttpClient() {
 
-                    public HTTPResponse get(URL url) throws IOException {
-                        if (url.getQuery().contains("GetCapabilities")) {
-                            URL caps = TestData.getResource(this, "geot553capabilities.xml");
-                            return new MockHttpResponse(caps, "text/xml");
-                        } else {
-                            throw new IllegalArgumentException(
-                                    "Don't know how to handle a get request over "
-                                            + url.toExternalForm());
-                        }
-                    }
-                };
+            @Override
+            public HTTPResponse get(URL url) throws IOException {
+                if (url.getQuery().contains("GetCapabilities")) {
+                    URL caps = TestData.getResource(this, "geot553capabilities.xml");
+                    return new MockHttpResponse(caps, "text/xml");
+                } else {
+                    throw new IllegalArgumentException(
+                            "Don't know how to handle a get request over " + url.toExternalForm());
+                }
+            }
+        };
 
         WebMapServer wms = new WebMapServer(new URL("http://test.org"), client);
         GetMapRequest request = wms.createGetMapRequest();

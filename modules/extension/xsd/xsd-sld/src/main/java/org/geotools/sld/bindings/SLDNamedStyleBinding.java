@@ -17,8 +17,8 @@
 package org.geotools.sld.bindings;
 
 import javax.xml.namespace.QName;
-import org.geotools.styling.NamedStyle;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.style.NamedStyle;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -56,6 +56,7 @@ public class SLDNamedStyleBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.NAMEDSTYLE;
     }
@@ -67,6 +68,7 @@ public class SLDNamedStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -78,6 +80,7 @@ public class SLDNamedStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return NamedStyle.class;
     }
@@ -89,6 +92,7 @@ public class SLDNamedStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -98,6 +102,7 @@ public class SLDNamedStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         NamedStyle namedStyle = styleFactory.createNamedStyle();
         namedStyle.setName((String) node.getChildValue("Name"));

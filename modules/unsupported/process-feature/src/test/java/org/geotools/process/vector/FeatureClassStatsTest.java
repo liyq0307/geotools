@@ -16,11 +16,13 @@
  */
 package org.geotools.process.vector;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -29,29 +31,27 @@ import org.geotools.process.vector.FeatureClassStats.Results;
 import org.jaitools.numeric.Statistic;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 public class FeatureClassStatsTest {
 
-    Object[][] data =
-            new Object[][] {
-                {'a', 1},
-                {'b', 1},
-                {'c', 2},
-                {'d', 3},
-                {'e', 3},
-                {'f', 8},
-                {'g', 8},
-                {'h', 9},
-                {'i', 11},
-                {'j', 14},
-                {'k', 16},
-                {'l', 24},
-                {'m', 26},
-                {'n', 26},
-                {'o', 45},
-                {'p', 53}
-            };
+    Object[][] data = {
+        {'a', 1},
+        {'b', 1},
+        {'c', 2},
+        {'d', 3},
+        {'e', 3},
+        {'f', 8},
+        {'g', 8},
+        {'h', 9},
+        {'i', 11},
+        {'j', 14},
+        {'k', 16},
+        {'l', 24},
+        {'m', 26},
+        {'n', 26},
+        {'o', 45},
+        {'p', 53}
+    };
     /*Object[][] data = new Object[][] { { 'd', 3 }, { 'e', 3 },
     { 'f', 8 }, { 'g', 8 }, { 'h', 9 }, { 'i', 11 }, { 'j', 14 }, { 'k', 16 }, { 'l', 24 },
     { 'm', 26 }, { 'n', 26 }, { 'o', 45 } };*/
@@ -80,17 +80,15 @@ public class FeatureClassStatsTest {
     @Test
     public void testEqualInterval() throws Exception {
 
-        Results result =
-                new FeatureClassStats()
-                        .execute(
-                                features,
-                                "valu",
-                                new LinkedHashSet<Statistic>(
-                                        Arrays.asList(Statistic.MEAN, Statistic.SUM)),
-                                4,
-                                ClassificationMethod.EQUAL_INTERVAL,
-                                null,
-                                null);
+        Results result = new FeatureClassStats()
+                .execute(
+                        features,
+                        "valu",
+                        new LinkedHashSet<>(Arrays.asList(Statistic.MEAN, Statistic.SUM)),
+                        4,
+                        ClassificationMethod.EQUAL_INTERVAL,
+                        null,
+                        null);
 
         assertResult(
                 result,
@@ -103,17 +101,15 @@ public class FeatureClassStatsTest {
 
     @Test
     public void testQuantile() throws Exception {
-        Results result =
-                new FeatureClassStats()
-                        .execute(
-                                features,
-                                "valu",
-                                new LinkedHashSet<Statistic>(
-                                        Arrays.asList(Statistic.MEAN, Statistic.SUM)),
-                                4,
-                                ClassificationMethod.QUANTILE,
-                                null,
-                                null);
+        Results result = new FeatureClassStats()
+                .execute(
+                        features,
+                        "valu",
+                        new LinkedHashSet<>(Arrays.asList(Statistic.MEAN, Statistic.SUM)),
+                        4,
+                        ClassificationMethod.QUANTILE,
+                        null,
+                        null);
 
         assertResult(
                 result,
@@ -126,17 +122,15 @@ public class FeatureClassStatsTest {
 
     @Test
     public void testNatural() throws Exception {
-        Results result =
-                new FeatureClassStats()
-                        .execute(
-                                features,
-                                "valu",
-                                new LinkedHashSet<Statistic>(
-                                        Arrays.asList(Statistic.MEAN, Statistic.SUM)),
-                                4,
-                                ClassificationMethod.NATURAL_BREAKS,
-                                null,
-                                null);
+        Results result = new FeatureClassStats()
+                .execute(
+                        features,
+                        "valu",
+                        new LinkedHashSet<>(Arrays.asList(Statistic.MEAN, Statistic.SUM)),
+                        4,
+                        ClassificationMethod.NATURAL_BREAKS,
+                        null,
+                        null);
 
         assertResult(
                 result,
@@ -148,12 +142,7 @@ public class FeatureClassStatsTest {
     }
 
     void assertResult(
-            Results result,
-            int classes,
-            Number[][] ranges,
-            Integer[] counts,
-            Number[] sums,
-            Number[] averages) {
+            Results result, int classes, Number[][] ranges, Integer[] counts, Number[] sums, Number[] averages) {
 
         assertEquals(classes, result.size());
 

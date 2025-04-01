@@ -27,18 +27,16 @@ public class HanaTypeNamesTestSetup extends JDBCTypeNamesTestSetup {
     private static final String VIEW = "ftnview";
 
     protected HanaTypeNamesTestSetup() {
-        super(new HanaTestSetup());
+        super(new HanaTestSetupPSPooling());
     }
 
     @Override
     protected void createTypes() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.createTestSchema();
 
-            String[][] cols = {
-                {"id", "INT"}, {"name", "VARCHAR(255)"}, {"geom", "ST_Geometry(1000004326)"}
-            };
+            String[][] cols = {{"id", "INT"}, {"name", "VARCHAR(255)"}, {"geom", "ST_Geometry(1000004326)"}};
             htu.createRegisteredTestTable(TABLE, cols);
             htu.createTestView(VIEW, TABLE, "id", "geom");
         }
@@ -47,7 +45,7 @@ public class HanaTypeNamesTestSetup extends JDBCTypeNamesTestSetup {
     @Override
     protected void dropTypes() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.dropTestView(VIEW);
             htu.dropTestTableCascade(TABLE);
         }

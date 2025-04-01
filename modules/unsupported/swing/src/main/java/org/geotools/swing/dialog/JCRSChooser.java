@@ -38,16 +38,13 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import net.miginfocom.swing.MigLayout;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * This class has a single static method that shows a dialog to prompt the user to choose a
- * coordinate reference system.
+ * This class has a single static method that shows a dialog to prompt the user to choose a coordinate reference system.
  *
  * <p>Example of use:
  *
@@ -79,8 +76,7 @@ public class JCRSChooser {
      *
      * <p>This method can be called safely from any thread.
      *
-     * @return a {@code CoordinateReferenceSystem} object or {@code null} if the user cancelled the
-     *     dialog
+     * @return a {@code CoordinateReferenceSystem} object or {@code null} if the user cancelled the dialog
      */
     public static CoordinateReferenceSystem showDialog() {
         return showDialog(null);
@@ -92,41 +88,37 @@ public class JCRSChooser {
      * <p>This method can be called safely from any thread.
      *
      * @param title optional non-default title
-     * @return a {@code CoordinateReferenceSystem} object or {@code null} if the user cancelled the
-     *     dialog
+     * @return a {@code CoordinateReferenceSystem} object or {@code null} if the user cancelled the dialog
      */
     public static CoordinateReferenceSystem showDialog(final String title) {
         return showDialog(title, null);
     }
 
     /**
-     * Displays a dialog with a list of coordinate reference systems in the EPSG database and with
-     * the specified initial code highlighted.
+     * Displays a dialog with a list of coordinate reference systems in the EPSG database and with the specified initial
+     * code highlighted.
      *
      * <p>This method can be called safely from any thread.
      *
      * @param title optional non-default title
      * @param initialCode optional initial EPSG code
-     * @return a {@code CoordinateReferenceSystem} object or {@code null} if the user cancelled the
-     *     dialog
+     * @return a {@code CoordinateReferenceSystem} object or {@code null} if the user cancelled the dialog
      */
-    public static CoordinateReferenceSystem showDialog(
-            final String title, final String initialCode) {
+    public static CoordinateReferenceSystem showDialog(final String title, final String initialCode) {
 
         return showDialog(title, initialCode, null);
     }
 
     /**
-     * Displays a dialog with a list of coordinate reference systems provided by the given authority
-     * (e.g. "EPSG"), and with the specified initial code highlighted.
+     * Displays a dialog with a list of coordinate reference systems provided by the given authority (e.g. "EPSG"), and
+     * with the specified initial code highlighted.
      *
      * <p>This method can be called safely from any thread.
      *
      * @param title optional non-default title
      * @param initialCode an optional initial code in appropriate form for the authority
      * @param authority optional non-default authority (defaults to "EPSG")
-     * @return a {@code CoordinateReferenceSystem} object or {@code null} if the user cancelled the
-     *     dialog
+     * @return a {@code CoordinateReferenceSystem} object or {@code null} if the user cancelled the dialog
      */
     public static CoordinateReferenceSystem showDialog(
             final String title, final String initialCode, final String authority) {
@@ -137,28 +129,22 @@ public class JCRSChooser {
             selected = doShow(title, initialCode, authority);
 
         } else {
-            final SynchronousQueue<CoordinateReferenceSystem> sq =
-                    new SynchronousQueue<CoordinateReferenceSystem>();
+            final SynchronousQueue<CoordinateReferenceSystem> sq = new SynchronousQueue<>();
 
             final Thread currentThread = Thread.currentThread();
 
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                CoordinateReferenceSystem crs =
-                                        doShow(title, initialCode, authority);
-                                if (crs == null) {
-                                    currentThread.interrupt();
-                                } else {
-                                    sq.put(crs);
-                                }
-                            } catch (InterruptedException ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        }
-                    });
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    CoordinateReferenceSystem crs = doShow(title, initialCode, authority);
+                    if (crs == null) {
+                        currentThread.interrupt();
+                    } else {
+                        sq.put(crs);
+                    }
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
 
             try {
                 selected = sq.take();
@@ -176,11 +162,9 @@ public class JCRSChooser {
      * @param title optional non-default title
      * @param initialCode an optional initial code in appropriate form for the authority
      * @param authority optional non-default authority (defaults to "EPSG")
-     * @return the selected coordinate reference system or {@code null} if the dialog is cancelled
-     *     by the user
+     * @return the selected coordinate reference system or {@code null} if the dialog is cancelled by the user
      */
-    private static CoordinateReferenceSystem doShow(
-            String title, String initialCode, String authority) {
+    private static CoordinateReferenceSystem doShow(String title, String initialCode, String authority) {
 
         CRSDialog dialog = new CRSDialog(title, initialCode, authority);
         DialogUtils.showCentred(dialog);
@@ -203,7 +187,7 @@ public class JCRSChooser {
         private final String initialCode;
 
         private CRSListModel model;
-        private JList listBox;
+        private JList<String> listBox;
         private JButton okButton;
 
         private CoordinateReferenceSystem crs;
@@ -233,56 +217,45 @@ public class JCRSChooser {
 
             final JTextField filterFld = new JTextField();
             filterFld.setPreferredSize(new Dimension(CONTROL_WIDTH, 20));
-            filterFld
-                    .getDocument()
-                    .addDocumentListener(
-                            new DocumentListener() {
+            filterFld.getDocument().addDocumentListener(new DocumentListener() {
 
-                                @Override
-                                public void insertUpdate(DocumentEvent e) {
-                                    model.setFilter(filterFld.getText());
-                                }
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    model.setFilter(filterFld.getText());
+                }
 
-                                @Override
-                                public void removeUpdate(DocumentEvent e) {
-                                    model.setFilter(filterFld.getText());
-                                }
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    model.setFilter(filterFld.getText());
+                }
 
-                                @Override
-                                public void changedUpdate(DocumentEvent e) {
-                                    model.setFilter(filterFld.getText());
-                                }
-                            });
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    model.setFilter(filterFld.getText());
+                }
+            });
 
             panel.add(filterFld, "wrap");
 
-            listBox = new JList(model);
-            listBox.addMouseListener(
-                    new MouseAdapter() {
+            listBox = new JList<>(model);
+            listBox.addMouseListener(new MouseAdapter() {
 
-                        @Override
-                        public void mouseClicked(MouseEvent e) {
-                            if (e.getClickCount() == 2) {
-                                selectCRS(listBox.getSelectedIndex());
-                            }
-                        }
-                    });
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getClickCount() == 2) {
+                        selectCRS(listBox.getSelectedIndex());
+                    }
+                }
+            });
 
-            listBox.addListSelectionListener(
-                    new ListSelectionListener() {
-                        @Override
-                        public void valueChanged(ListSelectionEvent e) {
-                            setOKButtonState();
-                        }
-                    });
+            listBox.addListSelectionListener(e -> setOKButtonState());
 
-            model.addListDataListener(
-                    new CRSListModelListener() {
-                        @Override
-                        public void process() {
-                            setOKButtonState();
-                        }
-                    });
+            model.addListDataListener(new CRSListModelListener() {
+                @Override
+                public void process() {
+                    setOKButtonState();
+                }
+            });
 
             JScrollPane listPane = new JScrollPane(listBox);
             listPane.setPreferredSize(new Dimension(CONTROL_WIDTH, 300));
@@ -327,9 +300,7 @@ public class JCRSChooser {
             return panel;
         }
 
-        /**
-         * Records the selected coordinate reference system, if one exists, and hides the dialog.
-         */
+        /** Records the selected coordinate reference system, if one exists, and hides the dialog. */
         @Override
         public void onOK() {
             if (model.getSize() > 0 && listBox.getSelectedIndex() >= 0) {
@@ -354,8 +325,8 @@ public class JCRSChooser {
         }
 
         /**
-         * Helper method for the list box and {@linkplain #onOK()} method which records the selected
-         * coordinate reference system.
+         * Helper method for the list box and {@linkplain #onOK()} method which records the selected coordinate
+         * reference system.
          *
          * @param index selected item index in the list box
          */
@@ -365,10 +336,7 @@ public class JCRSChooser {
                 crs = CRS.decode(DEFAULT_AUTHORITY + ":" + code, true);
 
             } catch (Exception ex) {
-                LOGGER.log(
-                        Level.SEVERE,
-                        "Failed to get coordinate reference system for code {0}",
-                        code);
+                LOGGER.log(Level.SEVERE, "Failed to get coordinate reference system for code {0}", code);
 
             } finally {
                 closeDialog();

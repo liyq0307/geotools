@@ -18,8 +18,16 @@
 package org.geotools.process.vector;
 
 import java.util.logging.Logger;
-import javax.measure.Unit;
 import javax.measure.UnitConverter;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
@@ -37,23 +45,13 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.operation.distance.DistanceOp;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
 import si.uom.SI;
 import systems.uom.common.USCustomary;
 
 @DescribeProcess(
-    title = "Nearest Feature",
-    description =
-            "Returns the feature in a given feature collection that has the smallest distance to a given point."
-)
+        title = "Nearest Feature",
+        description =
+                "Returns the feature in a given feature collection that has the smallest distance to a given point.")
 public class NearestProcess implements VectorProcess {
     private static final Logger LOGGER = Logging.getLogger(NearestProcess.class);
 
@@ -70,14 +68,12 @@ public class NearestProcess implements VectorProcess {
     public FeatureCollection execute(
             @DescribeParameter(name = "features", description = "Input feature collection")
                     FeatureCollection featureCollection,
-            @DescribeParameter(name = "point", description = "Point from which to compute distance")
-                    Point point,
+            @DescribeParameter(name = "point", description = "Point from which to compute distance") Point point,
             @DescribeParameter(
-                        name = "crs",
-                        min = 0,
-                        description =
-                                "Coordinate reference system of the collection and point (default is the input collection CRS)"
-                    )
+                            name = "crs",
+                            min = 0,
+                            description =
+                                    "Coordinate reference system of the collection and point (default is the input collection CRS)")
                     CoordinateReferenceSystem crs)
             throws ProcessException {
         try {
@@ -102,29 +98,23 @@ public class NearestProcess implements VectorProcess {
 
             DefaultFeatureCollection results = new DefaultFeatureCollection();
             FeatureType targetFeatureType = createTargetFeatureType(featureCollection.getSchema());
-            Unit fromUnit = SI.METRE;
-            Unit toUnit = USCustomary.MILE;
-            UnitConverter unitConvert = fromUnit.getConverterTo(toUnit);
+            UnitConverter unitConvert = SI.METRE.getConverterTo(USCustomary.MILE);
             Feature nearestFeature = null;
             double nearestDistance = 9e9;
             double nearestBearing = 0;
-            FeatureIterator featureIterator = featureCollection.features();
-            try {
+            try (FeatureIterator featureIterator = featureCollection.features()) {
                 while (featureIterator.hasNext()) {
                     SimpleFeature f = (SimpleFeature) featureIterator.next();
                     if (f.getDefaultGeometryProperty().getValue() == null) continue;
-                    DistanceOp op =
-                            new DistanceOp(
-                                    point, (Geometry) f.getDefaultGeometryProperty().getValue());
+                    DistanceOp op = new DistanceOp(
+                            point, (Geometry) f.getDefaultGeometryProperty().getValue());
                     Coordinate[] co = op.nearestPoints();
-                    double[] co0 =
-                            new double[] {
-                                co[0].x, co[0].y,
-                            };
-                    double[] co1 =
-                            new double[] {
-                                co[1].x, co[1].y,
-                            };
+                    double[] co0 = {
+                        co[0].x, co[0].y,
+                    };
+                    double[] co1 = {
+                        co[1].x, co[1].y,
+                    };
                     double[] geo0 = new double[2];
                     double[] geo1 = new double[2];
                     crsTransform.transform(co0, 0, geo0, 0, 1);
@@ -137,17 +127,11 @@ public class NearestProcess implements VectorProcess {
                     nearestDistance = m.doubleValue();
                     nearestBearing = calcBearing(co);
                 }
-            } finally {
-                featureIterator.close();
             }
             if (nearestFeature != null) {
                 nearestDistance = unitConvert.convert(nearestDistance);
-                results.add(
-                        createTargetFeature(
-                                nearestFeature,
-                                (SimpleFeatureType) targetFeatureType,
-                                nearestDistance,
-                                nearestBearing));
+                results.add(createTargetFeature(
+                        nearestFeature, (SimpleFeatureType) targetFeatureType, nearestDistance, nearestBearing));
             }
             return results;
         } catch (ProcessException e) {
@@ -165,8 +149,7 @@ public class NearestProcess implements VectorProcess {
      * @return the modified feature type
      * @throws ProcessException errror
      */
-    private SimpleFeatureType createTargetFeatureType(FeatureType sourceFeatureType)
-            throws ProcessException {
+    private SimpleFeatureType createTargetFeatureType(FeatureType sourceFeatureType) throws ProcessException {
         try {
             SimpleFeatureTypeBuilder typeBuilder = new SimpleFeatureTypeBuilder();
             typeBuilder.setName(sourceFeatureType.getName().getLocalPart());
@@ -174,16 +157,8 @@ public class NearestProcess implements VectorProcess {
             for (PropertyDescriptor attbType : sourceFeatureType.getDescriptors()) {
                 typeBuilder.add((AttributeDescriptor) attbType);
             }
-            typeBuilder
-                    .minOccurs(1)
-                    .maxOccurs(1)
-                    .nillable(false)
-                    .add("nearest_distance", Double.class);
-            typeBuilder
-                    .minOccurs(1)
-                    .maxOccurs(1)
-                    .nillable(false)
-                    .add("nearest_bearing", Double.class);
+            typeBuilder.minOccurs(1).maxOccurs(1).nillable(false).add("nearest_distance", Double.class);
+            typeBuilder.minOccurs(1).maxOccurs(1).nillable(false).add("nearest_bearing", Double.class);
             typeBuilder.setDefaultGeometry(
                     sourceFeatureType.getGeometryDescriptor().getLocalName());
             return typeBuilder.buildFeatureType();
@@ -204,19 +179,15 @@ public class NearestProcess implements VectorProcess {
      * @throws ProcessException error
      */
     private SimpleFeature createTargetFeature(
-            Feature feature,
-            SimpleFeatureType targetFeatureType,
-            Double nearestDistance,
-            Double nearestBearing)
+            Feature feature, SimpleFeatureType targetFeatureType, Double nearestDistance, Double nearestBearing)
             throws ProcessException {
         try {
-            AttributeDescriptor distanceAttbType =
-                    targetFeatureType.getDescriptor("nearest_distance");
-            AttributeDescriptor bearingAttbType =
-                    targetFeatureType.getDescriptor("nearest_bearing");
+            AttributeDescriptor distanceAttbType = targetFeatureType.getDescriptor("nearest_distance");
+            AttributeDescriptor bearingAttbType = targetFeatureType.getDescriptor("nearest_bearing");
             Object[] attributes = new Object[targetFeatureType.getAttributeCount()];
             for (int i = 0; i < attributes.length; i++) {
-                AttributeDescriptor attbType = targetFeatureType.getAttributeDescriptors().get(i);
+                AttributeDescriptor attbType =
+                        targetFeatureType.getAttributeDescriptors().get(i);
                 if (attbType.equals(distanceAttbType)) {
                     attributes[i] = nearestDistance;
                 } else if (attbType.equals(bearingAttbType)) {
@@ -241,11 +212,8 @@ public class NearestProcess implements VectorProcess {
      */
     private double calcBearing(Coordinate[] coords) {
         double y = Math.sin(coords[1].x - coords[0].x) * Math.cos(coords[1].y);
-        double x =
-                Math.cos(coords[0].y) * Math.sin(coords[1].y)
-                        - Math.sin(coords[0].y)
-                                * Math.cos(coords[1].y)
-                                * Math.cos(coords[1].x - coords[0].x);
+        double x = Math.cos(coords[0].y) * Math.sin(coords[1].y)
+                - Math.sin(coords[0].y) * Math.cos(coords[1].y) * Math.cos(coords[1].x - coords[0].x);
         double brng = ((Math.atan2(y, x) * 180.0 / Math.PI) + 360) % 360;
         return brng;
     }

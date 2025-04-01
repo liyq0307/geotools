@@ -17,10 +17,9 @@
 package org.geotools.se.v1_1.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.se.v1_1.SE;
 import org.geotools.sld.bindings.SLDSelectedChannelTypeBinding;
-import org.geotools.styling.StyleFactory;
-import org.geotools.xml.*;
 
 /**
  * Binding object for the type http://www.opengis.net/se:SelectedChannelType.
@@ -48,6 +47,7 @@ public class SelectedChannelTypeBinding extends SLDSelectedChannelTypeBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.SelectedChannelType;
     }

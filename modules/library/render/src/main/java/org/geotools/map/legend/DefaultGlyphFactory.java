@@ -16,15 +16,15 @@
  */
 package org.geotools.map.legend;
 
-import java.awt.*;
-import javax.swing.*;
+import java.awt.Color;
+import javax.swing.Icon;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.style.Rule;
 import org.geotools.map.Layer;
-import org.geotools.styling.Rule;
 import org.geotools.styling.SLD;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
 
 public class DefaultGlyphFactory implements GlyphFactory {
 
@@ -38,9 +38,9 @@ public class DefaultGlyphFactory implements GlyphFactory {
      *   <li>layer style, defaults will be used if not recognized
      * </ul>
      *
-     * @param layer
      * @return Icon For the provided layer
      */
+    @Override
     public Icon icon(Layer layer) {
         if (layer == null || layer.getFeatureSource() == null) {
             return geometry(null, null);
@@ -76,61 +76,73 @@ public class DefaultGlyphFactory implements GlyphFactory {
         return true;
     }
 
+    @Override
     public Icon polygon(Rule rule) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon geometry(Color color, Color fill) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon geometry(Rule rule) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon grid(Color color1, Color color2, Color color3, Color color4) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon icon(SimpleFeatureType schema) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon line(Color line, int width) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon line(Rule rule) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon palette(Color[] colors) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon point(Color point, Color fill) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon point(Rule rule) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon polygon(Color color, Color fill, int width) {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public Icon swatch(Color color) {
         // TODO Auto-generated method stub
         return null;

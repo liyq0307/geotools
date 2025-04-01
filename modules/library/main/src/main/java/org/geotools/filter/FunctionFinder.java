@@ -18,19 +18,18 @@ package org.geotools.filter;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
-import org.geotools.util.SuppressFBWarnings;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Isolate function lookup code from Factory implementation(s).
@@ -39,7 +38,7 @@ import org.opengis.filter.expression.Literal;
  *
  * <ul>
  *   <li>org.geotools.filter.Function
- *   <li>org.opengis.filter.expression.Function
+ *   <li>org.geotools.api.filter.expression.Function
  * </ul>
  *
  * This is done as a proper utility class that accepts Hints.
@@ -60,24 +59,19 @@ public class FunctionFinder {
      */
     public List<FunctionName> getAllFunctionDescriptions() {
         Set<FunctionFactory> functionFactories = CommonFactoryFinder.getFunctionFactories(null);
-        List<FunctionName> allFunctionDescriptions = new ArrayList<FunctionName>();
+        List<FunctionName> allFunctionDescriptions = new ArrayList<>();
 
         for (FunctionFactory factory : functionFactories) {
             List<FunctionName> functionNames = factory.getFunctionNames();
             allFunctionDescriptions.addAll(functionNames);
         }
-        Collections.sort(
-                allFunctionDescriptions,
-                new Comparator<FunctionName>() {
-                    @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_MIGHT_BE_INFEASIBLE")
-                    public int compare(FunctionName o1, FunctionName o2) {
-                        if (o1 == null && o2 == null) return 0;
-                        if (o1 == null && o2 != null) return 1;
-                        if (o1 != null && o2 == null) return -1;
+        Collections.sort(allFunctionDescriptions, (o1, o2) -> {
+            if (o1 == null && o2 == null) return 0;
+            if (o1 == null && o2 != null) return 1;
+            if (o1 != null && o2 == null) return -1;
 
-                        return o1.getName().compareTo(o2.getName());
-                    }
-                });
+            return o1.getName().compareTo(o2.getName());
+        });
         return Collections.unmodifiableList(allFunctionDescriptions);
     }
     /**
@@ -124,8 +118,7 @@ public class FunctionFinder {
      * @return Generated function
      * @throws a RuntimeException if an implementation for name could not be found
      */
-    public Function findFunction(
-            String name, List<org.opengis.filter.expression.Expression> parameters) {
+    public Function findFunction(String name, List<Expression> parameters) {
         return findFunction(toName(name), parameters);
     }
 
@@ -148,50 +141,37 @@ public class FunctionFinder {
      * @return Generated function
      * @throws a RuntimeException if an implementation for name could not be found
      */
-    public Function findFunction(
-            Name name, List<org.opengis.filter.expression.Expression> parameters) {
+    public Function findFunction(Name name, List<Expression> parameters) {
         return findFunction(name, parameters, null);
     }
 
     /**
-     * Look up a function for the provided name, may return a FallbackFunction if an implementation
-     * could not be found.
+     * Look up a function for the provided name, may return a FallbackFunction if an implementation could not be found.
      *
-     * <p>You can create a function to represent an SQL function or a function hosted on an external
-     * service; the fallback value will be used if you evulate by a Java implementation on the
-     * classpath.
+     * <p>You can create a function to represent an SQL function or a function hosted on an external service; the
+     * fallback value will be used if you evulate by a Java implementation on the classpath.
      *
      * @param name Function name; this will need to be an exact match
      * @param parameters Set of Expressions to use as function parameters
      * @param fallback Literal to use if an implementation could not be found
-     * @return Function for the provided name, may be a FallbackFunction if an implementation could
-     *     not be found
+     * @return Function for the provided name, may be a FallbackFunction if an implementation could not be found
      */
-    public Function findFunction(
-            String name,
-            List<org.opengis.filter.expression.Expression> parameters,
-            Literal fallback) {
+    public Function findFunction(String name, List<Expression> parameters, Literal fallback) {
         return findFunction(new NameImpl(name), parameters, fallback);
     }
 
     /**
-     * Look up a function for the provided name, may return a FallbackFunction if an implementation
-     * could not be found.
+     * Look up a function for the provided name, may return a FallbackFunction if an implementation could not be found.
      *
-     * <p>You can create a function to represent an SQL function or a function hosted on an external
-     * service; the fallback value will be used if you evulate by a Java implementation on the
-     * classpath.
+     * <p>You can create a function to represent an SQL function or a function hosted on an external service; the
+     * fallback value will be used if you evulate by a Java implementation on the classpath.
      *
      * @param name Function name; this will need to be an exact match
      * @param parameters Set of Expressions to use as function parameters
      * @param fallback Literal to use if an implementation could not be found
-     * @return Function for the provided name, may be a FallbackFunction if an implementation could
-     *     not be found
+     * @return Function for the provided name, may be a FallbackFunction if an implementation could not be found
      */
-    public Function findFunction(
-            Name name,
-            List<org.opengis.filter.expression.Expression> parameters,
-            Literal fallback) {
+    public Function findFunction(Name name, List<Expression> parameters, Literal fallback) {
         // try name as is
         Function f = findFunctionInternal(name, parameters, fallback);
 
@@ -215,7 +195,7 @@ public class FunctionFinder {
         throw new RuntimeException("Unable to find function " + name);
     }
 
-    Function findFunctionInternal(Name name, List parameters, Literal fallback) {
+    Function findFunctionInternal(Name name, List<Expression> parameters, Literal fallback) {
         if (functionFactoryCache == null) {
             synchronized (this) {
                 if (functionFactoryCache == null) {
@@ -242,7 +222,7 @@ public class FunctionFinder {
 
     private HashMap<Name, FunctionFactory> lookupFunctions() {
         // get all filter functions via function factory
-        HashMap<Name, FunctionFactory> result = new HashMap<Name, FunctionFactory>();
+        HashMap<Name, FunctionFactory> result = new HashMap<>();
 
         Set<FunctionFactory> functionFactories = CommonFactoryFinder.getFunctionFactories(null);
         for (FunctionFactory ff : functionFactories) {

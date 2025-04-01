@@ -25,7 +25,7 @@ import org.geotools.xsd.Binding;
 import org.geotools.xsd.ComplexBinding;
 
 /**
- * Gets children from a parent object, visiting bindings in teh hierachy until one is found.
+ * Gets children from a parent object, visiting bindings in the hierachy until one is found.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -51,8 +51,9 @@ public class GetPropertyExecutor implements BindingWalker.Visitor {
         return child;
     }
 
+    @Override
     public void visit(Binding binding) {
-        // TODO: visit should return a boolena to signify wether to continue
+        // TODO: visit should return a boolean to signify whether to continue
         if (child != null) {
             return;
         }
@@ -69,13 +70,12 @@ public class GetPropertyExecutor implements BindingWalker.Visitor {
             if (parent != null
                     && (binding.getType() != null)
                     && !binding.getType().isAssignableFrom(parent.getClass())) {
-                LOGGER.fine(
-                        parent
-                                + " ("
-                                + parent.getClass().getName()
-                                + ") "
-                                + " is not of type "
-                                + binding.getType().getName());
+                LOGGER.fine(parent
+                        + " ("
+                        + parent.getClass().getName()
+                        + ") "
+                        + " is not of type "
+                        + binding.getType().getName());
 
                 // try to convert
                 Object converted = Converters.convert(parent, binding.getType());
@@ -83,8 +83,8 @@ public class GetPropertyExecutor implements BindingWalker.Visitor {
                 if (converted != null) {
                     parent = converted;
                 } else {
-                    LOGGER.fine(
-                            "Could not convert " + parent + " to " + binding.getType().getName());
+                    LOGGER.fine("Could not convert " + parent + " to "
+                            + binding.getType().getName());
                     // For complex feature, if the feature can't be converted to the binding type,
                     // exit the route to avoid ClassCastException raised in
                     // child = complex.getProperty(parent, name);

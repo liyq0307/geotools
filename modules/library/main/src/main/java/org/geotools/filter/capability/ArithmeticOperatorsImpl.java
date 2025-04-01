@@ -16,8 +16,8 @@
  */
 package org.geotools.filter.capability;
 
-import org.opengis.filter.capability.ArithmeticOperators;
-import org.opengis.filter.capability.Functions;
+import org.geotools.api.filter.capability.ArithmeticOperators;
+import org.geotools.api.filter.capability.Functions;
 
 /**
  * Implementation of the ArithmeticOperators interface.
@@ -41,20 +41,19 @@ public class ArithmeticOperatorsImpl implements ArithmeticOperators {
 
     public ArithmeticOperatorsImpl(ArithmeticOperators copy) {
         this.simpleArithmetic = copy.hasSimpleArithmetic();
-        this.functions =
-                copy.getFunctions() == null
-                        ? new FunctionsImpl()
-                        : new FunctionsImpl(copy.getFunctions());
+        this.functions = copy.getFunctions() == null ? new FunctionsImpl() : new FunctionsImpl(copy.getFunctions());
     }
 
     public void setSimpleArithmetic(boolean simpleArithmetic) {
         this.simpleArithmetic = simpleArithmetic;
     }
 
+    @Override
     public boolean hasSimpleArithmetic() {
         return simpleArithmetic;
     }
 
+    @Override
     public FunctionsImpl getFunctions() {
         return functions;
     }

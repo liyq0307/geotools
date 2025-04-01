@@ -81,9 +81,10 @@ public class ParameterValueGroupTypeImpl extends AbstractGeneralParameterValueTy
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<AbstractGeneralParameterValueType> getIncludesValue() {
         if (includesValue == null) {
-            includesValue = new EObjectContainmentEList<AbstractGeneralParameterValueType>(AbstractGeneralParameterValueType.class, this, Gml311Package.PARAMETER_VALUE_GROUP_TYPE__INCLUDES_VALUE);
+            includesValue = new EObjectContainmentEList<>(AbstractGeneralParameterValueType.class, this, Gml311Package.PARAMETER_VALUE_GROUP_TYPE__INCLUDES_VALUE);
         }
         return includesValue;
     }
@@ -93,6 +94,7 @@ public class ParameterValueGroupTypeImpl extends AbstractGeneralParameterValueTy
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public OperationParameterGroupRefType getValuesOfGroup() {
         return valuesOfGroup;
     }
@@ -117,6 +119,7 @@ public class ParameterValueGroupTypeImpl extends AbstractGeneralParameterValueTy
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setValuesOfGroup(OperationParameterGroupRefType newValuesOfGroup) {
         if (newValuesOfGroup != valuesOfGroup) {
             NotificationChain msgs = null;

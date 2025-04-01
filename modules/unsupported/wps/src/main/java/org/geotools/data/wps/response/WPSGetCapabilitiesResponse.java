@@ -22,8 +22,8 @@ import java.util.Map;
 import javax.xml.parsers.ParserConfigurationException;
 import net.opengis.ows11.ExceptionReportType;
 import net.opengis.wps10.WPSCapabilitiesType;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.wps.AbstractWPSGetCapabilitiesResponse;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.wps.WPSConfiguration;
 import org.geotools.xml.XMLHandlerHints;
@@ -38,8 +38,7 @@ import org.xml.sax.SAXException;
  */
 public class WPSGetCapabilitiesResponse extends AbstractWPSGetCapabilitiesResponse {
 
-    public WPSGetCapabilitiesResponse(HTTPResponse httpResponse)
-            throws ServiceException, IOException {
+    public WPSGetCapabilitiesResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
         this(httpResponse, null);
     }
 
@@ -47,9 +46,7 @@ public class WPSGetCapabilitiesResponse extends AbstractWPSGetCapabilitiesRespon
             throws ServiceException, IOException {
         super(httpResponse);
 
-        InputStream inputStream = null;
-        try {
-            inputStream = httpResponse.getResponseStream();
+        try (InputStream inputStream = httpResponse.getResponseStream()) {
 
             // Map hints = new HashMap();
             // hints.put(DocumentHandler.DEFAULT_NAMESPACE_HINT_KEY, WPSSchema.getInstance());
@@ -64,12 +61,8 @@ public class WPSGetCapabilitiesResponse extends AbstractWPSGetCapabilitiesRespon
             try {
                 // object = DocumentFactory.getInstance(inputStream, hints, Level.WARNING);
                 object = parser.parse(inputStream);
-            } catch (SAXException e) {
-                throw (ServiceException)
-                        new ServiceException("Error while parsing XML.").initCause(e);
-            } catch (ParserConfigurationException e) {
-                throw (ServiceException)
-                        new ServiceException("Error while parsing XML.").initCause(e);
+            } catch (SAXException | ParserConfigurationException e) {
+                throw (ServiceException) new ServiceException("Error while parsing XML.").initCause(e);
             }
 
             // if (object instanceof ServiceException) {
@@ -83,11 +76,6 @@ public class WPSGetCapabilitiesResponse extends AbstractWPSGetCapabilitiesRespon
             // exception caught on server and returned
             else if (object instanceof ExceptionReportType) {
                 excepResponse = (ExceptionReportType) object;
-            }
-
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
             }
         }
     }

@@ -24,22 +24,22 @@ import java.util.logging.Logger;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 
 /**
- * The GrassCoverageFormatFactory will be discovered by the GridFormatFinder. Use the standard
- * Geotools method of discovering a factory in order to create a format.
+ * The GrassCoverageFormatFactory will be discovered by the GridFormatFinder. Use the standard Geotools method of
+ * discovering a factory in order to create a format.
  *
  * @author Andrea Antonello (www.hydrologis.com)
  */
 public class GrassCoverageFormatFactory implements GridFormatFactorySpi {
 
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(GrassCoverageFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(GrassCoverageFormatFactory.class);
 
     /**
      * Creates a new instance of GrassCoverageFormat
      *
      * @return an instance of GrassCoverageFormat
      */
+    @Override
     public GrassCoverageFormat createFormat() {
         return new GrassCoverageFormat();
     }
@@ -49,6 +49,7 @@ public class GrassCoverageFormatFactory implements GridFormatFactorySpi {
      *
      * @return true if all libraries are available
      */
+    @Override
     public boolean isAvailable() {
         boolean available = true;
 
@@ -71,7 +72,8 @@ public class GrassCoverageFormatFactory implements GridFormatFactorySpi {
      *
      * @return the implementation hints (an empty map, actually)
      */
-    public Map getImplementationHints() {
+    @Override
+    public Map<java.awt.RenderingHints.Key, ?> getImplementationHints() {
         return Collections.emptyMap();
     }
 }

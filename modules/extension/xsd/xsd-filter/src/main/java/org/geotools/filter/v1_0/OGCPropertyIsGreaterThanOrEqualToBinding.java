@@ -17,12 +17,12 @@
 package org.geotools.filter.v1_0;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Binding object for the element http://www.opengis.net/ogc:PropertyIsGreaterThanOrEqualTo.
@@ -47,6 +47,7 @@ public class OGCPropertyIsGreaterThanOrEqualToBinding extends AbstractComplexBin
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.PropertyIsGreaterThanOrEqualTo;
     }
@@ -58,10 +59,12 @@ public class OGCPropertyIsGreaterThanOrEqualToBinding extends AbstractComplexBin
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return PropertyIsGreaterThanOrEqualTo.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -73,6 +76,7 @@ public class OGCPropertyIsGreaterThanOrEqualToBinding extends AbstractComplexBin
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Expression e1 = (Expression) node.getChildValue(0);
         Expression e2 = (Expression) node.getChildValue(1);

@@ -16,8 +16,8 @@
  */
 package org.geotools.brewer.styling.builder;
 
-import org.geotools.styling.Mark;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Mark;
 
 public class MarkBuilder extends AbstractStyleBuilder<Mark> {
     StrokeBuilder strokeBuilder = new StrokeBuilder(this).unset();
@@ -29,10 +29,16 @@ public class MarkBuilder extends AbstractStyleBuilder<Mark> {
     Expression wellKnownName;
 
     public MarkBuilder() {
-        this(null);
+        super(null);
+        reset();
     }
 
     MarkBuilder(GraphicBuilder parent) {
+        super(parent);
+        reset();
+    }
+
+    MarkBuilder(GraphicLegendBuilder parent) {
         super(parent);
         reset();
     }
@@ -59,6 +65,7 @@ public class MarkBuilder extends AbstractStyleBuilder<Mark> {
         return fill;
     }
 
+    @Override
     public MarkBuilder reset() {
         // TODO: where is the default mark?
         this.wellKnownName = literal("square");
@@ -71,6 +78,7 @@ public class MarkBuilder extends AbstractStyleBuilder<Mark> {
         return this;
     }
 
+    @Override
     public Mark build() {
         if (unset) {
             return null;
@@ -89,11 +97,8 @@ public class MarkBuilder extends AbstractStyleBuilder<Mark> {
         return mark;
     }
 
-    public MarkBuilder reset(Mark mark) {
-        return reset((org.opengis.style.Mark) mark);
-    }
-
-    public MarkBuilder reset(org.opengis.style.Mark mark) {
+    @Override
+    public MarkBuilder reset(org.geotools.api.style.Mark mark) {
         if (mark == null) {
             return unset();
         }
@@ -106,10 +111,12 @@ public class MarkBuilder extends AbstractStyleBuilder<Mark> {
         return this;
     }
 
+    @Override
     public MarkBuilder unset() {
         return (MarkBuilder) super.unset();
     }
 
+    @Override
     protected void buildStyleInternal(StyleBuilder sb) {
         sb.featureTypeStyle().rule().point().graphic().mark().init(this);
     }

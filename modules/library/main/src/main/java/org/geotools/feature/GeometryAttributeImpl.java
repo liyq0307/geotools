@@ -16,6 +16,12 @@
  */
 package org.geotools.feature;
 
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.Utilities;
 import org.locationtech.jts.geom.Geometry;
@@ -23,12 +29,6 @@ import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * TODO: rename to GeometricAttribute Provides ...TODO summary sentence
@@ -55,20 +55,24 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
         super(content, descriptor, id);
     }
 
+    @Override
     public GeometryType getType() {
         return (GeometryType) super.getType();
     }
 
+    @Override
     public GeometryDescriptor getDescriptor() {
         return (GeometryDescriptor) super.getDescriptor();
     }
 
+    @Override
     public Geometry getValue() {
         return (Geometry) super.getValue();
     }
 
+    @Override
     public void setValue(Object newValue) throws IllegalArgumentException, IllegalStateException {
-        super.setValue((Geometry) newValue);
+        super.setValue(newValue);
     }
 
     public void setValue(Geometry geometry) {
@@ -76,6 +80,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
     }
 
     /** Set the bounds for the contained geometry. */
+    @Override
     public synchronized void setBounds(BoundingBox bbox) {
         bounds = bbox;
     }
@@ -83,14 +88,12 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
     /**
      * Returns the non null envelope of this attribute. If the attribute's geometry is <code>null
      * </code> the returned Envelope <code>isNull()</code> is true.
-     *
-     * @return
      */
+    @Override
     public synchronized BoundingBox getBounds() {
         if (bounds == null) {
-            ReferencedEnvelope bbox =
-                    new ReferencedEnvelope(getType().getCoordinateReferenceSystem());
-            Geometry geom = (Geometry) getValue();
+            ReferencedEnvelope bbox = new ReferencedEnvelope(getType().getCoordinateReferenceSystem());
+            Geometry geom = getValue();
             if (geom != null) {
                 bbox.expandToInclude(geom.getEnvelopeInternal());
             } else {
@@ -101,6 +104,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
         return bounds;
     }
 
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -158,6 +162,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
         return true;
     }
 
+    @Override
     public int hashCode() {
         int hash = descriptor.hashCode();
 
@@ -168,6 +173,7 @@ public class GeometryAttributeImpl extends AttributeImpl implements GeometryAttr
         return hash;
     }
 
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer(getClass().getSimpleName()).append(":");
         sb.append(getDescriptor().getName().getLocalPart());

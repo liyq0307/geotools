@@ -20,14 +20,15 @@ import static org.junit.Assert.fail;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataAccess;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.complex.feature.type.Types;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 
 /** @author Fernando Miño, Geosolutions */
 public class TestFeatureSource implements Closeable {
@@ -38,22 +39,21 @@ public class TestFeatureSource implements Closeable {
     private Name mappedTypeName = Types.typeName(null, "stationsIndexed");
 
     private AppSchemaDataAccessFactory factory;
-    private Map params;
+    private Map<String, Serializable> params;
     private DataAccess<FeatureType, Feature> dataStore;
     private MappingFeatureSource mappedSource;
 
-    public TestFeatureSource(
-            String schemaBase, String filename, String nsUri, String mappedTypeName) {
+    public TestFeatureSource(String schemaBase, String filename, String nsUri, String mappedTypeName) {
         this.schemaBase = schemaBase;
         this.filename = filename;
         this.nsUri = nsUri;
         this.mappedTypeName = Types.typeName(null, mappedTypeName);
-        setUp();
+        initialize();
     }
 
-    protected void setUp() {
+    protected void initialize() {
         factory = new AppSchemaDataAccessFactory();
-        params = new HashMap();
+        params = new HashMap<>();
         params.put("dbtype", "app-schema");
         URL resource = getClass().getResource(schemaBase + filename);
         if (resource == null) {

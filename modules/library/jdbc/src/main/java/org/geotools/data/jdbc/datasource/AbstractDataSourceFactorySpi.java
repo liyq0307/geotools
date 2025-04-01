@@ -19,7 +19,7 @@ package org.geotools.data.jdbc.datasource;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import org.geotools.data.DataAccessFactory.Param;
+import org.geotools.api.data.DataAccessFactory.Param;
 
 public abstract class AbstractDataSourceFactorySpi implements DataSourceFactorySpi {
 
@@ -30,6 +30,7 @@ public abstract class AbstractDataSourceFactorySpi implements DataSourceFactoryS
      *
      * @return return display name based on class name
      */
+    @Override
     public String getDisplayName() {
         String name = this.getClass().getName();
 
@@ -42,13 +43,13 @@ public abstract class AbstractDataSourceFactorySpi implements DataSourceFactoryS
         return name;
     }
 
-    public boolean canProcess(Map params) {
+    @Override
+    public boolean canProcess(Map<String, ?> params) {
         if (params == null) {
             return false;
         }
-        Param arrayParameters[] = getParametersInfo();
-        for (int i = 0; i < arrayParameters.length; i++) {
-            Param param = arrayParameters[i];
+        Param[] arrayParameters = getParametersInfo();
+        for (Param param : arrayParameters) {
             Object value;
             if (!params.containsKey(param.key)) {
                 if (param.required) {
@@ -80,7 +81,8 @@ public abstract class AbstractDataSourceFactorySpi implements DataSourceFactoryS
     }
 
     /** Returns the implementation hints. The default implementation returns en empty map. */
-    public Map getImplementationHints() {
-        return Collections.EMPTY_MAP;
+    @Override
+    public Map<java.awt.RenderingHints.Key, ?> getImplementationHints() {
+        return Collections.emptyMap();
     }
 }

@@ -39,27 +39,28 @@ public final class Interpolation extends XSD {
     /** private constructor */
     private Interpolation() {}
 
+    @Override
     protected void addDependencies(Set dependencies) {
         //
     }
 
     /** Returns 'http://www.opengis.net/WCS_service-extension_interpolation/1.0'. */
+    @Override
     public String getNamespaceURI() {
         return NAMESPACE;
     }
 
     /** Returns the location of 'rsub.xsd.'. */
+    @Override
     public String getSchemaLocation() {
         return getClass().getResource("int/v1_0/int.xsd").toString();
     }
 
-    public static final String NAMESPACE =
-            "http://www.opengis.net/WCS_service-extension_interpolation/1.0";
+    public static final String NAMESPACE = "http://www.opengis.net/WCS_service-extension_interpolation/1.0";
 
     public static final QName InterpolationType = new QName(NAMESPACE, "InterpolationType");
 
-    public static final QName InterpolationMethodType =
-            new QName(NAMESPACE, "InterpolationMethodType");
+    public static final QName InterpolationMethodType = new QName(NAMESPACE, "InterpolationMethodType");
 
     public static final QName InterpolationAxesType = new QName(NAMESPACE, "InterpolationAxesType");
 

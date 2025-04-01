@@ -21,8 +21,8 @@ import org.geotools.graph.structure.Node;
 import org.geotools.graph.structure.line.OptDirectedXYNode;
 
 /**
- * An inmplementation extended from OptDirectedGraphBuilder used to build optimized directed
- * components for line networks.
+ * An inmplementation extended from OptDirectedGraphBuilder used to build optimized directed components for line
+ * networks.
  *
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
  */
@@ -34,6 +34,7 @@ public class OptDirectedLineGraphBuilder extends OptDirectedGraphBuilder {
      * @see OptDirectedXYNode
      * @see org.geotools.graph.build.GraphBuilder#buildNode()
      */
+    @Override
     public Node buildNode() {
         return (new OptDirectedXYNode());
     }

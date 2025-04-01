@@ -16,214 +16,198 @@
  */
 package org.geotools.referencing.epsg.esri;
 
+import static org.junit.Assert.assertTrue;
+
 import java.util.Collection;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.referencing.factory.epsg.FactoryUsingWKT;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * Tests {@link FactoryUsingWKT} as a fallback after the default factory. This method performs the
- * tests through the {@link CRS#decode} method.
+ * Tests {@link FactoryUsingWKT} as a fallback after the default factory. This method performs the tests through the
+ * {@link CRS#decode} method.
  *
  * @version $Id$
  * @author Jody Garnett
  * @author Martin Desruisseaux
  */
-public class EpsgFallbackTest extends TestCase {
-    /** Returns the test suite. */
-    public static Test suite() {
-        return new TestSuite(EpsgFallbackTest.class);
-    }
+public class EpsgFallbackTest {
 
-    /**
-     * Run the test from the command line. Options: {@code -verbose}.
-     *
-     * @param args the command line arguments.
-     */
-    public static void main(final String[] args) {
-        junit.textui.TestRunner.run(suite());
-    }
-
-    /** Creates a test case with the specified name. */
-    public EpsgFallbackTest(final String name) {
-        super(name);
-    }
-
-    /**
-     * A random CRS for fun. This CRS is defined in the {@linkplain DefaultFactory default EPSG
-     * authority factory}.
-     */
+    /** A random CRS for fun. This CRS is defined in the {@linkplain DefaultFactory default EPSG authority factory}. */
+    @Test
     public void test26910() throws FactoryException {
         final String code = "EPSG:26910";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
+        Assert.assertNotNull(crs);
         assertTrue(crs instanceof ProjectedCRS);
-        assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
+        Assert.assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
     }
 
     /**
-     * UDIG requires this to work. This CRS is defined in the {@linkplain DefaultFactory default
-     * EPSG authority factory}.
+     * UDIG requires this to work. This CRS is defined in the {@linkplain DefaultFactory default EPSG authority
+     * factory}.
      */
+    @Test
     public void test4326() throws FactoryException {
         final String code = "EPSG:4326";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
+        Assert.assertNotNull(crs);
         assertTrue(crs instanceof GeographicCRS);
-        assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
+        Assert.assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
     }
 
     /**
-     * UDIG requires this to work. This CRS is defined in the {@linkplain DefaultFactory default
-     * EPSG authority factory}.
+     * UDIG requires this to work. This CRS is defined in the {@linkplain DefaultFactory default EPSG authority
+     * factory}.
      */
+    @Test
     public void test4269() throws FactoryException {
         final String code = "EPSG:4269";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
+        Assert.assertNotNull(crs);
         assertTrue(crs instanceof GeographicCRS);
-        assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
+        Assert.assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
     }
 
     /** UDIG requires this to work. This CRS is defined in {@code unnamed.properties}. */
+    @Test
     public void test42102() throws FactoryException {
         final String code = "EPSG:42102";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
+        Assert.assertNotNull(crs);
         assertTrue(crs instanceof ProjectedCRS);
-        assertSame(crs, CRS.decode(code, true));
+        Assert.assertSame(crs, CRS.decode(code, true));
 
         // Checks identifier
         final Collection<ReferenceIdentifier> identifiers = crs.getIdentifiers();
-        assertNotNull(identifiers);
-        assertFalse(identifiers.isEmpty());
+        Assert.assertNotNull(identifiers);
+        Assert.assertFalse(identifiers.isEmpty());
         NamedIdentifier expected = new NamedIdentifier(Citations.EPSG, "42102");
         assertTrue(identifiers.contains(expected));
     }
 
-    /**
-     * A random CRS for fun. This CRS is defined in the {@linkplain DefaultFactory default EPSG
-     * authority factory}.
-     */
+    /** A random CRS for fun. This CRS is defined in the {@linkplain DefaultFactory default EPSG authority factory}. */
+    @Test
     public void test26910Lower() throws FactoryException {
         final String code = "epsg:26910";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
+        Assert.assertNotNull(crs);
         assertTrue(crs instanceof ProjectedCRS);
-        assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
+        Assert.assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
     }
 
-    /**
-     * A random CRS for fun. This CRS is defined in the {@linkplain DefaultFactory default EPSG
-     * authority factory}.
-     */
+    /** A random CRS for fun. This CRS is defined in the {@linkplain DefaultFactory default EPSG authority factory}. */
+    @Test
     public void test26986Lower() throws FactoryException {
         final String code = "epsg:26986";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
+        Assert.assertNotNull(crs);
         assertTrue(crs instanceof ProjectedCRS);
-        assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
+        Assert.assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
     }
 
     /**
-     * WFS requires this to work. This CRS is defined in the {@linkplain DefaultFactory default EPSG
-     * authority factory}.
+     * WFS requires this to work. This CRS is defined in the {@linkplain DefaultFactory default EPSG authority factory}.
      */
+    @Test
     public void test4326Lower() throws FactoryException {
         final String code = "epsg:4326";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
+        Assert.assertNotNull(crs);
         assertTrue(crs instanceof GeographicCRS);
-        assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
+        Assert.assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
     }
 
     /**
-     * WFS requires this to work. This CRS is defined in the {@linkplain DefaultFactory default EPSG
-     * authority factory}.
+     * WFS requires this to work. This CRS is defined in the {@linkplain DefaultFactory default EPSG authority factory}.
      */
+    @Test
     public void test26742Lower() throws FactoryException {
         final String code = "epsg:26742";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
+        Assert.assertNotNull(crs);
         assertTrue(crs instanceof ProjectedCRS);
-        assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
+        Assert.assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
     }
 
     /**
-     * WFS requires this to work. This CRS is defined in the {@linkplain DefaultFactory default EPSG
-     * authority factory}.
+     * WFS requires this to work. This CRS is defined in the {@linkplain DefaultFactory default EPSG authority factory}.
      */
+    @Test
     public void test4269Lower() throws FactoryException {
         final String code = "epsg:4269";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
+        Assert.assertNotNull(crs);
         assertTrue(crs instanceof GeographicCRS);
-        assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
+        Assert.assertFalse(CRS.equalsIgnoreMetadata(crs, CRS.decode(code, true)));
     }
 
     /** WFS requires this to work. This CRS is defined in {@code unnamed.properties}. */
+    @Test
     public void test42304Lower() throws FactoryException {
         final String code = "epsg:42304";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
-        assertSame(crs, CRS.decode(code, true));
+        Assert.assertNotNull(crs);
+        Assert.assertSame(crs, CRS.decode(code, true));
     }
 
     /** WFS requires this to work. This CRS is defined in {@code unnamed.properties}. */
+    @Test
     public void test42102Lower() throws FactoryException {
         final String code = "epsg:42102";
         final CoordinateReferenceSystem crs = CRS.decode(code);
-        assertNotNull(crs);
-        assertSame(crs, CRS.decode(code, true));
+        Assert.assertNotNull(crs);
+        Assert.assertSame(crs, CRS.decode(code, true));
 
         // Checks identifier
         final Collection<ReferenceIdentifier> identifiers = crs.getIdentifiers();
-        assertNotNull(identifiers);
-        assertFalse(identifiers.isEmpty());
+        Assert.assertNotNull(identifiers);
+        Assert.assertFalse(identifiers.isEmpty());
         NamedIdentifier expected = new NamedIdentifier(Citations.EPSG, "42102");
         assertTrue(identifiers.contains(expected));
     }
 
     /** This CRS is defined in {@code esri.properties}. */
+    @Test
     public void test54004() throws FactoryException {
         final CRSAuthorityFactory factory = CRS.getAuthorityFactory(false);
         final String code = "EPSG:54004";
         final CoordinateReferenceSystem crs = factory.createCoordinateReferenceSystem(code);
-        assertNotNull(crs);
-        assertSame(crs, CRS.decode(code, true));
-        assertEquals("World_Mercator", String.valueOf(factory.getDescriptionText(code)));
+        Assert.assertNotNull(crs);
+        Assert.assertSame(crs, CRS.decode(code, true));
+        Assert.assertEquals("World_Mercator", String.valueOf(factory.getDescriptionText(code)));
 
         // Equivalent standard ESPG
-        final CoordinateReferenceSystem standard =
-                factory.createCoordinateReferenceSystem("EPSG:3395");
-        assertEquals(
-                "WGS 84 / World Mercator", String.valueOf(factory.getDescriptionText("EPSG:3395")));
+        Assert.assertEquals("WGS 84 / World Mercator", String.valueOf(factory.getDescriptionText("EPSG:3395")));
         // TODO: enable if we implement more intelligent 'equalsIgnoreMetadata'
+        // final CoordinateReferenceSystem standard =
+        // factory.createCoordinateReferenceSystem("EPSG:3395");
         // assertTrue(CRS.equalsIgnoreMetadata(crs, standard));
     }
 
     /** Tests the obtention of various codes. */
+    @Test
     public void testCodes() throws FactoryException {
         final CRSAuthorityFactory factory = CRS.getAuthorityFactory(false);
         final Collection codes = factory.getAuthorityCodes(ProjectedCRS.class);
         assertTrue(codes.contains("EPSG:3395")); // Defined in EPSG database
-        assertTrue(codes.contains("EPSG:54004")); // Defined in ESRI database
-        assertFalse(codes.contains("ESRI:54004"));
+        assertTrue(codes.contains("ESRI:54004")); // Defined in ESRI database
+        assertTrue(codes.contains("EPSG:54004")); // With EPSG as well
         assertTrue(codes.contains("EPSG:42304")); // Defined in unnamed database
         assertTrue(codes.contains("EPSG:26742")); // Defined in EPSG database
         assertTrue(codes.contains("EPSG:42102")); // Defined in unnamed database
-        assertFalse(codes.contains("EPSG:4326")); // This is a GeographicCRS, not a ProjectedCRS
+        Assert.assertFalse(codes.contains("EPSG:4326")); // This is a GeographicCRS, not a
+        // ProjectedCRS
         assertTrue(codes.contains("EPSG:100002")); // Defined in unnamed database
-        assertFalse(codes.contains("EPSG:100001")); // This is a GeographicCRS, not a ProjectedCRS
+        Assert.assertFalse(codes.contains("EPSG:100001")); // This is a GeographicCRS, not a ProjectedCRS
     }
 }

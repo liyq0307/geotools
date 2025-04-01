@@ -29,6 +29,7 @@ import org.geotools.styling.css.selector.ScaleRange;
 import org.geotools.styling.css.selector.Selector;
 import org.geotools.styling.css.selector.SelectorVisitor;
 import org.geotools.styling.css.selector.TypeName;
+import org.geotools.styling.css.selector.ZoomRange;
 
 /**
  * Simplifies out all pseudo classes, replacing them with {@link Selector#ACCEPT}
@@ -68,7 +69,7 @@ public class PseudoClassRemover implements SelectorVisitor {
                 simplified.add(newChild);
             }
         }
-        if (simplified.size() == 0) {
+        if (simplified.isEmpty()) {
             return Selector.ACCEPT;
         } else if (simplified.size() == 1) {
             return simplified.get(0);
@@ -88,7 +89,7 @@ public class PseudoClassRemover implements SelectorVisitor {
                 simplified.add(newChild);
             }
         }
-        if (simplified.size() == 0) {
+        if (simplified.isEmpty()) {
             return Selector.REJECT;
         } else if (simplified.size() == 1) {
             return simplified.get(0);
@@ -105,6 +106,11 @@ public class PseudoClassRemover implements SelectorVisitor {
     @Override
     public Object visit(ScaleRange scaleRange) {
         return scaleRange;
+    }
+
+    @Override
+    public Object visit(ZoomRange zoomRange) {
+        return zoomRange;
     }
 
     @Override

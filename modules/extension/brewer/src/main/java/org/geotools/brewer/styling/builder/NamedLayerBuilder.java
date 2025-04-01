@@ -18,18 +18,17 @@ package org.geotools.brewer.styling.builder;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.styling.FeatureTypeConstraint;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.Style;
+import org.geotools.api.style.FeatureTypeConstraint;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.Style;
 
 public class NamedLayerBuilder extends AbstractSLDBuilder<NamedLayer> {
 
-    List<FeatureTypeConstraintBuilder> featureTypeConstraint =
-            new ArrayList<FeatureTypeConstraintBuilder>();
+    List<FeatureTypeConstraintBuilder> featureTypeConstraint = new ArrayList<>();
 
     private String name;
 
-    List<StyleBuilder> styles = new ArrayList<StyleBuilder>();
+    List<StyleBuilder> styles = new ArrayList<>();
 
     public NamedLayerBuilder() {
         this(null);
@@ -53,14 +52,14 @@ public class NamedLayerBuilder extends AbstractSLDBuilder<NamedLayer> {
         return sb;
     }
 
-    @SuppressWarnings("unchecked")
+    @Override
     public NamedLayer build() {
         if (unset) {
             return null;
         }
         NamedLayer layer = sf.createNamedLayer();
         layer.setName(name);
-        List<FeatureTypeConstraint> list = new ArrayList<FeatureTypeConstraint>();
+        List<FeatureTypeConstraint> list = new ArrayList<>();
         for (FeatureTypeConstraintBuilder constraint : featureTypeConstraint) {
             list.add(constraint.build());
         }
@@ -76,6 +75,7 @@ public class NamedLayerBuilder extends AbstractSLDBuilder<NamedLayer> {
         return layer;
     }
 
+    @Override
     public NamedLayerBuilder reset() {
         unset = false;
         this.name = null;
@@ -83,6 +83,7 @@ public class NamedLayerBuilder extends AbstractSLDBuilder<NamedLayer> {
         return this;
     }
 
+    @Override
     public NamedLayerBuilder reset(NamedLayer layer) {
         if (layer == null) {
             return unset();
@@ -91,8 +92,7 @@ public class NamedLayerBuilder extends AbstractSLDBuilder<NamedLayer> {
         featureTypeConstraint.clear();
         if (layer.layerFeatureConstraints() != null) {
             for (FeatureTypeConstraint featureConstraint : layer.layerFeatureConstraints()) {
-                featureTypeConstraint.add(
-                        new FeatureTypeConstraintBuilder(this).reset(featureConstraint));
+                featureTypeConstraint.add(new FeatureTypeConstraintBuilder(this).reset(featureConstraint));
             }
         }
         styles.clear();
@@ -103,6 +103,7 @@ public class NamedLayerBuilder extends AbstractSLDBuilder<NamedLayer> {
         return this;
     }
 
+    @Override
     public NamedLayerBuilder unset() {
         return (NamedLayerBuilder) super.unset();
     }

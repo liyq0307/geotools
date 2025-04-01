@@ -17,16 +17,16 @@
 package org.geotools.filter.identity;
 
 import java.util.Date;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.ResourceId;
+import org.geotools.api.filter.identity.Version;
 import org.geotools.util.Utilities;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.identity.ResourceId;
-import org.opengis.filter.identity.Version;
 
 /**
  * Implementation of {@link ResourceId} used for Query.
  *
- * <p>This class is mutable under one condition only; during a commit a datastore can update the
- * internal fid to reflect the real identify assigned by the database or wfs.
+ * <p>This class is mutable under one condition only; during a commit a datastore can update the internal fid to reflect
+ * the real identify assigned by the database or wfs.
  *
  * <p>
  *
@@ -52,28 +52,23 @@ public class ResourceIdImpl extends FeatureIdVersionedImpl implements ResourceId
     }
 
     /**
-     * Obtain a ResourceId that represents an explicit request for feature id and feature version
-     * (essentially the quivalent of {@link FeatureId})
-     *
-     * @param fid
-     * @param featureVersion
+     * Obtain a ResourceId that represents an explicit request for feature id and feature version (essentially the
+     * quivalent of {@link FeatureId})
      */
     public ResourceIdImpl(String fid, String featureVersion) {
-        this(fid, featureVersion, (Version) null);
+        this(fid, featureVersion, null);
     }
 
     /**
-     * Date range constructor for a feature id; none or one of {@code start} and {@code end} can be
-     * {@code null}, making for an unconstrained date range at either of the ends.
+     * Date range constructor for a feature id; none or one of {@code start} and {@code end} can be {@code null}, making
+     * for an unconstrained date range at either of the ends.
      *
      * @param fid feature id, non null;
-     * @param start lower end of the time range, inclusive, or {@code null} only if {@code end !=
-     *     null}
-     * @param end upper end of the time range, inclusive, or {@code null} only if {@code start !=
-     *     null}
+     * @param start lower end of the time range, inclusive, or {@code null} only if {@code end != null}
+     * @param end upper end of the time range, inclusive, or {@code null} only if {@code start != null}
      */
     public ResourceIdImpl(String fid, Date start, Date end) {
-        this(fid, (String) null, (Version) null);
+        this(fid, null, (Version) null);
         if (start == null && end == null) {
             throw new NullPointerException(
                     "At least one of start and end time are required for a lookup based on a date range");

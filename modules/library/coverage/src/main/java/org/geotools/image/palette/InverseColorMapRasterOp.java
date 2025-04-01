@@ -31,9 +31,7 @@ public final class InverseColorMapRasterOp implements RasterOp {
     /** Default number of quantization colors used to build the index for the inverse color map. */
     public static final int DEFAULT_QUANTIZATION_COLORS = 5;
 
-    /**
-     * Default value for the threshold to decide whether a pixel is opaque (>=) or transparent (<).
-     */
+    /** Default value for the threshold to decide whether a pixel is opaque (>=) or transparent (<). */
     public static final int DEFAULT_ALPHA_TH = 1;
 
     private final IndexColorModel icm;
@@ -77,23 +75,11 @@ public final class InverseColorMapRasterOp implements RasterOp {
                 System.arraycopy(b, 0, colorMap[2], 0, transparencyIndex);
 
                 System.arraycopy(
-                        r,
-                        transparencyIndex + 1,
-                        colorMap[0],
-                        transparencyIndex,
-                        reducedMapSize - transparencyIndex);
+                        r, transparencyIndex + 1, colorMap[0], transparencyIndex, reducedMapSize - transparencyIndex);
                 System.arraycopy(
-                        g,
-                        transparencyIndex + 1,
-                        colorMap[1],
-                        transparencyIndex,
-                        reducedMapSize - transparencyIndex);
+                        g, transparencyIndex + 1, colorMap[1], transparencyIndex, reducedMapSize - transparencyIndex);
                 System.arraycopy(
-                        b,
-                        transparencyIndex + 1,
-                        colorMap[2],
-                        transparencyIndex,
-                        reducedMapSize - transparencyIndex);
+                        b, transparencyIndex + 1, colorMap[2], transparencyIndex, reducedMapSize - transparencyIndex);
             }
         } else {
             icm.getReds(colorMap[0]);
@@ -107,11 +93,13 @@ public final class InverseColorMapRasterOp implements RasterOp {
         this(destCM, DEFAULT_QUANTIZATION_COLORS, DEFAULT_ALPHA_TH);
     }
 
+    @Override
     public WritableRaster createCompatibleDestRaster(Raster src) {
         return icm.createCompatibleWritableRaster(src.getWidth(), src.getHeight())
                 .createWritableTranslatedChild(src.getMinX(), src.getMinY());
     }
 
+    @Override
     public WritableRaster filter(Raster src, WritableRaster dest) {
         if (dest == null) dest = createCompatibleDestRaster(src);
         else {
@@ -138,11 +126,8 @@ public final class InverseColorMapRasterOp implements RasterOp {
                 if (!sourceHasAlpha
                         || !hasAlpha
                         || (sourceHasAlpha && hasAlpha && rgba[alphaBand] >= this.alphaThreshold)) {
-                    int val =
-                            invCM.getIndexNearest(
-                                    rgba[0] & 0xff,
-                                    rgba[numBands == 1 ? 0 : 1] & 0xff,
-                                    rgba[numBands == 1 ? 0 : 2]);
+                    int val = invCM.getIndexNearest(
+                            rgba[0] & 0xff, rgba[numBands == 1 ? 0 : 1] & 0xff, rgba[numBands == 1 ? 0 : 2]);
                     if (hasAlpha && val >= transparencyIndex) val++;
                     dest.setSample(x_, y_, 0, (byte) (val & 0xff));
                 } else dest.setSample(x_, y_, 0, transparencyIndex);
@@ -151,16 +136,19 @@ public final class InverseColorMapRasterOp implements RasterOp {
         return dest;
     }
 
+    @Override
     public Rectangle2D getBounds2D(Raster src) {
         return (Rectangle) src.getBounds().clone();
     }
 
+    @Override
     public Point2D getPoint2D(Point2D srcPt, Point2D dstPt) {
         if (dstPt == null) dstPt = new Point();
         dstPt.setLocation(srcPt);
         return dstPt;
     }
 
+    @Override
     public RenderingHints getRenderingHints() {
         return null;
     }

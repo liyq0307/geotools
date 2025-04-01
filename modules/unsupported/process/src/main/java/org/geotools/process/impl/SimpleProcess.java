@@ -18,13 +18,13 @@ package org.geotools.process.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.util.NullProgressListener;
 import org.geotools.process.ProcessFactory;
-import org.opengis.util.ProgressListener;
 
 /**
- * Provide an implementation for a simple process (ie so quick and easy it is not going to need to
- * report progress as it goes).
+ * Provide an implementation for a simple process (ie so quick and easy it is not going to need to report progress as it
+ * goes).
  *
  * @author gdavis
  */
@@ -39,6 +39,7 @@ public abstract class SimpleProcess extends AbstractProcess {
         super(factory);
     }
 
+    @Override
     public final Map<String, Object> execute(Map<String, Object> input, ProgressListener monitor) {
         if (started) throw new IllegalStateException("Process can only be run once");
         started = true;
@@ -47,7 +48,7 @@ public abstract class SimpleProcess extends AbstractProcess {
         try {
             if (monitor.isCanceled()) return null; // respect isCanceled
             this.input = input;
-            result = new HashMap<String, Object>();
+            result = new HashMap<>();
 
             process();
 
@@ -60,11 +61,7 @@ public abstract class SimpleProcess extends AbstractProcess {
         }
     }
 
-    /**
-     * Implement your own process here.
-     *
-     * @throws Exception
-     */
+    /** Implement your own process here. */
     public abstract void process() throws Exception;
 
     protected Object get(String key) {

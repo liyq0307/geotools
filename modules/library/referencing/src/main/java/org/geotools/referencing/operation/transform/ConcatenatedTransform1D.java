@@ -16,12 +16,12 @@
  */
 package org.geotools.referencing.operation.transform;
 
-import org.geotools.geometry.DirectPosition1D;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransform1D;
-import org.opengis.referencing.operation.Matrix;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.TransformException;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransform1D;
+import org.geotools.api.referencing.operation.Matrix;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.Position1D;
 
 /**
  * Concatenated transform in which the resulting transform is one-dimensional.
@@ -46,17 +46,19 @@ final class ConcatenatedTransform1D extends ConcatenatedTransform implements Mat
     }
 
     /** Transforms the specified value. */
+    @Override
     public double transform(final double value) throws TransformException {
-        final double[] values = new double[] {value};
-        final double[] buffer = new double[] {transform1.getTargetDimensions()};
+        final double[] values = {value};
+        final double[] buffer = {transform1.getTargetDimensions()};
         transform1.transform(values, 0, buffer, 0, 1);
         transform2.transform(buffer, 0, values, 0, 1);
         return values[0];
     }
 
     /** Gets the derivative of this function at a value. */
+    @Override
     public double derivative(final double value) throws TransformException {
-        final DirectPosition1D p = new DirectPosition1D(value);
+        final Position1D p = new Position1D(value);
         final Matrix m = derivative(p);
         assert m.getNumRow() == 1 && m.getNumCol() == 1;
         return m.getElement(0, 0);

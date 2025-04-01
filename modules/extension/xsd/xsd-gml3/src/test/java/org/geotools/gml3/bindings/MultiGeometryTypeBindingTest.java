@@ -16,14 +16,18 @@
  */
 package org.geotools.gml3.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.geotools.gml3.GML;
 import org.geotools.gml3.GML3TestSupport;
+import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.w3c.dom.Document;
 
 public class MultiGeometryTypeBindingTest extends GML3TestSupport {
-
+    @Test
     public void testParse() throws Exception {
         GML3MockData.multiGeometry(document, document);
 
@@ -33,13 +37,15 @@ public class MultiGeometryTypeBindingTest extends GML3TestSupport {
         assertEquals(3, multiGeom.getNumGeometries());
     }
 
+    @Test
     public void testEncode() throws Exception {
         Geometry geometry = GML3MockData.multiGeometry();
         GML3EncodingUtils.setID(geometry, "geometry");
         Document dom = encode(geometry, GML.MultiGeometry);
         // print(dom);
         assertEquals("geometry", getID(dom.getDocumentElement()));
-        assertEquals(3, dom.getElementsByTagNameNS(GML.NAMESPACE, "geometryMember").getLength());
+        assertEquals(
+                3, dom.getElementsByTagNameNS(GML.NAMESPACE, "geometryMember").getLength());
         // geometry.1 is not encoded on the gml:Point because user data is already being used for
         // srsDimension and srsName; not going to support the use of these inside a multigeometry
         // and combined with gml:id
@@ -47,6 +53,7 @@ public class MultiGeometryTypeBindingTest extends GML3TestSupport {
                 "geometry.2",
                 getID(dom.getElementsByTagNameNS(GML.NAMESPACE, "LineString").item(0)));
         assertEquals(
-                "geometry.3", getID(dom.getElementsByTagNameNS(GML.NAMESPACE, "Polygon").item(0)));
+                "geometry.3",
+                getID(dom.getElementsByTagNameNS(GML.NAMESPACE, "Polygon").item(0)));
     }
 }

@@ -7,7 +7,7 @@
 package net.opengis.fes20;
 
 import org.eclipse.emf.ecore.EObject;
-import org.opengis.filter.capability.Operator;
+import org.geotools.api.filter.capability.Operator;
 
 /**
  * <!-- begin-user-doc -->
@@ -41,6 +41,7 @@ public interface ComparisonOperatorType extends EObject, Operator {
      *        extendedMetaData="kind='attribute' name='name'"
      * @generated
      */
+    @Override
     String getName();
 
     /**

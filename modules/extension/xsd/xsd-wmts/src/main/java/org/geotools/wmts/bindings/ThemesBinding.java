@@ -18,11 +18,13 @@
 
 package org.geotools.wmts.bindings;
 
+import java.util.List;
 import javax.xml.namespace.QName;
+import net.opengis.wmts.v_1.ThemeType;
 import net.opengis.wmts.v_1.ThemesType;
 import net.opengis.wmts.v_1.wmtsv_1Factory;
 import org.geotools.wmts.WMTS;
-import org.geotools.xsd.AbstractComplexBinding;
+import org.geotools.xsd.AbstractComplexEMFBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
@@ -59,7 +61,7 @@ import org.geotools.xsd.Node;
  *
  * @generated
  */
-public class ThemesBinding extends AbstractComplexBinding {
+public class ThemesBinding extends AbstractComplexEMFBinding {
 
     wmtsv_1Factory factory;
 
@@ -69,6 +71,7 @@ public class ThemesBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WMTS.Themes;
     }
@@ -80,7 +83,8 @@ public class ThemesBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
-    public Class getType() {
+    @Override
+    public Class<?> getType() {
         return ThemesType.class;
     }
 
@@ -91,9 +95,12 @@ public class ThemesBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         ThemesType themes = factory.createThemesType();
-        themes.getTheme().addAll(node.getChildValues("theme"));
+        @SuppressWarnings("unchecked")
+        List<ThemeType> children = node.getChildValues("Theme");
+        themes.getTheme().addAll(children);
         return themes;
     }
 }

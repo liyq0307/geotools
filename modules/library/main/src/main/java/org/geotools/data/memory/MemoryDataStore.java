@@ -20,13 +20,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
-import org.geotools.data.DataSourceException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentDataStore;
@@ -36,10 +40,6 @@ import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.FeatureTypes;
 import org.geotools.util.SuppressFBWarnings;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * This is an example implementation of a DataStore used for testing.
@@ -64,6 +64,7 @@ public class MemoryDataStore extends ContentDataStore {
     }
 
     /** Use MemoryState to manage internal storage. */
+    @Override
     protected MemoryState createContentState(ContentEntry entry) {
         return new MemoryState((MemoryEntry) entry);
     }
@@ -71,8 +72,8 @@ public class MemoryDataStore extends ContentDataStore {
     /**
      * Construct an MemoryDataStore around an empty collection of the provided SimpleFeatureType
      *
-     * @param featureType The initial feature type for the memory data store, an empty feature
-     *     collection of this type will be made available
+     * @param featureType The initial feature type for the memory data store, an empty feature collection of this type
+     *     will be made available
      */
     public MemoryDataStore(SimpleFeatureType featureType) {
         try {
@@ -91,12 +92,11 @@ public class MemoryDataStore extends ContentDataStore {
         addFeatures(collection);
     }
 
-    public MemoryDataStore(SimpleFeature[] array) {
+    public MemoryDataStore(SimpleFeature... array) {
         addFeatures(array);
     }
 
-    public MemoryDataStore(FeatureReader<SimpleFeatureType, SimpleFeature> reader)
-            throws IOException {
+    public MemoryDataStore(FeatureReader<SimpleFeatureType, SimpleFeature> reader) throws IOException {
         addFeatures(reader);
     }
 
@@ -111,8 +111,7 @@ public class MemoryDataStore extends ContentDataStore {
      * @throws IOException If problems are encountered while adding
      * @throws DataSourceException See IOException
      */
-    public void addFeatures(FeatureReader<SimpleFeatureType, SimpleFeature> reader)
-            throws IOException {
+    public void addFeatures(FeatureReader<SimpleFeatureType, SimpleFeature> reader) throws IOException {
         try {
             SimpleFeature feature = reader.next();
 
@@ -198,13 +197,13 @@ public class MemoryDataStore extends ContentDataStore {
      * @param features Array of features to add
      * @throws IllegalArgumentException If provided feature array is empty
      */
-    public void addFeatures(SimpleFeature[] features) {
+    public void addFeatures(SimpleFeature... features) {
         if ((features == null) || (features.length == 0)) {
             throw new IllegalArgumentException("Provided features are empty");
         }
         synchronized (entries) {
-            for (int i = 0; i < features.length; i++) {
-                addFeatureInternal(features[i]);
+            for (SimpleFeature feature : features) {
+                addFeatureInternal(feature);
             }
         }
     }
@@ -212,8 +211,7 @@ public class MemoryDataStore extends ContentDataStore {
     /**
      * Adds a single Feature to the correct typeName entry.
      *
-     * <p>This is an internal operation used for setting up MemoryDataStore - please use
-     * FeatureWriter for general use.
+     * <p>This is an internal operation used for setting up MemoryDataStore - please use FeatureWriter for general use.
      *
      * <p>This method is willing to create new FeatureTypes for MemoryDataStore.
      *
@@ -241,10 +239,9 @@ public class MemoryDataStore extends ContentDataStore {
     /**
      * Access MemoryState for typeName.
      *
-     * <p>Technically this is accessing the MemoryState for {@link Transaction#AUTO_COMMIT}, which
-     * is the definitive storage for the feature content.
+     * <p>Technically this is accessing the MemoryState for {@link Transaction#AUTO_COMMIT}, which is the definitive
+     * storage for the feature content.
      *
-     * @param typeName
      * @return MemoryState storing feature (by FeatureID)
      * @throws IOException If typeName cannot be found
      */
@@ -264,7 +261,6 @@ public class MemoryDataStore extends ContentDataStore {
      *
      * <p>
      *
-     * @param schema
      * @return MemoryState used for content storage
      * @throws IOException If new entry could not be created due to typeName conflict
      */
@@ -277,12 +273,7 @@ public class MemoryDataStore extends ContentDataStore {
                     return entry;
                 } else {
                     throw new IOException(
-                            "Entry "
-                                    + typeName
-                                    + " schema "
-                                    + entry.schema
-                                    + " incompatible with provided "
-                                    + schema);
+                            "Entry " + typeName + " schema " + entry.schema + " incompatible with provided " + schema);
                 }
             } else {
                 MemoryEntry entry = new MemoryEntry(this, schema);
@@ -298,18 +289,14 @@ public class MemoryDataStore extends ContentDataStore {
      * @return List of type names
      * @see org.geotools.data.ContentDataStore#getFeatureTypes()
      */
+    @Override
     protected List<Name> createTypeNames() {
-        List<Name> names = new ArrayList<Name>(this.entries.keySet());
-        Collections.sort(
-                names,
-                new Comparator<Name>() {
-                    public int compare(Name n1, Name n2) {
-                        return n1.toString().compareTo(n2.toString());
-                    }
-                });
+        List<Name> names = new ArrayList<>(this.entries.keySet());
+        Collections.sort(names, (n1, n2) -> n1.toString().compareTo(n2.toString()));
         return names;
     }
 
+    @Override
     protected ContentFeatureSource createFeatureSource(ContentEntry entry) {
         return createFeatureSource(entry, Query.ALL);
     }
@@ -321,13 +308,14 @@ public class MemoryDataStore extends ContentDataStore {
     /**
      * Adds support for a new featureType to MemoryDataStore.
      *
-     * <p>FeatureTypes are stored by typeName, an IOException will be thrown if the requested
-     * typeName is already in use.
+     * <p>FeatureTypes are stored by typeName, an IOException will be thrown if the requested typeName is already in
+     * use.
      *
      * @param featureType SimpleFeatureType to be added
      * @throws IOException If featureType already exists
-     * @see org.geotools.data.DataStore#createSchema(org.geotools.feature.SimpleFeatureType)
+     * @see DataStore#createSchema(org.geotools.feature.SimpleFeatureType)
      */
+    @Override
     public void createSchema(SimpleFeatureType featureType) throws IOException {
         Name typeName = featureType.getName();
         if (entries.containsKey(typeName)) {

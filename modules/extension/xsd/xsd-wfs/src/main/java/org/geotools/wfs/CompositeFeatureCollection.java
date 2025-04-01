@@ -21,20 +21,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.store.DataFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.identity.FeatureId;
 
 /**
  * Wraps multiple feature collections into a single.
  *
- * <p>This feature collection is used for wfs feature collections which can be made up of features
- * from different schemas.
+ * <p>This feature collection is used for wfs feature collections which can be made up of features from different
+ * schemas.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -46,21 +46,25 @@ public class CompositeFeatureCollection extends DataFeatureCollection {
         this.collections = collections;
     }
 
+    @Override
     protected Iterator<SimpleFeature> openIterator() throws IOException {
         return new CompositeIterator();
     }
 
+    @Override
     public SimpleFeatureType getSchema() {
         return null;
     }
 
+    @Override
     public ReferencedEnvelope getBounds() {
         return DataUtilities.bounds(this);
     }
 
+    @Override
     public int getCount() throws IOException {
         int count = 0;
-        Iterator i = iterator();
+        Iterator<SimpleFeature> i = iterator();
 
         try {
             while (i.hasNext()) {
@@ -82,8 +86,10 @@ public class CompositeFeatureCollection extends DataFeatureCollection {
             index = 0;
         }
 
+        @Override
         public void remove() {}
 
+        @Override
         public boolean hasNext() {
             // is there a current iterator that has another element
             if ((iterator != null) && iterator.hasNext()) {
@@ -98,7 +104,7 @@ public class CompositeFeatureCollection extends DataFeatureCollection {
                 }
 
                 // grap next
-                iterator = ((FeatureCollection) collections.get(index++)).features();
+                iterator = collections.get(index++).features();
 
                 if (iterator.hasNext()) {
                     return true;
@@ -113,28 +119,30 @@ public class CompositeFeatureCollection extends DataFeatureCollection {
             return false;
         }
 
+        @Override
         public SimpleFeature next() {
             return (SimpleFeature) iterator.next();
         }
     }
 
+    @Override
     public boolean addAll(Collection arg0) {
         throw new RuntimeException(
                 "Can't add to a composite featurecollection; you need to add to one of the constituent collections direclty.");
     }
 
+    @Override
     public <T> T[] toArray(T[] arg0) {
-        List<T> list = new ArrayList<T>();
+        List<T> list = new ArrayList<>();
         Iterator it = collections.iterator();
         while (it.hasNext()) {
             FeatureCollection col = (FeatureCollection) it.next();
-            FeatureIterator it2 = col.features();
-            try {
+            try (FeatureIterator it2 = col.features()) {
                 while (it2.hasNext()) {
-                    list.add((T) it.next());
+                    @SuppressWarnings("unchecked")
+                    T next = (T) it.next();
+                    list.add(next);
                 }
-            } finally {
-                it2.close();
             }
         }
 

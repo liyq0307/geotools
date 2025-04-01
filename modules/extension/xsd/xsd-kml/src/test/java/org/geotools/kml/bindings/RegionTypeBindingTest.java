@@ -16,31 +16,36 @@
  */
 package org.geotools.kml.bindings;
 
+import static org.junit.Assert.assertEquals;
+
 import org.geotools.kml.KML;
 import org.geotools.kml.KMLTestSupport;
 import org.geotools.xsd.Binding;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LinearRing;
 
 public class RegionTypeBindingTest extends KMLTestSupport {
+    @Test
     public void testType() {
         assertEquals(LinearRing.class, binding(KML.RegionType).getType());
     }
 
+    @Test
     public void testExecutionMode() {
         assertEquals(Binding.OVERRIDE, binding(KML.RegionType).getExecutionMode());
     }
 
+    @Test
     public void testParse() throws Exception {
-        String xml =
-                "<Region>"
-                        + "<LatLonAltBox>"
-                        + "<north>1</north>"
-                        + "<south>-1</south>"
-                        + "<east>1</east>"
-                        + "<west>-1</west>"
-                        + "</LatLonAltBox>"
-                        + "</Region>";
+        String xml = "<Region>"
+                + "<LatLonAltBox>"
+                + "<north>1</north>"
+                + "<south>-1</south>"
+                + "<east>1</east>"
+                + "<west>-1</west>"
+                + "</LatLonAltBox>"
+                + "</Region>";
 
         buildDocument(xml);
 

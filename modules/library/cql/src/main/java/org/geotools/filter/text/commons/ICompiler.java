@@ -17,15 +17,15 @@
 package org.geotools.filter.text.commons;
 
 import java.util.List;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.filter.text.cql2.CQLException;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.Expression;
 
 /**
  * This interface presents the methods which will be implemented by the different compiles.
  *
- * <p>Warning: This component is not published. It is part of module implementation. Client module
- * should not use this feature.
+ * <p>Warning: This component is not published. It is part of module implementation. Client module should not use this
+ * feature.
  *
  * @author Mauricio Pazos (Axios Engineering)
  * @since 2.6
@@ -36,10 +36,8 @@ public interface ICompiler {
     public String getSource();
 
     /**
-     * Compiles the source string to produce a {@link Filter}. The filter result must be retrieved
-     * with {@link #getFilter()}.
-     *
-     * @throws CQLException
+     * Compiles the source string to produce a {@link Filter}. The filter result must be retrieved with
+     * {@link #getFilter()}.
      */
     public void compileFilter() throws CQLException;
 
@@ -48,15 +46,12 @@ public interface ICompiler {
      *
      * @see #compileFilter()
      * @return Filter
-     * @throws CQLException
      */
     public Filter getFilter() throws CQLException;
 
     /**
-     * Compiles the source string to produce an {@link Expression}. The resultant expression must be
-     * retrieved with {@link #getExpression()}.
-     *
-     * @throws CQLException
+     * Compiles the source string to produce an {@link Expression}. The resultant expression must be retrieved with
+     * {@link #getExpression()}.
      */
     public void compileExpression() throws CQLException;
     /**
@@ -64,15 +59,12 @@ public interface ICompiler {
      *
      * @see #compileExpression()
      * @return Expression
-     * @throws CQLException
      */
     public Expression getExpression() throws CQLException;
 
     /**
-     * Compiles the source string to produce a {@link List} of {@link Filter}. The result must be
-     * retrieved with {@link #getFilterList()()}.
-     *
-     * @throws CQLException
+     * Compiles the source string to produce a {@link List} of {@link Filter}. The result must be retrieved with
+     * {@link #getFilterList()()}.
      */
     public void compileFilterList() throws CQLException;
 
@@ -81,14 +73,12 @@ public interface ICompiler {
      *
      * @see #compileFilterList()
      * @return List<Filter>
-     * @throws CQLException
      */
     public List<Filter> getFilterList() throws CQLException;
 
     /**
      * Return the token presents in the position specified.
      *
-     * @param position
      * @return IToken
      */
     public IToken getTokenInPosition(int position);

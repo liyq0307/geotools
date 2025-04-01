@@ -20,9 +20,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.util.InternationalString;
+import org.geotools.api.util.ProgressListener;
 import org.junit.Test;
-import org.opengis.util.InternationalString;
-import org.opengis.util.ProgressListener;
 
 /**
  * Test suite for {@link SubProgressListener}
@@ -88,46 +88,57 @@ public class SubProgressListenerTest {
             this.startedCalled = false;
         }
 
+        @Override
         public void progress(float percent) {
             this.progress = percent;
         }
 
+        @Override
         public float getProgress() {
             return this.progress;
         }
 
+        @Override
         public void complete() {}
 
         public boolean getStarted() {
             return this.startedCalled;
         }
 
+        @Override
         public void started() {
             this.startedCalled = true;
         }
 
+        @Override
         public void dispose() {}
 
+        @Override
         public void exceptionOccurred(Throwable exception) {}
 
         public String getDescription() {
             return null;
         }
 
+        @Override
         public InternationalString getTask() {
             return null;
         }
 
+        @Override
         public boolean isCanceled() {
             return false;
         }
 
+        @Override
         public void setCanceled(boolean cancel) {}
 
         public void setDescription(String description) {}
 
+        @Override
         public void setTask(InternationalString task) {}
 
+        @Override
         public void warningOccurred(String source, String location, String warning) {}
     }
 }

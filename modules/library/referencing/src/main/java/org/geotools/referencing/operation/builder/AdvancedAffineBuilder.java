@@ -19,20 +19,19 @@ package org.geotools.referencing.operation.builder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.geometry.MismatchedReferenceSystemException;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.referencing.operation.matrix.GeneralMatrix;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.geotools.referencing.operation.transform.ProjectiveTransform;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.geometry.MismatchedReferenceSystemException;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * Builder for affine transformation with possibility to set several constrains for affine
- * parameters that will be respected during calculation. This is convenient for example to use when
- * you want affine transformation with skew parameter equal to zero. Development carried out thanks
- * to R&D grant DC08P02OUK006 - Old Maps Online (www.oldmapsonline.org) from Ministry of Culture of
- * the Czech Republic
+ * Builder for affine transformation with possibility to set several constrains for affine parameters that will be
+ * respected during calculation. This is convenient for example to use when you want affine transformation with skew
+ * parameter equal to zero. Development carried out thanks to R&D grant DC08P02OUK006 - Old Maps Online
+ * (www.oldmapsonline.org) from Ministry of Culture of the Czech Republic
  *
  * @author jezekjan
  * @version $Id$
@@ -84,7 +83,7 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
     private int steps = 100;
 
     /** Map of constrains - parameter name as key and its required value */
-    private Map<String, Double> valueConstrain = new HashMap<String, Double>();
+    private Map<String, Double> valueConstrain = new HashMap<>();
 
     /** Affine transformation for approximate values */
     private final AffineTransform2D affineTrans;
@@ -95,26 +94,22 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
      * @param vectors GCPs
      */
     public AdvancedAffineBuilder(final List<MappedPosition> vectors)
-            throws IllegalArgumentException, MismatchedDimensionException,
-                    MismatchedReferenceSystemException, FactoryException {
+            throws IllegalArgumentException, MismatchedDimensionException, MismatchedReferenceSystemException,
+                    FactoryException {
         /** use constructor with approximate values taken from 6 parameters of affine transform */
         this(vectors, (AffineTransform2D) (new AffineTransformBuilder(vectors).getMathTransform()));
     }
 
     /**
-     * Constructs affine transform from GCPs and approximate values for calculation. This
-     * constructor should be used when the default calculation is divergating.
+     * Constructs affine transform from GCPs and approximate values for calculation. This constructor should be used
+     * when the default calculation is divergating.
      *
      * @param vectors GCPs
      * @param affineTrans approximate affine transformation
-     * @throws MismatchedSizeException
-     * @throws MismatchedDimensionException
-     * @throws MismatchedReferenceSystemException
-     * @throws FactoryException
      */
     public AdvancedAffineBuilder(final List<MappedPosition> vectors, AffineTransform2D affineTrans)
-            throws IllegalArgumentException, MismatchedDimensionException,
-                    MismatchedReferenceSystemException, FactoryException {
+            throws IllegalArgumentException, MismatchedDimensionException, MismatchedReferenceSystemException,
+                    FactoryException {
         super.setMappedPositions(vectors);
 
         /** sets approximate values */
@@ -132,9 +127,9 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
     }
 
     /**
-     * Sets constrain that {@code param} is equal to {@code value}. Be aware that the calculation
-     * may diverge in the case you set some values that are not 'close' to approximate values. I the
-     * case of divergence you can set approximate values using proper constructor
+     * Sets constrain that {@code param} is equal to {@code value}. Be aware that the calculation may diverge in the
+     * case you set some values that are not 'close' to approximate values. I the case of divergence you can set
+     * approximate values using proper constructor
      *
      * @param param parameter name - set one of AdvancedAffineBuilder static variables.
      * @param value required value
@@ -149,9 +144,8 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
     }
 
     /**
-     * Generates A matrix (Matrix of derivation of affine equation). Each column is derivation by
-     * each transformation parameter (sx, sy, sxy, phi, tx,ty). The rows are derivations of fx and
-     * fy.
+     * Generates A matrix (Matrix of derivation of affine equation). Each column is derivation by each transformation
+     * parameter (sx, sy, sxy, phi, tx,ty). The rows are derivations of fx and fy.
      *
      * @return A matrix
      */
@@ -215,8 +209,8 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
     }
 
     /**
-     * Fill L matrix. This matrix contains differences between expected value and value calculated
-     * from affine parameters
+     * Fill L matrix. This matrix contains differences between expected value and value calculated from affine
+     * parameters
      *
      * @return l matrix
      */
@@ -233,12 +227,8 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
             double y = getSourcePoints()[j].getOrdinate(1);
 
             /* a1 is target value - transfomed value*/
-            double dx =
-                    getTargetPoints()[j].getOrdinate(0)
-                            - (sx * cosphix * x - sy * sinphiy * y + tx);
-            double dy =
-                    getTargetPoints()[j].getOrdinate(1)
-                            - (sx * sinphix * x + sy * cosphiy * y + ty);
+            double dx = getTargetPoints()[j].getOrdinate(0) - (sx * cosphix * x - sy * sinphiy * y + tx);
+            double dy = getTargetPoints()[j].getOrdinate(1) - (sx * sinphix * x + sy * cosphiy * y + ty);
 
             l.setElement(j, 0, dx);
             l.setElement((l.getNumRow() / 2) + j, 0, dy);
@@ -251,7 +241,6 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
      * Ask for dx matrix with default number of iterations and precision constrain.
      *
      * @return dx matrix
-     * @throws FactoryException
      */
     private GeneralMatrix getDxMatrix() throws FactoryException {
         return getDxMatrix(dif, steps);
@@ -263,7 +252,6 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
      * @param tolerance tolerance for iteration.
      * @param maxSteps max steps of iteration
      * @return dx matrix
-     * @throws FactoryException
      */
     private GeneralMatrix getDxMatrix(double tolerance, int maxSteps) throws FactoryException {
         /** Matrix of new calculated coefficients */
@@ -436,8 +424,6 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
     /**
      * Joins A <sup>T</sup> matrix with L
      *
-     * @param ATl
-     * @param U
      * @return matrix constructs from ATl and U
      */
     private GeneralMatrix createAU(GeneralMatrix ATl, GeneralMatrix U) {
@@ -452,17 +438,13 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
     /**
      * Joins A matrix with B. result is: (A B ) (B 0 )
      *
-     * @param ATA
-     * @param B
      * @return matrix constructs from ATA and B
      */
     private GeneralMatrix createAB(GeneralMatrix ATA, GeneralMatrix B) {
         GeneralMatrix BT = B.clone();
         BT.transpose();
 
-        GeneralMatrix AAB =
-                new GeneralMatrix(
-                        ATA.getNumRow() + B.getNumRow(), ATA.getNumCol() + BT.getNumCol());
+        GeneralMatrix AAB = new GeneralMatrix(ATA.getNumRow() + B.getNumRow(), ATA.getNumCol() + BT.getNumCol());
 
         ATA.copySubMatrix(0, 0, ATA.getNumRow(), ATA.getNumCol(), 0, 0, AAB);
         B.copySubMatrix(0, 0, B.getNumRow(), B.getNumCol(), ATA.getNumRow(), 0, AAB);
@@ -470,8 +452,7 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
 
         GeneralMatrix zero = new GeneralMatrix(B.getNumRow(), B.getNumRow());
         zero.setZero();
-        zero.copySubMatrix(
-                0, 0, zero.getNumRow(), zero.getNumCol(), B.getNumCol(), B.getNumCol(), AAB);
+        zero.copySubMatrix(0, 0, zero.getNumRow(), zero.getNumCol(), B.getNumCol(), B.getNumCol(), AAB);
 
         return AAB;
     }
@@ -480,7 +461,6 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
      * Calculates coefficients of Projective transformation matrix from geometric parameters.
      *
      * @return Projective Matrix
-     * @throws FactoryException
      */
     protected GeneralMatrix getProjectiveMatrix() throws FactoryException {
         GeneralMatrix M = new GeneralMatrix(3, 3);
@@ -488,13 +468,13 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
         /** Runs calculation of parameter values */
         double[] param = getDxMatrix().getElements()[0];
 
-        /** calcuates matrix coefficients form geometric coefficients */
+        /** calculates matrix coefficients from geometric coefficients */
         double a11 = sx * Math.cos(phix);
         double a12 = -sy * Math.sin(phiy);
         double a21 = sx * Math.sin(phix);
         double a22 = sy * Math.cos(phiy);
 
-        /** Fill the metrix */
+        /** Fill the matrix */
         double[] m0 = {a11, a12, param[4]};
         double[] m1 = {a21, a22, param[5]};
         double[] m2 = {0, 0, 1};
@@ -507,7 +487,7 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
 
     @Override
     protected MathTransform computeMathTransform() throws FactoryException {
-        if (valueConstrain.size() == 0) {
+        if (valueConstrain.isEmpty()) {
             return affineTrans;
         }
 
@@ -523,19 +503,14 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
         return dif;
     }
 
-    /**
-     * Sets difference that is required between steps in iteration.
-     *
-     * @param dif
-     */
+    /** Sets difference that is required between steps in iteration. */
     public void setMaxIterationDifference(double dif) {
         this.dif = dif;
     }
 
     /**
-     * Return max number of iteration steps. If the difference between calculated values in each
-     * iteration steps is still bigger than required then Exception is thrown. This is not the
-     * number that was really needed for iteration.
+     * Return max number of iteration steps. If the difference between calculated values in each iteration steps is
+     * still bigger than required then Exception is thrown. This is not the number that was really needed for iteration.
      *
      * @return max number of iteration steps.
      */
@@ -544,8 +519,8 @@ public class AdvancedAffineBuilder extends MathTransformBuilder {
     }
 
     /**
-     * Sets max number of iteration steps. If the difference between calculated values in each
-     * iteration steps is still bigger than required than Exception is thrown.
+     * Sets max number of iteration steps. If the difference between calculated values in each iteration steps is still
+     * bigger than required than Exception is thrown.
      *
      * @param steps max number of iterations.
      */

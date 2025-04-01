@@ -16,13 +16,20 @@
  */
 package org.geotools.sld.bindings;
 
-import org.geotools.styling.RasterSymbolizer;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.Map;
+import org.geotools.api.style.RasterSymbolizer;
+import org.junit.Test;
 
 public class SLDRasterSymbolizerBindingTest extends SLDTestSupport {
+    @Test
     public void testType() throws Exception {
         assertEquals(RasterSymbolizer.class, new SLDRasterSymbolizerBinding(null).getType());
     }
 
+    @Test
     public void test() throws Exception {
         SLDMockData.rasterSymbolizer(document, document);
 
@@ -36,5 +43,25 @@ public class SLDRasterSymbolizerBindingTest extends SLDTestSupport {
         assertNotNull(rs.getOverlap());
         assertNotNull(rs.getGeometryPropertyName());
         assertNotNull(rs.getShadedRelief());
+    }
+
+    @Test
+    public void testWithVendorOptions() throws Exception {
+        SLDMockData.rasterSymbolizerWithVendorOptions(document, document);
+
+        RasterSymbolizer rs = (RasterSymbolizer) parse();
+        assertNotNull(rs);
+        assertNotNull(rs.getChannelSelection());
+        assertNotNull(rs.getColorMap());
+        assertNotNull(rs.getContrastEnhancement());
+        assertNotNull(rs.getImageOutline());
+        assertNotNull(rs.getOpacity());
+        assertNotNull(rs.getOverlap());
+        assertNotNull(rs.getGeometryPropertyName());
+        assertNotNull(rs.getShadedRelief());
+        Map<String, String> options = rs.getOptions();
+        assertEquals(2, options.size());
+        assertEquals("value", options.get("name"));
+        assertEquals("value2", options.get("name2"));
     }
 }

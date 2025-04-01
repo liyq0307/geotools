@@ -73,8 +73,7 @@ public class HanaWKBWriter {
             return computeSize((GeometryCollection) geometry, dimension);
         } else {
             throw new HanaWKBWriterException(
-                    MessageFormat.format(
-                            "Unsupported geometry type {0}", geometry.getGeometryType()));
+                    MessageFormat.format("Unsupported geometry type {0}", geometry.getGeometryType()));
         }
     }
 
@@ -102,7 +101,7 @@ public class HanaWKBWriter {
     }
 
     private static int computeSize(MultiPoint multiPoint, int dimension) {
-        return HEADER_SIZE + COUNT_SIZE + multiPoint.getNumPoints() * dimension * COORD_SIZE;
+        return HEADER_SIZE + COUNT_SIZE + multiPoint.getNumPoints() * (HEADER_SIZE + dimension * COORD_SIZE);
     }
 
     private static int computeSize(MultiLineString multiLineString, int dimension) {
@@ -121,8 +120,7 @@ public class HanaWKBWriter {
         return size;
     }
 
-    private static int computeSize(GeometryCollection geometryCollection, int dimension)
-            throws HanaWKBWriterException {
+    private static int computeSize(GeometryCollection geometryCollection, int dimension) throws HanaWKBWriterException {
         int size = HEADER_SIZE + COUNT_SIZE;
         for (int i = 0; i < geometryCollection.getNumGeometries(); ++i) {
             size += computeSize(geometryCollection.getGeometryN(i), dimension);
@@ -134,8 +132,7 @@ public class HanaWKBWriter {
 
     private static final int DIM_OFFSET = 1000;
 
-    private static void write(Geometry geometry, int dimension, ByteBuffer buffer)
-            throws HanaWKBWriterException {
+    private static void write(Geometry geometry, int dimension, ByteBuffer buffer) throws HanaWKBWriterException {
         if (geometry instanceof Point) {
             write((Point) geometry, dimension, buffer);
         } else if (geometry instanceof LineString) {
@@ -152,8 +149,7 @@ public class HanaWKBWriter {
             write((GeometryCollection) geometry, dimension, buffer);
         } else {
             throw new HanaWKBWriterException(
-                    MessageFormat.format(
-                            "Unsupported geometry type {0}", geometry.getGeometryType()));
+                    MessageFormat.format("Unsupported geometry type {0}", geometry.getGeometryType()));
         }
     }
 
@@ -190,7 +186,7 @@ public class HanaWKBWriter {
 
         write(shell.getCoordinateSequence(), dimension, buffer);
         for (int i = 0; i < numHoles; ++i) {
-            LineString hole = polygon.getInteriorRingN(0);
+            LineString hole = polygon.getInteriorRingN(i);
             write(hole.getCoordinateSequence(), dimension, buffer);
         }
     }
@@ -222,8 +218,7 @@ public class HanaWKBWriter {
         }
     }
 
-    private static void write(
-            GeometryCollection geometryCollection, int dimension, ByteBuffer buffer)
+    private static void write(GeometryCollection geometryCollection, int dimension, ByteBuffer buffer)
             throws HanaWKBWriterException {
         writeHeader(GeometryType.GEOMETRYCOLLECTION, dimension, buffer);
         int numGeometries = geometryCollection.getNumGeometries();

@@ -17,77 +17,69 @@
  */
 package org.geotools.gce.image;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.logging.Logger;
-import junit.textui.TestRunner;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.test.TestData;
 import org.geotools.util.logging.Logging;
-import org.opengis.coverage.grid.Format;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.TransformException;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
- * Test class for WorldImageWriter. This test tries to read, writer and re-read successive images
- * checking for errors.
+ * Test class for WorldImageWriter. This test tries to read, writer and re-read successive images checking for errors.
  *
  * @author Simone Giannecchini
  * @author rgould
  */
 public class WorldImageWriterTest extends WorldImageBaseTestCase {
-    private static final String[] supportedFormat =
-            new String[] {"tiff", "gif", "png", "bmp", "jpeg"};
+    private static final String[] supportedFormat = {"tiff", "gif", "png", "bmp", "jpeg"};
 
     private Logger logger = Logging.getLogger(WorldImageWriterTest.class);
 
-    public WorldImageWriterTest(String name) {
-        super(name);
-    }
-
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         File testData = TestData.file(this, ".");
         new File(testData, "write").mkdir();
     }
     /**
-     * This method simply read all the respecting a predefined pattern inside the testData directory
-     * and then it tries to read, write and re-read them back. All the possible errors are caught.
-     *
-     * @throws MalformedURLException
-     * @throws IOException
-     * @throws IllegalArgumentException
-     * @throws FactoryException
-     * @throws TransformException
-     * @throws ParseException
-     * @throws ParseException
+     * This method simply read all the respecting a predefined pattern inside the testData directory and then it tries
+     * to read, write and re-read them back. All the possible errors are caught.
      */
+    @Test
     public void testWrite()
-            throws MalformedURLException, IOException, IllegalArgumentException, FactoryException,
-                    TransformException, ParseException {
+            throws MalformedURLException, IOException, IllegalArgumentException, FactoryException, TransformException,
+                    ParseException {
 
         // checking test data directory for all kind of inputs
         final File test_data_dir = TestData.file(this, null);
         File output;
         final String[] fileList = test_data_dir.list(new MyFileFilter());
         for (String format : supportedFormat) {
-            final StringBuffer buff = new StringBuffer("Format is ").append(format).append("\n");
+            final StringBuffer buff =
+                    new StringBuffer("Format is ").append(format).append("\n");
             for (String filePath : fileList) {
                 buff.append(" Testing ability to write ").append(filePath);
                 // url
                 final URL url = TestData.getResource(this, filePath);
-                assertTrue(url != null);
+                assertNotNull(url);
                 output = this.write(url, format);
                 buff.append(" as url ").append(filePath).append(output.getName());
 
                 // getting file
                 final File file = TestData.file(this, filePath);
-                assertTrue(file != null);
+                assertNotNull(file);
                 // starting write test
                 output = this.write(file, format);
                 buff.append(" and file ").append(filePath).append(output.getName() + "\n");
@@ -97,25 +89,18 @@ public class WorldImageWriterTest extends WorldImageBaseTestCase {
     }
 
     /**
-     * This method is responsible for loading the provided source object as a cverage then for
-     * writing it on the temp directoy and finally for rereading the coverage back into memory in
-     * order to display it.
+     * This method is responsible for loading the provided source object as a cverage then for writing it on the temp
+     * directoy and finally for rereading the coverage back into memory in order to display it.
      *
      * @param source Object The object on disk representing the coverage to test.
-     * @throws IOException
-     * @throws IllegalArgumentException
-     * @throws FactoryException
-     * @throws TransformException
-     * @throws ParseException
      */
     private File write(Object source, String format)
-            throws IOException, IllegalArgumentException, FactoryException, TransformException,
-                    ParseException {
+            throws IOException, IllegalArgumentException, FactoryException, TransformException, ParseException {
         // instantiating a reader
         WorldImageReader wiReader = new WorldImageReader(source);
 
         // reading the original coverage
-        GridCoverage2D coverage = (GridCoverage2D) wiReader.read(null);
+        GridCoverage2D coverage = wiReader.read(null);
 
         assertNotNull(coverage);
         assertNotNull(coverage.getRenderedImage());
@@ -145,7 +130,7 @@ public class WorldImageWriterTest extends WorldImageBaseTestCase {
         // reading again
         assertTrue(tempFile.exists());
         wiReader = new WorldImageReader(tempFile);
-        coverage = (GridCoverage2D) wiReader.read(null);
+        coverage = wiReader.read(null);
 
         // displaying the coverage
         if (TestData.isInteractiveTest()) coverage.show();
@@ -154,15 +139,5 @@ public class WorldImageWriterTest extends WorldImageBaseTestCase {
         coverage.dispose(true);
 
         return tempFile;
-    }
-
-    /**
-     * TestRunner for testing inside a java application. It gives us the ability to keep windows
-     * open to inspect what happened.
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        TestRunner.run(WorldImageWriterTest.class);
     }
 }

@@ -17,16 +17,14 @@
 
 package org.geotools.swing.dialog;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Dimension;
-import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
-import java.awt.image.Raster;
 import java.util.concurrent.CountDownLatch;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -51,24 +49,23 @@ import org.junit.runner.RunWith;
 public class DialogUtilsTest extends GraphicsTestBase {
 
     /**
-     * Set this to true to display the screen shot image of the label in the test {@linkplain
-     * #labelTextIsFittedProperly()}.
+     * Set this to true to display the screen shot image of the label in the test
+     * {@linkplain #labelTextIsFittedProperly()}.
      */
     private static final boolean displayLabelImage = false;
 
     @Test
     public void labelTextExtentCanBeCalledSafelyOutsideEDT() {
         // Just testing there is no exception
-        Dimension dim = DialogUtils.getHtmlLabelTextExtent("foo", 300, true);
+        DialogUtils.getHtmlLabelTextExtent("foo", 300, true);
     }
 
     /**
-     * Tests display of a long html text string in a label. The string includes a red dot and the
-     * start and a blue dot at the end. When the label is rendered we grab a screen shot and then
-     * search for the dots to check that the whole of the text string was visible.
+     * Tests display of a long html text string in a label. The string includes a red dot and the start and a blue dot
+     * at the end. When the label is rendered we grab a screen shot and then search for the dots to check that the whole
+     * of the text string was visible.
      *
-     * <p>TODO: It would also be good to have a way of checking that the label does not include too
-     * much slack space.
+     * <p>TODO: It would also be good to have a way of checking that the label does not include too much slack space.
      */
     @Test
     public void labelTextIsFittedProperly() throws Exception {
@@ -91,38 +88,33 @@ public class DialogUtilsTest extends GraphicsTestBase {
         final int labelWidth = 300;
         final Dimension dim = DialogUtils.getHtmlLabelTextExtent(sb.toString(), labelWidth, true);
 
-        JFrame frame =
-                GuiActionRunner.execute(
-                        new GuiQuery<JFrame>() {
-                            @Override
-                            protected JFrame executeInEDT() throws Throwable {
-                                JFrame frame = new JFrame();
+        JFrame frame = GuiActionRunner.execute(new GuiQuery<JFrame>() {
+            @Override
+            protected JFrame executeInEDT() throws Throwable {
+                JFrame frame = new JFrame();
 
-                                /**
-                                 * mbedward: I tried overriding the label's paintComponent method to
-                                 * disable text anti-aliasing in order to make searching for the red
-                                 * and blue dots easier, but the rendering hint did not seem to
-                                 * affect HTML rendering. So instead, the findColorInRange method is
-                                 * used to allow for the fuzz of colour values.
-                                 */
-                                JLabel label = new JLabel(sb.toString());
-                                label.setName("TheLabel");
+                /**
+                 * mbedward: I tried overriding the label's paintComponent method to disable text anti-aliasing in order
+                 * to make searching for the red and blue dots easier, but the rendering hint did not seem to affect
+                 * HTML rendering. So instead, the findColorInRange method is used to allow for the fuzz of colour
+                 * values.
+                 */
+                JLabel label = new JLabel(sb.toString());
+                label.setName("TheLabel");
 
-                                label.setPreferredSize(dim);
-                                frame.add(label);
+                label.setPreferredSize(dim);
+                frame.add(label);
 
-                                frame.pack();
-                                return frame;
-                            }
-                        });
+                frame.pack();
+                return frame;
+            }
+        });
 
         FrameFixture fixture = new FrameFixture(frame);
-        Insets insets = frame.getInsets();
         fixture.show();
 
         JLabelFixture lf = fixture.label("TheLabel");
         Point pos = lf.target().getLocationOnScreen();
-        Dimension size = lf.target().getSize();
 
         Robot robot = new Robot();
         BufferedImage img = robot.createScreenCapture(new Rectangle(pos, dim));
@@ -134,26 +126,22 @@ public class DialogUtilsTest extends GraphicsTestBase {
         }
 
         // Search for the red-ish start dot
-        int[] lower = new int[] {200, 0, 0};
-        int[] upper = new int[] {255, 80, 80};
+        int[] lower = {200, 0, 0};
+        int[] upper = {255, 80, 80};
         Rectangle bounds = new Rectangle(img.getMinX(), img.getMinY(), 20, 20);
         assertTrue(findColorInRange(img, bounds, lower, upper));
 
         // Search for the blue-ish end dot
         lower = new int[] {0, 0, 200};
         upper = new int[] {80, 80, 255};
-        bounds =
-                new Rectangle(
-                        img.getMinX(), img.getMinY() + img.getHeight() - 20, img.getWidth(), 20);
+        bounds = new Rectangle(img.getMinX(), img.getMinY() + img.getHeight() - 20, img.getWidth(), 20);
         assertTrue(findColorInRange(img, bounds, lower, upper));
 
         fixture.cleanUp();
     }
 
-    private boolean findColorInRange(
-            BufferedImage img, Rectangle bounds, int[] lowerRGB, int[] upperRGB) {
+    private boolean findColorInRange(BufferedImage img, Rectangle bounds, int[] lowerRGB, int[] upperRGB) {
 
-        final Raster raster = img.getData();
         final ColorModel cm = img.getColorModel();
         boolean found = false;
 

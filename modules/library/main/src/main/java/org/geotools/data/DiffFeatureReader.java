@@ -23,34 +23,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Feature;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 
 /**
  * A FeatureReader that considers differences.
  *
- * <p>Used to implement In-Process Transaction support. This implementation will need to peek ahead
- * in order to check for deletetions.
+ * <p>Used to implement In-Process Transaction support. This implementation will need to peek ahead in order to check
+ * for deletetions.
  *
  * @author Jody Garnett, Refractions Research
  */
-public class DiffFeatureReader<T extends FeatureType, F extends Feature>
-        implements FeatureReader<T, F> {
+@SuppressWarnings("unchecked") // Diff is coded against SimpleFeature, while this is generified
+public class DiffFeatureReader<T extends FeatureType, F extends Feature> implements FeatureReader<T, F> {
     FeatureReader<T, F> reader;
     Diff diff;
 
@@ -71,10 +73,9 @@ public class DiffFeatureReader<T extends FeatureType, F extends Feature>
     /**
      * This constructor grabs a "copy" of the current diff.
      *
-     * <p>This reader is not "live" to changes over the course of the Transaction. (Iterators are
-     * not always stable of the course of modifications)
+     * <p>This reader is not "live" to changes over the course of the Transaction. (Iterators are not always stable of
+     * the course of modifications)
      *
-     * @param reader
      * @param diff2 Differences of Feature by FID
      */
     public DiffFeatureReader(FeatureReader<T, F> reader, Diff diff2) {
@@ -84,10 +85,9 @@ public class DiffFeatureReader<T extends FeatureType, F extends Feature>
     /**
      * This constructor grabs a "copy" of the current diff.
      *
-     * <p>This reader is not "live" to changes over the course of the Transaction. (Iterators are
-     * not always stable of the course of modifications)
+     * <p>This reader is not "live" to changes over the course of the Transaction. (Iterators are not always stable of
+     * the course of modifications)
      *
-     * @param reader
      * @param diff2 Differences of Feature by FID
      */
     public DiffFeatureReader(FeatureReader<T, F> reader, Diff diff2, Filter filter) {
@@ -111,12 +111,14 @@ public class DiffFeatureReader<T extends FeatureType, F extends Feature>
         }
     }
 
-    /** @see org.geotools.data.FeatureReader#getFeatureType() */
+    /** @see FeatureReader#getFeatureType() */
+    @Override
     public T getFeatureType() {
         return reader.getFeatureType();
     }
 
-    /** @see org.geotools.data.FeatureReader#next() */
+    /** @see FeatureReader#next() */
+    @Override
     public F next() throws IOException, IllegalAttributeException, NoSuchElementException {
         if (hasNext()) {
             F live = next;
@@ -128,7 +130,8 @@ public class DiffFeatureReader<T extends FeatureType, F extends Feature>
         throw new NoSuchElementException("No more Feature exists");
     }
 
-    /** @see org.geotools.data.FeatureReader#hasNext() */
+    /** @see FeatureReader#hasNext() */
+    @Override
     public boolean hasNext() throws IOException {
         if (next != null) {
             // We found it already
@@ -142,9 +145,7 @@ public class DiffFeatureReader<T extends FeatureType, F extends Feature>
 
             try {
                 peek = reader.next();
-            } catch (NoSuchElementException e) {
-                throw new DataSourceException("Could not aquire the next Feature", e);
-            } catch (IllegalAttributeException e) {
+            } catch (NoSuchElementException | IllegalAttributeException e) {
                 throw new DataSourceException("Could not aquire the next Feature", e);
             }
 
@@ -171,7 +172,8 @@ public class DiffFeatureReader<T extends FeatureType, F extends Feature>
         return next != null;
     }
 
-    /** @see org.geotools.data.FeatureReader#close() */
+    /** @see FeatureReader#close() */
+    @Override
     public void close() throws IOException {
         if (reader != null) {
             reader.close();
@@ -197,7 +199,7 @@ public class DiffFeatureReader<T extends FeatureType, F extends Feature>
 
     protected void querySpatialIndex() {
         while (spatialIndexIterator.hasNext() && next == null) {
-            F f = (F) spatialIndexIterator.next();
+            F f = spatialIndexIterator.next();
             if (encounteredFids.contains(f.getIdentifier().getID()) || !filter.evaluate(f)) {
                 continue;
             }
@@ -207,7 +209,7 @@ public class DiffFeatureReader<T extends FeatureType, F extends Feature>
 
     protected void queryAdded() {
         while (addedIterator.hasNext() && next == null) {
-            next = (F) addedIterator.next();
+            next = addedIterator.next();
             if (encounteredFids.contains(next.getIdentifier().getID()) || !filter.evaluate(next)) {
                 next = null;
             }
@@ -216,7 +218,7 @@ public class DiffFeatureReader<T extends FeatureType, F extends Feature>
 
     protected void queryModified() {
         while (modifiedIterator.hasNext() && next == null) {
-            next = (F) modifiedIterator.next();
+            next = modifiedIterator.next();
             if (next == Diff.NULL
                     || encounteredFids.contains(next.getIdentifier().getID())
                     || !filter.evaluate(next)) {
@@ -243,29 +245,32 @@ public class DiffFeatureReader<T extends FeatureType, F extends Feature>
 
     protected List getIndexedFeatures() {
         // TODO: check geom is default geom.
-        Envelope env = null;
-        env = extractBboxForSpatialIndexQuery((BinarySpatialOperator) filter);
+        Envelope env = extractBboxForSpatialIndexQuery((BinarySpatialOperator) filter);
         return diff.queryIndex(env);
     }
 
     protected Envelope extractBboxForSpatialIndexQuery(BinarySpatialOperator filter) {
-        org.opengis.filter.expression.Expression leftGeom = filter.getExpression1();
-        org.opengis.filter.expression.Expression rightGeom = filter.getExpression2();
+        org.geotools.api.filter.expression.Expression leftGeom = filter.getExpression1();
+        org.geotools.api.filter.expression.Expression rightGeom = filter.getExpression2();
 
-        Geometry g;
-        if (leftGeom instanceof org.opengis.filter.expression.Literal) {
-            g = (Geometry) ((org.opengis.filter.expression.Literal) leftGeom).getValue();
+        Object g;
+        if (leftGeom instanceof org.geotools.api.filter.expression.Literal) {
+            g = ((org.geotools.api.filter.expression.Literal) leftGeom).getValue();
         } else {
-            g = (Geometry) ((org.opengis.filter.expression.Literal) rightGeom).getValue();
+            g = ((org.geotools.api.filter.expression.Literal) rightGeom).getValue();
         }
-        return g.getEnvelopeInternal();
+
+        Envelope envelope = null;
+        if (g instanceof Geometry) {
+            envelope = ((Geometry) g).getEnvelopeInternal();
+        } else if (g instanceof Envelope) {
+            envelope = (Envelope) g;
+        }
+        return envelope;
     }
 
     protected boolean isDefaultGeometry(PropertyName ae) {
-        return reader.getFeatureType()
-                .getGeometryDescriptor()
-                .getLocalName()
-                .equals(ae.getPropertyName());
+        return reader.getFeatureType().getGeometryDescriptor().getLocalName().equals(ae.getPropertyName());
     }
 
     protected boolean isSubsetOfBboxFilter(Filter f) {

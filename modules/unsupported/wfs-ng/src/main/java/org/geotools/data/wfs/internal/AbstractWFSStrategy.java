@@ -32,6 +32,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,8 +45,29 @@ import java.util.logging.Logger;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import org.eclipse.emf.ecore.EObject;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.capability.ComparisonOperators;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.capability.ScalarCapabilities;
+import org.geotools.api.filter.capability.SpatialCapabilities;
+import org.geotools.api.filter.capability.SpatialOperators;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.filter.spatial.Intersects;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.filter.Capabilities;
+import org.geotools.filter.FilterAttributeExtractor;
 import org.geotools.filter.visitor.CapabilitiesFilterSplitter;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
 import org.geotools.util.Version;
@@ -54,21 +76,13 @@ import org.geotools.xml.XMLHandlerHints;
 import org.geotools.xml.filter.FilterCompliancePreProcessor;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Encoder;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.capability.SpatialCapabilities;
-import org.opengis.filter.capability.SpatialOperators;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.spatial.Intersects;
 
 /**
- * Base template-method class for {@link WFSStrategy} implementations that leverage the GeoTools
- * {@code xml-xsd} subsystem for schema assisted parsing and encoding of WFS requests and responses.
+ * Base template-method class for {@link WFSStrategy} implementations that leverage the GeoTools {@code xml-xsd}
+ * subsystem for schema assisted parsing and encoding of WFS requests and responses.
  *
- * <p>A conformant WFS client implementation based on this abstract class should only need to
- * implement the following methods from {@link WFSStrategy}:
+ * <p>A conformant WFS client implementation based on this abstract class should only need to implement the following
+ * methods from {@link WFSStrategy}:
  *
  * <ul>
  *   <li>{@link #setCapabilities}
@@ -94,8 +108,8 @@ import org.opengis.filter.spatial.Intersects;
  *   <li>{@link #createTransactionRequest}
  * </ul>
  *
- * <p>Additionaly, specific strategy objects may override any other method to work around specific
- * service implementation oddities. To that end, the following methods might be of special interest:
+ * <p>Additionally, specific strategy objects may override any other method to work around specific service
+ * implementation oddities. To that end, the following methods might be of special interest:
  *
  * <ul>
  *   <li>{@link #buildDescribeFeatureTypeParametersForGET}
@@ -106,25 +120,20 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
     protected static final Logger LOGGER = Loggers.MODULE;
 
-    public static final Configuration FILTER_1_0_CONFIGURATION =
-            new org.geotools.filter.v1_0.OGCConfiguration();
+    public static final Configuration FILTER_1_0_CONFIGURATION = new org.geotools.filter.v1_0.OGCConfiguration();
 
     public static final Configuration WFS_1_0_CAPABILITIES_CONFIGURATION =
             new org.geotools.wfs.v1_0.WFSCapabilitiesConfiguration();
 
     public static final Configuration WFS_1_0_CONFIGURATION = new WFSConfiguration_1_0();
 
-    public static final Configuration FILTER_1_1_CONFIGURATION =
-            new org.geotools.filter.v1_1.OGCConfiguration();
+    public static final Configuration FILTER_1_1_CONFIGURATION = new org.geotools.filter.v1_1.OGCConfiguration();
 
-    public static final Configuration WFS_1_1_CONFIGURATION =
-            new org.geotools.wfs.v1_1.WFSConfiguration();
+    public static final Configuration WFS_1_1_CONFIGURATION = new org.geotools.wfs.v1_1.WFSConfiguration();
 
-    public static final Configuration FILTER_2_0_CONFIGURATION =
-            new org.geotools.filter.v2_0.FESConfiguration();
+    public static final Configuration FILTER_2_0_CONFIGURATION = new org.geotools.filter.v2_0.FESConfiguration();
 
-    public static final Configuration WFS_2_0_CONFIGURATION =
-            new org.geotools.wfs.v2_0.WFSConfiguration();
+    public static final Configuration WFS_2_0_CONFIGURATION = new org.geotools.wfs.v2_0.WFSConfiguration();
 
     protected WFSConfig config;
 
@@ -137,42 +146,66 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
      */
 
     /**
-     * Used by {@link #getPostContents(WFSRequest)} to get the qualified operation name to encode;
-     * different WFS versions may use different operation names (specially namespaces).
+     * Used by {@link #getPostContents(WFSRequest)} to get the qualified operation name to encode; different WFS
+     * versions may use different operation names (specially namespaces).
      */
     protected abstract QName getOperationName(WFSOperationType operation);
 
     /**
-     * Creates the EMF object to be encoded with the {@link #getWfsConfiguration() WFS
-     * configuration} when a DescribeFeatureType POST request is to be made.
+     * If needed, expands the set of requested property names to include the ones needed to evaluate the unsupported
+     * filter.
+     *
+     * @param request
+     * @param unsupportedFilter
      */
-    protected abstract EObject createDescribeFeatureTypeRequestPost(
-            DescribeFeatureTypeRequest request);
+    protected void updatePropertyNames(GetFeatureRequest request, Filter unsupportedFilter) {
+        if (Filter.INCLUDE.equals(unsupportedFilter)) return;
+
+        String[] propertyNames = request.getPropertyNames();
+        if (propertyNames != null) {
+            Set<String> propertyNamesSet = new HashSet<>(Arrays.asList(propertyNames));
+            FilterAttributeExtractor extractor = new FilterAttributeExtractor();
+            unsupportedFilter.accept(extractor, null);
+            Set<String> extraAttributes = new HashSet<>(Arrays.asList(extractor.getAttributeNames()));
+            propertyNamesSet.addAll(extraAttributes);
+            // update the property names if needed
+            if (propertyNames.length < propertyNamesSet.size()) {
+                propertyNames = propertyNamesSet.toArray(new String[propertyNamesSet.size()]);
+                request.setPropertyNames(propertyNames);
+                // Also unset the query type, it's no longer representative of the query
+                // the parser will be configured with the full type in this case
+                // which does not appear to cause problems, other than maybe a few more
+                // loops searching for attributse that are not there. Recomputing the query
+                // type here is no possible, as we're dealing with potentially non simple types
+                request.setQueryType(null);
+            }
+        }
+    }
 
     /**
-     * Creates the EMF object to be encoded with the {@link #getWfsConfiguration() WFS
-     * configuration} when a GetFeature POST request is to be made.
+     * Creates the EMF object to be encoded with the {@link #getWfsConfiguration() WFS configuration} when a
+     * DescribeFeatureType POST request is to be made.
      */
-    protected abstract EObject createGetFeatureRequestPost(GetFeatureRequest query)
-            throws IOException;
+    protected abstract EObject createDescribeFeatureTypeRequestPost(DescribeFeatureTypeRequest request);
 
     /**
-     * Creates the EMF object to be encoded with the {@link #getWfsConfiguration() WFS
-     * configuration} when a Transaction request is to be made.
+     * Creates the EMF object to be encoded with the {@link #getWfsConfiguration() WFS configuration} when a GetFeature
+     * POST request is to be made.
      */
-    protected abstract EObject createTransactionRequest(TransactionRequest request)
-            throws IOException;
-
-    protected abstract EObject createListStoredQueriesRequestPost(ListStoredQueriesRequest request)
-            throws IOException;
-
-    protected abstract EObject createDescribeStoredQueriesRequestPost(
-            DescribeStoredQueriesRequest request) throws IOException;
+    protected abstract EObject createGetFeatureRequestPost(GetFeatureRequest query) throws IOException;
 
     /**
-     * Returns the xml configuration used to encode a filter at {@link
-     * #encodeGetFeatureGetFilter(Filter)}
+     * Creates the EMF object to be encoded with the {@link #getWfsConfiguration() WFS configuration} when a Transaction
+     * request is to be made.
      */
+    protected abstract EObject createTransactionRequest(TransactionRequest request) throws IOException;
+
+    protected abstract EObject createListStoredQueriesRequestPost(ListStoredQueriesRequest request) throws IOException;
+
+    protected abstract EObject createDescribeStoredQueriesRequestPost(DescribeStoredQueriesRequest request)
+            throws IOException;
+
+    /** Returns the xml configuration used to encode a filter at {@link #encodeGetFeatureGetFilter(Filter)} */
     protected abstract Configuration getFilterConfiguration();
 
     /**
@@ -180,6 +213,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
      *
      * @see #getPostContents(WFSRequest)
      */
+    @Override
     public abstract Configuration getWfsConfiguration();
 
     /*
@@ -222,7 +256,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     protected Map<String, String> buildGetFeatureParametersForGET(GetFeatureRequest request) {
         requestDebug("Creating GetFeature request parameters for ", request.getTypeName());
 
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         map.put("SERVICE", "WFS");
         Version serviceVersion = getServiceVersion();
         map.put("VERSION", serviceVersion.toString());
@@ -234,25 +268,9 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         map.put("OUTPUTFORMAT", outputFormat);
         map.put("RESULTTYPE", request.getResultType().name());
 
-        if (request.getMaxFeatures() != null) {
-            map.put("MAXFEATURES", String.valueOf(request.getMaxFeatures()));
-        }
-
         QName typeName = request.getTypeName();
         String queryTypeName = getPrefixedTypeName(typeName);
         map.put("TYPENAME", queryTypeName);
-
-        if (request.getPropertyNames() != null && request.getPropertyNames().length > 0) {
-            List<String> propertyNames = Arrays.asList(request.getPropertyNames());
-            StringBuilder pnames = new StringBuilder();
-            for (Iterator<String> it = propertyNames.iterator(); it.hasNext(); ) {
-                pnames.append(it.next());
-                if (it.hasNext()) {
-                    pnames.append(',');
-                }
-            }
-            map.put("PROPERTYNAME", encodePropertyName(pnames.toString()));
-        }
 
         final String srsName = request.getSrsName();
         if (srsName != null) {
@@ -266,14 +284,16 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
             Filter[] splitFilters = splitFilters(typeName, filter);
             supportedFilter = splitFilters[0];
             unsupportedFilter = splitFilters[1];
-            requestTrace(
-                    "Supported filter: ",
-                    supportedFilter,
-                    ". Unsupported filter: ",
-                    unsupportedFilter);
+            requestTrace("Supported filter: ", supportedFilter, ". Unsupported filter: ", unsupportedFilter);
         }
 
+        // in case of unsupported filter, we need to expand the property names and
+        // remove the max features limit
         request.setUnsupportedFilter(unsupportedFilter);
+        updatePropertyNames(request, unsupportedFilter);
+        if (!Filter.INCLUDE.equals(unsupportedFilter)) {
+            request.setMaxFeatures(null);
+        }
 
         if (supportedFilter instanceof Id) {
             final Set<Identifier> identifiers = ((Id) supportedFilter).getIdentifiers();
@@ -300,12 +320,32 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
             map.put("FILTER", xmlEncodedFilter);
         }
 
+        if (request.getMaxFeatures() != null) {
+            map.put("MAXFEATURES", String.valueOf(request.getMaxFeatures()));
+        }
+
+        if (request.getStartIndex() != null && this.canOffset()) {
+            map.put("STARTINDEX", String.valueOf(request.getStartIndex()));
+        }
+
+        if (request.getPropertyNames() != null && request.getPropertyNames().length > 0) {
+            List<String> propertyNames = Arrays.asList(request.getPropertyNames());
+            StringBuilder pnames = new StringBuilder();
+            for (Iterator<String> it = propertyNames.iterator(); it.hasNext(); ) {
+                pnames.append(it.next());
+                if (it.hasNext()) {
+                    pnames.append(',');
+                }
+            }
+            map.put("PROPERTYNAME", encodePropertyName(pnames.toString()));
+        }
+
         return map;
     }
 
     /**
-     * Returns a single-line string containing the xml representation of the given filter, as
-     * appropriate for the {@code FILTER} parameter in a GetFeature request.
+     * Returns a single-line string containing the xml representation of the given filter, as appropriate for the
+     * {@code FILTER} parameter in a GetFeature request.
      */
     protected String encodeGetFeatureGetFilter(final Filter filter) throws IOException {
 
@@ -322,7 +362,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         Encoder encoder = new Encoder(filterConfig);
         // do not write the xml declaration
         encoder.setOmitXMLDeclaration(true);
-        encoder.setEncoding(Charset.forName("UTF-8"));
+        encoder.setEncoding(StandardCharsets.UTF_8);
 
         String encoded = encoder.encodeAsString(filter, encName);
 
@@ -388,8 +428,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         }
 
         throw new IllegalArgumentException(
-                "Client does not support any of the server supported output formats for "
-                        + operation);
+                "Client does not support any of the server supported output formats for " + operation);
     }
 
     /** @see WFSStrategy#dispose() */
@@ -398,8 +437,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         // do nothing
     }
 
-    protected Map<String, String> buildDescribeFeatureTypeParametersForGET(
-            final DescribeFeatureTypeRequest request) {
+    protected Map<String, String> buildDescribeFeatureTypeParametersForGET(final DescribeFeatureTypeRequest request) {
 
         final QName typeName = request.getTypeName();
 
@@ -410,7 +448,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
             throw e;
         }
 
-        Map<String, String> kvp = new HashMap<String, String>();
+        Map<String, String> kvp = new HashMap<>();
         kvp.put("SERVICE", "WFS");
         kvp.put("VERSION", getServiceVersion().toString());
         kvp.put("REQUEST", "DescribeFeatureType");
@@ -420,8 +458,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         return buildDescribeFeatureTypeParametersForGET(kvp, typeName);
     }
 
-    protected Map<String, String> buildDescribeFeatureTypeParametersForGET(
-            Map<String, String> kvp, QName typeName) {
+    protected Map<String, String> buildDescribeFeatureTypeParametersForGET(Map<String, String> kvp, QName typeName) {
         String prefixedTypeName = getPrefixedTypeName(typeName);
 
         kvp.put("TYPENAME", prefixedTypeName);
@@ -436,7 +473,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     protected Map<String, String> buildDescribeStoredQueriesParametersForGET(
             final DescribeStoredQueriesRequest request) {
 
-        Map<String, String> kvp = new HashMap<String, String>();
+        Map<String, String> kvp = new HashMap<>();
         kvp.put("SERVICE", "WFS");
         kvp.put("VERSION", getServiceVersion().toString());
         kvp.put("REQUEST", "DescribeStoredQueries");
@@ -458,9 +495,8 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         return kvp;
     }
 
-    protected Map<String, String> buildListStoredQueriesParametersForGET(
-            ListStoredQueriesRequest request) {
-        Map<String, String> kvp = new HashMap<String, String>();
+    protected Map<String, String> buildListStoredQueriesParametersForGET(ListStoredQueriesRequest request) {
+        Map<String, String> kvp = new HashMap<>();
         kvp.put("SERVICE", "WFS");
         kvp.put("VERSION", getServiceVersion().toString());
         kvp.put("REQUEST", "ListStoredQueries");
@@ -536,13 +572,13 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         final Configuration configuration = getWfsConfiguration();
         Charset charset = getConfig().getDefaultEncoding();
         if (null == charset) {
-            charset = Charset.forName("UTF-8");
+            charset = StandardCharsets.UTF_8;
         }
         Encoder encoder = new Encoder(configuration);
         encoder.setEncoding(charset);
         encoder.setIndentSize(1);
 
-        Set<QName> typeNames = new HashSet<QName>();
+        Set<QName> typeNames = new HashSet<>();
 
         if (request instanceof TransactionRequest) {
             TransactionRequest tx = (TransactionRequest) request;
@@ -575,13 +611,11 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     }
 
     /**
-     * Splits the filter provided by the geotools query into the server supported and unsupported
-     * ones.
+     * Splits the filter provided by the geotools query into the server supported and unsupported ones.
      *
-     * @param typeName
-     * @return a two-element array where the first element is the supported filter and the second
-     *     the one to post-process
-     * @see org.geotools.data.wfs.internal.WFSStrategy#splitFilters(org.opengis.filter.Filter)
+     * @return a two-element array where the first element is the supported filter and the second the one to
+     *     post-process
+     * @see WFSStrategy#splitFilters(QName, Filter)
      */
     @Override
     public Filter[] splitFilters(QName typeName, Filter filter) {
@@ -609,6 +643,14 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
                     }
                 }
             }
+            /*
+             * General Fix for WFS 2.0 naming the scalar operations like the WFS 1.x operations, otherwise
+             * CapabilitiesFilterSplitter thinks filter is not supported at splitFilters
+             */
+            if (Versions.v2_0_0.equals(getServiceVersion())) {
+                ScalarCapabilities spatialCaps = filterCapabilities.getScalarCapabilities();
+                addNamesFilterOGC(spatialCaps, filterCaps);
+            }
         }
         filter = simplify(filter);
 
@@ -621,8 +663,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         }
         // TODO: modify FilterCompliancePreProcessor so that it preservers original FeatureID
         // instead re creating them from the FeautreId.getID()
-        FilterCompliancePreProcessor compliancePreProcessor =
-                new FilterCompliancePreProcessor(complianceLevel);
+        FilterCompliancePreProcessor compliancePreProcessor = new FilterCompliancePreProcessor(complianceLevel);
         filter.accept(compliancePreProcessor, null);
 
         filter = compliancePreProcessor.getFilter();
@@ -632,14 +673,53 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
             post = Filter.EXCLUDE.equals(filter) ? Filter.INCLUDE : filter;
         } else {
 
-            CapabilitiesFilterSplitter splitter =
-                    new CapabilitiesFilterSplitter(filterCaps, null, null);
+            CapabilitiesFilterSplitter splitter = new CapabilitiesFilterSplitter(filterCaps, null, null);
 
             filter.accept(splitter, null);
             server = splitter.getFilterPre();
             post = splitter.getFilterPost();
         }
         return new Filter[] {server, post};
+    }
+
+    /**
+     * General Fix for WFS 2.0 naming the scalar operations like the WFS 1.x operations, otherwise
+     * CapabilitiesFilterSplitter thinks filter is not supported at splitFilters.
+     *
+     * @param spatialCaps Original capabilities.
+     * @param resFilterCaps Capabilities to add the names to.
+     */
+    private void addNamesFilterOGC(ScalarCapabilities spatialCaps, Capabilities resFilterCaps) {
+        if (spatialCaps != null) {
+            ComparisonOperators spatialOps = spatialCaps.getComparisonOperators();
+            if (spatialOps != null) {
+                addNameFilterOGC(spatialOps, "PropertyIsGreaterThan", PropertyIsGreaterThan.NAME, resFilterCaps);
+                addNameFilterOGC(spatialOps, "PropertyIsNotEqualTo", PropertyIsNotEqualTo.NAME, resFilterCaps);
+                addNameFilterOGC(
+                        spatialOps, "PropertyIsLessThanOrEqualTo", PropertyIsLessThanOrEqualTo.NAME, resFilterCaps);
+                addNameFilterOGC(
+                        spatialOps,
+                        "PropertyIsGreaterThanOrEqualTo",
+                        PropertyIsGreaterThanOrEqualTo.NAME,
+                        resFilterCaps);
+                addNameFilterOGC(spatialOps, "PropertyIsLike", PropertyIsLike.NAME, resFilterCaps);
+                addNameFilterOGC(spatialOps, "PropertyIsNil", PropertyIsNil.NAME, resFilterCaps);
+                addNameFilterOGC(spatialOps, "PropertyIsEqualTo", PropertyIsEqualTo.NAME, resFilterCaps);
+                addNameFilterOGC(spatialOps, "PropertyIsNull", PropertyIsNull.NAME, resFilterCaps);
+                addNameFilterOGC(spatialOps, "PropertyIsBetween", PropertyIsBetween.NAME, resFilterCaps);
+                addNameFilterOGC(spatialOps, "PropertyIsLessThan", PropertyIsLessThan.NAME, resFilterCaps);
+            }
+        }
+    }
+
+    private void addNameFilterOGC(
+            ComparisonOperators spatialOps, String nameFES, String nameOGC, Capabilities resFilterCaps) {
+        if (null != spatialOps.getOperator(nameFES)) {
+            trace(
+                    "WFS 2.0 capabilities states the scalar operator " + nameFES + ". ",
+                    "Assuming it is " + nameOGC + " and adding " + nameOGC + " as a supported filter type");
+            resFilterCaps.addName(nameOGC);
+        }
     }
 
     protected Filter simplify(Filter filter) {
@@ -658,23 +738,21 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
         Map<String, String> requestParams;
 
+        String encoding = "UTF-8";
+
         switch (operation) {
             case GET_FEATURE:
                 requestParams = buildGetFeatureParametersForGET((GetFeatureRequest) request);
+                encoding = Charset.defaultCharset().name();
                 break;
             case DESCRIBE_FEATURETYPE:
-                requestParams =
-                        buildDescribeFeatureTypeParametersForGET(
-                                (DescribeFeatureTypeRequest) request);
+                requestParams = buildDescribeFeatureTypeParametersForGET((DescribeFeatureTypeRequest) request);
                 break;
             case DESCRIBE_STORED_QUERIES:
-                requestParams =
-                        buildDescribeStoredQueriesParametersForGET(
-                                (DescribeStoredQueriesRequest) request);
+                requestParams = buildDescribeStoredQueriesParametersForGET((DescribeStoredQueriesRequest) request);
                 break;
             case LIST_STORED_QUERIES:
-                requestParams =
-                        buildListStoredQueriesParametersForGET((ListStoredQueriesRequest) request);
+                requestParams = buildListStoredQueriesParametersForGET((ListStoredQueriesRequest) request);
                 break;
             default:
                 throw new UnsupportedOperationException();
@@ -682,7 +760,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
         URL baseUrl = getOperationURL(operation, GET);
 
-        URL finalURL = URIs.buildURL(baseUrl, requestParams);
+        URL finalURL = URIs.buildURL(baseUrl, requestParams, encoding);
         requestDebug("Built GET request for ", operation, ": ", finalURL);
 
         return finalURL;
@@ -720,27 +798,22 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
         switch (request.getOperation()) {
             case DESCRIBE_FEATURETYPE:
-                requestObject =
-                        createDescribeFeatureTypeRequestPost((DescribeFeatureTypeRequest) request);
+                requestObject = createDescribeFeatureTypeRequestPost((DescribeFeatureTypeRequest) request);
                 break;
             case DESCRIBE_STORED_QUERIES:
-                requestObject =
-                        createDescribeStoredQueriesRequestPost(
-                                (DescribeStoredQueriesRequest) request);
+                requestObject = createDescribeStoredQueriesRequestPost((DescribeStoredQueriesRequest) request);
                 break;
             case GET_FEATURE:
                 requestObject = createGetFeatureRequestPost((GetFeatureRequest) request);
                 break;
             case LIST_STORED_QUERIES:
-                requestObject =
-                        createListStoredQueriesRequestPost((ListStoredQueriesRequest) request);
+                requestObject = createListStoredQueriesRequestPost((ListStoredQueriesRequest) request);
                 break;
             case TRANSACTION:
                 requestObject = createTransactionRequest((TransactionRequest) request);
                 break;
             default:
-                throw new UnsupportedOperationException(
-                        "not yet implemented for " + request.getOperation());
+                throw new UnsupportedOperationException("not yet implemented for " + request.getOperation());
         }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();

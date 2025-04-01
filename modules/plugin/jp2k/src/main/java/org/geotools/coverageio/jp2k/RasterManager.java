@@ -25,12 +25,21 @@ import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageReadParam;
+import org.geotools.api.coverage.grid.GridCoverage;
+import org.geotools.api.coverage.grid.GridEnvelope;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.datum.PixelInCell;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.io.OverviewPolicy;
-import org.geotools.data.DataSourceException;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.util.ImageUtilities;
 import org.geotools.metadata.iso.extent.GeographicBoundingBoxImpl;
@@ -38,29 +47,18 @@ import org.geotools.referencing.CRS;
 import org.geotools.util.SoftValueHashMap;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.GridCoverage;
-import org.opengis.coverage.grid.GridEnvelope;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.datum.PixelInCell;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * A RasterManager allows to handle granules, decimation, overviews and spatial properties of a
- * raster.
+ * A RasterManager allows to handle granules, decimation, overviews and spatial properties of a raster.
  *
  * @author Daniele Romagnoli, GeoSolutions S.A.S.
  * @author Simone Giannecchini, GeoSolutions S.A.S.
  */
 class RasterManager {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(RasterManager.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(RasterManager.class);
 
-    final SoftValueHashMap<String, Granule> granulesCache = new SoftValueHashMap<String, Granule>();
+    final SoftValueHashMap<String, Granule> granulesCache = new SoftValueHashMap<>();
 
     /**
      * Simple support class for sorting overview resolutions
@@ -78,16 +76,14 @@ class RasterManager {
         int imageChoice;
 
         public OverviewLevel(
-                final double scaleFactor,
-                final double resolutionX,
-                final double resolutionY,
-                int imageChoice) {
+                final double scaleFactor, final double resolutionX, final double resolutionY, int imageChoice) {
             this.scaleFactor = scaleFactor;
             this.resolutionX = resolutionX;
             this.resolutionY = resolutionY;
             this.imageChoice = imageChoice;
         }
 
+        @Override
         public int compareTo(final OverviewLevel other) {
             if (scaleFactor > other.scaleFactor) return 1;
             else if (scaleFactor < other.scaleFactor) return -1;
@@ -110,8 +106,7 @@ class RasterManager {
     }
 
     class OverviewsController {
-        final ArrayList<RasterManager.OverviewLevel> resolutionsLevels =
-                new ArrayList<OverviewLevel>();
+        final ArrayList<RasterManager.OverviewLevel> resolutionsLevels = new ArrayList<>();
 
         public OverviewsController() {
 
@@ -123,12 +118,11 @@ class RasterManager {
             resolutionsLevels.add(new OverviewLevel(1, highestRes[0], highestRes[1], 0));
             if (numberOfOverviews > 0) {
                 for (int i = 0; i < overviewsResolution.length; i++)
-                    resolutionsLevels.add(
-                            new OverviewLevel(
-                                    overviewsResolution[i][0] / highestRes[0],
-                                    overviewsResolution[i][0],
-                                    overviewsResolution[i][1],
-                                    i + 1));
+                    resolutionsLevels.add(new OverviewLevel(
+                            overviewsResolution[i][0] / highestRes[0],
+                            overviewsResolution[i][0],
+                            overviewsResolution[i][1],
+                            i + 1));
                 Collections.sort(resolutionsLevels);
             }
         }
@@ -142,7 +136,7 @@ class RasterManager {
             // Future versions should use both.
             //
             // //
-            if (resolutionsLevels == null || resolutionsLevels.size() <= 0) return 0;
+            if (resolutionsLevels == null || resolutionsLevels.isEmpty()) return 0;
 
             // Now search for the best matching resolution.
             // Check also for the "perfect match"... unlikely in practice unless someone
@@ -150,7 +144,7 @@ class RasterManager {
             // the overviews, something a perf sensitive person might do in fact
 
             // requested scale factor for least reduced axis
-            final OverviewLevel max = (OverviewLevel) resolutionsLevels.get(0);
+            final OverviewLevel max = resolutionsLevels.get(0);
 
             // the requested resolutions
             final double requestedScaleFactorX;
@@ -164,14 +158,12 @@ class RasterManager {
                 requestedScaleFactorY = reqy / max.resolutionY;
             } else return 0;
             final int leastReduceAxis = requestedScaleFactorX <= requestedScaleFactorY ? 0 : 1;
-            final double requestedScaleFactor =
-                    leastReduceAxis == 0 ? requestedScaleFactorX : requestedScaleFactorY;
+            final double requestedScaleFactor = leastReduceAxis == 0 ? requestedScaleFactorX : requestedScaleFactorY;
 
             // are we looking for a resolution even higher than the native one?
             if (requestedScaleFactor <= 1) return max.imageChoice;
             // are we looking for a resolution even lower than the smallest overview?
-            final OverviewLevel min =
-                    (OverviewLevel) resolutionsLevels.get(resolutionsLevels.size() - 1);
+            final OverviewLevel min = resolutionsLevels.get(resolutionsLevels.size() - 1);
             if (requestedScaleFactor >= min.scaleFactor) return min.imageChoice;
             // Ok, so we know the overview is between min and max, skip the first
             // and search for an overview with a resolution lower than the one requested,
@@ -194,8 +186,8 @@ class RasterManager {
                 if (curr.scaleFactor > requestedScaleFactor || i == size - 1) {
                     if (policy == OverviewPolicy.QUALITY) return prev.imageChoice;
                     else if (policy == OverviewPolicy.SPEED) return curr.imageChoice;
-                    else if (requestedScaleFactor - prev.scaleFactor
-                            < curr.scaleFactor - requestedScaleFactor) return prev.imageChoice;
+                    else if (requestedScaleFactor - prev.scaleFactor < curr.scaleFactor - requestedScaleFactor)
+                        return prev.imageChoice;
                     else return curr.imageChoice;
                 }
                 prev = curr;
@@ -210,21 +202,15 @@ class RasterManager {
         public DecimationController() {}
 
         /**
-         * This method is responsible for evaluating possible subsampling factors once the best
-         * resolution level has been found, in case we have support for overviews, or starting from
-         * the original coverage in case there are no overviews available.
+         * This method is responsible for evaluating possible subsampling factors once the best resolution level has
+         * been found, in case we have support for overviews, or starting from the original coverage in case there are
+         * no overviews available.
          *
-         * <p>Anyhow this method should not be called directly but subclasses should make use of the
-         * setReadParams method instead in order to transparently look for overviews.
-         *
-         * @param imageIndex
-         * @param readParameters
-         * @param requestedRes
+         * <p>Anyhow this method should not be called directly but subclasses should make use of the setReadParams
+         * method instead in order to transparently look for overviews.
          */
         void performDecimation(
-                final int imageIndex,
-                final ImageReadParam readParameters,
-                final RasterLayerRequest request) {
+                final int imageIndex, final ImageReadParam readParameters, final RasterLayerRequest request) {
 
             // the read parameters cannot be null
             Utilities.ensureNonNull("readParameters", readParameters);
@@ -238,7 +224,7 @@ class RasterManager {
                 return;
             }
 
-            double selectedRes[] = new double[2];
+            double[] selectedRes = new double[2];
             final OverviewLevel level = overviewsController.resolutionsLevels.get(imageIndex);
             selectedRes[0] = level.resolutionX;
             selectedRes[1] = level.resolutionY;
@@ -257,47 +243,18 @@ class RasterManager {
                 // raster dimensions. The solution is to have the rater dimensions on each level and
                 // to confront raster dimensions,
                 // which means working
-                rasterWidth =
-                        (int)
-                                Math.round(
-                                        spatialDomainManager.coverageBBox.getSpan(0)
-                                                / selectedRes[0]);
-                rasterHeight =
-                        (int)
-                                Math.round(
-                                        spatialDomainManager.coverageBBox.getSpan(1)
-                                                / selectedRes[1]);
+                rasterWidth = (int) Math.round(spatialDomainManager.coverageBBox.getSpan(0) / selectedRes[0]);
+                rasterHeight = (int) Math.round(spatialDomainManager.coverageBBox.getSpan(1) / selectedRes[1]);
             }
-            // /////////////////////////////////////////////////////////////////////
-            // DECIMATION ON READING
-            // Setting subsampling factors with some checks
-            // 1) the subsampling factors cannot be zero
-            // 2) the subsampling factors cannot be such that the w or h are zero
-            // /////////////////////////////////////////////////////////////////////
-            int subSamplingFactorX = (int) Math.floor(requestedRes[0] / selectedRes[0]);
-            subSamplingFactorX = subSamplingFactorX == 0 ? 1 : subSamplingFactorX;
-
-            while (rasterWidth / subSamplingFactorX <= 0 && subSamplingFactorX >= 0)
-                subSamplingFactorX--;
-            subSamplingFactorX = subSamplingFactorX <= 0 ? 1 : subSamplingFactorX;
-
-            int subSamplingFactorY = (int) Math.floor(requestedRes[1] / selectedRes[1]);
-            subSamplingFactorY = subSamplingFactorY == 0 ? 1 : subSamplingFactorY;
-
-            while (rasterHeight / subSamplingFactorY <= 0 && subSamplingFactorY >= 0)
-                subSamplingFactorY--;
-            subSamplingFactorY = subSamplingFactorY <= 0 ? 1 : subSamplingFactorY;
-
-            readParameters.setSourceSubsampling(subSamplingFactorX, subSamplingFactorY, 0, 0);
+            ImageUtilities.setSubsamplingFactors(readParameters, requestedRes, selectedRes, rasterWidth, rasterHeight);
         }
     }
 
     /**
-     * This class is responsible for putting together all the 2D spatial information needed for a
-     * certain raster.
+     * This class is responsible for putting together all the 2D spatial information needed for a certain raster.
      *
-     * <p>Notice that when this structure will be extended to work in ND this will become much more
-     * complex or as an alternative a sibling TemporalDomainManager will be created.
+     * <p>Notice that when this structure will be extended to work in ND this will become much more complex or as an
+     * alternative a sibling TemporalDomainManager will be created.
      *
      * @author Simone Giannecchini, GeoSolutions SAS
      */
@@ -319,7 +276,7 @@ class RasterManager {
         //
         // ////////////////////////////////////////////////////////////////////////
         /** The base envelope read from file */
-        GeneralEnvelope coverageEnvelope = null;
+        GeneralBounds coverageEnvelope = null;
 
         double[] coverageFullResolution;
         /** WGS84 envelope 2D for this coverage */
@@ -329,21 +286,13 @@ class RasterManager {
         MathTransform2D coverageGridToWorld2D;
         /** The base grid range for the coverage */
         Rectangle coverageRasterArea;
-        /**
-         * Initialize the 2D properties (CRS and Envelope) of this coverage
-         *
-         * @throws TransformException
-         * @throws FactoryException
-         * @throws TransformException
-         * @throws FactoryException
-         */
+        /** Initialize the 2D properties (CRS and Envelope) of this coverage */
         private void prepareCoverageSpatialElements() throws TransformException, FactoryException {
             //
             // basic initialization
             //
-            coverageGeographicBBox =
-                    ImageUtilities.getReferencedEnvelopeFromGeographicBoundingBox(
-                            new GeographicBoundingBoxImpl(coverageEnvelope));
+            coverageGeographicBBox = ImageUtilities.getReferencedEnvelopeFromGeographicBoundingBox(
+                    new GeographicBoundingBoxImpl(coverageEnvelope));
             coverageGeographicCRS2D = coverageGeographicBBox.getCoordinateReferenceSystem();
 
             //
@@ -352,10 +301,8 @@ class RasterManager {
             coverageCRS2D = CRS.getHorizontalCRS(coverageCRS);
             assert coverageCRS2D.getCoordinateSystem().getDimension() == 2;
             if (coverageCRS.getCoordinateSystem().getDimension() != 2) {
-                final MathTransform transform =
-                        CRS.findMathTransform(
-                                coverageCRS, (CoordinateReferenceSystem) coverageCRS2D);
-                final GeneralEnvelope bbox = CRS.transform(transform, coverageEnvelope);
+                final MathTransform transform = CRS.findMathTransform(coverageCRS, coverageCRS2D);
+                final GeneralBounds bbox = CRS.transform(transform, coverageEnvelope);
                 bbox.setCoordinateReferenceSystem(coverageCRS2D);
                 coverageBBox = new ReferencedEnvelope(bbox);
             } else {
@@ -363,18 +310,14 @@ class RasterManager {
                 coverageBBox = new ReferencedEnvelope(coverageEnvelope);
             }
         }
-        /**
-         * Set the main parameters of this coverage request, getting basic information from the
-         * reader.
-         */
+        /** Set the main parameters of this coverage request, getting basic information from the reader. */
         private void setBaseParameters() {
             this.coverageEnvelope = RasterManager.this.getCoverageEnvelope().clone();
             this.coverageRasterArea = ((GridEnvelope2D) RasterManager.this.getCoverageGridrange());
             this.coverageCRS = RasterManager.this.getCoverageCRS();
             this.coverageGridToWorld2D = (MathTransform2D) RasterManager.this.getRaster2Model();
             this.coverageFullResolution = new double[2];
-            final OverviewLevel highestLevel =
-                    RasterManager.this.overviewsController.resolutionsLevels.get(0);
+            final OverviewLevel highestLevel = RasterManager.this.overviewsController.resolutionsLevels.get(0);
             coverageFullResolution[0] = highestLevel.resolutionX;
             coverageFullResolution[1] = highestLevel.resolutionY;
         }
@@ -382,7 +325,7 @@ class RasterManager {
     /** The CRS of the input coverage */
     private CoordinateReferenceSystem coverageCRS;
     /** The base envelope related to the input coverage */
-    private GeneralEnvelope coverageEnvelope;
+    private GeneralBounds coverageEnvelope;
 
     /** The coverage factory producing a {@link GridCoverage} from an image */
     private GridCoverageFactory coverageFactory;
@@ -438,22 +381,18 @@ class RasterManager {
         decimationController = new DecimationController();
         try {
             spatialDomainManager = new SpatialDomainManager();
-        } catch (TransformException e) {
-            throw new DataSourceException(e);
-        } catch (FactoryException e) {
+        } catch (TransformException | FactoryException e) {
             throw new DataSourceException(e);
         }
         extractOverviewPolicy();
     }
 
     /**
-     * This method is responsible for checking the overview policy as defined by the provided {@link
-     * Hints}.
+     * This method is responsible for checking the overview policy as defined by the provided {@link Hints}.
      *
      * @return the overview policy which can be one of {@link Hints#VALUE_OVERVIEW_POLICY_IGNORE},
      *     {@link Hints#VALUE_OVERVIEW_POLICY_NEAREST}, {@link Hints#VALUE_OVERVIEW_POLICY_SPEED},
-     *     {@link Hints#VALUE_OVERVIEW_POLICY_QUALITY}. Default is {@link
-     *     Hints#VALUE_OVERVIEW_POLICY_NEAREST}.
+     *     {@link Hints#VALUE_OVERVIEW_POLICY_QUALITY}. Default is {@link Hints#VALUE_OVERVIEW_POLICY_NEAREST}.
      */
     private OverviewPolicy extractOverviewPolicy() {
 
@@ -468,14 +407,12 @@ class RasterManager {
         return overviewPolicy;
     }
 
-    public Collection<GridCoverage2D> read(final GeneralParameterValue[] params)
-            throws IOException {
+    public Collection<GridCoverage2D> read(final GeneralParameterValue[] params) throws IOException {
 
         // create a request
         final RasterLayerRequest request = new RasterLayerRequest(params, this);
         if (request.isEmpty()) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.log(Level.FINE, "Request is empty: " + request.toString());
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.log(Level.FINE, "Request is empty: " + request.toString());
             return Collections.emptyList();
         }
 
@@ -506,7 +443,7 @@ class RasterManager {
         return coverageCRS;
     }
 
-    public GeneralEnvelope getCoverageEnvelope() {
+    public GeneralBounds getCoverageEnvelope() {
         return coverageEnvelope;
     }
 

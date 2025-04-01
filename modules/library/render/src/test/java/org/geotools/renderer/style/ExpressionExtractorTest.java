@@ -16,19 +16,26 @@
  */
 package org.geotools.renderer.style;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.Arrays;
 import java.util.List;
-import junit.framework.TestCase;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
+import org.junit.Test;
 
-public class ExpressionExtractorTest extends TestCase {
+public class ExpressionExtractorTest {
     FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
+    @Test
     public void testLiteral() {
         final String exp = "I'm a plain string";
         List<Expression> result = ExpressionExtractor.splitCqlExpressions(exp);
@@ -36,6 +43,7 @@ public class ExpressionExtractorTest extends TestCase {
         assertEquals(ff.literal("I'm a plain string"), result.get(0));
     }
 
+    @Test
     public void testLiteralEscapes() {
         final String exp = "I'm a plain string \\\\ \\${bla bla\\}";
         List<Expression> result = ExpressionExtractor.splitCqlExpressions(exp);
@@ -43,6 +51,7 @@ public class ExpressionExtractorTest extends TestCase {
         assertEquals(ff.literal("I'm a plain string \\ ${bla bla}"), result.get(0));
     }
 
+    @Test
     public void testSimpleExpressions() {
         final String exp = "I'm a ${name} expression of type ${type}";
         List<Expression> result = ExpressionExtractor.splitCqlExpressions(exp);
@@ -53,6 +62,7 @@ public class ExpressionExtractorTest extends TestCase {
         assertEquals(ff.property("type"), result.get(3));
     }
 
+    @Test
     public void testDoubleOpen() {
         try {
             ExpressionExtractor.splitCqlExpressions("I'm a plain string ${bla ${bla}");
@@ -62,6 +72,7 @@ public class ExpressionExtractorTest extends TestCase {
         }
     }
 
+    @Test
     public void testOpenLingering() {
         try {
             ExpressionExtractor.splitCqlExpressions("I'm a plain string ${bla");
@@ -71,6 +82,7 @@ public class ExpressionExtractorTest extends TestCase {
         }
     }
 
+    @Test
     public void testDoubleClose() {
         try {
             ExpressionExtractor.splitCqlExpressions("I'm a plain string ${bla}}");
@@ -80,6 +92,7 @@ public class ExpressionExtractorTest extends TestCase {
         }
     }
 
+    @Test
     public void testEscapesInside() {
         final String exp = "${strLength('\\\\\\${\\}')}";
         List<Expression> result = ExpressionExtractor.splitCqlExpressions(exp);
@@ -87,6 +100,7 @@ public class ExpressionExtractorTest extends TestCase {
         assertEquals(ff.function("strLength", ff.literal("\\${}")), result.get(0));
     }
 
+    @Test
     public void testTwoExpressions() {
         final String exp = "${name}${age}";
         List<Expression> result = ExpressionExtractor.splitCqlExpressions(exp);
@@ -95,12 +109,14 @@ public class ExpressionExtractorTest extends TestCase {
         assertEquals(ff.property("age"), result.get(1));
     }
 
+    @Test
     public void testCatenateOne() {
         Expression l = ff.literal("http://test?param=");
         Expression cat = ExpressionExtractor.catenateExpressions(Arrays.asList(l));
         assertEquals(l, cat);
     }
 
+    @Test
     public void testCatenateTwo() {
         Literal l = ff.literal("http://test?param=");
         PropertyName pn = ff.property("intAttribute");
@@ -112,6 +128,7 @@ public class ExpressionExtractorTest extends TestCase {
         assertEquals(pn, f.getParameters().get(1));
     }
 
+    @Test
     public void testCatenateThree() {
         Literal l1 = ff.literal("http://test?param=");
         PropertyName pn = ff.property("intAttribute");
@@ -123,5 +140,16 @@ public class ExpressionExtractorTest extends TestCase {
         assertEquals(l1, f.getParameters().get(0));
         assertEquals(pn, f.getParameters().get(1));
         assertEquals(l2, f.getParameters().get(2));
+    }
+
+    @Test
+    public void testCacheResults() throws Exception {
+        final String exp = "I'm a ${name} expression of type ${type}";
+        Expression ex1 = ExpressionExtractor.extractCqlExpressions(exp);
+        Expression ex2 = ExpressionExtractor.extractCqlExpressions(exp);
+        assertSame(ex1, ex2);
+        ExpressionExtractor.cleanExpressionCache();
+        Expression ex3 = ExpressionExtractor.extractCqlExpressions(exp);
+        assertNotSame(ex1, ex3);
     }
 }

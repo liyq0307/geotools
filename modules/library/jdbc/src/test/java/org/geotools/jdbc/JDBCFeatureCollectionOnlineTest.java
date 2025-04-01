@@ -16,7 +16,14 @@
  */
 package org.geotools.jdbc;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -24,16 +31,15 @@ import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 
 public abstract class JDBCFeatureCollectionOnlineTest extends JDBCTestSupport {
     SimpleFeatureCollection collection;
     JDBCFeatureStore source;
 
+    @Override
     protected void connect() throws Exception {
         super.connect();
 
@@ -41,32 +47,32 @@ public abstract class JDBCFeatureCollectionOnlineTest extends JDBCTestSupport {
         collection = source.getFeatures();
     }
 
+    @Test
     public void testIterator() throws Exception {
-        FeatureIterator<SimpleFeature> i = collection.features();
-        assertNotNull(i);
+        try (FeatureIterator<SimpleFeature> i = collection.features()) {
+            assertNotNull(i);
+            assertFeatureIterator(0, 3, i, new SimpleFeatureAssertion() {
 
-        assertFeatureIterator(
-                0,
-                3,
-                i,
-                new SimpleFeatureAssertion() {
+                @Override
+                public int toIndex(SimpleFeature feature) {
+                    return ((Number) feature.getAttribute(aname("intProperty"))).intValue();
+                }
 
-                    public int toIndex(SimpleFeature feature) {
-                        return ((Number) feature.getAttribute(aname("intProperty"))).intValue();
-                    }
+                @Override
+                public void check(int index, SimpleFeature feature) {
+                    assertNotNull(feature);
 
-                    public void check(int index, SimpleFeature feature) {
-                        assertNotNull(feature);
+                    String fid = feature.getID();
 
-                        String fid = feature.getID();
+                    int id = Integer.parseInt(fid.substring(fid.indexOf('.') + 1));
 
-                        int id = Integer.parseInt(fid.substring(fid.indexOf('.') + 1));
-
-                        assertEquals(index, id);
-                    }
-                });
+                    assertEquals(index, id);
+                }
+            });
+        }
     }
 
+    @Test
     public void testBounds() throws IOException {
         ReferencedEnvelope bounds = collection.getBounds();
         assertNotNull(bounds);
@@ -77,10 +83,12 @@ public abstract class JDBCFeatureCollectionOnlineTest extends JDBCTestSupport {
         assertEquals(2d, bounds.getMaxY(), 0.1);
     }
 
+    @Test
     public void testSize() throws IOException {
         assertEquals(3, collection.size());
     }
 
+    @Test
     public void testSubCollection() throws Exception {
         FilterFactory ff = dataStore.getFilterFactory();
         Filter f = ff.equals(ff.property(aname("intProperty")), ff.literal(1));
@@ -98,6 +106,7 @@ public abstract class JDBCFeatureCollectionOnlineTest extends JDBCTestSupport {
         assertEquals(exp.getMaxY(), act.getMaxY(), 0.1);
     }
 
+    @Test
     public void testAdd() throws IOException {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(collection.getSchema());
         b.set(aname("intProperty"), Integer.valueOf(3));
@@ -116,7 +125,7 @@ public abstract class JDBCFeatureCollectionOnlineTest extends JDBCTestSupport {
             boolean found = false;
 
             while (i.hasNext()) {
-                SimpleFeature f = (SimpleFeature) i.next();
+                SimpleFeature f = i.next();
 
                 if ("three".equals(f.getAttribute(aname("stringProperty")))) {
                     assertEquals(
@@ -124,11 +133,8 @@ public abstract class JDBCFeatureCollectionOnlineTest extends JDBCTestSupport {
                             ((Double) f.getAttribute(aname("doubleProperty"))).doubleValue(),
                             1e-5);
                     assertEquals(
-                            feature.getAttribute(aname("stringProperty")),
-                            f.getAttribute(aname("stringProperty")));
-                    assertEquals(
-                            feature.getAttribute(aname("geometry")),
-                            f.getAttribute(aname("geometry")));
+                            feature.getAttribute(aname("stringProperty")), f.getAttribute(aname("stringProperty")));
+                    assertEquals(feature.getAttribute(aname("geometry")), f.getAttribute(aname("geometry")));
                     found = true;
                 }
             }

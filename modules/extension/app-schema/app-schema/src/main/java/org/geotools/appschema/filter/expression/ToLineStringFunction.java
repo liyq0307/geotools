@@ -19,7 +19,15 @@ package org.geotools.appschema.filter.expression;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.filter.capability.FunctionNameImpl;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultVerticalCRS;
 import org.geotools.referencing.cs.DefaultVerticalCS;
@@ -27,19 +35,11 @@ import org.geotools.referencing.datum.DefaultVerticalDatum;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * This function converts double values to 1D LineString geometry object. This is needed when the
- * data store doesn't have geometry type columns (or they want to use custom CRS). If custom SRS
- * name is used, a 1D CRS will be created. This function expects:
+ * This function converts double values to 1D LineString geometry object. This is needed when the data store doesn't
+ * have geometry type columns (or they want to use custom CRS). If custom SRS name is used, a 1D CRS will be created.
+ * This function expects:
  *
  * <ol>
  *   <li>Expression: SRS name (could be custom SRS name)
@@ -57,15 +57,14 @@ public class ToLineStringFunction implements Function {
 
     private static final String USAGE = "Usage: toLineString(srsName, point 1, point 2)";
 
-    public static final FunctionName NAME =
-            new FunctionNameImpl(
-                    "toLineString",
-                    FunctionNameImpl.parameter("return", LineString.class),
-                    FunctionNameImpl.parameter("parameter", String.class, 1, 1),
-                    FunctionNameImpl.parameter("parameter", Double.class, 2, 3));
+    public static final FunctionName NAME = new FunctionNameImpl(
+            "toLineString",
+            FunctionNameImpl.parameter("return", LineString.class),
+            FunctionNameImpl.parameter("parameter", String.class, 1, 1),
+            FunctionNameImpl.parameter("parameter", Double.class, 2, 3));
 
     public ToLineStringFunction() {
-        this(new ArrayList<Expression>(), null);
+        this(new ArrayList<>(), null);
     }
 
     public ToLineStringFunction(List<Expression> parameters, Literal fallback) {
@@ -73,30 +72,37 @@ public class ToLineStringFunction implements Function {
         this.fallback = fallback;
     }
 
+    @Override
     public String getName() {
         return NAME.getName();
     }
 
+    @Override
     public FunctionName getFunctionName() {
         return NAME;
     }
 
+    @Override
     public List<Expression> getParameters() {
         return Collections.unmodifiableList(parameters);
     }
 
+    @Override
     public Literal getFallbackValue() {
         return fallback;
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public Object evaluate(Object object) {
         return evaluate(object, LineString.class);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public <T> T evaluate(Object object, Class<T> context) {
         if (parameters.size() != 3
@@ -104,33 +110,21 @@ public class ToLineStringFunction implements Function {
                 || parameters.get(1) == null
                 || parameters.get(2) == null) {
             throw new IllegalArgumentException(
-                    "Invalid parameters for toLineString function: "
-                            + parameters.toString()
-                            + ". "
-                            + USAGE);
+                    "Invalid parameters for toLineString function: " + parameters.toString() + ". " + USAGE);
         }
         Object srs = parameters.get(0).evaluate(object, String.class);
         String srsName = String.valueOf(srs);
         CoordinateReferenceSystem crs = null;
         try {
             crs = CRS.decode(srsName);
-        } catch (NoSuchAuthorityCodeException e) {
-            // custom CRS
-            crs =
-                    new DefaultVerticalCRS(
-                            srsName, DefaultVerticalDatum.GEOIDAL, DefaultVerticalCS.DEPTH);
         } catch (FactoryException e) {
             // custom CRS
-            crs =
-                    new DefaultVerticalCRS(
-                            srsName, DefaultVerticalDatum.GEOIDAL, DefaultVerticalCS.DEPTH);
+            crs = new DefaultVerticalCRS(srsName, DefaultVerticalDatum.GEOIDAL, DefaultVerticalCS.DEPTH);
         }
 
         // just in case
         if (crs == null) {
-            crs =
-                    new DefaultVerticalCRS(
-                            srsName, DefaultVerticalDatum.GEOIDAL, DefaultVerticalCS.DEPTH);
+            crs = new DefaultVerticalCRS(srsName, DefaultVerticalDatum.GEOIDAL, DefaultVerticalCS.DEPTH);
         }
 
         LineString linestring = null;
@@ -150,7 +144,7 @@ public class ToLineStringFunction implements Function {
             points[1] = new Coordinate(dblTwo, Coordinate.NULL_ORDINATE, Coordinate.NULL_ORDINATE);
 
             linestring = geomFactory.createLineString(points);
-            linestring.setUserData(crs);
+            JTS.setCRS(linestring, crs);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(
                     "Error converting the parameters for toLineString function: "

@@ -19,15 +19,17 @@ package org.geotools.ows.wms.test;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
-import junit.framework.TestCase;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Response;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.ows.wms.request.AbstractGetMapRequest;
 import org.geotools.ows.wms.request.GetMapRequest;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class AbstractGetMapRequestTest extends TestCase {
+public class AbstractGetMapRequestTest {
 
+    @Test
     public void testGetFinalURL() throws Exception {
         URL badURL = new URL("http://test.com/map.php?LAYERS=Provincial Boundary");
 
@@ -39,21 +41,14 @@ public class AbstractGetMapRequestTest extends TestCase {
         URL finalURL = request.getFinalURL();
         // System.out.println(finalURL);
         String processedURL = finalURL.toExternalForm();
-        assertTrue(processedURL.indexOf("LAYERS=Layer2,Provincial%20Boundary") != -1);
-        assertTrue(processedURL.indexOf("STYLES=,Two%20words") != -1);
-        assertTrue(processedURL.indexOf("SERVICE=WMS") != -1);
+        Assert.assertNotEquals(-1, processedURL.indexOf("LAYERS=Layer2,Provincial%20Boundary"));
+        Assert.assertNotEquals(-1, processedURL.indexOf("STYLES=,Two%20words"));
+        Assert.assertNotEquals(-1, processedURL.indexOf("SERVICE=WMS"));
     }
 
     private class RequestTestHelp extends AbstractGetMapRequest {
 
-        /**
-         * @param onlineResource
-         * @param properties
-         * @param availableLayers
-         * @param availableSRSs
-         * @param availableFormats
-         * @param availableExceptions
-         */
+        /** */
         public RequestTestHelp(URL onlineResource, Properties properties) {
             super(onlineResource, properties);
             // TODO Auto-generated constructor stub
@@ -62,13 +57,14 @@ public class AbstractGetMapRequestTest extends TestCase {
         /* (non-Javadoc)
          * @see AbstractGetMapRequest#initVersion()
          */
+        @Override
         protected void initVersion() {
             // TODO Auto-generated method stub
 
         }
 
-        public Response createResponse(HTTPResponse httpResponse)
-                throws ServiceException, IOException {
+        @Override
+        public Response createResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
             // TODO Auto-generated method stub
             return null;
         }

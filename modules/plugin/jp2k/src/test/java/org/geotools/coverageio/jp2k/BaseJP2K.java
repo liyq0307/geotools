@@ -33,18 +33,14 @@ import org.junit.Assert;
  *     <p>Base testing class initializing JAI properties to be used during tests.
  */
 @SuppressWarnings("deprecation")
-public class BaseJP2K extends Assert {
+public class BaseJP2K {
 
     protected static final double DELTA = 1.0E-6;
 
-    /**
-     * The {@code GridFormatFactorySpi} provided by the specific subclass to handle a specific
-     * format.
-     */
+    /** The {@code GridFormatFactorySpi} provided by the specific subclass to handle a specific format. */
     protected static final JP2KFormatFactory factorySpi = new JP2KFormatFactory();
 
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(BaseJP2K.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(BaseJP2K.class);
 
     protected static void forceDataLoading(final GridCoverage2D gc) {
         Assert.assertNotNull(gc);
@@ -52,18 +48,9 @@ public class BaseJP2K extends Assert {
         if (TestData.isInteractiveTest()) {
             final JFrame frame = new JFrame();
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.getContentPane()
-                    .add(
-                            new javax.media.jai.widget.ScrollingImagePanel(
-                                    gc.getRenderedImage(), 800, 800));
+            frame.getContentPane().add(new javax.media.jai.widget.ScrollingImagePanel(gc.getRenderedImage(), 800, 800));
             frame.pack();
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-
-                        public void run() {
-                            frame.setVisible(true);
-                        }
-                    });
+            SwingUtilities.invokeLater(() -> frame.setVisible(true));
         } else {
             PlanarImage.wrapRenderedImage(gc.getRenderedImage()).getTiles();
         }
@@ -79,10 +66,7 @@ public class BaseJP2K extends Assert {
         return available;
     }
 
-    /**
-     * @param reader
-     * @throws IOException
-     */
+    /** */
     protected void checkReader(GridCoverage2DReader reader) throws IOException {
         Assert.assertNotNull(reader);
 

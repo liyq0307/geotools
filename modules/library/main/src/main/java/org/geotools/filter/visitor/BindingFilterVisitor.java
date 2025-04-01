@@ -18,39 +18,39 @@ package org.geotools.filter.visitor;
 
 import java.util.Date;
 import java.util.List;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.InternalFunction;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
-import org.opengis.parameter.Parameter;
-import org.opengis.temporal.Period;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.InternalFunction;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
+import org.geotools.api.parameter.Parameter;
+import org.geotools.api.temporal.Period;
 
 /**
- * Binds all literals in the filter to the target type they are compared to, in order to avoid the
- * usage of converters on a evaluation by evaluation basis.
+ * Binds all literals in the filter to the target type they are compared to, in order to avoid the usage of converters
+ * on a evaluation by evaluation basis.
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -60,16 +60,13 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
 
     private ExpressionTypeVisitor expressionTypeVisitor;
 
-    /**
-     * Evaluates the
-     *
-     * @param schema
-     */
+    /** Evaluates the */
     public BindingFilterVisitor(FeatureType schema) {
         this.schema = schema;
         this.expressionTypeVisitor = new ExpressionTypeVisitor(schema);
     }
 
+    @Override
     public Object visit(PropertyIsEqualTo filter, Object extraData) {
         Class targetType = getTargetType(filter.getExpression1(), filter.getExpression2());
         Expression expr1 = optimize(filter.getExpression1(), extraData, targetType);
@@ -89,11 +86,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
 
     @Override
     public Object visit(PropertyIsBetween filter, Object extraData) {
-        Class targetType =
-                getTargetType(
-                        filter.getLowerBoundary(),
-                        filter.getExpression(),
-                        filter.getUpperBoundary());
+        Class targetType = getTargetType(filter.getLowerBoundary(), filter.getExpression(), filter.getUpperBoundary());
         Expression lb = optimize(filter.getLowerBoundary(), extraData, targetType);
         Expression ex = optimize(filter.getExpression(), extraData, targetType);
         Expression ub = optimize(filter.getUpperBoundary(), extraData, targetType);
@@ -115,8 +108,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         Expression expr1 = optimize(filter.getExpression1(), extraData, targetType);
         Expression expr2 = optimize(filter.getExpression2(), extraData, targetType);
         boolean matchCase = filter.isMatchingCase();
-        return getFactory(extraData)
-                .greaterOrEqual(expr1, expr2, matchCase, filter.getMatchAction());
+        return getFactory(extraData).greaterOrEqual(expr1, expr2, matchCase, filter.getMatchAction());
     }
 
     @Override
@@ -154,6 +146,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return duplicate;
     }
 
+    @Override
     public Object visit(After after, Object extraData) {
         Expression expr1 = optimizeTime(after.getExpression1(), extraData);
         Expression expr2 = optimizeTime(after.getExpression2(), extraData);
@@ -161,13 +154,16 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).after(expr1, expr2, after.getMatchAction());
     }
 
+    @Override
     public Object visit(AnyInteracts anyInteracts, Object extraData) {
         Expression expr1 = optimizeTime(anyInteracts.getExpression1(), extraData);
         Expression expr2 = optimizeTime(anyInteracts.getExpression2(), extraData);
 
         return getFactory(extraData).anyInteracts(expr1, expr2, anyInteracts.getMatchAction());
-    };
+    }
+    ;
 
+    @Override
     public Object visit(Before before, Object extraData) {
         Expression expr1 = optimizeTime(before.getExpression1(), extraData);
         Expression expr2 = optimizeTime(before.getExpression2(), extraData);
@@ -175,13 +171,16 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).before(expr1, expr2, before.getMatchAction());
     }
 
+    @Override
     public Object visit(Begins begins, Object extraData) {
         Expression expr1 = optimizeTime(begins.getExpression1(), extraData);
         Expression expr2 = optimizeTime(begins.getExpression2(), extraData);
 
         return getFactory(extraData).begins(expr1, expr2, begins.getMatchAction());
-    };
+    }
+    ;
 
+    @Override
     public Object visit(BegunBy begunBy, Object extraData) {
         Expression expr1 = optimizeTime(begunBy.getExpression1(), extraData);
         Expression expr2 = optimizeTime(begunBy.getExpression2(), extraData);
@@ -189,6 +188,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).begins(expr1, expr2, begunBy.getMatchAction());
     }
 
+    @Override
     public Object visit(During during, Object extraData) {
         Expression expr1 = optimizeTime(during.getExpression1(), extraData);
         Expression expr2 = optimizeTime(during.getExpression2(), extraData);
@@ -196,6 +196,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).during(expr1, expr2, during.getMatchAction());
     }
 
+    @Override
     public Object visit(EndedBy endedBy, Object extraData) {
         Expression expr1 = optimizeTime(endedBy.getExpression1(), extraData);
         Expression expr2 = optimizeTime(endedBy.getExpression2(), extraData);
@@ -203,6 +204,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).endedBy(expr1, expr2, endedBy.getMatchAction());
     }
 
+    @Override
     public Object visit(Ends ends, Object extraData) {
         Expression expr1 = optimizeTime(ends.getExpression1(), extraData);
         Expression expr2 = optimizeTime(ends.getExpression2(), extraData);
@@ -210,6 +212,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).ends(expr1, expr2, ends.getMatchAction());
     }
 
+    @Override
     public Object visit(Meets meets, Object extraData) {
         Expression expr1 = optimizeTime(meets.getExpression1(), extraData);
         Expression expr2 = optimizeTime(meets.getExpression2(), extraData);
@@ -217,6 +220,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).meets(expr1, expr2, meets.getMatchAction());
     }
 
+    @Override
     public Object visit(MetBy metBy, Object extraData) {
         Expression expr1 = optimizeTime(metBy.getExpression1(), extraData);
         Expression expr2 = optimizeTime(metBy.getExpression2(), extraData);
@@ -224,6 +228,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).metBy(expr1, expr2, metBy.getMatchAction());
     }
 
+    @Override
     public Object visit(OverlappedBy overlappedBy, Object extraData) {
         Expression expr1 = optimizeTime(overlappedBy.getExpression1(), extraData);
         Expression expr2 = optimizeTime(overlappedBy.getExpression2(), extraData);
@@ -231,6 +236,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).overlappedBy(expr1, expr2, overlappedBy.getMatchAction());
     }
 
+    @Override
     public Object visit(TContains contains, Object extraData) {
         Expression expr1 = optimizeTime(contains.getExpression1(), extraData);
         Expression expr2 = optimizeTime(contains.getExpression2(), extraData);
@@ -238,6 +244,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).tcontains(expr1, expr2, contains.getMatchAction());
     }
 
+    @Override
     public Object visit(TEquals equals, Object extraData) {
         Expression expr1 = optimizeTime(equals.getExpression1(), extraData);
         Expression expr2 = optimizeTime(equals.getExpression2(), extraData);
@@ -245,6 +252,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).tequals(expr1, expr2, equals.getMatchAction());
     }
 
+    @Override
     public Object visit(TOverlaps contains, Object extraData) {
         Expression expr1 = optimizeTime(contains.getExpression1(), extraData);
         Expression expr2 = optimizeTime(contains.getExpression2(), extraData);
@@ -261,7 +269,7 @@ public class BindingFilterVisitor extends DuplicatingFilterVisitor {
         return getFactory(extraData).lessOrEqual(expr1, expr2, matchCase, filter.getMatchAction());
     }
 
-    protected Expression optimize(Expression expression, Object extraData, Class targetType) {
+    protected Expression optimize(Expression expression, Object extraData, Class<?> targetType) {
         if (expression instanceof Literal && targetType != null) {
             // perform the conversion and return the optimized literal
             Object converted = expression.evaluate(null, targetType);

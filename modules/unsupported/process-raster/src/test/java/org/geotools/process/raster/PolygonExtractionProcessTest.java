@@ -16,7 +16,9 @@
  */
 package org.geotools.process.raster;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -24,12 +26,11 @@ import java.awt.image.Raster;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.imageio.ImageIO;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.coverage.CoverageFactoryFinder;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
@@ -48,7 +49,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Tests for the raster to vector PolygonExtractionProcess.
@@ -61,8 +61,7 @@ public class PolygonExtractionProcessTest {
 
     private static final double TOL = 1.0e-6;
 
-    private static final GridCoverageFactory covFactory =
-            CoverageFactoryFinder.getGridCoverageFactory(null);
+    private static final GridCoverageFactory covFactory = CoverageFactoryFinder.getGridCoverageFactory(null);
     private PolygonExtractionProcess process;
 
     @Before
@@ -74,16 +73,13 @@ public class PolygonExtractionProcessTest {
     public void simpleSmallCoverage() throws Exception {
         GridCoverage2D cov = buildSmallCoverage();
 
-        final int perimeters[] = {4, 16, 4};
-        final int areas[] = {1, 7, 1};
+        final int[] perimeters = {4, 16, 4};
+        final int[] areas = {1, 7, 1};
 
-        int band = 0;
-        Set<Double> outsideValues = Collections.singleton(0D);
         SimpleFeatureCollection fc = process.execute(cov, 0, Boolean.TRUE, null, null, null, null);
         assertEquals(3, fc.size());
 
-        FeatureIterator iter = fc.features();
-        try {
+        try (FeatureIterator iter = fc.features()) {
             while (iter.hasNext()) {
                 SimpleFeature feature = (SimpleFeature) iter.next();
                 Polygon poly = (Polygon) feature.getDefaultGeometry();
@@ -91,8 +87,6 @@ public class PolygonExtractionProcessTest {
                 assertEquals(perimeters[value - 1], (int) (poly.getBoundary().getLength() + 0.5));
                 assertEquals(areas[value - 1], (int) (poly.getArea() + 0.5));
             }
-        } finally {
-            iter.close();
         }
     }
 
@@ -106,10 +100,7 @@ public class PolygonExtractionProcessTest {
         };
 
         GridCoverage2D cov =
-                covFactory.create(
-                        "coverage",
-                        DATA,
-                        new ReferencedEnvelope(0, DATA[0].length, 0, DATA.length, null));
+                covFactory.create("coverage", DATA, new ReferencedEnvelope(0, DATA[0].length, 0, DATA.length, null));
         return cov;
     }
 
@@ -125,23 +116,16 @@ public class PolygonExtractionProcessTest {
         final int NUM_POLYS = 2;
 
         GridCoverage2D cov =
-                covFactory.create(
-                        "coverage",
-                        DATA,
-                        new ReferencedEnvelope(0, DATA[0].length, 0, DATA.length, null));
+                covFactory.create("coverage", DATA, new ReferencedEnvelope(0, DATA[0].length, 0, DATA.length, null));
 
         SimpleFeatureCollection fc = process.execute(cov, 0, Boolean.TRUE, null, null, null, null);
         assertEquals(NUM_POLYS, fc.size());
 
-        SimpleFeatureIterator iter = fc.features();
-        try {
+        try (SimpleFeatureIterator iter = fc.features()) {
             while (iter.hasNext()) {
                 Polygon poly = (Polygon) iter.next().getDefaultGeometry();
                 assertEquals(1, poly.getNumInteriorRing());
             }
-
-        } finally {
-            iter.close();
         }
     }
 
@@ -157,15 +141,11 @@ public class PolygonExtractionProcessTest {
         final int NUM_POLYS = 5;
 
         GridCoverage2D cov =
-                covFactory.create(
-                        "coverage",
-                        DATA,
-                        new ReferencedEnvelope(0, DATA[0].length, 0, DATA.length, null));
+                covFactory.create("coverage", DATA, new ReferencedEnvelope(0, DATA[0].length, 0, DATA.length, null));
 
         Number[] noDataValues = {-1};
         SimpleFeatureCollection fc =
-                process.execute(
-                        cov, 0, Boolean.TRUE, null, Arrays.asList(noDataValues), null, null);
+                process.execute(cov, 0, Boolean.TRUE, null, Arrays.asList(noDataValues), null, null);
         assertEquals(NUM_POLYS, fc.size());
     }
 
@@ -185,9 +165,7 @@ public class PolygonExtractionProcessTest {
         final int width = DATA[0].length;
         final int height = DATA.length;
 
-        GridCoverage2D cov =
-                covFactory.create(
-                        "coverage", DATA, new ReferencedEnvelope(0, width, 0, height, null));
+        GridCoverage2D cov = covFactory.create("coverage", DATA, new ReferencedEnvelope(0, width, 0, height, null));
 
         SimpleFeatureCollection fc = process.execute(cov, 0, Boolean.FALSE, null, null, null, null);
 
@@ -198,8 +176,8 @@ public class PolygonExtractionProcessTest {
     }
 
     /**
-     * This test works with a simple L-shape raster pattern which was causing the original raster to
-     * vector code to fail.
+     * This test works with a simple L-shape raster pattern which was causing the original raster to vector code to
+     * fail.
      */
     @Test
     public void singleLShapedRegion() throws Exception {
@@ -211,12 +189,7 @@ public class PolygonExtractionProcessTest {
         };
 
         GridCoverage2D cov =
-                covFactory.create(
-                        "coverage",
-                        DATA,
-                        new ReferencedEnvelope(0, DATA[0].length, 0, DATA.length, null));
-
-        Set<Double> outsideValues = Collections.singleton(0D);
+                covFactory.create("coverage", DATA, new ReferencedEnvelope(0, DATA[0].length, 0, DATA.length, null));
 
         SimpleFeatureCollection fc = process.execute(cov, 0, Boolean.TRUE, null, null, null, null);
         assertEquals(1, fc.size());
@@ -227,8 +200,8 @@ public class PolygonExtractionProcessTest {
     }
 
     /**
-     * This test uses an image that caused the original raster to vector code to fail. It is kept
-     * here to guard against regression.
+     * This test uses an image that caused the original raster to vector code to fail. It is kept here to guard against
+     * regression.
      */
     @Test
     public void extractPolygonsFromViewshedRaster() throws Exception {
@@ -237,22 +210,19 @@ public class PolygonExtractionProcessTest {
         URL url = getClass().getResource("viewshed.tif");
         BufferedImage img = ImageIO.read(url);
 
-        Rectangle bounds =
-                new Rectangle(img.getMinX(), img.getMinY(), img.getWidth(), img.getHeight());
+        Rectangle bounds = new Rectangle(img.getMinX(), img.getMinY(), img.getWidth(), img.getHeight());
         ReferencedEnvelope env = new ReferencedEnvelope(bounds, null);
 
         GridCoverage2D cov = covFactory.create("coverage", img, env);
 
         final int OUTSIDE = -1;
-        List<Number> noDataValues = new ArrayList<Number>();
+        List<Number> noDataValues = new ArrayList<>();
         noDataValues.add(OUTSIDE);
-        SimpleFeatureCollection fc =
-                process.execute(cov, 0, Boolean.TRUE, null, noDataValues, null, null);
+        SimpleFeatureCollection fc = process.execute(cov, 0, Boolean.TRUE, null, noDataValues, null, null);
 
         // validate geometries and sum areas
-        SimpleFeatureIterator iter = fc.features();
-        Map<Integer, Double> areas = new HashMap<Integer, Double>();
-        try {
+        Map<Integer, Double> areas = new HashMap<>();
+        try (SimpleFeatureIterator iter = fc.features()) {
             while (iter.hasNext()) {
                 SimpleFeature feature = iter.next();
                 Geometry geom = (Geometry) feature.getDefaultGeometry();
@@ -268,12 +238,10 @@ public class PolygonExtractionProcessTest {
                     areas.put(value, sum);
                 }
             }
-        } finally {
-            iter.close();
         }
 
         // compare summed areas to image data
-        Map<Integer, Double> imgAreas = new HashMap<Integer, Double>();
+        Map<Integer, Double> imgAreas = new HashMap<>();
         Raster tile = img.getTile(0, 0);
         for (int y = img.getMinY(), ny = 0; ny < img.getHeight(); y++, ny++) {
             for (int x = img.getMinX(), nx = 0; nx < img.getWidth(); x++, nx++) {
@@ -314,27 +282,23 @@ public class PolygonExtractionProcessTest {
         final int width = DATA[0].length;
         final int height = DATA.length;
 
-        GridCoverage2D cov =
-                covFactory.create(
-                        "coverage", DATA, new ReferencedEnvelope(0, width, 0, height, null));
+        GridCoverage2D cov = covFactory.create("coverage", DATA, new ReferencedEnvelope(0, width, 0, height, null));
 
-        List<Range> classificationRanges = new ArrayList<Range>();
+        List<Range> classificationRanges = new ArrayList<>();
         Range<Integer> r1 = Range.create(1, true, 4, true);
         Range<Integer> r2 = Range.create(5, true, 8, true);
         classificationRanges.add(r1);
         classificationRanges.add(r2);
 
-        SimpleFeatureCollection fc =
-                process.execute(cov, 0, Boolean.TRUE, null, null, classificationRanges, null);
+        SimpleFeatureCollection fc = process.execute(cov, 0, Boolean.TRUE, null, null, classificationRanges, null);
 
         assertEquals(2, fc.size());
 
         // Expected result is 2 polygons, each with area == 16.0
-        SimpleFeatureIterator iter = fc.features();
-        List<Integer> expectedValues = new ArrayList<Integer>();
+        List<Integer> expectedValues = new ArrayList<>();
         expectedValues.add(1);
         expectedValues.add(2);
-        try {
+        try (SimpleFeatureIterator iter = fc.features()) {
             while (iter.hasNext()) {
                 SimpleFeature feature = iter.next();
                 Integer value = ((Number) feature.getAttribute("value")).intValue();
@@ -343,17 +307,15 @@ public class PolygonExtractionProcessTest {
                 Polygon poly = (Polygon) feature.getDefaultGeometry();
                 assertEquals(16.0, poly.getArea(), TOL);
             }
-        } finally {
-            iter.close();
         }
     }
 
     /**
-     * Creates an ROI having the same bounds as the input grid coverage to check that the whole
-     * coverage is included in vectorizing.
+     * Creates an ROI having the same bounds as the input grid coverage to check that the whole coverage is included in
+     * vectorizing.
      *
-     * <p>This test fails at the moment because the top and right edges (in world space) of the
-     * coverage are treated as not included by the ROI.
+     * <p>This test fails at the moment because the top and right edges (in world space) of the coverage are treated as
+     * not included by the ROI.
      */
     @Ignore("See GEOT-3861")
     @Test
@@ -387,8 +349,7 @@ public class PolygonExtractionProcessTest {
          * Vectorize the coverage and check that we get a single polygon
          * having the same bounds as the input coverage
          */
-        SimpleFeatureCollection fc =
-                process.execute(cov, 0, Boolean.TRUE, roiGeom, null, null, null);
+        SimpleFeatureCollection fc = process.execute(cov, 0, Boolean.TRUE, roiGeom, null, null, null);
 
         assertEquals(1, fc.size());
 
@@ -396,9 +357,7 @@ public class PolygonExtractionProcessTest {
         assertEquals(1, ((Number) feature.getAttribute("value")).intValue());
 
         ReferencedEnvelope polyEnv = JTS.toEnvelope((Geometry) feature.getDefaultGeometry());
-        assertTrue(
-                "Expected " + dataEnv + " but got " + polyEnv,
-                dataEnv.boundsEquals2D(polyEnv, TOL));
+        assertTrue("Expected " + dataEnv + " but got " + polyEnv, dataEnv.boundsEquals2D(polyEnv, TOL));
     }
 
     @Ignore("See GEOT-3861")
@@ -428,13 +387,11 @@ public class PolygonExtractionProcessTest {
         GridCoverage2D cov = covFactory.create("coverage", DATA, dataEnv);
 
         // Create an ROI that cuts off the left and right-most pixels
-        ReferencedEnvelope processEnv =
-                new ReferencedEnvelope(minX + cellSize, maxX - cellSize, minY, maxY, null);
+        ReferencedEnvelope processEnv = new ReferencedEnvelope(minX + cellSize, maxX - cellSize, minY, maxY, null);
 
         Polygon roiGeometry = JTS.toGeometry(processEnv);
 
-        SimpleFeatureCollection fc =
-                process.execute(cov, 0, Boolean.TRUE, roiGeometry, null, null, null);
+        SimpleFeatureCollection fc = process.execute(cov, 0, Boolean.TRUE, roiGeometry, null, null, null);
 
         // Expected result is 3 polygons:
         //   value == 1, area = 5 cells
@@ -444,11 +401,10 @@ public class PolygonExtractionProcessTest {
 
         final double cellArea = cellSize * cellSize;
         final double[] areas = {5 * cellArea, 20 * cellArea, 5 * cellArea};
-        List<Integer> expectedValues = new ArrayList<Integer>();
+        List<Integer> expectedValues = new ArrayList<>();
         expectedValues.addAll(Arrays.asList(1, 2, 3));
 
-        SimpleFeatureIterator iter = fc.features();
-        try {
+        try (SimpleFeatureIterator iter = fc.features()) {
             while (iter.hasNext()) {
                 SimpleFeature feature = iter.next();
                 Integer value = ((Number) feature.getAttribute("value")).intValue();
@@ -459,8 +415,6 @@ public class PolygonExtractionProcessTest {
                 // System.out.println(poly.toText());
                 assertEquals(areas[value - 1], poly.getArea(), TOL);
             }
-        } finally {
-            iter.close();
         }
     }
 
@@ -469,13 +423,9 @@ public class PolygonExtractionProcessTest {
         Process process = Processors.createProcess(new NameImpl("ras", "PolygonExtraction"));
         assertNotNull(process);
 
-        Map<String, Object> inputs = new HashMap<String, Object>();
+        Map<String, Object> inputs = new HashMap<>();
         inputs.put("data", buildSmallCoverage());
-        inputs.put(
-                "ranges",
-                Arrays.asList(
-                        new Range<Integer>(0, true, 1, true),
-                        new Range<Integer>(2, true, 3, true)));
+        inputs.put("ranges", Arrays.asList(new Range<>(0, true, 1, true), new Range<>(2, true, 3, true)));
         Map<String, Object> results = process.execute(inputs, null);
         Object result = results.get("result");
         assertTrue(result instanceof SimpleFeatureCollection);

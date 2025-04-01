@@ -17,12 +17,12 @@
 package org.geotools.sld.bindings;
 
 import java.util.Map;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.GrowableInternationalString;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.util.InternationalString;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -64,6 +64,7 @@ public abstract class SLDInternationalStringBinding extends AbstractComplexBindi
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -80,6 +81,7 @@ public abstract class SLDInternationalStringBinding extends AbstractComplexBindi
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -89,7 +91,9 @@ public abstract class SLDInternationalStringBinding extends AbstractComplexBindi
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
+        @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) value;
         GrowableInternationalString intString =
                 new GrowableInternationalString(map.get(null).toString()) {
@@ -103,6 +107,7 @@ public abstract class SLDInternationalStringBinding extends AbstractComplexBindi
             if (key != null && key.equalsIgnoreCase("localized")) {
                 Iterable translations = (Iterable) map.get(key);
                 for (Object obj : translations) {
+                    @SuppressWarnings("unchecked")
                     Map<String, String> translation = (Map<String, String>) obj;
                     intString.add("", "_" + translation.get("lang"), translation.get(null));
                 }

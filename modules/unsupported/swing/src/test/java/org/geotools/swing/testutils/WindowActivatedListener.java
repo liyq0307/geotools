@@ -25,23 +25,24 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import org.assertj.swing.driver.WindowDriver;
 import org.assertj.swing.fixture.AbstractWindowFixture;
 import org.assertj.swing.fixture.DialogFixture;
 import org.assertj.swing.fixture.FrameFixture;
 
 /**
- * Listens for a window of specified class to be activated on the AWT event thread and, when it
- * appears, creates a FEST {@linkplain WindowFixture} object from it.
+ * Listens for a window of specified class to be activated on the AWT event thread and, when it appears, creates a FEST
+ * {@linkplain WindowFixture} object from it.
  *
  * @author Michael Bedward
  * @since 8.0
  * @version $Id$
  */
-public class WindowActivatedListener implements AWTEventListener {
+public class WindowActivatedListener<S, C extends Window, D extends WindowDriver> implements AWTEventListener {
 
     private final Class<? extends Window> windowClass;
     private final CountDownLatch latch;
-    private AbstractWindowFixture fixture;
+    private AbstractWindowFixture<S, C, D> fixture;
 
     /**
      * Creates a new listener.
@@ -49,8 +50,7 @@ public class WindowActivatedListener implements AWTEventListener {
      * @param windowClass the class to listen for.
      */
     public WindowActivatedListener(Class<? extends Window> windowClass) {
-        if (Frame.class.isAssignableFrom(windowClass)
-                || Dialog.class.isAssignableFrom(windowClass)) {
+        if (Frame.class.isAssignableFrom(windowClass) || Dialog.class.isAssignableFrom(windowClass)) {
             this.windowClass = windowClass;
 
         } else {
@@ -61,22 +61,22 @@ public class WindowActivatedListener implements AWTEventListener {
     }
 
     /**
-     * Checks if an event pertains to this listener's target window class and is of type {@linkplain
-     * WindowEvent#WINDOW_ACTIVATED}.
+     * Checks if an event pertains to this listener's target window class and is of type
+     * {@linkplain WindowEvent#WINDOW_ACTIVATED}.
      *
      * @param event an event
      */
     @Override
+    @SuppressWarnings("unchecked")
     public void eventDispatched(AWTEvent event) {
         if (fixture == null) {
             Object source = event.getSource();
-            if (windowClass.isAssignableFrom(source.getClass())
-                    && event.getID() == WindowEvent.WINDOW_ACTIVATED) {
+            if (windowClass.isAssignableFrom(source.getClass()) && event.getID() == WindowEvent.WINDOW_ACTIVATED) {
 
                 if (source instanceof Frame) {
-                    fixture = new FrameFixture((Frame) source);
+                    fixture = (AbstractWindowFixture<S, C, D>) new FrameFixture((Frame) source);
                 } else if (source instanceof Dialog) {
-                    fixture = new DialogFixture((Dialog) source);
+                    fixture = (AbstractWindowFixture<S, C, D>) new DialogFixture((Dialog) source);
                 }
 
                 latch.countDown();
@@ -89,10 +89,9 @@ public class WindowActivatedListener implements AWTEventListener {
      *
      * @param timeOutMillis maximum waiting time in milliseconds
      * @return the fixture or {@code null} if the time-out expires
-     * @throws InterruptedException on interruption while waiting for the fixture to become
-     *     available
+     * @throws InterruptedException on interruption while waiting for the fixture to become available
      */
-    public AbstractWindowFixture getFixture(long timeOutMillis) throws InterruptedException {
+    public AbstractWindowFixture<S, C, D> getFixture(long timeOutMillis) throws InterruptedException {
         if (latch.await(timeOutMillis, TimeUnit.MILLISECONDS)) {
             return fixture;
         } else {

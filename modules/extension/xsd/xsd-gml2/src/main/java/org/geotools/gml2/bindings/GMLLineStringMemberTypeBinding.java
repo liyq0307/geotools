@@ -53,6 +53,7 @@ import org.locationtech.jts.geom.LineString;
  */
 public class GMLLineStringMemberTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return new QName("http://www.opengis.net/gml", "LineStringMemberType");
     }
@@ -64,6 +65,7 @@ public class GMLLineStringMemberTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return LineString.class;
     }
@@ -75,15 +77,18 @@ public class GMLLineStringMemberTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return node.getChildValue(LineString.class);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) {
         return GML2EncodingUtils.GeometryPropertyType_getProperty((LineString) object, name, false);
     }
 
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    @Override
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         return GML2EncodingUtils.GeometryPropertyType_getProperties((LineString) object);
     }
 }

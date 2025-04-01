@@ -51,24 +51,24 @@ import org.locationtech.jts.geom.MultiPolygon;
  */
 public class MultiPolygonPropertyTypeBinding extends GeometryPropertyTypeBindingBase {
 
-    public MultiPolygonPropertyTypeBinding(
-            GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry) {
+    public MultiPolygonPropertyTypeBinding(GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry) {
         super(encodingUtils, idRegistry);
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MultiPolygonPropertyType;
     }
 
+    @Override
     public Class<? extends Geometry> getGeometryType() {
         return MultiPolygon.class;
     }
 
     /**
-     * Implements compare too against MultiSurfaceTypeBinidng because the two are bound to the same
-     * class, Polygon. This causes a conflict in the encoder. Since this binding is deprecated,
-     * MultiSurfacePropertyTypeBinding always wins.
+     * Implements compare too against MultiSurfaceTypeBinidng because the two are bound to the same class, Polygon. This
+     * causes a conflict in the encoder. Since this binding is deprecated, MultiSurfacePropertyTypeBinding always wins.
      */
     public int compareTo(Object o) {
         if (o instanceof MultiSurfacePropertyTypeBinding) {

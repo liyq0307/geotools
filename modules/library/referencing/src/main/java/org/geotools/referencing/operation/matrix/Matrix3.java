@@ -21,9 +21,8 @@ import java.io.Serializable;
 import org.ejml.UtilEjml;
 import org.ejml.data.DMatrix3x3;
 import org.ejml.dense.fixed.CommonOps_DDF3;
+import org.geotools.api.referencing.operation.Matrix;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
-import org.opengis.referencing.operation.Matrix;
 
 /**
  * A matrix of fixed {@value #SIZE}&times;{@value #SIZE} size.
@@ -68,13 +67,13 @@ public class Matrix3 implements XMatrix, Serializable {
     }
 
     /**
-     * Creates a new matrix initialized to the same value than the specified one. The specified
-     * matrix size must be {@value #SIZE}&times;{@value #SIZE}.
+     * Creates a new matrix initialized to the same value than the specified one. The specified matrix size must be
+     * {@value #SIZE}&times;{@value #SIZE}.
      */
     public Matrix3(final Matrix matrix) {
         mat = new DMatrix3x3();
         if (matrix.getNumRow() != SIZE || matrix.getNumCol() != SIZE) {
-            throw new IllegalArgumentException(Errors.format(ErrorKeys.ILLEGAL_MATRIX_SIZE));
+            throw new IllegalArgumentException(ErrorKeys.ILLEGAL_MATRIX_SIZE);
         }
         for (int j = 0; j < SIZE; j++) {
             for (int i = 0; i < SIZE; i++) {
@@ -82,42 +81,32 @@ public class Matrix3 implements XMatrix, Serializable {
             }
         }
     }
-    /**
-     * Cast (or convert) Matrix to internal DMatrixRMaj representation required for CommonOps_DDF3.
-     *
-     * @param matrix
-     * @return
-     */
+    /** Cast (or convert) Matrix to internal DMatrixRMaj representation required for CommonOps_DDF3. */
     private DMatrix3x3 internal(Matrix matrix) {
         if (matrix instanceof Matrix3) {
             return ((Matrix3) matrix).mat;
         } else {
-            DMatrix3x3 a =
-                    new DMatrix3x3(
-                            matrix.getElement(0, 0),
-                            matrix.getElement(0, 1),
-                            matrix.getElement(0, 2),
-                            matrix.getElement(1, 0),
-                            matrix.getElement(1, 1),
-                            matrix.getElement(1, 2),
-                            matrix.getElement(2, 0),
-                            matrix.getElement(2, 1),
-                            matrix.getElement(2, 2));
+            DMatrix3x3 a = new DMatrix3x3(
+                    matrix.getElement(0, 0),
+                    matrix.getElement(0, 1),
+                    matrix.getElement(0, 2),
+                    matrix.getElement(1, 0),
+                    matrix.getElement(1, 1),
+                    matrix.getElement(1, 2),
+                    matrix.getElement(2, 0),
+                    matrix.getElement(2, 1),
+                    matrix.getElement(2, 2));
             return a;
         }
     }
-    /**
-     * Returns the number of rows in this matrix, which is always {@value #SIZE} in this
-     * implementation.
-     */
+    /** Returns the number of rows in this matrix, which is always {@value #SIZE} in this implementation. */
+    @Override
     public final int getNumRow() {
         return SIZE;
     }
 
-    /**
-     * Returns the number of colmuns in this matrix, which is always {@value #SIZE} in this
-     * implementation.
-     */
+    /** Returns the number of colmuns in this matrix, which is always {@value #SIZE} in this implementation. */
+    @Override
     public final int getNumCol() {
         return SIZE;
     }
@@ -180,6 +169,7 @@ public class Matrix3 implements XMatrix, Serializable {
     }
 
     /** {@inheritDoc} */
+    @Override
     public final boolean isAffine() {
         return mat.a31 == 0 && mat.a32 == 0 && mat.a33 == 1;
     }
@@ -232,8 +222,6 @@ public class Matrix3 implements XMatrix, Serializable {
     /**
      * Returns the value at the row, column position in the matrix.
      *
-     * @param row
-     * @param column
      * @return Matrix value at the given row and column.
      */
     @Override
@@ -241,34 +229,34 @@ public class Matrix3 implements XMatrix, Serializable {
         return mat.get(row, column);
     }
 
+    @Override
     public void setColumn(int column, double... values) {
         if (values.length != mat.getNumCols()) {
-            throw new IllegalArgumentException(
-                    "Call setRow received an array of length "
-                            + values.length
-                            + ".  "
-                            + "The dimensions of the matrix is "
-                            + mat.getNumRows()
-                            + " by "
-                            + mat.getNumCols()
-                            + ".");
+            throw new IllegalArgumentException("Call setRow received an array of length "
+                    + values.length
+                    + ".  "
+                    + "The dimensions of the matrix is "
+                    + mat.getNumRows()
+                    + " by "
+                    + mat.getNumCols()
+                    + ".");
         }
         for (int i = 0; i < values.length; i++) {
             mat.set(i, column, values[i]);
         }
     }
 
+    @Override
     public void setRow(int row, double... values) {
         if (values.length != mat.getNumCols()) {
-            throw new IllegalArgumentException(
-                    "Call setRow received an array of length "
-                            + values.length
-                            + ".  "
-                            + "The dimensions of the matrix is "
-                            + mat.getNumRows()
-                            + " by "
-                            + mat.getNumCols()
-                            + ".");
+            throw new IllegalArgumentException("Call setRow received an array of length "
+                    + values.length
+                    + ".  "
+                    + "The dimensions of the matrix is "
+                    + mat.getNumRows()
+                    + " by "
+                    + mat.getNumCols()
+                    + ".");
         }
 
         for (int i = 0; i < values.length; i++) {
@@ -276,13 +264,7 @@ public class Matrix3 implements XMatrix, Serializable {
         }
     }
 
-    /**
-     * Sets the value of the row, column position in the matrix.
-     *
-     * @param row
-     * @param column
-     * @param value
-     */
+    /** Sets the value of the row, column position in the matrix. */
     @Override
     public void setElement(int row, int column, double value) {
         mat.set(row, column, value);
@@ -301,6 +283,7 @@ public class Matrix3 implements XMatrix, Serializable {
     }
 
     /** Returns {@code true} if this matrix is an identity matrix. */
+    @Override
     public final boolean isIdentity() {
         final int numRow = getNumRow();
         final int numCol = getNumCol();
@@ -322,11 +305,13 @@ public class Matrix3 implements XMatrix, Serializable {
      *
      * @since 2.3.1
      */
+    @Override
     public final boolean isIdentity(double tolerance) {
         return GeneralMatrix.isIdentity(this, tolerance);
     }
 
     /** {@inheritDoc} */
+    @Override
     public final void multiply(final Matrix matrix) {
         mul(matrix);
     }
@@ -370,17 +355,16 @@ public class Matrix3 implements XMatrix, Serializable {
         return equals(other, 0);
     }
 
+    @Override
     public boolean equals(final Matrix matrix, final double tolerance) {
         return GeneralMatrix.epsilonEquals(this, matrix, tolerance);
     }
 
     /**
-     * Returns an affine transform for this matrix. This is a convenience method for
-     * interoperability with Java2D.
+     * Returns an affine transform for this matrix. This is a convenience method for interoperability with Java2D.
      *
      * @return The affine transform for this matrix.
-     * @throws IllegalStateException if this matrix is not 3&times;3, or if the last row is not
-     *     {@code [0 0 1]}.
+     * @throws IllegalStateException if this matrix is not 3&times;3, or if the last row is not {@code [0 0 1]}.
      */
     public final AffineTransform toAffineTransform2D() throws IllegalStateException {
         if (isAffine()) {
@@ -392,24 +376,20 @@ public class Matrix3 implements XMatrix, Serializable {
                     getElement(0, 2),
                     getElement(1, 2));
         }
-        throw new IllegalStateException(Errors.format(ErrorKeys.NOT_AN_AFFINE_TRANSFORM));
+        throw new IllegalStateException(ErrorKeys.NOT_AN_AFFINE_TRANSFORM);
     }
 
     /**
-     * Returns a string representation of this matrix. The returned string is implementation
-     * dependent. It is usually provided for debugging purposes only.
+     * Returns a string representation of this matrix. The returned string is implementation dependent. It is usually
+     * provided for debugging purposes only.
      */
     @Override
     public String toString() {
         return GeneralMatrix.toString(this);
     }
 
-    /**
-     * Extract col to provided array.
-     *
-     * @param col
-     * @param array
-     */
+    /** Extract col to provided array. */
+    @Override
     public void getColumn(int col, double[] array) {
         for (int j = 0; j < array.length; j++) {
             array[j] = mat.get(j, col);
@@ -428,12 +408,8 @@ public class Matrix3 implements XMatrix, Serializable {
         mat = ret;
     }
 
-    /**
-     * Extract row to provided array
-     *
-     * @param row
-     * @param array
-     */
+    /** Extract row to provided array */
+    @Override
     public void getRow(int row, double[] array) {
         for (int i = 0; i < array.length; i++) {
             array[i] = mat.get(row, i);
@@ -443,11 +419,8 @@ public class Matrix3 implements XMatrix, Serializable {
     //
     // In-place operations
     //
-    /**
-     * In-place multiply with provided matrix.
-     *
-     * @param matrix
-     */
+    /** In-place multiply with provided matrix. */
+    @Override
     public final void mul(Matrix matrix) {
         DMatrix3x3 b = internal(matrix);
         DMatrix3x3 ret = new DMatrix3x3();
@@ -455,12 +428,8 @@ public class Matrix3 implements XMatrix, Serializable {
         mat = ret;
     }
 
-    /**
-     * In-place update from matrix1 * matrix2.
-     *
-     * @param matrix1
-     * @param matrix2
-     */
+    /** In-place update from matrix1 * matrix2. */
+    @Override
     public void mul(Matrix matrix1, Matrix matrix2) {
         DMatrix3x3 a = internal(matrix1);
         DMatrix3x3 b = internal(matrix2);
@@ -497,6 +466,7 @@ public class Matrix3 implements XMatrix, Serializable {
         mat.a32 = scalar - a.a33;
     }
 
+    @Override
     public void sub(Matrix matrix) {
         DMatrix3x3 a = internal(matrix);
         mat.a11 -= a.a11;
@@ -510,6 +480,7 @@ public class Matrix3 implements XMatrix, Serializable {
         mat.a32 -= a.a33;
     }
 
+    @Override
     public void sub(Matrix matrix1, Matrix matrix2) {
         DMatrix3x3 a = internal(matrix1);
         DMatrix3x3 b = internal(matrix2);
@@ -524,11 +495,7 @@ public class Matrix3 implements XMatrix, Serializable {
         mat.a32 = a.a33 - b.a33;
     }
 
-    /**
-     * Update in place to the provided matrix (row-order).
-     *
-     * @param matrix
-     */
+    /** Update in place to the provided matrix (row-order). */
     public void set(double[] matrix) {
         mat.a11 = matrix[0];
         mat.a12 = matrix[1];

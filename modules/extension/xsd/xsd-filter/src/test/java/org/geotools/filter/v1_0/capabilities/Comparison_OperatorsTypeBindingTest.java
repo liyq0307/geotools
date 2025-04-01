@@ -16,20 +16,29 @@
  */
 package org.geotools.filter.v1_0.capabilities;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.capability.ComparisonOperators;
 import org.geotools.xsd.Binding;
-import org.opengis.filter.capability.ComparisonOperators;
+import org.junit.Test;
 import org.w3c.dom.Document;
 
 public class Comparison_OperatorsTypeBindingTest extends FilterCapabilitiesTestSupport {
+    @Test
     public void testType() {
-        assertEquals(ComparisonOperators.class, binding(OGC.Comparison_OperatorsType).getType());
+        assertEquals(
+                ComparisonOperators.class, binding(OGC.Comparison_OperatorsType).getType());
     }
 
+    @Test
     public void testExectionMode() {
         assertEquals(Binding.OVERRIDE, binding(OGC.Comparison_OperatorsType).getExecutionMode());
     }
 
+    @Test
     public void testParse1() throws Exception {
         FilterMockData.comparison(document, document);
 
@@ -46,6 +55,7 @@ public class Comparison_OperatorsTypeBindingTest extends FilterCapabilitiesTestS
         assertNotNull(comparison.getOperator("NullCheck"));
     }
 
+    @Test
     public void testParse2() throws Exception {
         FilterMockData.comparison(document, document, false);
 
@@ -62,23 +72,22 @@ public class Comparison_OperatorsTypeBindingTest extends FilterCapabilitiesTestS
         assertNotNull(comparison.getOperator("NullCheck"));
     }
 
+    @Test
     public void testEncode() throws Exception {
-        Document dom =
-                encode(
-                        FilterMockData.comparison(),
-                        new QName(OGC.NAMESPACE, "Comparison_Operators"),
-                        OGC.Comparison_OperatorsType);
+        Document dom = encode(
+                FilterMockData.comparison(),
+                new QName(OGC.NAMESPACE, "Comparison_Operators"),
+                OGC.Comparison_OperatorsType);
 
         assertNotNull(getElementByQName(dom, OGC.Simple_Comparisons));
         assertNotNull(getElementByQName(dom, OGC.Like));
         assertNotNull(getElementByQName(dom, OGC.Between));
         assertNotNull(getElementByQName(dom, OGC.NullCheck));
 
-        dom =
-                encode(
-                        FilterMockData.comparison(false),
-                        new QName(OGC.NAMESPACE, "Comparison_Operators"),
-                        OGC.Comparison_OperatorsType);
+        dom = encode(
+                FilterMockData.comparison(false),
+                new QName(OGC.NAMESPACE, "Comparison_Operators"),
+                OGC.Comparison_OperatorsType);
         assertNull(getElementByQName(dom, OGC.Simple_Arithmetic));
         assertNotNull(getElementByQName(dom, OGC.Like));
         assertNotNull(getElementByQName(dom, OGC.Between));

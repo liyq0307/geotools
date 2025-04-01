@@ -18,6 +18,7 @@ package org.geotools.xs.bindings;
 
 import java.math.BigInteger;
 import javax.xml.namespace.QName;
+import org.apache.commons.lang3.StringUtils;
 import org.geotools.xs.XS;
 import org.geotools.xsd.InstanceComponent;
 import org.geotools.xsd.SimpleBinding;
@@ -46,6 +47,7 @@ import org.geotools.xsd.SimpleBinding;
  */
 public class XSIntegerBinding implements SimpleBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.INTEGER;
     }
@@ -57,6 +59,7 @@ public class XSIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
@@ -69,6 +72,7 @@ public class XSIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return BigInteger.class;
     }
@@ -81,6 +85,7 @@ public class XSIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         String string = (String) value;
 
@@ -88,7 +93,7 @@ public class XSIntegerBinding implements SimpleBinding {
             string = string.substring(1);
         }
 
-        return new BigInteger(string);
+        return StringUtils.isBlank((String) value) ? null : new BigInteger(string);
     }
 
     /**
@@ -98,6 +103,7 @@ public class XSIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public String encode(Object object, String value) {
         // dont cast to big integer, this binding is often subclassed
         Number integer = (Number) object;

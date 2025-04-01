@@ -23,8 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import javax.imageio.stream.FileImageInputStream;
+import org.geotools.api.parameter.GeneralParameterValue;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.image.test.ImageAssert;
 import org.geotools.s3.S3Connector;
@@ -33,12 +33,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.parameter.GeneralParameterValue;
 
 /**
- * Tests the S3GeoTiffReader and S3ImageInputStream for use with an Amazon S3 Compatible object
- * storage server. e.g. https://www.minio.io/ These are very basic and ignored for now since they
- * rely on a S3 server to run.
+ * Tests the S3GeoTiffReader and S3ImageInputStream for use with an Amazon S3 Compatible object storage server. e.g.
+ * https://www.minio.io/ These are very basic and ignored for now since they rely on a S3 server to run.
  *
  * @author timothy de bock
  */
@@ -47,21 +45,20 @@ public class S3GenericGeoTiffReaderTest {
 
     @Before
     public void before() {
-        System.setProperty(
-                S3Connector.S3_GEOTIFF_CONFIG_PATH, "./src/test/resources/s3.properties");
+        System.setProperty(S3Connector.S3_GEOTIFF_CONFIG_PATH, "./src/test/resources/s3.properties");
     }
 
     @Test
     public void testGeotiffReader() throws IOException, URISyntaxException {
-        S3GeoTiffReader reader =
-                new S3GeoTiffReader(new S3ImageInputStreamImpl("main://test/salinity.tif"));
+        S3GeoTiffReader reader = new S3GeoTiffReader(new S3ImageInputStreamImpl("main://test/salinity.tif"));
         GridCoverage2D coverage2D = reader.read(new GeneralParameterValue[0]);
         File expectedFile = getSalinityTestFile();
         ImageAssert.assertEquals(expectedFile, coverage2D.getRenderedImage(), 15);
     }
 
     private File getSalinityTestFile() throws URISyntaxException {
-        return new File(this.getClass().getClassLoader().getResource("salinity.tif").toURI());
+        return new File(
+                this.getClass().getClassLoader().getResource("salinity.tif").toURI());
     }
 
     /**
@@ -82,10 +79,6 @@ public class S3GenericGeoTiffReaderTest {
                     int fileBytesRead = fileIn.read(fileBuffer, 0, (int) readSize);
                     int s3BytesRead = in.read(s3Buffer, 0, (int) readSize);
 
-                    if (!Arrays.equals(fileBuffer, s3Buffer)) {
-                        // System.out.println("Arrays aren't equal");
-                    }
-
                     assertEquals(
                             "Bytes read expected to be equal. File stream is at pos: "
                                     + (fileIn.getStreamPosition() - 1),
@@ -105,21 +98,18 @@ public class S3GenericGeoTiffReaderTest {
 
     @Test
     public void testImageInputStream() throws IOException, URISyntaxException {
-        S3ImageInputStreamImpl in = new S3ImageInputStreamImpl("main://test/salinity.tif");
-        FileImageInputStream fileIn = new FileImageInputStream(getSalinityTestFile());
-        int fileResult;
-        int s3Result;
-        while ((fileResult = fileIn.read()) > -1) {
-            s3Result = in.read();
-            assertEquals(
-                    "S3 result must equal file result at stream position: "
-                            + (fileIn.getStreamPosition() - 1),
-                    fileResult,
-                    s3Result);
+        try (S3ImageInputStreamImpl in = new S3ImageInputStreamImpl("main://test/salinity.tif");
+                FileImageInputStream fileIn = new FileImageInputStream(getSalinityTestFile())) {
+            int fileResult;
+            int s3Result;
+            while ((fileResult = fileIn.read()) > -1) {
+                s3Result = in.read();
+                assertEquals(
+                        "S3 result must equal file result at stream position: " + (fileIn.getStreamPosition() - 1),
+                        fileResult,
+                        s3Result);
+            }
         }
-
-        fileIn.close();
-        in.close();
     }
 
     @Test

@@ -16,11 +16,11 @@
  */
 package org.geotools.filter.capability;
 
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.capability.IdCapabilities;
-import org.opengis.filter.capability.ScalarCapabilities;
-import org.opengis.filter.capability.SpatialCapabilities;
-import org.opengis.filter.capability.TemporalCapabilities;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.capability.IdCapabilities;
+import org.geotools.api.filter.capability.ScalarCapabilities;
+import org.geotools.api.filter.capability.SpatialCapabilities;
+import org.geotools.api.filter.capability.TemporalCapabilities;
 
 /**
  * Implementation of the FilterCapabilities interface.
@@ -44,10 +44,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
     }
 
     public FilterCapabilitiesImpl(
-            String version,
-            ScalarCapabilities scalar,
-            SpatialCapabilities spatial,
-            IdCapabilities id) {
+            String version, ScalarCapabilities scalar, SpatialCapabilities spatial, IdCapabilities id) {
         this.version = version;
         this.id = toIdCapabilitiesImpl(id);
         this.scalar = toScalarCapabilitiesImpl(scalar);
@@ -70,10 +67,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
 
     public FilterCapabilitiesImpl(FilterCapabilities copy) {
         this.version = copy.getVersion();
-        this.id =
-                copy.getIdCapabilities() == null
-                        ? null
-                        : new IdCapabilitiesImpl(copy.getIdCapabilities());
+        this.id = copy.getIdCapabilities() == null ? null : new IdCapabilitiesImpl(copy.getIdCapabilities());
         this.scalar = toScalarCapabilitiesImpl(copy.getScalarCapabilities());
         this.spatial = toSpatialCapabiltiesImpl(copy.getSpatialCapabilities());
         this.temporal = toTemporalCapabilitiesImpl(copy.getTemporalCapabilities());
@@ -99,8 +93,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
         return new IdCapabilitiesImpl(idCapabilities);
     }
 
-    private static SpatialCapabiltiesImpl toSpatialCapabiltiesImpl(
-            SpatialCapabilities spatialCapabilities) {
+    private static SpatialCapabiltiesImpl toSpatialCapabiltiesImpl(SpatialCapabilities spatialCapabilities) {
         if (spatialCapabilities == null) {
             return new SpatialCapabiltiesImpl();
         }
@@ -110,8 +103,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
         return new SpatialCapabiltiesImpl(spatialCapabilities);
     }
 
-    private static TemporalCapabilitiesImpl toTemporalCapabilitiesImpl(
-            TemporalCapabilities temporalCapabilities) {
+    private static TemporalCapabilitiesImpl toTemporalCapabilitiesImpl(TemporalCapabilities temporalCapabilities) {
         if (temporalCapabilities == null) {
             return new TemporalCapabilitiesImpl();
         }
@@ -130,13 +122,12 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
      *   <li>FilterCapabilities.VERSION_100
      *   <li>FilterCapabilities.VERSION_110
      * </ul>
-     *
-     * @param version
      */
     public void setVersion(String version) {
         this.version = version;
     }
 
+    @Override
     public String getVersion() {
         return version;
     }
@@ -145,6 +136,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
         this.id = toIdCapabilitiesImpl(id);
     }
 
+    @Override
     public IdCapabilitiesImpl getIdCapabilities() {
         if (id == null) {
             id = new IdCapabilitiesImpl();
@@ -156,6 +148,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
         this.scalar = toScalarCapabilitiesImpl(scalar);
     }
 
+    @Override
     public ScalarCapabilitiesImpl getScalarCapabilities() {
         if (scalar == null) {
             scalar = new ScalarCapabilitiesImpl();
@@ -167,6 +160,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
         this.spatial = toSpatialCapabiltiesImpl(spatial);
     }
 
+    @Override
     public SpatialCapabiltiesImpl getSpatialCapabilities() {
         if (spatial == null) {
             spatial = new SpatialCapabiltiesImpl();
@@ -178,6 +172,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
         this.temporal = temporal;
     }
 
+    @Override
     public TemporalCapabilities getTemporalCapabilities() {
         if (temporal == null) {
             temporal = new TemporalCapabilitiesImpl();
@@ -194,6 +189,7 @@ public class FilterCapabilitiesImpl implements FilterCapabilities {
         }
     }
 
+    @Override
     public String toString() {
         StringBuffer buf = new StringBuffer();
         buf.append("FilterCapabilities [");

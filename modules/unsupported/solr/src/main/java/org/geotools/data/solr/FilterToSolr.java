@@ -25,63 +25,63 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FilterCapabilities;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /** Encodes a OGC filter into a SOLR query syntax */
 public class FilterToSolr implements FilterVisitor {
@@ -90,10 +90,9 @@ public class FilterToSolr implements FilterVisitor {
     private static Logger LOGGER = org.geotools.util.logging.Logging.getLogger(FilterToSolr.class);
 
     /* Lucene characters to escape on filter expressions */
-    private static final String[] LUCENE_SPECIAL_CHARACTERS =
-            new String[] {
-                "+", "-", "&&", "||", "!", "(", ")", "{", "}", "[", "]", "^", "\"", "~", ":"
-            };
+    private static final String[] LUCENE_SPECIAL_CHARACTERS = {
+        "+", "-", "&&", "||", "!", "(", ")", "{", "}", "[", "]", "^", "\"", "~", ":"
+    };
 
     /** Filter factory */
     protected static FilterFactory filterFactory = CommonFactoryFinder.getFilterFactory(null);
@@ -120,10 +119,9 @@ public class FilterToSolr implements FilterVisitor {
     /**
      * A single call method to encode filter to SOLR query
      *
-     * @param filter
      * @return a string representing the filter encoded to SOLR.
-     * @throws Exception
      */
+    @SuppressWarnings("PMD.CloseResource")
     public String encodeToString(Filter filter) throws Exception {
         StringWriter out = new StringWriter();
         this.out = out;
@@ -154,9 +152,8 @@ public class FilterToSolr implements FilterVisitor {
     /**
      * Describes the capabilities of this encoder.
      *
-     * <p>Performs lazy creation of capabilities. If you're subclassing this class, override
-     * createFilterCapabilities to declare which filtercapabilities you support. Don't use this
-     * method.
+     * <p>Performs lazy creation of capabilities. If you're subclassing this class, override createFilterCapabilities to
+     * declare which filtercapabilities you support. Don't use this method.
      *
      * @return The capabilities supported by this encoder.
      */
@@ -293,8 +290,7 @@ public class FilterToSolr implements FilterVisitor {
 
     @Override
     public Object visit(PropertyIsGreaterThan filter, Object extraData) {
-        Expression[] expr =
-                binaryFilterVisitorNormalizer(filter.getExpression1(), filter.getExpression2());
+        Expression[] expr = binaryFilterVisitorNormalizer(filter.getExpression1(), filter.getExpression2());
         StringWriter output = asStringWriter(extraData);
         ExpressionToSolr visitor = new ExpressionToSolr();
         PropertyName propertyName = (PropertyName) expr[0];
@@ -307,8 +303,7 @@ public class FilterToSolr implements FilterVisitor {
 
     @Override
     public Object visit(PropertyIsGreaterThanOrEqualTo filter, Object extraData) {
-        Expression[] expr =
-                binaryFilterVisitorNormalizer(filter.getExpression1(), filter.getExpression2());
+        Expression[] expr = binaryFilterVisitorNormalizer(filter.getExpression1(), filter.getExpression2());
         StringWriter output = asStringWriter(extraData);
         ExpressionToSolr visitor = new ExpressionToSolr();
         PropertyName propertyName = (PropertyName) expr[0];
@@ -321,8 +316,7 @@ public class FilterToSolr implements FilterVisitor {
 
     @Override
     public Object visit(PropertyIsLessThan filter, Object extraData) {
-        Expression[] expr =
-                binaryFilterVisitorNormalizer(filter.getExpression1(), filter.getExpression2());
+        Expression[] expr = binaryFilterVisitorNormalizer(filter.getExpression1(), filter.getExpression2());
         checkExpressionIsProperty(filter.getExpression1());
         StringWriter output = asStringWriter(extraData);
         ExpressionToSolr visitor = new ExpressionToSolr();
@@ -336,8 +330,7 @@ public class FilterToSolr implements FilterVisitor {
 
     @Override
     public Object visit(PropertyIsLessThanOrEqualTo filter, Object extraData) {
-        Expression[] expr =
-                binaryFilterVisitorNormalizer(filter.getExpression1(), filter.getExpression2());
+        Expression[] expr = binaryFilterVisitorNormalizer(filter.getExpression1(), filter.getExpression2());
         StringWriter output = asStringWriter(extraData);
         ExpressionToSolr visitor = new ExpressionToSolr();
         PropertyName propertyName = (PropertyName) expr[0];
@@ -519,8 +512,8 @@ public class FilterToSolr implements FilterVisitor {
     }
 
     /**
-     * Convert extraData parameter to StringWriter or create new one if not exists This method is
-     * called at the start of each visit method to obtain output to write in
+     * Convert extraData parameter to StringWriter or create new one if not exists This method is called at the start of
+     * each visit method to obtain output to write in
      *
      * @param extraData output to write in
      */
@@ -532,20 +525,16 @@ public class FilterToSolr implements FilterVisitor {
     }
 
     /**
-     * Escape with "\\" the phrase according to Lucene special characters and other characters
-     * passed as input
+     * Escape with "\\" the phrase according to Lucene special characters and other characters passed as input
      *
      * @see {@link FilterToSolr#LUCENE_SPECIAL_CHARACTERS}
      * @param searchPhrase the phrase to escape
-     * @param otherEscapes additional parameters to escape other than {@link
-     *     FilterToSolr#LUCENE_SPECIAL_CHARACTERS}
+     * @param otherEscapes additional parameters to escape other than {@link FilterToSolr#LUCENE_SPECIAL_CHARACTERS}
      * @return the escaped string
      */
     protected static String escapeSpecialCharacters(String searchPhrase, String... otherEscapes) {
-        for (int i = 0; i < LUCENE_SPECIAL_CHARACTERS.length; i++) {
-            searchPhrase =
-                    searchPhrase.replace(
-                            LUCENE_SPECIAL_CHARACTERS[i], "\\" + LUCENE_SPECIAL_CHARACTERS[i]);
+        for (String luceneSpecialCharacter : LUCENE_SPECIAL_CHARACTERS) {
+            searchPhrase = searchPhrase.replace(luceneSpecialCharacter, "\\" + luceneSpecialCharacter);
         }
         for (String e : otherEscapes) {
             searchPhrase = searchPhrase.replace(e, "\\" + e);
@@ -581,8 +570,7 @@ public class FilterToSolr implements FilterVisitor {
         if (filter instanceof PropertyIsNotEqualTo) {
             output.append("-");
         }
-        Expression[] expr =
-                binaryFilterVisitorNormalizer(filter.getExpression1(), filter.getExpression2());
+        Expression[] expr = binaryFilterVisitorNormalizer(filter.getExpression1(), filter.getExpression2());
         ExpressionToSolr visitor = new ExpressionToSolr();
         expr[0].accept(visitor, output);
         output.append(":");
@@ -601,10 +589,7 @@ public class FilterToSolr implements FilterVisitor {
      */
 
     private Object buildBinaryLogicalOperator(
-            final String operator,
-            FilterVisitor visitor,
-            BinaryLogicOperator filter,
-            Object extraData) {
+            final String operator, FilterVisitor visitor, BinaryLogicOperator filter, Object extraData) {
         StringWriter output = asStringWriter(extraData);
         List<Filter> children = filter.getChildren();
         if (children != null) {
@@ -712,8 +697,7 @@ public class FilterToSolr implements FilterVisitor {
         if (filter instanceof BBOX) visitor.setSpatialStrategy(SolrSpatialStrategy.BBOX);
         AttributeDescriptor spatialAtt = (AttributeDescriptor) e1.evaluate(featureType);
         if (spatialAtt != null && spatialAtt instanceof GeometryDescriptor) {
-            visitor.setSpatialStrategy(
-                    SolrSpatialStrategy.createStrategy((GeometryDescriptor) spatialAtt));
+            visitor.setSpatialStrategy(SolrSpatialStrategy.createStrategy((GeometryDescriptor) spatialAtt));
         } else {
             LOGGER.warning("Spatial field: " + e1.toString() + " resolved to null or non-spatial");
         }
@@ -782,8 +766,7 @@ public class FilterToSolr implements FilterVisitor {
             e1 = expr2;
             e2 = expr1;
         } else {
-            throw new UnsupportedOperationException(
-                    "Expressions must be one PropertyName and one Literal");
+            throw new UnsupportedOperationException("Expressions must be one PropertyName and one Literal");
         }
         return new Expression[] {e1, e2};
     }

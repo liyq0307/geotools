@@ -18,7 +18,7 @@ package org.geotools.swing.wizard;
 
 import javax.swing.JComponent;
 import javax.swing.JTextField;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 import org.geotools.swing.wizard.JWizard.Controller;
 
 /**
@@ -34,11 +34,13 @@ public class JDoubleField extends ParamField {
         super(parameter);
     }
 
+    @Override
     public JComponent doLayout() {
         text = new JTextField(16);
         return text;
     }
 
+    @Override
     public Object getValue() {
         String val = text.getText();
         if (val == null || val.equals("")) {
@@ -51,18 +53,22 @@ public class JDoubleField extends ParamField {
         }
     }
 
+    @Override
     public void addListener(Controller controller) {
         text.addKeyListener(controller);
     }
 
+    @Override
     public void removeListener(Controller controller) {
         text.addKeyListener(controller);
     }
 
+    @Override
     public void setValue(Object value) {
-        text.setText(((Double) value).toString());
+        text.setText(value.toString());
     }
 
+    @Override
     public boolean validate() {
         String val = text.getText();
         try {

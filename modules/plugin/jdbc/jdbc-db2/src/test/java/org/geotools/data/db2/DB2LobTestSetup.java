@@ -14,35 +14,30 @@ public class DB2LobTestSetup extends JDBCLobTestSetup {
     @Override
     protected void createLobTable() throws Exception {
 
-        Connection con = getDataSource().getConnection();
-        con.prepareStatement(
-                        "create table "
-                                + DB2TestUtil.SCHEMA_QUOTED
-                                + ".\"testlob\" (\"fid\" int not null , \"blob_field\" BLOB(32) , \"clob_field\" CLOB(32), \"raw_field\" BLOB(32), PRIMARY KEY(\"fid\"))")
-                .execute();
+        try (Connection con = getDataSource().getConnection()) {
+            con.prepareStatement(
+                            "create table "
+                                    + DB2TestUtil.SCHEMA_QUOTED
+                                    + ".\"testlob\" (\"fid\" int not null , \"blob_field\" BLOB(32) , \"clob_field\" CLOB(32), \"raw_field\" BLOB(32), PRIMARY KEY(\"fid\"))")
+                    .execute();
 
-        PreparedStatement ps =
-                con.prepareStatement(
-                        "INSERT INTO "
-                                + DB2TestUtil.SCHEMA_QUOTED
-                                + ".\"testlob\" (\"fid\",\"blob_field\",\"clob_field\",\"raw_field\")  VALUES (?,?,?,?)");
-        ps.setInt(1, 0);
-        ps.setBytes(2, new byte[] {1, 2, 3, 4, 5});
-        ps.setString(3, "small clob");
-        ps.setBytes(4, new byte[] {6, 7, 8, 9, 10});
-        ps.execute();
-        ps.close();
-        con.close();
+            try (PreparedStatement ps = con.prepareStatement("INSERT INTO "
+                    + DB2TestUtil.SCHEMA_QUOTED
+                    + ".\"testlob\" (\"fid\",\"blob_field\",\"clob_field\",\"raw_field\")  VALUES (?,?,?,?)")) {
+                ps.setInt(1, 0);
+                ps.setBytes(2, new byte[] {1, 2, 3, 4, 5});
+                ps.setString(3, "small clob");
+                ps.setBytes(4, new byte[] {6, 7, 8, 9, 10});
+                ps.execute();
+            }
+        }
     }
 
     @Override
     protected void dropLobTable() throws Exception {
-        Connection con = getDataSource().getConnection();
-        try {
+        try (Connection con = getDataSource().getConnection()) {
             DB2TestUtil.dropTable(DB2TestUtil.SCHEMA, "testlob", con);
         } catch (SQLException e) {
         }
-
-        con.close();
     }
 }

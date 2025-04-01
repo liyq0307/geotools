@@ -16,15 +16,21 @@
  */
 package org.geotools.sld.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import org.geotools.api.style.ChannelSelection;
 import org.geotools.filter.function.EnvFunction;
-import org.geotools.styling.ChannelSelection;
+import org.junit.Test;
 
 public class SLDChannelSectionBindingTest extends SLDTestSupport {
+
+    @Test
     public void testType() throws Exception {
-        assertEquals(
-                ChannelSelection.class, new SLDChannelSelectionBinding(styleFactory).getType());
+        assertEquals(ChannelSelection.class, new SLDChannelSelectionBinding(styleFactory).getType());
     }
 
+    @Test
     public void testRGB() throws Exception {
         SLDMockData.channelSelectionRGB(document, document);
 
@@ -36,11 +42,8 @@ public class SLDChannelSectionBindingTest extends SLDTestSupport {
         assertEquals(cs.getRGBChannels()[2].getChannelName().evaluate(null, String.class), "Blue");
     }
 
-    /**
-     * Test Expression ENV function on ChannelSelection
-     *
-     * @throws Exception
-     */
+    /** Test Expression ENV function on ChannelSelection */
+    @Test
     public void testRGBExpression() throws Exception {
         SLDMockData.channelSelectionExpression(document, document);
 
@@ -50,23 +53,36 @@ public class SLDChannelSectionBindingTest extends SLDTestSupport {
         // test default value: 1
         EnvFunction.removeLocalValue("B1");
         assertEquals(
-                cs.getRGBChannels()[0].getChannelName().evaluate(null, Integer.class).intValue(),
+                cs.getRGBChannels()[0]
+                        .getChannelName()
+                        .evaluate(null, Integer.class)
+                        .intValue(),
                 1);
         // test ENV variable B1:20
         EnvFunction.setLocalValue("B1", "20");
         assertEquals(
-                cs.getRGBChannels()[0].getChannelName().evaluate(null, Integer.class).intValue(),
+                cs.getRGBChannels()[0]
+                        .getChannelName()
+                        .evaluate(null, Integer.class)
+                        .intValue(),
                 20);
         EnvFunction.removeLocalValue("B1");
 
         assertEquals(
-                cs.getRGBChannels()[1].getChannelName().evaluate(null, Integer.class).intValue(),
+                cs.getRGBChannels()[1]
+                        .getChannelName()
+                        .evaluate(null, Integer.class)
+                        .intValue(),
                 2);
         assertEquals(
-                cs.getRGBChannels()[2].getChannelName().evaluate(null, Integer.class).intValue(),
+                cs.getRGBChannels()[2]
+                        .getChannelName()
+                        .evaluate(null, Integer.class)
+                        .intValue(),
                 3);
     }
 
+    @Test
     public void testGray() throws Exception {
         SLDMockData.channelSelectionGray(document, document);
 

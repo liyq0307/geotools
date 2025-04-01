@@ -42,25 +42,20 @@ public class Index {
         super();
         this.typeName = typeName;
         this.indexName = indexName;
-        this.attributes = new ArrayList<String>(Arrays.asList(attributes));
+        this.attributes = new ArrayList<>(Arrays.asList(attributes));
         this.unique = unique;
     }
 
-    public Index(
-            String typeName, String indexName, boolean unique, Hints hints, String... attributes) {
+    public Index(String typeName, String indexName, boolean unique, Hints hints, String... attributes) {
         super();
         this.typeName = typeName;
         this.indexName = indexName;
         this.hints = hints;
-        this.attributes = new ArrayList<String>(Arrays.asList(attributes));
+        this.attributes = new ArrayList<>(Arrays.asList(attributes));
         this.unique = unique;
     }
 
-    /**
-     * True if the index is a unique one, false otherwise
-     *
-     * @return
-     */
+    /** True if the index is a unique one, false otherwise */
     public boolean isUnique() {
         return unique;
     }
@@ -75,20 +70,12 @@ public class Index {
         return typeName;
     }
 
-    /**
-     * The index name
-     *
-     * @return
-     */
+    /** The index name */
     public String getIndexName() {
         return indexName;
     }
 
-    /**
-     * Retrieves the hints for this index.
-     *
-     * @return
-     */
+    /** Retrieves the hints for this index. */
     public Hints getHints() {
         return hints;
     }

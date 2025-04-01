@@ -17,24 +17,23 @@
 package org.geotools.filter.v1_0;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.Not;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -64,6 +63,7 @@ import org.picocontainer.MutablePicoContainer;
 public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.BinaryLogicOpType;
     }
@@ -75,6 +75,7 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
@@ -86,6 +87,7 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return BinaryLogicOperator.class;
     }
@@ -97,6 +99,7 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -106,6 +109,7 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // implemented by element bindigns
         return null;
@@ -130,6 +134,7 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
         //        }
     }
 
+    @Override
     public Object getProperty(Object object, QName qName) throws Exception {
         BinaryLogicOperator operator = (BinaryLogicOperator) object;
 
@@ -140,13 +145,10 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
         String name = qName.getLocalPart();
 
         if ("comparisonOps".equals(name)) {
-            List comparison = new ArrayList();
+            List<Filter> comparison = new ArrayList<>();
 
-            for (Iterator f = operator.getChildren().iterator(); f.hasNext(); ) {
-                Filter filter = (Filter) f.next();
-
-                if (!(filter instanceof BinarySpatialOperator
-                                || filter instanceof BinaryTemporalOperator)
+            for (Filter filter : operator.getChildren()) {
+                if (!(filter instanceof BinarySpatialOperator || filter instanceof BinaryTemporalOperator)
                         && (filter instanceof BinaryComparisonOperator
                                 || filter instanceof PropertyIsLike
                                 || filter instanceof PropertyIsNull
@@ -163,11 +165,9 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
         }
 
         if ("spatialOps".equals(name)) {
-            List spatial = new ArrayList();
+            List<Filter> spatial = new ArrayList<>();
 
-            for (Iterator f = operator.getChildren().iterator(); f.hasNext(); ) {
-                Filter filter = (Filter) f.next();
-
+            for (Filter filter : operator.getChildren()) {
                 if (filter instanceof BinarySpatialOperator) {
                     spatial.add(filter);
                 }
@@ -179,11 +179,9 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
         }
 
         if ("temporalOps".equals(name)) {
-            List temporal = new ArrayList();
+            List<Filter> temporal = new ArrayList<>();
 
-            for (Iterator f = operator.getChildren().iterator(); f.hasNext(); ) {
-                Filter filter = (Filter) f.next();
-
+            for (Filter filter : operator.getChildren()) {
                 if (filter instanceof BinaryTemporalOperator) {
                     temporal.add(filter);
                 }
@@ -195,11 +193,9 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
         }
 
         if ("logicOps".equals(name)) {
-            List logic = new ArrayList();
+            List<Filter> logic = new ArrayList<>();
 
-            for (Iterator f = operator.getChildren().iterator(); f.hasNext(); ) {
-                Filter filter = (Filter) f.next();
-
+            for (Filter filter : operator.getChildren()) {
                 if (filter instanceof BinaryLogicOperator || filter instanceof Not) {
                     logic.add(filter);
                 }
@@ -211,7 +207,7 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
         }
 
         if ("_Id".equals(name)) {
-            List ids = new ArrayList();
+            List<Filter> ids = new ArrayList<>();
             for (Filter filter : operator.getChildren()) {
                 if (filter instanceof Id) {
                     ids.add(filter);
@@ -223,7 +219,7 @@ public class OGCBinaryLogicOpTypeBinding extends AbstractComplexBinding {
         }
 
         if ("Function".equals(name)) {
-            List functions = new ArrayList();
+            List<Filter> functions = new ArrayList<>();
             for (Filter filter : operator.getChildren()) {
                 if (filter instanceof Function) {
                     functions.add(filter);

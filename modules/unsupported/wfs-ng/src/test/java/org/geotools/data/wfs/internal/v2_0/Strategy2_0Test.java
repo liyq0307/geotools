@@ -23,12 +23,12 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import javax.xml.namespace.QName;
-import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.wfs.WFSTestData;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.data.wfs.internal.WFSRequest;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPClientFinder;
 import org.geotools.ows.ServiceException;
 import org.junit.Test;
 
@@ -36,7 +36,7 @@ public class Strategy2_0Test {
 
     private WFSClient newClient(String resource) throws IOException, ServiceException {
         URL capabilitiesURL = WFSTestData.url(resource);
-        HTTPClient httpClient = new SimpleHttpClient();
+        HTTPClient httpClient = HTTPClientFinder.createClient();
 
         WFSClient client = new WFSClient(capabilitiesURL, httpClient, new WFSConfig());
         return client;
@@ -48,17 +48,13 @@ public class Strategy2_0Test {
         WFSRequest wfsReq = wfsClient.createDescribeFeatureTypeRequest();
         wfsReq.setTypeName(new QName("http://www.openplans.org/topp", "states", "prefix"));
         String url = wfsReq.getStrategy().buildUrlGET(wfsReq).toString();
-        assertTrue(
-                URLDecoder.decode(url, StandardCharsets.UTF_8.toString())
-                        .contains("NAMESPACE=xmlns(prefix="));
+        assertTrue(URLDecoder.decode(url, StandardCharsets.UTF_8.toString()).contains("NAMESPACE=xmlns(prefix="));
         assertTrue(url.contains("TYPENAME"));
         WFSClient clientV2 = newClient("GeoServer_2.2.x/2.0.0/GetCapabilities.xml");
         WFSRequest wfsReqV2 = clientV2.createDescribeFeatureTypeRequest();
         wfsReqV2.setTypeName(new QName("http://www.openplans.org/topp", "states", "prefix"));
         String urlV2 = wfsReqV2.getStrategy().buildUrlGET(wfsReqV2).toString();
-        assertTrue(
-                URLDecoder.decode(urlV2, StandardCharsets.UTF_8.toString())
-                        .contains("NAMESPACES=xmlns(prefix,"));
+        assertTrue(URLDecoder.decode(urlV2, StandardCharsets.UTF_8.toString()).contains("NAMESPACES=xmlns(prefix,"));
         assertTrue(urlV2.contains("TYPENAMES"));
     }
 }

@@ -33,11 +33,11 @@ import org.xml.sax.XMLReader;
 /**
  * A wrapper that forwards any request to the default JAXP xml reader.
  *
- * <p>By default Batik wants Xerces, but we want to avoid the dependency since a SAX2 parser is
- * already included in the jre.
+ * <p>By default Batik wants Xerces, but we want to avoid the dependency since a SAX2 parser is already included in the
+ * jre.
  *
- * <p>This class is needed because Batik wants the name of a class that implements XMLReader and has
- * a public default constructor, and default jre parsers do not have it.
+ * <p>This class is needed because Batik wants the name of a class that implements XMLReader and has a public default
+ * constructor, and default jre parsers do not have it.
  *
  * @author wolf
  * @since 2.2.1
@@ -52,63 +52,73 @@ public class BatikXMLReader implements XMLReader {
         reader = parser.getXMLReader();
     }
 
+    @Override
     public ContentHandler getContentHandler() {
         return reader.getContentHandler();
     }
 
+    @Override
     public DTDHandler getDTDHandler() {
         return reader.getDTDHandler();
     }
 
+    @Override
     public EntityResolver getEntityResolver() {
         return reader.getEntityResolver();
     }
 
+    @Override
     public ErrorHandler getErrorHandler() {
         return reader.getErrorHandler();
     }
 
-    public boolean getFeature(String name)
-            throws SAXNotRecognizedException, SAXNotSupportedException {
+    @Override
+    public boolean getFeature(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
         return reader.getFeature(name);
     }
 
-    public Object getProperty(String name)
-            throws SAXNotRecognizedException, SAXNotSupportedException {
+    @Override
+    public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
         return reader.getProperty(name);
     }
 
+    @Override
     public void parse(InputSource input) throws IOException, SAXException {
         reader.parse(input);
     }
 
+    @Override
     public void parse(String systemId) throws IOException, SAXException {
         reader.parse(systemId);
     }
 
+    @Override
     public void setContentHandler(ContentHandler handler) {
         reader.setContentHandler(handler);
     }
 
+    @Override
     public void setDTDHandler(DTDHandler handler) {
         reader.setDTDHandler(handler);
     }
 
+    @Override
     public void setEntityResolver(EntityResolver resolver) {
         reader.setEntityResolver(resolver);
     }
 
+    @Override
     public void setErrorHandler(ErrorHandler handler) {
         reader.setErrorHandler(handler);
     }
 
-    public void setFeature(String name, boolean value)
-            throws SAXNotRecognizedException, SAXNotSupportedException {
+    @Override
+    public void setFeature(String name, boolean value) throws SAXNotRecognizedException, SAXNotSupportedException {
         reader.setFeature(name, value);
     }
 
-    public void setProperty(String name, Object value)
-            throws SAXNotRecognizedException, SAXNotSupportedException {
+    @Override
+    public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
         reader.setProperty(name, value);
     }
 }

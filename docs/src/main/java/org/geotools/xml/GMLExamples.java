@@ -1,21 +1,14 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2019, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
-
 package org.geotools.xml;
 
 import java.io.ByteArrayOutputStream;
@@ -30,6 +23,11 @@ import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureCollection;
@@ -47,11 +45,6 @@ import org.geotools.xml.schema.Schema;
 import org.geotools.xs.XSConfiguration;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.XSD;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -104,18 +97,13 @@ public class GMLExamples {
     private void transformExample() throws Exception {
         // transformExample start
         SimpleFeatureType TYPE =
-                DataUtilities.createType(
-                        "urn:org.geotools.xml.examples", "location", "geom:Point,name:String");
+                DataUtilities.createType("urn:org.geotools.xml.examples", "location", "geom:Point,name:String");
         TYPE.getUserData().put("prefix", "ex");
 
         WKTReader2 wkt = new WKTReader2();
         List<SimpleFeature> collection = new LinkedList<>();
-        collection.add(
-                SimpleFeatureBuilder.build(
-                        TYPE, new Object[] {wkt.read("POINT (1 2)"), "name1"}, null));
-        collection.add(
-                SimpleFeatureBuilder.build(
-                        TYPE, new Object[] {wkt.read("POINT (4 4)"), "name2"}, null));
+        collection.add(SimpleFeatureBuilder.build(TYPE, new Object[] {wkt.read("POINT (1 2)"), "name1"}, null));
+        collection.add(SimpleFeatureBuilder.build(TYPE, new Object[] {wkt.read("POINT (4 4)"), "name2"}, null));
 
         SimpleFeatureCollection featureCollection = new ListFeatureCollection(TYPE, collection);
 
@@ -179,9 +167,8 @@ public class GMLExamples {
     private void xdoExample() throws Exception {
         // xdoExample start
         XMLReader reader = getXMLReader();
-        URI schemaLoc =
-                new java.net.URI(
-                        "http://giswebservices.massgis.state.ma.us/geoserver/wfs?request=describefeaturetype&service=wfs&version=1.0.0&typename=massgis:GISDATA.COUNTIES_POLY");
+        URI schemaLoc = new java.net.URI(
+                "http://giswebservices.massgis.state.ma.us/geoserver/wfs?request=describefeaturetype&service=wfs&version=1.0.0&typename=massgis:GISDATA.COUNTIES_POLY");
 
         XSISAXHandler schemaHandler = new XSISAXHandler(schemaLoc);
 
@@ -213,8 +200,7 @@ public class GMLExamples {
         String namespaceURI = featureName.getNamespaceURI();
         String uri = schemaLocation.toExternalForm();
 
-        Configuration wfsConfiguration =
-                new org.geotools.gml3.ApplicationSchemaConfiguration(namespaceURI, uri);
+        Configuration wfsConfiguration = new org.geotools.gml3.ApplicationSchemaConfiguration(namespaceURI, uri);
 
         FeatureType parsed = GTXML.parseFeatureType(wfsConfiguration, featureName, crs);
         // safely cast down to SimpleFeatureType
@@ -238,17 +224,16 @@ public class GMLExamples {
         XSD xsd = new org.geotools.gml2.ApplicationSchemaXSD(namespaceURI, uri);
 
         // Step 2: custom configuration
-        Configuration configuration =
-                new Configuration(xsd) {
-                    {
-                        addDependency(new XSConfiguration());
-                        addDependency(new org.geotools.gml2.GMLConfiguration());
-                    }
+        Configuration configuration = new Configuration(xsd) {
+            {
+                addDependency(new XSConfiguration());
+                addDependency(new org.geotools.gml2.GMLConfiguration());
+            }
 
-                    protected void registerBindings(java.util.Map bindings) {
-                        // we have no special bindings
-                    }
-                };
+            protected void registerBindings(java.util.Map bindings) {
+                // we have no special bindings
+            }
+        };
         FeatureType parsed = GTXML.parseFeatureType(configuration, featureName, crs);
         // safely cast down to SimpleFeatureType
         SimpleFeatureType schema = DataUtilities.simple(parsed);

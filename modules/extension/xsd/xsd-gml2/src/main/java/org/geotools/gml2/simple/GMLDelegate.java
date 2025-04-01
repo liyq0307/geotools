@@ -19,10 +19,11 @@ package org.geotools.gml2.simple;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.XSD;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.locationtech.jts.geom.Geometry;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
@@ -40,141 +41,61 @@ public interface GMLDelegate {
      * @param f A sample feature
      * @param element The xml element holding the feature type
      * @param e The encoder
-     * @return
      */
     List getFeatureProperties(SimpleFeature f, XSDElementDeclaration element, Encoder e);
 
-    /**
-     * Creates the envelope encoder
-     *
-     * @param e
-     * @return
-     */
+    /** Creates the envelope encoder */
     ObjectEncoder createEnvelopeEncoder(Encoder e);
 
     /**
-     * Registers all the geometry encoders for this GML version in a map, by geometry class
-     * (different versions support different types of geometries, e.g., GML3 supports also curved
-     * ones)
-     *
-     * @param encoders
-     * @param encoder
+     * Registers all the geometry encoders for this GML version in a map, by geometry class (different versions support
+     * different types of geometries, e.g., GML3 supports also curved ones)
      */
-    void registerGeometryEncoders(Map<Class, GeometryEncoder> encoders, Encoder encoder);
+    void registerGeometryEncoders(Map<Class, GeometryEncoder<? extends Geometry>> encoders, Encoder encoder);
 
-    /**
-     * Sets the SRS attribute with the proper syntax for the given GML version
-     *
-     * @param atts
-     * @param crs
-     */
+    /** Sets the SRS attribute with the proper syntax for the given GML version */
     void setSrsNameAttribute(AttributesImpl atts, CoordinateReferenceSystem crs);
 
-    /**
-     * Sets the dimensions attribute, if available for the current GML version
-     *
-     * @param srsatts
-     * @param dimension
-     */
+    /** Sets the dimensions attribute, if available for the current GML version */
     void setGeometryDimensionAttribute(AttributesImpl srsatts, int dimension);
 
-    /**
-     * Initializes an empty feature id attribute, the attribute must be the first one in "atts"
-     *
-     * @param atts
-     */
+    /** Initializes an empty feature id attribute, the attribute must be the first one in "atts" */
     void initFidAttribute(AttributesImpl atts);
 
-    /**
-     * Writes whatever per collection preamble is needed in this GML version
-     *
-     * @param handler
-     * @throws Exception
-     */
+    /** Writes whatever per collection preamble is needed in this GML version */
     void startFeatures(GMLWriter handler) throws Exception;
 
-    /**
-     * Writes whatever per feature preamble is needed in this GML version
-     *
-     * @param handler
-     * @throws Exception
-     */
+    /** Writes whatever per feature preamble is needed in this GML version */
     void startFeature(GMLWriter handler) throws Exception;
 
-    /**
-     * Closes a collection of features
-     *
-     * @param handler
-     * @throws Exception
-     */
+    /** Closes a collection of features */
     void endFeatures(GMLWriter handler) throws Exception;
 
-    /**
-     * Closes a single feature
-     *
-     * @param handler
-     * @throws Exception
-     */
+    /** Closes a single feature */
     void endFeature(GMLWriter handler) throws Exception;
 
-    /**
-     * The GML prefix used by this encoding session
-     *
-     * @return
-     * @throws Exception
-     */
+    /** The GML prefix used by this encoding session */
     String getGmlPrefix() throws Exception;
 
-    /**
-     * Returns true if tuple encoding is supported in this standard
-     *
-     * @return
-     */
+    /** Returns true if tuple encoding is supported in this standard */
     boolean supportsTuples();
 
-    /**
-     * Writes the tuple preamble
-     *
-     * @param handler
-     * @throws SAXException
-     */
+    /** Writes the tuple preamble */
     void startTuple(GMLWriter handler) throws SAXException;
 
-    /**
-     * Closes a tuple
-     *
-     * @param handler
-     * @throws SAXException
-     */
+    /** Closes a tuple */
     void endTuple(GMLWriter handler) throws SAXException;
 
-    /**
-     * The XSD schema used by this GML version
-     *
-     * @return
-     */
+    /** The XSD schema used by this GML version */
     XSD getSchema();
 
-    /**
-     * Number of decimals used in the output
-     *
-     * @return
-     */
+    /** Number of decimals used in the output */
     int getNumDecimals();
 
-    /**
-     * Returns true if coordinates should be encoded as xs:decimal instead of xs:double
-     *
-     * @return
-     */
+    /** Returns true if coordinates should be encoded as xs:decimal instead of xs:double */
     boolean forceDecimalEncoding();
 
-    /**
-     * Returns true if coordinates should be right-padded with zeros up to the requested number of
-     * decimals.
-     *
-     * @return
-     */
+    /** Returns true if coordinates should be right-padded with zeros up to the requested number of decimals. */
     boolean padWithZeros();
 
     /**

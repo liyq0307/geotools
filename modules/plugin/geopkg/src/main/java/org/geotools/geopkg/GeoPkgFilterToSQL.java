@@ -20,18 +20,18 @@ import java.io.IOException;
 import java.io.Writer;
 import java.sql.Time;
 import java.sql.Timestamp;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
 import org.geotools.data.jdbc.FilterToSQLException;
 import org.geotools.filter.FilterCapabilities;
 import org.geotools.jdbc.PreparedFilterToSQL;
 import org.geotools.jdbc.PrimaryKeyColumn;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.BinarySpatialOperator;
 
 /** @author ian */
 public class GeoPkgFilterToSQL extends PreparedFilterToSQL {
@@ -45,9 +45,45 @@ public class GeoPkgFilterToSQL extends PreparedFilterToSQL {
     }
 
     /**
-     * Override done to ensure we don't complain if there is a BBOX filter, even if we claim not to
-     * support it
+     * cf. visit(Literal expression,...) When doing temporal queries (like "time BETWEEN t1 AND t2")
+     *
+     * <p>The encoding of the column name ("time") and the literals must be the same!
+     *
+     * <p>There is different handling for Date (DATE) and Timestamp (DATETIME).
+     *
+     * <p>For Timestamp (DATETIME), we use the datetime(XYZ, 'utc'):
+     *
+     * <p>datetime("Time",'utc') BETWEEN datetime(?,'utc') AND datetime(?,'utc')
+     *
+     * <p>For Date (DATE), we do no conversion in the sql lite:
+     *
+     * <p>datetime("Date") BETWEEN datetime(?) AND datetime(?)
+     *
+     * <p>For non-time columns, this just relegates to the superclass
+     *
+     * <p>For GeoPKG, the time column is actually stored as a STRING.
      */
+    @Override
+    public String escapeName(String name) {
+        String super_result = super.escapeName(name);
+        AttributeDescriptor desc = featureType.getDescriptor(name);
+        // desc might be null in the case of joins et al
+        if ((desc != null) && (desc.getType().getBinding() != null)) {
+            Class<?> binding = desc.getType().getBinding();
+            // utc -- everything must be consistent -- see literal visitor
+            if (Time.class.isAssignableFrom(binding)) {
+                return "time(" + super_result + ")";
+            } else if (Timestamp.class.isAssignableFrom(binding)) {
+                return "datetime(" + super_result + ",'utc' )"; // utc -- everything must be consistent -- see
+                // literal visitor
+            } else if (java.sql.Date.class.isAssignableFrom(binding)) {
+                return "date(" + super_result + ")";
+            }
+        }
+        return super_result;
+    }
+    /** Override done to ensure we don't complain if there is a BBOX filter, even if we claim not to support it */
+    @Override
     public void encode(Filter filter) throws FilterToSQLException {
         if (out == null) throw new FilterToSQLException("Can't encode to a null writer.");
         // hack, we lied about being able to support BBOX, because the implementation is
@@ -83,13 +119,11 @@ public class GeoPkgFilterToSQL extends PreparedFilterToSQL {
         if (!isPrepareEnabled()) return super.visit(expression, context);
 
         // evaluate the literal and store it for later
-        Object literalValue =
-                evaluateLiteral(expression, (context instanceof Class ? (Class) context : null));
+        Object literalValue = evaluateLiteral(expression, (context instanceof Class ? (Class) context : null));
         literalValues.add(literalValue);
         SRIDs.add(currentSRID);
         dimensions.add(currentDimension);
-        descriptors.add(
-                context instanceof AttributeDescriptor ? (AttributeDescriptor) context : null);
+        descriptors.add(context instanceof AttributeDescriptor ? (AttributeDescriptor) context : null);
 
         Class clazz = null;
         if (context instanceof Class) clazz = (Class) context;
@@ -104,14 +138,13 @@ public class GeoPkgFilterToSQL extends PreparedFilterToSQL {
                 if (Geometry.class.isAssignableFrom(literalValue.getClass())) {
                     int srid = currentSRID != null ? currentSRID : -1;
                     int dimension = currentDimension != null ? currentDimension : -1;
-                    dialect.prepareGeometryValue(
-                            (Geometry) literalValue, dimension, srid, Geometry.class, sb);
+                    dialect.prepareGeometryValue((Geometry) literalValue, dimension, srid, Geometry.class, sb);
                 } else if (Time.class.isAssignableFrom(literalValue.getClass())) {
-                    sb.append("time(?,'localtime')");
+                    sb.append("time(?)");
                 } else if (Timestamp.class.isAssignableFrom(literalValue.getClass())) {
-                    sb.append("datetime(?,'localtime')");
+                    sb.append("datetime(?,'utc' )");
                 } else if (java.sql.Date.class.isAssignableFrom(literalValue.getClass())) {
-                    sb.append("date(?,'localtime')");
+                    sb.append("date(?)");
                 } else if (encodingFunction) {
                     dialect.prepareFunctionArgument(clazz, sb);
                 } else {
@@ -128,18 +161,13 @@ public class GeoPkgFilterToSQL extends PreparedFilterToSQL {
 
     @Override
     protected Object visitBinarySpatialOperator(
-            BinarySpatialOperator filter,
-            PropertyName property,
-            Literal geometry,
-            boolean swapped,
-            Object extraData) {
+            BinarySpatialOperator filter, PropertyName property, Literal geometry, boolean swapped, Object extraData) {
 
         // get the attribute, it will expand the default geom name if necessary and give access to
         // the user data
         AttributeDescriptor attribute = property.evaluate(featureType, AttributeDescriptor.class);
         if (attribute == null) {
-            throw new IllegalArgumentException(
-                    "Could not find attribute referenced as " + property);
+            throw new IllegalArgumentException("Could not find attribute referenced as " + property);
         }
         // should be ever called only with a bbox filter
         Geometry reference = geometry.evaluate(null, Geometry.class);
@@ -153,16 +181,14 @@ public class GeoPkgFilterToSQL extends PreparedFilterToSQL {
         // can we use the spatial index?
         try {
             if (primaryKey != null
-                    && Boolean.TRUE.equals(
-                            attribute.getUserData().get(GeoPkgDialect.HAS_SPATIAL_INDEX))) {
+                    && Boolean.TRUE.equals(attribute.getUserData().get(GeoPkgDialect.HAS_SPATIAL_INDEX))) {
                 // encode the primary key
                 PrimaryKeyColumn pk = primaryKey.getColumns().get(0);
                 String pkName = pk.getName();
                 filterFactory.property(pkName).accept(this, null);
                 // Make Sure the table name is escaped - GEOT-5852
                 StringBuffer sb = new StringBuffer();
-                dialect.encodeTableName(
-                        "rtree_" + featureType.getTypeName() + "_" + attribute.getLocalName(), sb);
+                dialect.encodeTableName("rtree_" + featureType.getTypeName() + "_" + attribute.getLocalName(), sb);
                 String spatial_index = sb.toString();
 
                 out.write(" IN (SELECT id FROM " + spatial_index + " r WHERE");
@@ -177,21 +203,13 @@ public class GeoPkgFilterToSQL extends PreparedFilterToSQL {
                 StringBuffer sb = new StringBuffer();
                 dialect.encodeColumnName(null, attribute.getLocalName(), sb);
                 String encodedPropertyName = sb.toString();
-                out.write(
-                        "(ST_MaxX("
-                                + encodedPropertyName
-                                + ") >= "
-                                + envelope.getMinX()
-                                + " AND\n");
-                out.write(
-                        "ST_MinX(" + encodedPropertyName + ") <= " + envelope.getMaxX() + " AND\n");
-                out.write(
-                        "ST_MaxY(" + encodedPropertyName + ") >= " + envelope.getMinY() + " AND\n");
+                out.write("(ST_MaxX(" + encodedPropertyName + ") >= " + envelope.getMinX() + " AND\n");
+                out.write("ST_MinX(" + encodedPropertyName + ") <= " + envelope.getMaxX() + " AND\n");
+                out.write("ST_MaxY(" + encodedPropertyName + ") >= " + envelope.getMinY() + " AND\n");
                 out.write("ST_MinY(" + encodedPropertyName + ") <= " + envelope.getMaxY() + ")\n");
             }
         } catch (IOException e) {
-            throw new RuntimeException(
-                    "Failure encoding the SQL equivalent for a spatial filter", e);
+            throw new RuntimeException("Failure encoding the SQL equivalent for a spatial filter", e);
         }
 
         return extraData;

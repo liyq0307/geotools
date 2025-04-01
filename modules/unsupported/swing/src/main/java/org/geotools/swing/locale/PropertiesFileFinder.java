@@ -19,60 +19,57 @@ package org.geotools.swing.locale;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.geotools.util.URLs;
+import org.geotools.util.logging.Logging;
 
 /**
- * Searches for properties files in a resource directory within the gt-swing module and records the
- * {@code Locales} supported by each file. This is a helper for {@linkplain LocaleUtils}.
+ * Searches for properties files in a resource directory within the gt-swing module and records the {@code Locales}
+ * supported by each file. This is a helper for {@linkplain LocaleUtils}.
  *
- * <p>Normally, the {@linkplain #scan(String)} method will be responding to a call from outside this
- * class's jar, either directly or indirectly. An example of an indirect outside call is when an
- * application calls a LocaleUtils method which in turn calls the {@code scan} method. In this case,
- * the resource directory is searched by scanning the relevant entries in the gt-swing jar.
+ * <p>Normally, the {@linkplain #scan(String)} method will be responding to a call from outside this class's jar, either
+ * directly or indirectly. An example of an indirect outside call is when an application calls a LocaleUtils method
+ * which in turn calls the {@code scan} method. In this case, the resource directory is searched by scanning the
+ * relevant entries in the gt-swing jar.
  *
- * <p>For completeness, and to aid unit testing, calls from within the swing module are also
- * supported. In this case the resource directory is accessed as a local {@linkplain File} object.
+ * <p>For completeness, and to aid unit testing, calls from within the swing module are also supported. In this case the
+ * resource directory is accessed as a local {@linkplain File} object.
  *
  * @author Michael Bedward
  * @since 8.0
  * @version $Id$
  */
 public class PropertiesFileFinder {
-
+    static final Logger LOGGER = Logging.getLogger(PropertiesFileFinder.class);
     /**
-     * Searches for properties files in the specified resource directory and returns information
-     * about each file and the {@code Locales} that it supports.
-     *
-     * @param resourceDir
-     * @return
-     * @throws IOException
+     * Searches for properties files in the specified resource directory and returns information about each file and the
+     * {@code Locales} that it supports.
      */
     public List<PropertiesFileInfo> scan(String resourceDir) throws IOException {
-        List<SingleFileInfo> infoList = new ArrayList<SingleFileInfo>();
+        List<SingleFileInfo> infoList = new ArrayList<>();
 
         String path = getSelfPath();
         if (isJarPath(path)) {
-            JarInputStream jarFile = getAsJarInputStream(path);
-            JarEntry entry;
-            while ((entry = jarFile.getNextJarEntry()) != null) {
-                String name = entry.getName();
-                if (name.startsWith(resourceDir) && name.endsWith("properties")) {
-                    infoList.add(parseEntry(resourceDir.length(), name));
+            try (JarInputStream jarFile = getAsJarInputStream(path)) {
+                JarEntry entry;
+                while ((entry = jarFile.getNextJarEntry()) != null) {
+                    String name = entry.getName();
+                    if (name.startsWith(resourceDir) && name.endsWith("properties")) {
+                        infoList.add(parseEntry(resourceDir.length(), name));
+                    }
                 }
             }
-            jarFile.close();
 
         } else if (isBundle(path)) {
             // try to load the eclipse classes which enable to solve bundle:/ urls
@@ -83,17 +80,16 @@ public class PropertiesFileFinder {
                 classFileLocator = Class.forName("org.eclipse.core.runtime.FileLocator");
                 toFileURLMethod = classFileLocator.getMethod("toFileURL", URL.class);
             } catch (LinkageError | ClassNotFoundException ex) {
-                ex.printStackTrace();
+                LOGGER.log(Level.FINE, "", ex);
                 throw new IllegalArgumentException(
                         "trying to load a bundle resource "
                                 + resourceDir
                                 + " whilst the org.eclipse.core.runtime.FileLocator is not available",
                         ex);
             } catch (NoSuchMethodException | SecurityException ex) {
-                ex.printStackTrace();
+                LOGGER.log(Level.FINE, "", ex);
                 throw new IllegalArgumentException(
-                        "did not found method toFileUTL in class the org.eclipse.core.runtime.FileLocator",
-                        ex);
+                        "did not find method toFileUTL in class the org.eclipse.core.runtime.FileLocator", ex);
             }
             // convert to a directory we can list
             URL url = new URL(path);
@@ -102,16 +98,11 @@ public class PropertiesFileFinder {
             try {
                 urlFile = (URL) toFileURLMethod.invoke(null, url);
                 // try to load
-                if (urlFile == null)
-                    throw new RuntimeException(
-                            "error while converting the url " + url + " to a file");
+                if (urlFile == null) throw new RuntimeException("error while converting the url " + url + " to a file");
                 mydirectory = new File(urlFile.getFile());
-            } catch (IllegalAccessException
-                    | IllegalArgumentException
-                    | InvocationTargetException e) {
-                e.printStackTrace();
-                throw new RuntimeException(
-                        "error while converting the url " + url + " to a file", e);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                LOGGER.log(Level.FINE, "", e);
+                throw new RuntimeException("error while converting the url " + url + " to a file", e);
             }
 
             // list files
@@ -146,8 +137,8 @@ public class PropertiesFileFinder {
     }
 
     /**
-     * Gets the path to this class file. This will be a jar file path if called from outside this
-     * module, or a local path if called from within.
+     * Gets the path to this class file. This will be a jar file path if called from outside this module, or a local
+     * path if called from within.
      *
      * @return path to this class
      */
@@ -186,14 +177,8 @@ public class PropertiesFileFinder {
      * @throws IOException on error opening file
      */
     private JarInputStream getAsJarInputStream(String jarPath) throws IOException {
-        JarInputStream jis = null;
-
         URL jarUrl = new URL(jarPath);
-
-        InputStream is = jarUrl.openStream();
-        jis = new JarInputStream(is);
-
-        return jis;
+        return new JarInputStream(jarUrl.openStream());
     }
 
     /**
@@ -213,8 +198,7 @@ public class PropertiesFileFinder {
     }
 
     /**
-     * Parses an entry (either a jar file entry or local file name) and extracts the base name and
-     * locale.
+     * Parses an entry (either a jar file entry or local file name) and extracts the base name and locale.
      *
      * @param prefixLength length of entry prefix to discard
      * @param entry the entry
@@ -249,27 +233,20 @@ public class PropertiesFileFinder {
     }
 
     /**
-     * Converts a list of single file information (base name plus locale) into a list of {@linkplain
-     * PropertiesFileInfo} objects.
+     * Converts a list of single file information (base name plus locale) into a list of {@linkplain PropertiesFileInfo}
+     * objects.
      *
      * @param infoList list of single file information
      * @return a new list of {@code PropertiesFileInfo} objects
      */
     private List<PropertiesFileInfo> createReturnList(List<SingleFileInfo> infoList) {
-        List<PropertiesFileInfo> pfiList = new ArrayList<PropertiesFileInfo>();
+        List<PropertiesFileInfo> pfiList = new ArrayList<>();
 
         if (!infoList.isEmpty()) {
-            Collections.sort(
-                    infoList,
-                    new Comparator<SingleFileInfo>() {
-                        @Override
-                        public int compare(SingleFileInfo o1, SingleFileInfo o2) {
-                            return o1.name.compareTo(o2.name);
-                        }
-                    });
+            Collections.sort(infoList, (o1, o2) -> o1.name.compareTo(o2.name));
 
             String curName = infoList.get(0).name;
-            List<Locale> locales = new ArrayList<Locale>();
+            List<Locale> locales = new ArrayList<>();
             ListIterator<SingleFileInfo> iter = infoList.listIterator();
             while (iter.hasNext()) {
                 SingleFileInfo sfi = iter.next();

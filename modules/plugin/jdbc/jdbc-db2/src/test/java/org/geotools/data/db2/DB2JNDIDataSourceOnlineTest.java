@@ -17,6 +17,10 @@
 
 package org.geotools.data.db2;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.List;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.jdbc.JDBCJNDIDataSourceOnlineTest;
 import org.geotools.jdbc.JDBCJNDIDataStoreFactory;
@@ -24,8 +28,25 @@ import org.geotools.jdbc.JDBCJNDITestSetup;
 
 public class DB2JNDIDataSourceOnlineTest extends JDBCJNDIDataSourceOnlineTest {
 
+    @Override
     protected JDBCJNDITestSetup createTestSetup() {
         return new JDBCJNDITestSetup(new DB2TestSetup());
+    }
+
+    @Override
+    /** Make sure the JNDI factory exposes all the extra params that the non JNDI one exposes */
+    public void testExtraParams() {
+        List<String> baseParams = getBaseParams();
+        List<String> standardParams = getParamKeys(getDataStoreFactory());
+        standardParams.remove(JDBCDataStoreFactory.VALIDATECONN.key);
+        standardParams.remove(JDBCDataStoreFactory.MAX_OPEN_PREPARED_STATEMENTS.key);
+        standardParams.removeAll(baseParams);
+        List<String> baseJndiParams = getBaseJNDIParams();
+        List<String> jndiParams = getParamKeys(getJNDIStoreFactory());
+        assertTrue(jndiParams.contains(JDBCDataStoreFactory.FETCHSIZE.key));
+        assertTrue(jndiParams.contains(JDBCDataStoreFactory.BATCH_INSERT_SIZE.key));
+        jndiParams.removeAll(baseJndiParams);
+        assertEquals(standardParams, jndiParams);
     }
 
     @Override

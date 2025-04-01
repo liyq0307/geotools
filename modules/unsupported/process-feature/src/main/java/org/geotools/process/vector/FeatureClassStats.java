@@ -17,12 +17,17 @@
 package org.geotools.process.vector;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
@@ -32,7 +37,6 @@ import org.geotools.filter.function.JenksNaturalBreaksFunction;
 import org.geotools.filter.function.QuantileFunction;
 import org.geotools.filter.function.RangedClassifier;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.process.ProcessException;
 import org.geotools.process.classify.ClassificationMethod;
 import org.geotools.process.classify.ClassificationStats;
@@ -44,10 +48,6 @@ import org.geotools.util.logging.Logging;
 import org.jaitools.numeric.Range;
 import org.jaitools.numeric.Statistic;
 import org.jaitools.numeric.StreamingSampleStats;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.filter.FilterFactory;
-import org.opengis.util.ProgressListener;
 
 /**
  * Process that classifies vector data into "classes" using one of the following methods:
@@ -59,9 +59,8 @@ import org.opengis.util.ProgressListener;
  * </ul>
  */
 @DescribeProcess(
-    title = "featureClassStats",
-    description = "Calculates statistics from feature" + " values classified into bins/classes."
-)
+        title = "featureClassStats",
+        description = "Calculates statistics from feature" + " values classified into bins/classes.")
 public class FeatureClassStats implements VectorProcess {
 
     static Logger LOG = Logging.getLogger(FeatureClassStats.class);
@@ -72,27 +71,19 @@ public class FeatureClassStats implements VectorProcess {
     public Results execute(
             @DescribeParameter(name = "features", description = "The feature collection to analyze")
                     FeatureCollection features,
-            @DescribeParameter(name = "attribute", description = "The feature attribute to analyze")
-                    String attribute,
+            @DescribeParameter(name = "attribute", description = "The feature attribute to analyze") String attribute,
             @DescribeParameter(
-                        name = "stats",
-                        description = "The statistics to calculate for each class",
-                        collectionType = Statistic.class
-                    )
+                            name = "stats",
+                            description = "The statistics to calculate for each class",
+                            collectionType = Statistic.class)
                     Set<Statistic> stats,
-            @DescribeParameter(
-                        name = "classes",
-                        description = "The number of breaks/classes",
-                        min = 0
-                    )
-                    Integer classes,
+            @DescribeParameter(name = "classes", description = "The number of breaks/classes", min = 0) Integer classes,
             @DescribeParameter(name = "method", description = "The classification method", min = 0)
                     ClassificationMethod method,
             @DescribeParameter(
-                        name = "noData",
-                        description = "The attribute value to be omitted from any calculation",
-                        min = 0
-                    )
+                            name = "noData",
+                            description = "The attribute value to be omitted from any calculation",
+                            min = 0)
                     Double noData,
             ProgressListener progressListener)
             throws ProcessException, IOException {
@@ -101,10 +92,10 @@ public class FeatureClassStats implements VectorProcess {
         // initial checks/defaults
         //
         if (features == null) {
-            throw new ProcessException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, "features"));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, "features"));
         }
         if (attribute == null) {
-            throw new ProcessException(Errors.format(ErrorKeys.NULL_ARGUMENT_$1, "attribute"));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, "attribute"));
         }
         PropertyDescriptor property = features.getSchema().getDescriptor(attribute);
         if (property == null) {
@@ -119,8 +110,7 @@ public class FeatureClassStats implements VectorProcess {
         }
 
         if (classes < 1) {
-            throw new ProcessException(
-                    Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "classes", classes));
+            throw new ProcessException(MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_$2, "classes", classes));
         }
 
         // other defaults
@@ -146,8 +136,7 @@ public class FeatureClassStats implements VectorProcess {
             default:
                 throw new ProcessException("Unknown method: " + method);
         }
-        cf.setParameters(
-                Arrays.asList(filterFactory.property(attribute), filterFactory.literal(classes)));
+        cf.setParameters(Arrays.asList(filterFactory.property(attribute), filterFactory.literal(classes)));
 
         // compute the breaks
         RangedClassifier rc = (RangedClassifier) cf.evaluate(features);
@@ -156,12 +145,7 @@ public class FeatureClassStats implements VectorProcess {
         List<Range<Double>> ranges = new ArrayList<>();
         StreamingSampleStats[] sampleStats = new StreamingSampleStats[rc.getSize()];
         for (int i = 0; i < rc.getSize(); i++) {
-            ranges.add(
-                    Range.create(
-                            (Double) rc.getMin(i),
-                            true,
-                            (Double) rc.getMax(i),
-                            i == rc.getSize() - 1));
+            ranges.add(Range.create((Double) rc.getMin(i), true, (Double) rc.getMax(i), i == rc.getSize() - 1));
 
             StreamingSampleStats s = new StreamingSampleStats(Range.Type.INCLUDE);
             s.setStatistics(stats.toArray(new Statistic[stats.size()]));
@@ -174,8 +158,7 @@ public class FeatureClassStats implements VectorProcess {
         }
 
         // calculate all the stats
-        FeatureIterator it = features.features();
-        try {
+        try (FeatureIterator it = features.features()) {
             while (it.hasNext()) {
                 Feature f = it.next();
                 Object val = f.getProperty(attribute).getValue();
@@ -186,18 +169,14 @@ public class FeatureClassStats implements VectorProcess {
                 // convert to double
                 Double dubVal = Converters.convert(val, Double.class);
                 if (dubVal == null) {
-                    LOG.warning(
-                            String.format(
-                                    "Unable to convert value %s (attribute '%s') to Double, skipping",
-                                    val, attribute));
+                    LOG.warning(String.format(
+                            "Unable to convert value %s (attribute '%s') to Double, " + "skipping", val, attribute));
                     continue;
                 }
 
                 int slot = rc.classify(dubVal);
                 sampleStats[slot].offer(dubVal);
             }
-        } finally {
-            it.close();
         }
 
         return new Results(ranges, sampleStats);
@@ -215,22 +194,27 @@ public class FeatureClassStats implements VectorProcess {
             this.firstStat = sampleStats[0].getStatistics().iterator().next();
         }
 
+        @Override
         public int size() {
             return ranges.size();
         }
 
+        @Override
         public Set<Statistic> getStats() {
             return sampleStats[0].getStatistics();
         }
 
+        @Override
         public Range range(int i) {
             return ranges.get(i);
         }
 
+        @Override
         public Double value(int i, Statistic stat) {
             return sampleStats[i].getStatisticValue(stat);
         }
 
+        @Override
         public Long count(int i) {
             return sampleStats[i].getNumAccepted(firstStat);
         }

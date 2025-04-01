@@ -17,21 +17,21 @@
  */
 package org.geotools.filter.spatial;
 
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX3D;
+import org.geotools.api.geometry.BoundingBox3D;
 import org.geotools.geometry.jts.ReferencedEnvelope3D;
 import org.geotools.util.Converters;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX3D;
-import org.opengis.geometry.BoundingBox3D;
 
 /**
- * A 3D BBOX Filter Implementation Supports filtering with BBOXes that have 3D coordinates including
- * a minimum and maximum for the z-axis.
+ * A 3D BBOX Filter Implementation Supports filtering with BBOXes that have 3D coordinates including a minimum and
+ * maximum for the z-axis.
  *
  * @author Niels Charlier
  */
@@ -55,14 +55,17 @@ public class BBOX3DImpl implements BBOX3D {
         return property.getPropertyName();
     }
 
+    @Override
     public BoundingBox3D getBounds() {
         return envelope;
     }
 
+    @Override
     public Expression getExpression1() {
         return property;
     }
 
+    @Override
     public Expression getExpression2() {
         //        // in this case, the 3D BBOX falls back to regular 2D bbox behaviour (until there
         // is more
@@ -95,6 +98,7 @@ public class BBOX3DImpl implements BBOX3D {
         return factory.literal(envelope);
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object context) {
         return visitor.visit(this, context);
     }
@@ -109,6 +113,7 @@ public class BBOX3DImpl implements BBOX3D {
         return env;
     }
 
+    @Override
     public boolean evaluate(Object feature) {
 
         Geometry other = Converters.convert(property.evaluate(feature), Geometry.class);
@@ -132,6 +137,7 @@ public class BBOX3DImpl implements BBOX3D {
         return evaluate((Object) feature);
     }
 
+    @Override
     public MatchAction getMatchAction() {
         return MatchAction.ANY;
     }

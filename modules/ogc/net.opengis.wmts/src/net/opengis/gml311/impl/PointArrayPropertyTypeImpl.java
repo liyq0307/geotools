@@ -68,9 +68,10 @@ public class PointArrayPropertyTypeImpl extends MinimalEObjectImpl.Container imp
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<PointType> getPoint() {
         if (point == null) {
-            point = new EObjectContainmentEList<PointType>(PointType.class, this, Gml311Package.POINT_ARRAY_PROPERTY_TYPE__POINT);
+            point = new EObjectContainmentEList<>(PointType.class, this, Gml311Package.POINT_ARRAY_PROPERTY_TYPE__POINT);
         }
         return point;
     }

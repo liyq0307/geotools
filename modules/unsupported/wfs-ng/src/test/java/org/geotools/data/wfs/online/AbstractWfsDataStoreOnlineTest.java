@@ -15,67 +15,66 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-
 package org.geotools.data.wfs.online;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSDataStoreFactory;
 import org.geotools.data.wfs.WFSTestData;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPClientFinder;
+import org.geotools.http.HTTPResponse;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.CRS.AxisOrder;
+import org.geotools.test.OnlineTestSupport;
 import org.geotools.util.logging.Logging;
-import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Id;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-public abstract class AbstractWfsDataStoreOnlineTest {
+/** Online tests only run if {@link #serverUrl} can be reached, and fixture file wfs is found */
+public abstract class AbstractWfsDataStoreOnlineTest extends OnlineTestSupport {
 
     private static final Logger LOGGER = Logging.getLogger(AbstractWfsDataStoreOnlineTest.class);
 
     protected static final FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
-    private final String SERVER_URL;
+    private static final String FIXTURE_ID = "wfs";
 
-    protected static Boolean serviceAvailable = null;
+    private final String serverUrl;
+
+    /** Check for availability only once: true, false, or null for unknown. */
+    protected static Map<String, Boolean> serviceAvailable = new HashMap<>();
 
     /** The DataStore under test, static so we create it only once */
     protected WFSDataStore wfs = null;
@@ -89,14 +88,14 @@ public abstract class AbstractWfsDataStoreOnlineTest {
     private final int featureCount;
 
     /**
-     * The filter used for the count test, may be null if {@link #testFeatureSourceGetCountFilter()}
-     * and {@link #testFeatureSourceGetFeatures()} are not expected to be run
+     * The filter used for the count test, may be null if {@link #testFeatureSourceGetCountFilter()} and
+     * {@link #testFeatureSourceGetFeatures()} are not expected to be run
      */
     private final Id fidFilter;
 
     /**
-     * The filter used for the filter test, may be null if {@link
-     * #testFeatureSourceGetFeaturesFilter()} is not expected to run.
+     * The filter used for the filter test, may be null if {@link #testFeatureSourceGetFeaturesFilter()} is not expected
+     * to run.
      */
     private final Filter spatialFilter;
 
@@ -111,7 +110,7 @@ public abstract class AbstractWfsDataStoreOnlineTest {
             Id fidFilter,
             Filter spatialFilter,
             String axisOrder) {
-        this.SERVER_URL = serverURL;
+        this.serverUrl = serverURL;
         this.testType = testType;
         this.defaultGeometryName = defaultGeometryName;
         this.featureCount = featureCount;
@@ -121,43 +120,31 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         this.spatialFilter = spatialFilter;
     }
 
-    @Before
-    public void setUp() throws IOException {
-        if (serviceAvailable == null) {
+    @Override
+    protected void connect() throws Exception {
+        if (!serviceAvailable.containsKey(serverUrl)) {
             // check for service availability only once
-            URL url = new URL(SERVER_URL);
-            serviceAvailable = Boolean.FALSE;
-            InputStream stream = null;
+            URL url = new URL(serverUrl);
+            Boolean available = Boolean.FALSE;
+            HTTPClient client = HTTPClientFinder.createClient();
+            HTTPResponse response = client.get(url);
             try {
-                stream = url.openStream();
-                serviceAvailable = Boolean.TRUE;
-            } catch (Throwable t) {
-                LOGGER.log(
-                        Level.WARNING,
-                        "The test server is not available: "
-                                + SERVER_URL
-                                + ". "
-                                + getClass().getSimpleName()
-                                + " test disabled ");
-                url = null;
-                return;
+                response.getResponseStream();
+                available = Boolean.TRUE;
+            } catch (Exception e) {
+                LOGGER.warning(serverUrl + " not available. Tests will be skipped.");
             } finally {
-                if (stream != null)
-                    try {
-                        stream.close();
-                    } catch (IOException e) {
-                        // whatever
-                    }
+                response.dispose();
+                serviceAvailable.put(serverUrl, available);
             }
         }
 
-        if (wfs == null && serviceAvailable.booleanValue()) {
-            LOGGER.info("Creating test datastore for " + SERVER_URL);
+        if (wfs == null && isOnline()) {
+            LOGGER.info("Creating test datastore for " + serverUrl);
 
-            Map<String, Serializable> params = new HashMap<String, Serializable>();
-            params.put(WFSDataStoreFactory.URL.key, SERVER_URL);
-            params.put(WFSDataStoreFactory.GML_COMPATIBLE_TYPENAMES.key, true);
-            params.put(WFSDataStoreFactory.AXIS_ORDER.key, axisOrder);
+            Map<String, Serializable> params = new HashMap<>();
+            params.put(WFSDataStoreFactory.URL.key, serverUrl);
+            setUpParameters(params);
 
             WFSDataStoreFactory dataStoreFactory = new WFSDataStoreFactory();
             wfs = dataStoreFactory.createDataStore(params);
@@ -165,15 +152,32 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         }
     }
 
-    @Test
-    public void testFeatureSourceInfo()
-            throws IOException, NoSuchAuthorityCodeException, FactoryException {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+    @Override
+    protected String getFixtureId() {
+        return FIXTURE_ID;
+    }
 
-        SimpleFeatureSource featureSource;
-        featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
+    @Override
+    protected boolean isOnline() {
+        if (!serviceAvailable.containsKey(serverUrl)) {
+            try {
+                connect();
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return serviceAvailable.get(serverUrl).booleanValue();
+    }
+
+    protected void setUpParameters(Map<String, Serializable> params) {
+        params.put(WFSDataStoreFactory.GML_COMPATIBLE_TYPENAMES.key, true);
+        params.put(WFSDataStoreFactory.AXIS_ORDER.key, axisOrder);
+    }
+
+    @Test
+    public void testFeatureSourceInfo() throws Exception {
+
+        SimpleFeatureSource featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
 
         assertNotNull(featureSource);
 
@@ -187,14 +191,9 @@ public abstract class AbstractWfsDataStoreOnlineTest {
     }
 
     @Test
-    public void testFeatureSourceGetBounds()
-            throws IOException, NoSuchAuthorityCodeException, FactoryException {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+    public void testFeatureSourceGetBounds() throws Exception {
 
-        SimpleFeatureSource featureSource;
-        featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
+        SimpleFeatureSource featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
         assertNotNull(featureSource);
 
         ReferencedEnvelope infoBounds = featureSource.getInfo().getBounds();
@@ -208,8 +207,7 @@ public abstract class AbstractWfsDataStoreOnlineTest {
 
         bounds = featureSource.getBounds(query);
         assertNotNull(bounds);
-        assertSame(
-                "the bounds were not reprojected", queryCrs, bounds.getCoordinateReferenceSystem());
+        assertSame("the bounds were not reprojected", queryCrs, bounds.getCoordinateReferenceSystem());
 
         final String geometryName =
                 featureSource.getSchema().getGeometryDescriptor().getLocalName();
@@ -220,40 +218,26 @@ public abstract class AbstractWfsDataStoreOnlineTest {
     }
 
     @Test
-    public void testFeatureSourceGetCountAll() throws IOException {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+    public void testFeatureSourceGetCountAll() throws Exception {
 
-        SimpleFeatureSource featureSource;
-        featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
+        SimpleFeatureSource featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
         assertNotNull(featureSource);
 
         assertEquals(featureCount, featureSource.getCount(Query.ALL));
     }
 
-    /**
-     * Performs a FeatureSource.getCount(Query) with the constructor provided fid filter if the
-     * filter is not null.
-     *
-     * @throws IOException
-     */
+    /** Performs a FeatureSource.getCount(Query) with the constructor provided fid filter if the filter is not null. */
     @Test
-    public void testFeatureSourceGetCountFilter() throws IOException {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+    public void testFeatureSourceGetCountFilter() throws Exception {
 
         if (featureCount >= 0) { // server doesn't support feature count anyway, skip
             if (fidFilter == null) {
                 LOGGER.info(
-                        "Ignoring testFeatureSourceGetCountFilter "
-                                + "since the subclass didn't provide a fid filter");
+                        "Ignoring testFeatureSourceGetCountFilter " + "since the subclass didn't provide a fid filter");
                 return;
             }
 
-            SimpleFeatureSource featureSource;
-            featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
+            SimpleFeatureSource featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
             assertNotNull(featureSource);
 
             Query query = new Query(featureSource.getInfo().getName());
@@ -264,94 +248,74 @@ public abstract class AbstractWfsDataStoreOnlineTest {
     }
 
     @Test
-    public void testFeatureSourceGetFeatures() throws IOException {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+    public void testFeatureSourceGetFeatures() throws Exception {
+
         if (fidFilter == null) {
-            LOGGER.info(
-                    "Ignoring testFeatureSourceGetCountFilter "
-                            + "since the subclass didn't provide a fid filter");
+            LOGGER.info("Ignoring testFeatureSourceGetCountFilter " + "since the subclass didn't provide a fid filter");
             return;
         }
 
-        SimpleFeatureSource featureSource;
-        featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
+        SimpleFeatureSource featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
         assertNotNull(featureSource);
 
-        SimpleFeatureCollection features;
-        features = featureSource.getFeatures();
+        Query query = new Query(testType.FEATURETYPENAME);
+        query.setFilter(fidFilter);
+
+        SimpleFeatureCollection features = featureSource.getFeatures(query);
         assertNotNull(features);
 
         SimpleFeatureType schema = features.getSchema();
         assertNotNull(schema);
 
-        SimpleFeatureIterator iterator = features.features();
-        assertNotNull(iterator);
-        try {
-            assertTrue(iterator.hasNext());
+        try (SimpleFeatureIterator iterator = features.features()) {
+            assertNotNull(iterator);
+
+            assertTrue("Didn't get anything with fidFilter", iterator.hasNext());
             SimpleFeature next = iterator.next();
             assertNotNull(next);
             assertNotNull(next.getDefaultGeometry());
-        } finally {
-            iterator.close();
         }
     }
 
     @Test
-    public void testFeatureSourceGetFeaturesFilter() throws IOException {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+    public void testFeatureSourceGetFeaturesFilter() throws Exception {
 
         if (spatialFilter == null) {
             LOGGER.info(
-                    "Ignoring testFeatureSourceGetCountFilter "
-                            + "since the subclass didn't provide a spatial filter");
+                    "Ignoring testFeatureSourceGetCountFilter " + "since the subclass didn't provide a spatial filter");
             return;
         }
 
-        SimpleFeatureSource featureSource;
-        featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
+        SimpleFeatureSource featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
         assertNotNull(featureSource);
 
         Query query = new Query(testType.FEATURETYPENAME);
         query.setFilter(spatialFilter);
 
-        SimpleFeatureCollection features;
-        features = featureSource.getFeatures(query);
+        SimpleFeatureCollection features = featureSource.getFeatures(query);
         assertNotNull(features);
 
         SimpleFeatureType schema = features.getSchema();
         assertNotNull(schema);
 
-        SimpleFeatureIterator iterator = features.features();
-        assertNotNull(iterator);
-        try {
+        try (SimpleFeatureIterator iterator = features.features()) {
             assertTrue(iterator.hasNext());
             SimpleFeature next = iterator.next();
             assertNotNull(next);
             assertNotNull(next.getDefaultGeometry());
-            assertFalse(iterator.hasNext());
-        } finally {
-            iterator.close();
         }
     }
 
     @Test
-    public void testTypes() throws IOException, NoSuchElementException {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+    public void testTypes() throws Exception {
 
         assertTrue(wfs instanceof WFSDataStore);
 
-        String types[] = wfs.getTypeNames();
+        String[] types = wfs.getTypeNames();
         List<String> typeNames = Arrays.asList(types);
         assertTrue(typeNames.contains(testType.FEATURETYPENAME));
 
-        for (int i = 0; i < types.length; i++) {
-            String typeName = types[i];
+        for (String typeName : types) {
             SimpleFeatureType type = wfs.getSchema(typeName);
             type.getTypeName();
             type.getName().getNamespaceURI();
@@ -367,13 +331,10 @@ public abstract class AbstractWfsDataStoreOnlineTest {
             features = source.getFeatures(query);
             features.size();
 
-            SimpleFeatureIterator iterator = features.features();
-            try {
+            try (SimpleFeatureIterator iterator = features.features()) {
                 while (iterator.hasNext()) {
                     iterator.next();
                 }
-            } finally {
-                iterator.close();
             }
         }
 
@@ -388,10 +349,8 @@ public abstract class AbstractWfsDataStoreOnlineTest {
     }
 
     @Test
-    public void testSingleType() throws IOException, NoSuchElementException {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+    public void testSingleType() throws Exception {
+
         SimpleFeatureType type = wfs.getSchema(testType.FEATURETYPENAME);
         type.getTypeName();
         type.getName().getNamespaceURI();
@@ -403,100 +362,102 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         features.getBounds();
         features.getSchema();
 
-        Query query =
-                new Query(
-                        testType.FEATURETYPENAME,
-                        Filter.INCLUDE,
-                        20,
-                        Query.ALL_NAMES,
-                        "work already");
+        Query query = new Query(testType.FEATURETYPENAME, Filter.INCLUDE, 20, Query.ALL_NAMES, "work already");
         features = source.getFeatures(query);
         features.size();
 
-        SimpleFeatureIterator iterator = features.features();
-        try {
+        try (SimpleFeatureIterator iterator = features.features()) {
             while (iterator.hasNext()) {
                 iterator.next();
             }
-        } finally {
-            iterator.close();
         }
     }
 
     /** {@link BBOX} support? */
     @Test
     public void testDataStoreSupportsPlainBBOXInterface() throws Exception {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+
         final SimpleFeatureType ft = wfs.getSchema(testType.FEATURETYPENAME);
         SimpleFeatureSource featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
         final ReferencedEnvelope bounds = featureSource.getBounds();
-
         String srsName = CRS.toSRS(bounds.getCoordinateReferenceSystem());
 
-        final BBOX bbox =
-                ff.bbox(
-                        "the_geom",
+        final BBOX bbox = AxisOrder.EAST_NORTH == CRS.getAxisOrder(bounds.getCoordinateReferenceSystem())
+                        || WFSDataStoreFactory.AXIS_ORDER_COMPLIANT.equals(axisOrder)
+                ? ff.bbox(
+                        defaultGeometryName,
                         bounds.getMinX(),
                         bounds.getMinY(),
                         bounds.getMaxX(),
                         bounds.getMaxY(),
+                        srsName)
+                : ff.bbox(
+                        defaultGeometryName,
+                        bounds.getMinY(),
+                        bounds.getMinX(),
+                        bounds.getMaxY(),
+                        bounds.getMaxX(),
                         srsName);
 
         /** This one does not implement the deprecated geotools filter interfaces */
-        final BBOX strictBBox =
-                new BBOX() {
+        final BBOX strictBBox = new BBOX() {
 
-                    @Override
-                    public boolean evaluate(Object object) {
-                        return bbox.evaluate(object);
-                    }
+            @Override
+            public boolean evaluate(Object object) {
+                return bbox.evaluate(object);
+            }
 
-                    @Override
-                    public Object accept(FilterVisitor visitor, Object extraData) {
-                        return bbox.accept(visitor, extraData);
-                    }
+            @Override
+            public Object accept(FilterVisitor visitor, Object extraData) {
+                return bbox.accept(visitor, extraData);
+            }
 
-                    @Override
-                    public Expression getExpression2() {
-                        return bbox.getExpression2();
-                    }
+            @Override
+            public Expression getExpression2() {
+                return bbox.getExpression2();
+            }
 
-                    @Override
-                    public Expression getExpression1() {
-                        return bbox.getExpression1();
-                    }
+            @Override
+            public Expression getExpression1() {
+                return bbox.getExpression1();
+            }
 
-                    @Override
-                    public MatchAction getMatchAction() {
-                        return MatchAction.ANY;
-                    }
+            @Override
+            public MatchAction getMatchAction() {
+                return MatchAction.ANY;
+            }
 
-                    @Override
-                    public BoundingBox getBounds() {
-                        return bbox.getBounds();
-                    }
-                };
+            @Override
+            public BoundingBox getBounds() {
+                return bbox.getBounds();
+            }
+        };
 
         final Query query = new Query(ft.getTypeName());
-        query.setPropertyNames(new String[] {"the_geom"});
+        query.setPropertyNames(defaultGeometryName);
         query.setFilter(strictBBox);
+        query.setHandle("testDataStoreSupportsPlainBBOXInterface");
 
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                wfs.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
+            assertNotNull(reader);
+            assertTrue(reader.hasNext());
+        }
 
-        reader = wfs.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        assertNotNull(reader);
-
-        reader = wfs.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        assertNotNull(reader);
+        /*
+         *
+         * GEOT-6905
+         *
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                wfs.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
+            assertNotNull(reader);
+            assertTrue("Issued same query second time returns empty.", reader.hasNext());
+        }
+        */
     }
 
     @Test
     public void testDataStoreHandlesAxisFlipping() throws Exception {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
 
         final SimpleFeatureType ft = wfs.getSchema(testType.FEATURETYPENAME);
         final SimpleFeatureSource featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
@@ -511,35 +472,32 @@ public abstract class AbstractWfsDataStoreOnlineTest {
         ReferencedEnvelope lonLat = bounds.transform(wgs84LonLat, true);
         ReferencedEnvelope latLon = bounds.transform(wgs84LatLon, true);
 
-        final BBOX lonLatFilter =
-                ff.bbox(
-                        "the_geom",
-                        lonLat.getMinimum(0),
-                        lonLat.getMinimum(1),
-                        lonLat.getMaximum(0),
-                        lonLat.getMaximum(1),
-                        null);
+        final BBOX lonLatFilter = ff.bbox(
+                defaultGeometryName,
+                lonLat.getMinimum(0),
+                lonLat.getMinimum(1),
+                lonLat.getMaximum(0),
+                lonLat.getMaximum(1),
+                null);
 
-        final BBOX latLonFiler =
-                ff.bbox(
-                        "the_geom",
-                        latLon.getMinimum(0),
-                        latLon.getMinimum(1),
-                        latLon.getMaximum(0),
-                        latLon.getMaximum(1),
-                        null);
+        final BBOX latLonFiler = ff.bbox(
+                defaultGeometryName,
+                latLon.getMinimum(0),
+                latLon.getMinimum(1),
+                latLon.getMaximum(0),
+                latLon.getMaximum(1),
+                null);
 
         final Query query = new Query(ft.getTypeName());
-        query.setPropertyNames(new String[] {"the_geom"});
+        query.setPropertyNames(defaultGeometryName);
         query.setFilter(lonLatFilter);
         query.setCoordinateSystem(wgs84LonLat);
 
-        final int expectedCount = wfs.getFeatureSource(query.getTypeName()).getFeatures().size();
+        final int expectedCount =
+                wfs.getFeatureSource(query.getTypeName()).getFeatures().size();
 
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
-
-        reader = wfs.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        try {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                wfs.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
             assertTrue(reader.hasNext());
             int count = 0;
             while (reader.hasNext()) {
@@ -547,15 +505,13 @@ public abstract class AbstractWfsDataStoreOnlineTest {
                 count++;
             }
             assertEquals(expectedCount, count);
-        } finally {
-            reader.close();
         }
 
         query.setFilter(latLonFiler);
         query.setCoordinateSystem(wgs84LatLon);
 
-        reader = wfs.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        try {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                wfs.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
             assertTrue(reader.hasNext());
             int count = 0;
             while (reader.hasNext()) {
@@ -563,40 +519,30 @@ public abstract class AbstractWfsDataStoreOnlineTest {
                 count++;
             }
             assertEquals(expectedCount, count);
-        } finally {
-            reader.close();
         }
     }
 
     public void XtestFeatureType() throws Exception {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+
         WFSOnlineTestSupport.doFeatureType(wfs, testType.FEATURETYPENAME);
     }
 
     @Test
     public void testFeatureReader() throws Exception {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+
         WFSOnlineTestSupport.doFeatureReader(wfs, testType.FEATURETYPENAME);
     }
 
     @Test
     public void testFeatureReaderWithQuery() throws Exception {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+
         WFSOnlineTestSupport.doFeatureReaderWithQuery(wfs, testType.FEATURETYPENAME);
     }
 
     @Test
     public void testFeatureReaderWithFilterBBox() throws Exception {
-        if (Boolean.FALSE.equals(serviceAvailable)) {
-            return;
-        }
+
         ReferencedEnvelope bbox = wfs.getFeatureSource(testType.FEATURETYPENAME).getBounds();
-        WFSOnlineTestSupport.doFeatureReaderWithBBox(wfs, testType.FEATURETYPENAME, bbox);
+        WFSOnlineTestSupport.doFeatureReaderWithBBox(wfs, testType.FEATURETYPENAME, defaultGeometryName, bbox);
     }
 }

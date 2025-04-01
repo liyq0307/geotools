@@ -25,17 +25,21 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ByteArrayInStream;
+import org.locationtech.jts.io.InStream;
+import org.locationtech.jts.io.OutStream;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKBWriter;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 
 /**
  * Allows writing and reading features to/from the given file
@@ -47,6 +51,8 @@ public class SimpleFeatureIO {
     public static final int MAX_BYTES_LENGTH = 65535;
     public static final String BIG_STRING = "bigString";
 
+    public static final String ENABLE_DESERIALIZATION = "geotools.simplefeatureio.deserialization";
+
     RandomAccessFile raf;
 
     SimpleFeatureType schema;
@@ -55,19 +61,25 @@ public class SimpleFeatureIO {
 
     File file;
 
+    WKBWriter writer = new WKBWriter();
+    WKBReader reader = new WKBReader();
+    ByteArrayInStream bis;
+    ByteArrayOutStream bos;
+    byte[] buffer = new byte[8192]; // reusable buffer for small geometries
+
+    private final boolean initialFileEmpty;
+    private final String enableDeserialization;
+
     public SimpleFeatureIO(File file, SimpleFeatureType schema) throws FileNotFoundException {
         this.file = file;
         this.raf = new RandomAccessFile(file, "rw");
         this.schema = schema;
         this.builder = new SimpleFeatureBuilder(schema);
+        this.initialFileEmpty = this.file.length() <= 0;
+        this.enableDeserialization = System.getProperty(ENABLE_DESERIALIZATION);
     }
 
-    /**
-     * Writes the feature to the file
-     *
-     * @param sf
-     * @throws IOException
-     */
+    /** Writes the feature to the file */
     public void write(SimpleFeature sf) throws IOException {
         // write each attribute in the random access file
         List<AttributeDescriptor> attributes = schema.getAttributeDescriptors();
@@ -135,11 +147,11 @@ public class SimpleFeatureIO {
                     || binding == java.util.Date.class) {
                 raf.writeLong(((Date) value).getTime());
             } else if (Geometry.class.isAssignableFrom(binding)) {
-                WKBWriter writer = new WKBWriter();
-                byte[] buffer = writer.write((Geometry) value);
-                int length = buffer.length;
-                raf.writeInt(length);
-                raf.write(buffer);
+                ByteArrayOutStream os = getOutStream(this.buffer);
+                writer.write((Geometry) value, os);
+                int len = os.getPosition();
+                raf.writeInt(len);
+                raf.write(os.getBuffer(), 0, len);
             } else {
                 // can't optimize, in this case we use an ObjectOutputStream to write out
                 // full metadata
@@ -161,12 +173,7 @@ public class SimpleFeatureIO {
                 && ((Boolean) ad.getUserData().get(BIG_STRING));
     }
 
-    /**
-     * Reads the next feature form the file
-     *
-     * @return
-     * @throws IOException
-     */
+    /** Reads the next feature form the file */
     public SimpleFeature read() throws IOException {
         // read the fid, check for file end
         String fid = raf.readUTF();
@@ -180,13 +187,7 @@ public class SimpleFeatureIO {
         return builder.buildFeature(fid);
     }
 
-    /**
-     * Reads the attributes.
-     *
-     * @param ad
-     * @return
-     * @throws IOException
-     */
+    /** Reads the attributes. */
     Object readAttribute(AttributeDescriptor ad) throws IOException {
         // See the comments in {@link MergeSortDumper#writeAttribute(RandomAccessFile,
         // AttributeDescriptor, Object)} to get an insight on why the method is built like this
@@ -231,12 +232,11 @@ public class SimpleFeatureIO {
             } else if (binding == java.util.Date.class) {
                 return new java.util.Date(raf.readLong());
             } else if (Geometry.class.isAssignableFrom(binding)) {
-                WKBReader reader = new WKBReader();
                 int length = raf.readInt();
-                byte[] buffer = new byte[length];
-                raf.read(buffer);
+                byte[] buffer = getByteBuffer(length);
+                raf.read(buffer, 0, length);
                 try {
-                    return reader.read(buffer);
+                    return reader.read(getInStream(buffer));
                 } catch (ParseException e) {
                     throw new IOException("Failed to parse the geometry WKB", e);
                 }
@@ -246,7 +246,41 @@ public class SimpleFeatureIO {
         }
     }
 
+    private ByteArrayOutStream getOutStream(byte[] buffer) {
+        if (bos == null) {
+            bos = new ByteArrayOutStream(buffer);
+        } else {
+            bos.setBuffer(buffer);
+        }
+        return bos;
+    }
+
+    private InStream getInStream(byte[] buffer) {
+        if (bis == null) {
+            bis = new ByteArrayInStream(buffer);
+        } else {
+            bis.setBytes(buffer);
+        }
+        return bis;
+    }
+
+    private byte[] getByteBuffer(int length) {
+        byte[] buffer;
+        if (length < this.buffer.length) {
+            buffer = this.buffer;
+        } else {
+            buffer = new byte[length];
+        }
+        return buffer;
+    }
+
+    @SuppressWarnings("BanSerializableRead")
     private Object readObject() throws IOException {
+        if ("false".equalsIgnoreCase(this.enableDeserialization)) {
+            throw new IllegalStateException("Object deserialization is not allowed");
+        } else if (!this.initialFileEmpty && !"true".equalsIgnoreCase(this.enableDeserialization)) {
+            throw new IllegalStateException("Object deserialization is only allowed when created with an empty file");
+        }
         int length = raf.readInt();
         byte[] buffer = new byte[length];
         raf.read(buffer);
@@ -259,42 +293,22 @@ public class SimpleFeatureIO {
         }
     }
 
-    /**
-     * Moves the IO to the specified offset in the file
-     *
-     * @param offset
-     * @throws IOException
-     */
+    /** Moves the IO to the specified offset in the file */
     public void seek(long offset) throws IOException {
         raf.seek(offset);
     }
 
-    /**
-     * Returns the current reading position in the file
-     *
-     * @return
-     * @throws IOException
-     */
+    /** Returns the current reading position in the file */
     public long getOffset() throws IOException {
         return raf.getFilePointer();
     }
 
-    /**
-     * Returns true if the end of file has been reached
-     *
-     * @return
-     * @throws IOException
-     */
+    /** Returns true if the end of file has been reached */
     public boolean endOfFile() throws IOException {
         return getOffset() >= raf.length();
     }
 
-    /**
-     * Closes the IO, eventually deleting the file in the process
-     *
-     * @param deleteFile
-     * @throws IOException
-     */
+    /** Closes the IO, eventually deleting the file in the process */
     public void close(boolean deleteFile) throws IOException {
         try {
             raf.close();
@@ -316,12 +330,57 @@ public class SimpleFeatureIO {
     }
 
     private Collection<String> split(String value, int charSize) {
-        List<String> strings = new ArrayList<String>();
+        List<String> strings = new ArrayList<>();
         int index = 0;
         while (index < value.length()) {
             strings.add(value.substring(index, Math.min(index + charSize, value.length())));
             index += charSize;
         }
         return strings;
+    }
+
+    /**
+     * Straight OutStream implementation on top of a byte[], can reuse the one given, or allocate a larger one if needed
+     */
+    private class ByteArrayOutStream implements OutStream {
+
+        byte[] buffer;
+        int position;
+
+        public ByteArrayOutStream(byte[] buffer) {
+            setBuffer(buffer);
+        }
+
+        public void setBuffer(byte[] buffer) {
+            this.buffer = buffer;
+            this.position = 0;
+        }
+
+        @Override
+        public void write(byte[] bytes, int len) throws IOException {
+            if (position + len >= buffer.length) {
+                grow(position + len);
+            }
+            System.arraycopy(bytes, 0, this.buffer, position, len);
+            position += len;
+        }
+
+        private void grow(int minCapacity) {
+            if (minCapacity < 0) {
+                throw new OutOfMemoryError();
+            }
+            int oldCapacity = buffer.length;
+            int newCapacity = oldCapacity << 1;
+            if (newCapacity - minCapacity < 0) newCapacity = minCapacity;
+            this.buffer = Arrays.copyOf(buffer, newCapacity);
+        }
+
+        public int getPosition() {
+            return position;
+        }
+
+        public byte[] getBuffer() {
+            return buffer;
+        }
     }
 }

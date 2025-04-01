@@ -16,25 +16,31 @@
  */
 package org.geotools.jdbc;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.Collections;
+import org.geotools.api.data.FeatureLock;
+import org.geotools.api.data.FeatureLockException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsEqualTo;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureLock;
-import org.geotools.data.FeatureLockException;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsEqualTo;
+import org.junit.Test;
 
 public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
 
     JDBCFeatureStore store;
 
+    @Override
     protected void connect() throws Exception {
         super.connect();
 
@@ -42,6 +48,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
         store.setFeatureLock(FeatureLock.TRANSACTION);
     }
 
+    @Test
     public void testLockFeatures() throws Exception {
 
         FeatureLock lock = new FeatureLock(tname("ft1"), 60 * 60 * 1000);
@@ -56,8 +63,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
 
             // grabbing a reader should be no problem
             Query query = new Query(tname("ft1"));
-            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
-                    dataStore.getFeatureReader(query, tx)) {
+            try (FeatureReader<SimpleFeatureType, SimpleFeature> reader = dataStore.getFeatureReader(query, tx)) {
 
                 int count = 0;
                 while (reader.hasNext()) {
@@ -93,6 +99,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testLockFeaturesWithFilter() throws Exception {
 
         FeatureLock lock = new FeatureLock(tname("ft1"), 60 * 60 * 1000);
@@ -113,7 +120,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
             try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
                     dataStore.getFeatureWriter(tname("ft1"), tx)) {
                 while (writer.hasNext()) {
-                    SimpleFeature feature = (SimpleFeature) writer.next();
+                    SimpleFeature feature = writer.next();
                     Number old = (Number) feature.getAttribute(aname("intProperty"));
 
                     feature.setAttribute(aname("intProperty"), Integer.valueOf(100));
@@ -134,6 +141,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testLockFeaturesWithInvalidFilter() throws Exception {
 
         FeatureLock lock = new FeatureLock(tname("ft1"), 60 * 60 * 1000);
@@ -155,6 +163,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testLockFeaturesWithInvalidQuery() throws Exception {
         FeatureLock lock = new FeatureLock(tname("ft1"), 60 * 60 * 1000);
 
@@ -175,6 +184,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testUnlockFeatures() throws Exception {
         FeatureLock lock = new FeatureLock(tname("ft1"), 60 * 60 * 1000);
 
@@ -218,6 +228,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testUnlockFeaturesInvalidFilter() throws Exception {
         FeatureLock lock = new FeatureLock(tname("ft1"), 60 * 60 * 1000);
 
@@ -243,6 +254,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testDeleteLockedFeatures() throws Exception {
         FeatureLock lock = new FeatureLock(tname("ft1"), 60 * 60 * 1000);
 
@@ -272,6 +284,7 @@ public abstract class JDBCFeatureLockingOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testModifyLockedFeatures() throws Exception {
         FilterFactory ff = dataStore.getFilterFactory();
 

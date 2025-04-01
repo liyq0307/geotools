@@ -50,16 +50,17 @@ import org.locationtech.jts.geom.MultiLineString;
  */
 public class MultiLineStringPropertyTypeBinding extends GeometryPropertyTypeBindingBase {
 
-    public MultiLineStringPropertyTypeBinding(
-            GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry) {
+    public MultiLineStringPropertyTypeBinding(GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry) {
         super(encodingUtils, idRegistry);
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MultiLineStringPropertyType;
     }
 
+    @Override
     public Class<? extends Geometry> getGeometryType() {
         return MultiLineString.class;
     }

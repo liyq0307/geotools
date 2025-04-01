@@ -17,23 +17,29 @@
 package org.geotools.filter.text.ecql;
 
 import static java.util.Calendar.FEBRUARY;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-import org.geotools.filter.text.commons.CompilerUtil;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.filter.AndImpl;
+import org.geotools.filter.NotImpl;
 import org.geotools.filter.text.commons.Language;
 import org.geotools.filter.text.cql2.CQLComparisonPredicateTest;
 import org.geotools.filter.text.cql2.CQLException;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * ECQL Comparison Predicate Test Case.
@@ -44,8 +50,8 @@ import org.opengis.filter.expression.PropertyName;
  * &lt comparison predicate &gt ::= &lt expression &gt &lt comp op &gt &lt expression &gt
  * </pre>
  *
- * <p>This test case extends the from CQL test in order to assure that this extension (ECQL)
- * contains the base language (CQL).
+ * <p>This test case extends the from CQL test in order to assure that this extension (ECQL) contains the base language
+ * (CQL).
  *
  * @author Mauricio Pazos (Axios Engineering)
  * @since 2.6
@@ -57,6 +63,29 @@ public class ECQLComparisonPredicateTest extends CQLComparisonPredicateTest {
         super(Language.ECQL);
     }
 
+    /** Equals predicate sample */
+    @Override
+    @Test
+    public void deprecatedPredicate() throws Exception {
+
+        ECQL.toFilter("POP_RANK eq 6");
+        ECQL.toFilter("POP_RANK neq 6");
+        ECQL.toFilter("POP_RANK lte 6");
+        ECQL.toFilter("! (POP_RANK = 6)");
+
+        assertTrue(ECQL.toFilter("POP_RANK eq 6") instanceof PropertyIsEqualTo);
+        assertTrue(ECQL.toFilter("POP_RANK == 6") instanceof PropertyIsEqualTo);
+
+        assertTrue(ECQL.toFilter("POP_RANK lte 6") instanceof PropertyIsLessThanOrEqualTo);
+        assertTrue(ECQL.toFilter("POP_RANK gte 6") instanceof PropertyIsGreaterThanOrEqualTo);
+        assertTrue(ECQL.toFilter("POP_RANK lt 6") instanceof PropertyIsLessThan);
+        assertTrue(ECQL.toFilter("POP_RANK gt 6") instanceof PropertyIsGreaterThan);
+
+        assertTrue(ECQL.toFilter("! (POP_RANK == 6)") instanceof NotImpl);
+        assertTrue(ECQL.toFilter("POP_RANK neq 6") instanceof NotImpl);
+
+        assertTrue(ECQL.toFilter("A > 2 && B < 1") instanceof AndImpl);
+    }
     /**
      * Test: Expression on the Left hand of comparison predicate
      *
@@ -64,8 +93,6 @@ public class ECQLComparisonPredicateTest extends CQLComparisonPredicateTest {
      * Sample: (1+3) > aProperty
      *         (1+3) > (4-5)
      * </pre>
-     *
-     * @throws CQLException
      */
     @Test
     public void expressionComparisonProperty() throws CQLException {
@@ -80,11 +107,7 @@ public class ECQLComparisonPredicateTest extends CQLComparisonPredicateTest {
         testComparison(FilterECQLSample.EXPRESSIONS_WITH_PROPERTIES);
     }
 
-    /**
-     * Negative value test
-     *
-     * @throws CQLException
-     */
+    /** Negative value test */
     @Test
     public void negativeNumber() throws CQLException {
 
@@ -126,8 +149,6 @@ public class ECQLComparisonPredicateTest extends CQLComparisonPredicateTest {
      *          area( the_geom ) < abs(10)
      *
      * </pre>
-     *
-     * @throws CQLException
      */
     @Test
     public void functionsInComparison() throws CQLException {
@@ -147,96 +168,75 @@ public class ECQLComparisonPredicateTest extends CQLComparisonPredicateTest {
 
     @Test
     public void dateLiteral() throws Exception {
-        Filter f = CompilerUtil.parseFilter(this.language, "X = 2012-02-01");
+        Filter f = parseFilter("X = 2012-02-01");
         testPropertyIsEqualDate(f, date(2012, FEBRUARY, 1, 0, 0, 0, 0, TimeZone.getDefault()));
     }
 
     @Test
     public void dateLiteralTimeZoneUTC() throws Exception {
-        Filter f = CompilerUtil.parseFilter(this.language, "X = 2012-02-01Z");
-        testPropertyIsEqualDate(
-                f, date(2012, FEBRUARY, 1, 0, 0, 0, 0, TimeZone.getTimeZone("GMT")));
+        Filter f = parseFilter("X = 2012-02-01Z");
+        testPropertyIsEqualDate(f, date(2012, FEBRUARY, 1, 0, 0, 0, 0, TimeZone.getTimeZone("GMT")));
     }
 
     @Test
     public void dateLiteralTimeZonePlusMinus() throws Exception {
-        Filter f = CompilerUtil.parseFilter(this.language, "X = 2012-02-01-0800");
-        testPropertyIsEqualDate(
-                f, date(2012, FEBRUARY, 1, 0, 0, 0, 0, TimeZone.getTimeZone("GMT-8:00")));
+        Filter f = parseFilter("X = 2012-02-01-0800");
+        testPropertyIsEqualDate(f, date(2012, FEBRUARY, 1, 0, 0, 0, 0, TimeZone.getTimeZone("GMT-8:00")));
 
-        f = CompilerUtil.parseFilter(this.language, "X = 2012-02-01+08:00");
-        testPropertyIsEqualDate(
-                f, date(2012, FEBRUARY, 1, 0, 0, 0, 0, TimeZone.getTimeZone("GMT+8:00")));
+        f = parseFilter("X = 2012-02-01+08:00");
+        testPropertyIsEqualDate(f, date(2012, FEBRUARY, 1, 0, 0, 0, 0, TimeZone.getTimeZone("GMT+8:00")));
     }
 
     @Test
     public void dateTimeLiteral() throws Exception {
-        Filter f = CompilerUtil.parseFilter(this.language, "X = 2012-02-01T12:10:13");
+        Filter f = parseFilter("X = 2012-02-01T12:10:13");
         testPropertyIsEqualDate(f, date(2012, FEBRUARY, 1, 12, 10, 13, 0, TimeZone.getDefault()));
     }
 
     @Test
     public void dateTimeLiteralMilliseconds() throws Exception {
-        Filter f = CompilerUtil.parseFilter(this.language, "X = 2012-02-01T12:10:13.123");
+        Filter f = parseFilter("X = 2012-02-01T12:10:13.123");
         testPropertyIsEqualDate(f, date(2012, FEBRUARY, 1, 12, 10, 13, 123, TimeZone.getDefault()));
     }
 
     @Test
     public void dateTimeLiteralTimeZoneUTC() throws Exception {
-        Filter f = CompilerUtil.parseFilter(this.language, "X = 2012-02-01T12:10:13.123Z");
-        testPropertyIsEqualDate(
-                f, date(2012, FEBRUARY, 1, 12, 10, 13, 123, TimeZone.getTimeZone("GMT")));
+        Filter f = parseFilter("X = 2012-02-01T12:10:13.123Z");
+        testPropertyIsEqualDate(f, date(2012, FEBRUARY, 1, 12, 10, 13, 123, TimeZone.getTimeZone("GMT")));
     }
 
     @Test
     public void dateTimeLiteralTimeZonePlusMinus() throws Exception {
-        Filter f = CompilerUtil.parseFilter(this.language, "X = 2012-02-01T12:10:13.123-0800");
-        testPropertyIsEqualDate(
-                f, date(2012, FEBRUARY, 1, 12, 10, 13, 123, TimeZone.getTimeZone("GMT-8:00")));
+        Filter f = parseFilter("X = 2012-02-01T12:10:13.123-0800");
+        testPropertyIsEqualDate(f, date(2012, FEBRUARY, 1, 12, 10, 13, 123, TimeZone.getTimeZone("GMT-8:00")));
 
-        f = CompilerUtil.parseFilter(this.language, "X = 2012-02-01T12:10:13+08:00");
-        testPropertyIsEqualDate(
-                f, date(2012, FEBRUARY, 1, 12, 10, 13, 0, TimeZone.getTimeZone("GMT+8:00")));
+        f = parseFilter("X = 2012-02-01T12:10:13+08:00");
+        testPropertyIsEqualDate(f, date(2012, FEBRUARY, 1, 12, 10, 13, 0, TimeZone.getTimeZone("GMT+8:00")));
     }
 
-    /**
-     * Checks that both positive and negative numbers are parsed to numbers, not strings
-     *
-     * @throws Exception
-     */
+    /** Checks that both positive and negative numbers are parsed to numbers, not strings */
     @Test
     public void testPositiveNegativeConsistent() throws Exception {
-        BinaryComparisonOperator f =
-                (BinaryComparisonOperator) CompilerUtil.parseFilter(this.language, "foo > -1");
+        BinaryComparisonOperator f = (BinaryComparisonOperator) parseFilter("foo > -1");
         assertEquals(Long.valueOf(-1), f.getExpression2().evaluate(null));
-        f = (BinaryComparisonOperator) CompilerUtil.parseFilter(this.language, "foo > 1");
+        f = (BinaryComparisonOperator) parseFilter("foo > 1");
         assertEquals(Long.valueOf(1), f.getExpression2().evaluate(null));
 
-        f = (BinaryComparisonOperator) CompilerUtil.parseFilter(this.language, "-1 > foo");
+        f = (BinaryComparisonOperator) parseFilter("-1 > foo");
         assertEquals(Long.valueOf(-1), f.getExpression1().evaluate(null));
-        f = (BinaryComparisonOperator) CompilerUtil.parseFilter(this.language, "1 > foo");
+        f = (BinaryComparisonOperator) parseFilter("1 > foo");
         assertEquals(Long.valueOf(1), f.getExpression1().evaluate(null));
 
-        PropertyIsBetween between =
-                (PropertyIsBetween) CompilerUtil.parseFilter(this.language, "foo between -1 and 1");
+        PropertyIsBetween between = (PropertyIsBetween) parseFilter("foo between -1 and 1");
         assertEquals(Long.valueOf(-1), between.getLowerBoundary().evaluate(null));
         assertEquals(Long.valueOf(1), between.getUpperBoundary().evaluate(null));
 
-        between =
-                (PropertyIsBetween)
-                        CompilerUtil.parseFilter(this.language, "-1 between foo and bar");
+        between = (PropertyIsBetween) parseFilter("-1 between foo and bar");
         assertEquals(Long.valueOf(-1), between.getExpression().evaluate(null));
     }
 
-    private Date date(
-            int year,
-            int month,
-            int dayOfMonth,
-            int hourOfDay,
-            int minute,
-            int second,
-            int milliscond,
-            TimeZone tz) {
+    protected Date date(
+            int year, int month, int dayOfMonth, int hourOfDay, int minute, int second, int milliscond, TimeZone tz) {
         Calendar c = Calendar.getInstance();
         c.set(Calendar.YEAR, year);
         c.set(Calendar.MONTH, month);
@@ -249,7 +249,7 @@ public class ECQLComparisonPredicateTest extends CQLComparisonPredicateTest {
         return c.getTime();
     }
 
-    private void testPropertyIsEqualDate(Filter f, Date expected) {
+    protected void testPropertyIsEqualDate(Filter f, Date expected) {
         Assert.assertTrue(f instanceof PropertyIsEqualTo);
 
         PropertyIsEqualTo eq = (PropertyIsEqualTo) f;
@@ -267,13 +267,12 @@ public class ECQLComparisonPredicateTest extends CQLComparisonPredicateTest {
      * Asserts that the filter returned is the specified by the predicate
      *
      * @param testPredicate predicate to test
-     * @throws CQLException
      */
     private void testComparison(final String testPredicate) throws CQLException {
 
         Filter expected = FilterECQLSample.getSample(testPredicate);
 
-        Filter actual = CompilerUtil.parseFilter(this.language, testPredicate);
+        Filter actual = parseFilter(testPredicate);
 
         Assert.assertNotNull("expects filter not null", actual);
 

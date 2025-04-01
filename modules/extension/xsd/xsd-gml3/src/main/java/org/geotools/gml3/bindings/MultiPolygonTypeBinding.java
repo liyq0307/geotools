@@ -51,6 +51,7 @@ import org.locationtech.jts.geom.Polygon;
  *
  * @generated
  */
+@SuppressWarnings("ComparableType")
 public class MultiPolygonTypeBinding extends AbstractComplexBinding implements Comparable {
     GeometryFactory gFactory;
 
@@ -59,10 +60,12 @@ public class MultiPolygonTypeBinding extends AbstractComplexBinding implements C
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MultiPolygonType;
     }
 
+    @Override
     public int getExecutionMode() {
         return BEFORE;
     }
@@ -74,6 +77,7 @@ public class MultiPolygonTypeBinding extends AbstractComplexBinding implements C
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return MultiPolygon.class;
     }
@@ -85,12 +89,14 @@ public class MultiPolygonTypeBinding extends AbstractComplexBinding implements C
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List polys = node.getChildValues(Polygon.class);
+        List<Polygon> polys = node.getChildValues(Polygon.class);
 
-        return gFactory.createMultiPolygon((Polygon[]) polys.toArray(new Polygon[polys.size()]));
+        return gFactory.createMultiPolygon(polys.toArray(new Polygon[polys.size()]));
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if (GML.polygonMember.equals(name)) {
             MultiPolygon multiPolygon = (MultiPolygon) object;
@@ -109,10 +115,10 @@ public class MultiPolygonTypeBinding extends AbstractComplexBinding implements C
     }
 
     /**
-     * Implement comparable because both MultiPolygonBinding and MultiSurfaceBinding are bound to
-     * the same class, MultiPolygon. Since MultiPolygon is deprecated by gml3 MultiSurface always
-     * wins.
+     * Implement comparable because both MultiPolygonBinding and MultiSurfaceBinding are bound to the same class,
+     * MultiPolygon. Since MultiPolygon is deprecated by gml3 MultiSurface always wins.
      */
+    @Override
     public int compareTo(Object o) {
         if (o instanceof MultiSurfaceTypeBinding) {
             return 1;

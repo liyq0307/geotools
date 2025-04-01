@@ -25,12 +25,14 @@ import org.junit.Test;
 
 public class OSMTileIdentifierTest extends TileIdentifierTest {
 
+    @Override
     @Test
     public void testGetId() {
         // System.out.println(this.tileId.getId());
         Assert.assertEquals("SomeService_5_10_12", this.tileId.getId());
     }
 
+    @Override
     @Test
     public void testGetCode() {
         Assert.assertEquals("5/10/12", this.tileId.getCode());
@@ -38,22 +40,20 @@ public class OSMTileIdentifierTest extends TileIdentifierTest {
 
     @Test
     public void testGetRightNeighbour() {
-        OSMTileIdentifier neighbour =
-                new OSMTileIdentifier(11, 12, new WebMercatorZoomLevel(5), "SomeService");
+        OSMTileIdentifier neighbour = new OSMTileIdentifier(11, 12, new WebMercatorZoomLevel(5), "SomeService");
 
         Assert.assertEquals(neighbour, this.tileId.getRightNeighbour());
     }
 
     @Test
     public void testGetLowertNeighbour() {
-        OSMTileIdentifier neighbour =
-                new OSMTileIdentifier(10, 13, new WebMercatorZoomLevel(5), "SomeService");
+        OSMTileIdentifier neighbour = new OSMTileIdentifier(10, 13, new WebMercatorZoomLevel(5), "SomeService");
 
         Assert.assertEquals(neighbour, this.tileId.getLowerNeighbour());
     }
 
-    protected TileIdentifier createTestTileIdentifier(
-            ZoomLevel zoomLevel, int x, int y, String name) {
+    @Override
+    protected TileIdentifier createTestTileIdentifier(ZoomLevel zoomLevel, int x, int y, String name) {
         return new OSMTileIdentifier(x, y, zoomLevel, name);
     }
 }

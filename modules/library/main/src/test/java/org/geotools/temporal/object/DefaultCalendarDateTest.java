@@ -18,8 +18,13 @@ package org.geotools.temporal.object;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
+import org.geotools.api.temporal.CalendarDate;
+import org.geotools.api.temporal.TemporalReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
 import org.geotools.temporal.reference.DefaultTemporalReferenceSystem;
@@ -27,9 +32,6 @@ import org.geotools.util.SimpleInternationalString;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.temporal.CalendarDate;
-import org.opengis.temporal.TemporalReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /** @author Mehdi Sidhoum (Geomatys) */
 public class DefaultCalendarDateTest {
@@ -58,7 +60,7 @@ public class DefaultCalendarDateTest {
     @Test
     public void testGetCalendarEraName() {
         InternationalString result = calendarDate1.getCalendarEraName();
-        assertTrue(calendarDate2.getCalendarEraName().equals(result));
+        assertEquals(calendarDate2.getCalendarEraName(), result);
     }
 
     /** Test of getCalendarDate method, of class DefaultCalendarDate. */
@@ -72,9 +74,8 @@ public class DefaultCalendarDateTest {
     @Test
     public void testSetCalendarEraName() {
         InternationalString result = calendarDate1.getCalendarEraName();
-        ((DefaultCalendarDate) calendarDate1)
-                .setCalendarEraName(new SimpleInternationalString("new Era"));
-        assertFalse(calendarDate1.getCalendarEraName().equals(result));
+        ((DefaultCalendarDate) calendarDate1).setCalendarEraName(new SimpleInternationalString("new Era"));
+        assertNotEquals(calendarDate1.getCalendarEraName(), result);
     }
 
     /** Test of setCalendarDate method, of class DefaultCalendarDate. */
@@ -89,7 +90,7 @@ public class DefaultCalendarDateTest {
     /** Test of equals method, of class DefaultCalendarDate. */
     @Test
     public void testEquals() {
-        assertFalse(calendarDate1.equals(null));
+        assertNotEquals(null, calendarDate1);
         assertEquals(calendarDate1, calendarDate1);
     }
 
@@ -97,13 +98,13 @@ public class DefaultCalendarDateTest {
     @Test
     public void testHashCode() {
         int result = calendarDate1.hashCode();
-        assertFalse(calendarDate2.hashCode() == result);
+        assertNotEquals(calendarDate2.hashCode(), result);
     }
 
     /** Test of toString method, of class DefaultCalendarDate. */
     @Test
     public void testToString() {
         String result = calendarDate1.toString();
-        assertFalse(calendarDate2.toString().equals(result));
+        assertNotEquals(calendarDate2.toString(), result);
     }
 }

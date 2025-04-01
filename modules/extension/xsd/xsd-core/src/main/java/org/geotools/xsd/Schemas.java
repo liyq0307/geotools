@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -107,27 +106,23 @@ public class Schemas {
 
     static {
         // need to register custom factory to load schema resources
-        Resource.Factory.Registry.INSTANCE
-                .getExtensionToFactoryMap()
-                .put("xsd", new XSDResourceFactoryImpl());
+        Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap().put("xsd", new XSDResourceFactoryImpl());
     }
 
     /**
-     * Finds all the XSDSchemas used by the {@link Configuration configuration} by looking at the
-     * configuration's schema locator and its dependencies.
+     * Finds all the XSDSchemas used by the {@link Configuration configuration} by looking at the configuration's schema
+     * locator and its dependencies.
      *
      * @param configuration the {@link Configuration} for which to find all its related schemas
      * @return a {@link SchemaIndex} holding the schemas related to <code>configuration</code>
      */
     public static final SchemaIndex findSchemas(Configuration configuration) {
-        Set configurations = new HashSet(configuration.allDependencies());
+        Set<Configuration> configurations = new HashSet<>(configuration.allDependencies());
         configurations.add(configuration);
 
-        List resolvedSchemas = new ArrayList(configurations.size());
+        List<XSDSchema> resolvedSchemas = new ArrayList<>(configurations.size());
 
-        for (Iterator it = configurations.iterator(); it.hasNext(); ) {
-            Configuration conf = (Configuration) it.next();
-
+        for (Configuration conf : configurations) {
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.fine("looking up schema for " + conf.getNamespaceURI());
             }
@@ -161,8 +156,7 @@ public class Schemas {
             }
         }
 
-        XSDSchema[] schemas =
-                (XSDSchema[]) resolvedSchemas.toArray(new XSDSchema[resolvedSchemas.size()]);
+        XSDSchema[] schemas = resolvedSchemas.toArray(new XSDSchema[resolvedSchemas.size()]);
         SchemaIndex index = new SchemaIndexImpl(schemas);
 
         return index;
@@ -174,14 +168,12 @@ public class Schemas {
      * @param configuration The parser configuration.
      * @return A list of location resolvers, empty if none found.
      */
-    public static List findSchemaLocationResolvers(Configuration configuration) {
-        List all = configuration.allDependencies();
-        List resolvers = new ArrayList();
+    public static List<XSDSchemaLocationResolver> findSchemaLocationResolvers(Configuration configuration) {
+        List<Configuration> all = configuration.allDependencies();
+        List<XSDSchemaLocationResolver> resolvers = new ArrayList<>();
 
-        for (Iterator c = all.iterator(); c.hasNext(); ) {
-            configuration = (Configuration) c.next();
-
-            XSDSchemaLocationResolver resolver = new SchemaLocationResolver(configuration.getXSD());
+        for (Configuration c : all) {
+            XSDSchemaLocationResolver resolver = new SchemaLocationResolver(c.getXSD());
 
             if (resolver != null) {
                 resolvers.add(resolver);
@@ -199,21 +191,21 @@ public class Schemas {
      * @throws IOException In the event of a schema parsing error.
      */
     public static final XSDSchema parse(String location) throws IOException {
-        return parse(location, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+        return parse(location, Collections.emptyList(), Collections.emptyList());
     }
 
     /**
      * Parses a schema at the specified location.
      *
      * @param location A uri pointing to the location of the schema.
-     * @param locators A list of schema locator objects to be used when parsing imports/includes of
-     *     the main schema.
-     * @param resolvers A list of schema location resolvers used to override schema locations
-     *     encountered in an instance document or an imported schema.
+     * @param locators A list of schema locator objects to be used when parsing imports/includes of the main schema.
+     * @param resolvers A list of schema location resolvers used to override schema locations encountered in an instance
+     *     document or an imported schema.
      * @return The parsed schema, or null if the schema could not be parsed.
      * @throws IOException In the event of a schema parsing error.
      */
-    public static final XSDSchema parse(String location, List locators, List resolvers)
+    public static final XSDSchema parse(
+            String location, List<XSDSchemaLocator> locators, List<XSDSchemaLocationResolver> resolvers)
             throws IOException {
         return parse(location, locators, resolvers, null);
     }
@@ -222,17 +214,19 @@ public class Schemas {
      * Parses a schema at the specified location.
      *
      * @param location A uri pointing to the location of the schema.
-     * @param locators A list of schema locator objects to be used when parsing imports/includes of
-     *     the main schema.
-     * @param resolvers A list of schema location resolvers used to override schema locations
-     *     encountered in an instance document or an imported schema.
-     * @param uriHandlers A list of uri handlers to inject into the parsing chain, to handle
-     *     externally referenced resources, like external schemas, etc...
+     * @param locators A list of schema locator objects to be used when parsing imports/includes of the main schema.
+     * @param resolvers A list of schema location resolvers used to override schema locations encountered in an instance
+     *     document or an imported schema.
+     * @param uriHandlers A list of uri handlers to inject into the parsing chain, to handle externally referenced
+     *     resources, like external schemas, etc...
      * @return The parsed schema, or null if the schema could not be parsed.
      * @throws IOException In the event of a schema parsing error.
      */
     public static final XSDSchema parse(
-            String location, List locators, List resolvers, List<URIHandler> uriHandlers)
+            String location,
+            List<XSDSchemaLocator> locators,
+            List<XSDSchemaLocationResolver> resolvers,
+            List<URIHandler> uriHandlers)
             throws IOException {
         ResourceSet resourceSet = new ResourceSetImpl();
 
@@ -255,8 +249,7 @@ public class Schemas {
         return parse(location, resourceSet);
     }
 
-    public static final XSDSchema parse(String location, ResourceSet resourceSet)
-            throws IOException {
+    public static final XSDSchema parse(String location, ResourceSet resourceSet) throws IOException {
         // check for case of file url, make sure it is an absolute reference
         File locationFile = null;
         try {
@@ -273,8 +266,7 @@ public class Schemas {
 
         URI uri = URI.createURI(location);
 
-        XSDResourceImpl xsdMainResource =
-                (XSDResourceImpl) resourceSet.createResource(URI.createURI(".xsd"));
+        XSDResourceImpl xsdMainResource = (XSDResourceImpl) resourceSet.createResource(URI.createURI(".xsd"));
         xsdMainResource.setURI(uri);
 
         // read resource before synchronize: Shorter lock duration and prevention of deadlock
@@ -318,14 +310,9 @@ public class Schemas {
     /**
      * Fetches the contents of the URI into a byte[].
      *
-     * @param uri
-     * @param options
-     * @param response
      * @return The resource data
-     * @throws IOException
      */
-    private static byte[] readUriResource(URI uri, ResourceSet resourceSet, Map<?, ?> response)
-            throws IOException {
+    private static byte[] readUriResource(URI uri, ResourceSet resourceSet, Map<?, ?> response) throws IOException {
         Map<Object, Object> options = resourceSet.getLoadOptions();
         URIConverter uriConverter = getUriConverter(resourceSet);
 
@@ -340,17 +327,14 @@ public class Schemas {
     }
 
     /**
-     * Fetches the map to be used as reponse from the given options, creating a new one if not
-     * existing.
+     * Fetches the map to be used as reponse from the given options, creating a new one if not existing.
      *
-     * @param options
      * @return a map to be used as response
      */
     private static Map<?, ?> getOrCreateResponseFrom(Map<Object, Object> options) {
-        Map<?, ?> response =
-                (options == null) ? null : (Map<?, ?>) options.get(URIConverter.OPTION_RESPONSE);
+        Map<?, ?> response = (options == null) ? null : (Map<?, ?>) options.get(URIConverter.OPTION_RESPONSE);
         if (response == null) {
-            response = new HashMap<Object, Object>();
+            response = new HashMap<>();
         }
         return response;
     }
@@ -365,7 +349,8 @@ public class Schemas {
             return false;
         }
 
-        return schema.getElementDeclarations().isEmpty() && schema.getTypeDefinitions().isEmpty();
+        return schema.getElementDeclarations().isEmpty()
+                && schema.getTypeDefinitions().isEmpty();
     }
 
     private static void forceImport(XSDSchemaImpl schema) {
@@ -386,12 +371,11 @@ public class Schemas {
      * @param importee The schema being imported.
      * @return The import object.
      */
-    public static final XSDImport importSchema(XSDSchema schema, final XSDSchema importee)
-            throws IOException {
+    public static final XSDImport importSchema(XSDSchema schema, final XSDSchema importee) throws IOException {
         Resource resource = schema.eResource();
         if (resource == null) {
             final ResourceSet resourceSet = new ResourceSetImpl();
-            resource = (XSDResourceImpl) resourceSet.createResource(URI.createURI(".xsd"));
+            resource = resourceSet.createResource(URI.createURI(".xsd"));
             resource.getContents().add(schema);
         }
 
@@ -399,31 +383,30 @@ public class Schemas {
         imprt.setNamespace(importee.getTargetNamespace());
         schema.getContents().add(imprt);
 
-        List<XSDSchemaLocator> locators = new ArrayList<XSDSchemaLocator>();
-        locators.add(
-                new XSDSchemaLocator() {
-                    public XSDSchema locateSchema(
-                            XSDSchema xsdSchema,
-                            String namespaceURI,
-                            String rawSchemaLocationURI,
-                            String resolvedSchemaLocationURI) {
+        List<XSDSchemaLocator> locators = new ArrayList<>();
+        locators.add(new XSDSchemaLocator() {
+            @Override
+            public XSDSchema locateSchema(
+                    XSDSchema xsdSchema,
+                    String namespaceURI,
+                    String rawSchemaLocationURI,
+                    String resolvedSchemaLocationURI) {
 
-                        if (importee.getTargetNamespace().equals(namespaceURI)) {
-                            return importee;
-                        }
+                if (importee.getTargetNamespace().equals(namespaceURI)) {
+                    return importee;
+                }
 
-                        return null;
-                    }
-                });
+                return null;
+            }
+        });
         AdapterFactory adapterFactory = new SchemaLocatorAdapterFactory(locators);
         resource.getResourceSet().getAdapterFactories().add(adapterFactory);
         return imprt;
     }
 
     /**
-     * Remove all references to a schema It is important to call this method for every dynamic
-     * schema created that is not needed anymore, because references in the static schema's will
-     * otherwise keep it alive forever
+     * Remove all references to a schema It is important to call this method for every dynamic schema created that is
+     * not needed anymore, because references in the static schema's will otherwise keep it alive forever
      *
      * @param schema to be flushed
      */
@@ -437,13 +420,11 @@ public class Schemas {
                     synchronized (Schemas.class) {
                         synchronized (resolvedSchema.eAdapters()) {
                             resolvedSchema.getReferencingDirectives().remove(directive);
-                            for (XSDElementDeclaration dec :
-                                    resolvedSchema.getElementDeclarations()) {
+                            for (XSDElementDeclaration dec : resolvedSchema.getElementDeclarations()) {
                                 if (dec == null) {
                                     continue;
                                 }
-                                List<XSDElementDeclaration> toRemove =
-                                        new ArrayList<XSDElementDeclaration>();
+                                List<XSDElementDeclaration> toRemove = new ArrayList<>();
                                 for (XSDElementDeclaration subs : dec.getSubstitutionGroup()) {
                                     if (subs != null
                                             && subs.getContainer() != null
@@ -461,19 +442,19 @@ public class Schemas {
     }
 
     public static final List validateImportsIncludes(String location) throws IOException {
-        return validateImportsIncludes(location, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+        return validateImportsIncludes(location, Collections.emptyList(), Collections.emptyList());
     }
 
     public static final List validateImportsIncludes(
-            String location, XSDSchemaLocator[] locators, XSDSchemaLocationResolver[] resolvers)
-            throws IOException {
+            String location, XSDSchemaLocator[] locators, XSDSchemaLocationResolver[] resolvers) throws IOException {
         return validateImportsIncludes(
                 location,
-                (locators != null) ? Arrays.asList(locators) : Collections.EMPTY_LIST,
-                (resolvers != null) ? Arrays.asList(resolvers) : Collections.EMPTY_LIST);
+                (locators != null) ? Arrays.asList(locators) : Collections.emptyList(),
+                (resolvers != null) ? Arrays.asList(resolvers) : Collections.emptyList());
     }
 
-    public static final List validateImportsIncludes(String location, List locators, List resolvers)
+    public static final List validateImportsIncludes(
+            String location, List<XSDSchemaLocator> locators, List<XSDSchemaLocationResolver> resolvers)
             throws IOException {
 
         // create a parser
@@ -488,15 +469,14 @@ public class Schemas {
             throw (IOException) new IOException("could not create parser").initCause(e);
         }
 
-        SchemaImportIncludeValidator validator =
-                new SchemaImportIncludeValidator(locators, resolvers);
+        SchemaImportIncludeValidator validator = new SchemaImportIncludeValidator(locators, resolvers);
 
         // queue of files to parse
-        LinkedList q = new LinkedList();
+        LinkedList<String> q = new LinkedList<>();
         q.add(location);
 
         while (!q.isEmpty()) {
-            location = (String) q.removeFirst();
+            location = q.removeFirst();
             validator.setBaseLocation(location);
 
             try {
@@ -515,7 +495,7 @@ public class Schemas {
             }
         }
 
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
     }
 
     static final class SchemaImportIncludeValidator extends DefaultHandler {
@@ -523,32 +503,34 @@ public class Schemas {
         /** base location */
         String baseLocation;
         /** locators for resolving to schemas directely */
-        List locators;
+        List<XSDSchemaLocator> locators;
         /** locators for resolving to absolute schema locations */
-        List resolvers;
+        List<XSDSchemaLocationResolver> resolvers;
         /** tracking seen namespaces and schema locations */
-        Set seen;
+        Set<String> seen;
         /** list of errors encountered */
-        List errors;
+        List<String> errors;
         /** next set of locations to process */
-        List next;
+        List<String> next;
 
-        SchemaImportIncludeValidator(List locators, List resolvers) {
+        SchemaImportIncludeValidator(List<XSDSchemaLocator> locators, List<XSDSchemaLocationResolver> resolvers) {
             this.locators = locators;
             this.resolvers = resolvers;
-            seen = new HashSet();
-            errors = new ArrayList();
-            next = new ArrayList();
+            seen = new HashSet<>();
+            errors = new ArrayList<>();
+            next = new ArrayList<>();
         }
 
         public void setBaseLocation(String baseLocation) {
             this.baseLocation = baseLocation;
         }
 
+        @Override
         public void startDocument() throws SAXException {
             next.clear();
         }
 
+        @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes)
                 throws SAXException {
             // process import
@@ -565,13 +547,10 @@ public class Schemas {
 
                 if (schemaLocation != null) {
                     // look for a locator or resolver that can handle it
-                    for (Iterator l = locators.iterator(); l.hasNext(); ) {
-                        XSDSchemaLocator locator = (XSDSchemaLocator) l.next();
-
+                    for (XSDSchemaLocator locator : locators) {
                         // check for schema locator which canHandle
                         if (locator instanceof SchemaLocator) {
-                            if (((SchemaLocator) locator)
-                                    .canHandle(null, namespace, schemaLocation, null)) {
+                            if (((SchemaLocator) locator).canHandle(null, namespace, schemaLocation, null)) {
                                 // cool, return here and do not recurse
                                 return;
                             }
@@ -603,13 +582,11 @@ public class Schemas {
 
         String resolve(String namespace, String location) {
             // look for a location resolver capable of handling it
-            for (Iterator r = resolvers.iterator(); r.hasNext(); ) {
-                XSDSchemaLocationResolver resolver = (XSDSchemaLocationResolver) r.next();
+            for (XSDSchemaLocationResolver resolver : resolvers) {
                 if (resolver instanceof SchemaLocationResolver) {
                     if (((SchemaLocationResolver) resolver).canHandle(null, namespace, location)) {
                         // can handle, actually resolve and recurse
-                        String resolvedSchemaLocation =
-                                resolver.resolveSchemaLocation(null, namespace, location);
+                        String resolvedSchemaLocation = resolver.resolveSchemaLocation(null, namespace, location);
                         if (resolvedSchemaLocation != null) {
                             return resolvedSchemaLocation;
                         }
@@ -652,8 +629,7 @@ public class Schemas {
     }
 
     /**
-     * Returns a list of all child element declarations of the specified type, no order is
-     * guaranteed.
+     * Returns a list of all child element declarations of the specified type, no order is guaranteed.
      *
      * @param type The type.
      * @return A list of @link XSDElementDeclaration objects, one for each child element.
@@ -668,15 +644,14 @@ public class Schemas {
      * @param type The type definition.
      * @param name The naem of the child element declaration.
      * @param includeParents Flag to control wether parent types are included.
-     * @return The particle representing the element declaration, or <code>null</code> if it could
-     *     not be found.
+     * @return The particle representing the element declaration, or <code>null</code> if it could not be found.
      */
     public static final XSDParticle getChildElementParticle(
             XSDTypeDefinition type, String name, boolean includeParents) {
         List particles = getChildElementParticles(type, includeParents);
 
-        for (Iterator p = particles.iterator(); p.hasNext(); ) {
-            XSDParticle particle = (XSDParticle) p.next();
+        for (Object o : particles) {
+            XSDParticle particle = (XSDParticle) o;
             XSDElementDeclaration element = (XSDElementDeclaration) particle.getContent();
 
             if (element.isElementDeclarationReference()) {
@@ -692,53 +667,51 @@ public class Schemas {
     }
 
     /**
-     * Returns a list of all child element particles that corresponde to element declarations of the
-     * specified type, no order is guaranteed.
+     * Returns a list of all child element particles that corresponde to element declarations of the specified type, no
+     * order is guaranteed.
      *
-     * <p>The <code>includeParents</code> flag controls if this method should returns those elements
-     * defined on parent types.
+     * <p>The <code>includeParents</code> flag controls if this method should returns those elements defined on parent
+     * types.
      *
      * @param type THe type.
      * @param includeParents flag indicating if parent types should be processed
      * @return A list of {@link XSDParticle}.
      */
-    public static final List getChildElementParticles(
-            XSDTypeDefinition type, boolean includeParents) {
-        final HashSet contents = new HashSet();
-        final ArrayList particles = new ArrayList();
-        TypeWalker.Visitor visitor =
-                new TypeWalker.Visitor() {
-                    public boolean visit(XSDTypeDefinition type) {
-                        // simple types dont have children
-                        if (type instanceof XSDSimpleTypeDefinition) {
-                            return true;
+    public static final List<XSDParticle> getChildElementParticles(XSDTypeDefinition type, boolean includeParents) {
+        final Set<XSDElementDeclaration> contents = new HashSet<>();
+        final List<XSDParticle> particles = new ArrayList<>();
+        TypeWalker.Visitor visitor = new TypeWalker.Visitor() {
+            @Override
+            public boolean visit(XSDTypeDefinition type) {
+                // simple types don't have children
+                if (type instanceof XSDSimpleTypeDefinition) {
+                    return true;
+                }
+
+                XSDComplexTypeDefinition cType = (XSDComplexTypeDefinition) type;
+
+                ElementVisitor visitor = new ElementVisitor() {
+                    @Override
+                    public void visit(XSDParticle particle) {
+                        XSDElementDeclaration element = (XSDElementDeclaration) particle.getContent();
+
+                        if (element.isElementDeclarationReference()) {
+                            element = element.getResolvedElementDeclaration();
                         }
 
-                        XSDComplexTypeDefinition cType = (XSDComplexTypeDefinition) type;
-
-                        ElementVisitor visitor =
-                                new ElementVisitor() {
-                                    public void visit(XSDParticle particle) {
-                                        XSDElementDeclaration element =
-                                                (XSDElementDeclaration) particle.getContent();
-
-                                        if (element.isElementDeclarationReference()) {
-                                            element = element.getResolvedElementDeclaration();
-                                        }
-
-                                        // make sure unique
-                                        if (!contents.contains(element)) {
-                                            contents.add(element);
-                                            particles.add(particle);
-                                        }
-                                    }
-                                };
-
-                        visitElements(cType, visitor);
-
-                        return true;
+                        // make sure unique
+                        if (!contents.contains(element)) {
+                            contents.add(element);
+                            particles.add(particle);
+                        }
                     }
                 };
+
+                visitElements(cType, visitor);
+
+                return true;
+            }
+        };
 
         if (includeParents) {
             // walk up the type hierarchy of the element to generate a list of
@@ -749,74 +722,72 @@ public class Schemas {
             visitor.visit(type);
         }
 
-        return new ArrayList(particles);
+        return new ArrayList<>(particles);
     }
 
     /**
-     * Returns a list of all xs:any element particles that correspond to element declarations of the
-     * specified type.
+     * Returns a list of all xs:any element particles that correspond to element declarations of the specified type.
      *
      * @param type The type.
      * @return A list of {@link XSDParticle}.
      */
-    public static final List getAnyElementParticles(XSDTypeDefinition type) {
-        final HashSet contents = new HashSet();
-        final ArrayList particles = new ArrayList();
-        TypeWalker.Visitor visitor =
-                new TypeWalker.Visitor() {
-                    public boolean visit(XSDTypeDefinition type) {
-                        // simple types doesn't have children
-                        if (type instanceof XSDSimpleTypeDefinition) {
-                            return true;
+    public static final List<XSDParticle> getAnyElementParticles(XSDTypeDefinition type) {
+        final Set<XSDWildcard> contents = new HashSet<>();
+        final List<XSDParticle> particles = new ArrayList<>();
+        TypeWalker.Visitor visitor = new TypeWalker.Visitor() {
+            @Override
+            public boolean visit(XSDTypeDefinition type) {
+                // simple types doesn't have children
+                if (type instanceof XSDSimpleTypeDefinition) {
+                    return true;
+                }
+
+                XSDComplexTypeDefinition cType = (XSDComplexTypeDefinition) type;
+
+                ElementVisitor visitor = new ElementVisitor() {
+                    @Override
+                    public void visit(XSDParticle particle) {
+                        XSDWildcard element = (XSDWildcard) particle.getContent();
+
+                        // make sure unique
+                        if (!contents.contains(element)) {
+                            contents.add(element);
+                            particles.add(particle);
                         }
-
-                        XSDComplexTypeDefinition cType = (XSDComplexTypeDefinition) type;
-
-                        ElementVisitor visitor =
-                                new ElementVisitor() {
-                                    public void visit(XSDParticle particle) {
-                                        XSDWildcard element = (XSDWildcard) particle.getContent();
-
-                                        // make sure unique
-                                        if (!contents.contains(element)) {
-                                            contents.add(element);
-                                            particles.add(particle);
-                                        }
-                                    }
-                                };
-
-                        visitAnyElements(cType, visitor);
-
-                        return true;
                     }
                 };
+
+                visitAnyElements(cType, visitor);
+
+                return true;
+            }
+        };
 
         // just visit this type
         visitor.visit(type);
 
-        return new ArrayList(particles);
+        return new ArrayList<>(particles);
     }
 
     /**
-     * Method to visit xs:any element. The method differs from visitElements only by the fact that
-     * it visits xs:any rather than <element>
+     * Method to visit xs:any element. The method differs from visitElements only by the fact that it visits xs:any
+     * rather than <element>
      *
      * @param cType XSDComplexTypeDefinition
      * @param visitor ElementVisitor
      */
     private static void visitAnyElements(XSDComplexTypeDefinition cType, ElementVisitor visitor) {
         // simple content cant define children
-        if ((cType.getContent() == null)
-                || (cType.getContent() instanceof XSDSimpleTypeDefinition)) {
+        if ((cType.getContent() == null) || (cType.getContent() instanceof XSDSimpleTypeDefinition)) {
             return;
         }
 
         // use a queue to simulate the recursion
-        LinkedList queue = new LinkedList();
-        queue.addLast(cType.getContent());
+        LinkedList<XSDParticle> queue = new LinkedList<>();
+        queue.addLast((XSDParticle) cType.getContent());
 
         while (!queue.isEmpty()) {
-            XSDParticle particle = (XSDParticle) queue.removeFirst();
+            XSDParticle particle = queue.removeFirst();
 
             // analyze type of particle content
             int pType = XSDUtil.nodeType(particle.getElement());
@@ -829,8 +800,7 @@ public class Schemas {
 
                 switch (pType) {
                     case XSDConstants.GROUP_ELEMENT:
-                        XSDModelGroupDefinition grpDef =
-                                (XSDModelGroupDefinition) particle.getContent();
+                        XSDModelGroupDefinition grpDef = (XSDModelGroupDefinition) particle.getContent();
 
                         if (grpDef.isModelGroupDefinitionReference()) {
                             grpDef = grpDef.getResolvedModelGroupDefinition();
@@ -850,7 +820,7 @@ public class Schemas {
 
                 if (grp != null) {
                     // enque all particles in the group
-                    List parts = grp.getParticles();
+                    List<XSDParticle> parts = grp.getParticles();
 
                     // TODO: this check isa bit hacky.. .figure out why this is the case
                     if (parts.isEmpty()) {
@@ -867,23 +837,21 @@ public class Schemas {
     }
 
     /**
-     * Returns a list of all child element declarations of the specified type, no order is
-     * guaranteed.
+     * Returns a list of all child element declarations of the specified type, no order is guaranteed.
      *
-     * <p>The <code>includeParents</code> flag controls if this method should returns those elements
-     * defined on parent types.
+     * <p>The <code>includeParents</code> flag controls if this method should returns those elements defined on parent
+     * types.
      *
      * @param type The type
      * @param includeParents flag indicating if parent types should be processed
      * @return A list of @link XSDElementDeclaration objects, one for each child element.
      */
-    public static final List getChildElementDeclarations(
+    public static final List<XSDElementDeclaration> getChildElementDeclarations(
             XSDTypeDefinition type, boolean includeParents) {
-        List particles = getChildElementParticles(type, includeParents);
-        List elements = new ArrayList();
+        List<XSDParticle> particles = getChildElementParticles(type, includeParents);
+        List<XSDElementDeclaration> elements = new ArrayList<>();
 
-        for (Iterator p = particles.iterator(); p.hasNext(); ) {
-            XSDParticle particle = (XSDParticle) p.next();
+        for (XSDParticle particle : particles) {
             XSDElementDeclaration decl = (XSDElementDeclaration) particle.getContent();
 
             if (decl.isElementDeclarationReference()) {
@@ -907,26 +875,25 @@ public class Schemas {
      *
      * @return The base type, or null if it could not be found.
      */
-    public static final XSDTypeDefinition getBaseTypeDefinition(
-            XSDTypeDefinition type, final QName parentTypeName) {
-        final List found = new ArrayList();
+    public static final XSDTypeDefinition getBaseTypeDefinition(XSDTypeDefinition type, final QName parentTypeName) {
+        final List<XSDTypeDefinition> found = new ArrayList<>();
 
-        TypeWalker.Visitor visitor =
-                new TypeWalker.Visitor() {
-                    public boolean visit(XSDTypeDefinition type) {
-                        if (nameMatches(type, parentTypeName)) {
-                            found.add(type);
+        TypeWalker.Visitor visitor = new TypeWalker.Visitor() {
+            @Override
+            public boolean visit(XSDTypeDefinition type) {
+                if (nameMatches(type, parentTypeName)) {
+                    found.add(type);
 
-                            return false;
-                        }
+                    return false;
+                }
 
-                        return true;
-                    }
-                };
+                return true;
+            }
+        };
 
         new TypeWalker().walk(type, visitor);
 
-        return found.isEmpty() ? null : (XSDTypeDefinition) found.get(0);
+        return found.isEmpty() ? null : found.get(0);
     }
 
     /**
@@ -958,46 +925,42 @@ public class Schemas {
      * @param type The type definition containg the declaration <code>element</code>
      * @param element The declaration of the element.
      * @return The minimum number of occurences.
-     * @throws IllegalArgumentException If the element declaration cannot be locaated withing the
-     *     type definition.
+     * @throws IllegalArgumentException If the element declaration cannot be locaated withing the type definition.
      */
-    public static final int getMinOccurs(
-            XSDComplexTypeDefinition type, XSDElementDeclaration element) {
+    public static final int getMinOccurs(XSDComplexTypeDefinition type, XSDElementDeclaration element) {
         final XSDElementDeclaration fElement = element;
-        final ArrayList minOccurs = new ArrayList();
+        final ArrayList<Integer> minOccurs = new ArrayList<>();
 
-        ElementVisitor visitor =
-                new ElementVisitor() {
-                    public void visit(XSDParticle particle) {
-                        XSDElementDeclaration decl = (XSDElementDeclaration) particle.getContent();
+        ElementVisitor visitor = new ElementVisitor() {
+            @Override
+            public void visit(XSDParticle particle) {
+                XSDElementDeclaration decl = (XSDElementDeclaration) particle.getContent();
 
-                        if (decl.isElementDeclarationReference()) {
-                            decl = decl.getResolvedElementDeclaration();
-                        }
+                if (decl.isElementDeclarationReference()) {
+                    decl = decl.getResolvedElementDeclaration();
+                }
 
-                        if (decl == fElement) {
-                            if (particle.isSetMinOccurs()) {
-                                minOccurs.add(Integer.valueOf(particle.getMinOccurs()));
-                            } else if (particle.getContainer() instanceof XSDModelGroup
-                                    && particle.getContainer().getContainer()
-                                            instanceof XSDParticle) {
-                                particle = (XSDParticle) particle.getContainer().getContainer();
-                                minOccurs.add(Integer.valueOf(particle.getMinOccurs()));
-                            } else {
-                                minOccurs.add(1);
-                            }
-                        }
+                if (decl == fElement) {
+                    if (particle.isSetMinOccurs()) {
+                        minOccurs.add(Integer.valueOf(particle.getMinOccurs()));
+                    } else if (particle.getContainer() instanceof XSDModelGroup
+                            && particle.getContainer().getContainer() instanceof XSDParticle) {
+                        particle = (XSDParticle) particle.getContainer().getContainer();
+                        minOccurs.add(Integer.valueOf(particle.getMinOccurs()));
+                    } else {
+                        minOccurs.add(1);
                     }
-                };
+                }
+            }
+        };
 
         visitElements(type, visitor, true);
 
         if (minOccurs.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Element: " + element + " not found in type: " + type);
+            throw new IllegalArgumentException("Element: " + element + " not found in type: " + type);
         }
 
-        return ((Integer) minOccurs.get(0)).intValue();
+        return minOccurs.get(0).intValue();
     }
 
     /**
@@ -1006,65 +969,59 @@ public class Schemas {
      * @param type The type definition containg the declaration <code>element</code>
      * @param element The declaration of the element.
      * @return The minimum number of occurences.
-     * @throws IllegalArgumentException If the element declaration cannot be locaated withing the
-     *     type definition.
+     * @throws IllegalArgumentException If the element declaration cannot be locaated withing the type definition.
      */
-    public static final int getMaxOccurs(
-            XSDComplexTypeDefinition type, XSDElementDeclaration element) {
+    public static final int getMaxOccurs(XSDComplexTypeDefinition type, XSDElementDeclaration element) {
         final XSDElementDeclaration fElement = element;
-        final ArrayList maxOccurs = new ArrayList();
+        final ArrayList<Integer> maxOccurs = new ArrayList<>();
 
-        ElementVisitor visitor =
-                new ElementVisitor() {
-                    public void visit(XSDParticle particle) {
-                        XSDElementDeclaration decl = (XSDElementDeclaration) particle.getContent();
+        ElementVisitor visitor = new ElementVisitor() {
+            @Override
+            public void visit(XSDParticle particle) {
+                XSDElementDeclaration decl = (XSDElementDeclaration) particle.getContent();
 
-                        if (decl.isElementDeclarationReference()) {
-                            decl = decl.getResolvedElementDeclaration();
-                        }
+                if (decl.isElementDeclarationReference()) {
+                    decl = decl.getResolvedElementDeclaration();
+                }
 
-                        if (decl == fElement) {
-                            if (particle.isSetMaxOccurs()) {
-                                maxOccurs.add(Integer.valueOf(particle.getMaxOccurs()));
-                            } else if (particle.getContainer() instanceof XSDModelGroup
-                                    && particle.getContainer().getContainer()
-                                            instanceof XSDParticle) {
-                                particle = (XSDParticle) particle.getContainer().getContainer();
-                                maxOccurs.add(Integer.valueOf(particle.getMaxOccurs()));
-                            } else {
-                                maxOccurs.add(1);
-                            }
-                        }
+                if (decl == fElement) {
+                    if (particle.isSetMaxOccurs()) {
+                        maxOccurs.add(Integer.valueOf(particle.getMaxOccurs()));
+                    } else if (particle.getContainer() instanceof XSDModelGroup
+                            && particle.getContainer().getContainer() instanceof XSDParticle) {
+                        particle = (XSDParticle) particle.getContainer().getContainer();
+                        maxOccurs.add(Integer.valueOf(particle.getMaxOccurs()));
+                    } else {
+                        maxOccurs.add(1);
                     }
-                };
+                }
+            }
+        };
 
         visitElements(type, visitor, true);
 
         if (maxOccurs.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Element: " + element + " not found in type: " + type);
+            throw new IllegalArgumentException("Element: " + element + " not found in type: " + type);
         }
 
-        return ((Integer) maxOccurs.get(0)).intValue();
+        return maxOccurs.get(0).intValue();
     }
 
-    private static void visitElements(
-            XSDComplexTypeDefinition cType, ElementVisitor visitor, boolean includeParents) {
+    private static void visitElements(XSDComplexTypeDefinition cType, ElementVisitor visitor, boolean includeParents) {
         if (includeParents) {
-            LinkedList baseTypes = new LinkedList();
+            LinkedList<XSDComplexTypeDefinition> baseTypes = new LinkedList<>();
             XSDTypeDefinition baseType = cType.getBaseType();
 
             while ((baseType != null) && (baseType != baseType.getBaseType())) {
                 if (baseType instanceof XSDComplexTypeDefinition) {
-                    baseTypes.addLast(baseType);
+                    baseTypes.addLast((XSDComplexTypeDefinition) baseType);
                 }
 
                 baseType = baseType.getBaseType();
             }
 
-            for (Iterator it = baseTypes.iterator(); it.hasNext(); ) {
-                baseType = (XSDTypeDefinition) it.next();
-                visitElements((XSDComplexTypeDefinition) baseType, visitor);
+            for (XSDComplexTypeDefinition td : baseTypes) {
+                visitElements(td, visitor);
             }
         }
 
@@ -1073,17 +1030,16 @@ public class Schemas {
 
     private static void visitElements(XSDComplexTypeDefinition cType, ElementVisitor visitor) {
         // simple content cant define children
-        if ((cType.getContent() == null)
-                || (cType.getContent() instanceof XSDSimpleTypeDefinition)) {
+        if ((cType.getContent() == null) || (cType.getContent() instanceof XSDSimpleTypeDefinition)) {
             return;
         }
 
         // use a queue to simulate the recursion
-        LinkedList queue = new LinkedList();
-        queue.addLast(cType.getContent());
+        LinkedList<XSDParticle> queue = new LinkedList<>();
+        queue.addLast((XSDParticle) cType.getContent());
 
         while (!queue.isEmpty()) {
-            XSDParticle particle = (XSDParticle) queue.removeFirst();
+            XSDParticle particle = queue.removeFirst();
 
             // analyze type of particle content
             int pType = XSDUtil.nodeType(particle.getElement());
@@ -1096,8 +1052,7 @@ public class Schemas {
 
                 switch (pType) {
                     case XSDConstants.GROUP_ELEMENT:
-                        XSDModelGroupDefinition grpDef =
-                                (XSDModelGroupDefinition) particle.getContent();
+                        XSDModelGroupDefinition grpDef = (XSDModelGroupDefinition) particle.getContent();
 
                         if (grpDef.isModelGroupDefinitionReference()) {
                             grpDef = grpDef.getResolvedModelGroupDefinition();
@@ -1116,10 +1071,10 @@ public class Schemas {
                 }
 
                 if (grp != null) {
-                    // enque all particles in the group
-                    List parts = grp.getParticles();
+                    // enqueue all particles in the group
+                    List<XSDParticle> parts = grp.getParticles();
 
-                    // TODO: this check isa  bit hacky.. .figure out why this is the case
+                    // TODO: this check is a bit hacky... figure out why this is the case
                     if (parts.isEmpty()) {
                         parts = grp.getContents();
                     }
@@ -1134,26 +1089,24 @@ public class Schemas {
     }
 
     /**
-     * Returns an element declaration that is contained in the type of another element declaration.
-     * The following strategy is used to locate the child element declaration.
+     * Returns an element declaration that is contained in the type of another element declaration. The following
+     * strategy is used to locate the child element declaration.
      *
      * <ol>
-     *   <li>The immediate children of the specified element are examined, if a match is found, it
-     *       is returned. If 1. does not match, global elements that derive from the immediate
-     *       children are examined.
+     *   <li>The immediate children of the specified element are examined, if a match is found, it is returned. If 1.
+     *       does not match, global elements that derive from the immediate children are examined.
      * </ol>
      *
      * @param parent the containing element declaration
      * @param qName the qualified name of the contained element
      * @return The contained element declaration, or false if containment is not satisfied.
      */
-    public static final XSDElementDeclaration getChildElementDeclaration(
-            XSDElementDeclaration parent, QName qName) {
+    public static final XSDElementDeclaration getChildElementDeclaration(XSDElementDeclaration parent, QName qName) {
         // look for a match in a direct child
         List children = getChildElementDeclarations(parent.getType());
 
-        for (Iterator itr = children.iterator(); itr.hasNext(); ) {
-            XSDElementDeclaration element = (XSDElementDeclaration) itr.next();
+        for (Object value : children) {
+            XSDElementDeclaration element = (XSDElementDeclaration) value;
 
             if (nameMatches(element, qName)) {
                 return element;
@@ -1161,16 +1114,14 @@ public class Schemas {
         }
 
         // couldn't find one, look for match in derived elements
-        ArrayList derived = new ArrayList();
+        ArrayList<XSDElementDeclaration> derived = new ArrayList<>();
 
-        for (Iterator itr = children.iterator(); itr.hasNext(); ) {
-            XSDElementDeclaration child = (XSDElementDeclaration) itr.next();
+        for (Object o : children) {
+            XSDElementDeclaration child = (XSDElementDeclaration) o;
             derived.addAll(getDerivedElementDeclarations(child));
         }
 
-        for (Iterator itr = derived.iterator(); itr.hasNext(); ) {
-            XSDElementDeclaration child = (XSDElementDeclaration) itr.next();
-
+        for (XSDElementDeclaration child : derived) {
             if (nameMatches(child, qName)) {
                 return child;
             }
@@ -1180,19 +1131,16 @@ public class Schemas {
     }
 
     /**
-     * Returns a list of all top level elements that are of a type derived from the type of the
-     * specified element.
+     * Returns a list of all top level elements that are of a type derived from the type of the specified element.
      *
      * @param element The element.
      * @return All elements which are of a type derived from the type of the specified element.
      */
-    public static final List getDerivedElementDeclarations(XSDElementDeclaration element) {
-        List elements = element.getSchema().getElementDeclarations();
-        List derived = new ArrayList();
+    public static final List<XSDElementDeclaration> getDerivedElementDeclarations(XSDElementDeclaration element) {
+        List<XSDElementDeclaration> elements = element.getSchema().getElementDeclarations();
+        List<XSDElementDeclaration> derived = new ArrayList<>();
 
-        for (Iterator itr = elements.iterator(); itr.hasNext(); ) {
-            XSDElementDeclaration derivee = (XSDElementDeclaration) itr.next();
-
+        for (XSDElementDeclaration derivee : elements) {
             if (derivee.equals(element)) {
                 continue; // same element
             }
@@ -1218,88 +1166,81 @@ public class Schemas {
     }
 
     /**
-     * Returns a list of all attribute declarations declared in the type (or any base type) of the
-     * specified element.
+     * Returns a list of all attribute declarations declared in the type (or any base type) of the specified element.
      *
      * <p>This method is just a shortcut for {@link #getAttributeDeclarations(XSDTypeDefinition)
      * getAttributeDeclarations(element.getType()}
      *
      * @param element The element.
-     * @return A list of @link XSDAttributeDeclaration objects, one for each attribute of the
-     *     element.
+     * @return A list of @link XSDAttributeDeclaration objects, one for each attribute of the element.
      */
-    public static final List getAttributeDeclarations(XSDElementDeclaration element) {
+    public static final List<XSDAttributeDeclaration> getAttributeDeclarations(XSDElementDeclaration element) {
         return getAttributeDeclarations(element.getType());
     }
 
     /**
-     * Returns a list of all attribute declarations declared in the type (or any base type) of the
-     * specified element.
+     * Returns a list of all attribute declarations declared in the type (or any base type) of the specified element.
      *
      * @param type The type definition
-     * @return A list of @link XSDAttributeDeclaration objects, one for each attribute of the
-     *     element.
+     * @return A list of @link XSDAttributeDeclaration objects, one for each attribute of the element.
      */
-    public static final List getAttributeDeclarations(XSDTypeDefinition type) {
+    public static final List<XSDAttributeDeclaration> getAttributeDeclarations(XSDTypeDefinition type) {
         return getAttributeDeclarations(type, true);
     }
 
     /**
-     * Returns a list of all attribute declarations declared in the type (and optionally any base
-     * type) of the specified element.
+     * Returns a list of all attribute declarations declared in the type (and optionally any base type) of the specified
+     * element.
      *
      * @param type The element type
      * @param includeParents Wether to include parent types.
-     * @return A list of @link XSDAttributeDeclaration objects, one for each attribute of the
-     *     element.
+     * @return A list of @link XSDAttributeDeclaration objects, one for each attribute of the element.
      */
-    public static final List getAttributeDeclarations(
+    public static final List<XSDAttributeDeclaration> getAttributeDeclarations(
             XSDTypeDefinition type, boolean includeParents) {
-        final ArrayList attributes = new ArrayList();
+        final List<XSDAttributeDeclaration> attributes = new ArrayList<>();
 
         // walk up the type hierarchy of the element to generate a list of atts
-        TypeWalker.Visitor visitor =
-                new TypeWalker.Visitor() {
-                    public boolean visit(XSDTypeDefinition type) {
-                        // simple types dont have attributes
-                        if (type instanceof XSDSimpleTypeDefinition) {
-                            return true;
+        TypeWalker.Visitor visitor = new TypeWalker.Visitor() {
+            @Override
+            public boolean visit(XSDTypeDefinition type) {
+                // simple types dont have attributes
+                if (type instanceof XSDSimpleTypeDefinition) {
+                    return true;
+                }
+
+                XSDComplexTypeDefinition cType = (XSDComplexTypeDefinition) type;
+
+                // get all the attribute content (groups,or uses) and add to q
+                List attContent = cType.getAttributeContents();
+
+                for (Object value : attContent) {
+                    XSDAttributeGroupContent content = (XSDAttributeGroupContent) value;
+
+                    if (content instanceof XSDAttributeUse) {
+                        // an attribute, add it to the list
+                        XSDAttributeUse use = (XSDAttributeUse) content;
+                        attributes.add(use.getAttributeDeclaration());
+                    } else if (content instanceof XSDAttributeGroupDefinition) {
+                        // attribute group, add all atts in group to list
+                        XSDAttributeGroupDefinition attGrp = (XSDAttributeGroupDefinition) content;
+
+                        if (attGrp.isAttributeGroupDefinitionReference()) {
+                            attGrp = attGrp.getResolvedAttributeGroupDefinition();
                         }
 
-                        XSDComplexTypeDefinition cType = (XSDComplexTypeDefinition) type;
+                        List uses = attGrp.getAttributeUses();
 
-                        // get all the attribute content (groups,or uses) and add to q
-                        List attContent = cType.getAttributeContents();
-
-                        for (Iterator itr = attContent.iterator(); itr.hasNext(); ) {
-                            XSDAttributeGroupContent content =
-                                    (XSDAttributeGroupContent) itr.next();
-
-                            if (content instanceof XSDAttributeUse) {
-                                // an attribute, add it to the list
-                                XSDAttributeUse use = (XSDAttributeUse) content;
-                                attributes.add(use.getAttributeDeclaration());
-                            } else if (content instanceof XSDAttributeGroupDefinition) {
-                                // attribute group, add all atts in group to list
-                                XSDAttributeGroupDefinition attGrp =
-                                        (XSDAttributeGroupDefinition) content;
-
-                                if (attGrp.isAttributeGroupDefinitionReference()) {
-                                    attGrp = attGrp.getResolvedAttributeGroupDefinition();
-                                }
-
-                                List uses = attGrp.getAttributeUses();
-
-                                for (Iterator aitr = uses.iterator(); aitr.hasNext(); ) {
-                                    XSDAttributeUse use = (XSDAttributeUse) aitr.next();
-                                    attributes.add(use.getAttributeDeclaration());
-                                }
-                            }
+                        for (Object o : uses) {
+                            XSDAttributeUse use = (XSDAttributeUse) o;
+                            attributes.add(use.getAttributeDeclaration());
                         }
-
-                        return true;
                     }
-                };
+                }
+
+                return true;
+            }
+        };
 
         if (includeParents) {
             // walk up the type hierarchy of the element to generate a list of
@@ -1314,19 +1255,17 @@ public class Schemas {
     }
 
     /**
-     * Returns an attribute declaration that is contained in the type of another element
-     * declaration.
+     * Returns an attribute declaration that is contained in the type of another element declaration.
      *
      * @param element The containing element declaration.
      * @param qName The qualified name of the contained attribute
      * @return The contained attribute declaration, or false if containment is not satisfied.
      */
-    public static final XSDAttributeDeclaration getAttributeDeclaration(
-            XSDElementDeclaration element, QName qName) {
+    public static final XSDAttributeDeclaration getAttributeDeclaration(XSDElementDeclaration element, QName qName) {
         List atts = getAttributeDeclarations(element);
 
-        for (Iterator itr = atts.iterator(); itr.hasNext(); ) {
-            XSDAttributeDeclaration att = (XSDAttributeDeclaration) itr.next();
+        for (Object o : atts) {
+            XSDAttributeDeclaration att = (XSDAttributeDeclaration) o;
 
             if (nameMatches(att, qName)) {
                 return att;
@@ -1339,27 +1278,26 @@ public class Schemas {
     /**
      * Returns a flat list of imports from the specified schema.
      *
-     * <p>The method recurses into imported schemas. The list returned is filtered so that duplicate
-     * includes are removed. Two includes are considered equal if they have the same target
-     * namespace.
+     * <p>The method recurses into imported schemas. The list returned is filtered so that duplicate includes are
+     * removed. Two includes are considered equal if they have the same target namespace.
      *
      * @param schema The top-level schema.
      * @return A list containing objects of type {@link XSDImport}.
      */
     public static final List getImports(XSDSchema schema) {
-        LinkedList queue = new LinkedList();
-        ArrayList imports = new ArrayList();
-        HashSet added = new HashSet();
+        LinkedList<XSDSchema> queue = new LinkedList<>();
+        ArrayList<XSDImport> imports = new ArrayList<>();
+        Set<String> added = new HashSet<>();
 
         queue.addLast(schema);
 
         while (!queue.isEmpty()) {
-            schema = (XSDSchema) queue.removeFirst();
+            schema = queue.removeFirst();
 
             List contents = schema.getContents();
 
-            for (Iterator itr = contents.iterator(); itr.hasNext(); ) {
-                XSDSchemaContent content = (XSDSchemaContent) itr.next();
+            for (Object o : contents) {
+                XSDSchemaContent content = (XSDSchemaContent) o;
 
                 if (content instanceof XSDImport) {
                     XSDImport imprt = (XSDImport) content;
@@ -1370,11 +1308,10 @@ public class Schemas {
 
                         XSDSchema resolvedSchema = imprt.getResolvedSchema();
                         if (resolvedSchema == null) {
-                            LOGGER.info(
-                                    "Schema import wasn't resolved: "
-                                            + imprt.getNamespace()
-                                            + " declared location: "
-                                            + imprt.getSchemaLocation());
+                            LOGGER.info("Schema import wasn't resolved: "
+                                    + imprt.getNamespace()
+                                    + " declared location: "
+                                    + imprt.getSchemaLocation());
                         } else {
                             queue.addLast(resolvedSchema);
                         }
@@ -1389,26 +1326,26 @@ public class Schemas {
     /**
      * Returns a flat list of includes from the specified schema.
      *
-     * <p>The method recurses into included schemas. The list returned is filtered so that duplicate
-     * includes are removed. Two includes are considered equal if they have the same uri location
+     * <p>The method recurses into included schemas. The list returned is filtered so that duplicate includes are
+     * removed. Two includes are considered equal if they have the same uri location
      *
      * @param schema The top-level schema.
      * @return A list containing objects of type {@link XSDInclude}.
      */
     public static final List getIncludes(XSDSchema schema) {
-        LinkedList queue = new LinkedList();
-        ArrayList includes = new ArrayList();
-        HashSet added = new HashSet();
+        LinkedList<XSDSchema> queue = new LinkedList<>();
+        List<XSDInclude> includes = new ArrayList<>();
+        Set<String> added = new HashSet<>();
 
         queue.addLast(schema);
 
         while (!queue.isEmpty()) {
-            schema = (XSDSchema) queue.removeFirst();
+            schema = queue.removeFirst();
 
             List contents = schema.getContents();
 
-            for (Iterator itr = contents.iterator(); itr.hasNext(); ) {
-                XSDSchemaContent content = (XSDSchemaContent) itr.next();
+            for (Object o : contents) {
+                XSDSchemaContent content = (XSDSchemaContent) o;
 
                 if (content instanceof XSDInclude) {
                     XSDInclude include = (XSDInclude) content;
@@ -1440,9 +1377,7 @@ public class Schemas {
      * @return The element declaration, or null if it could not be found.
      */
     public static XSDElementDeclaration getElementDeclaration(XSDSchema schema, QName name) {
-        for (Iterator e = schema.getElementDeclarations().iterator(); e.hasNext(); ) {
-            XSDElementDeclaration element = (XSDElementDeclaration) e.next();
-
+        for (XSDElementDeclaration element : schema.getElementDeclarations()) {
             if (element.getTargetNamespace().equals(name.getNamespaceURI())) {
                 if (element.getName().equals(name.getLocalPart())) {
                     return element;
@@ -1454,9 +1389,9 @@ public class Schemas {
     }
 
     /**
-     * Method for comparing the name of a schema component to a qualified name. The component name
-     * and the qualified name match if both the namespaces match, and the local parts match.
-     * Prefixes are ignored. Two strings will match if one of the following conditions hold.
+     * Method for comparing the name of a schema component to a qualified name. The component name and the qualified
+     * name match if both the namespaces match, and the local parts match. Prefixes are ignored. Two strings will match
+     * if one of the following conditions hold.
      *
      * <ul>
      *   <li>Both strings are null.
@@ -1532,8 +1467,8 @@ public class Schemas {
         String ns = schema.getTargetNamespace();
         Map pre2ns = schema.getQNamePrefixToNamespaceMap();
 
-        for (Iterator itr = pre2ns.entrySet().iterator(); itr.hasNext(); ) {
-            Map.Entry entry = (Map.Entry) itr.next();
+        for (Object o : pre2ns.entrySet()) {
+            Map.Entry entry = (Map.Entry) o;
 
             if (entry.getKey() == null) {
                 continue; // default prefix
@@ -1548,18 +1483,18 @@ public class Schemas {
     }
 
     /**
-     * Obtains all instances of a particular class from a container by navigating up the container
-     * hierachy.
+     * Obtains all instances of a particular class from a container by navigating up the container hierachy.
      *
      * @param container The container.
      * @param clazz The class.
      * @return A list of all instances of <code>clazz</code>, or the empty list if none found.
      */
-    public static List getComponentInstancesOfType(PicoContainer container, Class clazz) {
-        List instances = new ArrayList();
+    public static <T> List<T> getComponentInstancesOfType(PicoContainer container, Class<T> clazz) {
+        List<T> instances = new ArrayList<>();
 
         while (container != null) {
-            List l = container.getComponentInstancesOfType(clazz);
+            @SuppressWarnings("unchecked")
+            List<T> l = container.getComponentInstancesOfType(clazz);
             instances.addAll(l);
             container = container.getParent();
         }
@@ -1568,20 +1503,18 @@ public class Schemas {
     }
 
     /**
-     * Obtains all component adapters of a particular class from a container by navigating up the
-     * container hierarchy.
+     * Obtains all component adapters of a particular class from a container by navigating up the container hierarchy.
      *
      * @param container The container.
      * @param clazz The class.
-     * @return A list of all adapters for components of class <code>clazz</code>, or the empty list
-     *     if none found.
+     * @return A list of all adapters for components of class <code>clazz</code>, or the empty list if none found.
      */
-    public static List<ComponentAdapter> getComponentAdaptersOfType(
-            PicoContainer container, Class clazz) {
-        List instances = new ArrayList();
+    public static List<ComponentAdapter> getComponentAdaptersOfType(PicoContainer container, Class clazz) {
+        List<ComponentAdapter> instances = new ArrayList<>();
 
         while (container != null) {
-            List l = container.getComponentAdaptersOfType(clazz);
+            @SuppressWarnings("unchecked")
+            List<ComponentAdapter> l = container.getComponentAdaptersOfType(clazz);
             instances.addAll(l);
             container = container.getParent();
         }
@@ -1601,22 +1534,25 @@ public class Schemas {
             container = container.getParent();
         }
 
-        container.accept(
-                new PicoVisitor() {
-                    public Object traverse(Object node) {
-                        return null;
-                    }
+        container.accept(new PicoVisitor() {
+            @Override
+            public Object traverse(Object node) {
+                return null;
+            }
 
-                    public void visitContainer(PicoContainer container) {
-                        if (container instanceof MutablePicoContainer) {
-                            ((MutablePicoContainer) container).unregisterComponent(key);
-                        }
-                    }
+            @Override
+            public void visitContainer(PicoContainer container) {
+                if (container instanceof MutablePicoContainer) {
+                    ((MutablePicoContainer) container).unregisterComponent(key);
+                }
+            }
 
-                    public void visitComponentAdapter(ComponentAdapter adapter) {}
+            @Override
+            public void visitComponentAdapter(ComponentAdapter adapter) {}
 
-                    public void visitParameter(Parameter parameter) {}
-                });
+            @Override
+            public void visitParameter(Parameter parameter) {}
+        });
     }
 
     /** Returns the name of the element represented by the particle as a QName. */
@@ -1629,61 +1565,55 @@ public class Schemas {
     }
 
     /**
-     * Simple visitor interface for visiting elements which are part of complex types. This
-     * interface is private api because there is probably a better way of visiting the contents of a
-     * type.
+     * Simple visitor interface for visiting elements which are part of complex types. This interface is private api
+     * because there is probably a better way of visiting the contents of a type.
      *
      * @author Justin Deoliveira, The Open Planning Project, jdeolive@openplans.org
      */
     private static interface ElementVisitor {
-        /**
-         * The particle containing the element.
-         *
-         * @param element
-         */
+        /** The particle containing the element. */
         void visit(XSDParticle element);
     }
 
     static class SchemaLocatorAdapterFactory extends AdapterFactoryImpl {
         SchemaLocatorAdapter adapter;
 
-        public SchemaLocatorAdapterFactory(List /*<XSDSchemaLocator>*/ locators) {
+        public SchemaLocatorAdapterFactory(List<XSDSchemaLocator> locators) {
             adapter = new SchemaLocatorAdapter(locators);
         }
 
+        @Override
         public boolean isFactoryForType(Object type) {
             return type == XSDSchemaLocator.class;
         }
 
+        @Override
         public Adapter adaptNew(Notifier notifier, Object type) {
             return adapter;
         }
     }
 
     static class SchemaLocatorAdapter extends AdapterImpl implements XSDSchemaLocator {
-        List /*<XSDSchemaLocator>*/ locators;
+        List<XSDSchemaLocator> locators;
 
-        public SchemaLocatorAdapter(List /*<XSDSchemaLocator>*/ locators) {
-            this.locators = new ArrayList(locators);
+        public SchemaLocatorAdapter(List<XSDSchemaLocator> locators) {
+            this.locators = new ArrayList<>(locators);
         }
 
+        @Override
         public boolean isAdapterForType(Object type) {
             return type == XSDSchemaLocator.class;
         }
 
+        @Override
         public XSDSchema locateSchema(
                 XSDSchema xsdSchema,
                 String namespaceURI,
                 String rawSchemaLocationURI,
                 String resolvedSchemaLocationURI) {
-            for (int i = 0; i < locators.size(); i++) {
-                XSDSchemaLocator locator = (XSDSchemaLocator) locators.get(i);
+            for (XSDSchemaLocator locator : locators) {
                 XSDSchema schema =
-                        locator.locateSchema(
-                                xsdSchema,
-                                namespaceURI,
-                                rawSchemaLocationURI,
-                                resolvedSchemaLocationURI);
+                        locator.locateSchema(xsdSchema, namespaceURI, rawSchemaLocationURI, resolvedSchemaLocationURI);
 
                 if (schema != null) {
                     return schema;
@@ -1701,38 +1631,37 @@ public class Schemas {
     static class SchemaLocationResolverAdapterFactory extends AdapterFactoryImpl {
         SchemaLocationResolverAdapter adapter;
 
-        public SchemaLocationResolverAdapterFactory(
-                List /*<XSDSchemaLocationResolver>*/ resolvers) {
+        public SchemaLocationResolverAdapterFactory(List<XSDSchemaLocationResolver> resolvers) {
             adapter = new SchemaLocationResolverAdapter(resolvers);
         }
 
+        @Override
         public boolean isFactoryForType(Object type) {
             return type == XSDSchemaLocationResolver.class;
         }
 
+        @Override
         public Adapter adaptNew(Notifier notifier, Object type) {
             return adapter;
         }
     }
 
-    static class SchemaLocationResolverAdapter extends AdapterImpl
-            implements XSDSchemaLocationResolver {
-        List /*<XSDSchemaLocationResolver>*/ resolvers;
+    static class SchemaLocationResolverAdapter extends AdapterImpl implements XSDSchemaLocationResolver {
+        List<XSDSchemaLocationResolver> resolvers;
 
-        public SchemaLocationResolverAdapter(List /*<XSDSchemaLocationResolver>*/ resolvers) {
-            this.resolvers = new ArrayList(resolvers);
+        public SchemaLocationResolverAdapter(List<XSDSchemaLocationResolver> resolvers) {
+            this.resolvers = new ArrayList<>(resolvers);
         }
 
+        @Override
         public boolean isAdapterForType(Object type) {
             return type == XSDSchemaLocationResolver.class;
         }
 
-        public String resolveSchemaLocation(
-                XSDSchema schema, String namespaceURI, String rawSchemaLocationURI) {
-            for (int i = 0; i < resolvers.size(); i++) {
-                XSDSchemaLocationResolver resolver = (XSDSchemaLocationResolver) resolvers.get(i);
-                String resolved =
-                        resolver.resolveSchemaLocation(schema, namespaceURI, rawSchemaLocationURI);
+        @Override
+        public String resolveSchemaLocation(XSDSchema schema, String namespaceURI, String rawSchemaLocationURI) {
+            for (XSDSchemaLocationResolver resolver : resolvers) {
+                String resolved = resolver.resolveSchemaLocation(schema, namespaceURI, rawSchemaLocationURI);
 
                 if (resolved != null) {
                     return resolved;
@@ -1740,10 +1669,7 @@ public class Schemas {
             }
 
             if (LOGGER.isLoggable(Level.FINE)) {
-                LOGGER.fine(
-                        "Could not resolve schema location: "
-                                + rawSchemaLocationURI
-                                + " to physical location.");
+                LOGGER.fine("Could not resolve schema location: " + rawSchemaLocationURI + " to physical location.");
             }
 
             return null;

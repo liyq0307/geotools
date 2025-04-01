@@ -81,6 +81,7 @@ public class TransformationTypeImpl extends AbstractGeneralTransformationTypeImp
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public OperationMethodRefType getUsesMethod() {
         return usesMethod;
     }
@@ -105,6 +106,7 @@ public class TransformationTypeImpl extends AbstractGeneralTransformationTypeImp
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setUsesMethod(OperationMethodRefType newUsesMethod) {
         if (newUsesMethod != usesMethod) {
             NotificationChain msgs = null;
@@ -124,9 +126,10 @@ public class TransformationTypeImpl extends AbstractGeneralTransformationTypeImp
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<ParameterValueType> getUsesValue() {
         if (usesValue == null) {
-            usesValue = new EObjectContainmentEList<ParameterValueType>(ParameterValueType.class, this, Gml311Package.TRANSFORMATION_TYPE__USES_VALUE);
+            usesValue = new EObjectContainmentEList<>(ParameterValueType.class, this, Gml311Package.TRANSFORMATION_TYPE__USES_VALUE);
         }
         return usesValue;
     }

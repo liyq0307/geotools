@@ -7,18 +7,14 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-  <project xmlns="http://maven.apache.org/POM/4.0.0" 
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-           xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                               http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools.maven</groupId>
     <artifactId>maven</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
-  
 
   <!-- =========================================================== -->
   <!--     Module Description                                      -->
@@ -27,14 +23,12 @@
   <artifactId>xmlcodegen</artifactId>
   <packaging>maven-plugin</packaging>
   <name>XML Code Generation Support</name>
-  <description>
-    XML Code Generation Support.
-  </description>
+  <description>XML Code Generation Support.</description>
 
   <developers>
     <developer>
-      <name>Justin Deoliveira</name>
       <id>jdeolive</id>
+      <name>Justin Deoliveira</name>
       <email>jdeolive@users.sourceforge.net</email>
       <organization>The Open Planning Project</organization>
       <roles>
@@ -44,36 +38,25 @@
     </developer>
   </developers>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.geotools.xsd</groupId>
-			<artifactId>gt-xsd-core</artifactId>
-			<version>${project.version}</version>
-		</dependency>	
-                <dependency>
-			<groupId>org.geotools</groupId>
-			<artifactId>gt-graph</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
-	</dependencies>
-  
   <!-- disable pmd -->
   <properties>
     <pmd.skip>true</pmd.skip>
+    <spotless.apply.skip>true</spotless.apply.skip>
+    <spotless.check.skip>true</spotless.check.skip>
   </properties>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.geotools.xsd</groupId>
+      <artifactId>gt-xsd-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-graph</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-  <build> 
-    <plugins>
-      <plugin>
-        <groupId>com.coveo</groupId>
-        <artifactId>fmt-maven-plugin</artifactId>
-        <configuration>
-            <skip>true</skip>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+  </dependencies>
 
 </project>

@@ -17,12 +17,12 @@
 package org.geotools.util;
 
 import java.util.Set;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.util.GenericName;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.util.factory.FactoryRegistryException;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.util.GenericName;
 
 /**
  * This is facade around several constructs used by GeoTools for internal caching.
@@ -30,11 +30,9 @@ import org.opengis.util.GenericName;
  * <p>This class provides the following services:
  *
  * <ul>
- *   <li>Access to an implementation of "weak", "all" and "none" implementations of {@link
- *       ObjectCache}.
+ *   <li>Access to an implementation of "weak", "all" and "none" implementations of {@link ObjectCache}.
  *   <li>The ability to turn a "code" into a good "key" for use with an ObjectCache.
- *   <li>A Pair data object (think of C STRUCT) for use as a key when storing a value against two
- *       objects.
+ *   <li>A Pair data object (think of C STRUCT) for use as a key when storing a value against two objects.
  * </ul>
  *
  * @since 2.5
@@ -73,6 +71,7 @@ public final class ObjectCaches {
             this.target = target;
         }
 
+        @Override
         public int hashCode() {
             int code = 0;
             if (source != null) code = source.hashCode();
@@ -80,55 +79,56 @@ public final class ObjectCaches {
             return code;
         }
 
+        @Override
         public boolean equals(final Object other) {
             if (other instanceof Pair) {
                 final Pair that = (Pair) other;
-                return Utilities.equals(this.source, that.source)
-                        && Utilities.equals(this.target, that.target);
+                return Utilities.equals(this.source, that.source) && Utilities.equals(this.target, that.target);
             }
             return false;
         }
 
+        @Override
         public String toString() {
             return source + " \u21E8 " + target;
         }
     }
 
     /**
-     * Create a two level cache, operates as a level1 cache that is willing to obtain values from a
-     * (usually shared) level2 cache.
+     * Create a two level cache, operates as a level1 cache that is willing to obtain values from a (usually shared)
+     * level2 cache.
      *
-     * <p>This functionality is used to tie two ObjectCache implementations together (allowing them
-     * to collaborate while focusing on different use cases). The real world example of chaining is
-     * in {@link AbstractFindableAuthorityFactory} in which:
+     * <p>This functionality is used to tie two ObjectCache implementations together (allowing them to collaborate while
+     * focusing on different use cases). The real world example of chaining is in
+     * {@link AbstractFindableAuthorityFactory} in which:
      *
      * <ul>
      *   <li>create uses: chain( cache, findCache )
      *   <li>find uses: chain( findCache, cache )
      * </ul>
      *
-     * In this manner the find operation does not upset normal cache. It will not create any objects
-     * already present in the cache.
+     * In this manner the find operation does not upset normal cache. It will not create any objects already present in
+     * the cache.
      *
-     * @param level1
-     * @param level2
      * @return ObjectCache
      */
-    public static ObjectCache chain(final ObjectCache level1, final ObjectCache level2) {
+    public static <K, V> ObjectCache<K, V> chain(final ObjectCache<K, V> level1, final ObjectCache<K, V> level2) {
         if (level1 == level2) {
             return level1;
         }
         if (level1 == null) return level2;
         if (level2 == null) return level1;
-        return new ObjectCache() {
+        return new ObjectCache<K, V>() {
+            @Override
             public void clear() {
                 level1.clear();
             }
 
-            public Object get(Object key) {
-                Object value = level1.get(key);
+            @Override
+            public V get(K key) {
+                V value = level1.get(key);
                 if (value == null) {
-                    Object check = level2.get(key);
+                    V check = level2.get(key);
                     if (check != null) {
                         try {
                             level1.writeLock(key);
@@ -145,33 +145,39 @@ public final class ObjectCaches {
                 return value;
             }
 
-            public Object peek(Object key) {
+            @Override
+            public V peek(K key) {
                 return level1.peek(key);
             }
 
-            public void put(Object key, Object object) {
+            @Override
+            public void put(K key, V object) {
                 level1.put(key, object);
             }
 
-            public void writeLock(Object key) {
+            @Override
+            public void writeLock(K key) {
                 level1.writeLock(key);
             }
 
-            public void writeUnLock(Object key) {
+            @Override
+            public void writeUnLock(K key) {
                 level1.writeLock(key);
             }
 
-            public Set<Object> getKeys() {
+            @Override
+            public Set<K> getKeys() {
                 return level1.getKeys();
             }
 
-            public void remove(Object key) {
+            @Override
+            public void remove(K key) {
                 level1.remove(key);
             }
         };
     }
     /** Utility method used to produce cache based on provide Hint */
-    public static ObjectCache create(Hints hints) throws FactoryRegistryException {
+    public static <K, V> ObjectCache<K, V> create(Hints hints) throws FactoryRegistryException {
         if (hints == null) hints = GeoTools.getDefaultHints();
         String policy = (String) hints.get(Hints.CACHE_POLICY);
         int limit = Hints.CACHE_LIMIT.toValue(hints);
@@ -185,25 +191,27 @@ public final class ObjectCaches {
      * @return A new ObjectCache
      * @see Hints.BUFFER_POLICY
      */
-    public static ObjectCache create(String policy, int size) {
+    public static <K, V> ObjectCache<K, V> create(String policy, int size) {
         if ("weak".equalsIgnoreCase(policy)) {
-            return new WeakObjectCache(0);
+            return new WeakObjectCache<>(0);
         } else if ("all".equalsIgnoreCase(policy)) {
-            return new DefaultObjectCache(size);
+            return new DefaultObjectCache<>(size);
         } else if ("none".equalsIgnoreCase(policy)) {
-            return NullObjectCache.INSTANCE;
+            @SuppressWarnings("unchecked")
+            ObjectCache<K, V> cast = (ObjectCache<K, V>) NullObjectCache.INSTANCE;
+            return cast;
         } else if ("fixed".equalsIgnoreCase(policy)) {
-            return new FixedSizeObjectCache(size);
+            return new FixedSizeObjectCache<>(size);
         } else if ("soft".equals(policy)) {
-            return new SoftObjectCache(size);
+            return new SoftObjectCache<>(size);
         } else {
-            return new DefaultObjectCache(size);
+            return new DefaultObjectCache<>(size);
         }
     }
 
     /**
-     * Produce a good key based on the privided citaiton and code. You can think of the citation as
-     * being "here" and the code being the "what".
+     * Produce a good key based on the privided citaiton and code. You can think of the citation as being "here" and the
+     * code being the "what".
      *
      * @param code Code
      * @return A good key for use with ObjectCache
@@ -224,8 +232,6 @@ public final class ObjectCaches {
     /**
      * Produce a good key based on a pair of codes.
      *
-     * @param code1
-     * @param code2
      * @return A object to use as a key
      */
     public static Object toKey(Citation citation, String code1, String code2) {

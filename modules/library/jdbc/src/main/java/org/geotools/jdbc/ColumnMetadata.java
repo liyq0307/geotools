@@ -16,9 +16,12 @@
  */
 package org.geotools.jdbc;
 
+import org.geotools.api.filter.Filter;
+
 /** Metadata about a table column used to carry information through the type mapping process. */
 public class ColumnMetadata {
 
+    Filter restriction;
     /** The column java type, if known */
     Class binding;
     /** The column name */
@@ -31,6 +34,8 @@ public class ColumnMetadata {
     boolean nullable;
     /** The native srid */
     Integer srid;
+    /** Column Remarks */
+    String remarks;
 
     public Class getBinding() {
         return binding;
@@ -78,5 +83,21 @@ public class ColumnMetadata {
 
     public void setSrid(Integer srid) {
         this.srid = srid;
+    }
+
+    public Filter getRestriction() {
+        return restriction;
+    }
+
+    public void setRestriction(Filter restriction) {
+        this.restriction = restriction;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 }

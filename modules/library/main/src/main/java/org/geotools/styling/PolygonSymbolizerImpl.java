@@ -18,20 +18,25 @@ package org.geotools.styling;
 
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
-import org.opengis.filter.expression.Expression;
-import org.opengis.style.StyleVisitor;
-import org.opengis.util.Cloneable;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Description;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
+import org.geotools.api.util.Cloneable;
 
 /**
- * Provides a representation of a PolygonSymbolizer in an SLD Document. A PolygonSymbolizer defines
- * how a polygon geometry should be rendered.
+ * Provides a representation of a PolygonSymbolizer in an SLD Document. A PolygonSymbolizer defines how a polygon
+ * geometry should be rendered.
  *
  * @author James Macgill, CCG
  * @author Johann Sorel (Geomatys)
  * @version $Id$
  */
-public class PolygonSymbolizerImpl extends AbstractSymbolizer
-        implements PolygonSymbolizer, Cloneable {
+public class PolygonSymbolizerImpl extends AbstractSymbolizer implements PolygonSymbolizer, Cloneable {
 
     private Expression offset;
     private DisplacementImpl disp;
@@ -60,19 +65,23 @@ public class PolygonSymbolizerImpl extends AbstractSymbolizer
         this.offset = offset;
     }
 
+    @Override
     public Expression getPerpendicularOffset() {
         return offset;
     }
 
+    @Override
     public void setPerpendicularOffset(Expression offset) {
         this.offset = offset;
     }
 
+    @Override
     public Displacement getDisplacement() {
         return disp;
     }
 
-    public void setDisplacement(org.opengis.style.Displacement displacement) {
+    @Override
+    public void setDisplacement(org.geotools.api.style.Displacement displacement) {
         this.disp = DisplacementImpl.cast(displacement);
     }
     /**
@@ -80,6 +89,7 @@ public class PolygonSymbolizerImpl extends AbstractSymbolizer
      *
      * @return The Fill style to use when rendering the area.
      */
+    @Override
     public Fill getFill() {
         return fill;
     }
@@ -89,7 +99,8 @@ public class PolygonSymbolizerImpl extends AbstractSymbolizer
      *
      * @param fill The Fill style to use when rendering the area.
      */
-    public void setFill(org.opengis.style.Fill fill) {
+    @Override
+    public void setFill(org.geotools.api.style.Fill fill) {
         if (this.fill == fill) {
             return;
         }
@@ -101,6 +112,7 @@ public class PolygonSymbolizerImpl extends AbstractSymbolizer
      *
      * @return The Stroke style to use when rendering lines.
      */
+    @Override
     public StrokeImpl getStroke() {
         return stroke;
     }
@@ -110,7 +122,8 @@ public class PolygonSymbolizerImpl extends AbstractSymbolizer
      *
      * @param stroke The Stroke style to use when rendering lines.
      */
-    public void setStroke(org.opengis.style.Stroke stroke) {
+    @Override
+    public void setStroke(org.geotools.api.style.Stroke stroke) {
         if (this.stroke == stroke) {
             return;
         }
@@ -122,11 +135,13 @@ public class PolygonSymbolizerImpl extends AbstractSymbolizer
      *
      * @param visitor The visitor to accept.
      */
-    public Object accept(StyleVisitor visitor, Object data) {
+    @Override
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    @Override
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -135,6 +150,7 @@ public class PolygonSymbolizerImpl extends AbstractSymbolizer
      *
      * @return The deep copy clone.
      */
+    @Override
     public Object clone() {
         PolygonSymbolizerImpl clone;
 
@@ -187,14 +203,14 @@ public class PolygonSymbolizerImpl extends AbstractSymbolizer
         return true;
     }
 
-    static PolygonSymbolizerImpl cast(org.opengis.style.Symbolizer symbolizer) {
+    static PolygonSymbolizerImpl cast(org.geotools.api.style.Symbolizer symbolizer) {
         if (symbolizer == null) {
             return null;
         } else if (symbolizer instanceof PolygonSymbolizerImpl) {
             return (PolygonSymbolizerImpl) symbolizer;
-        } else if (symbolizer instanceof org.opengis.style.PolygonSymbolizer) {
-            org.opengis.style.PolygonSymbolizer polygonSymbolizer =
-                    (org.opengis.style.PolygonSymbolizer) symbolizer;
+        } else if (symbolizer instanceof org.geotools.api.style.PolygonSymbolizer) {
+            org.geotools.api.style.PolygonSymbolizer polygonSymbolizer =
+                    (org.geotools.api.style.PolygonSymbolizer) symbolizer;
             PolygonSymbolizerImpl copy = new PolygonSymbolizerImpl();
             copy.setStroke(StrokeImpl.cast(polygonSymbolizer.getStroke()));
             copy.setDescription(polygonSymbolizer.getDescription());

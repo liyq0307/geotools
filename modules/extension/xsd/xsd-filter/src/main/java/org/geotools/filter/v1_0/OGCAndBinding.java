@@ -18,13 +18,13 @@ package org.geotools.filter.v1_0;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 import org.geotools.xsd.filter.FilterParsingUtils;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 
 /**
  * Binding object for the element http://www.opengis.net/ogc:And.
@@ -48,6 +48,7 @@ public class OGCAndBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.And;
     }
@@ -59,10 +60,12 @@ public class OGCAndBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return And.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -74,9 +77,9 @@ public class OGCAndBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List<Filter> operands =
-                FilterParsingUtils.BinaryLogicOperator_getChildFilters(node, filterfactory);
+        List<Filter> operands = FilterParsingUtils.BinaryLogicOperator_getChildFilters(node, filterfactory);
         return filterfactory.and(operands);
     }
 }

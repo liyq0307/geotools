@@ -27,22 +27,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.SoftValueHashMap;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Vocabulary translation; using an external lookup table.
  *
- * <p>This is similar to a Recode function from the Symbology Enoding 1.1 specifcation with the
- * difference that the lookup table is named by a URI. This URI can be handled internally as an
- * optimization; or it can be resolved to an external URL which is dragged down (as a property file)
- * and cached.
+ * <p>This is similar to a Recode function from the Symbology Enoding 1.1 specifcation with the difference that the
+ * lookup table is named by a URI. This URI can be handled internally as an optimization; or it can be resolved to an
+ * external URL which is dragged down (as a property file) and cached.
  *
  * <p>This function expects:
  *
@@ -62,7 +61,7 @@ public class VocabFunction implements Function {
     public static final FunctionName NAME = new FunctionNameImpl("Vocab", "expr", "vocab");
 
     public VocabFunction() {
-        this(new ArrayList<Expression>(), null);
+        this(new ArrayList<>(), null);
     }
 
     public VocabFunction(List<Expression> parameters, Literal fallback) {
@@ -70,26 +69,32 @@ public class VocabFunction implements Function {
         this.fallback = fallback;
     }
 
+    @Override
     public String getName() {
         return NAME.getName();
     }
 
+    @Override
     public FunctionName getFunctionName() {
         return NAME;
     }
 
+    @Override
     public List<Expression> getParameters() {
         return Collections.unmodifiableList(parameters);
     }
 
+    @Override
     public Object accept(ExpressionVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public Object evaluate(Object object) {
         return evaluate(object, Object.class);
     }
 
+    @Override
     public <T> T evaluate(Object object, Class<T> context) {
         final Expression expr = parameters.get(0);
         Expression vocab = parameters.get(1);
@@ -104,8 +109,7 @@ public class VocabFunction implements Function {
         return Converters.convert(lookup.get(key), context);
     }
 
-    static Map<String, Properties> cache =
-            Collections.synchronizedMap(new SoftValueHashMap<String, Properties>());
+    static Map<String, Properties> cache = Collections.synchronizedMap(new SoftValueHashMap<>());
 
     public static synchronized Properties lookup(String urn) {
         // We should look up in our Registery
@@ -123,22 +127,12 @@ public class VocabFunction implements Function {
         properties = new Properties();
         File file = new File(urn);
         if (file.exists()) {
-            InputStream input = null;
-            try {
-                input = new BufferedInputStream(new FileInputStream(file));
+            try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
                 properties.load(input);
             } catch (FileNotFoundException e) {
                 throw new RuntimeException("Could not find file for lookup table " + urn);
             } catch (IOException e) {
                 throw new RuntimeException("Difficulty parsing lookup table " + urn);
-            } finally {
-                if (input != null) {
-                    try {
-                        input.close();
-                    } catch (IOException e) {
-                        // we tried;
-                    }
-                }
             }
         } else {
             cache.put(urn, null); // don't check again and waste our time
@@ -147,6 +141,7 @@ public class VocabFunction implements Function {
         return properties;
     }
 
+    @Override
     public Literal getFallbackValue() {
         return fallback;
     }

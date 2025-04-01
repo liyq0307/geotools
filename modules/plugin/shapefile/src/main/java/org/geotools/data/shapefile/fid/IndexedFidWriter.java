@@ -16,7 +16,7 @@
  */
 package org.geotools.data.shapefile.fid;
 
-import static org.geotools.data.shapefile.files.ShpFileType.*;
+import static org.geotools.data.shapefile.files.ShpFileType.FIX;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -33,7 +33,7 @@ import org.geotools.util.NIOUtilities;
  *
  * @author Jesse
  */
-public class IndexedFidWriter implements FileWriter {
+public class IndexedFidWriter implements FileWriter, AutoCloseable {
     public static final int HEADER_SIZE = 13;
     public static final int RECORD_SIZE = 12;
     private FileChannel channel;
@@ -51,11 +51,9 @@ public class IndexedFidWriter implements FileWriter {
     private StorageFile storageFile;
 
     /**
-     * Creates a new instance and writes the fids to a storage file which is replaces the original
-     * on close().
+     * Creates a new instance and writes the fids to a storage file which is replaces the original on close().
      *
      * @param shpFiles The shapefiles to used
-     * @throws IOException
      */
     public IndexedFidWriter(ShpFiles shpFiles) throws IOException {
         storageFile = shpFiles.getStorageFile(FIX);
@@ -64,12 +62,11 @@ public class IndexedFidWriter implements FileWriter {
 
     /**
      * Create a new instance<br>
-     * Note: {@link StorageFile#replaceOriginal()} is NOT called. Call {@link
-     * #IndexedFidWriter(ShpFiles)} for that behaviour.
+     * Note: {@link StorageFile#replaceOriginal()} is NOT called. Call {@link #IndexedFidWriter(ShpFiles)} for that
+     * behaviour.
      *
      * @param shpFiles The shapefiles to used
      * @param storageFile the storage file that will be written to. It will NOT be closed.
-     * @throws IOException
      */
     public IndexedFidWriter(ShpFiles shpFiles, StorageFile storageFile) throws IOException {
         // Note do NOT assign storageFile so that it is closed because this method method requires
@@ -81,8 +78,7 @@ public class IndexedFidWriter implements FileWriter {
 
     private void init(ShpFiles shpFiles, StorageFile storageFile) throws IOException {
         if (!shpFiles.isLocal()) {
-            throw new IllegalArgumentException(
-                    "Currently only local files are supported for writing");
+            throw new IllegalArgumentException("Currently only local files are supported for writing");
         }
 
         try {
@@ -158,13 +154,14 @@ public class IndexedFidWriter implements FileWriter {
         return fidIndex;
     }
 
+    @SuppressWarnings("PMD.UseTryWithResources")
+    @Override
     public void close() throws IOException {
         if (closed) {
             return;
         }
 
         try {
-
             finishLastWrite();
         } finally {
             try {
@@ -205,8 +202,8 @@ public class IndexedFidWriter implements FileWriter {
     /**
      * Increments the fidIndex by 1.
      *
-     * <p>Indicates that a feature was removed from the location. This is intended to ensure that
-     * FIDs stay constant over time. Consider the following case of 5 features.
+     * <p>Indicates that a feature was removed from the location. This is intended to ensure that FIDs stay constant
+     * over time. Consider the following case of 5 features.
      *
      * <ul>
      *   <li>feature 1 has fid typename.0
@@ -232,8 +229,7 @@ public class IndexedFidWriter implements FileWriter {
      * @throws IOException if current fid index is null
      */
     public void remove() throws IOException {
-        if (current == -1)
-            throw new IOException("Current fid index is null, next must be called before remove");
+        if (current == -1) throw new IOException("Current fid index is null, next must be called before remove");
         if (hasNext()) {
             removes++;
             current = -1;
@@ -241,16 +237,14 @@ public class IndexedFidWriter implements FileWriter {
     }
 
     /**
-     * Writes the current fidIndex. Writes to the same place in the file each time. Only {@link
-     * #next()} moves forward in the file.
+     * Writes the current fidIndex. Writes to the same place in the file each time. Only {@link #next()} moves forward
+     * in the file.
      *
-     * @throws IOException
      * @see #next()
      * @see #remove()
      */
     public void write() throws IOException {
-        if (current == -1)
-            throw new IOException("Current fid index is null, next must be called before write()");
+        if (current == -1) throw new IOException("Current fid index is null, next must be called before write()");
 
         if (writeBuffer == null) {
             allocateBuffers();
@@ -271,34 +265,34 @@ public class IndexedFidWriter implements FileWriter {
         return closed;
     }
 
+    @Override
     public String id() {
         return getClass().getName();
     }
 
-    public static final IndexedFidWriter EMPTY_WRITER =
-            new IndexedFidWriter() {
-                @Override
-                public void close() throws IOException {}
+    public static final IndexedFidWriter EMPTY_WRITER = new IndexedFidWriter() {
+        @Override
+        public void close() throws IOException {}
 
-                @Override
-                public boolean hasNext() throws IOException {
-                    return false;
-                }
+        @Override
+        public boolean hasNext() throws IOException {
+            return false;
+        }
 
-                @Override
-                public boolean isClosed() {
-                    return false;
-                }
+        @Override
+        public boolean isClosed() {
+            return false;
+        }
 
-                @Override
-                public void write() throws IOException {}
+        @Override
+        public void write() throws IOException {}
 
-                @Override
-                public long next() throws IOException {
-                    return 0;
-                }
+        @Override
+        public long next() throws IOException {
+            return 0;
+        }
 
-                @Override
-                public void remove() throws IOException {}
-            };
+        @Override
+        public void remove() throws IOException {}
+    };
 }

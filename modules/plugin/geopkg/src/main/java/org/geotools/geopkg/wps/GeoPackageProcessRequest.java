@@ -23,9 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.geopkg.TileMatrix;
 import org.locationtech.jts.geom.Envelope;
-import org.opengis.filter.Filter;
 
 /**
  * GeoPackage Process Request. Object representation of the XML submitted to the GeoPackage process.
@@ -92,12 +93,63 @@ public class GeoPackageProcessRequest {
         public abstract LayerType getType();
     }
 
+    public static class Overview implements Comparable<Overview> {
+        String name;
+        double distance;
+        double scaleDenominator;
+        Filter filter;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public double getDistance() {
+            return distance;
+        }
+
+        public void setDistance(double distance) {
+            this.distance = distance;
+        }
+
+        public Filter getFilter() {
+            return filter;
+        }
+
+        public void setFilter(Filter filter) {
+            this.filter = filter;
+        }
+
+        @Override
+        public int compareTo(Overview o) {
+            // compare both in case the distance and scale denominators are set
+            int diff = (int) Math.signum(distance - o.distance);
+            if (diff != 0) return diff;
+            return (int) Math.signum(scaleDenominator - o.scaleDenominator);
+        }
+
+        public double getScaleDenominator() {
+            return scaleDenominator;
+        }
+
+        public void setScaleDenominator(double scaleDenominator) {
+            this.scaleDenominator = scaleDenominator;
+        }
+    }
+
     public static class FeaturesLayer extends Layer {
 
         protected QName featureType = null;
         protected Set<QName> propertyNames = null;
         protected Filter filter = null;
+        protected SortBy[] sort = null;
         protected boolean indexed = false;
+        protected boolean styles = true;
+        protected boolean metadata = true;
+        protected List<Overview> overviews;
 
         @Override
         public LayerType getType() {
@@ -128,12 +180,65 @@ public class GeoPackageProcessRequest {
             this.filter = filter;
         }
 
+        public SortBy[] getSort() {
+            return sort;
+        }
+
+        public void setSort(SortBy[] sort) {
+            this.sort = sort;
+        }
+
         public boolean isIndexed() {
             return indexed;
         }
 
         public void setIndexed(boolean indexed) {
             this.indexed = indexed;
+        }
+
+        public boolean isStyles() {
+            return styles;
+        }
+
+        public void setStyles(boolean styles) {
+            this.styles = styles;
+        }
+
+        public boolean isMetadata() {
+            return metadata;
+        }
+
+        public void setMetadata(boolean metadata) {
+            this.metadata = metadata;
+        }
+
+        public List<Overview> getOverviews() {
+            return overviews;
+        }
+
+        public void setOverviews(List<Overview> overviews) {
+            this.overviews = overviews;
+        }
+    }
+
+    public static class Parameter {
+        String name;
+        String value;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
         }
     }
 
@@ -206,6 +311,7 @@ public class GeoPackageProcessRequest {
         protected String gridSetName = null;
         protected List<TileMatrix> grids = null;
         protected TilesCoverage coverage = null;
+        protected List<Parameter> parameters;
 
         @Override
         public LayerType getType() {
@@ -291,11 +397,20 @@ public class GeoPackageProcessRequest {
         public void setLayers(List<QName> layers) {
             this.layers = layers;
         }
+
+        public List<Parameter> getParameters() {
+            return parameters;
+        }
+
+        public void setParameters(List<Parameter> parameters) {
+            this.parameters = parameters;
+        }
     }
 
-    protected List<Layer> layers = new ArrayList<Layer>();
+    protected List<Layer> layers = new ArrayList<>();
     protected URL path = null;
     protected boolean remove = true;
+    protected boolean context = true;
 
     public Boolean getRemove() {
         return remove;
@@ -331,5 +446,13 @@ public class GeoPackageProcessRequest {
 
     public void setPath(URL path) {
         this.path = path;
+    }
+
+    public boolean isContext() {
+        return context;
+    }
+
+    public void setContext(boolean context) {
+        this.context = context;
     }
 }

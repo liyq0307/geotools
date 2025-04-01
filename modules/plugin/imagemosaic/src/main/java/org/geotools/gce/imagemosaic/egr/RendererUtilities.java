@@ -21,26 +21,24 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.geometry.MismatchedDimensionException;
+import org.geotools.api.referencing.datum.PixelInCell;
 import org.geotools.coverage.grid.GridEnvelope2D;
-import org.geotools.geometry.Envelope2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.operation.builder.GridToEnvelopeMapper;
 import org.locationtech.jts.geom.Envelope;
-import org.opengis.geometry.MismatchedDimensionException;
-import org.opengis.referencing.datum.PixelInCell;
 
 /**
- * This is a reduced copy of RenderUtilities found in the render module, to avoid adding a
- * dependency on it while using only a few methods
+ * This is a reduced copy of RenderUtilities found in the render module, to avoid adding a dependency on it while using
+ * only a few methods
  */
 public final class RendererUtilities {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(RendererUtilities.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(RendererUtilities.class);
 
     /**
-     * Helper class for building affine transforms. We use one instance per thread, in order to
-     * avoid the need for {@code synchronized} statements.
+     * Helper class for building affine transforms. We use one instance per thread, in order to avoid the need for
+     * {@code synchronized} statements.
      */
     private static final ThreadLocal<GridToEnvelopeMapper> gridToEnvelopeMappers =
             new ThreadLocal<GridToEnvelopeMapper>() {
@@ -53,43 +51,39 @@ public final class RendererUtilities {
             };
 
     /** Utilities classes should not be instantiated. */
-    private RendererUtilities() {};
+    private RendererUtilities() {}
+    ;
 
     /**
      * Sets up the affine transform
      *
-     * <p>NOTE It is worth to note that here we do not take into account the half a pixel
-     * translation stated by ogc for coverages bounds. One reason is that WMS 1.1.1 does not follow
-     * it!!!
+     * <p>NOTE It is worth to note that here we do not take into account the half a pixel translation stated by ogc for
+     * coverages bounds. One reason is that WMS 1.1.1 does not follow it!!!
      *
      * @param mapExtent the map extent
      * @param paintArea the size of the rendering output area
      * @return a transform that maps from real world coordinates to the screen
      */
-    public static AffineTransform worldToScreenTransform(
-            ReferencedEnvelope mapExtent, Rectangle paintArea) {
+    public static AffineTransform worldToScreenTransform(ReferencedEnvelope mapExtent, Rectangle paintArea) {
 
         // //
         //
         // Convert the JTS envelope and get the transform
         //
         // //
-        final Envelope2D genvelope = new Envelope2D(mapExtent);
+        final ReferencedEnvelope genvelope = new ReferencedEnvelope(mapExtent);
 
         // //
         //
         // Get the transform
         //
         // //
-        final GridToEnvelopeMapper m = (GridToEnvelopeMapper) gridToEnvelopeMappers.get();
+        final GridToEnvelopeMapper m = gridToEnvelopeMappers.get();
         try {
             m.setGridRange(new GridEnvelope2D(paintArea));
             m.setEnvelope(genvelope);
             return m.createAffineTransform().createInverse();
-        } catch (MismatchedDimensionException e) {
-            LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
-            return null;
-        } catch (NoninvertibleTransformException e) {
+        } catch (MismatchedDimensionException | NoninvertibleTransformException e) {
             LOGGER.log(Level.WARNING, e.getLocalizedMessage(), e);
             return null;
         }
@@ -98,10 +92,9 @@ public final class RendererUtilities {
     /**
      * Creates the map's bounding box in real world coordinates.
      *
-     * @param worldToScreen a transform which converts World coordinates to screen pixel
-     *     coordinates. No assumptions are done on axis order as this is assumed to be
-     *     pre-calculated. The affine transform may specify an rotation, in case the envelope will
-     *     encompass the complete (rotated) world polygon.
+     * @param worldToScreen a transform which converts World coordinates to screen pixel coordinates. No assumptions are
+     *     done on axis order as this is assumed to be pre-calculated. The affine transform may specify an rotation, in
+     *     case the envelope will encompass the complete (rotated) world polygon.
      * @param paintArea the size of the rendering output area
      * @return the envelope in world coordinates corresponding to the screen rectangle.
      */

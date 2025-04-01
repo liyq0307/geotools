@@ -18,25 +18,21 @@ package org.geotools.geometry.jts;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Locale;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 
 public class WKTWriter2Test {
 
-    /**
-     * Draw a circle between the start and end point; or each group of three their after.
-     *
-     * @throws Exception
-     */
+    /** Draw a circle between the start and end point; or each group of three their after. */
     @Test
     public void circularString() throws Exception {
         testRoundTrip(
                 "CIRCULARSTRING (220268.439465645 150415.359530563, 220227.333322076 150505.561285879, 220227.353105332 150406.434743975)");
-        testRoundTrip(
-                "CIRCULARSTRING (143.62025166838282 -30.037497356076827, 142.92857147299705 -32.75101196874403, "
-                        + "145.96132309891922 -34.985671061528784, 149.57565307617188 -33.41153335571289, 149.41972407584802 -29.824672680573517, "
-                        + "146.1209416055467 -30.19711586270431, 143.62025166838282 -30.037497356076827)");
+        testRoundTrip("CIRCULARSTRING (143.62025166838282 -30.037497356076827, 142.92857147299705 -32.75101196874403, "
+                + "145.96132309891922 -34.985671061528784, 149.57565307617188 -33.41153335571289, 149.41972407584802 -29.824672680573517, "
+                + "146.1209416055467 -30.19711586270431, 143.62025166838282 -30.037497356076827)");
         testRoundTrip(
                 "CIRCULARSTRING (143.62025166838282 -30.037497356076827, 142.92857147299705 -32.75101196874403, 143.62025166838282 -30.037497356076827)");
         testRoundTrip("CIRCULARSTRING EMPTY");
@@ -89,6 +85,19 @@ public class WKTWriter2Test {
                         + "COMPOUNDCURVE ((6 10, 10 1, 14 10), CIRCULARSTRING (14 10, 10 14, 6 10)), COMPOUNDCURVE ((13 10, 10 2, 7 10), CIRCULARSTRING (7 10, 10 13, 13 10))), "
                         + "CURVEPOLYGON (COMPOUNDCURVE ((106 110, 110 101, 114 110), CIRCULARSTRING (114 110, 110 114, 106 110))))");
         testRoundTrip("MULTISURFACE EMPTY");
+    }
+
+    @Test
+    public void treatingNegativeNumbersInNorwegianLocale() throws Exception {
+        Locale defLocale = Locale.getDefault();
+        try {
+            Locale norLocale = new Locale("nb");
+            Locale.setDefault(norLocale);
+            testRoundTrip(
+                    "CURVEPOLYGON (CIRCULARSTRING (143.62025166838282 -30.037497356076827, 142.92857147299705 -32.75101196874403, 143.62025166838282 -30.037497356076827))");
+        } finally {
+            Locale.setDefault(defLocale);
+        }
     }
 
     private void testRoundTrip(String wkt, String expectedWkt) throws ParseException {

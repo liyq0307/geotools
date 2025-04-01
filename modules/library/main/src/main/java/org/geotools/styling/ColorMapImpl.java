@@ -18,9 +18,11 @@ package org.geotools.styling;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.style.ColorMapEntry;
+import org.geotools.api.style.StyleVisitor;
+import org.geotools.api.style.TraversingStyleVisitor;
 import org.geotools.util.Utilities;
-import org.opengis.filter.expression.Function;
-import org.opengis.style.StyleVisitor;
 
 /**
  * A simple implementation of the color map interface.
@@ -28,10 +30,10 @@ import org.opengis.style.StyleVisitor;
  * @author iant
  * @author aaime
  */
-public class ColorMapImpl implements ColorMap {
+public class ColorMapImpl implements org.geotools.api.style.ColorMap {
     private final Function function;
-    private List<ColorMapEntry> list = new ArrayList<ColorMapEntry>();
-    private int type = ColorMap.TYPE_RAMP;
+    private List<ColorMapEntry> list = new ArrayList<>();
+    private int type = org.geotools.api.style.ColorMap.TYPE_RAMP;
     private boolean extendedColors;
 
     public ColorMapImpl() {
@@ -42,48 +44,59 @@ public class ColorMapImpl implements ColorMap {
         this.function = function;
     }
 
+    @Override
     public void addColorMapEntry(ColorMapEntry entry) {
         list.add(entry);
     }
 
+    @Override
     public ColorMapEntry[] getColorMapEntries() {
-        return (ColorMapEntry[]) list.toArray(new ColorMapEntry[0]);
+        return list.toArray(new ColorMapEntry[0]);
     }
 
+    @Override
     public ColorMapEntry getColorMapEntry(int index) {
-        return (ColorMapEntry) list.get(index);
+        return list.get(index);
     }
 
     /** @see org.geotools.styling.ColorMap#getType() */
+    @Override
     public int getType() {
         return type;
     }
 
     /** @see org.geotools.styling.ColorMap#setType(int) */
+    @Override
     public void setType(int type) {
-        if ((type < TYPE_RAMP) || (type > TYPE_VALUES)) {
+        if ((type < org.geotools.api.style.ColorMap.TYPE_RAMP)
+                || (type > org.geotools.api.style.ColorMap.TYPE_VALUES)) {
             throw new IllegalArgumentException();
         }
         this.type = type;
     }
 
-    public Object accept(StyleVisitor visitor, Object data) {
+    @Override
+    public Object accept(TraversingStyleVisitor visitor, Object data) {
         return visitor.visit(this, data);
     }
 
+    @Override
     public boolean getExtendedColors() {
         return extendedColors;
     }
 
+    @Override
     public void setExtendedColors(boolean extended) {
         extendedColors = extended;
     }
 
+    @Override
     public Function getFunction() {
         return function;
     }
 
-    public void accept(org.geotools.styling.StyleVisitor visitor) {
+    @Override
+    public void accept(StyleVisitor visitor) {
         visitor.visit(this);
     }
 
@@ -124,7 +137,7 @@ public class ColorMapImpl implements ColorMap {
         return false;
     }
 
-    static ColorMapImpl cast(org.opengis.style.ColorMap colorMap) {
+    static ColorMapImpl cast(org.geotools.api.style.ColorMap colorMap) {
         if (colorMap == null) {
             return null;
         } else if (colorMap instanceof ColorMapImpl) {

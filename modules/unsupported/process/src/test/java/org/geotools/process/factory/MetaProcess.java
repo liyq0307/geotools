@@ -16,7 +16,7 @@
  */
 package org.geotools.process.factory;
 
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 
 /**
  * Fake process using some metadata in the annotations
@@ -27,20 +27,17 @@ import org.geotools.data.Parameter;
 public class MetaProcess {
 
     @DescribeResult(
-        name = "value",
-        description = "the value provided as input",
-        meta = {"mimeTypes=application/shapefile,application/json"}
-    )
+            name = "value",
+            description = "the value provided as input",
+            meta = {"mimeTypes=application/shapefile,application/json"})
     public byte[] execute(
             @DescribeParameter(
-                        name = "extension",
-                        meta = {Parameter.EXT + "=shp"}
-                    )
+                            name = "extension",
+                            meta = {Parameter.EXT + "=shp"})
                     String ext,
             @DescribeParameter(
-                        name = "password",
-                        meta = {Parameter.IS_PASSWORD + "=true"}
-                    )
+                            name = "password",
+                            meta = {Parameter.IS_PASSWORD + "=true"})
                     String pwd) {
         return null;
     }

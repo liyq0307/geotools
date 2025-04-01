@@ -20,8 +20,7 @@ package org.geotools.data.solr;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +30,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import org.apache.commons.beanutils.BeanComparator;
-import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.ORDER;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
@@ -39,7 +37,14 @@ import org.apache.solr.client.solrj.request.LukeRequest;
 import org.apache.solr.client.solrj.response.LukeResponse;
 import org.apache.solr.client.solrj.response.LukeResponse.FieldInfo;
 import org.apache.solr.client.solrj.response.LukeResponse.FieldTypeInfo;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.data.solr.SolrUtils.ExtendedFieldSchemaInfo;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
@@ -51,13 +56,6 @@ import org.geotools.filter.FilterCapabilities;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
 
 /**
  * Datastore implementation for SOLR document <br>
@@ -76,14 +74,13 @@ public class SolrDataStore extends ContentDataStore {
     private List<Name> nativeTypeNames;
 
     // Attributes present in SOLR schema
-    private ArrayList<SolrAttribute> solrAttributes = new ArrayList<SolrAttribute>();
+    private ArrayList<SolrAttribute> solrAttributes = new ArrayList<>();
 
     // SOLR uuid attributes
     private SolrAttribute pk = null;
 
     // Attributes configurations of the store entries
-    private Map<String, SolrLayerConfiguration> solrConfigurations =
-            new ConcurrentHashMap<String, SolrLayerConfiguration>();
+    private Map<String, SolrLayerConfiguration> solrConfigurations = new ConcurrentHashMap<>();
 
     HttpSolrClient solrServer;
 
@@ -93,17 +90,13 @@ public class SolrDataStore extends ContentDataStore {
     public SolrDataStore(URL url, SolrLayerMapper layerMapper, IndexesConfig indexesConfig) {
         this(url, layerMapper);
         // build the feature types based on the provided indexes configuration
-        indexesConfig
-                .getIndexesNames()
-                .forEach(
-                        indexName -> {
-                            // get from Apache Solr the index schema and retrieve its attributes
-                            List<SolrAttribute> solrAttributes = getSolrAttributes(indexName);
-                            // build the feature type using the index configuration
-                            SimpleFeatureType defaultFeatureType =
-                                    indexesConfig.buildFeatureType(indexName, solrAttributes);
-                            defaultFeatureTypes.put(indexName, defaultFeatureType);
-                        });
+        indexesConfig.getIndexesNames().forEach(indexName -> {
+            // get from Apache Solr the index schema and retrieve its attributes
+            List<SolrAttribute> solrAttributes = getSolrAttributes(indexName);
+            // build the feature type using the index configuration
+            SimpleFeatureType defaultFeatureType = indexesConfig.buildFeatureType(indexName, solrAttributes);
+            defaultFeatureTypes.put(indexName, defaultFeatureType);
+        });
     }
 
     /**
@@ -126,24 +119,21 @@ public class SolrDataStore extends ContentDataStore {
         // TODO: make connection timeouts configurable
         this.url = url;
         this.layerMapper = layerMapper;
-        this.solrServer =
-                new HttpSolrClient.Builder()
-                        .withBaseSolrUrl(url.toString())
-                        .allowCompression(true)
-                        .withConnectionTimeout(10000)
-                        .withSocketTimeout(10000)
-                        .build();
+        this.solrServer = new HttpSolrClient.Builder()
+                .withBaseSolrUrl(url.toString())
+                .allowCompression(true)
+                .withConnectionTimeout(10000)
+                .withSocketTimeout(10000)
+                .build();
         this.solrServer.setFollowRedirects(true);
     }
 
     /**
      * Retrieve SOLR attribute for specific type <br>
-     * Two SOLR LukeRequest are needed to discover SOLR fields and theirs schema for dynamic and
-     * static kinds. <br>
-     * For each discovered field a SOLR request is needed to verify if the field has no values in
-     * the actual type, this information will be stored in {@link SolrAttribute#setEmpty}. <br>
-     * SolrJ not extracts information about uniqueKey so custom class {@link
-     * ExtendedFieldSchemaInfo} is used. <br>
+     * Two SOLR LukeRequest are needed to discover SOLR fields and theirs schema for dynamic and static kinds. <br>
+     * For each discovered field a SOLR request is needed to verify if the field has no values in the actual type, this
+     * information will be stored in {@link SolrAttribute#setEmpty}. <br>
+     * SolrJ not extracts information about uniqueKey so custom class {@link ExtendedFieldSchemaInfo} is used. <br>
      * MultiValued SOLR field is mapped as String type
      *
      * @param layerName the type to use to query the SOLR field {@link SolrDataStore#field}
@@ -152,7 +142,7 @@ public class SolrDataStore extends ContentDataStore {
      */
     public ArrayList<SolrAttribute> getSolrAttributes(String layerName) {
         if (solrAttributes.isEmpty()) {
-            solrAttributes = new ArrayList<SolrAttribute>();
+            solrAttributes = new ArrayList<>();
             try {
                 LukeRequest lq = new LukeRequest();
                 lq.setShowSchema(true);
@@ -162,7 +152,7 @@ public class SolrDataStore extends ContentDataStore {
                 lq.setShowSchema(false);
                 LukeResponse processField = lq.process(solrServer);
                 Map<String, FieldInfo> fis = processField.getFieldInfo();
-                SortedSet<String> keys = new TreeSet<String>(fis.keySet());
+                SortedSet<String> keys = new TreeSet<>(fis.keySet());
                 for (String k : keys) {
                     FieldInfo fieldInfo = fis.get(k);
                     String name = fieldInfo.getName();
@@ -174,8 +164,7 @@ public class SolrDataStore extends ContentDataStore {
                         Class<?> objType = SolrUtils.decodeSolrFieldType(solrTypeName);
                         if (objType != null) {
                             ExtendedFieldSchemaInfo extendedFieldSchemaInfo =
-                                    new SolrUtils.ExtendedFieldSchemaInfo(
-                                            processSchema, processField, name);
+                                    new SolrUtils.ExtendedFieldSchemaInfo(processSchema, processField, name);
                             SolrAttribute at = new SolrAttribute(name, objType);
                             at.setSolrType(solrTypeName);
                             if (extendedFieldSchemaInfo.getUniqueKey()) {
@@ -201,15 +190,18 @@ public class SolrDataStore extends ContentDataStore {
                     }
                 }
                 // Reorder fields: empty after
-                List<BeanComparator> sortFields =
-                        Arrays.asList(new BeanComparator("empty"), new BeanComparator("name"));
-                ComparatorChain multiSort = new ComparatorChain(sortFields);
-                Collections.sort(solrAttributes, multiSort);
+                Comparator<SolrAttribute> sortFields = getEmptyComparator();
+                solrAttributes.sort(sortFields);
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
             }
         }
         return solrAttributes;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Comparator<SolrAttribute> getEmptyComparator() {
+        return new BeanComparator("empty").thenComparing(new BeanComparator("name"));
     }
 
     @Override
@@ -243,12 +235,11 @@ public class SolrDataStore extends ContentDataStore {
 
     @Override
     public FilterFactory getFilterFactory() {
-        return CommonFactoryFinder.getFilterFactory2();
+        return CommonFactoryFinder.getFilterFactory();
     }
 
     /**
-     * The filter capabilities which reports which spatial operations the underlying SOLR server can
-     * handle natively.
+     * The filter capabilities which reports which spatial operations the underlying SOLR server can handle natively.
      *
      * @return The filter capabilities, never <code>null</code>.
      */
@@ -273,16 +264,14 @@ public class SolrDataStore extends ContentDataStore {
         return url;
     }
 
-    /**
-     * Gets the document loader controlling how documents are mapped to layers from the solr index.
-     */
+    /** Gets the document loader controlling how documents are mapped to layers from the solr index. */
     public SolrLayerMapper getLayerMapper() {
         return layerMapper;
     }
 
     /**
-     * Gets the primary key attribute a type in this datastore.</br> If the key is not currently
-     * available a call to {@link #getSolrAttributes} is needed.
+     * Gets the primary key attribute a type in this datastore.<br>
+     * If the key is not currently available a call to {@link #getSolrAttributes} is needed.
      *
      * @param layerName the type to use to query the SOLR field {@link SolrDataStore#field}
      */
@@ -300,12 +289,11 @@ public class SolrDataStore extends ContentDataStore {
     }
 
     /**
-     * Builds the SolrJ query with support of subset of fields, limit/offset, sorting, OGC filter
-     * encoding and viewParams <br>
-     * The SOLR query always need the order by PK field to enable pagination and efficient data
-     * retrieving <br>
-     * Currently only additional "q" and "fq" SOLR parameters can be passed using vireParams, this
-     * conditions are added in AND with others
+     * Builds the SolrJ query with support of subset of fields, limit/offset, sorting, OGC filter encoding and
+     * viewParams <br>
+     * The SOLR query always need the order by PK field to enable pagination and efficient data retrieving <br>
+     * Currently only additional "q" and "fq" SOLR parameters can be passed using vireParams, this conditions are added
+     * in AND with others
      *
      * @param featureType the feature type to query
      * @param q the OGC query to translate in SOLR request
@@ -338,14 +326,9 @@ public class SolrDataStore extends ContentDataStore {
                     if (sort.getPropertyName() != null) {
                         query.addSort(
                                 sort.getPropertyName().getPropertyName(),
-                                sort.getSortOrder().equals(SortOrder.ASCENDING)
-                                        ? ORDER.asc
-                                        : ORDER.desc);
+                                sort.getSortOrder().equals(SortOrder.ASCENDING) ? ORDER.asc : ORDER.desc);
                     } else {
-                        naturalSortOrder =
-                                sort.getSortOrder().equals(SortOrder.ASCENDING)
-                                        ? ORDER.asc
-                                        : ORDER.desc;
+                        naturalSortOrder = sort.getSortOrder().equals(SortOrder.ASCENDING) ? ORDER.asc : ORDER.desc;
                     }
                 }
             }
@@ -375,13 +358,10 @@ public class SolrDataStore extends ContentDataStore {
     /**
      * Create a group by field Solr query
      *
-     * @param featureType
-     * @param q
      * @param visitor UniqueVisitor with group settings
      * @return Solr query
      */
-    protected SolrQuery selectUniqueValues(
-            SimpleFeatureType featureType, Query q, UniqueVisitor visitor) {
+    protected SolrQuery selectUniqueValues(SimpleFeatureType featureType, Query q, UniqueVisitor visitor) {
         SolrQuery query = select(featureType, q);
         // normal fields empty
         query.setFields(new String[] {});
@@ -394,10 +374,9 @@ public class SolrDataStore extends ContentDataStore {
     }
 
     /**
-     * Builds the SolrJ count query with support of limit/offset, OGC filter encoding and viewParams
-     * <br>
-     * Currently only additional "q" and "fq" SOLR parameters can be passed using viewParams, this
-     * conditions are added in AND with others
+     * Builds the SolrJ count query with support of limit/offset, OGC filter encoding and viewParams <br>
+     * Currently only additional "q" and "fq" SOLR parameters can be passed using viewParams, this conditions are added
+     * in AND with others
      *
      * @param featureType the feature type to query
      * @param q the OGC query to translate in SOLR request
@@ -454,8 +433,8 @@ public class SolrDataStore extends ContentDataStore {
         String fqViewParamers = null;
         Hints hints = q.getHints();
         if (hints != null) {
-            Map<String, String> parameters =
-                    (Map<String, String>) hints.get(Hints.VIRTUAL_TABLE_PARAMETERS);
+            @SuppressWarnings("unchecked")
+            Map<String, String> parameters = (Map) hints.get(Hints.VIRTUAL_TABLE_PARAMETERS);
             if (parameters != null) {
                 for (String param : parameters.keySet()) {
                     // Accepts only q and fq query parameters

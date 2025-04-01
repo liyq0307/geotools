@@ -20,27 +20,24 @@ package org.geotools.filter.function.math;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_min_2 extends FunctionExpressionImpl {
 
     // public static FunctionName NAME = new FunctionNameImpl("min_2","long","long");
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "min_2",
-                    parameter("minium", Long.class),
-                    parameter("long", Number.class),
-                    parameter("long", Number.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "min_2", parameter("minium", Long.class), parameter("long", Number.class), parameter("long", Number.class));
 
     public FilterFunction_min_2() {
         super("min_2");
         functionName = NAME;
     }
 
+    @Override
     public Object evaluate(Object feature) {
         Object arg0 = getExpression(0).evaluate(feature);
         Object arg1 = getExpression(1).evaluate(feature);

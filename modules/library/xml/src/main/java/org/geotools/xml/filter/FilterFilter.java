@@ -19,6 +19,7 @@ package org.geotools.xml.filter;
 // Java Topology Suite dependencies
 
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.filter.AbstractFilter;
 import org.geotools.filter.DefaultExpression;
 import org.geotools.filter.ExpressionSAXParser;
@@ -30,7 +31,6 @@ import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.LogicSAXParser;
 import org.geotools.gml.GMLHandlerJTS;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.XMLFilterImpl;
@@ -38,16 +38,15 @@ import org.xml.sax.helpers.XMLFilterImpl;
 /**
  * Creates an OGC filter using a SAX filter.
  *
- * <p>Possibly the worst-named class of all time, <code>FilterFilter</code> extracts an OGC filter
- * object from an XML stream and passes it to its parent as a fully instantiated OGC filter object.
+ * <p>Possibly the worst-named class of all time, <code>FilterFilter</code> extracts an OGC filter object from an XML
+ * stream and passes it to its parent as a fully instantiated OGC filter object.
  *
  * @author Rob Hranac, Vision for New York
  * @version $Id$
  */
 public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
     /** The logger for the filter module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(FilterFilter.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(FilterFilter.class);
 
     /** For handling and creating logic filters that come in. */
     private LogicSAXParser logicFactory;
@@ -79,10 +78,7 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
     /** units for a distance element attribute. somewhere else? */
     private String units;
 
-    /**
-     * collects element content on each call to {@link #characters(char[], int, int)} to be
-     * processed by endElement
-     */
+    /** collects element content on each call to {@link #characters(char[], int, int)} to be processed by endElement */
     private StringBuffer characters;
 
     private boolean convertLiteralToNumber = true;
@@ -108,8 +104,7 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
      * @param parent The parent of this filter, to recieve the filters created.
      * @param schema The schema that the filter will be used against.
      */
-    public FilterFilter(
-            FilterHandler parent, SimpleFeatureType schema, boolean convertLiteralToNumber) {
+    public FilterFilter(FilterHandler parent, SimpleFeatureType schema, boolean convertLiteralToNumber) {
         this(parent, schema);
         this.convertLiteralToNumber = convertLiteralToNumber;
     }
@@ -123,8 +118,8 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
      * @param atts The element attributes.
      * @throws SAXException Some parsing error occured while reading filter.
      */
-    public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
-            throws SAXException {
+    @Override
+    public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
         LOGGER.finer("found start element: " + localName);
 
         characters.setLength(0);
@@ -155,10 +150,9 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
                             || (localName.equals("LowerBoundary"))
                             || (localName.equals("Distance")))) {
                 if (!(localName.endsWith("Member"))) // from CITE tests
-                throw new SAXException(
-                            "Attempted to construct illegal filter - I dont understand the tag: "
-                                    + qName
-                                    + ".  HINT: tags are case-sensitive!");
+                throw new SAXException("Attempted to construct illegal filter - I dont understand the tag: "
+                        + qName
+                        + ".  HINT: tags are case-sensitive!");
             }
 
             try {
@@ -221,8 +215,7 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
                     }
                 }
             } catch (IllegalFilterException ife) {
-                throw new SAXException(
-                        "Attempted to construct illegal " + "filter: " + ife.getMessage(), ife);
+                throw new SAXException("Attempted to construct illegal " + "filter: " + ife.getMessage(), ife);
             }
         } else {
             parent.startElement(namespaceURI, localName, qName, atts);
@@ -240,15 +233,15 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
     }
 
     /**
-     * Reads the only internal characters read by filters. If we are in a distance filter than the
-     * distance is set in the filter factory, if not we forward directly along to the expression
-     * factory.
+     * Reads the only internal characters read by filters. If we are in a distance filter than the distance is set in
+     * the filter factory, if not we forward directly along to the expression factory.
      *
      * @param chars Raw coordinate string from the filter document.
      * @param start Beginning character position of raw string.
      * @param length Length of the character string.
      * @throws SAXException Some parsing error occurred while reading coordinates.
      */
+    @Override
     public void characters(char[] chars, int start, int length) throws SAXException {
         // accumulate partial strings in the instance StringBuffer
         // so we make sure the message is collected as a whole before
@@ -257,12 +250,9 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
     }
 
     /**
-     * Calling this method should be the first thing done by {@link #endElement(String, String,
-     * String)}, to ensure the message passed to the expression factory contains the whole string
-     * accumulated by the potentially many calls to {@link #characters(char[], int, int)} done by
-     * the parser.
-     *
-     * @throws SAXException
+     * Calling this method should be the first thing done by {@link #endElement(String, String, String)}, to ensure the
+     * message passed to the expression factory contains the whole string accumulated by the potentially many calls to
+     * {@link #characters(char[], int, int)} done by the parser.
      */
     private void processCharacters() throws SAXException {
         if (insideFilter) {
@@ -288,16 +278,15 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
     }
 
     /**
-     * Checks for filter element end and - if not a Filter then sends it directly to the appropriate
-     * filter factory.
+     * Checks for filter element end and - if not a Filter then sends it directly to the appropriate filter factory.
      *
      * @param namespaceURI Namespace of the element.
      * @param localName Local name of the element.
      * @param qName Full name of the element, including namespace prefix.
      * @throws SAXException Parsing error occurred while reading coordinates.
      */
-    public void endElement(String namespaceURI, String localName, String qName)
-            throws SAXException {
+    @Override
+    public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
         LOGGER.finer("found end element: " + localName);
 
         processCharacters();
@@ -316,8 +305,7 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
                         addFilterToParent();
                     }
                 } catch (IllegalFilterException e) {
-                    throw new SAXException(
-                            "Attempted to construct illegal filter: " + e.getMessage());
+                    throw new SAXException("Attempted to construct illegal filter: " + e.getMessage());
                 }
             }
 
@@ -374,8 +362,7 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
                     insideDistance = false;
                 }
             } catch (IllegalFilterException e) {
-                throw new SAXException(
-                        "Attempted to construct illegal filter: " + e.getMessage(), e);
+                throw new SAXException("Attempted to construct illegal filter: " + e.getMessage(), e);
             }
         } else {
             parent.endElement(namespaceURI, localName, qName);
@@ -389,6 +376,7 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
      * @throws RuntimeException if the filterFactory can't handle the geometry
      * @task REVISIT: can we throw another exception?
      */
+    @Override
     public void geometry(Geometry geometry) throws RuntimeException {
         // Sends the geometry to the expression
         try {
@@ -406,8 +394,7 @@ public class FilterFilter extends XMLFilterImpl implements GMLHandlerJTS {
     }
 
     /**
-     * Converts the string representation of the expression to the AbstractFilter or
-     * DefaultExpression short type.
+     * Converts the string representation of the expression to the AbstractFilter or DefaultExpression short type.
      *
      * @param filterType Type of filter for check.
      * @return the short representation of the filter.

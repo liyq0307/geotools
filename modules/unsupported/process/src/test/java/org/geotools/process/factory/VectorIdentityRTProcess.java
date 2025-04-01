@@ -16,10 +16,13 @@
  */
 package org.geotools.process.factory;
 
-import org.geotools.data.Query;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import org.geotools.api.coverage.grid.GridGeometry;
+import org.geotools.api.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.process.ProcessException;
-import org.opengis.coverage.grid.GridGeometry;
 
 /**
  * A simple Rendering Transformation process for testing aspects of how transformations are called.
@@ -27,9 +30,8 @@ import org.opengis.coverage.grid.GridGeometry;
  * @author Martin Davis - OpenGeo
  */
 @DescribeProcess(
-    title = "SimpleVectorRTProcess",
-    description = "Simple test RT process taking a vector dataset as input."
-)
+        title = "SimpleVectorRTProcess",
+        description = "Simple test RT process taking a vector dataset as input.")
 public class VectorIdentityRTProcess {
     /** Note: for testing purposes only. A real Rendering Transformation must never store state. */
     int invertQueryValue;
@@ -37,8 +39,7 @@ public class VectorIdentityRTProcess {
     @DescribeResult(name = "result", description = "The result")
     public SimpleFeatureCollection execute(
             // process data
-            @DescribeParameter(name = "data", description = "Features to process")
-                    SimpleFeatureCollection data,
+            @DescribeParameter(name = "data", description = "Features to process") SimpleFeatureCollection data,
             @DescribeParameter(name = "value", description = "Value for testing") Integer value)
             throws ProcessException {
         if (value != invertQueryValue) {
@@ -56,5 +57,15 @@ public class VectorIdentityRTProcess {
         invertQueryValue = value;
 
         return targetQuery;
+    }
+
+    public boolean clipOnRenderingArea(
+            @DescribeParameter(name = "data", description = "Features to process") SimpleFeatureCollection data,
+            @DescribeParameter(name = "value", description = "Value for testing") Integer value) {
+        // making sure inputs have been provided
+        assertNotNull(data);
+        assertEquals(Integer.valueOf(10), value);
+        // not the default value
+        return true;
     }
 }

@@ -24,9 +24,9 @@ import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.geotools.data.DataAccessFactory.Param;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.FileDataStoreFinder;
+import org.geotools.api.data.DataAccessFactory.Param;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.FileDataStoreFinder;
 import org.geotools.util.URLs;
 
 /**
@@ -46,14 +46,14 @@ public class JDataStoreWizard extends Wizard {
     }
 
     public JDataStoreWizard(DataStoreFactorySpi format) {
-        this(format, new HashMap<String, Object>());
+        this(format, new HashMap<>());
     }
 
     public JDataStoreWizard(DataStoreFactorySpi format, Map<String, Object> params) {
         setWindowTitle(format == null ? "Connect" : format == null ? "" : format.getDisplayName());
 
         if (params == null) {
-            connectionParameters = new HashMap<String, Object>();
+            connectionParameters = new HashMap<>();
         } else {
             connectionParameters = params;
         }

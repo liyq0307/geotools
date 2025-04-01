@@ -26,7 +26,6 @@ import java.awt.Toolkit;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -50,12 +49,11 @@ import org.junit.runner.RunWith;
 /**
  * Tests for {@linkplain JFileImageChooser}.
  *
- * <p>This test class uses an {@linkplain ExecutorService} to launch the dialog which avoids a
- * deadlock between the modal dialog and this class waiting for the dialog to show up on the event
- * thread.
+ * <p>This test class uses an {@linkplain ExecutorService} to launch the dialog which avoids a deadlock between the
+ * modal dialog and this class waiting for the dialog to show up on the event thread.
  *
- * <p>TODO: it would be good to test display of the "Confirm file name" dialog but I haven't worked
- * out how to detect its appearance on the EDT reliably without blocking the test.
+ * <p>TODO: it would be good to test display of the "Confirm file name" dialog but I haven't worked out how to detect
+ * its appearance on the EDT reliably without blocking the test.
  *
  * @author Michael Bedward
  * @since 8.0
@@ -66,11 +64,11 @@ public class JFileImageChooserTest extends GraphicsTestBase<DialogFixture, Dialo
 
     private static final Class<? extends Component> DIALOG_CLASS = JFileImageChooser.class;
 
-    private static final ExecutorService executor = Executors.newSingleThreadExecutor();;
+    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     private static List<String> readerFileSuffixes;
     private static List<String> writerFileSuffixes;
 
-    private WindowActivatedListener listener;
+    private WindowActivatedListener<DialogFixture, Dialog, DialogDriver> listener;
 
     @BeforeClass
     public static void setupOnce() {
@@ -85,7 +83,7 @@ public class JFileImageChooserTest extends GraphicsTestBase<DialogFixture, Dialo
          * or JFileChooser, because this is what the underlying Swing file chooser
          * creates and displays.
          */
-        listener = new WindowActivatedListener(JDialog.class);
+        listener = new WindowActivatedListener<>(JDialog.class);
         Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.WINDOW_EVENT_MASK);
     }
 
@@ -100,13 +98,12 @@ public class JFileImageChooserTest extends GraphicsTestBase<DialogFixture, Dialo
 
         // Can't use base class getButton method because JFileChooser has
         // duplicate components
-        windowFixture.button(
-                new GenericTypeMatcher<JButton>(JButton.class) {
-                    @Override
-                    protected boolean isMatching(JButton component) {
-                        return component.isVisible() && "Open".equals(component.getText());
-                    }
-                });
+        windowFixture.button(new GenericTypeMatcher<JButton>(JButton.class) {
+            @Override
+            protected boolean isMatching(JButton component) {
+                return component.isVisible() && "Open".equals(component.getText());
+            }
+        });
     }
 
     @Test
@@ -115,13 +112,12 @@ public class JFileImageChooserTest extends GraphicsTestBase<DialogFixture, Dialo
 
         // Can't use base class getButton method because JFileChooser has
         // duplicate components
-        windowFixture.button(
-                new GenericTypeMatcher<JButton>(JButton.class) {
-                    @Override
-                    protected boolean isMatching(JButton component) {
-                        return component.isVisible() && "Save".equals(component.getText());
-                    }
-                });
+        windowFixture.button(new GenericTypeMatcher<JButton>(JButton.class) {
+            @Override
+            protected boolean isMatching(JButton component) {
+                return component.isVisible() && "Save".equals(component.getText());
+            }
+        });
     }
 
     @Test
@@ -138,9 +134,7 @@ public class JFileImageChooserTest extends GraphicsTestBase<DialogFixture, Dialo
             if (suffix.startsWith(".")) {
                 suffix = suffix.substring(1);
             }
-            assertTrue(
-                    "file suffix not a supported format: " + suffix,
-                    readerFileSuffixes.contains(suffix));
+            assertTrue("file suffix not a supported format: " + suffix, readerFileSuffixes.contains(suffix));
         }
     }
 
@@ -158,31 +152,21 @@ public class JFileImageChooserTest extends GraphicsTestBase<DialogFixture, Dialo
             if (suffix.startsWith(".")) {
                 suffix = suffix.substring(1);
             }
-            assertTrue(
-                    "file suffix not a supported format: " + suffix,
-                    writerFileSuffixes.contains(suffix));
+            assertTrue("file suffix not a supported format: " + suffix, writerFileSuffixes.contains(suffix));
         }
     }
 
     /**
-     * Calls {@linkplain JFileImageChooser#showOpenFile(java.awt.Component, java.io.File)} in a
-     * separate thread and confirms that the dialog is displayed.
+     * Calls {@linkplain JFileImageChooser#showOpenFile(java.awt.Component, java.io.File)} in a separate thread and
+     * confirms that the dialog is displayed.
      *
      * @param parent optional parent component
      * @param workingDir optional initial working dir
      * @return a future for the task being run in a separate thread
      */
-    private Future<File> showOpenDialog(final Component parent, final File workingDir)
-            throws Exception {
+    private Future<File> showOpenDialog(final Component parent, final File workingDir) throws Exception {
 
-        Future<File> future =
-                executor.submit(
-                        new Callable<File>() {
-                            @Override
-                            public File call() throws Exception {
-                                return JFileImageChooser.showOpenFile(parent, workingDir);
-                            }
-                        });
+        Future<File> future = executor.submit(() -> JFileImageChooser.showOpenFile(parent, workingDir));
 
         assertComponentDisplayed(DIALOG_CLASS);
         windowFixture = listener.getFixture(DISPLAY_TIMEOUT);
@@ -190,24 +174,16 @@ public class JFileImageChooserTest extends GraphicsTestBase<DialogFixture, Dialo
     }
 
     /**
-     * Calls {@linkplain JFileImageChooser#showSaveFile(java.awt.Component, java.io.File)} in a
-     * separate thread and confirms that the dialog is displayed.
+     * Calls {@linkplain JFileImageChooser#showSaveFile(java.awt.Component, java.io.File)} in a separate thread and
+     * confirms that the dialog is displayed.
      *
      * @param parent optional parent component
      * @param workingDir optional initial working dir
      * @return a future for the task being run in a separate thread
      */
-    private Future<File> showSaveDialog(final Component parent, final File workingDir)
-            throws Exception {
+    private Future<File> showSaveDialog(final Component parent, final File workingDir) throws Exception {
 
-        Future<File> future =
-                executor.submit(
-                        new Callable<File>() {
-                            @Override
-                            public File call() throws Exception {
-                                return JFileImageChooser.showSaveFile(parent, workingDir);
-                            }
-                        });
+        Future<File> future = executor.submit(() -> JFileImageChooser.showSaveFile(parent, workingDir));
 
         assertComponentDisplayed(DIALOG_CLASS);
         windowFixture = listener.getFixture(DISPLAY_TIMEOUT);
@@ -220,12 +196,11 @@ public class JFileImageChooserTest extends GraphicsTestBase<DialogFixture, Dialo
      * @return FEST fixture for the component
      */
     private JComboBoxFixture getFileFormatComboBox() {
-        return windowFixture.comboBox(
-                new GenericTypeMatcher<JComboBox>(JComboBox.class) {
-                    @Override
-                    protected boolean isMatching(JComboBox component) {
-                        return component.getItemAt(0) instanceof JFileImageChooser.FormatFilter;
-                    }
-                });
+        return windowFixture.comboBox(new GenericTypeMatcher<JComboBox>(JComboBox.class) {
+            @Override
+            protected boolean isMatching(JComboBox component) {
+                return component.getItemAt(0) instanceof JFileImageChooser.FormatFilter;
+            }
+        });
     }
 }

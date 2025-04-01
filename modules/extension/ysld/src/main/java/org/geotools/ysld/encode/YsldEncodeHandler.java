@@ -17,7 +17,7 @@
  */
 package org.geotools.ysld.encode;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
@@ -27,12 +27,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
 import org.geotools.filter.text.ecql.ECQL;
 import org.geotools.ysld.Tuple;
 import org.geotools.ysld.Ysld;
 import org.geotools.ysld.parse.Util;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
 
 /**
  * Encodes a single style object as YSLD
@@ -40,7 +40,7 @@ import org.opengis.filter.expression.Literal;
  * @param <T> Class of the style object
  */
 public abstract class YsldEncodeHandler<T> implements Iterator<Object> {
-    Deque<Map<String, Object>> stack = new ArrayDeque<Map<String, Object>>();
+    Deque<Map<String, Object>> stack = new ArrayDeque<>();
 
     public YsldEncodeHandler() {
         reset();
@@ -54,10 +54,7 @@ public abstract class YsldEncodeHandler<T> implements Iterator<Object> {
 
     @SuppressWarnings("unchecked")
     YsldEncodeHandler(T obj) {
-        this.it =
-                obj != null
-                        ? Collections.singleton(obj).iterator()
-                        : (Iterator<T>) Collections.emptyIterator();
+        this.it = obj != null ? Collections.singleton(obj).iterator() : (Iterator<T>) Collections.emptyIterator();
     }
 
     @Override
@@ -105,13 +102,7 @@ public abstract class YsldEncodeHandler<T> implements Iterator<Object> {
         return this;
     }
 
-    /**
-     * Should be used to encode values parsed with Util.name
-     *
-     * @param key
-     * @param expr
-     * @return
-     */
+    /** Should be used to encode values parsed with Util.name */
     YsldEncodeHandler<T> putName(String key, Expression expr) {
         if (expr != null && expr != Expression.NIL) {
             put(key, toObjOrNull(expr, true));
@@ -182,12 +173,7 @@ public abstract class YsldEncodeHandler<T> implements Iterator<Object> {
         return obj;
     }
 
-    /**
-     * See {@link #toObjOrNull(Expression, boolean)}
-     *
-     * @param expr
-     * @return
-     */
+    /** See {@link #toObjOrNull(Expression, boolean)} */
     Object toObjOrNull(Expression expr) {
         return toObjOrNull(expr, false);
     }
@@ -213,16 +199,13 @@ public abstract class YsldEncodeHandler<T> implements Iterator<Object> {
     }
 
     /**
-     * Takes an {@link Expression} and encodes it as YSLD. Literals are encoded as Strings.
-     * Concatenation expressions are removed, as they are implicit in the YSLD syntax. Other
-     * non-literal expressions are wrapped in ${}.
+     * Takes an {@link Expression} and encodes it as YSLD. Literals are encoded as Strings. Concatenation expressions
+     * are removed, as they are implicit in the YSLD syntax. Other non-literal expressions are wrapped in ${}.
      *
-     * <p>If the resulting string can be converted to the number, returns an appropriate {@link
-     * Number} object. Otherwise returns a {@link String}. Returns null if the passed expressison
-     * was null
+     * <p>If the resulting string can be converted to the number, returns an appropriate {@link Number} object.
+     * Otherwise returns a {@link String}. Returns null if the passed expressison was null
      *
      * @param expr Expression to encode
-     * @param isname
      * @return {@link String} or {@link Number} representation of expr, or null if expr is null.
      */
     Object toObjOrNull(Expression expr, boolean isname) {
@@ -234,7 +217,8 @@ public abstract class YsldEncodeHandler<T> implements Iterator<Object> {
         for (Expression subExpr : subExpressions) {
             if (!isNull(subExpr)) {
                 if (subExpr instanceof Literal) {
-                    builder.append(escapeForEmbededCQL(((Literal) subExpr).getValue().toString()));
+                    builder.append(
+                            escapeForEmbededCQL(((Literal) subExpr).getValue().toString()));
                 } else {
                     builder.append("${")
                             .append(escapeForEmbededCQL(ECQL.toCQL(subExpr)))
@@ -293,7 +277,7 @@ public abstract class YsldEncodeHandler<T> implements Iterator<Object> {
     }
 
     Map<String, Object> newMap() {
-        return new LinkedHashMap<String, Object>();
+        return new LinkedHashMap<>();
     }
 
     boolean isNull(Expression expr) {

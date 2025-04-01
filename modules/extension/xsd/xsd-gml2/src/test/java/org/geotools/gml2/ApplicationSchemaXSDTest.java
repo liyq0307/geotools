@@ -16,7 +16,7 @@
  */
 package org.geotools.gml2;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.geotools.xsd.SchemaLocationResolver;
 import org.junit.Test;
@@ -27,8 +27,7 @@ public class ApplicationSchemaXSDTest {
     @Test
     public void testCreateSchemaLocationResolver() {
         ApplicationSchemaXSD instance =
-                new ApplicationSchemaXSD(
-                        "http://myschema.com", "jar:file:///mytest/schemas.jar!/main.xsd");
+                new ApplicationSchemaXSD("http://myschema.com", "jar:file:///mytest/schemas.jar!/main.xsd");
         SchemaLocationResolver resolver = instance.createSchemaLocationResolver();
         assertEquals(
                 "jar:file:///mytest/schemas.jar!/test.xsd",

@@ -23,8 +23,8 @@ import org.geotools.text.Text;
 /**
  * Factory providing a number of processes for working with feature data.
  *
- * <p>Internally this factory makes use of the information provided by the {@link DescribeProcess}
- * annotations to produce the correct process description.
+ * <p>Internally this factory makes use of the information provided by the {@link DescribeProcess} annotations to
+ * produce the correct process description.
  *
  * @author Jody Garnett (LISAsoft)
  */
@@ -36,7 +36,7 @@ public class VectorProcessFactory extends AnnotatedBeanProcessFactory {
         if (registry == null) {
             synchronized (VectorProcessFactory.class) {
                 if (registry == null) {
-                    registry = new BeanFactoryRegistry<VectorProcess>(VectorProcess.class);
+                    registry = new BeanFactoryRegistry<>(VectorProcess.class);
                 }
             }
         }

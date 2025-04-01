@@ -62,8 +62,8 @@ public class CurvedGeometryFactory extends GeometryFactory {
     /**
      * Creates a {@link CircularString}
      *
-     * @param dimension Number of dimensions in the control point array. For the time being, any
-     *     value other than 2 will cause a IllegalArgumentException
+     * @param dimension Number of dimensions in the control point array. For the time being, any value other than 2 will
+     *     cause a IllegalArgumentException
      */
     public LineString createCircularString(int dimension, double... controlPoints) {
         if (dimension != 2) {
@@ -74,11 +74,11 @@ public class CurvedGeometryFactory extends GeometryFactory {
     }
 
     /**
-     * Creates a {@link CircularString} or a {@link CircularRing} depending on whether the points
-     * are forming a closed ring, or not
+     * Creates a {@link CircularString} or a {@link CircularRing} depending on whether the points are forming a closed
+     * ring, or not
      *
-     * @param dimension Number of dimensions in the control point array. For the time being, any
-     *     value other than 2 will cause a IllegalArgumentException
+     * @param dimension Number of dimensions in the control point array. For the time being, any value other than 2 will
+     *     cause a IllegalArgumentException
      */
     public LineString createCurvedGeometry(int dimension, double... controlPoints) {
         if (dimension != 2) {
@@ -99,8 +99,8 @@ public class CurvedGeometryFactory extends GeometryFactory {
     }
 
     /**
-     * Creates a {@link CircularString} or a {@link CircularRing} depending on whether the points
-     * are forming a closed ring, or not
+     * Creates a {@link CircularString} or a {@link CircularRing} depending on whether the points are forming a closed
+     * ring, or not
      */
     public LineString createCurvedGeometry(CoordinateSequence cs) {
         int lastCoordinate = cs.size() - 1;
@@ -137,33 +137,17 @@ public class CurvedGeometryFactory extends GeometryFactory {
         }
     }
 
-    /**
-     * Explicitly creates a {@link CurvePolygon}
-     *
-     * @param shell
-     * @param holes
-     * @return
-     */
-    public Polygon createCurvePolygon(LinearRing shell, LinearRing[] holes) {
+    /** Explicitly creates a {@link CurvePolygon} */
+    public Polygon createCurvePolygon(LinearRing shell, LinearRing... holes) {
         return new CurvePolygon(shell, holes, this, tolerance);
     }
 
-    /**
-     * Explicitly creates a {@link MultiSurface}
-     *
-     * @param polygons
-     * @return
-     */
+    /** Explicitly creates a {@link MultiSurface} */
     public MultiPolygon createMultiSurface(List<Polygon> polygons) {
         return new MultiSurface(polygons, this, tolerance);
     }
 
-    /**
-     * Explicitly creates a {@link MultiCurve}
-     *
-     * @param components
-     * @return
-     */
+    /** Explicitly creates a {@link MultiCurve} */
     public MultiCurve createMultiCurve(List<LineString> components) {
         return new MultiCurve(components, this, tolerance);
     }
@@ -173,8 +157,7 @@ public class CurvedGeometryFactory extends GeometryFactory {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((delegate == null) ? 0 : delegate.hashCode());
-        long temp;
-        temp = Double.doubleToLongBits(tolerance);
+        long temp = Double.doubleToLongBits(tolerance);
         result = prime * result + (int) (temp ^ (temp >>> 32));
         return result;
     }
@@ -188,16 +171,11 @@ public class CurvedGeometryFactory extends GeometryFactory {
         if (delegate == null) {
             if (other.delegate != null) return false;
         } else if (!delegate.equals(other.delegate)) return false;
-        if (Double.doubleToLongBits(tolerance) != Double.doubleToLongBits(other.tolerance))
-            return false;
+        if (Double.doubleToLongBits(tolerance) != Double.doubleToLongBits(other.tolerance)) return false;
         return true;
     }
 
-    /**
-     * Returns the linearization tolerance used to create the curved geometries
-     *
-     * @return
-     */
+    /** Returns the linearization tolerance used to create the curved geometries */
     public double getTolerance() {
         return tolerance;
     }
@@ -209,22 +187,27 @@ public class CurvedGeometryFactory extends GeometryFactory {
 
     /* Delegate methods */
 
+    @Override
     public Geometry toGeometry(Envelope envelope) {
         return delegate.toGeometry(envelope);
     }
 
+    @Override
     public PrecisionModel getPrecisionModel() {
         return delegate.getPrecisionModel();
     }
 
+    @Override
     public Point createPoint(Coordinate coordinate) {
         return delegate.createPoint(coordinate);
     }
 
+    @Override
     public Point createPoint(CoordinateSequence coordinates) {
         return delegate.createPoint(coordinates);
     }
 
+    @Override
     public MultiLineString createMultiLineString(LineString[] lineStrings) {
         boolean curved = false;
         for (LineString ls : lineStrings) {
@@ -240,10 +223,12 @@ public class CurvedGeometryFactory extends GeometryFactory {
         }
     }
 
+    @Override
     public GeometryCollection createGeometryCollection(Geometry[] geometries) {
         return delegate.createGeometryCollection(geometries);
     }
 
+    @Override
     public MultiPolygon createMultiPolygon(Polygon[] polygons) {
         if (containsCurves(polygons)) {
             return new MultiSurface(polygons, this, tolerance);
@@ -251,27 +236,33 @@ public class CurvedGeometryFactory extends GeometryFactory {
         return delegate.createMultiPolygon(polygons);
     }
 
+    @Override
     public LinearRing createLinearRing(Coordinate[] coordinates) {
         return delegate.createLinearRing(coordinates);
     }
 
+    @Override
     public LinearRing createLinearRing(CoordinateSequence coordinates) {
         return delegate.createLinearRing(coordinates);
     }
 
+    @Override
     public MultiPoint createMultiPoint(Point[] point) {
         return delegate.createMultiPoint(point);
     }
 
+    @Override
     @SuppressWarnings("deprecation")
     public MultiPoint createMultiPoint(Coordinate[] coordinates) {
         return delegate.createMultiPoint(coordinates);
     }
 
+    @Override
     public MultiPoint createMultiPoint(CoordinateSequence coordinates) {
         return delegate.createMultiPoint(coordinates);
     }
 
+    @Override
     public Polygon createPolygon(LinearRing shell, LinearRing[] holes) {
         if (shell instanceof CurvedGeometry || containsCurves(holes)) {
             return new CurvePolygon(shell, holes, this, tolerance);
@@ -280,14 +271,17 @@ public class CurvedGeometryFactory extends GeometryFactory {
         }
     }
 
+    @Override
     public Polygon createPolygon(CoordinateSequence coordinates) {
         return delegate.createPolygon(coordinates);
     }
 
+    @Override
     public Polygon createPolygon(Coordinate[] coordinates) {
         return delegate.createPolygon(coordinates);
     }
 
+    @Override
     public Polygon createPolygon(LinearRing shell) {
         if (shell instanceof CurvedGeometry) {
             return new CurvePolygon(shell, (LinearRing[]) null, this, tolerance);
@@ -296,52 +290,48 @@ public class CurvedGeometryFactory extends GeometryFactory {
         }
     }
 
+    @Override
     public Geometry buildGeometry(Collection geomList) {
         return delegate.buildGeometry(geomList);
     }
 
+    @Override
     public LineString createLineString(Coordinate[] coordinates) {
         return delegate.createLineString(coordinates);
     }
 
+    @Override
     public LineString createLineString(CoordinateSequence coordinates) {
         return delegate.createLineString(coordinates);
     }
 
+    @Override
     public Geometry createGeometry(Geometry g) {
         return delegate.createGeometry(g);
     }
 
+    @Override
     public int getSRID() {
         return delegate.getSRID();
     }
 
+    @Override
     public CoordinateSequenceFactory getCoordinateSequenceFactory() {
         return delegate.getCoordinateSequenceFactory();
     }
 
-    /**
-     * Returns true if the geometry is a curved geometry, or contains curved geometries
-     *
-     * @param g
-     * @return
-     */
+    /** Returns true if the geometry is a curved geometry, or contains curved geometries */
     public boolean hasCurves(Geometry g) {
         if (g instanceof CurvedGeometry) {
             return true;
         }
 
         final AtomicBoolean hasCurves = new AtomicBoolean(false);
-        g.apply(
-                new GeometryComponentFilter() {
-
-                    @Override
-                    public void filter(Geometry geom) {
-                        if (geom instanceof CurvedGeometry) {
-                            hasCurves.set(true);
-                        }
-                    }
-                });
+        g.apply((GeometryComponentFilter) geom -> {
+            if (geom instanceof CurvedGeometry) {
+                hasCurves.set(true);
+            }
+        });
 
         return hasCurves.get();
     }

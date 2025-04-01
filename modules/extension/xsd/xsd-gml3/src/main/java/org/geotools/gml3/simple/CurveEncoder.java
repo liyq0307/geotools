@@ -38,8 +38,7 @@ class CurveEncoder extends GeometryEncoder<LineString> {
 
     static final QualifiedName SEGMENTS = new QualifiedName(GML.NAMESPACE, "segments", "gml");
 
-    static final QualifiedName LINE_STRING_SEGMENT =
-            new QualifiedName(GML.NAMESPACE, "LineStringSegment", "gml");
+    static final QualifiedName LINE_STRING_SEGMENT = new QualifiedName(GML.NAMESPACE, "LineStringSegment", "gml");
 
     static final QualifiedName ARC_STRING = new QualifiedName(GML.NAMESPACE, "ArcString", "gml");
 
@@ -68,8 +67,8 @@ class CurveEncoder extends GeometryEncoder<LineString> {
         this.arcString = ARC_STRING.derive(gmlPrefix, gmlUri);
     }
 
-    public void encode(LineString geometry, AttributesImpl atts, GMLWriter handler, String gmlId)
-            throws Exception {
+    @Override
+    public void encode(LineString geometry, AttributesImpl atts, GMLWriter handler, String gmlId) throws Exception {
         if (gmlId != null) {
             atts = cloneWithGmlId(atts, gmlId);
         }
@@ -88,6 +87,7 @@ class CurveEncoder extends GeometryEncoder<LineString> {
             SingleCurvedGeometry curve = (SingleCurvedGeometry) geometry;
             encodeCurve(curve, handler);
         } else if (geometry instanceof CompoundCurvedGeometry) {
+            @SuppressWarnings("unchecked")
             CompoundCurvedGeometry<LineString> compound = (CompoundCurvedGeometry) geometry;
             for (LineString component : compound.getComponents()) {
                 encodeContents(component, handler);
@@ -109,8 +109,7 @@ class CurveEncoder extends GeometryEncoder<LineString> {
 
     private void encodeCurve(SingleCurvedGeometry curve, GMLWriter handler) throws Exception {
         AttributesImpl atts = new AttributesImpl();
-        atts.addAttribute(
-                GML.NAMESPACE, "interpolation", "interpolation", "", "circularArc3Points");
+        atts.addAttribute(GML.NAMESPACE, "interpolation", "interpolation", "", "circularArc3Points");
         handler.startElement(arcString, atts);
 
         handler.posList(new LiteCoordinateSequence(curve.getControlPoints()));

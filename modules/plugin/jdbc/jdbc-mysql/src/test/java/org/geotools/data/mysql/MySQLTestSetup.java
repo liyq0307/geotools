@@ -42,6 +42,7 @@ public class MySQLTestSetup extends JDBCTestSetup {
         return new MySQLDataStoreFactory();
     }
 
+    @Override
     protected void setUpData() throws Exception {
         // allow time parsing in str_to_date
         run("SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'NO_ZERO_IN_DATE',''));");
@@ -59,6 +60,12 @@ public class MySQLTestSetup extends JDBCTestSetup {
         } catch (Exception e) {
             // e.printStackTrace();
         }
+
+        try {
+            run("DROP TABLE ft4;");
+        } catch (Exception e) {
+            // e.printStackTrace();
+        }
         runSafe("DELETE FROM geometry_columns");
 
         // create some data
@@ -67,26 +74,62 @@ public class MySQLTestSetup extends JDBCTestSetup {
         sb.append("CREATE TABLE ft1 ")
                 .append("(id int AUTO_INCREMENT PRIMARY KEY , ")
                 .append("geometry POINT, intProperty int, ")
-                .append(
-                        "doubleProperty double, stringProperty varchar(255) COLLATE latin1_general_cs) ENGINE=InnoDB;");
+                .append("doubleProperty double, stringProperty varchar(255) COLLATE latin1_general_cs) ENGINE=InnoDB;");
         run(sb.toString());
 
         // setup so that we can start counting from 0, otherwise 0 is treated as a special value
         run("SET sql_mode='NO_AUTO_VALUE_ON_ZERO';");
 
         sb = new StringBuffer();
-        sb.append("INSERT INTO ft1 VALUES (")
-                .append("0,GeometryFromText('POINT(0 0)',4326), 0, 0.0,'zero');");
+        sb.append("INSERT INTO ft1 VALUES (").append("0,ST_GeomFromText('POINT(0 0)',4326), 0, 0.0,'zero');");
         run(sb.toString());
 
         sb = new StringBuffer();
-        sb.append("INSERT INTO ft1 VALUES (")
-                .append("1,GeometryFromText('POINT(1 1)',4326), 1, 1.1,'one');");
+        sb.append("INSERT INTO ft1 VALUES (").append("1,ST_GeomFromText('POINT(1 1)',4326), 1, 1.1,'one');");
         run(sb.toString());
 
         sb = new StringBuffer();
-        sb.append("INSERT INTO ft1 VALUES (")
-                .append("2,GeometryFromText('POINT(2 2)',4326), 2, 2.2,'two');");
+        sb.append("INSERT INTO ft1 VALUES (").append("2,ST_GeomFromText('POINT(2 2)',4326), 2, 2.2,'two');");
+        run(sb.toString());
+
+        runft4();
+    }
+
+    private void runft4() throws Exception {
+        StringBuffer sb = new StringBuffer();
+        // JD: COLLATE latin1_general_cs is neccesary to ensure case-sensitive string comparisons
+        sb.append("CREATE TABLE ft4 ")
+                .append("(id int AUTO_INCREMENT PRIMARY KEY , ")
+                .append("geometry POINT, intProperty int, ")
+                .append("doubleProperty double, stringProperty varchar(255) COLLATE latin1_general_cs) ENGINE=InnoDB;");
+        run(sb.toString());
+
+        sb = new StringBuffer();
+        sb.append("INSERT INTO ft4 VALUES (").append("0,ST_GeomFromText('POINT(0 0)',4326), 0, 0.0,'zero');");
+        run(sb.toString());
+
+        sb = new StringBuffer();
+        sb.append("INSERT INTO ft4 VALUES (").append("1,ST_GeomFromText('POINT(1 1)',4326), 1, 1.1,'one');");
+        run(sb.toString());
+
+        sb = new StringBuffer();
+        sb.append("INSERT INTO ft4 VALUES (").append("2,ST_GeomFromText('POINT(2 2)',4326), 1, 1.1,'one_2');");
+        run(sb.toString());
+
+        sb = new StringBuffer();
+        sb.append("INSERT INTO ft4 VALUES (").append("3,ST_GeomFromText('POINT(3 3)',4326), 1, 1.1,'one_2');");
+        run(sb.toString());
+
+        sb = new StringBuffer();
+        sb.append("INSERT INTO ft4 VALUES (").append("4,ST_GeomFromText('POINT(4 4)',4326), 2, 2.2,'two');");
+        run(sb.toString());
+
+        sb = new StringBuffer();
+        sb.append("INSERT INTO ft4 VALUES (").append("5,ST_GeomFromText('POINT(5 5)',4326), 2, 2.2,'two_2');");
+        run(sb.toString());
+
+        sb = new StringBuffer();
+        sb.append("INSERT INTO ft4 VALUES (").append("6,ST_GeomFromText('POINT(6 6)',4326), 3, 3.3,'three');");
         run(sb.toString());
     }
 
@@ -99,7 +142,7 @@ public class MySQLTestSetup extends JDBCTestSetup {
     protected Properties createExampleFixture() {
         Properties p = new Properties();
 
-        p.put("driver", "com.mysql.jdbc.Driver");
+        p.put("driver", "com.mysql.cj.jdbc.Driver");
         p.put("url", "jdbc:mysql://localhost/geotools");
         p.put("host", "localhost");
         p.put("port", "3306");

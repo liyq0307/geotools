@@ -30,7 +30,8 @@ import org.locationtech.jts.geom.GeometryFactory;
  * @source $URL$
  */
 /** @source $URL$ */
-public class PointData extends HashMap {
+public class PointData extends HashMap<Object, Object> {
+    @Override
     public Object put(Object key, Object value) {
         if (key instanceof String) {
             String key_s = (String) key;
@@ -42,10 +43,7 @@ public class PointData extends HashMap {
 
                 while (st.hasMoreTokens()) {
                     StringTokenizer st2 = new StringTokenizer(st.nextToken(), ",");
-                    c[i] =
-                            new Coordinate(
-                                    Double.parseDouble(st2.nextToken()),
-                                    Double.parseDouble(st2.nextToken()));
+                    c[i] = new Coordinate(Double.parseDouble(st2.nextToken()), Double.parseDouble(st2.nextToken()));
                     i++;
                 }
 

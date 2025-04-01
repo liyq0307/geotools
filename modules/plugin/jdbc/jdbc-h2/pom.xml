@@ -7,18 +7,14 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                               http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools.jdbc</groupId>
     <artifactId>gt-jdbc</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
-
 
   <!-- =========================================================== -->
   <!--     Module Description                                      -->
@@ -28,10 +24,7 @@
   <packaging>jar</packaging>
   <name>H2 DataStore</name>
 
-
-  <description>
-	DataStore for H2 Database.
-  </description>
+  <description>DataStore for H2 Database.</description>
 
   <licenses>
     <license>
@@ -41,14 +34,13 @@
     </license>
   </licenses>
 
-
   <!-- =========================================================== -->
   <!--     Developers and Contributors                             -->
   <!-- =========================================================== -->
   <developers>
     <developer>
-      <name>Justin Deoliveira</name>
       <id>jdeolive</id>
+      <name>Justin Deoliveira</name>
       <email>jdeolive@users.sourceforge.net</email>
       <organization>TOPP</organization>
       <roles>
@@ -69,14 +61,19 @@
           <artifactId>h2</artifactId>
         </exclusion>
         <exclusion>
-           <groupId>org.locationtech.jts</groupId>
-           <artifactId>jts-core</artifactId>
+          <groupId>net.sourceforge.hatbox</groupId>
+          <artifactId>hatbox</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.hatbox</groupId>
+      <artifactId>hatbox</artifactId>
+      <version>1.0.b11</version>
     </dependency>
   </dependencies>
 

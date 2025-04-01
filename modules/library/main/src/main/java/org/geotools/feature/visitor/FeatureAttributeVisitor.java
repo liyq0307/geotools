@@ -17,12 +17,12 @@
 package org.geotools.feature.visitor;
 
 import java.util.List;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.filter.expression.Expression;
+import java.util.Optional;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.filter.expression.Expression;
 
 /**
- * Extension of FeatureVisitor for visitors that require access to properties of the feature
- * collection being visited.
+ * Extension of FeatureVisitor for visitors that require access to properties of the feature collection being visited.
  *
  * @author Justin Deoliveira, OpenGeo
  */
@@ -30,4 +30,15 @@ public interface FeatureAttributeVisitor extends FeatureVisitor {
 
     /** List of expressions used by visitor. */
     List<Expression> getExpressions();
+
+    /**
+     * Returns the expected output type given the input type.
+     *
+     * @param inputTypes The type of the input expressions
+     * @throws IllegalArgumentException If the list of input types is not a match for the {@link #getExpressions()}
+     *     result or is not acceptable for this visito
+     */
+    default Optional<List<Class>> getResultType(List<Class> inputTypes) {
+        return Optional.empty();
+    }
 }

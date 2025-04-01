@@ -16,21 +16,24 @@
  */
 package org.geotools.filter;
 
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.util.ConverterFactory;
 import org.geotools.util.Converters;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
+import org.geotools.util.factory.Hints;
 
 /** @author jdeolive TODO: rename this class to IsEqualToImpl */
 public class IsEqualsToImpl extends MultiCompareFilterImpl implements PropertyIsEqualTo {
+
+    public static final Hints SAFE_CONVERSION_HINTS = new Hints(ConverterFactory.SAFE_CONVERSION, true);
 
     protected IsEqualsToImpl(Expression expression1, Expression expression2) {
         this(expression1, expression2, true);
     }
 
-    protected IsEqualsToImpl(
-            Expression expression1, Expression expression2, MatchAction matchAction) {
+    protected IsEqualsToImpl(Expression expression1, Expression expression2, MatchAction matchAction) {
         this(expression1, expression2, true, matchAction);
     }
 
@@ -39,10 +42,7 @@ public class IsEqualsToImpl extends MultiCompareFilterImpl implements PropertyIs
     }
 
     protected IsEqualsToImpl(
-            Expression expression1,
-            Expression expression2,
-            boolean matchCase,
-            MatchAction matchAction) {
+            Expression expression1, Expression expression2, boolean matchCase, MatchAction matchAction) {
         super(expression1, expression2, matchCase, matchAction);
     }
 
@@ -86,6 +86,15 @@ public class IsEqualsToImpl extends MultiCompareFilterImpl implements PropertyIs
             if (v1 != null && v1.equals(value2)) return true;
         } else if (expression2 instanceof Literal && !(expression1 instanceof Literal)) {
             Object v2 = Converters.convert(value2, value1.getClass());
+            if (v2 != null && v2.equals(value1)) return true;
+        }
+
+        // if one side is string and the other is not, try to convert the string to non-string
+        if (value1 instanceof String && !(value2 instanceof String)) {
+            Object v1 = Converters.convert(value1, value2.getClass(), SAFE_CONVERSION_HINTS);
+            if (v1 != null && v1.equals(value2)) return true;
+        } else if (value2 instanceof String && !(value1 instanceof String)) {
+            Object v2 = Converters.convert(value2, value1.getClass(), SAFE_CONVERSION_HINTS);
             if (v2 != null && v2.equals(value1)) return true;
         }
 
@@ -145,6 +154,7 @@ public class IsEqualsToImpl extends MultiCompareFilterImpl implements PropertyIs
         }
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }

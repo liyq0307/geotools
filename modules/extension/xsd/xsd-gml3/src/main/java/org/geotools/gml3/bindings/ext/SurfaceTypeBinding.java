@@ -34,6 +34,7 @@ public class SurfaceTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.SurfaceType;
     }
@@ -50,6 +51,7 @@ public class SurfaceTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return MultiPolygon.class;
     }
@@ -61,9 +63,10 @@ public class SurfaceTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        Polygon[] patches = (Polygon[]) node.getChildValue(Polygon[].class);
-        MultiPolygon mp = (MultiPolygon) node.getChildValue(MultiPolygon.class);
+        Polygon[] patches = node.getChildValue(Polygon[].class);
+        MultiPolygon mp = node.getChildValue(MultiPolygon.class);
         if (mp != null) {
             return mp;
         } else {

@@ -17,12 +17,12 @@
 package org.geotools.sld.bindings;
 
 import javax.xml.namespace.QName;
-import org.geotools.styling.LinePlacement;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.LinePlacement;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Binding object for the element http://www.opengis.net/sld:LinePlacement.
@@ -58,6 +58,7 @@ public class SLDLinePlacementBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.LINEPLACEMENT;
     }
@@ -69,6 +70,7 @@ public class SLDLinePlacementBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -80,6 +82,7 @@ public class SLDLinePlacementBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return LinePlacement.class;
     }
@@ -91,6 +94,7 @@ public class SLDLinePlacementBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         Expression offset = null;

@@ -17,6 +17,7 @@
 package org.geotools.xs.bindings;
 
 import javax.xml.namespace.QName;
+import org.apache.commons.lang3.StringUtils;
 import org.geotools.xs.XS;
 import org.geotools.xsd.InstanceComponent;
 import org.geotools.xsd.SimpleBinding;
@@ -52,6 +53,7 @@ import org.geotools.xsd.SimpleBinding;
  */
 public class XSBooleanBinding implements SimpleBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.BOOLEAN;
     }
@@ -63,6 +65,7 @@ public class XSBooleanBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -75,6 +78,7 @@ public class XSBooleanBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Boolean.class;
     }
@@ -87,13 +91,15 @@ public class XSBooleanBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         if ("1".equals(value) || "true".equals(value)) {
             return Boolean.TRUE;
         } else if ("0".equals(value) || "false".equals(value)) {
             return Boolean.FALSE;
+        } else if (StringUtils.isBlank((String) value)) {
+            return null;
         }
-
         throw new IllegalArgumentException("boolean indeterminate from  '" + value + "'");
     }
 
@@ -104,6 +110,7 @@ public class XSBooleanBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public String encode(Object object, String value) {
         Boolean bool = (Boolean) object;
 

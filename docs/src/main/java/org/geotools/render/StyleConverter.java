@@ -1,11 +1,13 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2006-2010, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This file is hereby placed into the Public Domain. This means anyone is
- *    free to do whatever they wish with this file. Use it well and enjoy!
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.render;
 
@@ -27,12 +29,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.xml.transform.TransformerException;
 import net.miginfocom.swing.MigLayout;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.UserLayer;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.styling.FeatureTypeConstraint;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.UserLayer;
 import org.geotools.swing.data.JParameterListWizard;
 import org.geotools.swing.wizard.JWizard;
 import org.geotools.util.KVP;
@@ -40,7 +42,6 @@ import org.geotools.util.SuppressFBWarnings;
 import org.geotools.xml.styling.SLDParser;
 import org.geotools.xml.styling.SLDTransformer;
 import org.geotools.xsd.Encoder;
-import org.opengis.style.Style;
 
 /**
  * StyleConverter example used to demonstrate reading and writing of SLD and SE files.
@@ -60,22 +61,21 @@ public class StyleConverter extends JFrame {
     Style style;
     private JTextArea text;
 
-    private ActionListener convertListener =
-            new ActionListener() {
+    private ActionListener convertListener = new ActionListener() {
 
-                public void actionPerformed(ActionEvent e) {
-                    String command = e.getActionCommand();
-                    if (SLD_1_0.equals(command)) {
-                        convertToSLD_1_0();
-                    }
-                    if (SLD_1_1.equals(command)) {
-                        convertToSLD_1_1();
-                    }
-                    if (SE_1_1.equals(command)) {
-                        convertToSE_1_1();
-                    }
-                }
-            };
+        public void actionPerformed(ActionEvent e) {
+            String command = e.getActionCommand();
+            if (SLD_1_0.equals(command)) {
+                convertToSLD_1_0();
+            }
+            if (SLD_1_1.equals(command)) {
+                convertToSLD_1_1();
+            }
+            if (SE_1_1.equals(command)) {
+                convertToSE_1_1();
+            }
+        }
+    };
 
     private ButtonGroup group;
 
@@ -116,29 +116,27 @@ public class StyleConverter extends JFrame {
 
         importSLD = new JButton("Import SLD");
         importSLD.setActionCommand("importSLD");
-        export.addActionListener(
-                new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (style != null) {
-                            importSLD();
-                        }
-                    }
-                });
+        export.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (style != null) {
+                    importSLD();
+                }
+            }
+        });
 
         importSE = new JButton("Import SE");
         importSE.setEnabled(false);
 
         export = new JButton("Export");
-        export.addActionListener(
-                new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (style != null) {
-                            export();
-                        }
-                    }
-                });
+        export.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (style != null) {
+                    export();
+                }
+            }
+        });
 
         getContentPane().setLayout(new MigLayout("", "[[]][][][grow][]", "[][][][][grow][]"));
 
@@ -171,11 +169,7 @@ public class StyleConverter extends JFrame {
     }
 
     protected void importSLD() {
-        File file =
-                importStyleWizard(
-                        "Select style layer descriptor 1.0 document",
-                        "sld",
-                        "style layer descriptor");
+        File file = importStyleWizard("Select style layer descriptor 1.0 document", "sld", "style layer descriptor");
         if (file == null) return; // cancel
 
         StyleFactory factory = CommonFactoryFinder.getStyleFactory();
@@ -191,8 +185,7 @@ public class StyleConverter extends JFrame {
             JOptionPane.showMessageDialog(this, "Style not defined");
             return;
         }
-        org.geotools.sld.v1_1.SLDConfiguration configuration =
-                new org.geotools.sld.v1_1.SLDConfiguration();
+        org.geotools.sld.v1_1.SLDConfiguration configuration = new org.geotools.sld.v1_1.SLDConfiguration();
         Encoder encoder = new Encoder(configuration);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -232,14 +225,12 @@ public class StyleConverter extends JFrame {
         StyleFactory factory = CommonFactoryFinder.getStyleFactory();
         StyledLayerDescriptor sld = factory.createStyledLayerDescriptor();
 
-        org.geotools.sld.v1_1.SLDConfiguration configuration =
-                new org.geotools.sld.v1_1.SLDConfiguration();
+        org.geotools.sld.v1_1.SLDConfiguration configuration = new org.geotools.sld.v1_1.SLDConfiguration();
         Encoder encoder = new Encoder(configuration);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
-            encoder.encode(
-                    style, org.geotools.sld.bindings.SLD.STYLEDLAYERDESCRIPTOR, outputStream);
+            encoder.encode(style, org.geotools.sld.bindings.SLD.STYLEDLAYERDESCRIPTOR, outputStream);
             String document = outputStream.toString("UTF-8");
 
             display(document, SLD_1_1);
@@ -248,12 +239,7 @@ public class StyleConverter extends JFrame {
         }
     }
 
-    /**
-     * Update displayed text and format.
-     *
-     * @param document
-     * @param format
-     */
+    /** Update displayed text and format. */
     public void display(String document, String format) {
         if (document == null) {
             text.setText("<!-- copy or import style document here -->");
@@ -296,9 +282,9 @@ public class StyleConverter extends JFrame {
 
         // FeatureTypeConstraint ftc =
         // styleFactory.createFeatureTypeConstraint(null, Filter.INCLUDE, null);
-        layer.setLayerFeatureConstraints(new FeatureTypeConstraint[] {null});
+        layer.setLayerFeatureConstraints(null);
         sld.addStyledLayer(layer);
-        layer.addUserStyle((org.geotools.styling.Style) style);
+        layer.addUserStyle(style);
 
         return sld;
     }

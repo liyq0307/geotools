@@ -45,6 +45,7 @@ public class XSAnySimpleTypeBinding implements SimpleBinding {
      *
      * @generated
      */
+    @Override
     public QName getTarget() {
         return XS.ANYSIMPLETYPE;
     }
@@ -56,6 +57,7 @@ public class XSAnySimpleTypeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
@@ -68,6 +70,7 @@ public class XSAnySimpleTypeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return String.class;
     }
@@ -75,12 +78,12 @@ public class XSAnySimpleTypeBinding implements SimpleBinding {
     /**
      *
      * <!-- begin-user-doc -->
-     * This method returns the value paramter, which is the facet parsed string passed in from the
-     * framework.
+     * This method returns the value paramter, which is the facet parsed string passed in from the framework.
      * <!-- end-user-doc -->
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         return value;
     }
@@ -92,6 +95,7 @@ public class XSAnySimpleTypeBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public String encode(Object object, String value) {
         return (object == null) ? null : String.valueOf(object);
     }

@@ -17,46 +17,57 @@
 
 package org.geotools.data.complex;
 
+import static java.util.Map.entry;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.ComplexAttribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.appschema.filter.FilterFactoryImplNamespaceAware;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.complex.feature.type.Types;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureImpl;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.gml3.bindings.GML3EncodingUtils;
 import org.geotools.test.AppSchemaTestSupport;
+import org.geotools.wfs.PropertyValueCollection;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.locationtech.jts.util.Stopwatch;
-import org.opengis.feature.ComplexAttribute;
-import org.opengis.feature.Feature;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
- * This is the tests for feature chaining; nesting complex attributes (feature and non-feature)
- * inside another complex attribute.
+ * This is the tests for feature chaining; nesting complex attributes (feature and non-feature) inside another complex
+ * attribute.
  *
  * @author Rini Angreani (CSIRO Earth Science and Resource Engineering)
  */
@@ -87,7 +98,7 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
 
     static final Name CONTROLLED_CONCEPT = Types.typeName(GSMLNS, "ControlledConcept");
 
-    static FilterFactory2 ff;
+    static FilterFactory ff;
 
     private NamespaceSupport namespaces = new NamespaceSupport();
 
@@ -98,53 +109,25 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         ff = new FilterFactoryImplNamespaceAware(namespaces);
     }
 
-    /**
-     * Map of geological unit values to mapped feature objects based on
-     * mappedFeaturePropertyFile.properties
-     */
-    static final Map<String, String> mfToGuMap =
-            new HashMap<String, String>() {
-                {
-                    put("mf1", "gu.25699");
-                    put("mf2", "gu.25678");
-                    put("mf3", "gu.25678");
-                    put("mf4", "gu.25682");
-                }
-            };
+    /** Map of geological unit values to mapped feature objects based on mappedFeaturePropertyFile.properties */
+    static final Map<String, String> mfToGuMap = Map.ofEntries(
+            entry("mf1", "gu.25699"), entry("mf2", "gu.25678"), entry("mf3", "gu.25678"), entry("mf4", "gu.25682"));
 
-    /**
-     * Map of compositional part values to geological unit objects based on geologicUnit.properties
-     */
-    static final Map<String, String> guToCpMap =
-            new HashMap<String, String>() {
-                {
-                    put("gu.25699", "cp.167775491936278899");
-                    put("gu.25678", "cp.167775491936278844;cp.167775491936278856");
-                    put("gu.25682", "cp.167775491936278812");
-                }
-            };
+    /** Map of compositional part values to geological unit objects based on geologicUnit.properties */
+    static final Map<String, String> guToCpMap = Map.ofEntries(
+            entry("gu.25699", "cp.167775491936278899"),
+            entry("gu.25678", "cp.167775491936278844;cp.167775491936278856"),
+            entry("gu.25682", "cp.167775491936278812"));
 
     /** Map of exposure colour values to geological unit objects based on geologicUnit.properties */
     static final Map<String, String> guToExposureColorMap =
-            new HashMap<String, String>() {
-                {
-                    put("gu.25699", "Blue");
-                    put("gu.25678", "Yellow;Blue");
-                    put("gu.25682", "Red");
-                }
-            };
+            Map.ofEntries(entry("gu.25699", "Blue"), entry("gu.25678", "Yellow;Blue"), entry("gu.25682", "Red"));
 
-    /**
-     * Map of out crop character values to geological unit objects based on geologicUnit.properties
-     */
-    static Map<String, String> guToOutcropCharacterMap =
-            new HashMap<String, String>() {
-                {
-                    put("gu.25699", "x");
-                    put("gu.25678", "x;y");
-                    put("gu.25682", "z");
-                }
-            };
+    /** Map of out crop character values to geological unit objects based on geologicUnit.properties */
+    static Map<String, String> guToOutcropCharacterMap = Map.ofEntries(
+            entry("gu.25699", "x"), //
+            entry("gu.25678", "x;y"), //
+            entry("gu.25682", "z"));
 
     private static final String schemaBase = "/test-data/";
 
@@ -171,264 +154,249 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         // System.out.println("Set up time: " + sw.getTimeString());
     }
 
-    /**
-     * Test that chaining works
-     *
-     * @throws Exception
-     */
+    /** Test that chaining works */
     @Test
     public void testFeatureChaining() throws Exception {
-        FeatureIterator<Feature> mfIterator = mfFeatures.features();
+        try (FeatureIterator<Feature> mfIterator = mfFeatures.features();
+                FeatureIterator<Feature> guIterator = guFeatures.features();
+                FeatureIterator<Feature> cpIterator = cpFeatures.features()) {
 
-        FeatureIterator<Feature> guIterator = guFeatures.features();
-
-        // Extract all geological unit features into a map by id
-        Map<String, Feature> guMap = new HashMap<String, Feature>();
-        Feature guFeature;
-        while (guIterator.hasNext()) {
-            guFeature = (Feature) guIterator.next();
-            String guId = guFeature.getIdentifier().getID();
-            if (!guMap.containsKey(guId)) {
-                guMap.put(guId, guFeature);
-            }
-        }
-
-        // Extract all compositional part "features" into a map by id
-        FeatureIterator<Feature> cpIterator = cpFeatures.features();
-        Map<String, Feature> cpMap = new HashMap<String, Feature>();
-        Feature cpFeature;
-        while (cpIterator.hasNext()) {
-            cpFeature = (Feature) cpIterator.next();
-            String cpId = cpFeature.getIdentifier().getID();
-            if (!cpMap.containsKey(cpId)) {
-                cpMap.put(cpId, cpFeature);
-            }
-        }
-
-        Feature mfFeature;
-        Collection<Property> nestedGuFeatures;
-        String guId;
-        final String NESTED_LINK = "specification";
-        Collection<Property> nestedCpFeatures;
-        String cpId;
-        while (mfIterator.hasNext()) {
-            mfFeature = (Feature) mfIterator.next();
-            String mfId = mfFeature.getIdentifier().toString();
-            String[] guIds = this.mfToGuMap.get(mfId).split(";");
-
-            // make sure we have the right number of nested features
-            nestedGuFeatures = (Collection<Property>) mfFeature.getProperties(NESTED_LINK);
-            assertEquals(guIds.length, nestedGuFeatures.size());
-
-            ArrayList<String> nestedGuIds = new ArrayList<String>();
-
-            for (Property property : nestedGuFeatures) {
-                Object value = property.getValue();
-                assertNotNull(value);
-                assertTrue(value instanceof Collection);
-                assertEquals(1, ((Collection) value).size());
-
-                Feature nestedGuFeature = (Feature) ((Collection) value).iterator().next();
-                /** Test geological unit */
-                // make sure each of the nested geologic unit is valid
-                guId = nestedGuFeature.getIdentifier().toString();
-                assertTrue(guMap.containsKey(guId));
-
-                nestedGuIds.add(guId);
-
-                // make sure the nested geologic unit feature has the right properties
-                guFeature = guMap.get(guId.toString());
-                Collection<Property> guProperties = guFeature.getProperties();
-                assertEquals(nestedGuFeature.getProperties(), guProperties);
-
-                /** Test compositional part */
-                // make sure the right number of nested features are there
-                String[] cpIds = this.guToCpMap.get(guId).split(";");
-                nestedCpFeatures = (Collection<Property>) guFeature.getProperties("composition");
-                assertEquals(cpIds.length, nestedCpFeatures.size());
-
-                ArrayList<String> nestedCpIds = new ArrayList<String>();
-                for (Property cpProperty : nestedCpFeatures) {
-                    Object cpPropertyValue = cpProperty.getValue();
-                    assertNotNull(cpPropertyValue);
-                    assertTrue(cpPropertyValue instanceof Collection);
-                    assertEquals(1, ((Collection) cpPropertyValue).size());
-
-                    Feature nestedCpFeature =
-                            (Feature) ((Collection) cpPropertyValue).iterator().next();
-                    // make sure each of the nested compositional part feature is valid
-                    cpId = nestedCpFeature.getIdentifier().toString();
-                    assertTrue(cpMap.containsKey(cpId));
-
-                    nestedCpIds.add(cpId);
-
-                    // make sure each of the nested compositional part has the right properties
-                    cpFeature = cpMap.get(cpId.toString());
-                    Collection<Property> cpProperties = cpFeature.getProperties();
-                    assertEquals(nestedCpFeature.getProperties(), cpProperties);
+            // Extract all geological unit features into a map by id
+            Map<String, Feature> guMap = new HashMap<>();
+            Feature guFeature;
+            while (guIterator.hasNext()) {
+                guFeature = guIterator.next();
+                String guId = guFeature.getIdentifier().getID();
+                if (!guMap.containsKey(guId)) {
+                    guMap.put(guId, guFeature);
                 }
-                // make sure all the nested compositional part features are there
-                assertTrue(nestedCpIds.containsAll(Arrays.asList(cpIds)));
             }
-            // make sure all the nested geological unit features are there
-            assertTrue(nestedGuIds.containsAll(Arrays.asList(guIds)));
+
+            // Extract all compositional part "features" into a map by id
+            Map<String, Feature> cpMap = new HashMap<>();
+            Feature cpFeature;
+            while (cpIterator.hasNext()) {
+                cpFeature = cpIterator.next();
+                String cpId = cpFeature.getIdentifier().getID();
+                if (!cpMap.containsKey(cpId)) {
+                    cpMap.put(cpId, cpFeature);
+                }
+            }
+
+            Feature mfFeature;
+            Collection<Property> nestedGuFeatures;
+            String guId;
+            final String NESTED_LINK = "specification";
+            Collection<Property> nestedCpFeatures;
+            String cpId;
+            while (mfIterator.hasNext()) {
+                mfFeature = mfIterator.next();
+                String mfId = mfFeature.getIdentifier().toString();
+
+                if (this.mfToGuMap.get(mfId) != null) {
+                    String[] guIds = this.mfToGuMap.get(mfId).split(";");
+
+                    // make sure we have the right number of nested features
+                    nestedGuFeatures = (Collection<Property>) mfFeature.getProperties(NESTED_LINK);
+                    assertEquals(guIds.length, nestedGuFeatures.size());
+
+                    ArrayList<String> nestedGuIds = new ArrayList<>();
+
+                    for (Property property : nestedGuFeatures) {
+                        Object value = property.getValue();
+                        assertNotNull(value);
+                        assertTrue(value instanceof Collection);
+                        assertEquals(1, ((Collection) value).size());
+
+                        Feature nestedGuFeature =
+                                (Feature) ((Collection) value).iterator().next();
+                        /** Test geological unit */
+                        // make sure each of the nested geologic unit is valid
+                        guId = nestedGuFeature.getIdentifier().toString();
+                        assertTrue(guMap.containsKey(guId));
+
+                        nestedGuIds.add(guId);
+
+                        // make sure the nested geologic unit feature has the right properties
+                        guFeature = guMap.get(guId.toString());
+                        Collection<Property> guProperties = guFeature.getProperties();
+                        assertEquals(nestedGuFeature.getProperties(), guProperties);
+
+                        /** Test compositional part */
+                        // make sure the right number of nested features are there
+                        String[] cpIds = this.guToCpMap.get(guId).split(";");
+                        nestedCpFeatures = (Collection<Property>) guFeature.getProperties("composition");
+                        assertEquals(cpIds.length, nestedCpFeatures.size());
+
+                        ArrayList<String> nestedCpIds = new ArrayList<>();
+                        for (Property cpProperty : nestedCpFeatures) {
+                            Object cpPropertyValue = cpProperty.getValue();
+                            assertNotNull(cpPropertyValue);
+                            assertTrue(cpPropertyValue instanceof Collection);
+                            assertEquals(1, ((Collection) cpPropertyValue).size());
+
+                            Feature nestedCpFeature = (Feature)
+                                    ((Collection) cpPropertyValue).iterator().next();
+                            // make sure each of the nested compositional part feature is valid
+                            cpId = nestedCpFeature.getIdentifier().toString();
+                            assertTrue(cpMap.containsKey(cpId));
+
+                            nestedCpIds.add(cpId);
+
+                            // make sure each of the nested compositional part has the right
+                            // properties
+                            cpFeature = cpMap.get(cpId.toString());
+                            Collection<Property> cpProperties = cpFeature.getProperties();
+                            assertEquals(nestedCpFeature.getProperties(), cpProperties);
+                        }
+                        // make sure all the nested compositional part features are there
+                        assertTrue(nestedCpIds.containsAll(Arrays.asList(cpIds)));
+                    }
+                    // make sure all the nested geological unit features are there
+                    assertTrue(nestedGuIds.containsAll(Arrays.asList(guIds)));
+                }
+            }
         }
-        mfIterator.close();
-        guIterator.close();
-        cpIterator.close();
     }
 
     /**
-     * testFeatureChaining() tests one to many relationship, but the many side was on the chaining
-     * side ie. geologic unit side (with many composition parts). This is to test that configuring
-     * many on the the chained works. We're using composition part -> lithology here.
-     *
-     * @throws Exception
+     * testFeatureChaining() tests one to many relationship, but the many side was on the chaining side ie. geologic
+     * unit side (with many composition parts). This is to test that configuring many on the the chained works. We're
+     * using composition part -> lithology here.
      */
     @Test
     public void testManyOnChainedSide() throws Exception {
 
         final String LITHOLOGY = "lithology";
         // get controlled concept features on their own
-        AbstractMappingFeatureIterator iterator =
-                (AbstractMappingFeatureIterator) ccFeatures.features();
         int count = 0;
-        Map<String, Feature> featureList = new HashMap<String, Feature>();
-        try {
+        Map<String, Feature> featureList = new HashMap<>();
+        try (AbstractMappingFeatureIterator iterator = (AbstractMappingFeatureIterator) ccFeatures.features()) {
             while (iterator.hasNext()) {
                 Feature f = iterator.next();
                 featureList.put(f.getIdentifier().getID(), f);
                 count++;
             }
-        } finally {
-            iterator.close();
         }
         assertEquals(5, count);
 
-        FeatureIterator<Feature> cpIterator = cpFeatures.features();
-        while (cpIterator.hasNext()) {
-            Feature cpFeature = (Feature) cpIterator.next();
-            Collection<Property> lithologies = cpFeature.getProperties(LITHOLOGY);
-            if (cpFeature.getIdentifier().toString().equals("cp.167775491936278812")) {
-                // see ControlledConcept.properties file:
-                // _=NAME:String,COMPOSITION_ID:String
-                // cc.1=name_a|cp.167775491936278812
-                // cc.1=name_b|cp.167775491936278812
-                // cc.1=name_c|cp.167775491936278812
-                // cc.2=name_2|cp.167775491936278812
-                assertEquals(2, ((Collection) lithologies).size());
-                Collection<String> lithologyIds = new ArrayList<String>();
-                for (Property lithologyProperty : lithologies) {
-                    Feature nestedFeature =
-                            (Feature) ((Collection) lithologyProperty.getValue()).iterator().next();
-                    String fId = nestedFeature.getIdentifier().getID();
-                    lithologyIds.add(fId);
-                    Feature lithology = featureList.get(fId);
-                    assertEquals(nestedFeature.getProperties(), lithology.getProperties());
+        try (FeatureIterator<Feature> cpIterator = cpFeatures.features()) {
+            while (cpIterator.hasNext()) {
+                Feature cpFeature = cpIterator.next();
+                Collection<Property> lithologies = cpFeature.getProperties(LITHOLOGY);
+                if (cpFeature.getIdentifier().toString().equals("cp.167775491936278812")) {
+                    // see ControlledConcept.properties file:
+                    // _=NAME:String,COMPOSITION_ID:String
+                    // cc.1=name_a|cp.167775491936278812
+                    // cc.1=name_b|cp.167775491936278812
+                    // cc.1=name_c|cp.167775491936278812
+                    // cc.2=name_2|cp.167775491936278812
+                    assertEquals(2, lithologies.size());
+                    Collection<String> lithologyIds = new ArrayList<>();
+                    for (Property lithologyProperty : lithologies) {
+                        Feature nestedFeature = (Feature) ((Collection) lithologyProperty.getValue())
+                                .iterator()
+                                .next();
+                        String fId = nestedFeature.getIdentifier().getID();
+                        lithologyIds.add(fId);
+                        Feature lithology = featureList.get(fId);
+                        assertEquals(nestedFeature.getProperties(), lithology.getProperties());
+                    }
+                    assertTrue(featureList.keySet().containsAll(lithologyIds));
+                } else {
+                    // lithology is required
+                    assertEquals(1, lithologies.size());
                 }
-                assertTrue(featureList.keySet().containsAll(lithologyIds));
-            } else {
-                // lithology is required
-                assertEquals(1, lithologies.size());
             }
         }
     }
 
     /**
-     * Test nesting multiple multi valued properties. Both exposure color and outcrop character are
-     * multi valued. By making sure that both are nested inside geological unit feature, it's
-     * verified that nesting multiple multi valued properties is possible.
-     *
-     * @throws Exception
+     * Test nesting multiple multi valued properties. Both exposure color and outcrop character are multi valued. By
+     * making sure that both are nested inside geological unit feature, it's verified that nesting multiple multi valued
+     * properties is possible.
      */
     @Test
     public void testMultipleMultiValuedProperties() throws Exception {
-        FeatureIterator<Feature> guIterator = guFeatures.features();
-
         Feature guFeature;
         final String EXPOSURE_COLOR = "exposureColor";
         final String OUTCROP_CHARACTER = "outcropCharacter";
-        while (guIterator.hasNext()) {
-            guFeature = (Feature) guIterator.next();
-            String guId = guFeature.getIdentifier().toString();
-            ArrayList realValues = new ArrayList();
+        try (FeatureIterator<Feature> guIterator = guFeatures.features()) {
+            while (guIterator.hasNext()) {
+                guFeature = guIterator.next();
+                String guId = guFeature.getIdentifier().toString();
+                List<Object> realValues = new ArrayList<>();
 
-            /** Test exposure color */
-            Collection<Property> nestedTermValues =
-                    (Collection<Property>) guFeature.getProperties(EXPOSURE_COLOR);
-            // get exposure color property values from geological unit feature
-            for (Property property : nestedTermValues) {
-                Object value = property.getValue();
-                assertNotNull(value);
-                assertTrue(value instanceof Collection);
-                assertEquals(1, ((Collection) value).size());
+                /** Test exposure color */
+                Collection<Property> nestedTermValues = guFeature.getProperties(EXPOSURE_COLOR);
+                // get exposure color property values from geological unit feature
+                for (Property property : nestedTermValues) {
+                    Object value = property.getValue();
+                    assertNotNull(value);
+                    assertTrue(value instanceof Collection);
+                    assertEquals(1, ((Collection) value).size());
 
-                Feature feature = (Feature) ((Collection) value).iterator().next();
-                for (Property nestedProperty : feature.getProperties("value")) {
-                    realValues.add(
-                            ((Property) ((Collection) nestedProperty.getValue()).iterator().next())
-                                    .getValue());
+                    Feature feature = (Feature) ((Collection) value).iterator().next();
+                    for (Property nestedProperty : feature.getProperties("value")) {
+                        realValues.add(((Property) ((Collection) nestedProperty.getValue())
+                                        .iterator()
+                                        .next())
+                                .getValue());
+                    }
                 }
-            }
 
-            // compares the values from the property file
-            String[] values = this.guToExposureColorMap.get(guId).split(";");
-            assertEquals(realValues.size(), values.length);
-            assertTrue(realValues.containsAll(Arrays.asList(values)));
+                // compares the values from the property file
+                String[] values = this.guToExposureColorMap.get(guId).split(";");
+                assertEquals(realValues.size(), values.length);
+                assertTrue(realValues.containsAll(Arrays.asList(values)));
 
-            /** Test outcrop character */
-            nestedTermValues = (Collection<Property>) guFeature.getProperties(OUTCROP_CHARACTER);
-            realValues.clear();
-            // get nested outcrop character values from geological unit feature
-            for (Property property : nestedTermValues) {
-                Object value = property.getValue();
-                assertNotNull(value);
-                assertTrue(value instanceof Collection);
-                assertEquals(1, ((Collection) value).size());
+                /** Test outcrop character */
+                nestedTermValues = guFeature.getProperties(OUTCROP_CHARACTER);
+                realValues.clear();
+                // get nested outcrop character values from geological unit feature
+                for (Property property : nestedTermValues) {
+                    Object value = property.getValue();
+                    assertNotNull(value);
+                    assertTrue(value instanceof Collection);
+                    assertEquals(1, ((Collection) value).size());
 
-                Feature feature = (Feature) ((Collection) value).iterator().next();
-                for (Property nestedProperty : feature.getProperties("value")) {
-                    realValues.add(
-                            ((Property) ((Collection) nestedProperty.getValue()).iterator().next())
-                                    .getValue());
+                    Feature feature = (Feature) ((Collection) value).iterator().next();
+                    for (Property nestedProperty : feature.getProperties("value")) {
+                        realValues.add(((Property) ((Collection) nestedProperty.getValue())
+                                        .iterator()
+                                        .next())
+                                .getValue());
+                    }
                 }
+                // compare with values from property file
+                values = this.guToOutcropCharacterMap.get(guId).split(";");
+                assertEquals(realValues.size(), values.length);
+                assertTrue(realValues.containsAll(Arrays.asList(values)));
             }
-            // compare with values from property file
-            values = this.guToOutcropCharacterMap.get(guId).split(";");
-            assertEquals(realValues.size(), values.length);
-            assertTrue(realValues.containsAll(Arrays.asList(values)));
         }
-        guIterator.close();
     }
 
-    /**
-     * Test mapping multi-valued simple properties still works.
-     *
-     * @throws Exception
-     */
+    /** Test mapping multi-valued simple properties still works. */
     @Test
     public void testMultiValuedSimpleProperties() throws Exception {
-        FeatureIterator<Feature> iterator = ccFeatures.features();
-        while (iterator.hasNext()) {
-            Feature next = iterator.next();
-            Collection<Property> names = next.getProperties("name");
-            // these are gml:name and gsml:name, so count twice
-            if (next.getIdentifier().toString().equals("cc.1")) {
-                // see ControlledConcept.properties where id = cc.1
-                assertEquals(6, names.size());
-            } else {
-                // see ControlledConcept.properties where id = cc.2
-                assertEquals(2, names.size());
+        try (FeatureIterator<Feature> iterator = ccFeatures.features()) {
+            while (iterator.hasNext()) {
+                Feature next = iterator.next();
+                Collection<Property> names = next.getProperties("name");
+                // these are gml:name and gsml:name, so count twice
+                if (next.getIdentifier().toString().equals("cc.1")) {
+                    // see ControlledConcept.properties where id = cc.1
+                    assertEquals(6, names.size());
+                } else {
+                    // see ControlledConcept.properties where id = cc.2
+                    assertEquals(2, names.size());
+                }
             }
         }
-        iterator.close();
     }
 
-    /**
-     * Test filtering attributes on nested features.
-     *
-     * @throws Exception
-     */
+    /** Test filtering attributes on nested features. */
+    @SuppressWarnings("unchecked")
     @Test
     public void testFilters() throws Exception {
         // make sure filter query can be made on MappedFeature based on GU properties
@@ -442,50 +410,42 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         // </ogc:PropertyIsLike>
         // </ogc:Filter>
 
-        Expression property =
-                ff.property("gsml:specification/gsml:GeologicUnit/gml:description", namespaces);
-        Filter filter =
-                ff.like(property, "Olivine basalt, tuff, microgabbro, minor sedimentary rocks");
+        Expression property = ff.property("gsml:specification/gsml:GeologicUnit/gml:description", namespaces);
+        Filter filter = ff.like(property, "Olivine basalt, tuff, microgabbro, minor sedimentary rocks");
         FeatureCollection<FeatureType, Feature> filteredResults = mfSource.getFeatures(filter);
         assertEquals(3, size(filteredResults));
-        FeatureIterator<Feature> iterator = filteredResults.features();
-        Feature feature = iterator.next();
-        assertEquals("mf1", feature.getIdentifier().toString());
-        feature = iterator.next();
-        assertEquals("mf2", feature.getIdentifier().toString());
-        feature = iterator.next();
-        assertEquals("mf3", feature.getIdentifier().toString());
-        iterator.close();
+        try (FeatureIterator<Feature> iterator = filteredResults.features()) {
+            Feature feature = iterator.next();
+            assertEquals("mf1", feature.getIdentifier().toString());
+            feature = iterator.next();
+            assertEquals("mf2", feature.getIdentifier().toString());
+            feature = iterator.next();
+            assertEquals("mf3", feature.getIdentifier().toString());
+        }
 
         /** Test filtering on multi valued properties */
-        FeatureSource<FeatureType, Feature> guSource =
-                AppSchemaDataAccessRegistry.getFeatureSource(GEOLOGIC_UNIT_NAME);
+        FeatureSource<FeatureType, Feature> guSource = AppSchemaDataAccessRegistry.getFeatureSource(GEOLOGIC_UNIT_NAME);
         // composition part is a multi valued property
         // we're testing that we can get a geologic unit which has a composition part with a
         // significant proportion value
-        property =
-                ff.property(
-                        "gsml:composition/gsml:CompositionPart/gsml:proportion/gsml:CGI_TermValue/gsml:value",
-                        namespaces);
+        property = ff.property(
+                "gsml:composition/gsml:CompositionPart/gsml:proportion/gsml:CGI_TermValue/gsml:value", namespaces);
         filter = ff.equals(property, ff.literal("significant"));
         filteredResults = guSource.getFeatures(filter);
         assertEquals(2, size(filteredResults));
-        iterator = filteredResults.features();
-        feature = iterator.next();
-        assertEquals("gu.25678", feature.getIdentifier().toString());
-        feature = iterator.next();
-        assertEquals("gu.25682", feature.getIdentifier().toString());
-        iterator.close();
+        try (FeatureIterator<Feature> iterator = filteredResults.features()) {
+            Feature feature = iterator.next();
+            assertEquals("gu.25678", feature.getIdentifier().toString());
+            feature = iterator.next();
+            assertEquals("gu.25682", feature.getIdentifier().toString());
+        }
 
         /** Test filtering client properties on chained features */
-        property =
-                ff.property(
-                        "gsml:specification/gsml:GeologicUnit/gsml:occurrence/@xlink:href",
-                        namespaces);
+        property = ff.property("gsml:specification/gsml:GeologicUnit/gsml:occurrence/@xlink:href", namespaces);
         filter = ff.like(property, "urn:cgi:feature:MappedFeature:mf1");
         filteredResults = mfSource.getFeatures(filter);
         assertEquals(1, size(filteredResults));
-        feature = filteredResults.features().next();
+        Feature feature = DataUtilities.first(filteredResults);
         assertEquals("mf1", feature.getIdentifier().toString());
 
         /** Test filtering on denormalised view, see GEOT-2927 */
@@ -501,22 +461,18 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         feature = filteredResults.features().next();
         assertEquals("gu.25678", feature.getIdentifier().toString());
         Collection<Property> properties = feature.getProperties(Types.typeName(GMLNS, "name"));
-        assertTrue(properties.size() == 3);
+        assertEquals(3, properties.size());
         Iterator<Property> propIterator = properties.iterator();
-        ComplexAttribute complexAttribute;
-        Collection<? extends Property> values;
         // first
-        complexAttribute = (ComplexAttribute) propIterator.next();
-        values = complexAttribute.getValue();
+        ComplexAttribute complexAttribute = (ComplexAttribute) propIterator.next();
+        Collection<? extends Property> values = complexAttribute.getValue();
         assertEquals(1, values.size());
-        assertEquals(
-                "Yaugher Volcanic Group 1", GML3EncodingUtils.getSimpleContent(complexAttribute));
+        assertEquals("Yaugher Volcanic Group 1", GML3EncodingUtils.getSimpleContent(complexAttribute));
         // second
         complexAttribute = (ComplexAttribute) propIterator.next();
         values = complexAttribute.getValue();
         assertEquals(1, values.size());
-        assertEquals(
-                "Yaugher Volcanic Group 2", GML3EncodingUtils.getSimpleContent(complexAttribute));
+        assertEquals("Yaugher Volcanic Group 2", GML3EncodingUtils.getSimpleContent(complexAttribute));
         // third
         complexAttribute = (ComplexAttribute) propIterator.next();
         values = complexAttribute.getValue();
@@ -531,7 +487,7 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         // ensure it's the right feature
         assertEquals("gu.25678", feature.getIdentifier().toString());
         properties = feature.getProperties(Types.typeName(GSMLNS, "exposureColor"));
-        assertTrue(properties.size() == 2);
+        assertEquals(2, properties.size());
         propIterator = properties.iterator();
         values = (Collection) propIterator.next().getValue();
         assertEquals(1, values.size());
@@ -545,21 +501,18 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Test nesting features of a complex type with simple content. Previously didn't get encoded.
-     * Also making sure that a feature type can have multiple FEATURE_LINK to be referred by
-     * different types.
-     *
-     * @throws Exception
+     * Test nesting features of a complex type with simple content. Previously didn't get encoded. Also making sure that
+     * a feature type can have multiple FEATURE_LINK to be referred by different types.
      */
     @Test
     public void testComplexTypeWithSimpleContent() throws Exception {
-        Map dsParams = new HashMap();
+        Map<String, Serializable> dsParams = new HashMap<>();
         URL url = getClass().getResource(schemaBase + "FirstParentFeature.xml");
         assertNotNull(url);
 
         dsParams.put("dbtype", "app-schema");
         dsParams.put("url", url.toExternalForm());
-        DataAccess<FeatureType, Feature> dataAccess = DataAccessFinder.getDataStore(dsParams);
+        DataAccess dataAccess = DataAccessFinder.getDataStore(dsParams);
         assertNotNull(dataAccess);
 
         // <AttributeMapping>
@@ -573,31 +526,32 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         FeatureType featureType = dataAccess.getSchema(typeName);
         assertNotNull(featureType);
 
-        FeatureSource fSource = (FeatureSource) dataAccess.getFeatureSource(typeName);
-        FeatureCollection features = (FeatureCollection) fSource.getFeatures();
+        FeatureSource fSource = dataAccess.getFeatureSource(typeName);
+        FeatureCollection features = fSource.getFeatures();
 
         assertEquals(5, size(features));
 
-        FeatureIterator iterator = features.features();
-        while (iterator.hasNext()) {
-            Feature next = iterator.next();
-            Collection<Property> children = next.getProperties("nestedFeature");
-            if (next.getIdentifier().toString().equals("cc.1")) {
-                // _=STRING:String,LINK_ONE:String,LINK_TWO:String
-                // sc.1=string_one|cc.1|cc.2
-                // sc.2=string_two|cc.1|cc.2
-                // sc.3=string_three|NULL|cc.2
-                assertEquals(2, children.size());
-            } else {
-                assertEquals(0, children.size());
-            }
-            for (Property nestedFeature : children) {
-                Object value = nestedFeature.getValue();
-                assertNotNull(value);
-                value = ((Collection) value).iterator().next();
-                assertTrue(value instanceof FeatureImpl);
-                Feature feature = (Feature) value;
-                assertNotNull(feature.getProperty("someAttribute").getValue());
+        try (FeatureIterator iterator = features.features()) {
+            while (iterator.hasNext()) {
+                Feature next = iterator.next();
+                Collection<Property> children = next.getProperties("nestedFeature");
+                if (next.getIdentifier().toString().equals("cc.1")) {
+                    // _=STRING:String,LINK_ONE:String,LINK_TWO:String
+                    // sc.1=string_one|cc.1|cc.2
+                    // sc.2=string_two|cc.1|cc.2
+                    // sc.3=string_three|NULL|cc.2
+                    assertEquals(2, children.size());
+                } else {
+                    assertEquals(0, children.size());
+                }
+                for (Property nestedFeature : children) {
+                    Object value = nestedFeature.getValue();
+                    assertNotNull(value);
+                    value = ((Collection) value).iterator().next();
+                    assertTrue(value instanceof FeatureImpl);
+                    Feature feature = (Feature) value;
+                    assertNotNull(feature.getProperty("someAttribute").getValue());
+                }
             }
         }
 
@@ -607,7 +561,7 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         // <OCQL>LINK_TWO</OCQL>
         // </sourceExpression>
         // </AttributeMapping>
-        dsParams = new HashMap();
+        dsParams = new HashMap<>();
         url = getClass().getResource(schemaBase + "SecondParentFeature.xml");
         assertNotNull(url);
 
@@ -619,101 +573,87 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         featureType = dataAccess.getSchema(typeName);
         assertNotNull(featureType);
 
-        fSource = (FeatureSource) dataAccess.getFeatureSource(typeName);
-        features = (FeatureCollection) fSource.getFeatures();
+        fSource = dataAccess.getFeatureSource(typeName);
+        features = fSource.getFeatures();
 
         assertEquals(5, size(features));
 
-        iterator = features.features();
-        while (iterator.hasNext()) {
-            Feature next = iterator.next();
-            Collection<Property> children = next.getProperties("nestedFeature");
-            if (next.getIdentifier().toString().equals("cc.2")) {
-                // _=STRING:String,LINK_ONE:String,LINK_TWO:String
-                // sc.1=string_one|cc.1|cc.2
-                // sc.2=string_two|cc.1|cc.2
-                // sc.3=string_three|NULL|cc.2
-                assertEquals(3, children.size());
-            } else {
-                assertEquals(0, children.size());
-            }
-            for (Property nestedFeature : children) {
-                Object value = nestedFeature.getValue();
-                assertNotNull(value);
-                value = ((Collection) value).iterator().next();
-                assertTrue(value instanceof FeatureImpl);
-                Feature feature = (Feature) value;
-                assertNotNull(feature.getProperty("someAttribute").getValue());
+        try (FeatureIterator iterator = features.features()) {
+            while (iterator.hasNext()) {
+                Feature next = iterator.next();
+                Collection<Property> children = next.getProperties("nestedFeature");
+                if (next.getIdentifier().toString().equals("cc.2")) {
+                    // _=STRING:String,LINK_ONE:String,LINK_TWO:String
+                    // sc.1=string_one|cc.1|cc.2
+                    // sc.2=string_two|cc.1|cc.2
+                    // sc.3=string_three|NULL|cc.2
+                    assertEquals(3, children.size());
+                } else {
+                    assertEquals(0, children.size());
+                }
+                for (Property nestedFeature : children) {
+                    Object value = nestedFeature.getValue();
+                    assertNotNull(value);
+                    value = ((Collection) value).iterator().next();
+                    assertTrue(value instanceof FeatureImpl);
+                    Feature feature = (Feature) value;
+                    assertNotNull(feature.getProperty("someAttribute").getValue());
+                }
             }
         }
-
         dataAccess.dispose();
     }
 
     /**
-     * Test chaining multi-valued by reference (xlink:href). It should result with multiple
-     * attributes with no nested attributes, but only client property with xlink:href.
-     *
-     * @throws Exception
+     * Test chaining multi-valued by reference (xlink:href). It should result with multiple attributes with no nested
+     * attributes, but only client property with xlink:href.
      */
     @Test
     public void testMultiValuedPropertiesByRef() throws Exception {
         final String MF_PREFIX = "urn:cgi:feature:MappedFeature:";
-        final String OCCURENCE = "occurrence";
+        final String OCCURRENCE = "occurrence";
         final Map<String, String> guToOccurrenceMap =
-                new HashMap<String, String>() {
-                    {
-                        put("gu.25699", "mf1");
-                        put("gu.25678", "mf2;mf3");
-                        put("gu.25682", "mf4");
-                    }
-                };
+                Map.ofEntries(entry("gu.25699", "mf1"), entry("gu.25678", "mf2;mf3"), entry("gu.25682", "mf4"));
 
-        ArrayList<String> processedFeatureIds = new ArrayList<String>();
+        ArrayList<String> processedFeatureIds = new ArrayList<>();
 
-        FeatureIterator<Feature> guIterator = guFeatures.features();
-        while (guIterator.hasNext()) {
-            Feature guFeature = (Feature) guIterator.next();
-            String guId = guFeature.getIdentifier().toString();
-            String[] mfIds = guToOccurrenceMap.get(guId).split(";");
-            Collection<Property> properties = guFeature.getProperties(OCCURENCE);
+        try (FeatureIterator<Feature> guIterator = guFeatures.features()) {
+            while (guIterator.hasNext()) {
+                Feature guFeature = guIterator.next();
+                String guId = guFeature.getIdentifier().toString();
+                String[] mfIds = guToOccurrenceMap.get(guId).split(";");
+                Collection<Property> properties = guFeature.getProperties(OCCURRENCE);
 
-            assertEquals(mfIds.length, properties.size());
+                assertEquals(mfIds.length, properties.size());
 
-            int propertyIndex = 0;
-            for (Property property : properties) {
-                Object clientProps = property.getUserData().get(Attributes.class);
-                assertNotNull(clientProps);
-                assertTrue(clientProps instanceof HashMap);
-                Object hrefValue =
-                        ((Map) clientProps).get(AbstractMappingFeatureIterator.XLINK_HREF_NAME);
+                int propertyIndex = 0;
+                for (Property property : properties) {
+                    Object clientProps = property.getUserData().get(Attributes.class);
+                    assertNotNull(clientProps);
+                    assertTrue(clientProps instanceof HashMap);
+                    Object hrefValue = ((Map) clientProps).get(AbstractMappingFeatureIterator.XLINK_HREF_NAME);
 
-                // ensure the right href:xlink is there
-                assertEquals(MF_PREFIX + mfIds[propertyIndex], hrefValue);
+                    // ensure the right href:xlink is there
+                    assertEquals(MF_PREFIX + mfIds[propertyIndex], hrefValue);
 
-                // ensure no attributes would be encoded
-                assertTrue(((Collection) property.getValue()).isEmpty());
-                propertyIndex++;
+                    // ensure no attributes would be encoded
+                    assertTrue(((Collection) property.getValue()).isEmpty());
+                    propertyIndex++;
+                }
+                processedFeatureIds.add(guId);
             }
-            processedFeatureIds.add(guId);
+
+            assertEquals(guToOccurrenceMap.size(), processedFeatureIds.size());
+            assertTrue(processedFeatureIds.containsAll(guToOccurrenceMap.keySet()));
         }
-
-        assertEquals(guToOccurrenceMap.size(), processedFeatureIds.size());
-        assertTrue(processedFeatureIds.containsAll(guToOccurrenceMap.keySet()));
-
-        // clean ups
-        guIterator.close();
     }
 
     /**
-     * Tests that equivalent source data stores (i.e. with exactly the same configuration
-     * parameters) are detected and only one instance of them is created and shared between all
-     * feature mappings referencing it.
+     * Tests that equivalent source data stores (i.e. with exactly the same configuration parameters) are detected and
+     * only one instance of them is created and shared between all feature mappings referencing it.
      *
-     * <p>Note: the above holds true in the context of a single {@link AppSchemaDataAccess}
-     * instance, not across data stores.
-     *
-     * @throws IOException
+     * <p>Note: the above holds true in the context of a single {@link AppSchemaDataAccess} instance, not across data
+     * stores.
      */
     @Test
     public void testSourceDataStoreConsolidation() throws IOException {
@@ -752,17 +692,11 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         assertNotEquals(guSourceFs.getDataStore(), mfSourceFs.getDataStore());
     }
 
-    /**
-     * Load all the data accesses.
-     *
-     * @return
-     * @throws Exception
-     */
+    /** Load all the data accesses. */
     private static void loadDataAccesses() throws Exception {
         /** Load mapped feature data access */
-        Map dsParams = new HashMap();
-        URL url =
-                FeatureChainingTest.class.getResource(schemaBase + "MappedFeaturePropertyfile.xml");
+        Map<String, Serializable> dsParams = new HashMap<>();
+        URL url = FeatureChainingTest.class.getResource(schemaBase + "MappedFeaturePropertyfile.xml");
         assertNotNull(url);
 
         dsParams.put("dbtype", "app-schema");
@@ -773,8 +707,8 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         FeatureType mappedFeatureType = mfDataAccess.getSchema(MAPPED_FEATURE);
         assertNotNull(mappedFeatureType);
 
-        mfSource = (FeatureSource) mfDataAccess.getFeatureSource(MAPPED_FEATURE);
-        mfFeatures = (FeatureCollection) mfSource.getFeatures();
+        mfSource = mfDataAccess.getFeatureSource(MAPPED_FEATURE);
+        mfFeatures = mfSource.getFeatures();
 
         /** Load geologic unit data access */
         url = FeatureChainingTest.class.getResource(schemaBase + "GeologicUnit.xml");
@@ -787,13 +721,12 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
         FeatureType guType = guDataAccess.getSchema(GEOLOGIC_UNIT);
         assertNotNull(guType);
 
-        FeatureSource<FeatureType, Feature> guSource =
-                (FeatureSource<FeatureType, Feature>) guDataAccess.getFeatureSource(GEOLOGIC_UNIT);
-        guFeatures = (FeatureCollection) guSource.getFeatures();
+        FeatureSource<FeatureType, Feature> guSource = guDataAccess.getFeatureSource(GEOLOGIC_UNIT);
+        guFeatures = guSource.getFeatures();
 
         /**
-         * Non-feature types that are included in geologicUnit.xml should be loaded when geologic
-         * unit data access is created
+         * Non-feature types that are included in geologicUnit.xml should be loaded when geologic unit data access is
+         * created
          */
         // Composition Part
         cpFeatures = DataAccessRegistry.getFeatureSource(COMPOSITION_PART).getFeatures();
@@ -802,20 +735,40 @@ public class FeatureChainingTest extends AppSchemaTestSupport {
                 DataAccessRegistry.getFeatureSource(CGI_TERM_VALUE).getFeatures();
         // ControlledConcept
         ccFeatures = DataAccessRegistry.getFeatureSource(CONTROLLED_CONCEPT).getFeatures();
-        assertEquals(4, size(mfFeatures));
+        assertEquals(5, size(mfFeatures));
         assertEquals(3, size(guFeatures));
         assertEquals(4, size(cpFeatures));
         assertEquals(6, size(cgiFeatures));
     }
 
-    private static int size(FeatureCollection<FeatureType, Feature> features) {
-        int size = 0;
-        FeatureIterator<Feature> iterator = features.features();
-        while (iterator.hasNext()) {
-            iterator.next();
-            size++;
+    @Test
+    public void testPropertyValueCollection() {
+        // test that the Attribute return from a PropertyValueCollection iteration,
+        // when a PropertyName points to a SimpleAttribute in a ComplexFeature,
+        // doesn't throws a ClassCastException on getType method
+
+        PropertyName pn = ff.property("gsml:specification/gsml:GeologicUnit/gsml:purpose");
+
+        PropertyDescriptor descriptor = pn.evaluate(mfFeatures.getSchema(), null);
+
+        PropertyValueCollection propertyValueCollection =
+                new PropertyValueCollection(mfFeatures, (AttributeDescriptor) descriptor, pn);
+        Iterator it = propertyValueCollection.iterator();
+        while (it.hasNext()) {
+            Attribute attribute = (Attribute) it.next();
+            // attribute.getType() was causing Class cast exception to ComplexType
+            assertFalse(attribute.getType() instanceof ComplexType);
         }
-        iterator.close();
-        return size;
+    }
+
+    private static int size(FeatureCollection features) {
+        int size = 0;
+        try (FeatureIterator iterator = features.features()) {
+            while (iterator.hasNext()) {
+                iterator.next();
+                size++;
+            }
+            return size;
+        }
     }
 }

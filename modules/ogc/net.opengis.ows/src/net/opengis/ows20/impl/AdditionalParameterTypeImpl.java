@@ -82,6 +82,7 @@ public class AdditionalParameterTypeImpl extends EObjectImpl implements Addition
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public CodeType getName() {
     return name;
   }
@@ -106,6 +107,7 @@ public class AdditionalParameterTypeImpl extends EObjectImpl implements Addition
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setName(CodeType newName) {
     if (newName != name) {
       NotificationChain msgs = null;
@@ -125,9 +127,10 @@ public class AdditionalParameterTypeImpl extends EObjectImpl implements Addition
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<EObject> getValue() {
     if (value == null) {
-      value = new EObjectContainmentEList<EObject>(EObject.class, this, Ows20Package.ADDITIONAL_PARAMETER_TYPE__VALUE);
+      value = new EObjectContainmentEList<>(EObject.class, this, Ows20Package.ADDITIONAL_PARAMETER_TYPE__VALUE);
     }
     return value;
   }

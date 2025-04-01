@@ -16,14 +16,18 @@
  */
 package org.geotools.data.shapefile;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import org.geotools.TestData;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStoreFinder;
 import org.junit.Test;
 
 /**
@@ -37,10 +41,10 @@ public class ServiceTest extends TestCaseSupport {
     /** Make sure that the loading mechanism is working properly. */
     @Test
     public void testIsAvailable() {
-        Iterator list = DataStoreFinder.getAvailableDataStores();
+        Iterator<DataStoreFactorySpi> list = DataStoreFinder.getAvailableDataStores();
         boolean found = false;
         while (list.hasNext()) {
-            DataStoreFactorySpi fac = (DataStoreFactorySpi) list.next();
+            DataStoreFactorySpi fac = list.next();
             if (fac instanceof ShapefileDataStoreFactory) {
                 found = true;
                 assertNotNull(fac.getDescription());
@@ -53,7 +57,7 @@ public class ServiceTest extends TestCaseSupport {
     /** Ensure that we can create a DataStore using url OR string url. */
     @Test
     public void testShapefileDataStore() throws Exception {
-        HashMap params = new HashMap();
+        Map<String, Serializable> params = new HashMap<>();
         params.put("url", TestData.url(TEST_FILE));
         DataStore ds = DataStoreFinder.getDataStore(params);
         assertNotNull(ds);
@@ -64,7 +68,7 @@ public class ServiceTest extends TestCaseSupport {
 
     @Test
     public void testBadURL() {
-        HashMap params = new HashMap();
+        Map<String, Serializable> params = new HashMap<>();
         params.put("url", "aaa://bbb.ccc");
         try {
             ShapefileDataStoreFactory f = new ShapefileDataStoreFactory();

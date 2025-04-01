@@ -17,9 +17,9 @@
 package org.geotools.brewer.styling.builder;
 
 import java.awt.Color;
-import org.geotools.styling.ColorMapEntry;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ColorMapEntry;
 import org.geotools.util.Converters;
-import org.opengis.filter.expression.Expression;
 
 public class ColorMapEntryBuilder extends AbstractStyleBuilder<ColorMapEntry> {
 
@@ -52,14 +52,17 @@ public class ColorMapEntryBuilder extends AbstractStyleBuilder<ColorMapEntry> {
     public ColorMapEntryBuilder colorHex(String hex) {
         Color color = Converters.convert(hex, Color.class);
         if (color == null) {
-            throw new IllegalArgumentException(
-                    "The provided expression could not be turned into a color: " + hex);
+            throw new IllegalArgumentException("The provided expression could not be turned into a color: " + hex);
         }
         return color(color);
     }
 
     public ColorMapEntryBuilder color(String cqlExpression) {
         return color(cqlExpression(cqlExpression));
+    }
+
+    public ColorMapEntryBuilder colorAsLiteral(String color) {
+        return color(literal(color));
     }
 
     public ColorMapEntryBuilder opacity(Expression opacity) {
@@ -75,6 +78,10 @@ public class ColorMapEntryBuilder extends AbstractStyleBuilder<ColorMapEntry> {
         return opacity(cqlExpression(cqlExpression));
     }
 
+    public ColorMapEntryBuilder opacityAsLiteral(String opacity) {
+        return opacity(literal(opacity));
+    }
+
     public ColorMapEntryBuilder quantity(Expression quantity) {
         this.quantity = quantity;
         return this;
@@ -84,8 +91,17 @@ public class ColorMapEntryBuilder extends AbstractStyleBuilder<ColorMapEntry> {
         return quantity(literal(quantity));
     }
 
+    public ColorMapEntryBuilder quantityAsLiteral(String quantity) {
+        return quantity(literal(quantity));
+    }
+
     public ColorMapEntryBuilder quantity(String cqlExpression) {
         return quantity(cqlExpression(cqlExpression));
+    }
+
+    public ColorMapEntryBuilder label(String label) {
+        this.label = label;
+        return this;
     }
 
     @Override

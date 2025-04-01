@@ -18,7 +18,11 @@ package org.geotools.se.v1_1;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -26,41 +30,41 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.style.AnchorPoint;
+import org.geotools.api.style.ColorMap;
+import org.geotools.api.style.ContrastMethod;
+import org.geotools.api.style.Displacement;
+import org.geotools.api.style.ExternalGraphic;
+import org.geotools.api.style.ExternalMark;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.LineSymbolizer;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.OverlapBehaviorEnum;
+import org.geotools.api.style.PointSymbolizer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
+import org.geotools.api.style.ResourceLocator;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.Stroke;
+import org.geotools.api.style.TextSymbolizer;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.filter.function.EnvFunction;
-import org.geotools.styling.AnchorPoint;
-import org.geotools.styling.ColorMap;
 import org.geotools.styling.DefaultResourceLocator;
-import org.geotools.styling.ExternalGraphic;
-import org.geotools.styling.ExternalMark;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Fill;
-import org.geotools.styling.Font;
-import org.geotools.styling.Graphic;
-import org.geotools.styling.LineSymbolizer;
-import org.geotools.styling.Mark;
-import org.geotools.styling.PointSymbolizer;
-import org.geotools.styling.PolygonSymbolizer;
-import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.ResourceLocator;
 import org.geotools.styling.SLD;
-import org.geotools.styling.SelectedChannelType;
-import org.geotools.styling.Stroke;
-import org.geotools.styling.TextSymbolizer;
-import org.geotools.styling.TextSymbolizer2;
 import org.geotools.styling.UomOgcMapping;
 import org.geotools.xsd.Parser;
+import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Function;
-import org.opengis.style.ContrastMethod;
-import org.opengis.style.Displacement;
-import org.opengis.style.GraphicalSymbol;
-import org.opengis.style.OverlapBehavior;
-import org.opengis.style.Rule;
 import org.picocontainer.MutablePicoContainer;
 
 public class SEExampleTest extends SETestSupport {
@@ -68,7 +72,8 @@ public class SEExampleTest extends SETestSupport {
     SimpleFeature f1;
 
     @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
         tb.setName("test");
         tb.add("hospitalName", String.class);
@@ -80,6 +85,7 @@ public class SEExampleTest extends SETestSupport {
         f1 = b.buildFeature(null);
     }
 
+    @Test
     public void testParsePointSymbolizer1() throws Exception {
         /*<PointSymbolizer version="1.1.0" xsi:schemaLocation="http://www.opengis.net/se/1.1.0/Symbolizer.xsd" xmlns="http://www.opengis.net/se" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" uom="http://www.opengeospatial.org/se/units/metre">
          <Name>MyPointSymbolizer</Name>
@@ -105,7 +111,7 @@ public class SEExampleTest extends SETestSupport {
                 sym.getDescription().getAbstract().toString());
 
         Graphic g = sym.getGraphic();
-        assertEquals(8.0, g.getSize().evaluate(null, Double.class));
+        assertEquals(8.0, g.getSize().evaluate(null, Double.class), 0d);
         assertEquals(1, g.graphicalSymbols().size());
 
         Mark m = (Mark) g.graphicalSymbols().get(0);
@@ -115,6 +121,7 @@ public class SEExampleTest extends SETestSupport {
         assertNull(m.getStroke());
     }
 
+    @Test
     public void testParsePointSymbolizer2() throws Exception {
         /*<PointSymbolizer version="1.1.0" xsi:schemaLocation="http://www.opengis.net/se http://www.opengis.net/se/1.1.0/Symbolizer.xsd" xmlns="http://www.opengis.net/se" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" uom="http://www.opengeospatial.org/se/units/pixel">
             <Name>MyPointSymbolizer</Name>
@@ -144,7 +151,7 @@ public class SEExampleTest extends SETestSupport {
                 sym.getDescription().getAbstract().toString());
 
         Graphic g = sym.getGraphic();
-        assertEquals(15.0, g.getSize().evaluate(null, Double.class));
+        assertEquals(15.0, g.getSize().evaluate(null, Double.class), 0d);
         assertEquals(2, g.graphicalSymbols().size());
 
         ExternalGraphic eg = (ExternalGraphic) g.graphicalSymbols().get(0);
@@ -156,6 +163,7 @@ public class SEExampleTest extends SETestSupport {
         assertEquals("image/png", eg.getFormat());
     }
 
+    @Test
     public void testParsePointSymbolizer3() throws Exception {
         /*<PointSymbolizer version="1.1.0" xmlns="http://www.opengis.net/se" uom="http://www.opengeospatial.org/se/units/pixel">
             <Name>MyPointSymbolizer</Name>
@@ -181,7 +189,7 @@ public class SEExampleTest extends SETestSupport {
                 sym.getDescription().getAbstract().toString());
 
         Graphic g = sym.getGraphic();
-        assertEquals(15.0, g.getSize().evaluate(null, Double.class));
+        assertEquals(15.0, g.getSize().evaluate(null, Double.class), 0d);
         assertEquals(1, g.graphicalSymbols().size());
 
         ExternalGraphic eg = (ExternalGraphic) g.graphicalSymbols().get(0);
@@ -191,6 +199,7 @@ public class SEExampleTest extends SETestSupport {
         assertNull(eg.getLocation());
     }
 
+    @Test
     public void testParsePointSymbolizer4() throws Exception {
         /*<PointSymbolizer version="1.1.0" xmlns="http://www.opengis.net/se" uom="http://www.opengeospatial.org/se/units/pixel">
             <Name>MyPointSymbolizer</Name>
@@ -216,7 +225,7 @@ public class SEExampleTest extends SETestSupport {
                 sym.getDescription().getAbstract().toString());
 
         Graphic g = sym.getGraphic();
-        assertEquals(15.0, g.getSize().evaluate(null, Double.class));
+        assertEquals(15.0, g.getSize().evaluate(null, Double.class), 0d);
         assertEquals(1, g.graphicalSymbols().size());
 
         Mark mark = (Mark) g.graphicalSymbols().get(0);
@@ -227,6 +236,7 @@ public class SEExampleTest extends SETestSupport {
         assertNull(em.getOnlineResource());
     }
 
+    @Test
     public void testParsePointSymbolizerRelativeURL() throws Exception {
         /*<?xml version="1.0" encoding="ISO-8859-1"?>
         <PointSymbolizer version="1.1.0" xsi:schemaLocation="http://www.opengis.net/se http://www.opengis.net/se/1.1.0/Symbolizer.xsd" xmlns="http://www.opengis.net/se" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" uom="http://www.opengeospatial.org/se/units/pixel">
@@ -245,26 +255,22 @@ public class SEExampleTest extends SETestSupport {
         </PointSymbolizer>
         */
 
-        SEConfiguration se =
-                new SEConfiguration() {
-                    @Override
-                    protected void configureContext(MutablePicoContainer container) {
+        SEConfiguration se = new SEConfiguration() {
+            @Override
+            protected void configureContext(MutablePicoContainer container) {
 
-                        super.configureContext(container);
+                super.configureContext(container);
 
-                        DefaultResourceLocator locator =
-                                (DefaultResourceLocator)
-                                        container.getComponentInstance(ResourceLocator.class);
-                        try {
-                            locator.setSourceUrl(new URL("http://my.test.host/"));
-                        } catch (MalformedURLException e) {
-                        }
-                    }
-                };
+                DefaultResourceLocator locator =
+                        (DefaultResourceLocator) container.getComponentInstance(ResourceLocator.class);
+                try {
+                    locator.setSourceUrl(new URL("http://my.test.host/"));
+                } catch (MalformedURLException e) {
+                }
+            }
+        };
         Parser p = new Parser(se);
-        PointSymbolizer sym =
-                (PointSymbolizer)
-                        p.parse(getClass().getResourceAsStream("example-pointsymbolizer6.xml"));
+        PointSymbolizer sym = (PointSymbolizer) p.parse(getClass().getResourceAsStream("example-pointsymbolizer6.xml"));
         assertEquals("MyPointSymbolizer", sym.getName());
         assertEquals("Example Pointsymbolizer", sym.getDescription().getTitle().toString());
         assertEquals(
@@ -272,7 +278,7 @@ public class SEExampleTest extends SETestSupport {
                 sym.getDescription().getAbstract().toString());
 
         Graphic g = sym.getGraphic();
-        assertEquals(15.0, g.getSize().evaluate(null, Double.class));
+        assertEquals(15.0, g.getSize().evaluate(null, Double.class), 0d);
         assertEquals(1, g.graphicalSymbols().size());
 
         ExternalGraphic eg = (ExternalGraphic) g.graphicalSymbols().get(0);
@@ -280,11 +286,12 @@ public class SEExampleTest extends SETestSupport {
         assertEquals("image/png", eg.getFormat());
     }
 
+    @Test
     public void testParsePointSymbolizerAnchorDisplacement() throws Exception {
         PointSymbolizer sym = (PointSymbolizer) parse("example-pointsymbolizer5.xml");
 
         Graphic g = sym.getGraphic();
-        assertEquals(15.0, g.getSize().evaluate(null, Double.class));
+        assertEquals(15.0, g.getSize().evaluate(null, Double.class), 0d);
         assertEquals(1, g.graphicalSymbols().size());
         AnchorPoint ap = g.getAnchorPoint();
         assertNotNull(ap);
@@ -296,6 +303,7 @@ public class SEExampleTest extends SETestSupport {
         assertEquals(20, d.getDisplacementY().evaluate(null, Double.class), 0d);
     }
 
+    @Test
     public void testParsePointSymbolizerMarkIndex() throws Exception {
         PointSymbolizer sym = (PointSymbolizer) parse("example-pointsymbolizer-markindex.xml");
 
@@ -309,6 +317,7 @@ public class SEExampleTest extends SETestSupport {
         assertEquals("ttf", em.getFormat());
     }
 
+    @Test
     public void testParseLineSymbolizer() throws Exception {
         /*<LineSymbolizer version="1.1.0" xsi:schemaLocation="http://www.opengis.net/se http://www.opengis.net/se/1.1.0/Symbolizer.xsd" xmlns="http://www.opengis.net/se" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" uom="http://www.opengeospatial.org/se/units/metre">
             <Name>MyLineSymbolizer</Name>
@@ -333,6 +342,7 @@ public class SEExampleTest extends SETestSupport {
         assertEquals(Integer.valueOf(2), s.getWidth().evaluate(null, Integer.class));
     }
 
+    @Test
     public void testParsePolygonSymbolizer() throws Exception {
         /*<PolygonSymbolizer version="1.1.0" xsi:schemaLocation="http://www.opengis.net/se http://www.opengis.net/se/1.1.0/Symbolizer.xsd" xmlns="http://www.opengis.net/se" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" uom="http://www.opengeospatial.org/se/units/pixel">
             <Name>MyPolygonSymbolizer</Name>
@@ -349,7 +359,8 @@ public class SEExampleTest extends SETestSupport {
         </PolygonSymbolizer>*/
         PolygonSymbolizer sym = (PolygonSymbolizer) parse("example-polygonsymbolizer.xml");
         assertEquals("MyPolygonSymbolizer", sym.getName());
-        assertEquals("Example PolygonSymbolizer", sym.getDescription().getTitle().toString());
+        assertEquals(
+                "Example PolygonSymbolizer", sym.getDescription().getTitle().toString());
         assertEquals(
                 "This is just a simple example of a polygon symbolizer.",
                 sym.getDescription().getAbstract().toString());
@@ -364,6 +375,7 @@ public class SEExampleTest extends SETestSupport {
         assertEquals(170, c.getBlue());
     }
 
+    @Test
     public void testParseTextSymbolizer() throws Exception {
         TextSymbolizer sym = (TextSymbolizer) parse("example-textsymbolizer.xml");
         assertEquals("MyTextSymbolizer", sym.getName());
@@ -388,7 +400,7 @@ public class SEExampleTest extends SETestSupport {
         Fill fill = sym.getFill();
         assertEquals(Color.BLACK, fill.getColor().evaluate(null, Color.class));
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         // System.out.println(sym.getPriority());
         assertEquals(ff.property("people"), sym.getPriority());
 
@@ -397,6 +409,7 @@ public class SEExampleTest extends SETestSupport {
         assertEquals("100", options.get("auto-wrap"));
     }
 
+    @Test
     public void testParseRasterSymbolizer1() throws Exception {
         /*<RasterSymbolizer version="1.1.0" xsi:schemaLocation="http://www.opengis.net/se http://www.opengis.net/se/1.1.0/Symbolizer.xsd" xmlns="http://www.opengis.net/se" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
                 <Opacity>1.0</Opacity>
@@ -448,8 +461,8 @@ public class SEExampleTest extends SETestSupport {
                 <ShadedRelief/>
         </RasterSymbolizer>*/
         RasterSymbolizer sym = (RasterSymbolizer) parse("example-rastersymbolizer1.xml");
-        assertEquals(1.0, sym.getOpacity().evaluate(null, Double.class));
-        assertEquals(OverlapBehavior.AVERAGE, sym.getOverlapBehavior());
+        assertEquals(1.0, sym.getOpacity().evaluate(null, Double.class), 0d);
+        assertEquals(OverlapBehaviorEnum.AVERAGE, sym.getOverlapBehavior());
 
         ColorMap map = sym.getColorMap();
         assertNotNull(map);
@@ -465,13 +478,14 @@ public class SEExampleTest extends SETestSupport {
         assertEquals(0, c.getRed());
         assertEquals(250, c.getGreen());
         assertEquals(0, c.getBlue());
-        assertEquals(-417d, map.getColorMapEntry(1).getQuantity().evaluate(null, Double.class));
+        assertEquals(-417d, map.getColorMapEntry(1).getQuantity().evaluate(null, Double.class), 0d);
 
         c = map.getColorMapEntry(19).getColor().evaluate(null, Color.class);
         assertEquals(Color.WHITE, c);
-        assertEquals(13000d, map.getColorMapEntry(19).getQuantity().evaluate(null, Double.class));
+        assertEquals(13000d, map.getColorMapEntry(19).getQuantity().evaluate(null, Double.class), 0d);
     }
 
+    @Test
     public void testParseRasterSymbolizer2() throws Exception {
         /*
         <RasterSymbolizer version="1.1.0" xsi:schemaLocation="http://www.opengis.net/se/1.1.0/Symbolizer.xsd" xmlns="http://www.opengis.net/se" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -516,15 +530,14 @@ public class SEExampleTest extends SETestSupport {
         </RasterSymbolizer>*/
 
         RasterSymbolizer sym = (RasterSymbolizer) parse("example-rastersymbolizer2.xml");
-        assertEquals(1.0, sym.getOpacity().evaluate(null, Double.class));
-        assertEquals(OverlapBehavior.LATEST_ON_TOP, sym.getOverlapBehavior());
+        assertEquals(1.0, sym.getOpacity().evaluate(null, Double.class), 0d);
+        assertEquals(OverlapBehaviorEnum.LATEST_ON_TOP, sym.getOverlapBehavior());
 
         SelectedChannelType[] ch = sym.getChannelSelection().getRGBChannels();
         assertEquals("1", ch[0].getChannelName().evaluate(null, String.class));
         assertEquals(ContrastMethod.HISTOGRAM, ch[0].getContrastEnhancement().getMethod());
         assertEquals("2", ch[1].getChannelName().evaluate(null, String.class));
-        assertEquals(
-                2.5, ch[1].getContrastEnhancement().getGammaValue().evaluate(null, Double.class));
+        assertEquals(2.5, ch[1].getContrastEnhancement().getGammaValue().evaluate(null, Double.class), 0d);
         assertEquals("3", ch[2].getChannelName().evaluate(null, String.class));
         assertEquals(ContrastMethod.NORMALIZE, ch[2].getContrastEnhancement().getMethod());
 
@@ -538,20 +551,15 @@ public class SEExampleTest extends SETestSupport {
         c = map.getColorMapEntry(1).getColor().evaluate(null, Color.class);
         assertEquals(Color.WHITE, c);
 
-        assertEquals(
-                1.0, sym.getContrastEnhancement().getGammaValue().evaluate(null, Double.class));
+        assertEquals(1.0, sym.getContrastEnhancement().getGammaValue().evaluate(null, Double.class), 0d);
     }
 
-    /**
-     * Test the Expression parser for SelectChannel
-     *
-     * @throws Exception
-     */
+    /** Test the Expression parser for SelectChannel */
     @Test
     public void testParseRasterChannelExpression() throws Exception {
         RasterSymbolizer sym = (RasterSymbolizer) parse("example-raster-channel-expression.xml");
-        assertEquals(1.0, sym.getOpacity().evaluate(null, Double.class));
-        assertEquals(OverlapBehavior.LATEST_ON_TOP, sym.getOverlapBehavior());
+        assertEquals(1.0, sym.getOpacity().evaluate(null, Double.class), 0d);
+        assertEquals(OverlapBehaviorEnum.LATEST_ON_TOP, sym.getOverlapBehavior());
 
         SelectedChannelType[] ch = sym.getChannelSelection().getRGBChannels();
 
@@ -565,8 +573,7 @@ public class SEExampleTest extends SETestSupport {
 
         assertEquals(ContrastMethod.HISTOGRAM, ch[0].getContrastEnhancement().getMethod());
         assertEquals("2", ch[1].getChannelName().evaluate(null, String.class));
-        assertEquals(
-                2.5, ch[1].getContrastEnhancement().getGammaValue().evaluate(null, Double.class));
+        assertEquals(2.5, ch[1].getContrastEnhancement().getGammaValue().evaluate(null, Double.class), 0d);
         assertEquals("3", ch[2].getChannelName().evaluate(null, String.class));
         assertEquals(ContrastMethod.NORMALIZE, ch[2].getContrastEnhancement().getMethod());
 
@@ -580,10 +587,10 @@ public class SEExampleTest extends SETestSupport {
         c = map.getColorMapEntry(1).getColor().evaluate(null, Color.class);
         assertEquals(Color.WHITE, c);
 
-        assertEquals(
-                1.0, sym.getContrastEnhancement().getGammaValue().evaluate(null, Double.class));
+        assertEquals(1.0, sym.getContrastEnhancement().getGammaValue().evaluate(null, Double.class), 0d);
     }
 
+    @Test
     public void testParseFeatureStyle() throws Exception {
         /*
         <FeatureTypeStyle version="1.1.0" xsi:schemaLocation="http://www.opengis.net/se/1.1.0/FeatureStyle.xsd" xmlns="http://www.opengis.net/se" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xmlns:oceansea="http://www.myurl.net/oceansea">
@@ -613,6 +620,7 @@ public class SEExampleTest extends SETestSupport {
         assertEquals(SLD.toColor("#96C3F5"), sym.getFill().getColor().evaluate(null, Color.class));
     }
 
+    @Test
     public void testParseFeatureStyleVendor() throws Exception {
         FeatureTypeStyle fts = (FeatureTypeStyle) parse("example-featurestyle-vendor.xml");
         assertEquals(
@@ -623,6 +631,7 @@ public class SEExampleTest extends SETestSupport {
         assertEquals("value", options.get("key"));
     }
 
+    @Test
     public void testParseCoverageStyle() throws Exception {
         /*
         <CoverageStyle version="1.1.0" xsi:schemaLocation="http://www.opengis.net/se http://www.opengis.net/se/1.1.0/FeatureStyle.xsd" xmlns="http://www.opengis.net/se" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -656,12 +665,10 @@ public class SEExampleTest extends SETestSupport {
         RasterSymbolizer sym = (RasterSymbolizer) rule.symbolizers().get(0);
         assertEquals(
                 "Band.band1",
-                sym.getChannelSelection()
-                        .getGrayChannel()
-                        .getChannelName()
-                        .evaluate(null, String.class));
+                sym.getChannelSelection().getGrayChannel().getChannelName().evaluate(null, String.class));
     }
 
+    @Test
     public void testParseValidatePointSymbolizerGeomTransform() throws Exception {
         PointSymbolizer ps = (PointSymbolizer) parse("example-pointsymbolizer-geotrans.xml");
         assertTrue(ps.getGeometry() instanceof Function);
@@ -670,6 +677,7 @@ public class SEExampleTest extends SETestSupport {
         assertEquals(0, errors.size());
     }
 
+    @Test
     public void testParseGraphicWithFallbacks() throws Exception {
         Graphic graphic = (Graphic) parse("example-graphic-fallback.xml");
         final List<GraphicalSymbol> symbols = graphic.graphicalSymbols();
@@ -681,15 +689,14 @@ public class SEExampleTest extends SETestSupport {
         assertThat(eg1.getURI(), containsString("transport/amenity=parking.svg?fill=%2300eb00"));
         ExternalGraphic eg2 = (ExternalGraphic) symbols.get(1);
         assertThat(eg2.getURI(), containsString("transport/amenity=parking.svg"));
-        assertThat(
-                eg2.getURI(),
-                not((containsString("transport/amenity=parking.svg?fill=%2300eb00"))));
+        assertThat(eg2.getURI(), not((containsString("transport/amenity=parking.svg?fill=%2300eb00"))));
         Mark mark = (Mark) symbols.get(2);
         assertEquals("square", mark.getWellKnownName().evaluate(null, String.class));
     }
 
+    @Test
     public void testParseTextSymbolizerWithGraphic() throws Exception {
-        TextSymbolizer2 sym = (TextSymbolizer2) parse("example-textsymbolizer-graphic.xml");
+        TextSymbolizer sym = (TextSymbolizer) parse("example-textsymbolizer-graphic.xml");
         Graphic graphic = sym.getGraphic();
         assertNotNull(graphic);
         assertNotNull(graphic.graphicalSymbols());

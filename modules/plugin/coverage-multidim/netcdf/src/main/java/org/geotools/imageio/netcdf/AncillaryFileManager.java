@@ -39,11 +39,12 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.feature.type.Name;
 import org.geotools.coverage.grid.io.FileSetManager;
 import org.geotools.coverage.grid.io.FileSystemFileSetManager;
 import org.geotools.coverage.io.catalog.DataStoreConfiguration;
 import org.geotools.coverage.util.CoverageUtilities;
-import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.feature.NameImpl;
 import org.geotools.gce.imagemosaic.Utils;
 import org.geotools.gce.imagemosaic.catalog.index.Indexer;
@@ -62,14 +63,14 @@ import org.geotools.gce.imagemosaic.properties.PropertiesCollectorFinder;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollectorSPI;
 import org.geotools.imageio.netcdf.Slice2DIndex.Slice2DIndexManager;
 import org.geotools.imageio.netcdf.utilities.NetCDFUtilities;
+import org.geotools.util.SoftValueHashMap;
 import org.geotools.util.URLs;
 import org.geotools.util.Utilities;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.type.Name;
 
 /**
- * A class used to store any auxiliary indexing information such as the low level indexer definition
- * as well as the datastore properties configuration specifying where to build that index.
+ * A class used to store any auxiliary indexing information such as the low level indexer definition as well as the
+ * datastore properties configuration specifying where to build that index.
  *
  * <p>Since 14.x is it also possible to store the catalog into a PostGis based DB
  *
@@ -78,38 +79,33 @@ import org.opengis.feature.type.Name;
 public class AncillaryFileManager implements FileSetManager {
 
     /**
-     * The Ancillary file manager will parse different type of auxiliary files: an XML based indexer
-     * specifying the definition of the low level index describing the multidim granules catalog, as
-     * well as datastore properties file containing the configuration of the PostGIS DB where the
-     * catalog should be stored.
+     * The Ancillary file manager will parse different type of auxiliary files: an XML based indexer specifying the
+     * definition of the low level index describing the multidim granules catalog, as well as datastore properties file
+     * containing the configuration of the PostGIS DB where the catalog should be stored.
      */
     enum AuxiliaryFileType {
         INDEXER_XML {
+            @Override
             File lookup(String baseName, File parentDirectory, File destinationDirectory) {
-                File file;
                 // CASE 1: side file (for backward compatibility)
                 // Compose the path to an optional XML auxiliary file in the same directory of the
                 // input file
                 // (filename.xml)
                 String optionalAuxiliaryPath =
-                        parentDirectory.getAbsolutePath()
-                                + File.separator
-                                + baseName
-                                + INDEX_SUFFIX;
-                file = new File(optionalAuxiliaryPath);
+                        parentDirectory.getAbsolutePath() + File.separator + baseName + INDEX_SUFFIX;
+                File file = new File(optionalAuxiliaryPath);
                 if (!file.exists() || !file.canRead()) {
                     // CASE 2: side file in hidden folder (for retrocompatibility)
                     // Compose the path to an optional XML auxiliary file inside a directory of with
                     // the same
                     // name of the file but with a dot before (.filename/filename.xml)
-                    optionalAuxiliaryPath =
-                            parentDirectory.getAbsolutePath()
-                                    + File.separator
-                                    + "."
-                                    + baseName
-                                    + File.separator
-                                    + baseName
-                                    + INDEX_SUFFIX;
+                    optionalAuxiliaryPath = parentDirectory.getAbsolutePath()
+                            + File.separator
+                            + "."
+                            + baseName
+                            + File.separator
+                            + baseName
+                            + INDEX_SUFFIX;
                     file = new File(optionalAuxiliaryPath);
                     if (!file.exists() || !file.canRead()) {
                         file = null;
@@ -126,29 +122,26 @@ public class AncillaryFileManager implements FileSetManager {
         },
 
         INDEXER_DATASTORE {
+            @Override
             File lookup(String baseName, File parentDirectory, File destinationDirectory) {
-                File file = null;
 
                 // CASE 1: side file (for backward compatibility)
                 // Compose the path to an optional datastore file in the same directory of the input
                 // file
                 String optionalAuxiliaryDatastorePath =
-                        parentDirectory.getAbsolutePath()
-                                + File.separator
-                                + DEFAULT_DATASTORE_PROPERTIES;
-                file = new File(optionalAuxiliaryDatastorePath);
+                        parentDirectory.getAbsolutePath() + File.separator + DEFAULT_DATASTORE_PROPERTIES;
+                File file = new File(optionalAuxiliaryDatastorePath);
                 if (!file.exists() || !file.canRead()) {
                     // CASE 2: side file in hidden folder (for backward compatibility)
                     // Compose the path to an optional datastore file inside a directory with the
                     // same
                     // name of the file but with a dot before (.filename/mddatastore.properties)
-                    optionalAuxiliaryDatastorePath =
-                            parentDirectory.getAbsolutePath()
-                                    + File.separator
-                                    + "."
-                                    + baseName
-                                    + File.separator
-                                    + DEFAULT_DATASTORE_PROPERTIES;
+                    optionalAuxiliaryDatastorePath = parentDirectory.getAbsolutePath()
+                            + File.separator
+                            + "."
+                            + baseName
+                            + File.separator
+                            + DEFAULT_DATASTORE_PROPERTIES;
                     file = new File(optionalAuxiliaryDatastorePath);
                     if (!file.exists() || !file.canRead()) {
                         file = null;
@@ -178,17 +171,22 @@ public class AncillaryFileManager implements FileSetManager {
     /** Default schema name */
     static final String DEFAULT_SCHEMA_NAME = "def";
 
-    private static final Set<String> CUT_EXTENSIONS = new HashSet<String>();
+    private static final Set<String> CUT_EXTENSIONS = new HashSet<>();
 
-    private static final Set<PropertiesCollectorSPI> pcSPIs =
-            PropertiesCollectorFinder.getPropertiesCollectorSPI();
+    private static final Set<PropertiesCollectorSPI> pcSPIs = PropertiesCollectorFinder.getPropertiesCollectorSPI();
 
     private static JAXBContext CONTEXT = null;
 
     // contains information about dimensions that will produce multiple bands indexed by the
     // dimension name
-    private final Map<String, MultipleBandsDimensionInfo> multipleBandsDimensionsInfo =
-            new HashMap<>();
+    private final Map<String, MultipleBandsDimensionInfo> multipleBandsDimensionsInfo = new HashMap<>();
+
+    // Indexer and datastore config can be considered static so we can cache them
+    // in order to avoid their repeated unmarshalling when accessing a dataset.
+
+    protected static final Map<String, Indexer> INDEXER_CACHE = new SoftValueHashMap<>();
+
+    protected static final Map<String, DataStoreConfiguration> DATASTORE_CONFIG_CACHE = new SoftValueHashMap<>();
 
     static {
         try {
@@ -209,13 +207,13 @@ public class AncillaryFileManager implements FileSetManager {
     private static final String DEFAULT_DATASTORE_PROPERTIES = "mddatastore.properties";
 
     /** The list of Slice2D indexes */
-    private final List<Slice2DIndex> slicesIndexList = new ArrayList<Slice2DIndex>();
+    private final List<Slice2DIndex> slicesIndexList = new ArrayList<>();
 
     /** The Slice2D index manager */
     Slice2DIndexManager slicesIndexManager;
 
     /** The map of coverages elements */
-    Map<String, Coverage> coveragesMapping = new HashMap<String, Coverage>();
+    Map<String, Coverage> coveragesMapping = new HashMap<>();
 
     /** coverage Name to variable mapping */
     Map<Name, String> variablesMap = null;
@@ -248,8 +246,7 @@ public class AncillaryFileManager implements FileSetManager {
         this(netcdfFile, indexFilePath, null);
     }
 
-    public AncillaryFileManager(
-            final File netcdfFile, final String indexFilePath, final String datastoreFilePath)
+    public AncillaryFileManager(final File netcdfFile, final String indexFilePath, final String datastoreFilePath)
             throws IOException, JAXBException, NoSuchAlgorithmException {
 
         org.geotools.util.Utilities.ensureNonNull("file", netcdfFile);
@@ -281,8 +278,7 @@ public class AncillaryFileManager implements FileSetManager {
         String mainName = FilenameUtils.getName(mainFilePath);
         // TODO: Improve that check on extensions.
         String extension = FilenameUtils.getExtension(mainName);
-        String baseName =
-                cutExtension(extension) ? FilenameUtils.removeExtension(mainName) : mainName;
+        String baseName = cutExtension(extension) ? FilenameUtils.removeExtension(mainName) : mainName;
         String outputLocalFolder = "." + baseName + "_" + hashCode;
         destinationDir = new File(baseDir, outputLocalFolder);
 
@@ -306,50 +302,36 @@ public class AncillaryFileManager implements FileSetManager {
 
         // init
         initIndexer();
-        datastoreIndexFile =
-                lookupFile(datastoreFilePath, baseName, AuxiliaryFileType.INDEXER_DATASTORE);
+        datastoreIndexFile = lookupFile(datastoreFilePath, baseName, AuxiliaryFileType.INDEXER_DATASTORE);
     }
 
     /**
-     * Use different approaches to look for the specified file since it can be provided externally
-     * (as from the imageMosaic sharing the same indexer between multiple NetCDF files), it can be
-     * contained into a .DIR folder or it can be contained into a HASHNAME folder.
-     *
-     * @param auxFilePath
-     * @param baseName
+     * Use different approaches to look for the specified file since it can be provided externally (as from the
+     * imageMosaic sharing the same indexer between multiple NetCDF files), it can be contained into a .DIR folder or it
+     * can be contained into a HASHNAME folder.
      */
     private File lookupFile(String filePath, String baseName, AuxiliaryFileType type) {
         // CASE 1: file externally provided
-        File file = null;
         if (filePath != null) {
-            file = new File(filePath);
-            if (!file.exists() || !file.canRead()) {
-                file = null;
+            // absolute path?
+            File file = new File(filePath);
+            if (file.exists() && file.canRead()) return file;
+            // findable relative path?
+            if (!file.isAbsolute()) {
+                file = new File(parentDirectory, filePath);
+                if (file.exists() && file.canRead()) return file;
             }
         }
-        if (file != null) {
-            return file;
-        } else {
-            file = type.lookup(baseName, parentDirectory, destinationDir);
-        }
-
-        return file;
+        // CASE 2, default lookup
+        return type.lookup(baseName, parentDirectory, destinationDir);
     }
 
     private static boolean cutExtension(String extension) {
         return CUT_EXTENSIONS.contains(extension);
     }
 
-    /**
-     * Check whether the file have been updated.
-     *
-     * @param ncFile
-     * @param slicesIndexFile
-     * @param destinationDir
-     * @throws IOException
-     */
-    private static void checkReset(
-            final File mainFile, final File slicesIndexFile, final File destinationDir)
+    /** Check whether the file have been updated. */
+    private static void checkReset(final File mainFile, final File slicesIndexFile, final File destinationDir)
             throws IOException {
         // TODO: Consider acquiring a LOCK on the file
         if (slicesIndexFile.exists()) {
@@ -359,8 +341,7 @@ public class AncillaryFileManager implements FileSetManager {
             // Check whether the NetCDF time is more recent with respect to the auxiliary indexes
             if (mainFileTime > indexTime) {
                 // Need to delete all the auxiliary files and start from scratch
-                final Collection<File> listedFiles =
-                        FileUtils.listFiles(destinationDir, null, true);
+                final Collection<File> listedFiles = FileUtils.listFiles(destinationDir, null, true);
                 for (File file : listedFiles) {
 
                     // Preserve summary file which contains mapping between coverages and underlying
@@ -376,9 +357,7 @@ public class AncillaryFileManager implements FileSetManager {
     /**
      * Write indexer to disk
      *
-     * @throws IOException
-     * @throws JAXBException
-     *     <p>TODO: Need to check for thread safety
+     * <p>TODO: Need to check for thread safety
      */
     public void writeToDisk() throws IOException, JAXBException {
         // Write collected information
@@ -388,13 +367,7 @@ public class AncillaryFileManager implements FileSetManager {
         }
     }
 
-    /**
-     * Write to disk the variable summary, a simple text file containing variable names.
-     *
-     * @param indexerFile
-     * @param coveragesMapping
-     * @throws JAXBException
-     */
+    /** Write to disk the variable summary, a simple text file containing variable names. */
     private void storeIndexer(final File indexerFile, final Map<String, Coverage> coveragesMapping)
             throws JAXBException {
         if (coveragesMapping == null || coveragesMapping.isEmpty()) {
@@ -430,12 +403,7 @@ public class AncillaryFileManager implements FileSetManager {
         marshaller.marshal(indexer, indexerFile);
     }
 
-    /**
-     * Return a {@link Name} representation of the coverage name
-     *
-     * @param varName
-     * @return
-     */
+    /** Return a {@link Name} representation of the coverage name */
     public Name getCoverageName(String varName) {
         final Collection<Coverage> coverages = coveragesMapping.values();
         for (Coverage cov : coverages) {
@@ -463,13 +431,7 @@ public class AncillaryFileManager implements FileSetManager {
         }
     }
 
-    /**
-     * Return a {@link Slice2DIndex} related to the provided imageIndex
-     *
-     * @param imageIndex
-     * @return
-     * @throws IOException
-     */
+    /** Return a {@link Slice2DIndex} related to the provided imageIndex */
     public Slice2DIndex getSlice2DIndex(final int imageIndex) throws IOException {
         Slice2DIndex variableIndex;
         if (slicesIndexManager != null) {
@@ -511,8 +473,8 @@ public class AncillaryFileManager implements FileSetManager {
 
     private Coverage addCoverage(Coverage coverage) {
         if (variablesMap == null) {
-            variablesMap = new HashMap<Name, String>();
-            coveragesMapping = new HashMap<String, Coverage>();
+            variablesMap = new HashMap<>();
+            coveragesMapping = new HashMap<>();
         }
         coveragesMapping.put(coverage.getName(), coverage);
         variablesMap.put(new NameImpl(coverage.getName()), coverage.getOrigName());
@@ -532,13 +494,9 @@ public class AncillaryFileManager implements FileSetManager {
         slicesIndexList.clear();
     }
 
-    /**
-     * Get the list of Names for the underlying coverage list
-     *
-     * @return
-     */
+    /** Get the list of Names for the underlying coverage list */
     public List<Name> getCoveragesNames() {
-        final List<Name> names = new ArrayList<Name>();
+        final List<Name> names = new ArrayList<>();
         Collection<Coverage> coverages = coveragesMapping.values();
         for (Coverage cov : coverages) {
             names.add(new NameImpl(cov.getName()));
@@ -546,35 +504,43 @@ public class AncillaryFileManager implements FileSetManager {
         return names;
     }
 
-    /**
-     * Retrieve basic indexer properties by scanning the indexer XML instance.
-     *
-     * @throws JAXBException
-     */
+    /** Retrieve basic indexer properties by scanning the indexer XML instance. */
     protected void initIndexer() throws JAXBException {
-        if (indexerFile.exists() && indexerFile.canRead()) {
+        String indexerPath = indexerFile.getAbsolutePath();
+        Indexer cachedIndexer = INDEXER_CACHE.get(indexerPath);
+        if (cachedIndexer != null) {
+            indexer = cachedIndexer;
+        } else if (indexerFile.exists() && indexerFile.canRead()) {
             Unmarshaller unmarshaller = CONTEXT.createUnmarshaller();
             if (unmarshaller != null) {
                 indexer = (Indexer) unmarshaller.unmarshal(indexerFile);
-                // indexed information about dimensions that supports multiple bands
-                initMultipleBandsDimensionsInfo(indexer);
-                // Parsing schemas
-                final SchemasType schemas = indexer.getSchemas();
-                Map<String, String> schemaMapping = new HashMap<String, String>();
-                if (schemas != null) {
-                    // Map schema names to schema attributes string
-                    List<SchemaType> schemaElements = schemas.getSchema();
-                    for (SchemaType schemaElement : schemaElements) {
-                        schemaMapping.put(schemaElement.getName(), schemaElement.getAttributes());
-                    }
+                if (indexer == null) {
+                    throw new IllegalArgumentException("unable to create Indexer for " + indexerPath);
                 }
-
-                // Parsing properties collectors
-                initPropertiesCollectors();
-
-                // Parsing coverages
-                initCoverages(schemaMapping);
+                INDEXER_CACHE.put(indexerFile.getAbsolutePath(), indexer);
+            } else {
+                throw new IllegalArgumentException("unable to create Unmarshaller for " + indexerPath);
             }
+        }
+        if (indexer != null) {
+            // indexed information about dimensions that supports multiple bands
+            initMultipleBandsDimensionsInfo(indexer);
+            // Parsing schemas
+            final SchemasType schemas = indexer.getSchemas();
+            Map<String, String> schemaMapping = new HashMap<>();
+            if (schemas != null) {
+                // Map schema names to schema attributes string
+                List<SchemaType> schemaElements = schemas.getSchema();
+                for (SchemaType schemaElement : schemaElements) {
+                    schemaMapping.put(schemaElement.getName(), schemaElement.getAttributes());
+                }
+            }
+
+            // Parsing properties collectors
+            initPropertiesCollectors();
+
+            // Parsing coverages
+            initCoverages(schemaMapping);
         }
     }
 
@@ -625,8 +591,7 @@ public class AncillaryFileManager implements FileSetManager {
                 }
 
                 // Add the newly created indexer coverage
-                final Coverage coverage =
-                        createCoverate(coverageName, origName, schemaAttributes, schemaName);
+                final Coverage coverage = createCoverage(coverageName, origName, schemaAttributes, schemaName);
                 addCoverage(coverage);
             }
         }
@@ -639,10 +604,8 @@ public class AncillaryFileManager implements FileSetManager {
      * @param origName name of the underlying variable
      * @param schemaAttributes schema definition attributes
      * @param schemaName schema name
-     * @return
      */
-    private Coverage createCoverate(
-            String coverageName, String origName, String schemaAttributes, String schemaName) {
+    private Coverage createCoverage(String coverageName, String origName, String schemaAttributes, String schemaName) {
         SchemaType schema = OBJECT_FACTORY.createSchemaType();
         Coverage coverage = OBJECT_FACTORY.createIndexerCoveragesCoverage();
         coverage.setOrigName(origName);
@@ -656,14 +619,12 @@ public class AncillaryFileManager implements FileSetManager {
     /**
      * Get the coverageName using the specified nameCollector
      *
-     * @param nameCollector The name of the propertiesCollector which will be used to setup the
-     *     coverage name
-     * @return
+     * @param nameCollector The name of the propertiesCollector which will be used to setup the coverage name
      */
     private String getCoverageNameFromCollector(final String nameCollector) {
         String coverageName = null;
         if (collectors != null && collectors.containsKey(nameCollector)) {
-            Map<String, Object> keyValues = new HashMap<String, Object>();
+            Map<String, Object> keyValues = new HashMap<>();
             PropertiesCollector collector = collectors.get(nameCollector);
             collector.collect(ncFile);
             collector.setProperties(keyValues);
@@ -679,7 +640,7 @@ public class AncillaryFileManager implements FileSetManager {
         if (collectors != null) {
             List<Collector> collectorList = collectors.getCollector();
             if (collectorList != null) {
-                this.collectors = new HashMap<String, PropertiesCollector>();
+                this.collectors = new HashMap<>();
 
                 // Scan the collectors list defined inside the indexer
                 for (Collector collector : collectorList) {
@@ -698,22 +659,17 @@ public class AncillaryFileManager implements FileSetManager {
                     }
                     if (selectedSPI == null) {
                         if (LOGGER.isLoggable(Level.INFO)) {
-                            LOGGER.info(
-                                    "Unable to find a PropertyCollector for this INTERNAL_STORE_SPI: "
-                                            + spiName);
+                            LOGGER.info("Unable to find a PropertyCollector for this INTERNAL_STORE_SPI: " + spiName);
                         }
                         continue;
                     }
 
                     // property names
-                    final String propertyNames[] =
-                            new String[] {mapped != null ? mapped : COVERAGE_NAME};
+                    final String[] propertyNames = {mapped != null ? mapped : COVERAGE_NAME};
 
                     // create the PropertiesCollector
-                    final PropertiesCollector pc =
-                            selectedSPI.create(
-                                    DefaultPropertiesCollectorSPI.REGEX_PREFIX + value,
-                                    Arrays.asList(propertyNames));
+                    final PropertiesCollector pc = selectedSPI.create(
+                            DefaultPropertiesCollectorSPI.REGEX_PREFIX + value, Arrays.asList(propertyNames));
                     if (pc != null) {
                         this.collectors.put(collectorName, pc);
                     }
@@ -722,16 +678,15 @@ public class AncillaryFileManager implements FileSetManager {
         }
     }
 
+    /**
+     * Returns the schema definition name for a given coverage (the schema definition name is not normally used in the
+     * database, which uses the coverage name instead)
+     */
     public String getTypeName(String coverageName) {
         return coveragesMapping.get(coverageName).getSchema().getName();
     }
 
-    /**
-     * Add the default schema to this coverage
-     *
-     * @param coverage
-     * @return
-     */
+    /** Add the default schema to this coverage */
     public String setSchema(Coverage coverage, final String schemaName, final String schemaDef) {
         Utilities.ensureNonNull("coverage", coverage);
         Utilities.ensureNonNull("schemaName", schemaName);
@@ -750,10 +705,7 @@ public class AncillaryFileManager implements FileSetManager {
         return null;
     }
 
-    /**
-     * @param varName
-     * @return
-     */
+    /** */
     public boolean acceptsVariable(String varName) {
         Utilities.ensureNonNull("varName", varName);
         if (indexer == null || indexer.getCoverages() == null) {
@@ -804,9 +756,7 @@ public class AncillaryFileManager implements FileSetManager {
             int two_halfs = 0;
             do {
                 buf.append(
-                        (0 <= halfbyte) && (halfbyte <= 9)
-                                ? (char) ('0' + halfbyte)
-                                : (char) ('a' + (halfbyte - 10)));
+                        (0 <= halfbyte) && (halfbyte <= 9) ? (char) ('0' + halfbyte) : (char) ('a' + (halfbyte - 10)));
                 halfbyte = b & 0x0F;
             } while (two_halfs++ < 1);
         }
@@ -814,32 +764,30 @@ public class AncillaryFileManager implements FileSetManager {
     }
 
     /**
-     * Create the {@link DataStoreConfiguration} using the external datastoreIndexFile if provided,
-     * or the H2 based default.
-     *
-     * @return
-     * @throws IOException
+     * Create the {@link DataStoreConfiguration} using the external datastoreIndexFile if provided, or the H2 based
+     * default.
      */
     public DataStoreConfiguration getDatastoreConfiguration() throws IOException {
         DataStoreConfiguration datastoreConfiguration = null;
         if (datastoreIndexFile != null) {
+            String datastoreFilePath = datastoreIndexFile.getAbsolutePath();
+            datastoreConfiguration = DATASTORE_CONFIG_CACHE.get(datastoreFilePath);
+            if (datastoreConfiguration != null) {
+                return datastoreConfiguration;
+            }
             URL datastoreURL = URLs.fileToUrl(datastoreIndexFile);
             Properties properties = CoverageUtilities.loadPropertiesFromURL(datastoreURL);
             if (properties != null) {
                 String storeName = properties.getProperty(NetCDFUtilities.STORE_NAME);
                 if (storeName != null) {
-                    return new DataStoreConfiguration(storeName);
+                    datastoreConfiguration = new DataStoreConfiguration(storeName);
                 } else {
                     final String SPIClass = properties.getProperty("SPI");
                     try {
                         // create a datastore as instructed
-                        final DataStoreFactorySpi spi =
-                                (DataStoreFactorySpi)
-                                        Class.forName(SPIClass)
-                                                .getDeclaredConstructor()
-                                                .newInstance();
-                        Map<String, Serializable> datastoreParams =
-                                Utils.filterDataStoreParams(properties, spi);
+                        final DataStoreFactorySpi spi = (DataStoreFactorySpi)
+                                Class.forName(SPIClass).getDeclaredConstructor().newInstance();
+                        Map<String, Serializable> datastoreParams = Utils.filterDataStoreParams(properties, spi);
 
                         // create a datastore configuration using the specified SPI and
                         // datastoreParams
@@ -849,39 +797,33 @@ public class AncillaryFileManager implements FileSetManager {
                         datastoreConfiguration.setShared(true);
                         // update params for the shared case
                         checkStoreWrapping(datastoreConfiguration);
+
                     } catch (Exception e) {
                         final IOException ioe = new IOException();
                         throw (IOException) ioe.initCause(e);
                     }
                 }
+                DATASTORE_CONFIG_CACHE.put(datastoreFilePath, datastoreConfiguration);
             }
         } else {
             File parentFile = slicesIndexFile.getParentFile();
-            String database =
-                    FilenameUtils.removeExtension(
-                                    FilenameUtils.getName(slicesIndexFile.getCanonicalPath()))
-                            .replace(".", "");
+            String database = FilenameUtils.removeExtension(FilenameUtils.getName(slicesIndexFile.getCanonicalPath()))
+                    .replace(".", "");
             datastoreConfiguration =
-                    new DataStoreConfiguration(
-                            DataStoreConfiguration.getDefaultParams(database, parentFile));
+                    new DataStoreConfiguration(DataStoreConfiguration.getDefaultParams(database, parentFile));
         }
         return datastoreConfiguration;
     }
 
-    /**
-     * Check whether the dataStore needs to be wrapped (as an instance, to allow long typeNames and
-     * attributes).
-     *
-     * @param datastoreConfiguration
-     * @throws IOException
-     */
-    private void checkStoreWrapping(DataStoreConfiguration datastoreConfiguration)
-            throws IOException {
+    /** Check whether the dataStore needs to be wrapped (as an instance, to allow long typeNames and attributes). */
+    private void checkStoreWrapping(DataStoreConfiguration datastoreConfiguration) throws IOException {
         Map<String, Serializable> params = datastoreConfiguration.getParams();
         String param = getParameter(Utils.Prop.WRAP_STORE);
         if (param != null && param.trim().equalsIgnoreCase("true")) {
             params.put(Utils.Prop.WRAP_STORE, true);
-            params.put(Utils.Prop.PARENT_LOCATION, URLs.fileToUrl(getDestinationDir()).toString());
+            params.put(
+                    Utils.Prop.PARENT_LOCATION,
+                    URLs.fileToUrl(getDestinationDir()).toString());
         }
     }
 
@@ -897,8 +839,8 @@ public class AncillaryFileManager implements FileSetManager {
     }
 
     /**
-     * Utility method that wil retrieve from the indexer file information about multiple bands
-     * dimensions and will parse that information and index it by the dimensions names.
+     * Utility method that wil retrieve from the indexer file information about multiple bands dimensions and will parse
+     * that information and index it by the dimensions names.
      */
     private void initMultipleBandsDimensionsInfo(Indexer indexer) {
         if (indexer.getMultipleBandsDimensions() == null
@@ -918,11 +860,17 @@ public class AncillaryFileManager implements FileSetManager {
     }
 
     /**
-     * This method will return the multiple bands information associated with the provided dimension
-     * name or NULL if the dimensions is single band.
+     * This method will return the multiple bands information associated with the provided dimension name or NULL if the
+     * dimensions is single band.
      */
     MultipleBandsDimensionInfo getMultipleBandsDimensionInfo(String dimensionName) {
         // simple lookup in the hash table, if the dimensions is single band we simply return NULL
         return multipleBandsDimensionsInfo.get(dimensionName);
+    }
+
+    /** Clear the parsed configs (datastore and indexer) cache */
+    public static void clearCache() {
+        DATASTORE_CONFIG_CACHE.clear();
+        INDEXER_CACHE.clear();
     }
 }

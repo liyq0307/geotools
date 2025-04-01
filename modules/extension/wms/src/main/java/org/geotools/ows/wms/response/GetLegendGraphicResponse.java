@@ -17,15 +17,14 @@
 package org.geotools.ows.wms.response;
 
 import java.io.IOException;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Response;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 
 /** @author Richard Gould */
 public class GetLegendGraphicResponse extends Response {
 
-    public GetLegendGraphicResponse(HTTPResponse httpResponse)
-            throws ServiceException, IOException {
+    public GetLegendGraphicResponse(HTTPResponse httpResponse) throws ServiceException, IOException {
         super(httpResponse);
 
         String contentType = getContentType();

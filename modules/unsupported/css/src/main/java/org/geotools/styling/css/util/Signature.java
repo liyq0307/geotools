@@ -20,8 +20,8 @@ import java.util.BitSet;
 import java.util.function.IntConsumer;
 
 /**
- * The binary signature for a list of values, indicates which objects of the list have been selected
- * using 1s, those that have not using 0s
+ * The binary signature for a list of values, indicates which objects of the list have been selected using 1s, those
+ * that have not using 0s
  *
  * @author Andrea Aime - GeoSolutions
  */
@@ -30,39 +30,20 @@ public abstract class Signature implements Cloneable {
     /** Increments the binary signature, that is, adds 1 to it */
     public abstract void increment();
 
-    /**
-     * Checks if this signature contains another
-     *
-     * @param other
-     * @param k
-     * @return
-     */
+    /** Checks if this signature contains another */
     public abstract boolean contains(Signature other, int k);
 
-    /**
-     * Returns the flag at the i-th position
-     *
-     * @param i
-     * @return
-     */
+    /** Returns the flag at the i-th position */
     public abstract boolean get(int i);
 
-    /**
-     * Sets the flag at the i-th position
-     *
-     * @param idx
-     * @param b
-     */
+    /** Sets the flag at the i-th position */
     public abstract void set(int idx, boolean b);
 
-    /**
-     * The size of the signature, in number of bits
-     *
-     * @return
-     */
+    /** The size of the signature, in number of bits */
     public abstract int size();
 
     /** Clones the signature */
+    @Override
     public abstract Object clone();
 
     @Override
@@ -103,6 +84,7 @@ public abstract class Signature implements Cloneable {
             this.size = other.size;
         }
 
+        @Override
         public void increment() {
             for (int i = 0; i < bs.size(); i++) {
                 if (bs.get(i)) {
@@ -114,6 +96,7 @@ public abstract class Signature implements Cloneable {
             }
         }
 
+        @Override
         public boolean contains(Signature otherSignature, int k) {
             BitsetSignature other = (BitsetSignature) otherSignature;
             final int max = Math.min(bs.size(), k + 1);
@@ -145,6 +128,7 @@ public abstract class Signature implements Cloneable {
             return size;
         }
 
+        @Override
         public Object clone() {
             return new BitsetSignature(this);
         }

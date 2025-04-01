@@ -128,9 +128,10 @@ public class TimeOrdinalEraTypeImpl extends DefinitionTypeImpl implements TimeOr
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<RelatedTimeType> getRelatedTime() {
         if (relatedTime == null) {
-            relatedTime = new EObjectContainmentEList<RelatedTimeType>(RelatedTimeType.class, this, Gml311Package.TIME_ORDINAL_ERA_TYPE__RELATED_TIME);
+            relatedTime = new EObjectContainmentEList<>(RelatedTimeType.class, this, Gml311Package.TIME_ORDINAL_ERA_TYPE__RELATED_TIME);
         }
         return relatedTime;
     }
@@ -140,6 +141,7 @@ public class TimeOrdinalEraTypeImpl extends DefinitionTypeImpl implements TimeOr
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public TimeNodePropertyType getStart() {
         return start;
     }
@@ -164,6 +166,7 @@ public class TimeOrdinalEraTypeImpl extends DefinitionTypeImpl implements TimeOr
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setStart(TimeNodePropertyType newStart) {
         if (newStart != start) {
             NotificationChain msgs = null;
@@ -183,6 +186,7 @@ public class TimeOrdinalEraTypeImpl extends DefinitionTypeImpl implements TimeOr
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public TimeNodePropertyType getEnd() {
         return end;
     }
@@ -207,6 +211,7 @@ public class TimeOrdinalEraTypeImpl extends DefinitionTypeImpl implements TimeOr
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setEnd(TimeNodePropertyType newEnd) {
         if (newEnd != end) {
             NotificationChain msgs = null;
@@ -226,6 +231,7 @@ public class TimeOrdinalEraTypeImpl extends DefinitionTypeImpl implements TimeOr
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public TimePeriodPropertyType getExtent() {
         return extent;
     }
@@ -250,6 +256,7 @@ public class TimeOrdinalEraTypeImpl extends DefinitionTypeImpl implements TimeOr
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setExtent(TimePeriodPropertyType newExtent) {
         if (newExtent != extent) {
             NotificationChain msgs = null;
@@ -269,9 +276,10 @@ public class TimeOrdinalEraTypeImpl extends DefinitionTypeImpl implements TimeOr
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<TimeOrdinalEraPropertyType> getMember() {
         if (member == null) {
-            member = new EObjectContainmentEList<TimeOrdinalEraPropertyType>(TimeOrdinalEraPropertyType.class, this, Gml311Package.TIME_ORDINAL_ERA_TYPE__MEMBER);
+            member = new EObjectContainmentEList<>(TimeOrdinalEraPropertyType.class, this, Gml311Package.TIME_ORDINAL_ERA_TYPE__MEMBER);
         }
         return member;
     }
@@ -281,6 +289,7 @@ public class TimeOrdinalEraTypeImpl extends DefinitionTypeImpl implements TimeOr
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public ReferenceType getGroup() {
         return group;
     }
@@ -305,6 +314,7 @@ public class TimeOrdinalEraTypeImpl extends DefinitionTypeImpl implements TimeOr
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setGroup(ReferenceType newGroup) {
         if (newGroup != group) {
             NotificationChain msgs = null;

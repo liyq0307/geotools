@@ -16,8 +16,12 @@
  */
 package org.geotools.jdbc;
 
-import org.geotools.referencing.CRS;
-import org.opengis.feature.simple.SimpleFeatureType;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.junit.Test;
 
 /**
  * Tests data reading when we expose primary keys as attributes
@@ -29,14 +33,16 @@ public abstract class JDBCFeatureSourceExposePkOnlineTest extends JDBCFeatureSou
     @Override
     protected void connect() throws Exception {
         super.connect();
-        ((JDBCFeatureStore) featureSource).setExposePrimaryKeyColumns(true);
+        featureSource.setExposePrimaryKeyColumns(true);
     }
 
+    @Override
+    @Test
     public void testSchema() throws Exception {
         SimpleFeatureType schema = featureSource.getSchema();
         assertEquals(tname("ft1"), schema.getTypeName());
         assertEquals(dataStore.getNamespaceURI(), schema.getName().getNamespaceURI());
-        assertTrue(areCRSEqual(CRS.decode("EPSG:4326"), schema.getCoordinateReferenceSystem()));
+        assertTrue(areCRSEqual(decodeEPSG(4326), schema.getCoordinateReferenceSystem()));
 
         assertEquals(5, schema.getAttributeCount());
         assertNotNull(schema.getDescriptor(aname("id")));

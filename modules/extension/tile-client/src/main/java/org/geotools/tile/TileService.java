@@ -17,13 +17,21 @@
  */
 package org.geotools.tile;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPResponse;
+import org.geotools.image.io.ImageIOExt;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.tile.impl.ScaleZoomLevelMatcher;
@@ -32,9 +40,6 @@ import org.geotools.util.ObjectCache;
 import org.geotools.util.ObjectCaches;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Envelope;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * A TileService represent the class of objects that serve map tiles.
@@ -45,46 +50,83 @@ import org.opengis.referencing.operation.TransformException;
  * @author Ugo Taddei
  * @since 12
  */
-public abstract class TileService {
+public abstract class TileService implements ImageLoader {
 
     protected static final Logger LOGGER = Logging.getLogger(TileService.class);
+
+    protected static int cacheSize = 50;
 
     /**
      * This WeakHashMap acts as a memory cache.
      *
      * <p>Because we are using SoftReference, we won't run out of Memory, the GC will free space.
      */
-    private ObjectCache tiles = ObjectCaches.create("soft", 50); // $NON-NLS-1$
+    private final ObjectCache<String, Tile> tiles = ObjectCaches.create("soft", cacheSize);
 
-    private String baseURL;
+    private final String baseURL;
+    private final String name;
+    private final HTTPClient client;
 
-    private String name;
+    /**
+     * Creates a TileService
+     *
+     * <p>Client isn't set so you should override loadImageTileImage.
+     *
+     * @param name the name. Cannot be null.
+     */
+    protected TileService(String name) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be null");
+        }
+        this.name = name;
+        this.baseURL = null;
+        this.client = null;
+    }
+
+    /**
+     * Create a new TileService with a name and a base URL.
+     *
+     * <p>Client isn't set so you should override loadImageTileImage.
+     *
+     * @param name the name. Cannot be null.
+     * @param baseURL the base URL. This is a string representing the common part of the URL for all this service's
+     *     tiles. Cannot be null. Note that this constructor doesn't ensure that the URL is well-formed.
+     */
+    protected TileService(String name, String baseURL) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be null");
+        }
+        this.name = name;
+        if (baseURL == null || baseURL.isEmpty()) {
+            throw new IllegalArgumentException("Base URL cannot be null");
+        }
+        this.baseURL = baseURL;
+        this.client = null;
+    }
 
     /**
      * Create a new TileService with a name and a base URL
      *
      * @param name the name. Cannot be null.
-     * @param baseURL the base URL. This is a string representing the common part of the URL for all
-     *     this service's tiles. Cannot be null. Note that this constructor doesn't ensure that the
-     *     URL is well-formed.
+     * @param baseURL the base URL. This is a string representing the common part of the URL for all this service's
+     *     tiles. Cannot be null. Note that this constructor doesn't ensure that the URL is well-formed.
+     * @param client HTTPClient instance to use for a tile request.
      */
-    protected TileService(String name, String baseURL) {
-        setName(name);
-        setBaseURL(baseURL);
-    }
-
-    private void setBaseURL(String baseURL) {
-        if (baseURL == null || baseURL.isEmpty()) {
-            throw new IllegalArgumentException("Base URL cannot be null");
-        }
-        this.baseURL = baseURL;
-    }
-
-    private void setName(String name) {
+    protected TileService(String name, String baseURL, HTTPClient client) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Name cannot be null");
         }
         this.name = name;
+
+        if (baseURL == null || baseURL.isEmpty()) {
+            throw new IllegalArgumentException("Base URL cannot be null");
+        }
+        this.baseURL = baseURL;
+
+        if (client == null) {
+            throw new IllegalArgumentException("Client cannot be null");
+        }
+        this.client = client;
     }
 
     public String getName() {
@@ -99,11 +141,7 @@ public abstract class TileService {
         return 256;
     }
 
-    /**
-     * Returns the prefix of an tile-url, e.g.: http://tile.openstreetmap.org/
-     *
-     * @return
-     */
+    /** Returns the prefix of an tile-url, e.g.: http://tile.openstreetmap.org/ */
     public String getBaseUrl() {
         return this.baseURL;
     }
@@ -116,13 +154,12 @@ public abstract class TileService {
     /**
      * Translates the map scale into a zoom-level for the map services.
      *
-     * <p>The scale-factor (0-100) decides whether the tiles will be scaled down (100) or scaled up
-     * (0).
+     * <p>The scale-factor (0-100) decides whether the tiles will be scaled down (100) or scaled up (0).
      *
      * @param scaleFactor Scale-factor (0-100)
      * @return Zoom-level
      */
-    public int getZoomLevelFromMapScale(ScaleZoomLevelMatcher zoomLevelMatcher, int scaleFactor) {
+    public int getZoomLevelFromMapScale(ScaleZoomLevelMatcher zoomLevelMatcher, double scaleFactor) {
         // fallback scale-list
         double[] scaleList = getScaleList();
         assert (scaleList != null && scaleList.length > 0);
@@ -155,14 +192,9 @@ public abstract class TileService {
     /**
      * Returns the zoom-level that should be used to fetch the tiles.
      *
-     * @param scale
-     * @param scaleFactor
-     * @param useRecommended always use the calculated zoom-level, do not use the one the user
-     *     selected
-     * @return
+     * @param useRecommended always use the calculated zoom-level, do not use the one the user selected
      */
-    public int getZoomLevelToUse(
-            ScaleZoomLevelMatcher zoomLevelMatcher, int scaleFactor, boolean useRecommended) {
+    public int getZoomLevelToUse(ScaleZoomLevelMatcher zoomLevelMatcher, double scaleFactor, boolean useRecommended) {
         if (useRecommended) {
             return getZoomLevelFromMapScale(zoomLevelMatcher, scaleFactor);
         }
@@ -171,8 +203,7 @@ public abstract class TileService {
         int zoomLevel = -1;
 
         // check if the zoom-level is valid
-        if (!selectionAutomatic
-                && ((zoomLevel >= getMinZoomLevel()) && (zoomLevel <= getMaxZoomLevel()))) {
+        if (!selectionAutomatic && ((zoomLevel >= getMinZoomLevel()) && (zoomLevel <= getMaxZoomLevel()))) {
             // the zoom-level from the properties is valid, so let's take it
 
             return zoomLevel;
@@ -183,12 +214,7 @@ public abstract class TileService {
         }
     }
 
-    /**
-     * Returns the lowest zoom-level number from the scaleList.
-     *
-     * @param scaleList
-     * @return
-     */
+    /** Returns the lowest zoom-level number from the scaleList. */
     public int getMinZoomLevel() {
         double[] scaleList = getScaleList();
         int minZoomLevel = 0;
@@ -200,12 +226,7 @@ public abstract class TileService {
         return minZoomLevel;
     }
 
-    /**
-     * Returns the highest zoom-level number from the scaleList.
-     *
-     * @param scaleList
-     * @return
-     */
+    /** Returns the highest zoom-level number from the scaleList. */
     public int getMaxZoomLevel() {
         double[] scaleList = getScaleList();
         int maxZoomLevel = scaleList.length - 1;
@@ -218,10 +239,7 @@ public abstract class TileService {
     }
 
     public Set<Tile> findTilesInExtent(
-            ReferencedEnvelope _mapExtent,
-            int scaleFactor,
-            boolean recommendedZoomLevel,
-            int maxNumberOfTiles) {
+            ReferencedEnvelope _mapExtent, double scaleFactor, boolean recommendedZoomLevel, int maxNumberOfTiles) {
 
         ReferencedEnvelope mapExtent = createSafeEnvelopeInWGS84(_mapExtent);
 
@@ -238,15 +256,14 @@ public abstract class TileService {
         ScaleZoomLevelMatcher zoomLevelMatcher = null;
         try {
 
-            zoomLevelMatcher =
-                    new ScaleZoomLevelMatcher(
-                            getTileCrs(),
-                            getProjectedTileCrs(),
-                            CRS.findMathTransform(getTileCrs(), getProjectedTileCrs()),
-                            CRS.findMathTransform(getProjectedTileCrs(), getTileCrs()),
-                            mapExtent,
-                            mapExtent,
-                            scaleFactor);
+            zoomLevelMatcher = new ScaleZoomLevelMatcher(
+                    getTileCrs(),
+                    getProjectedTileCrs(),
+                    CRS.findMathTransform(getTileCrs(), getProjectedTileCrs()),
+                    CRS.findMathTransform(getProjectedTileCrs(), getTileCrs()),
+                    mapExtent,
+                    mapExtent,
+                    scaleFactor);
 
         } catch (FactoryException e) {
             throw new RuntimeException(e);
@@ -262,11 +279,9 @@ public abstract class TileService {
         Set<Tile> tileList = new HashSet<>(100);
 
         // Let's get the first tile which covers the upper-left corner
-        Tile firstTile =
-                tileFactory.findTileAtCoordinate(
-                        extent.getMinX(), extent.getMaxY(), zoomLevel, this);
+        TileIdentifier identifier = identifyTileAtCoordinate(extent.getMinX(), extent.getMaxY(), zoomLevel);
+        Tile firstTile = obtainTile(identifier);
 
-        addTileToCache(firstTile);
         tileList.add(firstTile);
 
         Tile firstTileOfRow = firstTile;
@@ -282,10 +297,10 @@ public abstract class TileService {
 
                 // Check if the new tile is still part of the extent and
                 // that we don't have the first tile again
-                if (extent.intersects((Envelope) rightNeighbour.getExtent())
+                if (rightNeighbour != null
+                        && extent.intersects((Envelope) rightNeighbour.getExtent())
                         && !firstTileOfRow.equals(rightNeighbour)) {
 
-                    addTileToCache(rightNeighbour);
                     tileList.add(rightNeighbour);
 
                     movingTile = rightNeighbour;
@@ -294,10 +309,7 @@ public abstract class TileService {
                     break;
                 }
                 if (tileList.size() > maxNumberOfTiles) {
-                    LOGGER.warning(
-                            "Reached tile limit of "
-                                    + maxNumberOfTiles
-                                    + ". Returning an empty collection.");
+                    LOGGER.warning("Reached tile limit of " + maxNumberOfTiles + ". Returning an empty collection.");
                     return Collections.emptySet();
                 }
             } while (tileList.size() < maxNumberOfTilesForZoomLevel);
@@ -306,10 +318,10 @@ public abstract class TileService {
             Tile lowerNeighbour = tileFactory.findLowerNeighbour(firstTileOfRow, this);
 
             // Check if the new tile is still part of the extent
-            if (extent.intersects((Envelope) lowerNeighbour.getExtent())
+            if (lowerNeighbour != null
+                    && extent.intersects((Envelope) lowerNeighbour.getExtent())
                     && !firstTile.equals(lowerNeighbour)) {
 
-                addTileToCache(lowerNeighbour);
                 tileList.add(lowerNeighbour);
 
                 firstTileOfRow = movingTile = lowerNeighbour;
@@ -321,43 +333,51 @@ public abstract class TileService {
         return tileList;
     }
 
-    /**
-     * Add a tile to the cache.
-     *
-     * <p>The cache used here is a soft cache, which has an un-controllable time to live (could last
-     * a split seconds or 100 years).
-     *
-     * <p>Subclasses services (such as WMTS) may have some more hints about the tile TTL, so a more
-     * controllable cache should be implemented in these cases.
-     */
-    protected Tile addTileToCache(Tile tile) {
-        String id = tile.getId();
+    /** Returns tile identifier for the tile at the given coordinate */
+    public abstract TileIdentifier identifyTileAtCoordinate(double lon, double lat, ZoomLevel zoomLevel);
+
+    /** Fetches the image from url given by tile. */
+    @Override
+    public BufferedImage loadImageTileImage(Tile tile) throws IOException {
+        final HTTPResponse response = getHttpClient().get(tile.getUrl());
+        try {
+            return ImageIOExt.readBufferedImage(response.getResponseStream());
+        } finally {
+            response.dispose();
+        }
+    }
+
+    /** Check cache for given identifier. Call TileFactory to create new if not present. */
+    public Tile obtainTile(TileIdentifier identifier) {
+        String id = identifier.getId();
         boolean isInCache = !(tiles.peek(id) == null || tiles.get(id) == null);
 
         if (isInCache) {
             if (LOGGER.isLoggable(Level.FINER)) {
                 LOGGER.fine("Tile already in cache: " + id);
             }
-            return (Tile) tiles.get(id);
+            return tiles.get(id);
         } else {
             if (LOGGER.isLoggable(Level.FINER)) {
-                LOGGER.fine("Tile added to cache: " + id);
+                LOGGER.fine("Tile created new: " + id);
             }
-            tiles.put(id, tile);
-            return tile;
+            final Tile newTile = getTileFactory().create(identifier, this);
+            tiles.put(id, newTile);
+            return newTile;
         }
     }
 
     /**
      * Returns a list that represents a mapping between zoom-levels and map scale.
      *
-     * <p>Array index: zoom-level Value at index: map scale High zoom-level -> more detailed map Low
-     * zoom-level -> less detailed map
+     * <p>Array index: zoom-level Value at index: map scale High zoom-level -> more detailed map Low zoom-level -> less
+     * detailed map
      *
      * @return mapping between zoom-levels and map scale
      */
     public abstract double[] getScaleList();
 
+    /** Returns the bounds for the complete TileService */
     public abstract ReferencedEnvelope getBounds();
 
     /** The projection the tiles are drawn in. */
@@ -366,16 +386,13 @@ public abstract class TileService {
     /** Returns the TileFactory which is used to call the method getTileFromCoordinate(). */
     public abstract TileFactory getTileFactory();
 
-    public static final ReferencedEnvelope createSafeEnvelopeInWGS84(
-            ReferencedEnvelope _mapExtent) {
+    public static final ReferencedEnvelope createSafeEnvelopeInWGS84(ReferencedEnvelope _mapExtent) {
 
         try {
 
             return _mapExtent.transform(DefaultGeographicCRS.WGS84, true);
 
-        } catch (TransformException e) {
-            throw new RuntimeException(e);
-        } catch (FactoryException e) {
+        } catch (TransformException | FactoryException e) {
             throw new RuntimeException(e);
         }
     }
@@ -383,14 +400,10 @@ public abstract class TileService {
     /**
      * Normalize extents.
      *
-     * <p>The extent from the viewport may look like this: MaxY: 110° (=-70°) MinY: -110° MaxX: 180°
-     * MinX: -180°
+     * <p>The extent from the viewport may look like this: MaxY: 110° (=-70°) MinY: -110° MaxX: 180° MinX: -180°
      *
-     * <p>But cutExtentIntoTiles(..) requires an extent that looks like this: MaxY: 85° (or 90°)
-     * MinY: -85° (or -90°) MaxX: 180° MinX: -180°
-     *
-     * @param envelope
-     * @return
+     * <p>But cutExtentIntoTiles(..) requires an extent that looks like this: MaxY: 85° (or 90°) MinY: -85° (or -90°)
+     * MaxX: 180° MinX: -180°
      */
     private ReferencedEnvelope normalizeExtent(ReferencedEnvelope envelope) {
         ReferencedEnvelope bounds = getBounds();
@@ -400,18 +413,13 @@ public abstract class TileService {
                 || envelope.getMaxX() > bounds.getMaxX()
                 || envelope.getMinX() < bounds.getMinX()) {
 
-            double maxY =
-                    (envelope.getMaxY() > bounds.getMaxY()) ? bounds.getMaxY() : envelope.getMaxY();
-            double minY =
-                    (envelope.getMinY() < bounds.getMinY()) ? bounds.getMinY() : envelope.getMinY();
-            double maxX =
-                    (envelope.getMaxX() > bounds.getMaxX()) ? bounds.getMaxX() : envelope.getMaxX();
-            double minX =
-                    (envelope.getMinX() < bounds.getMinX()) ? bounds.getMinX() : envelope.getMinX();
+            double maxY = (envelope.getMaxY() > bounds.getMaxY()) ? bounds.getMaxY() : envelope.getMaxY();
+            double minY = (envelope.getMinY() < bounds.getMinY()) ? bounds.getMinY() : envelope.getMinY();
+            double maxX = (envelope.getMaxX() > bounds.getMaxX()) ? bounds.getMaxX() : envelope.getMaxX();
+            double minX = (envelope.getMinX() < bounds.getMinX()) ? bounds.getMinX() : envelope.getMinX();
 
             ReferencedEnvelope newEnvelope =
-                    new ReferencedEnvelope(
-                            minX, maxX, minY, maxY, envelope.getCoordinateReferenceSystem());
+                    new ReferencedEnvelope(minX, maxX, minY, maxY, envelope.getCoordinateReferenceSystem());
 
             return newEnvelope;
         }
@@ -419,7 +427,20 @@ public abstract class TileService {
         return envelope;
     }
 
+    @Override
     public String toString() {
         return getName();
+    }
+
+    /**
+     * Returns the http client to use for fetching images.
+     *
+     * @throws IllegalStateException If the service is constructed without a client.
+     */
+    public final HTTPClient getHttpClient() {
+        if (this.client == null) {
+            throw new IllegalStateException("This service isn't set up with a http client.");
+        }
+        return this.client;
     }
 }

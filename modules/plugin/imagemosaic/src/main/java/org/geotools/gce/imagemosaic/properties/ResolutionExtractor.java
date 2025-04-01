@@ -23,9 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** @author Niels Charlier */
 class ResolutionExtractor extends PropertiesCollector {
@@ -66,7 +66,7 @@ class ResolutionExtractor extends PropertiesCollector {
 
     Double getResolution() {
         // get the the match and convert it to double
-        String resolutionStr = getMatches().size() > 0 ? getMatches().get(0) : null;
+        String resolutionStr = !getMatches().isEmpty() ? getMatches().get(0) : null;
         if (resolutionStr != null) {
             try {
                 return Double.parseDouble(resolutionStr);

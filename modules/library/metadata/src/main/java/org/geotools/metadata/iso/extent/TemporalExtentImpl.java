@@ -20,13 +20,13 @@
 package org.geotools.metadata.iso.extent;
 
 import java.util.Date;
+import org.geotools.api.metadata.extent.TemporalExtent;
+import org.geotools.api.temporal.TemporalPrimitive;
 import org.geotools.metadata.iso.MetadataEntity;
-import org.opengis.metadata.extent.TemporalExtent;
-import org.opengis.temporal.TemporalPrimitive;
 
 /**
- * Boundary enclosing the dataset, expressed as the closed set of (<var>x</var>,<var>y</var>)
- * coordinates of the polygon. The last point replicates first point.
+ * Boundary enclosing the dataset, expressed as the closed set of (<var>x</var>,<var>y</var>) coordinates of the
+ * polygon. The last point replicates first point.
  *
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
@@ -38,14 +38,14 @@ public class TemporalExtentImpl extends MetadataEntity implements TemporalExtent
     private static final long serialVersionUID = 3668140516657118045L;
 
     /**
-     * The start date and time for the content of the dataset, in milliseconds ellapsed since
-     * January 1st, 1970. A value of {@link Long#MIN_VALUE} means that this attribute is not set.
+     * The start date and time for the content of the dataset, in milliseconds ellapsed since January 1st, 1970. A value
+     * of {@link Long#MIN_VALUE} means that this attribute is not set.
      */
     private long startTime = Long.MIN_VALUE;
 
     /**
-     * The end date and time for the content of the dataset, in milliseconds ellapsed since January
-     * 1st, 1970. A value of {@link Long#MIN_VALUE} means that this attribute is not set.
+     * The end date and time for the content of the dataset, in milliseconds ellapsed since January 1st, 1970. A value
+     * of {@link Long#MIN_VALUE} means that this attribute is not set.
      */
     private long endTime = Long.MIN_VALUE;
 
@@ -97,7 +97,8 @@ public class TemporalExtentImpl extends MetadataEntity implements TemporalExtent
      *
      * @since 2.4
      */
-    // No implementing class for {@linkplain org.opengis.temporal.TemporalPrimitive}
+    // No implementing class for {@linkplain org.geotools.api.temporal.TemporalPrimitive}
+    @Override
     public TemporalPrimitive getExtent() {
         return extent;
     }

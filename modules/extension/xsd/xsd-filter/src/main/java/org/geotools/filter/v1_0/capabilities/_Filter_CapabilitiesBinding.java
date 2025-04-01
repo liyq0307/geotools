@@ -17,13 +17,13 @@
 package org.geotools.filter.v1_0.capabilities;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FilterCapabilities;
+import org.geotools.api.filter.capability.ScalarCapabilities;
+import org.geotools.api.filter.capability.SpatialCapabilities;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.capability.ScalarCapabilities;
-import org.opengis.filter.capability.SpatialCapabilities;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:_Filter_Capabilities.
@@ -52,6 +52,7 @@ public class _Filter_CapabilitiesBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC._Filter_Capabilities;
     }
@@ -63,6 +64,7 @@ public class _Filter_CapabilitiesBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return FilterCapabilities.class;
     }
@@ -74,14 +76,16 @@ public class _Filter_CapabilitiesBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return factory.capabilities(
                 FilterCapabilities.VERSION_100,
-                (ScalarCapabilities) node.getChildValue(ScalarCapabilities.class),
-                (SpatialCapabilities) node.getChildValue(SpatialCapabilities.class),
+                node.getChildValue(ScalarCapabilities.class),
+                node.getChildValue(SpatialCapabilities.class),
                 null);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         FilterCapabilities capabilities = (FilterCapabilities) object;
 

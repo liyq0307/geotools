@@ -16,15 +16,19 @@
  */
 package org.geotools.sld.bindings;
 
-import org.geotools.styling.LayerFeatureConstraints;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import org.geotools.api.style.LayerFeatureConstraints;
+import org.junit.Test;
 
 public class SLDLayerFeatureConstraintsBindingTest extends SLDTestSupport {
+    @Test
     public void testType() throws Exception {
-        assertEquals(
-                LayerFeatureConstraints.class,
-                new SLDLayerFeatureConstraintsBinding(null).getType());
+        assertEquals(LayerFeatureConstraints.class, new SLDLayerFeatureConstraintsBinding(null).getType());
     }
 
+    @Test
     public void test() throws Exception {
         SLDMockData.layerFeatureConstraints(document, document);
 

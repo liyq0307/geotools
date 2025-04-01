@@ -18,6 +18,7 @@
 package org.geotools.geometry.jts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -58,6 +59,27 @@ public class GeometryClipperTest {
         clipper = new GeometryClipper(new Envelope(0, 10, 0, 10));
         wkt = new WKTReader();
         boundsPoly = wkt.read("POLYGON((0 0, 0 10, 10 10, 10 0, 0 0))");
+    }
+
+    // case:
+    // polygon being clipped returns a multipolygon.
+    @Test
+    public void testMulti() throws Exception {
+        Polygon polygon = (Polygon)
+                wkt.read(
+                        "POLYGON ((1.0201465201465183 12.338461538461548, 3.272161172161173 7.7956043956044, 3.893406593406595 11.60073260073261, 6.456043956043961 7.679120879120883, 6.223076923076928 12.64908424908426, 1.0201465201465183 12.338461538461548))");
+        MultiPolygon clipped = (MultiPolygon) clipper.clip(polygon, true);
+
+        assertEquals(2, clipped.getNumGeometries());
+
+        // verify it works if the polygon is a multipolygon
+        // note - this is the same polygon as above.
+        MultiPolygon mpoly = (MultiPolygon)
+                wkt.read(
+                        "MULTIPOLYGON (((1.0201465201465183 12.338461538461548, 3.272161172161173 7.7956043956044, 3.893406593406595 11.60073260073261, 6.456043956043961 7.679120879120883, 6.223076923076928 12.64908424908426, 1.0201465201465183 12.338461538461548)))");
+        clipped = (MultiPolygon) clipper.clip(mpoly, true);
+
+        assertEquals(2, clipped.getNumGeometries());
     }
 
     @Test
@@ -130,6 +152,18 @@ public class GeometryClipperTest {
         Geometry clipped = clipper.clip(ls, false);
         assertTrue(clipped.equalsExact(wkt.read("LINESTRING(0 2, 0 3)")));
         showResult("Touch and parallel", ls, clipped);
+    }
+
+    @Test
+    public void testTouchPoly() throws Exception {
+        MultiPolygon mp = (MultiPolygon) wkt.read("MULTIPOLYGON("
+                + "((10 10, 10 11, 11 11, 11 10, 10 10)), "
+                + // touching corner
+                "((10 0, 10 1, 11 1, 11 0, 10 0)), "
+                + // share side
+                "((0 0, 0 1, 1 1, 1 0, 0 0)))"); // fully inside
+        Geometry clipped = clipper.clip(mp, false);
+        assertTrue(clipped.equalsExact(wkt.read("POLYGON((0 0, 0 1, 1 1, 1 0, 0 0)))")));
     }
 
     @Test
@@ -212,16 +246,13 @@ public class GeometryClipperTest {
         Geometry clipped = clipper.clip(g, false);
         // System.out.println(clipped);
         assertTrue(
-                clipped.equalsExact(
-                        wkt.read(
-                                "POLYGON ((10 2, 10 8, 6 8, 6 2, 10 2), (10 4, 10 6, 8 6, 8 4, 10 4))")));
+                clipped.equalsExact(wkt.read("POLYGON ((10 2, 10 8, 6 8, 6 2, 10 2), (10 4, 10 6, 8 6, 8 4, 10 4))")));
         showResult("Donut crossing, invalid geom", g, clipped);
     }
 
     @Test
     public void testDonutHoleOutside() throws Exception {
-        Geometry g =
-                wkt.read("POLYGON((6 2, 14 2, 14 8, 6 8, 6 2), (11 4, 12 4, 12 6, 11 6, 11 4))");
+        Geometry g = wkt.read("POLYGON((6 2, 14 2, 14 8, 6 8, 6 2), (11 4, 12 4, 12 6, 11 6, 11 4))");
         Geometry clipped = clipper.clip(g, false);
         // System.out.println(clipped);
         assertTrue(clipped.equalsExact(wkt.read("POLYGON ((10 2, 10 8, 6 8, 6 2, 10 2))")));
@@ -232,9 +263,7 @@ public class GeometryClipperTest {
     public void testDonutCrossingValid() throws Exception {
         Geometry g = wkt.read("POLYGON((6 2, 14 2, 14 8, 6 8, 6 2), (8 4, 12 4, 12 6, 8 6, 8 4))");
         Geometry clipped = clipper.clip(g, true);
-        assertTrue(
-                clipped.equalsExact(
-                        wkt.read("POLYGON ((10 2, 6 2, 6 8, 10 8, 10 6, 8 6, 8 4, 10 4, 10 2))")));
+        assertTrue(clipped.equalsExact(wkt.read("POLYGON ((10 2, 6 2, 6 8, 10 8, 10 6, 8 6, 8 4, 10 4, 10 2))")));
         showResult("Donut crossing, valid geom", g, clipped);
     }
 
@@ -249,13 +278,11 @@ public class GeometryClipperTest {
     @Test
     public void testGeotXYWZ() throws Exception {
         clipper = new GeometryClipper(new Envelope(-11, 761, -11, 611));
-        Geometry g =
-                wkt.read(
-                        "POLYGON((367 -13, 459 105, 653 -42, 611 -96, 562 -60, 514 -124, 367 -13))");
+        Geometry g = wkt.read("POLYGON((367 -13, 459 105, 653 -42, 611 -96, 562 -60, 514 -124, 367 -13))");
         // System.out.println(g.getNumPoints());
         Geometry clipped = clipper.clip(g, false);
         assertNotNull(clipped);
-        assertTrue(!clipped.isEmpty());
+        assertFalse(clipped.isEmpty());
         //        System.out.println(clipped);
     }
 
@@ -271,7 +298,7 @@ public class GeometryClipperTest {
         clipper = new GeometryClipper(new Envelope(-12, 780.0, -12, 396.0));
 
         Geometry result = clipper.clipSafe(g, true, 1); // mimic streaming renderer
-        assertTrue(!result.isEmpty());
+        assertFalse(result.isEmpty());
         assertTrue(result.getArea() > 0);
     }
 

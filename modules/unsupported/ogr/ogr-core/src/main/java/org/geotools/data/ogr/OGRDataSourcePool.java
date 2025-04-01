@@ -24,8 +24,8 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
-import org.geotools.data.DataAccessFactory;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataAccessFactory;
+import org.geotools.api.data.DataSourceException;
 
 class OGRDataSourcePool implements AutoCloseable {
 
@@ -36,7 +36,7 @@ class OGRDataSourcePool implements AutoCloseable {
     private long lastClear;
     private final boolean primeDataSources;
 
-    public OGRDataSourcePool(OGR ogr, String ogrSourceName, String ogrDriver, Map params)
+    public OGRDataSourcePool(OGR ogr, String ogrSourceName, String ogrDriver, Map<String, ?> params)
             throws IOException {
         this.ogrSourceName = ogrSourceName;
         this.ogrDriver = ogrDriver;
@@ -48,16 +48,14 @@ class OGRDataSourcePool implements AutoCloseable {
         config.maxIdle = (int) lookup(OGRDataStoreFactory.MAXCONN, params);
         config.minIdle = (int) lookup(OGRDataStoreFactory.MINCONN, params);
         config.maxWait = (int) lookup(OGRDataStoreFactory.MAXWAIT, params) * 1000l;
-        config.minEvictableIdleTimeMillis =
-                (int) lookup(OGRDataStoreFactory.MIN_EVICTABLE_TIME, params) * 1000l;
-        config.numTestsPerEvictionRun =
-                (int) lookup(OGRDataStoreFactory.EVICTOR_TESTS_PER_RUN, params);
+        config.minEvictableIdleTimeMillis = (int) lookup(OGRDataStoreFactory.MIN_EVICTABLE_TIME, params) * 1000l;
+        config.numTestsPerEvictionRun = (int) lookup(OGRDataStoreFactory.EVICTOR_TESTS_PER_RUN, params);
         this.readOnlyPool = new GenericObjectPool(new PooledDataSourceFactory(), config);
 
         this.primeDataSources = (boolean) lookup(OGRDataStoreFactory.PRIME_DATASOURCE, params);
     }
 
-    private Object lookup(DataAccessFactory.Param param, Map params) throws IOException {
+    private Object lookup(DataAccessFactory.Param param, Map<String, ?> params) throws IOException {
         return Optional.ofNullable(param.lookUp(params)).orElse(param.getDefaultValue());
     }
 
@@ -94,14 +92,12 @@ class OGRDataSourcePool implements AutoCloseable {
                     ogr.DriverRelease(driver);
                 }
                 if (source == null)
-                    throw new IOException(
-                            "Could not create OGR data source with driver "
-                                    + ogrDriver
-                                    + " and options "
-                                    + Arrays.toString(options));
+                    throw new IOException("Could not create OGR data source with driver "
+                            + ogrDriver
+                            + " and options "
+                            + Arrays.toString(options));
             } else {
-                throw new DataSourceException(
-                        "Driver not provided, and could not " + "open data source neither");
+                throw new DataSourceException("Driver not provided, and could not " + "open data source neither");
             }
         }
         return new OGRDataSource(ogr, this, source, true);
@@ -117,29 +113,28 @@ class OGRDataSourcePool implements AutoCloseable {
             }
             ds = ogr.DriverOpen(driver, ogrSourceName, mode);
             if (ds == null) {
-                throw new IOException(
-                        "OGR could not open '"
-                                + ogrSourceName
-                                + "' in "
-                                + (update ? "read-write" : "read-only")
-                                + " mode with driver "
-                                + ogrDriver);
+                throw new IOException("OGR could not open '"
+                        + ogrSourceName
+                        + "' in "
+                        + (update ? "read-write" : "read-only")
+                        + " mode with driver "
+                        + ogrDriver);
             }
         } else {
             ds = ogr.OpenShared(ogrSourceName, mode);
             if (ds == null) {
-                throw new IOException(
-                        "OGR could not open '"
-                                + ogrSourceName
-                                + "' in "
-                                + (update ? "read-write" : "read-only")
-                                + " mode");
+                throw new IOException("OGR could not open '"
+                        + ogrSourceName
+                        + "' in "
+                        + (update ? "read-write" : "read-only")
+                        + " mode");
             }
         }
 
         return ds;
     }
 
+    @Override
     public void close() {
         try {
             readOnlyPool.close();

@@ -17,29 +17,28 @@
 package org.geotools.data;
 
 import java.util.NoSuchElementException;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
 
 /**
  * Represents an Empty, Typed, FeatureReader.
  *
  * @author Jody Garnett, Refractions Research
  */
-public class EmptyFeatureReader<T extends FeatureType, F extends Feature>
-        implements FeatureReader<T, F> {
+public class EmptyFeatureReader<T extends FeatureType, F extends Feature> implements FeatureReader<T, F> {
     T featureType;
 
     /**
      * An Empty FeatureReader<SimpleFeatureType, SimpleFeature> of the provided <code>featureType
      * </code>.
-     *
-     * @param featureType
      */
     public EmptyFeatureReader(T featureType) {
         this.featureType = featureType;
     }
 
-    /** @see org.geotools.data.FeatureReader#getFeatureType() */
+    /** @see FeatureReader#getFeatureType() */
+    @Override
     public T getFeatureType() {
         return featureType;
     }
@@ -48,9 +47,9 @@ public class EmptyFeatureReader<T extends FeatureType, F extends Feature>
      * Throws NoSuchElementException as this is an Empty FeatureReader.
      *
      * @return Does not return
-     * @throws NoSuchElementException
-     * @see org.geotools.data.FeatureReader#next()
+     * @see FeatureReader#next()
      */
+    @Override
     public F next() throws NoSuchElementException {
         throw new NoSuchElementException("FeatureReader is empty");
     }
@@ -59,8 +58,9 @@ public class EmptyFeatureReader<T extends FeatureType, F extends Feature>
      * There is no next Feature.
      *
      * @return <code>false</code>
-     * @see org.geotools.data.FeatureReader#hasNext()
+     * @see FeatureReader#hasNext()
      */
+    @Override
     public boolean hasNext() {
         return false;
     }
@@ -68,8 +68,9 @@ public class EmptyFeatureReader<T extends FeatureType, F extends Feature>
     /**
      * Cleans up after Empty FeatureReader.
      *
-     * @see org.geotools.data.FeatureReader#close()
+     * @see FeatureReader#close()
      */
+    @Override
     public void close() {
         featureType = null;
     }

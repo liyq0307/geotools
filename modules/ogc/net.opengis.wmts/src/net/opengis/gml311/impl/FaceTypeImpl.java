@@ -93,9 +93,10 @@ public class FaceTypeImpl extends AbstractTopoPrimitiveTypeImpl implements FaceT
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<DirectedEdgePropertyType> getDirectedEdge() {
         if (directedEdge == null) {
-            directedEdge = new EObjectContainmentEList<DirectedEdgePropertyType>(DirectedEdgePropertyType.class, this, Gml311Package.FACE_TYPE__DIRECTED_EDGE);
+            directedEdge = new EObjectContainmentEList<>(DirectedEdgePropertyType.class, this, Gml311Package.FACE_TYPE__DIRECTED_EDGE);
         }
         return directedEdge;
     }
@@ -105,9 +106,10 @@ public class FaceTypeImpl extends AbstractTopoPrimitiveTypeImpl implements FaceT
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<DirectedTopoSolidPropertyType> getDirectedTopoSolid() {
         if (directedTopoSolid == null) {
-            directedTopoSolid = new EObjectContainmentEList<DirectedTopoSolidPropertyType>(DirectedTopoSolidPropertyType.class, this, Gml311Package.FACE_TYPE__DIRECTED_TOPO_SOLID);
+            directedTopoSolid = new EObjectContainmentEList<>(DirectedTopoSolidPropertyType.class, this, Gml311Package.FACE_TYPE__DIRECTED_TOPO_SOLID);
         }
         return directedTopoSolid;
     }
@@ -117,6 +119,7 @@ public class FaceTypeImpl extends AbstractTopoPrimitiveTypeImpl implements FaceT
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public SurfacePropertyType getSurfaceProperty() {
         return surfaceProperty;
     }
@@ -141,6 +144,7 @@ public class FaceTypeImpl extends AbstractTopoPrimitiveTypeImpl implements FaceT
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setSurfaceProperty(SurfacePropertyType newSurfaceProperty) {
         if (newSurfaceProperty != surfaceProperty) {
             NotificationChain msgs = null;

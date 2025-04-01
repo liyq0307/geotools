@@ -16,12 +16,17 @@
  */
 package org.geotools.gml3.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import org.geotools.api.feature.type.AttributeType;
 import org.geotools.feature.AttributeImpl;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.type.AttributeTypeImpl;
 import org.geotools.gml3.GML3TestSupport;
 import org.geotools.xlink.XLINK;
-import org.opengis.feature.type.AttributeType;
+import org.junit.Test;
 
 /**
  * Test ReferenceTypeBinding.
@@ -30,42 +35,22 @@ import org.opengis.feature.type.AttributeType;
  */
 public class ReferenceTypeBindingTest extends GML3TestSupport {
 
-    /**
-     * Make sure no xlink:href is created if id is not set.
-     *
-     * @throws Exception
-     */
+    /** Make sure no xlink:href is created if id is not set. */
+    @Test
     public void testXlinkHrefNull() throws Exception {
         AttributeType attType =
-                new AttributeTypeImpl(
-                        new NameImpl("someAttributeType"),
-                        String.class,
-                        false,
-                        false,
-                        null,
-                        null,
-                        null);
+                new AttributeTypeImpl(new NameImpl("someAttributeType"), String.class, false, false, null, null, null);
         AttributeImpl node = new AttributeImpl(null, attType, null);
         ReferenceTypeBinding binding = new ReferenceTypeBinding();
         Object xlink = binding.getProperty(node, XLINK.HREF);
         assertNull(xlink);
     }
 
-    /**
-     * Test xlink:href returns gml:id.
-     *
-     * @throws Exception
-     */
+    /** Test xlink:href returns gml:id. */
+    @Test
     public void testXlinkHref() throws Exception {
         AttributeType attType =
-                new AttributeTypeImpl(
-                        new NameImpl("someAttributeType"),
-                        String.class,
-                        false,
-                        false,
-                        null,
-                        null,
-                        null);
+                new AttributeTypeImpl(new NameImpl("someAttributeType"), String.class, false, false, null, null, null);
         AttributeImpl node = new AttributeImpl(null, attType, null);
         final String ID = "something";
         node.getUserData().put("gml:id", ID);

@@ -16,15 +16,14 @@
  */
 package org.geotools.brewer.styling.filter.expression;
 
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.brewer.styling.builder.Builder;
-import org.opengis.filter.expression.Expression;
 
 /**
- * Child expression builder; suitable for use collecting function parameters and binary expression
- * arguments.
+ * Child expression builder; suitable for use collecting function parameters and binary expression arguments.
  *
- * <p>This builder is designed to be "chained" from a parent builder; you may return to the parent
- * builder at any time by calling end().
+ * <p>This builder is designed to be "chained" from a parent builder; you may return to the parent builder at any time
+ * by calling end().
  *
  * @param <P> parent builder
  */
@@ -62,8 +61,7 @@ public class ChildExpressionBuilder<P extends Builder<?>> extends ExpressionBuil
     /**
      * Build the parameter; adding it to the parent.
      *
-     * <p>When using this from another builder you may wish to override the this build() method as
-     * shown below:
+     * <p>When using this from another builder you may wish to override the this build() method as shown below:
      *
      * <pre>
      * final Expression array[] = ...
@@ -78,6 +76,7 @@ public class ChildExpressionBuilder<P extends Builder<?>> extends ExpressionBuil
      *
      * @return internal expression
      */
+    @Override
     public Expression build() {
         if (unset) {
             return null;
@@ -92,7 +91,6 @@ public class ChildExpressionBuilder<P extends Builder<?>> extends ExpressionBuil
      * </code>
      *
      * @see _build()
-     * @return
      */
     public P end() {
         build();
@@ -106,6 +104,7 @@ public class ChildExpressionBuilder<P extends Builder<?>> extends ExpressionBuil
      *
      * @param obj Object to use as the resulting literal
      */
+    @Override
     public P literal(Object obj) {
         literal().value(obj);
         return end();
@@ -116,6 +115,7 @@ public class ChildExpressionBuilder<P extends Builder<?>> extends ExpressionBuil
      *
      * <p>Example:<code>b.property("x");</code>
      */
+    @Override
     public P property(String xpath) {
         property().property(xpath);
         return end();

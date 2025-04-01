@@ -20,11 +20,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 import org.apache.commons.io.IOUtils;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyledLayerDescriptor;
 import org.geotools.styling.css.selector.PseudoClass;
 import org.geotools.util.logging.Logging;
-import org.opengis.style.Style;
 import org.parboiled.errors.ErrorUtils;
 import org.parboiled.support.ParseTreeUtils;
 import org.parboiled.support.ParsingResult;
@@ -39,11 +41,7 @@ public class CssBaseTest {
     CssParser parser = CssParser.getInstance();
 
     protected void assertProperty(
-            CssRule r,
-            PseudoClass pseudoClass,
-            int propertyIdx,
-            String propertyName,
-            Value expectedValue) {
+            CssRule r, PseudoClass pseudoClass, int propertyIdx, String propertyName, Value expectedValue) {
         Property p = r.getProperties().get(pseudoClass).get(propertyIdx);
         assertEquals(propertyName, p.getName());
         assertEquals(1, p.getValues().size());
@@ -51,11 +49,11 @@ public class CssBaseTest {
         assertEquals(expectedValue, value);
     }
 
-    protected void assertProperty(
-            CssRule r, int propertyIdx, String propertyName, Value expectedValue) {
+    protected void assertProperty(CssRule r, int propertyIdx, String propertyName, Value expectedValue) {
         assertProperty(r, PseudoClass.ROOT, propertyIdx, propertyName, expectedValue);
     }
 
+    @SuppressWarnings("unchecked")
     protected void printResults(String input, ParsingResult<?> result) {
         Object value = result.parseTreeRoot.getValue();
         if (value != null) {
@@ -65,23 +63,28 @@ public class CssBaseTest {
             LOGGER.info(input + " = " + str + '\n');
         }
         if (value instanceof GraphNode) {
-            LOGGER.info(
-                    "\nAbstract Syntax Tree:\n"
-                            + GraphUtils.printTree((GraphNode) value, new ToStringFormatter(null))
-                            + '\n');
+            LOGGER.info("\nAbstract Syntax Tree:\n"
+                    + GraphUtils.printTree((GraphNode) value, new ToStringFormatter<GraphNode>())
+                    + '\n');
         } else {
             LOGGER.info("\nParse Tree:\n" + ParseTreeUtils.printNodeTree(result) + '\n');
         }
     }
 
     protected String readResource(String resource) throws IOException {
-        return IOUtils.toString(ParserSyntheticTest.class.getResourceAsStream(resource), "UTF-8");
+        return IOUtils.toString(ParserSyntheticTest.class.getResourceAsStream(resource), StandardCharsets.UTF_8);
     }
 
     protected Style translate(String css) {
         Stylesheet ss = parse(css);
         CssTranslator translator = new CssTranslator();
         return translator.translate(ss);
+    }
+
+    protected StyledLayerDescriptor translateMultiLayer(String css) {
+        Stylesheet ss = parse(css);
+        CssTranslator translator = new CssTranslator();
+        return translator.translateMultilayer(ss);
     }
 
     protected Stylesheet parse(String css) {

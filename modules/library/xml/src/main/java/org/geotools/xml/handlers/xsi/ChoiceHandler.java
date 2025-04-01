@@ -42,17 +42,18 @@ public class ChoiceHandler extends ElementGroupingHandler {
     private String id;
     private int minOccurs;
     private int maxOccurs;
-    private List children; // element, group, choice, sequence, any
+    private List<XSIElementHandler> children; // element, group, choice, sequence, any
     private DefaultChoice cache = null;
 
     /** @see java.lang.Object#hashCode() */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
-        return (LOCALNAME.hashCode() * ((id == null) ? 1 : id.hashCode()))
-                + (minOccurs * maxOccurs);
+        return (LOCALNAME.hashCode() * ((id == null) ? 1 : id.hashCode())) + (minOccurs * maxOccurs);
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
+    @Override
     public XSIElementHandler getHandler(String namespaceURI, String localName) {
         if (SchemaHandler.namespaceURI.equalsIgnoreCase(namespaceURI)) {
             // child types
@@ -60,7 +61,7 @@ public class ChoiceHandler extends ElementGroupingHandler {
             // group
             if (GroupHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (children == null) {
-                    children = new LinkedList();
+                    children = new LinkedList<>();
                 }
 
                 GroupHandler gh = new GroupHandler();
@@ -72,7 +73,7 @@ public class ChoiceHandler extends ElementGroupingHandler {
             // choice
             if (LOCALNAME.equalsIgnoreCase(localName)) {
                 if (children == null) {
-                    children = new LinkedList();
+                    children = new LinkedList<>();
                 }
 
                 GroupHandler gh = new GroupHandler();
@@ -84,7 +85,7 @@ public class ChoiceHandler extends ElementGroupingHandler {
             // sequence
             if (SequenceHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (children == null) {
-                    children = new LinkedList();
+                    children = new LinkedList<>();
                 }
 
                 SequenceHandler gh = new SequenceHandler();
@@ -96,7 +97,7 @@ public class ChoiceHandler extends ElementGroupingHandler {
             // any
             if (AnyHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (children == null) {
-                    children = new LinkedList();
+                    children = new LinkedList<>();
                 }
 
                 AnyHandler gh = new AnyHandler();
@@ -108,7 +109,7 @@ public class ChoiceHandler extends ElementGroupingHandler {
             // element
             if (ElementTypeHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (children == null) {
-                    children = new LinkedList();
+                    children = new LinkedList<>();
                 }
 
                 ElementTypeHandler gh = new ElementTypeHandler();
@@ -122,9 +123,9 @@ public class ChoiceHandler extends ElementGroupingHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
+    @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
         id = atts.getValue("", "id");
 
@@ -145,23 +146,19 @@ public class ChoiceHandler extends ElementGroupingHandler {
         }
 
         minOccurs = ((min == null) || "".equalsIgnoreCase(min)) ? 1 : Integer.parseInt(min);
-        maxOccurs =
-                ((max == null) || "".equalsIgnoreCase(max))
-                        ? 1
-                        : ("unbounded".equalsIgnoreCase(max)
-                                ? ElementGrouping.UNBOUNDED
-                                : Integer.parseInt(max));
+        maxOccurs = ((max == null) || "".equalsIgnoreCase(max))
+                ? 1
+                : ("unbounded".equalsIgnoreCase(max) ? ElementGrouping.UNBOUNDED : Integer.parseInt(max));
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
 
-    /**
-     * @see
-     *     org.geotools.xml.XSIHandlers.ElementGroupingHandler#compress(org.geotools.xml.XSIHandlers.SchemaHandler)
-     */
+    /** @see org.geotools.xml.XSIHandlers.ElementGroupingHandler#compress(org.geotools.xml.XSIHandlers.SchemaHandler) */
+    @Override
     protected ElementGrouping compress(SchemaHandler parent) throws SAXException {
 
         synchronized (this) {
@@ -189,11 +186,13 @@ public class ChoiceHandler extends ElementGroupingHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandlerType() */
+    @Override
     public int getHandlerType() {
         return DEFAULT;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String) */
+    @Override
     public void endElement(String namespaceURI, String localName) {
         // does nothing
     }
@@ -212,13 +211,14 @@ public class ChoiceHandler extends ElementGroupingHandler {
         int minOccurs;
 
         /** @see org.geotools.xml.xsi.ElementGrouping#findChildElement(java.lang.String) */
+        @Override
         public Element findChildElement(String name) {
             if (children == null) {
                 return null;
             }
 
-            for (int i = 0; i < children.length; i++) {
-                Element t = children[i].findChildElement(name);
+            for (ElementGrouping child : children) {
+                Element t = child.findChildElement(name);
 
                 if (t != null) { // found it
 
@@ -230,37 +230,43 @@ public class ChoiceHandler extends ElementGroupingHandler {
         }
 
         /** @see org.geotools.xml.xsi.Choice#getChildren() */
+        @Override
         public ElementGrouping[] getChildren() {
             return children;
         }
 
         /** @see org.geotools.xml.xsi.Choice#getId() */
+        @Override
         public String getId() {
             return id;
         }
 
         /** @see org.geotools.xml.xsi.ElementGrouping#getMaxOccurs() */
+        @Override
         public int getMaxOccurs() {
             return maxOccurs;
         }
 
         /** @see org.geotools.xml.xsi.ElementGrouping#getMinOccurs() */
+        @Override
         public int getMinOccurs() {
             return minOccurs;
         }
 
         /** @see org.geotools.xml.xsi.ElementGrouping#getGrouping() */
+        @Override
         public int getGrouping() {
             return CHOICE;
         }
 
+        @Override
         public Element findChildElement(String localName, URI namespaceURI) {
             if (children == null) {
                 return null;
             }
 
-            for (int i = 0; i < children.length; i++) {
-                Element t = children[i].findChildElement(localName, namespaceURI);
+            for (ElementGrouping child : children) {
+                Element t = child.findChildElement(localName, namespaceURI);
 
                 if (t != null) { // found it
 

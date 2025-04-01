@@ -1,32 +1,32 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ * GeoTools - The Open Source Java GIS Toolkit http://geotools.org
  *
- *    (C) 2002-2008, Open Source Geospatial Foundation (OSGeo)
+ * (C) 2002-2008, Open Source Geospatial Foundation (OSGeo)
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
+ * This library is free software; you can redistribute it and/or modify it under the terms of the
+ * GNU Lesser General Public License as published by the Free Software Foundation; version 2.1 of
+ * the License.
  *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
+ * This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+ * even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
  */
 package org.geotools.data.shapefile;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.geotools.TestData;
 import org.geotools.data.shapefile.dbf.DbaseFileHeader;
 import org.geotools.data.shapefile.dbf.DbaseFileReader;
@@ -43,8 +43,7 @@ import org.junit.Test;
  */
 public class DbaseFileTest extends TestCaseSupport {
 
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(DbaseFileTest.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(DbaseFileTest.class);
 
     static final String TEST_FILE = "shapes/statepop.dbf";
 
@@ -63,6 +62,7 @@ public class DbaseFileTest extends TestCaseSupport {
         assertEquals("Number of attributes found incorect", 252, dbf.getHeader().getNumFields());
     }
 
+    @Override
     @After
     public void tearDown() throws Exception {
         dbf.close();
@@ -79,25 +79,23 @@ public class DbaseFileTest extends TestCaseSupport {
         Object[] attrs = new Object[dbf.getHeader().getNumFields()];
         dbf.readEntry(attrs);
         assertEquals("Value of Column 0 is wrong", "Illinois", attrs[0]);
-        assertEquals(
-                "Value of Column 4 is wrong", 143986.61, ((Double) attrs[4]).doubleValue(), 0.001);
+        assertEquals("Value of Column 4 is wrong", 143986.61, ((Double) attrs[4]).doubleValue(), 0.001);
     }
 
     @Test
     public void testRowVsEntry() throws Exception {
         Object[] attrs = new Object[dbf.getHeader().getNumFields()];
-        DbaseFileReader dbf2 =
-                new DbaseFileReader(shpFiles, false, ShapefileDataStore.DEFAULT_STRING_CHARSET);
-        while (dbf.hasNext()) {
-            dbf.readEntry(attrs);
-            DbaseFileReader.Row r = dbf2.readRow();
-            for (int i = 0, ii = attrs.length; i < ii; i++) {
-                assertNotNull(attrs[i]);
-                assertNotNull(r.read(i));
-                assertEquals(attrs[i], r.read(i));
+        try (DbaseFileReader dbf2 = new DbaseFileReader(shpFiles, false, ShapefileDataStore.DEFAULT_STRING_CHARSET)) {
+            while (dbf.hasNext()) {
+                dbf.readEntry(attrs);
+                DbaseFileReader.Row r = dbf2.readRow();
+                for (int i = 0, ii = attrs.length; i < ii; i++) {
+                    assertNotNull(attrs[i]);
+                    assertNotNull(r.read(i));
+                    assertEquals(attrs[i], r.read(i));
+                }
             }
         }
-        dbf2.close();
     }
 
     @Test
@@ -116,11 +114,11 @@ public class DbaseFileTest extends TestCaseSupport {
             header.addColumn("emptyDate", 'D', 20, 0);
             int length = header.getRecordLength();
             header.removeColumn("emptyDate");
-            assertTrue(length != header.getRecordLength());
+            assertNotEquals(length, header.getRecordLength());
             header.addColumn("emptyDate", 'D', 20, 0);
-            assertTrue(length == header.getRecordLength());
+            assertEquals(length, header.getRecordLength());
             header.removeColumn("billy");
-            assertTrue(length == header.getRecordLength());
+            assertEquals(length, header.getRecordLength());
         } finally {
             LOGGER.setLevel(before);
         }
@@ -158,45 +156,98 @@ public class DbaseFileTest extends TestCaseSupport {
         header.setNumRecords(20);
         File f = new File(System.getProperty("java.io.tmpdir"), "scratchDBF.dbf");
         f.deleteOnExit();
-        FileOutputStream fout = new FileOutputStream(f);
-        DbaseFileWriter dbf =
-                new DbaseFileWriter(header, fout.getChannel(), Charset.defaultCharset());
-        for (int i = 0; i < header.getNumRecords(); i++) {
-            dbf.write(new Object[6]);
+        try (FileOutputStream fout = new FileOutputStream(f);
+                DbaseFileWriter dbf = new DbaseFileWriter(header, fout.getChannel(), Charset.defaultCharset()); ) {
+
+            for (int i = 0; i < header.getNumRecords(); i++) {
+                dbf.write(new Object[6]);
+            }
         }
-        dbf.close();
         ShpFiles tempShpFiles = new ShpFiles(f);
-        DbaseFileReader r =
-                new DbaseFileReader(tempShpFiles, false, ShapefileDataStore.DEFAULT_STRING_CHARSET);
-        int cnt = 0;
-        while (r.hasNext()) {
-            cnt++;
-            Object[] o = r.readEntry();
-            assertTrue(o.length == r.getHeader().getNumFields());
+        try (DbaseFileReader r = new DbaseFileReader(tempShpFiles, false, ShapefileDataStore.DEFAULT_STRING_CHARSET)) {
+            int cnt = 0;
+            while (r.hasNext()) {
+                cnt++;
+                Object[] o = r.readEntry();
+                assertEquals(o.length, r.getHeader().getNumFields());
+            }
+            assertEquals("Bad number of records", cnt, 20);
+        } finally {
+            f.delete();
         }
-        assertEquals("Bad number of records", cnt, 20);
-        r.close(); // make sure the channel is closed
-        f.delete();
     }
 
     @Test
     public void testFieldFormatter() throws Exception {
         DbaseFileWriter.FieldFormatter formatter =
-                new DbaseFileWriter.FieldFormatter(
-                        Charset.defaultCharset(), TimeZone.getDefault(), false);
+                new DbaseFileWriter.FieldFormatter(StandardCharsets.UTF_8, TimeZone.getDefault(), false);
 
-        String stringWithInternationChars = "hello " + '\u20ac';
-        // if (verbose) {
-        // System.out.println(stringWithInternationChars);
-        // }
-        String formattedString = formatter.getFieldString(10, stringWithInternationChars);
+        int sizeInBytes = 8;
 
-        assertEquals("          ".getBytes().length, formattedString.getBytes().length);
+        // A null string should result in padding
+        String formattedString = formatter.getFieldString(sizeInBytes, null);
+        assertEquals(sizeInBytes, formattedString.getBytes().length);
+        assertEquals("        ", formattedString);
 
-        // test when the string is too big.
-        stringWithInternationChars = '\u20ac' + "1234567890";
-        formattedString = formatter.getFieldString(10, stringWithInternationChars);
+        // A short string will be padded
+        formattedString = formatter.getFieldString(sizeInBytes, "cat");
+        assertEquals(sizeInBytes, formattedString.getBytes().length);
+        assertEquals("cat     ", formattedString);
 
-        assertEquals("          ".getBytes().length, formattedString.getBytes().length);
+        // A string that has the right number of bytes needs no padding
+        formattedString = formatter.getFieldString(sizeInBytes, "12345678");
+        assertEquals(sizeInBytes, formattedString.getBytes().length);
+        assertEquals("12345678", formattedString);
+
+        // larger strings get trucated
+        formattedString = formatter.getFieldString(sizeInBytes, "12345678910");
+        assertEquals(sizeInBytes, formattedString.getBytes().length);
+        assertEquals("12345678", formattedString);
+    }
+
+    @Test
+    public void testUTF8Chars() throws Exception {
+        DbaseFileWriter.FieldFormatter formatter =
+                new DbaseFileWriter.FieldFormatter(StandardCharsets.UTF_8, TimeZone.getDefault(), false);
+
+        int sizeInBytes = 4;
+
+        // a short string will be padded
+        String formattedString = formatter.getFieldString(sizeInBytes, "\u0412");
+        assertEquals(sizeInBytes, formattedString.getBytes().length);
+        assertEquals("\u0412  ", formattedString);
+
+        // a string of size btyes need no padding
+        formattedString = formatter.getFieldString(sizeInBytes, "\u0412\u0412");
+        assertEquals(sizeInBytes, formattedString.getBytes().length);
+        assertEquals("\u0412\u0412", formattedString);
+
+        // large strings get trucated
+        formattedString = formatter.getFieldString(sizeInBytes, "\u0412\u0412\u0412");
+        assertEquals(sizeInBytes, formattedString.getBytes().length);
+        assertEquals("\u0412\u0412", formattedString);
+
+        // if a multi-byte character is the last to be removed then padding may be required to
+        formattedString = formatter.getFieldString(sizeInBytes, "\u0412A\u0412\u0412");
+        assertEquals(sizeInBytes, formattedString.getBytes().length);
+        assertEquals("\u0412A ", formattedString);
+    }
+
+    @Test
+    public void testVeryLongStrings() throws Exception {
+        // formatter.setFieldString will truncate input to the desired size. But it should do this
+        // in a reasonably performant manner.
+        DbaseFileWriter.FieldFormatter formatter =
+                new DbaseFileWriter.FieldFormatter(StandardCharsets.UTF_8, TimeZone.getDefault(), false);
+
+        // build up a very large input string. The test string is also formed so that the 8th char
+        // is also multibyte
+        String test = IntStream.range(0, 100000)
+                .mapToObj(i -> "\u0412A cat\u0412jumped over the dog")
+                .collect(Collectors.joining(","));
+
+        String formattedString = formatter.getFieldString(8, test);
+        assertEquals("\u0412A cat ", formattedString);
+        assertEquals(8, formattedString.getBytes().length);
     }
 }

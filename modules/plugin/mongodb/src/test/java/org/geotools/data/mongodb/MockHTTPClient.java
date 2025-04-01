@@ -21,8 +21,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.ows.HTTPResponse;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPResponse;
 
 /**
  * @author ImranR
@@ -31,7 +31,7 @@ import org.geotools.data.ows.HTTPResponse;
 public class MockHTTPClient implements HTTPClient {
 
     /** Mocks HTTP calls */
-    Map<String, HTTPResponse> expectGet = new HashMap<String, HTTPResponse>();
+    Map<String, HTTPResponse> expectGet = new HashMap<>();
 
     public MockHTTPClient() {}
 
@@ -44,8 +44,7 @@ public class MockHTTPClient implements HTTPClient {
     }
 
     @Override
-    public HTTPResponse post(URL url, InputStream postContent, String postContentType)
-            throws IOException {
+    public HTTPResponse post(URL url, InputStream postContent, String postContentType) throws IOException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -70,6 +69,14 @@ public class MockHTTPClient implements HTTPClient {
 
     @Override
     public void setPassword(String password) {}
+
+    @Override
+    public Map<String, String> getExtraParams() {
+        return null;
+    }
+
+    @Override
+    public void setExtraParams(Map<String, String> extraParams) {}
 
     @Override
     public int getConnectTimeout() {

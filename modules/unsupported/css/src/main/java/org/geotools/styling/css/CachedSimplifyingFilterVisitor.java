@@ -23,22 +23,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
 import org.geotools.styling.css.util.UnboundSimplifyingFilterVisitor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
 
 /**
- * A simplifying filter visitor that caches the results, to avoid repeating their computation over
- * and over
+ * A simplifying filter visitor that caches the results, to avoid repeating their computation over and over
  *
  * @author Andrea Aime - GeoSolutions
  */
 class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
     // filters we know are already simplified
-    Map<Filter, Filter> cache = new WeakHashMap<Filter, Filter>();
+    Map<Filter, Filter> cache = new WeakHashMap<>();
 
     public CachedSimplifyingFilterVisitor(FeatureType ft) {
         setFeatureType(ft);
@@ -77,6 +76,7 @@ class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
         return result;
     }
 
+    @Override
     protected List<Filter> extraAndSimplification(Object extraData, List<Filter> filters) {
         if (filters.size() > 1) {
             // if there are nested ors and top level filters, try factoring out common expression,
@@ -124,7 +124,7 @@ class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
                         if (simplified == Filter.EXCLUDE) {
                             continue;
                         } else if (simplified == Filter.INCLUDE) {
-                            return Collections.singletonList((Filter) Filter.INCLUDE);
+                            return Collections.singletonList(Filter.INCLUDE);
                         } else if (reduced == null) {
                             reduced = simplified;
                         } else if (!simplified.equals(reduced)) {
@@ -134,7 +134,7 @@ class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
                     }
 
                     if (reduced == null) {
-                        return Collections.singletonList((Filter) Filter.EXCLUDE);
+                        return Collections.singletonList(Filter.EXCLUDE);
                     } else if (!twoOrMore) {
                         filters.clear();
                         if (!(reduced instanceof And)) {
@@ -153,6 +153,7 @@ class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
         return filters;
     }
 
+    @Override
     protected List<Filter> extraOrSimplification(Object extraData, List<Filter> filters) {
         if (filters.size() > 1) {
             // if there are nested ands and top level filters, try factoring out common expression,
@@ -198,7 +199,7 @@ class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
                         Or or = getFactory(extraData).or(newList);
                         Filter simplified = (Filter) or.accept(this, extraData);
                         if (simplified == Filter.EXCLUDE) {
-                            return Collections.singletonList((Filter) Filter.EXCLUDE);
+                            return Collections.singletonList(Filter.EXCLUDE);
                         } else if (simplified == Filter.INCLUDE) {
                             continue;
                         } else if (reduced == null) {
@@ -210,7 +211,7 @@ class CachedSimplifyingFilterVisitor extends UnboundSimplifyingFilterVisitor {
                     }
 
                     if (reduced == null) {
-                        return Collections.singletonList((Filter) Filter.INCLUDE);
+                        return Collections.singletonList(Filter.INCLUDE);
                     } else if (!twoOrMore) {
                         filters.clear();
                         if (!(reduced instanceof Or)) {

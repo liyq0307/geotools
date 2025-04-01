@@ -104,23 +104,25 @@ public class DescribeFeatureTypeTypeBinding extends AbstractComplexEMFBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WFS.DescribeFeatureTypeType;
     }
 
     /**
-     * @return {@link Binding#BEFORE} so at parse time we can return an instance of {@link
-     *     DescribeFeatureTypeType}, or the framework would try to create a {@link
-     *     BaseRequestType},which is abstract.
+     * @return {@link Binding#BEFORE} so at parse time we can return an instance of {@link DescribeFeatureTypeType}, or
+     *     the framework would try to create a {@link BaseRequestType},which is abstract.
      */
+    @Override
     public int getExecutionMode() {
         return BEFORE;
     }
 
     /**
-     * Simply returns an instance of {@link DescribeFeatureTypeType} and lets the framework to
-     * reflectively set the object properties.
+     * Simply returns an instance of {@link DescribeFeatureTypeType} and lets the framework to reflectively set the
+     * object properties.
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return wfsFactory.createDescribeFeatureTypeType();
     }

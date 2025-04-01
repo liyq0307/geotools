@@ -20,9 +20,8 @@ import java.awt.geom.Dimension2D;
 import java.io.Serializable;
 
 /**
- * Implement float and double version of {@link Dimension2D}. This class is only temporary; it will
- * disappear if <em>JavaSoft</em> implements {@code Dimension2D.Float} and {@code
- * Dimension2D.Double}.
+ * Implement float and double version of {@link Dimension2D}. This class is only temporary; it will disappear if
+ * <em>JavaSoft</em> implements {@code Dimension2D.Float} and {@code Dimension2D.Double}.
  *
  * @since 2.0
  * @version $Id$
@@ -33,8 +32,8 @@ public final class XDimension2D {
     private XDimension2D() {}
 
     /**
-     * Implement float version of {@link Dimension2D}. This class is temporary; it will disappear if
-     * <em>JavaSoft</em> implements {@code Dimension2D.Float} and {@code Dimension2D.Double}.
+     * Implement float version of {@link Dimension2D}. This class is temporary; it will disappear if <em>JavaSoft</em>
+     * implements {@code Dimension2D.Float} and {@code Dimension2D.Double}.
      *
      * @version $Id$
      * @author Martin Desruisseaux (IRD)
@@ -69,17 +68,20 @@ public final class XDimension2D {
          * @param w The width.
          * @param h The height.
          */
+        @Override
         public void setSize(final double w, final double h) {
             width = (float) w;
             height = (float) h;
         }
 
         /** Returns the width. */
+        @Override
         public double getWidth() {
             return width;
         }
 
         /** Returns the height. */
+        @Override
         public double getHeight() {
             return height;
         }
@@ -92,8 +94,8 @@ public final class XDimension2D {
     }
 
     /**
-     * Implement double version of {@link Dimension2D}. This class is temporary; it will disappear
-     * if <em>JavaSoft</em> implements {@code Dimension2D.Float} and {@code Dimension2D.Double}.
+     * Implement double version of {@link Dimension2D}. This class is temporary; it will disappear if <em>JavaSoft</em>
+     * implements {@code Dimension2D.Float} and {@code Dimension2D.Double}.
      *
      * @version $Id$
      * @author Martin Desruisseaux (IRD)
@@ -128,17 +130,20 @@ public final class XDimension2D {
          * @param w The width.
          * @param h The height.
          */
+        @Override
         public void setSize(final double w, final double h) {
             width = w;
             height = h;
         }
 
         /** Returns the width. */
+        @Override
         public double getWidth() {
             return width;
         }
 
         /** Returns the height. */
+        @Override
         public double getHeight() {
             return height;
         }

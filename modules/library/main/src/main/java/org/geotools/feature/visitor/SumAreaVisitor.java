@@ -16,13 +16,17 @@
  */
 package org.geotools.feature.visitor;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
+import org.locationtech.jts.geom.Geometry;
 
 /**
  * Calculates the Sum of Areas for geometric fields
@@ -49,8 +53,7 @@ public class SumAreaVisitor extends SumVisitor {
         super.visit(feature);
     }
 
-    public SumAreaVisitor(int attributeTypeIndex, SimpleFeatureType type)
-            throws IllegalFilterException {
+    public SumAreaVisitor(int attributeTypeIndex, SimpleFeatureType type) throws IllegalFilterException {
 
         this(factory.property(type.getDescriptor(attributeTypeIndex).getLocalName()));
     }
@@ -59,9 +62,22 @@ public class SumAreaVisitor extends SumVisitor {
         this(factory.property(type.getDescriptor(attrName).getLocalName()));
     }
 
+    @Override
+    public Optional<List<Class>> getResultType(List<Class> inputTypes) {
+        if (inputTypes == null || inputTypes.size() != 1)
+            throw new IllegalArgumentException("Expecting a single type in input, not " + inputTypes);
+
+        Class type = inputTypes.get(0);
+        if (Geometry.class.isAssignableFrom(type)) {
+            return Optional.of(Collections.singletonList(Double.class));
+        }
+        throw new IllegalArgumentException("The input type for sum must be geometric, instead this was found: " + type);
+    }
+
     static class SumAreaStrategy implements SumStrategy {
         Double number = null;
 
+        @Override
         public void add(Object value) {
             Number num = (Number) value;
             if (num.doubleValue() >= 0) {
@@ -72,6 +88,7 @@ public class SumAreaVisitor extends SumVisitor {
             }
         }
 
+        @Override
         public Object getResult() {
             return number == null ? null : Double.valueOf(number);
         }

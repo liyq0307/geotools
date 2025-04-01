@@ -19,12 +19,12 @@ package org.geotools.xsd.impl;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.ComplexAttribute;
 import org.geotools.util.Converters;
 import org.geotools.xs.XS;
 import org.geotools.xsd.Binding;
 import org.geotools.xsd.ComplexBinding;
 import org.geotools.xsd.SimpleBinding;
-import org.opengis.feature.ComplexAttribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -77,6 +77,7 @@ public class ElementEncodeExecutor implements BindingWalker.Visitor {
         return encoding;
     }
 
+    @Override
     public void visit(Binding binding) {
         // ensure that the type of the object being encoded matches the type
         // of the binding
@@ -116,8 +117,7 @@ public class ElementEncodeExecutor implements BindingWalker.Visitor {
                 if (logger.isLoggable(Level.FINE)) {
                     // do not log the object, may be a multi-megabyte feature collection
                     // that can trigger an OOM toStringing itself
-                    logger.fine(
-                            "[ " + object.getClass() + " ] is not of type " + binding.getType());
+                    logger.fine("[ " + object.getClass() + " ] is not of type " + binding.getType());
                 }
 
                 return;
@@ -134,11 +134,7 @@ public class ElementEncodeExecutor implements BindingWalker.Visitor {
                     encoding = element;
                 }
             } catch (Throwable t) {
-                String msg =
-                        "Encode failed for "
-                                + element.getName()
-                                + ". Cause: "
-                                + t.getLocalizedMessage();
+                String msg = "Encode failed for " + element.getName() + ". Cause: " + t.getLocalizedMessage();
                 throw new RuntimeException(msg, t);
             }
         } else {
@@ -148,7 +144,7 @@ public class ElementEncodeExecutor implements BindingWalker.Visitor {
             Text text = null;
 
             for (int i = 0; i < encoding.getChildNodes().getLength(); i++) {
-                Node node = (Node) encoding.getChildNodes().item(i);
+                Node node = encoding.getChildNodes().item(i);
 
                 if (node instanceof Text) {
                     text = (Text) node;
@@ -181,11 +177,7 @@ public class ElementEncodeExecutor implements BindingWalker.Visitor {
                     encoding.setAttribute(prefix + ":nil", "true");
                 }
             } catch (Throwable t) {
-                String msg =
-                        "Encode failed for "
-                                + element.getName()
-                                + ". Cause: "
-                                + t.getLocalizedMessage();
+                String msg = "Encode failed for " + element.getName() + ". Cause: " + t.getLocalizedMessage();
                 throw new RuntimeException(msg, t);
             }
         }

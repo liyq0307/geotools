@@ -23,23 +23,26 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.ResourceInfo;
-import org.geotools.data.ServiceInfo;
+import org.geotools.api.data.ResourceInfo;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.http.HTTPClient;
+import org.geotools.http.HTTPClientFinder;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
+import org.geotools.util.logging.Logging;
 
 /**
- * This abstract class provides a building block for one to implement an Open Web Service (OWS)
- * client. Each OWS is usually defined by an OGC specification, available at <a
+ * This abstract class provides a building block for one to implement an Open Web Service (OWS) client. Each OWS is
+ * usually defined by an OGC specification, available at <a
  * href="http://www.opengeospatial.org">http://www.opengeospatial.org</a>.
  *
- * <p>This class provides version negotiation, Capabilities document retrieval, and a
- * request/response infrastructure. Implementing subclasses need to provide their own Specifications
- * (representing versions of the OWS to be implemented) and their own request/response instances.
+ * <p>This class provides version negotiation, Capabilities document retrieval, and a request/response infrastructure.
+ * Implementing subclasses need to provide their own Specifications (representing versions of the OWS to be implemented)
+ * and their own request/response instances.
  *
  * @author Richard Gould
  */
@@ -47,9 +50,11 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
 
     private HTTPClient httpClient;
     protected final URL serverURL;
+    protected final Map<String, String> headers;
+
     protected C capabilities;
     protected ServiceInfo info;
-    protected Map<R, ResourceInfo> resourceInfo = new HashMap<R, ResourceInfo>();
+    protected Map<R, ResourceInfo> resourceInfo = new HashMap<>();
 
     /** Contains the specifications that are to be used with this service */
     protected Specification[] specs;
@@ -59,8 +64,7 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
     /** Hints, now used for the XML parsing * */
     protected Map<String, Object> hints;
 
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(AbstractOpenWebService.class);
+    protected static final Logger LOGGER = Logging.getLogger(AbstractOpenWebService.class);
 
     /**
      * Set up the specifications used and retrieve the Capabilities document given by serverURL.
@@ -70,21 +74,32 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
      * @throws ServiceException if the server responds with an error
      */
     public AbstractOpenWebService(final URL serverURL) throws IOException, ServiceException {
-        this(serverURL, new SimpleHttpClient(), null);
+        this(serverURL, HTTPClientFinder.createClient(), null);
+    }
+
+    public AbstractOpenWebService(final URL serverURL, HTTPClient httpClient) throws IOException, ServiceException {
+        this(serverURL, httpClient, null);
+    }
+
+    public AbstractOpenWebService(final URL serverURL, final HTTPClient httpClient, final C capabilities)
+            throws ServiceException, IOException {
+        this(serverURL, httpClient, capabilities, null);
     }
 
     public AbstractOpenWebService(
-            final URL serverURL, final HTTPClient httpClient, final C capabilities)
+            final URL serverURL, final HTTPClient httpClient, final C capabilities, Map<String, Object> hints)
             throws ServiceException, IOException {
-        this(serverURL, httpClient, capabilities, null);
+        this(serverURL, httpClient, capabilities, hints, null);
     }
 
     public AbstractOpenWebService(
             final URL serverURL,
             final HTTPClient httpClient,
             final C capabilities,
-            Map<String, Object> hints)
+            Map<String, Object> hints,
+            Map<String, String> headers)
             throws ServiceException, IOException {
+
         if (serverURL == null) {
             throw new NullPointerException("serverURL");
         }
@@ -94,6 +109,8 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
 
         this.serverURL = serverURL;
         this.httpClient = httpClient;
+        this.headers = headers;
+
         this.hints = hints;
 
         setupSpecifications();
@@ -101,30 +118,33 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
         if (capabilities == null) {
             this.capabilities = negotiateVersion();
             if (this.capabilities == null) {
-                throw new ServiceException(
-                        "Version negotiation unable to retrieve or parse Capabilities document.");
+                throw new ServiceException("Version negotiation unable to retrieve or parse Capabilities document.");
             }
         } else {
             this.capabilities = capabilities;
         }
 
-        for (int i = 0; i < specs.length; i++) {
-            if (specs[i].getVersion().equals(this.capabilities.getVersion())) {
-                specification = specs[i];
+        for (Specification spec : specs) {
+            if (spec.getVersion().equals(this.capabilities.getVersion())) {
+                specification = spec;
                 break;
             }
         }
 
         if (specification == null) {
             specification = specs[specs.length - 1];
-            LOGGER.warning(
-                    "Unable to choose a specification based on cached capabilities. "
-                            + "Arbitrarily choosing spec '"
-                            + specification.getVersion()
-                            + "'.");
+            LOGGER.warning("Unable to choose a specification based on cached capabilities. "
+                    + "Arbitrarily choosing spec '"
+                    + specification.getVersion()
+                    + "'.");
         }
     }
 
+    /**
+     * @deprecated httpClient should be treated as a final
+     * @param httpClient
+     */
+    @Deprecated
     public void setHttpClient(HTTPClient httpClient) {
         this.httpClient = httpClient;
     }
@@ -134,8 +154,8 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
     }
 
     /**
-     * Get the getCapabilities document. If there was an error parsing it during creation, it will
-     * return null (and it should have thrown an exception during creation).
+     * Get the getCapabilities document. If there was an error parsing it during creation, it will return null (and it
+     * should have thrown an exception during creation).
      *
      * @return a Capabilities object, representing the Capabilities of the server
      */
@@ -144,8 +164,7 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
     /**
      * Description of this service.
      *
-     * <p>Provides a very quick description of the service, for more information please review the
-     * capabilitie document.
+     * <p>Provides a very quick description of the service, for more information please review the capabilitie document.
      *
      * <p>
      *
@@ -190,38 +209,35 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
      * Version number negotiation occurs as follows (credit OGC):
      *
      * <ul>
-     *   <li><b>1) </b> If the server implements the requested version number, the server shall send
-     *       that version.
-     *   <li><b>2a) </b> If a version unknown to the server is requested, the server shall send the
-     *       highest version less than the requested version.
-     *   <li><b>2b) </b> If the client request is for a version lower than any of those known to the
-     *       server, then the server shall send the lowest version it knows.
-     *   <li><b>3a) </b> If the client does not understand the new version number sent by the
-     *       server, it may either cease communicating with the server or send a new request with a
-     *       new version number that the client does understand but which is less than that sent by
-     *       the server (if the server had responded with a lower version).
-     *   <li><b>3b) </b> If the server had responded with a higher version (because the request was
-     *       for a version lower than any known to the server), and the client does not understand
-     *       the proposed higher version, then the client may send a new request with a version
-     *       number higher than that sent by the server.
+     *   <li><b>1) </b> If the server implements the requested version number, the server shall send that version.
+     *   <li><b>2a) </b> If a version unknown to the server is requested, the server shall send the highest version less
+     *       than the requested version.
+     *   <li><b>2b) </b> If the client request is for a version lower than any of those known to the server, then the
+     *       server shall send the lowest version it knows.
+     *   <li><b>3a) </b> If the client does not understand the new version number sent by the server, it may either
+     *       cease communicating with the server or send a new request with a new version number that the client does
+     *       understand but which is less than that sent by the server (if the server had responded with a lower
+     *       version).
+     *   <li><b>3b) </b> If the server had responded with a higher version (because the request was for a version lower
+     *       than any known to the server), and the client does not understand the proposed higher version, then the
+     *       client may send a new request with a version number higher than that sent by the server.
      * </ul>
      *
-     * <p>The OGC tells us to repeat this process (or give up). This means we are actually going to
-     * come up with a bit of setup cost in figuring out our GetCapabilities request. This means that
-     * it is possible that we may make multiple requests before being satisfied with a response.
+     * <p>The OGC tells us to repeat this process (or give up). This means we are actually going to come up with a bit
+     * of setup cost in figuring out our GetCapabilities request. This means that it is possible that we may make
+     * multiple requests before being satisfied with a response.
      *
-     * <p>Also, if we are unable to parse a given version for some reason, for example, malformed
-     * XML, we will request a lower version until we have run out of versions to request with. Thus,
-     * a server that does not play nicely may take some time to parse and might not even succeed.
+     * <p>Also, if we are unable to parse a given version for some reason, for example, malformed XML, we will request a
+     * lower version until we have run out of versions to request with. Thus, a server that does not play nicely may
+     * take some time to parse and might not even succeed.
      *
      * @return a capabilities object that represents the Capabilities on the server
-     * @throws IOException if there is an error communicating with the server, or the XML cannot be
-     *     parsed
+     * @throws IOException if there is an error communicating with the server, or the XML cannot be parsed
      * @throws ServiceException if the server returns a ServiceException
      */
     @SuppressWarnings("unchecked")
     protected C negotiateVersion() throws IOException, ServiceException {
-        List<String> versions = new ArrayList<String>(specs.length);
+        List<String> versions = new ArrayList<>(specs.length);
         Exception exception = null;
 
         for (int i = 0; i < specs.length; i++) {
@@ -237,10 +253,7 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
             String[] tokens = serverURL.getQuery().split("&");
             for (String token : tokens) {
                 String[] param = token.split("=");
-                if (param != null
-                        && param.length > 1
-                        && param[0] != null
-                        && param[0].equalsIgnoreCase("version")) {
+                if (param != null && param.length > 1 && param[0] != null && param[0].equalsIgnoreCase("version")) {
                     if (versions.contains(param[1])) test = versions.indexOf(param[1]);
                 }
             }
@@ -250,8 +263,7 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
             Specification tempSpecification = specs[test];
             String clientVersion = tempSpecification.getVersion();
 
-            GetCapabilitiesRequest request =
-                    tempSpecification.createGetCapabilitiesRequest(serverURL);
+            GetCapabilitiesRequest request = tempSpecification.createGetCapabilitiesRequest(serverURL);
             request.setRequestHints(hints);
 
             // Grab document
@@ -332,13 +344,10 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
         // could not talk to this server
         if (exception != null) {
             IOException e =
-                    new IOException(
-                            "Could not establish version neogitation: " + exception.getMessage(),
-                            exception);
+                    new IOException("Could not establish version negotiation: " + exception.getMessage(), exception);
             throw e;
         } else {
-            throw new ServiceException(
-                    "Version negotiation unable to retrieve or parse Capabilities document.");
+            throw new ServiceException("Version negotiation unable to retrieve or parse Capabilities document.");
         }
     }
 
@@ -356,8 +365,8 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
 
         String before = null;
 
-        for (Iterator i = known.iterator(); i.hasNext(); ) {
-            String test = (String) i.next();
+        for (Object o : known) {
+            String test = (String) o;
 
             if (test.compareTo(version) < 0) {
 
@@ -384,8 +393,8 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
 
         String after = null;
 
-        for (Iterator i = known.iterator(); i.hasNext(); ) {
-            String test = (String) i.next();
+        for (Object o : known) {
+            String test = (String) o;
 
             if (test.compareTo(version) > 0) {
                 if ((after == null) || (after.compareTo(test) < 0)) {
@@ -398,8 +407,8 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
     }
 
     /**
-     * Issues a request to the server and returns that server's response. It asks the server to send
-     * the response gzipped to provide a faster transfer time.
+     * Issues a request to the server and returns that server's response. It asks the server to send the response
+     * gzipped to provide a faster transfer time.
      *
      * @param request the request to be issued
      * @return a response from the server, which is created according to the specific Request
@@ -417,23 +426,22 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
 
                 final String postContentType = request.getPostContentType();
 
+                // For logging use the internals of HTTPClientFactory
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 request.performPostOutput(out);
-                InputStream in;
-                if (LOGGER.isLoggable(Level.FINE)) {
-                    byte[] byteArray = out.toByteArray();
-                    LOGGER.fine(new String(byteArray));
-                    in = new ByteArrayInputStream(byteArray);
-                } else {
-                    in = new ByteArrayInputStream(out.toByteArray());
-                }
-                try {
-                    httpResponse = httpClient.post(finalURL, in, postContentType);
-                } finally {
-                    in.close();
+                try (InputStream in = getStream(out)) {
+                    if (headers == null) {
+                        httpResponse = httpClient.post(finalURL, in, postContentType);
+                    } else {
+                        httpResponse = httpClient.post(finalURL, in, postContentType, headers);
+                    }
                 }
             } else {
-                httpResponse = httpClient.get(finalURL);
+                if (headers == null) {
+                    httpResponse = httpClient.get(finalURL);
+                } else {
+                    httpResponse = httpClient.get(finalURL, headers);
+                }
             }
 
             final Response response = request.createResponse(httpResponse);
@@ -450,8 +458,19 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
         }
     }
 
-    public GetCapabilitiesResponse issueRequest(GetCapabilitiesRequest request)
-            throws IOException, ServiceException {
+    private InputStream getStream(ByteArrayOutputStream out) {
+        InputStream in;
+        if (LOGGER.isLoggable(Level.FINE)) {
+            byte[] byteArray = out.toByteArray();
+            LOGGER.fine(new String(byteArray));
+            in = new ByteArrayInputStream(byteArray);
+        } else {
+            in = new ByteArrayInputStream(out.toByteArray());
+        }
+        return in;
+    }
+
+    public GetCapabilitiesResponse issueRequest(GetCapabilitiesRequest request) throws IOException, ServiceException {
         return (GetCapabilitiesResponse) internalIssueRequest(request);
     }
 
@@ -464,11 +483,7 @@ public abstract class AbstractOpenWebService<C extends Capabilities, R extends O
         return hints;
     }
 
-    /**
-     * Sets the hints affecting the service operations
-     *
-     * @param hints
-     */
+    /** Sets the hints affecting the service operations */
     public void setHints(Map<String, Object> hints) {
         this.hints = hints;
     }

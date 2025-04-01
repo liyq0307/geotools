@@ -75,14 +75,22 @@ public class GeoPkgGeomReader {
 
     public GeometryHeader getHeader() throws IOException {
         if (header == null) {
-            header = readHeader();
+            try {
+                header = readHeader();
+            } catch (ParseException e) {
+                throw new IOException(e);
+            }
         }
         return header;
     }
 
     public Geometry get() throws IOException {
         if (header == null) {
-            header = readHeader();
+            try {
+                header = readHeader();
+            } catch (ParseException e) {
+                throw new IOException(e);
+            }
         }
 
         if (geometry == null) {
@@ -92,13 +100,8 @@ public class GeoPkgGeomReader {
                     && header.getFlags().getEnvelopeIndicator() != EnvelopeType.NONE
                     && envelope.getWidth() < simplificationDistance.doubleValue()
                     && envelope.getHeight() < simplificationDistance.doubleValue()) {
-                Geometry simplified =
-                        getSimplifiedShape(
-                                geometryType,
-                                envelope.getMinX(),
-                                envelope.getMinY(),
-                                envelope.getMaxX(),
-                                envelope.getMaxY());
+                Geometry simplified = getSimplifiedShape(
+                        geometryType, envelope.getMinX(), envelope.getMinY(), envelope.getMaxX(), envelope.getMaxY());
                 if (simplified != null) {
                     geometry = simplified;
                 }
@@ -111,8 +114,7 @@ public class GeoPkgGeomReader {
         return geometry;
     }
 
-    public Geometry getSimplifiedShape(
-            Class type, double minX, double minY, double maxX, double maxY) {
+    public Geometry getSimplifiedShape(Class type, double minX, double minY, double maxX, double maxY) {
         CoordinateSequenceFactory csf = factory.getCoordinateSequenceFactory();
         if (Point.class.equals(type)) {
             CoordinateSequence cs = JTS.createCS(csf, 1, 2);
@@ -130,8 +132,7 @@ public class GeoPkgGeomReader {
             cs.setOrdinate(1, 1, maxY);
             return factory.createLineString(cs);
         } else if (MultiLineString.class.equals(type)) {
-            LineString ls =
-                    (LineString) getSimplifiedShape(LineString.class, minX, minY, maxX, maxY);
+            LineString ls = (LineString) getSimplifiedShape(LineString.class, minX, minY, maxX, maxY);
             return factory.createMultiLineString(new LineString[] {ls});
         } else if (Polygon.class.equals(type)) {
             CoordinateSequence cs = JTS.createCS(csf, 5, 2);
@@ -204,7 +205,7 @@ public class GeoPkgGeomReader {
     *       0 = Big Endian   (most significant bit first)
     *       1 = Little Endian (least significant bit first)
     */
-    protected GeometryHeader readHeader() throws IOException {
+    protected GeometryHeader readHeader() throws IOException, ParseException {
         GeometryHeader h = new GeometryHeader();
 
         // read first 4 bytes
@@ -213,7 +214,7 @@ public class GeoPkgGeomReader {
         input.read(buf);
 
         // next byte flags
-        h.setFlags(new GeometryHeaderFlags((byte) buf[3]));
+        h.setFlags(new GeometryHeaderFlags(buf[3]));
 
         // set endianess
         ByteOrderDataInStream din = new ByteOrderDataInStream(input);

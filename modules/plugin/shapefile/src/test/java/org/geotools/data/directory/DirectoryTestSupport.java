@@ -1,6 +1,6 @@
 package org.geotools.data.directory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import org.geotools.TestData;
+import org.geotools.api.data.FileStoreFactory;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.junit.After;
 
@@ -42,28 +43,25 @@ public class DirectoryTestSupport {
             if (f.isDirectory()) {
                 deleteDirectory(f);
             } else {
-                if (!f.delete()) {
-                    // System.out.println("Couldn't delete " + f.getAbsolutePath());
-                }
+                f.delete();
             }
         }
         directory.delete();
     }
 
     /**
-     * Copies the specified shape file into the {@code test-data} directory, together with its
-     * sibling ({@code .dbf}, {@code .shp}, {@code .shx} and {@code .prj} files).
+     * Copies the specified shape file into the {@code test-data} directory, together with its sibling ({@code .dbf},
+     * {@code .shp}, {@code .shx} and {@code .prj} files).
      */
     protected File copyShapefiles(final String name) throws IOException {
         return copyShapefiles(name, null);
     }
 
     /**
-     * Copies the specified shape file into the {@code test-data} directory, together with its
-     * sibling ({@code .dbf}, {@code .shp}, {@code .shx} and {@code .prj} files).
+     * Copies the specified shape file into the {@code test-data} directory, together with its sibling ({@code .dbf},
+     * {@code .shp}, {@code .shx} and {@code .prj} files).
      */
-    protected File copyShapefiles(final String name, final String directoryName)
-            throws IOException {
+    protected File copyShapefiles(final String name, final String directoryName) throws IOException {
         assertTrue(TestData.copy(this, sibling(name, "dbf"), directoryName).canRead());
         assertTrue(TestData.copy(this, sibling(name, "shp"), directoryName).canRead());
         assertTrue(TestData.copy(this, sibling(name, "shx"), directoryName).canRead());

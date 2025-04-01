@@ -18,44 +18,44 @@ package org.geotools.gml2;
 
 import java.io.InputStream;
 import javax.xml.namespace.QName;
-import junit.framework.TestCase;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.xsd.StreamingParser;
+import org.junit.Assert;
+import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
 
-public class GMLFeatureStreamingTest extends TestCase {
+public class GMLFeatureStreamingTest {
+    @Test
     public void testStreamByXpath() throws Exception {
-        InputStream in = getClass().getResourceAsStream("feature.xml");
-        String xpath = "/featureMember/TestFeature";
+        try (InputStream in = getClass().getResourceAsStream("feature.xml")) {
+            String xpath = "/featureMember/TestFeature";
 
-        StreamingParser parser = new StreamingParser(new TestConfiguration(), in, xpath);
-        makeAssertions(parser);
-
-        in.close();
+            StreamingParser parser = new StreamingParser(new TestConfiguration(), in, xpath);
+            makeAssertions(parser);
+        }
     }
 
+    @Test
     public void testStreamByElementName() throws Exception {
-        InputStream in = getClass().getResourceAsStream("feature.xml");
+        try (InputStream in = getClass().getResourceAsStream("feature.xml")) {
 
-        StreamingParser parser =
-                new StreamingParser(
-                        new TestConfiguration(), in, new QName(GML.NAMESPACE, "featureMember"));
-        makeAssertions(parser);
-
-        in.close();
+            StreamingParser parser =
+                    new StreamingParser(new TestConfiguration(), in, new QName(GML.NAMESPACE, "featureMember"));
+            makeAssertions(parser);
+        }
     }
 
     private void makeAssertions(StreamingParser parser) {
         for (int i = 0; i < 3; i++) {
             SimpleFeature f = (SimpleFeature) parser.parse();
-            assertNotNull(f);
+            Assert.assertNotNull(f);
 
-            assertEquals(i + "", f.getID());
-            assertEquals(i, ((Point) f.getDefaultGeometry()).getX(), 0d);
-            assertEquals(i, ((Point) f.getDefaultGeometry()).getY(), 0d);
-            assertEquals(i, ((Integer) f.getAttribute("count")).intValue());
+            Assert.assertEquals(i + "", f.getID());
+            Assert.assertEquals(i, ((Point) f.getDefaultGeometry()).getX(), 0d);
+            Assert.assertEquals(i, ((Point) f.getDefaultGeometry()).getY(), 0d);
+            Assert.assertEquals(i, ((Integer) f.getAttribute("count")).intValue());
         }
 
-        assertNull(parser.parse());
+        Assert.assertNull(parser.parse());
     }
 }

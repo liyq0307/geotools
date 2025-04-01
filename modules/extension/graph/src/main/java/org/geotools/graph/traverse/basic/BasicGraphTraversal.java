@@ -17,7 +17,6 @@
 package org.geotools.graph.traverse.basic;
 
 import org.geotools.graph.structure.Graph;
-import org.geotools.graph.structure.GraphVisitor;
 import org.geotools.graph.structure.Graphable;
 import org.geotools.graph.traverse.GraphIterator;
 import org.geotools.graph.traverse.GraphTraversal;
@@ -36,10 +35,7 @@ public class BasicGraphTraversal implements GraphTraversal {
     /** the walker being iterated over the graph * */
     private GraphWalker m_walker;
 
-    /**
-     * the iterator specifying the order in which to visit components of the graph during the
-     * traversal *
-     */
+    /** the iterator specifying the order in which to visit components of the graph during the traversal * */
     private GraphIterator m_iterator;
 
     /**
@@ -56,11 +52,13 @@ public class BasicGraphTraversal implements GraphTraversal {
     }
 
     /** @see GraphTraversal#setGraph(Graph) */
+    @Override
     public void setGraph(Graph graph) {
         m_graph = graph;
     }
 
     /** @see GraphTraversal#getGraph() */
+    @Override
     public Graph getGraph() {
         return (m_graph);
     }
@@ -71,6 +69,7 @@ public class BasicGraphTraversal implements GraphTraversal {
      * @see GraphIterator#init(Graph)
      * @see GraphTraversal#setIterator(GraphIterator)
      */
+    @Override
     public void setIterator(GraphIterator iterator) {
         m_iterator = iterator;
         m_iterator.setTraversal(this);
@@ -78,16 +77,19 @@ public class BasicGraphTraversal implements GraphTraversal {
     }
 
     /** @see GraphTraversal#getIterator() */
+    @Override
     public GraphIterator getIterator() {
         return (m_iterator);
     }
 
     /** @see GraphTraversal#setWalker(GraphWalker) */
+    @Override
     public void setWalker(GraphWalker walker) {
         m_walker = walker;
     }
 
     /** @see GraphTraversal#getWalker() */
+    @Override
     public GraphWalker getWalker() {
         return (m_walker);
     }
@@ -97,22 +99,19 @@ public class BasicGraphTraversal implements GraphTraversal {
      *
      * @see GraphTraversal#init()
      */
+    @Override
     public void init() {
         // initialize the nodes of the graph
-        m_graph.visitNodes(
-                new GraphVisitor() {
-                    public int visit(Graphable component) {
-                        component.setVisited(false);
-                        component.setCount(0);
-                        return (0);
-                    }
-                });
+        m_graph.visitNodes(component -> {
+            component.setVisited(false);
+            component.setCount(0);
+            return (0);
+        });
     }
 
     /**
-     * Upon each iteration of the traversal, a component is returned from the iterator and passed to
-     * the visitor. The traversal interprets the return codes from the walker and performs the
-     * following actions. <br>
+     * Upon each iteration of the traversal, a component is returned from the iterator and passed to the visitor. The
+     * traversal interprets the return codes from the walker and performs the following actions. <br>
      * <br>
      *
      * <TABLE border="1" width="60%" style="font-family:Arial;font-size=10pt">
@@ -143,6 +142,7 @@ public class BasicGraphTraversal implements GraphTraversal {
      *
      * @see GraphTraversal#traverse()
      */
+    @Override
     public void traverse() {
         Graphable current;
 
@@ -185,10 +185,12 @@ public class BasicGraphTraversal implements GraphTraversal {
         m_walker.finish();
     }
 
+    @Override
     public void setVisited(Graphable g, boolean visited) {
         g.setVisited(visited);
     }
 
+    @Override
     public boolean isVisited(Graphable g) {
         return (g.isVisited());
     }

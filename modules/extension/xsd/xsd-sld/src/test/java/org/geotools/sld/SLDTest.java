@@ -17,13 +17,27 @@
 package org.geotools.sld;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
 import java.io.IOException;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.IOUtils;
-import org.geotools.styling.*;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Font;
+import org.geotools.api.style.Graphic;
+import org.geotools.api.style.GraphicalSymbol;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.PolygonSymbolizer;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.TextSymbolizer;
+import org.geotools.api.style.UserLayer;
+import org.geotools.styling.SLD;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Parser;
 import org.junit.Ignore;
@@ -37,8 +51,7 @@ public class SLDTest {
         Parser parser = new Parser(new SLDConfiguration());
 
         StyledLayerDescriptor sld =
-                (StyledLayerDescriptor)
-                        parser.parse(getClass().getResourceAsStream("example-sld.xml"));
+                (StyledLayerDescriptor) parser.parse(getClass().getResourceAsStream("example-sld.xml"));
 
         assertEquals(1, sld.getStyledLayers().length);
 
@@ -95,8 +108,7 @@ public class SLDTest {
     @Ignore
     // GEOT-5726 - test consistency with org.geotools.styling.SLDParser
     @Test
-    public void testParserConsistency()
-            throws ParserConfigurationException, SAXException, IOException {
+    public void testParserConsistency() throws ParserConfigurationException, SAXException, IOException {
         String sldText =
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?><sld:StyledLayerDescriptor xmlns=\"http://www.opengis.net/sld\" xmlns:sld=\"http://www.opengis.net/sld\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:ogc=\"http://www.opengis.net/ogc\" version=\"1.0.0\">\n"
                         + "  <sld:Name>emptytag</sld:Name>\n"
@@ -126,15 +138,49 @@ public class SLDTest {
 
         Configuration config = new SLDConfiguration();
         Parser parser = new Parser(config);
-        StyledLayerDescriptor sld =
-                (StyledLayerDescriptor) parser.parse(IOUtils.toInputStream(sldText, "UTF-8"));
+        StyledLayerDescriptor sld = (StyledLayerDescriptor) parser.parse(IOUtils.toInputStream(sldText, "UTF-8"));
 
         Style s = ((UserLayer) (sld.layers().get(0))).getUserStyles()[0];
-        TextSymbolizer symbolizer =
-                (TextSymbolizer) (s.featureTypeStyles().get(0).rules().get(0).symbolizers().get(0));
+        TextSymbolizer symbolizer = (TextSymbolizer)
+                (s.featureTypeStyles().get(0).rules().get(0).symbolizers().get(0));
         Font font = symbolizer.fonts().get(0);
         assertTrue(font.getFamily().size() > 0);
 
         assertEquals("", font.getFamily().get(0).toString());
+    }
+
+    @Test
+    public void testBackgroundSolid() throws ParserConfigurationException, SAXException, IOException {
+        Parser parser = new Parser(new SLDConfiguration());
+
+        // if a validation error occurs it will blow up with an exception
+        parser.validate(getClass().getResourceAsStream("backgroundSolid.sld"));
+
+        StyledLayerDescriptor sld =
+                (StyledLayerDescriptor) parser.parse(getClass().getResourceAsStream("backgroundSolid.sld"));
+        Style style = ((NamedLayer) sld.getStyledLayers()[0]).getStyles()[0];
+        Fill fill = style.getBackground();
+        assertNotNull(fill);
+        assertEquals(Color.RED, fill.getColor().evaluate(null, Color.class));
+        assertEquals(1, fill.getOpacity().evaluate(null, Double.class), 1);
+    }
+
+    @Test
+    public void testBackgroundGraphicFill() throws ParserConfigurationException, SAXException, IOException {
+        Parser parser = new Parser(new SLDConfiguration());
+
+        // if a validation error occurs it will blow up with an exception
+        parser.validate(getClass().getResourceAsStream("backgroundGraphicFill.sld"));
+
+        StyledLayerDescriptor sld =
+                (StyledLayerDescriptor) parser.parse(getClass().getResourceAsStream("backgroundGraphicFill.sld"));
+        Style style = ((NamedLayer) sld.getStyledLayers()[0]).getStyles()[0];
+        Fill fill = style.getBackground();
+        assertNotNull(fill);
+        Graphic graphic = fill.getGraphicFill();
+        assertNotNull(graphic);
+        GraphicalSymbol firstSymbol = graphic.graphicalSymbols().get(0);
+        assertTrue(firstSymbol instanceof Mark);
+        assertEquals("square", ((Mark) firstSymbol).getWellKnownName().evaluate(null, String.class));
     }
 }

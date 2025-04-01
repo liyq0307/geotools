@@ -17,8 +17,8 @@
 package org.geotools.data.store;
 
 import java.util.Iterator;
+import org.geotools.api.feature.Feature;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.Feature;
 
 /**
  * An {@link Iterator} which delegates to a {@link FeatureIterator}.
@@ -41,16 +41,19 @@ public class FeatureIteratorIterator<F extends Feature> implements Iterator<F> {
     }
 
     /** Calls through to {@link FeatureIterator#hasNext()} */
+    @Override
     public boolean hasNext() {
         return delegate.hasNext();
     }
 
     /** Calls through to {@link FeatureIterator#next()} */
+    @Override
     public F next() {
         return delegate.next();
     }
 
     /** @throws UnsupportedOperationException */
+    @Override
     public void remove() {
         throw new UnsupportedOperationException("remove is not supported");
     }

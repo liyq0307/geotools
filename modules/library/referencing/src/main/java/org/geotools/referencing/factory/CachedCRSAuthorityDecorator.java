@@ -22,43 +22,43 @@ package org.geotools.referencing.factory;
 // J2SE dependencies and extensions
 
 import java.util.Set;
+import org.geotools.api.metadata.citation.Citation;
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CompoundCRS;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.DerivedCRS;
+import org.geotools.api.referencing.crs.EngineeringCRS;
+import org.geotools.api.referencing.crs.GeocentricCRS;
+import org.geotools.api.referencing.crs.GeographicCRS;
+import org.geotools.api.referencing.crs.ImageCRS;
+import org.geotools.api.referencing.crs.ProjectedCRS;
+import org.geotools.api.referencing.crs.TemporalCRS;
+import org.geotools.api.referencing.crs.VerticalCRS;
+import org.geotools.api.referencing.cs.CSAuthorityFactory;
+import org.geotools.api.referencing.datum.DatumAuthorityFactory;
+import org.geotools.api.referencing.operation.CoordinateOperationAuthorityFactory;
+import org.geotools.api.util.InternationalString;
 import org.geotools.util.ObjectCache;
 import org.geotools.util.ObjectCaches;
 import org.geotools.util.factory.BufferedFactory;
 import org.geotools.util.factory.FactoryRegistryException;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
-import org.opengis.metadata.citation.Citation;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CompoundCRS;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.DerivedCRS;
-import org.opengis.referencing.crs.EngineeringCRS;
-import org.opengis.referencing.crs.GeocentricCRS;
-import org.opengis.referencing.crs.GeographicCRS;
-import org.opengis.referencing.crs.ImageCRS;
-import org.opengis.referencing.crs.ProjectedCRS;
-import org.opengis.referencing.crs.TemporalCRS;
-import org.opengis.referencing.crs.VerticalCRS;
-import org.opengis.referencing.cs.CSAuthorityFactory;
-import org.opengis.referencing.datum.DatumAuthorityFactory;
-import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
-import org.opengis.util.InternationalString;
 
 /**
- * An authority factory that caches all objects created by the delegate CRSAuthorityFactory. The
- * behaviour of the {@code createFoo(String)} methods first looks if a previously created object
- * exists for the given code. If such an object exists, it is returned directly. The testing of the
- * cache is synchronized and may block if the referencing object is under construction.
+ * An authority factory that caches all objects created by the delegate CRSAuthorityFactory. The behaviour of the
+ * {@code createFoo(String)} methods first looks if a previously created object exists for the given code. If such an
+ * object exists, it is returned directly. The testing of the cache is synchronized and may block if the referencing
+ * object is under construction.
  *
- * <p>If the object is not yet created, the definition is delegated to the appropriate the
- * {@linkplain an AuthorityFactory authority factory} and the result is cached for next time.
+ * <p>If the object is not yet created, the definition is delegated to the appropriate the {@linkplain an
+ * AuthorityFactory authority factory} and the result is cached for next time.
  *
- * <p>This object is responsible for owning a {{ReferencingObjectCache}}; there are several
- * implementations to choose from on construction.
+ * <p>This object is responsible for owning a {{ReferencingObjectCache}}; there are several implementations to choose
+ * from on construction.
  *
  * @since 2.4
  * @version $Id: BufferedAuthorityDecorator.java 26038 2007-06-27 01:58:12Z jgarnett $
@@ -68,7 +68,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         implements AuthorityFactory, CRSAuthorityFactory, BufferedFactory {
 
     /** Cache to be used for referencing objects. */
-    ObjectCache cache;
+    ObjectCache<Object, Object> cache;
 
     /** The delegate authority for coordinate reference systems. */
     private CRSAuthorityFactory crsAuthority;
@@ -79,9 +79,8 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
     /**
      * Constructs an instance wrapping the specified factory with a default cache.
      *
-     * <p>The provided authority factory must implement {@link DatumAuthorityFactory}, {@link
-     * CSAuthorityFactory}, {@link CRSAuthorityFactory} and {@link
-     * CoordinateOperationAuthorityFactory} .
+     * <p>The provided authority factory must implement {@link DatumAuthorityFactory}, {@link CSAuthorityFactory},
+     * {@link CRSAuthorityFactory} and {@link CoordinateOperationAuthorityFactory} .
      *
      * @param factory The factory to cache. Can not be {@code null}.
      */
@@ -90,28 +89,26 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
     }
 
     /**
-     * Constructs an instance wrapping the specified factory. The {@code maxStrongReferences}
-     * argument specify the maximum number of objects to keep by strong reference. If a greater
-     * amount of objects are created, then the strong references for the oldest ones are replaced by
-     * weak references.
+     * Constructs an instance wrapping the specified factory. The {@code maxStrongReferences} argument specify the
+     * maximum number of objects to keep by strong reference. If a greater amount of objects are created, then the
+     * strong references for the oldest ones are replaced by weak references.
      *
-     * <p>This constructor is protected because subclasses must declare which of the {@link
-     * DatumAuthorityFactory}, {@link CSAuthorityFactory}, {@link CRSAuthorityFactory} {@link
-     * SearchableAuthorityFactory} and {@link CoordinateOperationAuthorityFactory} interfaces they
-     * choose to implement.
+     * <p>This constructor is protected because subclasses must declare which of the {@link DatumAuthorityFactory},
+     * {@link CSAuthorityFactory}, {@link CRSAuthorityFactory} {@link SearchableAuthorityFactory} and
+     * {@link CoordinateOperationAuthorityFactory} interfaces they choose to implement.
      *
      * @param factory The factory to cache. Can not be {@code null}.
      * @param cache The underlying cache
      */
-    protected CachedCRSAuthorityDecorator(CRSAuthorityFactory factory, ObjectCache cache) {
+    protected CachedCRSAuthorityDecorator(CRSAuthorityFactory factory, ObjectCache<Object, Object> cache) {
         super(((ReferencingFactory) factory).getPriority()); // TODO
         this.cache = cache;
-        crsAuthority = (CRSAuthorityFactory) factory;
+        crsAuthority = factory;
         this.delegate = (AbstractAuthorityFactory) factory;
     }
 
     /** Utility method used to produce cache based on hint */
-    protected static ObjectCache createCache(final Hints hints) throws FactoryRegistryException {
+    protected static <K, V> ObjectCache<K, V> createCache(final Hints hints) throws FactoryRegistryException {
         return ObjectCaches.create(hints);
     }
 
@@ -125,6 +122,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
     //
     // AuthorityFactory
     //
+    @Override
     public IdentifiedObject createObject(String code) throws FactoryException {
         final String key = toKey(code);
         IdentifiedObject obj = (IdentifiedObject) cache.get(key);
@@ -143,14 +141,17 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         return obj;
     }
 
+    @Override
     public Citation getAuthority() {
         return crsAuthority.getAuthority();
     }
 
-    public Set getAuthorityCodes(Class type) throws FactoryException {
+    @Override
+    public Set<String> getAuthorityCodes(Class<? extends IdentifiedObject> type) throws FactoryException {
         return crsAuthority.getAuthorityCodes(type);
     }
 
+    @Override
     public InternationalString getDescriptionText(String code) throws FactoryException {
         return crsAuthority.getDescriptionText(code);
     }
@@ -158,6 +159,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
     //
     // CRSAuthority
     //
+    @Override
     public synchronized CompoundCRS createCompoundCRS(final String code) throws FactoryException {
         final String key = toKey(code);
         CompoundCRS crs = (CompoundCRS) cache.get(key);
@@ -176,8 +178,8 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         return crs;
     }
 
-    public CoordinateReferenceSystem createCoordinateReferenceSystem(String code)
-            throws FactoryException {
+    @Override
+    public CoordinateReferenceSystem createCoordinateReferenceSystem(String code) throws FactoryException {
         final String key = toKey(code);
         CoordinateReferenceSystem crs = (CoordinateReferenceSystem) cache.get(key);
         if (crs == null) {
@@ -195,6 +197,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         return crs;
     }
 
+    @Override
     public DerivedCRS createDerivedCRS(String code) throws FactoryException {
         final String key = toKey(code);
         DerivedCRS crs = (DerivedCRS) cache.get(key);
@@ -213,6 +216,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         return crs;
     }
 
+    @Override
     public EngineeringCRS createEngineeringCRS(String code) throws FactoryException {
         final String key = toKey(code);
         EngineeringCRS crs = (EngineeringCRS) cache.get(key);
@@ -231,6 +235,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         return crs;
     }
 
+    @Override
     public GeocentricCRS createGeocentricCRS(String code) throws FactoryException {
         final String key = toKey(code);
         GeocentricCRS crs = (GeocentricCRS) cache.get(key);
@@ -249,6 +254,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         return crs;
     }
 
+    @Override
     public GeographicCRS createGeographicCRS(String code) throws FactoryException {
         final String key = toKey(code);
         GeographicCRS crs = (GeographicCRS) cache.get(key);
@@ -267,6 +273,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         return crs;
     }
 
+    @Override
     public ImageCRS createImageCRS(String code) throws FactoryException {
         final String key = toKey(code);
         ImageCRS crs = (ImageCRS) cache.get(key);
@@ -285,6 +292,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         return crs;
     }
 
+    @Override
     public ProjectedCRS createProjectedCRS(String code) throws FactoryException {
         final String key = toKey(code);
         ProjectedCRS crs = (ProjectedCRS) cache.get(key);
@@ -303,6 +311,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         return crs;
     }
 
+    @Override
     public TemporalCRS createTemporalCRS(String code) throws FactoryException {
         final String key = toKey(code);
         TemporalCRS crs = (TemporalCRS) cache.get(key);
@@ -321,6 +330,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         return crs;
     }
 
+    @Override
     public VerticalCRS createVerticalCRS(String code) throws FactoryException {
         final String key = toKey(code);
         VerticalCRS crs = (VerticalCRS) cache.get(key);
@@ -342,6 +352,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
     //
     // AbstractAuthorityFactory
     //
+    @Override
     public void dispose() throws FactoryException {
         delegate.dispose();
         cache.clear();
@@ -349,50 +360,48 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         delegate = null;
     }
 
+    @Override
     public String getBackingStoreDescription() throws FactoryException {
         return delegate.getBackingStoreDescription();
     }
 
     /**
-     * Returns a finder which can be used for looking up unidentified objects. The default
-     * implementation delegates lookup to the underlying backing store and caches the result.
+     * Returns a finder which can be used for looking up unidentified objects. The default implementation delegates
+     * lookup to the underlying backing store and caches the result.
      *
      * @since 2.4
      */
     @Override
-    public synchronized IdentifiedObjectFinder getIdentifiedObjectFinder(
-            final Class /*<? extends IdentifiedObject>*/ type) throws FactoryException {
-        return new Finder(
-                delegate.getIdentifiedObjectFinder(type), ObjectCaches.create("weak", 250));
+    public synchronized IdentifiedObjectFinder getIdentifiedObjectFinder(final Class<? extends IdentifiedObject> type)
+            throws FactoryException {
+        return new Finder(delegate.getIdentifiedObjectFinder(type), ObjectCaches.create("weak", 250));
     }
 
     /**
-     * An implementation of {@link IdentifiedObjectFinder} which delegates the work to the
-     * underlying backing store and caches the result.
+     * An implementation of {@link IdentifiedObjectFinder} which delegates the work to the underlying backing store and
+     * caches the result.
      *
-     * <p>A separate ObjectCache, findCache, is used to store the values created over the course of
-     * finding. The findCache is set up as a "chain" allowing it to use our cache to prevent
-     * duplication of effort. In the future this findCache may be shared between instances.
+     * <p>A separate ObjectCache, findCache, is used to store the values created over the course of finding. The
+     * findCache is set up as a "chain" allowing it to use our cache to prevent duplication of effort. In the future
+     * this findCache may be shared between instances.
      *
-     * <p><b>Implementation note:</b> we will create objects using directly the underlying backing
-     * store, not using the cache. This is because hundred of objects may be created during a scan
-     * while only one will be typically retained. We don't want to overload the cache with every
-     * false candidates that we encounter during the scan.
+     * <p><b>Implementation note:</b> we will create objects using directly the underlying backing store, not using the
+     * cache. This is because hundred of objects may be created during a scan while only one will be typically retained.
+     * We don't want to overload the cache with every false candidates that we encounter during the scan.
      */
     private final class Finder extends IdentifiedObjectFinder.Adapter {
         /** Cache used when finding */
-        private ObjectCache findCache;
+        private ObjectCache<Object, Object> findCache;
 
         /** Creates a finder for the underlying backing store. */
-        Finder(final IdentifiedObjectFinder finder, ObjectCache tempCache) {
+        Finder(final IdentifiedObjectFinder finder, ObjectCache<Object, Object> tempCache) {
             super(finder);
             this.findCache = tempCache;
         }
 
         /**
-         * Looks up an object from this authority factory which is equals, ignoring metadata, to the
-         * specified object. The default implementation performs the same lookup than the backing
-         * store and caches the result.
+         * Looks up an object from this authority factory which is equals, ignoring metadata, to the specified object.
+         * The default implementation performs the same lookup than the backing store and caches the result.
          */
         @Override
         public IdentifiedObject find(final IdentifiedObject object) throws FactoryException {
@@ -405,8 +414,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
              *       is not a big deal if the same object is searched twice; it is "just" a
              *       waste of CPU.
              */
-            IdentifiedObject candidate;
-            candidate = (IdentifiedObject) findCache.get(object);
+            IdentifiedObject candidate = (IdentifiedObject) findCache.get(object);
 
             if (candidate == null) {
                 // Must delegates to 'finder' (not to 'super') in order to take
@@ -432,8 +440,7 @@ public final class CachedCRSAuthorityDecorator extends AbstractAuthorityFactory
         /** Returns the identifier for the specified object. */
         @Override
         public String findIdentifier(final IdentifiedObject object) throws FactoryException {
-            IdentifiedObject candidate;
-            candidate = (IdentifiedObject) findCache.get(object);
+            IdentifiedObject candidate = (IdentifiedObject) findCache.get(object);
             if (candidate != null) {
                 return getIdentifier(candidate);
             }

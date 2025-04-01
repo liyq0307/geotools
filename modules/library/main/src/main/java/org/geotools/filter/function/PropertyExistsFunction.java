@@ -22,32 +22,29 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /** A new function to check if a property exists. */
 public class PropertyExistsFunction extends FunctionExpressionImpl {
 
     // public static FunctionName NAME = new FunctionNameImpl("PropertyExists","propertyName");
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "PropertyExists",
-                    parameter("exists", Boolean.class),
-                    parameter("propertyName", Object.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "PropertyExists", parameter("exists", Boolean.class), parameter("propertyName", Object.class));
 
     public PropertyExistsFunction() {
         super(NAME);
     }
 
     private String getPropertyName() {
-        Expression expr = (Expression) getParameters().get(0);
+        Expression expr = getParameters().get(0);
 
         return getPropertyName(expr);
     }
@@ -67,9 +64,8 @@ public class PropertyExistsFunction extends FunctionExpressionImpl {
     }
 
     /**
-     * @return {@link Boolean#TRUE} if the <code>feature</code>'s {@link FeatureType} contains an
-     *     attribute named as the property name passed as this function argument, {@link
-     *     Boolean#FALSE} otherwise.
+     * @return {@link Boolean#TRUE} if the <code>feature</code>'s {@link FeatureType} contains an attribute named as the
+     *     property name passed as this function argument, {@link Boolean#FALSE} otherwise.
      */
     public Object evaluate(SimpleFeature feature) {
         String propName = getPropertyName();
@@ -79,10 +75,11 @@ public class PropertyExistsFunction extends FunctionExpressionImpl {
     }
 
     /**
-     * @return {@link Boolean#TRUE} if the Class of the object passed as argument defines a property
-     *     names as the property name passed as this function argument, following the standard Java
-     *     Beans naming conventions for getters. {@link Boolean#FALSE} otherwise.
+     * @return {@link Boolean#TRUE} if the Class of the object passed as argument defines a property names as the
+     *     property name passed as this function argument, following the standard Java Beans naming conventions for
+     *     getters. {@link Boolean#FALSE} otherwise.
      */
+    @Override
     public Object evaluate(Object bean) {
         if (bean instanceof SimpleFeature) {
             return evaluate((SimpleFeature) bean);

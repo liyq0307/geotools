@@ -23,27 +23,28 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 
+@SuppressWarnings("PMD.SystemPrintln")
 public class PropertyExamples {
 
     static File directory;
@@ -64,18 +65,18 @@ public class PropertyExamples {
             }
             File example = new File(tmp, "example.properties");
 
-            BufferedWriter writer = new BufferedWriter(new FileWriter(example));
-            writer.write("_=id:Integer,name:String,geom:Point");
-            writer.newLine();
-            writer.write("fid1=1|jody garnett|POINT(0 0)");
-            writer.newLine();
-            writer.write("fid2=2|brent|POINT(10 10)");
-            writer.newLine();
-            writer.write("fid3=3|dave|POINT(20 20)");
-            writer.newLine();
-            writer.write("fid4=4|justin deolivera|POINT(30 30)");
-            writer.newLine();
-            writer.close();
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(example))) {
+                writer.write("_=id:Integer,name:String,geom:Point");
+                writer.newLine();
+                writer.write("fid1=1|jody garnett|POINT(0 0)");
+                writer.newLine();
+                writer.write("fid2=2|brent|POINT(10 10)");
+                writer.newLine();
+                writer.write("fid3=3|dave|POINT(20 20)");
+                writer.newLine();
+                writer.write("fid4=4|justin deolivera|POINT(30 30)");
+                writer.newLine();
+            }
 
             directory = tmp;
             try {
@@ -90,10 +91,10 @@ public class PropertyExamples {
         } catch (Exception e) {
             java.util.logging.Logger.getGlobal().log(java.util.logging.Level.INFO, "", e);
         } finally {
-            File list[] = tmp.listFiles();
-            for (int i = 0; i < list.length; i++) {
-                list[i].delete();
-                System.out.println("remove " + list[i]);
+            File[] list = tmp.listFiles();
+            for (File file : list) {
+                file.delete();
+                System.out.println("remove " + file);
             }
             tmp.delete();
             System.out.println("remove " + tmp);
@@ -118,119 +119,97 @@ public class PropertyExamples {
     private static void transactionExample() throws Exception {
         System.out.println("transactionExample start\n");
         // transactionExample start
-        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        Map<String, Serializable> params = new HashMap<>();
         params.put("directory", directory);
         DataStore store = DataStoreFinder.getDataStore(params);
 
-        Transaction t1 = new DefaultTransaction("transaction 1");
-        Transaction t2 = new DefaultTransaction("transactoin 2");
+        try (Transaction t1 = new DefaultTransaction("transaction 1");
+                Transaction t2 = new DefaultTransaction("transactoin 2")) {
 
-        SimpleFeatureType type = store.getSchema("example");
-        SimpleFeatureStore featureStore = (SimpleFeatureStore) store.getFeatureSource("example");
-        SimpleFeatureStore featureStore1 = (SimpleFeatureStore) store.getFeatureSource("example");
-        SimpleFeatureStore featureStore2 = (SimpleFeatureStore) store.getFeatureSource("example");
+            SimpleFeatureType type = store.getSchema("example");
+            SimpleFeatureStore featureStore = (SimpleFeatureStore) store.getFeatureSource("example");
+            SimpleFeatureStore featureStore1 = (SimpleFeatureStore) store.getFeatureSource("example");
+            SimpleFeatureStore featureStore2 = (SimpleFeatureStore) store.getFeatureSource("example");
 
-        featureStore1.setTransaction(t1);
-        featureStore2.setTransaction(t2);
+            featureStore1.setTransaction(t1);
+            featureStore2.setTransaction(t2);
 
-        System.out.println("Step 1");
-        System.out.println("------");
-        System.out.println(
-                "start     auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-        System.out.println(
-                "start              t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-        System.out.println(
-                "start              t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+            System.out.println("Step 1");
+            System.out.println("------");
+            System.out.println("start     auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+            System.out.println("start              t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+            System.out.println("start              t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
-        // select feature to remove
-        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
-        Filter filter1 = ff.id(Collections.singleton(ff.featureId("fid1")));
-        featureStore1.removeFeatures(filter1); // road1 removes fid1 on t1
+            // select feature to remove
+            FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
+            Filter filter1 = ff.id(Collections.singleton(ff.featureId("fid1")));
+            featureStore1.removeFeatures(filter1); // road1 removes fid1 on t1
 
-        System.out.println();
-        System.out.println("Step 2 transaction 1 removes feature 'fid1'");
-        System.out.println("------");
-        System.out.println(
-                "t1 remove auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-        System.out.println(
-                "t1 remove          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-        System.out.println(
-                "t1 remove          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+            System.out.println();
+            System.out.println("Step 2 transaction 1 removes feature 'fid1'");
+            System.out.println("------");
+            System.out.println("t1 remove auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+            System.out.println("t1 remove          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+            System.out.println("t1 remove          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
-        // new feature to add!
-        SimpleFeature feature =
-                SimpleFeatureBuilder.build(type, new Object[] {5, "chris", null}, "fid5");
-        feature.getUserData().put(Hints.USE_PROVIDED_FID, true);
-        feature.getUserData().put(Hints.PROVIDED_FID, "fid5");
+            // new feature to add!
+            SimpleFeature feature = SimpleFeatureBuilder.build(type, new Object[] {5, "chris", null}, "fid5");
+            feature.getUserData().put(Hints.USE_PROVIDED_FID, true);
+            feature.getUserData().put(Hints.PROVIDED_FID, "fid5");
 
-        SimpleFeatureCollection collection = DataUtilities.collection(feature);
-        featureStore2.addFeatures(collection);
+            SimpleFeatureCollection collection = DataUtilities.collection(feature);
+            featureStore2.addFeatures(collection);
 
-        System.out.println();
-        System.out.println("Step 3 transaction 2 adds a new feature '" + feature.getID() + "'");
-        System.out.println("------");
-        System.out.println(
-                "t2 add    auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-        System.out.println(
-                "t2 add             t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-        System.out.println(
-                "t1 add             t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+            System.out.println();
+            System.out.println("Step 3 transaction 2 adds a new feature '" + feature.getID() + "'");
+            System.out.println("------");
+            System.out.println("t2 add    auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+            System.out.println("t2 add             t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+            System.out.println("t1 add             t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
-        // commit transaction one
-        t1.commit();
+            // commit transaction one
+            t1.commit();
 
-        System.out.println();
-        System.out.println("Step 4 transaction 1 commits the removal of feature 'fid1'");
-        System.out.println("------");
-        System.out.println(
-                "t1 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-        System.out.println(
-                "t1 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-        System.out.println(
-                "t1 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+            System.out.println();
+            System.out.println("Step 4 transaction 1 commits the removal of feature 'fid1'");
+            System.out.println("------");
+            System.out.println("t1 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+            System.out.println("t1 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+            System.out.println("t1 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
 
-        // commit transaction two
-        t2.commit();
+            // commit transaction two
+            t2.commit();
 
-        System.out.println();
-        System.out.println(
-                "Step 5 transaction 2 commits the addition of '" + feature.getID() + "'");
-        System.out.println("------");
-        System.out.println(
-                "t2 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
-        System.out.println(
-                "t2 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
-        System.out.println(
-                "t2 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
-
-        t1.close();
-        t2.close();
+            System.out.println();
+            System.out.println("Step 5 transaction 2 commits the addition of '" + feature.getID() + "'");
+            System.out.println("------");
+            System.out.println("t2 commit auto-commit: " + DataUtilities.fidSet(featureStore.getFeatures()));
+            System.out.println("t2 commit          t1: " + DataUtilities.fidSet(featureStore1.getFeatures()));
+            System.out.println("t2 commit          t2: " + DataUtilities.fidSet(featureStore2.getFeatures()));
+        }
         store.dispose(); // clear out any listeners
         // transactionExample end
         System.out.println("\ntransactionExample end\n");
     }
 
+    @SuppressWarnings("PMD.UseTryWithResources") // neet in catch for rollback
     private static void removeAllExample() throws Exception {
         System.out.println("removeAllExample start\n");
         // removeAllExample start
-        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        Map<String, Serializable> params = new HashMap<>();
         params.put("directory", directory);
         DataStore store = DataStoreFinder.getDataStore(params);
 
         Transaction t = new DefaultTransaction("transaction");
         try {
-            FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
-                    store.getFeatureWriter("example", Filter.INCLUDE, t);
-
-            SimpleFeature feature;
-            try {
+            try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                    store.getFeatureWriter("example", Filter.INCLUDE, t)) {
+                SimpleFeature feature;
                 while (writer.hasNext()) {
                     feature = writer.next();
                     System.out.println("remove " + feature.getID());
                     writer.remove(); // marking contents for removal
                 }
-            } finally {
-                writer.close();
             }
             System.out.println("commit " + t); // only now are the contents
             // removed
@@ -249,15 +228,14 @@ public class PropertyExamples {
     private void replaceAll() throws Exception {
         System.out.println("replaceAll start\n");
         // replaceAll start
-        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        Map<String, Serializable> params = new HashMap<>();
         params.put("directory", directory);
         DataStore store = DataStoreFinder.getDataStore(params);
 
         final SimpleFeatureType type = store.getSchema("example");
-        final FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
-        SimpleFeature f;
+
         DefaultFeatureCollection collection = new DefaultFeatureCollection();
-        f = SimpleFeatureBuilder.build(type, new Object[] {1, "jody"}, "fid1");
+        SimpleFeature f = SimpleFeatureBuilder.build(type, new Object[] {1, "jody"}, "fid1");
         collection.add(f);
         f = SimpleFeatureBuilder.build(type, new Object[] {2, "brent"}, "fid3");
         collection.add(f);
@@ -266,23 +244,22 @@ public class PropertyExamples {
         f = SimpleFeatureBuilder.build(type, new Object[] {4, "justin"}, "fid4");
         collection.add(f);
 
-        writer = store.getFeatureWriter("road", Transaction.AUTO_COMMIT);
-        try {
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                store.getFeatureWriter("road", Transaction.AUTO_COMMIT)) {
             // remove all features
             while (writer.hasNext()) {
                 writer.next();
                 writer.remove();
             }
             // copy new features in
-            SimpleFeatureIterator iterator = collection.features();
-            while (iterator.hasNext()) {
-                SimpleFeature feature = iterator.next();
-                SimpleFeature newFeature = writer.next(); // new blank feature
-                newFeature.setAttributes(feature.getAttributes());
-                writer.write();
+            try (SimpleFeatureIterator iterator = collection.features()) {
+                while (iterator.hasNext()) {
+                    SimpleFeature feature = iterator.next();
+                    SimpleFeature newFeature = writer.next(); // new blank feature
+                    newFeature.setAttributes(feature.getAttributes());
+                    writer.write();
+                }
             }
-        } finally {
-            writer.close();
         }
         // replaceAll end
         System.out.println("\nreplaceAll end\n");
@@ -291,23 +268,21 @@ public class PropertyExamples {
     private static void appendContent() throws Exception {
         System.out.println("copyContent start\n");
         // copyContent start
-        Map<String, Serializable> params = new HashMap<String, Serializable>();
+        Map<String, Serializable> params = new HashMap<>();
         params.put("directory", directory);
         DataStore store = DataStoreFinder.getDataStore(params);
 
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
         SimpleFeature feature, newFeature;
 
         SimpleFeatureType type = store.getSchema("example");
-        SimpleFeatureType type2 =
-                DataUtilities.createType("duplicate", "id:Integer,geom:Geometry,name:String");
+        SimpleFeatureType type2 = DataUtilities.createType("duplicate", "id:Integer,geom:Geometry,name:String");
 
         Query query = new Query(type.getTypeName(), Filter.INCLUDE);
-        reader = store.getFeatureReader(query, Transaction.AUTO_COMMIT);
         store.createSchema(type2);
-        writer = store.getFeatureWriterAppend("duplicate", Transaction.AUTO_COMMIT);
-        try {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                        store.getFeatureReader(query, Transaction.AUTO_COMMIT);
+                FeatureWriter<SimpleFeatureType, SimpleFeature> writer =
+                        store.getFeatureWriterAppend("duplicate", Transaction.AUTO_COMMIT)) {
             while (reader.hasNext()) {
                 feature = reader.next();
                 newFeature = writer.next();
@@ -316,9 +291,6 @@ public class PropertyExamples {
                 newFeature.setAttribute("name", feature.getAttribute("name"));
                 writer.write();
             }
-        } finally {
-            reader.close();
-            writer.close();
         }
         // copyContent end
         System.out.println("\ncopyContent end\n");

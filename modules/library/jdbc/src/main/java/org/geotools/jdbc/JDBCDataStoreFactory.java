@@ -17,7 +17,6 @@
 package org.geotools.jdbc;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -25,10 +24,10 @@ import java.util.Map;
 import java.util.function.Predicate;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp.BasicDataSource;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.Parameter;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Parameter;
 import org.geotools.data.jdbc.datasource.DBCPDataSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
@@ -49,13 +48,7 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
 
     /** parameter for database type */
     public static final Param DBTYPE =
-            new Param(
-                    "dbtype",
-                    String.class,
-                    "Type",
-                    true,
-                    null,
-                    Collections.singletonMap(Parameter.LEVEL, "program"));
+            new Param("dbtype", String.class, "Type", true, null, Collections.singletonMap(Parameter.LEVEL, "program"));
 
     /** parameter for database host */
     public static final Param HOST = new Param("host", String.class, "Host", true, "localhost");
@@ -73,173 +66,132 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
     public static final Param USER = new Param("user", String.class, "user name to login as");
 
     /** parameter for database password */
-    public static final Param PASSWD =
-            new Param(
-                    "passwd",
-                    String.class,
-                    new SimpleInternationalString("password used to login"),
-                    false,
-                    null,
-                    Collections.singletonMap(Parameter.IS_PASSWORD, Boolean.TRUE));
+    public static final Param PASSWD = new Param(
+            "passwd",
+            String.class,
+            new SimpleInternationalString("password used to login"),
+            false,
+            null,
+            Collections.singletonMap(Parameter.IS_PASSWORD, Boolean.TRUE));
 
     /** parameter for namespace of the datastore */
-    public static final Param NAMESPACE =
-            new Param("namespace", String.class, "Namespace prefix", false);
+    public static final Param NAMESPACE = new Param("namespace", String.class, "Namespace prefix", false);
 
     /** parameter for data source */
-    public static final Param DATASOURCE =
-            new Param("Data Source", DataSource.class, "Data Source", false);
+    public static final Param DATASOURCE = new Param("Data Source", DataSource.class, "Data Source", false);
 
     /** Maximum number of connections in the connection pool */
-    public static final Param MAXCONN =
-            new Param(
-                    "max connections",
-                    Integer.class,
-                    "maximum number of open connections",
-                    false,
-                    Integer.valueOf(10));
+    public static final Param MAXCONN = new Param(
+            "max connections", Integer.class, "maximum number of open connections", false, Integer.valueOf(10));
 
     /** Minimum number of connections in the connection pool */
-    public static final Param MINCONN =
-            new Param(
-                    "min connections",
-                    Integer.class,
-                    "minimum number of pooled connection",
-                    false,
-                    Integer.valueOf(1));
+    public static final Param MINCONN = new Param(
+            "min connections", Integer.class, "minimum number of pooled connection", false, Integer.valueOf(1));
 
     /** If connections should be validated before using them */
-    public static final Param VALIDATECONN =
-            new Param(
-                    "validate connections",
-                    Boolean.class,
-                    "check connection is alive before using it",
-                    false,
-                    Boolean.TRUE);
+    public static final Param VALIDATECONN = new Param(
+            "validate connections", Boolean.class, "check connection is alive before using it", false, Boolean.TRUE);
 
     /** Number of records read */
-    public static final Param FETCHSIZE =
-            new Param(
-                    "fetch size",
-                    Integer.class,
-                    "number of records read with each iteraction with the dbms",
-                    false,
-                    1000);
+    public static final Param FETCHSIZE = new Param(
+            "fetch size", Integer.class, "number of records read with each iteraction with the dbms", false, 1000);
 
-    /**
-     * If different from one, the JDBCInsertFeatureWriter will buffer the features and insert them
-     * in batches
-     */
-    public static final Param BATCH_INSERT_SIZE =
-            new Param(
-                    "Batch insert size",
-                    Integer.class,
-                    "Number of records inserted in the same batch (default, 1). For optimal performance, set to 100.",
-                    false,
-                    1);
+    /** If different from one, the JDBCInsertFeatureWriter will buffer the features and insert them in batches */
+    public static final Param BATCH_INSERT_SIZE = new Param(
+            "Batch insert size",
+            Integer.class,
+            "Number of records inserted in the same batch (default, 1). For optimal performance, set to 100.",
+            false,
+            1);
 
     /** Maximum amount of time the pool will wait when trying to grab a new connection * */
-    public static final Param MAXWAIT =
-            new Param(
-                    "Connection timeout",
-                    Integer.class,
-                    "number of seconds the connection pool will wait before timing out attempting to get a new connection (default, 20 seconds)",
-                    false,
-                    20);
+    public static final Param MAXWAIT = new Param(
+            "Connection timeout",
+            Integer.class,
+            "number of seconds the connection pool will wait before timing out attempting to get a new connection (default, 20 seconds)",
+            false,
+            20);
 
     /** If IDLE connections should be validated before using them * */
-    public static final Param TEST_WHILE_IDLE =
-            new Param(
-                    "Test while idle",
-                    Boolean.class,
-                    "Periodically test the connections are still valid also while idle in the pool",
-                    false,
-                    true);
+    public static final Param TEST_WHILE_IDLE = new Param(
+            "Test while idle",
+            Boolean.class,
+            "Periodically test the connections are still valid also while idle in the pool",
+            false,
+            true);
 
     /** Idle object evictor periodicity * */
-    public static final Param TIME_BETWEEN_EVICTOR_RUNS =
-            new Param(
-                    "Evictor run periodicity",
-                    Integer.class,
-                    "number of seconds between idle object evitor runs (default, 300 seconds)",
-                    false,
-                    300);
+    public static final Param TIME_BETWEEN_EVICTOR_RUNS = new Param(
+            "Evictor run periodicity",
+            Integer.class,
+            "number of seconds between idle object evitor runs (default, 300 seconds)",
+            false,
+            300);
 
     /** Min time for a connection to be idle in order to be evicted * */
-    public static final Param MIN_EVICTABLE_TIME =
-            new Param(
-                    "Max connection idle time",
-                    Integer.class,
-                    "number of seconds a connection needs to stay idle for the evictor to consider closing it",
-                    false,
-                    300);
+    public static final Param MIN_EVICTABLE_TIME = new Param(
+            "Max connection idle time",
+            Integer.class,
+            "number of seconds a connection needs to stay idle for the evictor to consider closing it",
+            false,
+            300);
 
     /** Number of connections checked during a single evictor run * */
-    public static final Param EVICTOR_TESTS_PER_RUN =
-            new Param(
-                    "Evictor tests per run",
-                    Integer.class,
-                    "number of connections checked by the idle connection evictor for each of its runs (defaults to 3)",
-                    false,
-                    3);
+    public static final Param EVICTOR_TESTS_PER_RUN = new Param(
+            "Evictor tests per run",
+            Integer.class,
+            "number of connections checked by the idle connection evictor for each of its runs (defaults to 3)",
+            false,
+            3);
 
     /** Metadata table providing information about primary keys * */
-    public static final Param PK_METADATA_TABLE =
-            new Param(
-                    "Primary key metadata table",
-                    String.class,
-                    "The optional table containing primary key structure and sequence associations. Can be expressed as 'schema.name' or just 'name'",
-                    false);
+    public static final Param PK_METADATA_TABLE = new Param(
+            "Primary key metadata table",
+            String.class,
+            "The optional table containing primary key structure and sequence associations. Can be expressed as 'schema.name' or just 'name'",
+            false);
 
     /**
-     * Number of prepared statements cached per connection (this param is exposed only by factories
-     * supporting prepared statements *
+     * Number of prepared statements cached per connection (this param is exposed only by factories supporting prepared
+     * statements *
      */
-    public static final Param MAX_OPEN_PREPARED_STATEMENTS =
-            new Param(
-                    "Max open prepared statements",
-                    Integer.class,
-                    "Maximum number of prepared statements kept open and cached for each connection in the pool. "
-                            + "Set to 0 to have unbounded caching, to -1 to disable caching",
-                    false,
-                    50);
+    public static final Param MAX_OPEN_PREPARED_STATEMENTS = new Param(
+            "Max open prepared statements",
+            Integer.class,
+            "Maximum number of prepared statements kept open and cached for each connection in the pool. "
+                    + "Set to 0 to have unbounded caching, to -1 to disable caching",
+            false,
+            50);
 
     /** expose primary key columns as attributes */
-    public static final Param EXPOSE_PK =
-            new Param(
-                    "Expose primary keys",
-                    Boolean.class,
-                    "Expose primary key columns as " + "attributes of the feature type",
-                    false,
-                    false);
+    public static final Param EXPOSE_PK = new Param(
+            "Expose primary keys",
+            Boolean.class,
+            "Expose primary key columns as " + "attributes of the feature type",
+            false,
+            false);
 
     /** SQL executed when the session begins */
-    public static final Param SQL_ON_BORROW =
-            new Param(
-                    "Session startup SQL",
-                    String.class,
-                    "SQL statement executed when the connection is grabbed from the pool",
-                    false,
-                    null,
-                    Collections.singletonMap(Parameter.IS_LARGE_TEXT, Boolean.TRUE));
+    public static final Param SQL_ON_BORROW = new Param(
+            "Session startup SQL",
+            String.class,
+            "SQL statement executed when the connection is grabbed from the pool",
+            false,
+            null,
+            Collections.singletonMap(Parameter.IS_LARGE_TEXT, Boolean.TRUE));
 
     /** SQL executed when the session ends */
-    public static final Param SQL_ON_RELEASE =
-            new Param(
-                    "Session close-up SQL",
-                    String.class,
-                    "SQL statement executed when the connection is released to the pool",
-                    false,
-                    null,
-                    Collections.singletonMap(Parameter.IS_LARGE_TEXT, Boolean.TRUE));
+    public static final Param SQL_ON_RELEASE = new Param(
+            "Session close-up SQL",
+            String.class,
+            "SQL statement executed when the connection is released to the pool",
+            false,
+            null,
+            Collections.singletonMap(Parameter.IS_LARGE_TEXT, Boolean.TRUE));
 
     /** JDBC callback factory */
-    public static final Param CALLBACK_FACTORY =
-            new Param(
-                    "Callback factory",
-                    String.class,
-                    "Name of JDBCReaderCallbackFactory to enable on the data store",
-                    false);
+    public static final Param CALLBACK_FACTORY = new Param(
+            "Callback factory", String.class, "Name of JDBCReaderCallbackFactory to enable on the data store", false);
 
     /** system property name used to set callback factory */
     static final String CALLBACK_PROPERTY = "gt2.jdbc.callback";
@@ -263,21 +215,21 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
      *   <li>Required Parameters are present
      * </ul>
      *
-     * @param params
      * @return true if params is in agreement with getParametersInfo and checkDBType
      */
-    public boolean canProcess(Map params) {
+    @Override
+    public boolean canProcess(Map<String, ?> params) {
         if (!DataUtilities.canProcess(params, getParametersInfo())) {
             return false;
         }
         return checkDBType(params);
     }
 
-    protected boolean checkDBType(Map params) {
+    protected boolean checkDBType(Map<String, ?> params) {
         return checkDBType(params, getDatabaseID());
     }
 
-    protected final boolean checkDBType(Map params, String dbtype) {
+    protected final boolean checkDBType(Map<String, ?> params, String dbtype) {
         String type;
 
         try {
@@ -293,7 +245,8 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
         }
     }
 
-    public final JDBCDataStore createDataStore(Map params) throws IOException {
+    @Override
+    public final JDBCDataStore createDataStore(Map<String, ?> params) throws IOException {
         JDBCDataStore dataStore = new JDBCDataStore();
 
         // dialect
@@ -341,15 +294,13 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
                 String[] parts = metadataTable.split("\\.");
                 if (parts.length > 2)
                     throw new IllegalArgumentException(
-                            "The primary key metadata table format "
-                                    + "is either 'name' or 'schema.name'");
+                            "The primary key metadata table format " + "is either 'name' or 'schema.name'");
                 tableFinder.setTableSchema(parts[0]);
                 tableFinder.setTableName(parts[1]);
             } else {
                 tableFinder.setTableName(metadataTable);
             }
-            dataStore.setPrimaryKeyFinder(
-                    new CompositePrimaryKeyFinder(tableFinder, new HeuristicPrimaryKeyFinder()));
+            dataStore.setPrimaryKeyFinder(new CompositePrimaryKeyFinder(tableFinder, new HeuristicPrimaryKeyFinder()));
         }
 
         // expose primary keys
@@ -362,8 +313,7 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
         String sqlOnBorrow = (String) SQL_ON_BORROW.lookUp(params);
         String sqlOnRelease = (String) SQL_ON_RELEASE.lookUp(params);
         if (sqlOnBorrow != null || sqlOnRelease != null) {
-            SessionCommandsListener listener =
-                    new SessionCommandsListener(sqlOnBorrow, sqlOnRelease);
+            SessionCommandsListener listener = new SessionCommandsListener(sqlOnBorrow, sqlOnRelease);
             dataStore.getConnectionLifecycleListeners().add(listener);
         }
 
@@ -374,9 +324,7 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
             callbackFactory = System.getProperty(CALLBACK_PROPERTY);
         }
         dataStore.setCallbackFactory(
-                callbackFactory != null
-                        ? findCallbackFactory(callbackFactory)
-                        : JDBCCallbackFactory.NULL);
+                callbackFactory != null ? findCallbackFactory(callbackFactory) : JDBCCallbackFactory.NULL);
 
         // factories
         dataStore.setFilterFactory(CommonFactoryFinder.getFilterFactory(null));
@@ -396,38 +344,38 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
     /**
      * Subclass hook to do additional initialization of a newly created datastore.
      *
-     * <p>Typically subclasses will want to override this method in the case where they provide
-     * additional datastore parameters, those should be processed here.
+     * <p>Typically subclasses will want to override this method in the case where they provide additional datastore
+     * parameters, those should be processed here.
      *
-     * <p>This method is provided with an instance of the datastore. In some cases subclasses may
-     * wish to create a new instance of the datastore, for instance in order to wrap the original
-     * instance. This is supported but the new datastore must be returned from this method. If not
-     * is such the case this method should still return the original passed in.
+     * <p>This method is provided with an instance of the datastore. In some cases subclasses may wish to create a new
+     * instance of the datastore, for instance in order to wrap the original instance. This is supported but the new
+     * datastore must be returned from this method. If not is such the case this method should still return the original
+     * passed in.
      *
      * @param dataStore The newly created datastore.
      * @param params THe datastore parameters.
      */
-    protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map params)
-            throws IOException {
+    protected JDBCDataStore createDataStoreInternal(JDBCDataStore dataStore, Map<String, ?> params) throws IOException {
         return dataStore;
     }
 
-    public DataStore createNewDataStore(Map params) throws IOException {
+    @Override
+    public DataStore createNewDataStore(Map<String, ?> params) throws IOException {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public final Param[] getParametersInfo() {
-        LinkedHashMap map = new LinkedHashMap();
+        Map<String, Object> map = new LinkedHashMap<>();
         setupParameters(map);
 
-        return (Param[]) map.values().toArray(new Param[map.size()]);
+        return map.values().toArray(new Param[map.size()]);
     }
 
     /**
      * Sets up the database connection parameters.
      *
-     * <p>Subclasses may extend, but should not override. This implementation registers the
-     * following parameters.
+     * <p>Subclasses may extend, but should not override. This implementation registers the following parameters.
      *
      * <ul>
      *   <li>{@link #HOST}
@@ -438,22 +386,15 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
      *   <li>{@link #PASSWD}
      * </ul>
      *
-     * Subclass implementation may remove any parameters from the map, or may overrwrite any
-     * parameters in the map.
+     * Subclass implementation may remove any parameters from the map, or may overrwrite any parameters in the map.
      *
      * @param parameters Map of {@link Param} objects.
      */
-    protected void setupParameters(Map parameters) {
+    protected void setupParameters(Map<String, Object> parameters) {
         // remember: when adding a new parameter here that is not connection related,
         // add it to the JDBCJNDIDataStoreFactory class
         parameters.put(
-                DBTYPE.key,
-                new Param(
-                        DBTYPE.key,
-                        DBTYPE.type,
-                        DBTYPE.description,
-                        DBTYPE.required,
-                        getDatabaseID()));
+                DBTYPE.key, new Param(DBTYPE.key, DBTYPE.type, DBTYPE.description, DBTYPE.required, getDatabaseID()));
         parameters.put(HOST.key, HOST);
         parameters.put(PORT.key, PORT);
         parameters.put(DATABASE.key, DATABASE);
@@ -481,9 +422,10 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
     /**
      * Determines if the datastore is available.
      *
-     * <p>Subclasses may with to override or extend this method. This implementation checks whether
-     * the jdbc driver class (provided by {@link #getDriverClassName()} can be loaded.
+     * <p>Subclasses may with to override or extend this method. This implementation checks whether the jdbc driver
+     * class (provided by {@link #getDriverClassName()} can be loaded.
      */
+    @Override
     public boolean isAvailable() {
         try {
             Class.forName(getDriverClassName());
@@ -499,6 +441,7 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
      *
      * <p>Subclasses may override, this implementation returns <code>null</code>.
      */
+    @Override
     public Map<java.awt.RenderingHints.Key, ?> getImplementationHints() {
         return null;
     }
@@ -523,7 +466,7 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
      * @param dataStore The datastore.
      * @param params The connection parameters
      */
-    protected SQLDialect createSQLDialect(JDBCDataStore dataStore, Map params) {
+    protected SQLDialect createSQLDialect(JDBCDataStore dataStore, Map<String, ?> params) {
         return createSQLDialect(dataStore);
     }
 
@@ -549,7 +492,7 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
      *
      * If different behaviour is needed, this method should be extended or overridden.
      */
-    protected DataSource createDataSource(Map params, SQLDialect dialect) throws IOException {
+    protected DataSource createDataSource(Map<String, ?> params, SQLDialect dialect) throws IOException {
         BasicDataSource dataSource = createDataSource(params);
 
         // some default data source behaviour
@@ -557,11 +500,10 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
             dataSource.setPoolPreparedStatements(true);
 
             // check if the dialect exposes the max prepared statements param
-            Map<String, Serializable> testMap = new HashMap<String, Serializable>();
+            Map<String, Object> testMap = new HashMap<>();
             setupParameters(testMap);
             if (testMap.containsKey(MAX_OPEN_PREPARED_STATEMENTS.key)) {
-                Integer maxPreparedStatements =
-                        (Integer) MAX_OPEN_PREPARED_STATEMENTS.lookUp(params);
+                Integer maxPreparedStatements = (Integer) MAX_OPEN_PREPARED_STATEMENTS.lookUp(params);
                 // limit prepared statements
                 if (maxPreparedStatements != null && maxPreparedStatements > 0)
                     dataSource.setMaxOpenPreparedStatements(maxPreparedStatements);
@@ -581,9 +523,8 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
      *
      * @param params Map of connection parameter.
      * @return DataSource for SQL use
-     * @throws IOException
      */
-    public BasicDataSource createDataSource(Map params) throws IOException {
+    public BasicDataSource createDataSource(Map<String, ?> params) throws IOException {
         // create a datasource
         BasicDataSource dataSource = new BasicDataSource();
 
@@ -654,22 +595,13 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
     }
 
     /**
-     * Override this to return a good validation query (a very quick one, such as one that asks the
-     * database what time is it) or return null if the factory does not support validation.
-     *
-     * @return
+     * Override this to return a good validation query (a very quick one, such as one that asks the database what time
+     * is it) or return null if the factory does not support validation.
      */
     protected abstract String getValidationQuery();
 
-    /**
-     * Builds up the JDBC url in a jdbc:<database>://<host>:<port>/<dbname> Override if you need a
-     * different setup
-     *
-     * @param params
-     * @return
-     * @throws IOException
-     */
-    protected String getJDBCUrl(Map params) throws IOException {
+    /** Builds up the JDBC url in a jdbc:<database>://<host>:<port>/<dbname> Override if you need a different setup */
+    protected String getJDBCUrl(Map<String, ?> params) throws IOException {
         // jdbc url
         String host = (String) HOST.lookUp(params);
         Integer port = (Integer) PORT.lookUp(params);
@@ -689,16 +621,13 @@ public abstract class JDBCDataStoreFactory implements DataStoreFactorySpi {
     /**
      * Looks up the callback factory with the specified name.
      *
-     * <p>Will return {@link JDBCCallbackFactory#NULL} if the factory with the specified name can't
-     * be found.
+     * <p>Will return {@link JDBCCallbackFactory#NULL} if the factory with the specified name can't be found.
      */
     static JDBCCallbackFactory findCallbackFactory(String factoryName) {
         if (factoryName != null) {
             try {
-                Predicate<JDBCCallbackFactory> sameName =
-                        f -> factoryName.equalsIgnoreCase(f.getName());
-                return CALLBACK_REGISTRY.getFactory(
-                        JDBCCallbackFactory.class, sameName, null, null);
+                Predicate<JDBCCallbackFactory> sameName = f -> factoryName.equalsIgnoreCase(f.getName());
+                return CALLBACK_REGISTRY.getFactory(JDBCCallbackFactory.class, sameName, null, null);
             } catch (FactoryRegistryException e) {
                 // pass through
             }

@@ -32,9 +32,9 @@ import org.xml.sax.helpers.DefaultHandler;
 /**
  * This is a schema handler. Code here has been modified from code written by Ian Schneider.
  *
- * <p>This class contains one stack used to store part of the parse tree. The ElementHandlers found
- * on the stack have direct next handlers placed on the stack. So here's the warning, be careful to
- * read how you may be affecting (or forgetting to affect) the stack.
+ * <p>This class contains one stack used to store part of the parse tree. The ElementHandlers found on the stack have
+ * direct next handlers placed on the stack. So here's the warning, be careful to read how you may be affecting (or
+ * forgetting to affect) the stack.
  *
  * @author dzwiers, Refractions Research, Inc. http://www.refractions.net
  * @author $Author:$ (last modification)
@@ -43,11 +43,10 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class XSISAXHandler extends DefaultHandler {
     // the logger -- should be used for debugging (assuming there are bugs LOL)
-    protected static final Logger logger =
-            org.geotools.util.logging.Logging.getLogger(XSISAXHandler.class);
+    protected static final Logger logger = org.geotools.util.logging.Logging.getLogger(XSISAXHandler.class);
 
     // the stack of handers representing a portion of the parse tree
-    private Stack handlers = new Stack();
+    private Stack<XSIElementHandler> handlers = new Stack<>();
 
     // The schema being used to parse into
     private Schema schema = null;
@@ -59,8 +58,8 @@ public class XSISAXHandler extends DefaultHandler {
     private Locator locator;
 
     /**
-     * Collects string chunks in {@link #characters(char[], int, int)} callback to be handled at the
-     * beggining of {@link #endElement(String, String, String)}
+     * Collects string chunks in {@link #characters(char[], int, int)} callback to be handled at the beggining of
+     * {@link #endElement(String, String, String)}
      */
     private StringBuffer characters = new StringBuffer();
 
@@ -72,17 +71,14 @@ public class XSISAXHandler extends DefaultHandler {
         /* not used*/
     }
 
-    /**
-     * Stores the uri being parsed to help resolve relative uris within the document.
-     *
-     * @param uri
-     */
+    /** Stores the uri being parsed to help resolve relative uris within the document. */
     public XSISAXHandler(URI uri) {
         //        this.uri = uri;
         rootHandler = new RootHandler(uri);
     }
 
     /** @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String, java.lang.String) */
+    @Override
     public void startPrefixMapping(String arg0, String arg1) {
         rootHandler.startPrefixMapping(arg0, arg1);
     }
@@ -92,6 +88,7 @@ public class XSISAXHandler extends DefaultHandler {
      *
      * @see org.xml.sax.ContentHandler#endDocument()
      */
+    @Override
     public void endDocument() {
         handlers.pop();
     }
@@ -101,6 +98,7 @@ public class XSISAXHandler extends DefaultHandler {
      *
      * @see org.xml.sax.ContentHandler#startDocument()
      */
+    @Override
     public void startDocument() {
         try {
             handlers.push(rootHandler);
@@ -113,12 +111,9 @@ public class XSISAXHandler extends DefaultHandler {
     /**
      * Implementation of characters. push String
      *
-     * @param ch
-     * @param start
-     * @param length
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#characters(char[], int, int)
      */
+    @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
         characters.append(ch, start, length);
     }
@@ -133,7 +128,7 @@ public class XSISAXHandler extends DefaultHandler {
         XSIElementHandler peek = null;
         try {
             if ((text != null) && !"".equals(text.trim())) {
-                peek = (XSIElementHandler) handlers.peek();
+                peek = handlers.peek();
                 peek.characters(text);
             }
         } catch (SAXException e) {
@@ -145,20 +140,15 @@ public class XSISAXHandler extends DefaultHandler {
     /**
      * Implementation of endElement. push NS,Name
      *
-     * @param namespaceURI
-     * @param localName
-     * @param qName
-     * @throws SAXException
-     * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String,
-     *     java.lang.String)
+     * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
      */
-    public void endElement(String namespaceURI, String localName, String qName)
-            throws SAXException {
+    @Override
+    public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
         handleCharacters();
         logger.fine("END: " + qName);
 
         try {
-            XSIElementHandler element = (XSIElementHandler) handlers.pop();
+            XSIElementHandler element = handlers.pop();
             element.endElement(namespaceURI, localName);
         } catch (SAXException e) {
             logger.warning(e.toString());
@@ -169,24 +159,17 @@ public class XSISAXHandler extends DefaultHandler {
     /**
      * Implementation of startElement.
      *
-     * @param namespaceURI
-     * @param localName
-     * @param qName
-     * @param atts
-     * @throws SAXException
-     * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String,
-     *     java.lang.String, org.xml.sax.Attributes)
+     * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String, java.lang.String,
+     *     org.xml.sax.Attributes)
      */
-    public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
-            throws SAXException {
+    @Override
+    public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
         characters.setLength(0);
         logger.fine("START: " + qName);
 
         try {
-            XSIElementHandler eh =
-                    ((XSIElementHandler) handlers.peek()).getHandler(namespaceURI, localName);
-            logger.finest(
-                    "Parent Node = " + ((XSIElementHandler) handlers.peek()).getClass().getName());
+            XSIElementHandler eh = handlers.peek().getHandler(namespaceURI, localName);
+            logger.finest("Parent Node = " + handlers.peek().getClass().getName());
 
             if (eh == null) {
                 eh = new IgnoreHandler();
@@ -203,11 +186,7 @@ public class XSISAXHandler extends DefaultHandler {
         }
     }
 
-    /**
-     * Sets the logging level for all the XSISAXHandlers.
-     *
-     * @param l
-     */
+    /** Sets the logging level for all the XSISAXHandlers. */
     public static void setLogLevel(Level l) {
         logger.setLevel(l);
         XSIElementHandler.setLogLevel(l);
@@ -216,11 +195,10 @@ public class XSISAXHandler extends DefaultHandler {
     /**
      * getSchema purpose.
      *
-     * <p>This method should be called only after the parse has been completed. This method will
-     * then return a compressed schema instance.
+     * <p>This method should be called only after the parse has been completed. This method will then return a
+     * compressed schema instance.
      *
      * @return schema
-     * @throws SAXException
      */
     public Schema getSchema() throws SAXException {
         if (schema == null) {
@@ -233,9 +211,9 @@ public class XSISAXHandler extends DefaultHandler {
     /**
      * Implementation of error.
      *
-     * @param exception
      * @see org.xml.sax.ErrorHandler#error(org.xml.sax.SAXParseException)
      */
+    @Override
     public void error(SAXParseException exception) {
         logger.severe("ERROR " + exception.getMessage());
         logger.severe("col " + locator.getColumnNumber() + ", line " + locator.getLineNumber());
@@ -244,10 +222,9 @@ public class XSISAXHandler extends DefaultHandler {
     /**
      * Implementation of fatalError.
      *
-     * @param exception
-     * @throws SAXException
      * @see org.xml.sax.ErrorHandler#fatalError(org.xml.sax.SAXParseException)
      */
+    @Override
     public void fatalError(SAXParseException exception) throws SAXException {
         logger.severe("FATAL " + exception.getMessage());
         logger.severe("col " + locator.getColumnNumber() + ", line " + locator.getLineNumber());
@@ -257,15 +234,16 @@ public class XSISAXHandler extends DefaultHandler {
     /**
      * Implementation of warning.
      *
-     * @param exception
      * @see org.xml.sax.ErrorHandler#warning(org.xml.sax.SAXParseException)
      */
+    @Override
     public void warning(SAXParseException exception) {
         logger.warning("WARN " + exception.getMessage());
         logger.severe("col " + locator.getColumnNumber() + ", line " + locator.getLineNumber());
     }
 
     /** @see org.xml.sax.ContentHandler#setDocumentLocator(org.xml.sax.Locator) */
+    @Override
     public void setDocumentLocator(Locator locator) {
         super.setDocumentLocator(locator);
         this.locator = locator;

@@ -20,33 +20,36 @@
  */
 package org.geotools.referencing.operation.projection;
 
-import static java.lang.Math.*;
+import static java.lang.Math.PI;
+import static java.lang.Math.asin;
+import static java.lang.Math.atan;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
+import static java.lang.Math.toDegrees;
 
 import java.awt.geom.Point2D;
 import java.util.logging.Level;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
- * Rotated Pole Transformation for rotated spherical coordinates ("Rotated Pole Coordinates"),
- * commonly used in numerical weather forecasting models.
+ * Rotated Pole Transformation for rotated spherical coordinates ("Rotated Pole Coordinates"), commonly used in
+ * numerical weather forecasting models.
  *
- * <p>Key parameters: {@code latitudeOfOrigin}, {@code centralMeridian} - latitude/longitude of the
- * rotated origin.
+ * <p>Key parameters: {@code latitudeOfOrigin}, {@code centralMeridian} - latitude/longitude of the rotated origin.
  *
- * <p>Based on the code provided by Jürgen Seib (Deutscher Wetterdienst), adopted to follow
- * "+proj=ob_tran" behaviour.
+ * <p>Based on the code provided by Jürgen Seib (Deutscher Wetterdienst), adopted to follow "+proj=ob_tran" behaviour.
  *
  * <p>For examples see "RotatedPole.txt" file in tests directory
  *
- * @see <a href="http://www.cosmo-model.org/content/model/documentation/core/default.htm#p1">COSMO
- *     User Manual, Part 1</a>
+ * @see <a href="http://www.cosmo-model.org/content/model/documentation/core/default.htm#p1">COSMO User Manual, Part
+ *     1</a>
  * @see <a href="https://github.com/OSGeo/proj.4/blob/master/src/PJ_ob_tran.c">proj.4</a>
  * @since 15.0
  * @version $Id$
@@ -68,14 +71,14 @@ public class RotatedPole extends MapProjection {
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      *
      * @param x The longitude of the coordinate, in <strong>radians</strong>.
      * @param y The latitude of the coordinate, in <strong>radians</strong>.
      */
-    protected Point2D transformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    @Override
+    protected Point2D transformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
         final double sinlat = sin(y);
         final double coslat = cos(y);
         final double sinlatP = sin(PI / 2 - latitudeOfOrigin);
@@ -83,12 +86,7 @@ public class RotatedPole extends MapProjection {
         final double sinlon1 = sin(x);
         final double coslon1 = cos(x);
 
-        x =
-                toDegrees(
-                                atan(
-                                        (coslat * sinlon1)
-                                                / (coslat * sinlatP * coslon1 + sinlat * coslatP)))
-                        / globalScale;
+        x = toDegrees(atan((coslat * sinlon1) / (coslat * sinlatP * coslon1 + sinlat * coslatP))) / globalScale;
         y = toDegrees(asin(sinlat * sinlatP - coslat * coslatP * coslon1)) / globalScale;
 
         if (ptDst != null) {
@@ -99,11 +97,11 @@ public class RotatedPole extends MapProjection {
     }
 
     /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates (units in radians) and
-     * stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates (units in radians) and stores the result in
+     * {@code ptDst} (linear distance on a unit sphere).
      */
-    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst)
-            throws ProjectionException {
+    @Override
+    protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) throws ProjectionException {
         final double scalePI = globalScale * PI / 180;
         final double sinlat = sin(y * scalePI);
         final double coslat = cos(y * scalePI);
@@ -137,9 +135,8 @@ public class RotatedPole extends MapProjection {
     // ////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for an {@linkplain org.geotools.referencing.operation.projection.RotatedPole
-     * Rotated Pole} projection.
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for an
+     * {@linkplain org.geotools.referencing.operation.projection.RotatedPole Rotated Pole} projection.
      *
      * @since 15.0
      * @version $Id$
@@ -152,20 +149,19 @@ public class RotatedPole extends MapProjection {
         private static final long serialVersionUID = 8452425384927757022L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.AUTO, "Rotated_Pole"),
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR,
-                            SEMI_MINOR,
-                            CENTRAL_MERIDIAN,
-                            LATITUDE_OF_ORIGIN,
-                            SCALE_FACTOR,
-                            FALSE_EASTING,
-                            FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.AUTO, "Rotated_Pole"),
+                },
+                new ParameterDescriptor[] {
+                    SEMI_MAJOR,
+                    SEMI_MINOR,
+                    CENTRAL_MERIDIAN,
+                    LATITUDE_OF_ORIGIN,
+                    SCALE_FACTOR,
+                    FALSE_EASTING,
+                    FALSE_NORTHING
+                });
 
         /** Constructs a new provider. */
         public Provider() {
@@ -179,6 +175,7 @@ public class RotatedPole extends MapProjection {
          * @return The created math transform.
          * @throws ParameterNotFoundException if a required parameter was not found.
          */
+        @Override
         protected MathTransform createMathTransform(final ParameterValueGroup parameters)
                 throws ParameterNotFoundException, FactoryException {
             if (isSpherical(parameters)) {

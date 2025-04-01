@@ -18,15 +18,15 @@ package org.geotools.sld.bindings;
 
 import java.util.List;
 import javax.xml.namespace.QName;
-import org.geotools.styling.NamedLayer;
-import org.geotools.styling.StyleFactory;
-import org.geotools.styling.StyledLayer;
-import org.geotools.styling.StyledLayerDescriptor;
-import org.geotools.styling.UserLayer;
+import org.geotools.api.style.NamedLayer;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.style.StyledLayer;
+import org.geotools.api.style.StyledLayerDescriptor;
+import org.geotools.api.style.UserLayer;
+import org.geotools.api.util.InternationalString;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.util.InternationalString;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -69,6 +69,7 @@ public class SLDStyledLayerDescriptorBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.STYLEDLAYERDESCRIPTOR;
     }
@@ -80,6 +81,7 @@ public class SLDStyledLayerDescriptorBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -91,6 +93,7 @@ public class SLDStyledLayerDescriptorBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return StyledLayerDescriptor.class;
     }
@@ -102,6 +105,7 @@ public class SLDStyledLayerDescriptorBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -111,6 +115,7 @@ public class SLDStyledLayerDescriptorBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         StyledLayerDescriptor sld = styleFactory.createStyledLayerDescriptor();
 
@@ -138,11 +143,11 @@ public class SLDStyledLayerDescriptorBinding extends AbstractComplexBinding {
         StyledLayer[] layers = null;
 
         if (node.hasChild(NamedLayer.class)) {
-            List namedLayers = node.getChildValues(NamedLayer.class);
-            layers = (StyledLayer[]) namedLayers.toArray(new StyledLayer[namedLayers.size()]);
+            List<NamedLayer> namedLayers = node.getChildValues(NamedLayer.class);
+            layers = namedLayers.toArray(new StyledLayer[namedLayers.size()]);
         } else if (node.hasChild(UserLayer.class)) {
-            List userLayers = node.getChildValues(UserLayer.class);
-            layers = (StyledLayer[]) userLayers.toArray(new StyledLayer[userLayers.size()]);
+            List<UserLayer> userLayers = node.getChildValues(UserLayer.class);
+            layers = userLayers.toArray(new StyledLayer[userLayers.size()]);
         }
 
         sld.setStyledLayers(layers);

@@ -1,28 +1,48 @@
+/*
+ *    GeoTools - The Open Source Java GIS Toolkit
+ *    http://geotools.org
+ *
+ *    (C) 2001-2022, Open Source Geospatial Foundation (OSGeo)
+ *
+ *    This library is free software; you can redistribute it and/or
+ *    modify it under the terms of the GNU Lesser General Public
+ *    License as published by the Free Software Foundation;
+ *    version 2.1 of the License.
+ *
+ *    This library is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    Lesser General Public License for more details.
+ */
 package org.geotools.filter;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
 import java.util.Arrays;
+import java.util.List;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsLike;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsLike;
 
-@SuppressWarnings("deprecation")
 public class FiltersTest {
 
     private static final double DELTA = 0.0000001;
 
     private static Filters filters;
 
-    private static FilterFactory2 ff;
+    private static FilterFactory ff;
 
     private static Filter a;
 
@@ -34,7 +54,7 @@ public class FiltersTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        ff = CommonFactoryFinder.getFilterFactory2(null);
+        ff = CommonFactoryFinder.getFilterFactory(null);
         filters = new Filters(ff);
         a = ff.greater(ff.property("zone"), ff.literal(7));
         b = ff.like(ff.property("suburb"), "N%");
@@ -117,14 +137,6 @@ public class FiltersTest {
         assertEquals("#0000ff", Filters.puts(Color.BLUE));
     }
 
-    private int count(Filter filter) {
-        if (filter instanceof BinaryLogicOperator) {
-            BinaryLogicOperator logic = (BinaryLogicOperator) filter;
-            return logic.getChildren() != null ? logic.getChildren().size() : -1;
-        }
-        return -1;
-    }
-
     @Test
     public void testRemoveFilter() {
         Filter results = Filters.removeFilter(null, a);
@@ -159,7 +171,7 @@ public class FiltersTest {
         assertEquals("Filter should not be removed because it should not recurse", base, results);
 
         results = Filters.removeFilter(base, d);
-        assertFalse("Results should be a new object with different children", base.equals(results));
+        assertNotEquals("Results should be a new object with different children", base, results);
         childOr = ff.or(b, c);
         And expected = ff.and(a, childOr);
         assertEquals(expected, results);
@@ -183,7 +195,7 @@ public class FiltersTest {
         String results = Filters.findPropertyName(b);
         assertEquals("suburb", results);
 
-        Filter f = ff.equals(ff.literal("bar"), ff.literal("foo"));
+        ff.equals(ff.literal("bar"), ff.literal("foo"));
     }
 
     @Test
@@ -191,7 +203,6 @@ public class FiltersTest {
         assertNull(Filters.findPropertyName(null));
 
         Filter f = ff.equals(ff.literal("bar"), ff.literal("foo"));
-        String results = Filters.findPropertyName(b);
         assertNull(Filters.findPropertyName(f));
     }
 
@@ -199,5 +210,22 @@ public class FiltersTest {
     public void testEmptyEscape() {
         PropertyIsLike like = ff.like(ff.literal("abc def"), "*de*", "*", "_", "");
         assertTrue(like.evaluate(null));
+    }
+
+    @Test
+    public void testLogicFilterEquality() {
+        // this used to fail, as ["a, b"] returned true to containsAll(["a", "a"])
+        Filter andAB = ff.and(a, b);
+        Filter andAA = ff.and(a, a);
+        assertNotEquals(andAB, andAA);
+
+        // another test for a case where the filter is not the same, while the result woul be same
+        Filter andAAA = ff.and(List.of(a, a, a));
+        assertNotEquals(andAA, andAAA);
+
+        // but make sure order is not important
+        Filter andAAB = ff.and(List.of(a, a, b));
+        Filter andABA = ff.and(List.of(a, b, a));
+        assertEquals(andAAB, andABA);
     }
 }

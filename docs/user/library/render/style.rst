@@ -10,63 +10,52 @@ This page is devoted to examples, to review the concepts consult the references 
 
 References:
 
-* :doc:`gt-main style layer descriptor <../main/sld>` (interfaces)
-* :doc:`gt-opengis symbology encoding <../opengis/se>` (interfaces)
+* :doc:`gt-api style layer descriptor <../api/sld>` (interfaces)
+* :doc:`gt-api symbology encoding <../api/se>` (interfaces)
 * http://www.opengeospatial.org/standards/sld (style layer descriptor)
 * http://www.opengeospatial.org/standards/symbol (symbology encoding)
 
 StyleFactory
 ^^^^^^^^^^^^
 
-We have three style factories offering various levels of standards compliance vs pragmatism.
+We have two approaches offering various levels of standards compliance vs pragmatism.
 
-============== ==================== ================ ======== =======================================
+============== ==================== ================ ======== ============================================
 Module         Class                Capability       Scope    Description
-============== ==================== ================ ======== =======================================
-``gt-opengis`` ``StyleFactory``     get              SE       Strictly limited to the SE standard
-``gt-main``    ``StyleFactory``     get/set          SE / SLD Supports GeoTools vendor extensions
-``gt-main``    ``StyleFactory2``    get/set          SE / SLD Supports text label graphics
+============== ==================== ================ ======== ============================================
+``gt-api``     ``StyleFactory``     get/set          SE / SLD SE, SLD, and vendor extensions
 ``gt-main``    ``StyleBuilder``     get/set/defaults SE / SLD Shorter methods, does not do everything
-============== ==================== ================ ======== =======================================
+``gt-brewer``  ``StyleBuilder``     fluent           SE / SLD Fluent API for SE, SLD and vendor extensions
+============== ==================== ================ ======== ============================================
 
 Here are some examples of these classes in action:
 
 * ``StyleFactory``
-  
-  The ``gt-opengis`` ``StyleFactory`` allows you to create read-only instances.
+    
+  StyleFactory allows creation using the parameters defined by the SLD standard.
   
   Here is a quick example showing the creation of a ``PointSymbolizer``:
   
-  .. literalinclude:: /../src/main/java/org/geotools/opengis/StyleExamples.java
+  .. literalinclude:: /../src/main/java/org/geotools/api/StyleExamples.java
      :language: java
      :start-after: // styleFactoryExample start
      :end-before: // styleFactoryExample end
   
-* ``StyleFactory2``
+  To work with GeoTools vendor specific options, a slightly different style of programming
+  is needed taking advantage of the mutable instances are creating allowing you to call both
+  get and set methods.
   
-  This ``gt-main`` interface allows one additional non standard trick; it allows us to place
-  an icon behind text labels. This is a popular technique used for example to place a
-  "label shield" behind hi-way signs.
-
-* ``StyleFactory``
-  
-  This ``gt-main`` interface allows access to all the GeoTools vendor specific options.
-  
-  It has a slightly different style of programming where mutable instances are creating allowing
-  you to call both get and set methods.
-  
-  You are of course not advised to update a style while it is being used to draw.
+  .. note:: These classes are not thread-safe, do not update a style while it is being used to draw.
   
   .. literalinclude:: /../src/main/java/org/geotools/render/StyleExamples.java
      :language: java
      :start-after: // styleFactoryExample start
      :end-before: // styleFactoryExample end
 
-* ``StyleBuilder``
+* ``StyleBuilder`` from ``gt-main``:
   
-  Since a ``Style`` is composed of a complex set of objects, a ``StyleBuilder`` object is provided for
-  you to conveniently build simple styles without the need to build all of the style elements
-  by hand.
+  Since a ``Style`` is composed of a complex set of objects, a ``StyleBuilder`` object is provided 
+  to build simple styles without the need to build all of the style elements by hand.
   
   For example, you can create a ``PolygonSymbolizer`` and then create a ``Style`` out of it with a
   single method call: the builder will generate a default ``FeatureTypeStyle`` and the ``Rule`` for you.
@@ -80,11 +69,17 @@ Here are some examples of these classes in action:
   less of an issue now as the rendering system is able to correctly handle null as a default
   for many cases such as default symbol size.
 
+* ``StyleBuilder`` from ``gt-brewer``:
+  
+  .. code-block:: java
+     
+     Style style = new StrokeBuilder().color(Color.BLACK).width(3).buildStyle();
+
 **What to use**
 
 For working with symbology encoding ``StyleFactory`` is recommended as it defines a small
 number of easy to use methods. There are however no helpful methods and shortcuts
-but you have the advantage of less methods to trip over). Since everything is in plain
+(but you have the advantage of less methods to trip over). Since everything is in plain
 sight you may discover some tricky advanced abilities that may not obvious using
 ``StyleBuilder``.
 
@@ -93,16 +88,15 @@ with their default values filled in; and then configure them as needed using set
 
 Internally we have:
 
-* ``StyleFactoryImpl2`` that creates the raw objects; this is an implementation
-  of the simple ``gt-opengis`` ``StyleFactory``.
+* ``StyleFactoryImpl2`` that creates the raw objects
 * ``StyleFactoryImpl`` makes use of a delegate to create the objects; and then allows for a wider
-  range of create methods defined by ``gt-main`` ``StyleFactory``
-* ``StyleBuilder`` which as expected uses a ``FilterFactory`` and a ``StyleFactory`` in order to get the job done.
+  range of create methods defined by ``gt-api`` ``StyleFactory``
+* ``StyleBuilder`` uses a ``FilterFactory`` and a ``StyleFactory`` in order build up a complicated data structure
 
 Style Layer Descriptor
 ^^^^^^^^^^^^^^^^^^^^^^
 
-GeoTools styling is built on the style layer descriptor data model shown below (from :doc:`gt-main <../main/sld>`).
+GeoTools styling is built on the style layer descriptor data model shown below (from :doc:`gt-api <../api/sld>`).
 
 .. image:: /images/sld.PNG
 
@@ -208,12 +202,30 @@ XML:
      :start-after: // markTestSLD start
      :end-before: // markTestSLD end
 
+As an extension GeoTools supports defining a Style ``Background`` object that will be used
+to fill the canvas before the style rendering directives are applied to features and coverages.
+
+Here is how to setup a style with background: 
+
+  .. literalinclude:: /../src/main/java/org/geotools/render/StyleExamples.java
+     :language: java
+     :start-after: // styleBackground start
+     :end-before: // styleBackground end
+
+and a similar setup :download:`as a SLD </../../modules/library/xml/src/test/resources/org/geotools/xml/styling/test-data/backgroundSolid.sld>`:
+
+  .. literalinclude:: /../../modules/library/xml/src/test/resources/org/geotools/xml/styling/test-data/backgroundSolid.sld
+
+
 Symbology Encoding
 ^^^^^^^^^^^^^^^^^^
 
 The feature type style data model captures the symbology encoding information describing how a feature should be drawn on the screen and will represent the bulk of our examples.
 
 .. image:: /images/se.PNG
+
+
+
 
 FeatureTypeStyle
 ''''''''''''''''
@@ -420,6 +432,7 @@ Examples:
 Point symbolizers support ``VendorOptions``:
 
 * ``labelObstacle(true/false)``\ : No labels should overlap this feature, used to ensure point graphics are clearly visible and not obscured by text.
+* ``fallbackOnDefaultMark(true/false)``\ : If the graphics used in the symbolizer cannot be found, fallback on a default gray square (``true``, default value) or skip the symbolizer without painting anything (``false``).
 
 LineSymbolizer
 ''''''''''''''
@@ -520,7 +533,7 @@ Considerable vendor options are provided for working with ``TextSymbolizers``:
   
 * ``forceLeftToRight(true)``\ : When true forces labels to a readable orientation, when false they make follow the line orientation even if that means the label will look upside down (useful when using TTF symbol fonts to add direction markers along a line)
 
-* ``goodnessOfFit(90)``\ : Sets the percentage of the label that must sit inside the geometry to allow drawing the label. Works only on polygons.
+* ``goodnessOfFit(0.5)``\ : Sets the ratio of the label that must sit inside the geometry to allow drawing the label. Works only on polygons. Provided values should span from 0 .. 1
 
 * ``graphic-margin(10)``\ : Pixels between the stretched graphic and the text, applies when graphic stretching is in use
   
@@ -556,6 +569,10 @@ Considerable vendor options are provided for working with ``TextSymbolizers``:
 
 * ``displacementMode``\ : Comma separated list of label displacement directions for point/polygon labels (used along with ``maxDisplacement``). The indicated directions will be tried in turn.
                     Valid values are cardinal directions abbreviations, in particular, N, W, E, S, NW, NE, SW, SE.
+
+* ``fontShrinkSizeMin(0)``\ : lower font size limit that could be used when rendering the label. When set (to a positive value) the rendering process will be applied iteratively by decreasing the initial font size by 1 unit until an acceptable placement location is found or the specified value is reached. Should be set to a value greater than 0 and lower than the symbolizer's font size otherwise it is ignored.
+
+* ``graphicPlacement(label)``: placement of the graphic found in the text symbolizer, compared to the associated label. If using ``label`` (default value) the graphic is centered with the label. If using ``independet`` the graphic is placed relative to label point instead, and the graphic anchor/offset are used to position it, while the label retains its own anchor/offset related to the label point.   
 
 Raster Symbolizer
 '''''''''''''''''

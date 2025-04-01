@@ -17,15 +17,14 @@
 package org.geotools.filter.v1_0.capabilities;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.SpatialOperator;
+import org.geotools.api.filter.capability.SpatialOperators;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.SpatialOperator;
-import org.opengis.filter.capability.SpatialOperators;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:Spatial_OperatorsType.
@@ -63,6 +62,7 @@ public class Spatial_OperatorsTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.Spatial_OperatorsType;
     }
@@ -74,6 +74,7 @@ public class Spatial_OperatorsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return SpatialOperators.class;
     }
@@ -85,18 +86,18 @@ public class Spatial_OperatorsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List ops = new ArrayList();
+        List<SpatialOperator> ops = new ArrayList<>();
 
-        for (Iterator i = node.getChildren().iterator(); i.hasNext(); ) {
-            Node child = (Node) i.next();
+        for (Node child : node.getChildren()) {
             ops.add(factory.spatialOperator(child.getComponent().getName(), null));
         }
 
-        return factory.spatialOperators(
-                (SpatialOperator[]) ops.toArray(new SpatialOperator[ops.size()]));
+        return factory.spatialOperators(ops.toArray(new SpatialOperator[ops.size()]));
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         SpatialOperators spatial = (SpatialOperators) object;
 

@@ -26,7 +26,7 @@ import net.opengis.wmts.v_1.DimensionType;
 import net.opengis.wmts.v_1.GetTileType;
 import net.opengis.wmts.v_1.wmtsv_1Factory;
 import org.geotools.wmts.WMTS;
-import org.geotools.xsd.AbstractComplexBinding;
+import org.geotools.xsd.AbstractComplexEMFBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
@@ -91,7 +91,7 @@ import org.geotools.xsd.Node;
  *
  * @generated
  */
-public class GetTileBinding extends AbstractComplexBinding {
+public class GetTileBinding extends AbstractComplexEMFBinding {
 
     wmtsv_1Factory factory;
 
@@ -101,6 +101,7 @@ public class GetTileBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WMTS.GetTile;
     }
@@ -112,6 +113,7 @@ public class GetTileBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return GetTileType.class;
     }
@@ -123,6 +125,7 @@ public class GetTileBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         GetTileType getTile = factory.createGetTileType();
 

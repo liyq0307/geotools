@@ -19,8 +19,8 @@ package org.geotools.brewer.styling.builder;
 import java.util.HashMap;
 import java.util.Map;
 import javax.measure.Unit;
-import org.geotools.styling.ExtensionSymbolizer;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ExtensionSymbolizer;
 
 public class ExtensionSymbolizerBuilder extends AbstractStyleBuilder<ExtensionSymbolizer> {
     private String name;
@@ -33,7 +33,7 @@ public class ExtensionSymbolizerBuilder extends AbstractStyleBuilder<ExtensionSy
 
     private String extensionName;
 
-    private Map<String, Expression> parameters = new HashMap<String, Expression>();
+    private Map<String, Expression> parameters = new HashMap<>();
 
     public ExtensionSymbolizerBuilder() {
         this(null);
@@ -87,13 +87,13 @@ public class ExtensionSymbolizerBuilder extends AbstractStyleBuilder<ExtensionSy
         return this;
     }
 
+    @Override
     public ExtensionSymbolizer build() {
         if (unset) {
             return null;
         }
         ExtensionSymbolizer symbolizer =
-                sf.extensionSymbolizer(
-                        name, null, description.build(), uom, extensionName, parameters);
+                sf.extensionSymbolizer(name, null, description.build(), uom, extensionName, parameters);
         symbolizer.setGeometry(geometry);
         if (parent == null) {
             reset();
@@ -101,17 +101,19 @@ public class ExtensionSymbolizerBuilder extends AbstractStyleBuilder<ExtensionSy
         return symbolizer;
     }
 
+    @Override
     public ExtensionSymbolizerBuilder reset() {
         name = null;
         geometry = null;
         description.unset();
         uom = null;
         extensionName = null;
-        parameters = new HashMap<String, Expression>();
+        parameters = new HashMap<>();
         unset = false;
         return this;
     }
 
+    @Override
     public ExtensionSymbolizerBuilder reset(ExtensionSymbolizer symbolizer) {
         if (symbolizer == null) {
             return unset();
@@ -127,6 +129,7 @@ public class ExtensionSymbolizerBuilder extends AbstractStyleBuilder<ExtensionSy
         return this;
     }
 
+    @Override
     public ExtensionSymbolizerBuilder unset() {
         return (ExtensionSymbolizerBuilder) super.unset();
     }

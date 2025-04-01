@@ -17,12 +17,12 @@
 package org.geotools.gml3.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.Property;
 import org.geotools.gml3.GML;
 import org.geotools.xlink.XLINK;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.feature.Property;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -51,6 +51,7 @@ import org.w3c.dom.Element;
  */
 public class ReferenceTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.ReferenceType;
     }
@@ -62,6 +63,7 @@ public class ReferenceTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Property.class;
     }
@@ -73,11 +75,13 @@ public class ReferenceTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         // TODO: implement and remove call to super
         return super.parse(instance, node, value);
     }
 
+    @Override
     public Element encode(Object object, Document document, Element value) throws Exception {
         Property property = (Property) object;
         // I don't think we can assign values to this type, so only encode client properties
@@ -87,6 +91,7 @@ public class ReferenceTypeBinding extends AbstractComplexBinding {
         return value;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         Property association = (Property) object;
 

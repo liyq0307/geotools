@@ -17,6 +17,9 @@
 
 package org.geotools.filter.v2_0.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.List;
 import net.opengis.fes20.AvailableFunctionsType;
 import net.opengis.fes20.ComparisonOperatorsType;
@@ -27,11 +30,13 @@ import net.opengis.fes20.ResourceIdentifierType;
 import net.opengis.fes20.ScalarCapabilitiesType;
 import net.opengis.fes20.SpatialCapabilitiesType;
 import net.opengis.fes20.SpatialOperatorType;
+import org.geotools.api.filter.capability.Operator;
 import org.geotools.filter.v2_0.FES;
 import org.geotools.filter.v2_0.FESTestSupport;
-import org.opengis.filter.capability.Operator;
+import org.junit.Test;
 
 public class Filter_CapabilitiesBindingTest extends FESTestSupport {
+    @Test
     public void testParse() throws Exception {
         String xml =
                 "<fes:Filter_Capabilities xmlns:fes='http://www.opengis.net/fes/2.0' xmlns:gml='http://schemas.opengis.net/gml'>"

@@ -17,10 +17,10 @@
 package org.geotools.filter.v2_0.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsLike;
 import org.geotools.filter.v1_0.OGCPropertyIsLikeTypeBinding;
 import org.geotools.filter.v2_0.FES;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsLike;
 
 /**
  * Binding object for the type http://www.opengis.net/fes/2.0:PropertyIsLikeType.
@@ -55,17 +55,18 @@ public class PropertyIsLikeTypeBinding extends OGCPropertyIsLikeTypeBinding {
         this.factory = factory;
     }
 
+    @Override
     public QName getTarget() {
         return FES.PropertyIsLikeType;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         PropertyIsLike isLike = (PropertyIsLike) object;
 
         if (FES.expression.equals(name)) {
             return new Object[] {
-                isLike.getExpression(),
-                isLike.getLiteral() != null ? factory.literal(isLike.getLiteral()) : null
+                isLike.getExpression(), isLike.getLiteral() != null ? factory.literal(isLike.getLiteral()) : null
             };
         }
 

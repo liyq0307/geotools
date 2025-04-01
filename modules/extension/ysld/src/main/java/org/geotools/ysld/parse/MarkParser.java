@@ -17,7 +17,9 @@
  */
 package org.geotools.ysld.parse;
 
-import org.geotools.styling.*;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Mark;
+import org.geotools.api.style.Stroke;
 import org.geotools.ysld.YamlMap;
 import org.geotools.ysld.YamlObject;
 
@@ -43,20 +45,18 @@ public abstract class MarkParser extends YsldParseHandler {
             mark.setWellKnownName(Util.expression(map.str("shape"), factory));
         }
 
-        context.push(
-                new StrokeParser(factory) {
-                    @Override
-                    protected void stroke(Stroke stroke) {
-                        mark.setStroke(stroke);
-                    }
-                });
-        context.push(
-                new FillParser(factory) {
-                    @Override
-                    protected void fill(Fill fill) {
-                        mark.setFill(fill);
-                    }
-                });
+        context.push(new StrokeParser(factory) {
+            @Override
+            protected void stroke(Stroke stroke) {
+                mark.setStroke(stroke);
+            }
+        });
+        context.push(new FillParser(factory) {
+            @Override
+            protected void fill(Fill fill) {
+                mark.setFill(fill);
+            }
+        });
     }
 
     protected abstract void mark(Mark mark);

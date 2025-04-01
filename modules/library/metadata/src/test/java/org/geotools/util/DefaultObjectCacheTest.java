@@ -16,9 +16,12 @@
  */
 package org.geotools.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import org.junit.*;
+import org.junit.Test;
 
 /**
  * Tests the {@link DefaultObjectCache} with simple tests.
@@ -31,18 +34,17 @@ public final class DefaultObjectCacheTest {
     public void testSimple() {
         Integer key1 = 1;
         Integer key2 = 2;
-        String value1 = new String("value 1");
-        String value2 = new String("value 2");
+        String value1 = "value 1";
 
-        ObjectCache cache = new DefaultObjectCache();
+        ObjectCache<Integer, String> cache = new DefaultObjectCache<>();
         assertNotNull(cache);
-        assertEquals(null, cache.get(key1));
+        assertNull(cache.get(key1));
 
         cache.writeLock(key1);
         cache.put(key1, value1);
         cache.writeUnLock(key1);
         assertEquals(value1, cache.get(key1));
-        assertEquals(null, cache.get(key2));
+        assertNull(cache.get(key2));
 
         // this is 2 because a call to get adds and item to the
         // cache
@@ -54,13 +56,11 @@ public final class DefaultObjectCacheTest {
     @Test
     public void testRemove() {
         Integer key1 = 1;
-        Integer key2 = 2;
-        String value1 = new String("value 1");
-        String value2 = new String("value 2");
+        String value1 = "value 1";
 
-        ObjectCache cache = new DefaultObjectCache();
+        ObjectCache<Integer, String> cache = new DefaultObjectCache<>();
         assertNotNull(cache);
-        assertEquals(null, cache.get(key1));
+        assertNull(cache.get(key1));
         assertEquals(1, cache.getKeys().size());
 
         //    	try{

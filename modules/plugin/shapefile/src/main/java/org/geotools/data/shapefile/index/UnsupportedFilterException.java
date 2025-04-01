@@ -17,8 +17,8 @@
 package org.geotools.data.shapefile.index;
 
 /**
- * This exception is thrown when we are asked to use a filter that does not contain a geometry
- * literal (or anything else we can guess a bounds for).
+ * This exception is thrown when we are asked to use a filter that does not contain a geometry literal (or anything else
+ * we can guess a bounds for).
  *
  * @author Tommaso Nolli
  */
@@ -30,30 +30,17 @@ public class UnsupportedFilterException extends Exception {
         super();
     }
 
-    /**
-     * Filter is not supported.
-     *
-     * @param message
-     */
+    /** Filter is not supported. */
     public UnsupportedFilterException(String message) {
         super(message);
     }
 
-    /**
-     * Filter is not supported.
-     *
-     * @param message
-     * @param cause
-     */
+    /** Filter is not supported. */
     public UnsupportedFilterException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    /**
-     * Filter is not supported.
-     *
-     * @param cause
-     */
+    /** Filter is not supported. */
     public UnsupportedFilterException(Throwable cause) {
         super(cause);
     }

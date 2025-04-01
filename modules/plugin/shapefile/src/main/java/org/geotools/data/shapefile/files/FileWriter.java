@@ -17,8 +17,7 @@
 package org.geotools.data.shapefile.files;
 
 /**
- * Indicates that the object writes to one of the Shapefile related files controlled by {@link
- * ShpFiles}
+ * Indicates that the object writes to one of the Shapefile related files controlled by {@link ShpFiles}
  *
  * @author jesse
  */
@@ -28,5 +27,6 @@ public interface FileWriter extends FileReader {
      *
      * @return id for the writer.
      */
+    @Override
     String id();
 }

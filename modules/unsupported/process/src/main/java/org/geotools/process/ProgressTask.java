@@ -22,8 +22,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
-import org.opengis.util.InternationalString;
-import org.opengis.util.ProgressListener;
+import org.geotools.api.util.InternationalString;
+import org.geotools.api.util.ProgressListener;
 
 /**
  * An implementation of the Progress interface.
@@ -49,42 +49,48 @@ public class ProgressTask implements Runnable, Progress {
         synchronizer = new Synchronizer(process, input);
     }
 
+    @Override
     public float getProgress() {
         return synchronizer.getProgress();
     }
 
+    @Override
     public boolean isCancelled() {
         return synchronizer.innerIsCancelled();
     }
 
+    @Override
     public boolean isDone() {
         return synchronizer.innerIsDone();
     }
 
+    @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
         return synchronizer.innerCancel(mayInterruptIfRunning);
     }
 
+    @Override
     public Map<String, Object> get() throws InterruptedException, ExecutionException {
         return synchronizer.innerGet();
     }
 
+    @Override
     public Map<String, Object> get(long timeout, TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {
         return synchronizer.innerGet(unit.toNanos(timeout));
     }
 
     /**
-     * This protected method is invoked when this process transitions to state isDone (whether
-     * normally or via cancellation). The default implementation does nothing. Subclasses may
-     * override this method to invoke completion callbacks. You can query status inside the
-     * implementation of this method to determine whether this task has been canceled.
+     * This protected method is invoked when this process transitions to state isDone (whether normally or via
+     * cancellation). The default implementation does nothing. Subclasses may override this method to invoke completion
+     * callbacks. You can query status inside the implementation of this method to determine whether this task has been
+     * canceled.
      */
     protected void done() {}
 
     /**
-     * Sets the result of this ProgressTask to the given value unless this ProgressTask has already
-     * been set or has been canceled.
+     * Sets the result of this ProgressTask to the given value unless this ProgressTask has already been set or has been
+     * canceled.
      *
      * @param value the value to set
      */
@@ -93,8 +99,8 @@ public class ProgressTask implements Runnable, Progress {
     }
 
     /**
-     * Causes this ProgressTask to report an ExecutionException with the given throwable as its
-     * cause, unless this ProgressTask has already been set or has been canceled.
+     * Causes this ProgressTask to report an ExecutionException with the given throwable as its cause, unless this
+     * ProgressTask has already been set or has been canceled.
      *
      * @param t the cause of failure.
      */
@@ -103,14 +109,15 @@ public class ProgressTask implements Runnable, Progress {
     }
 
     /** Sets this ProgressTask to the result of the computation unless it has been canceled. */
+    @Override
     public void run() {
         synchronizer.innerRun();
     }
 
     /**
-     * Executes the process without setting its result, and then resets this ProgressTask to its
-     * initial state, failing to do so if the computation encounters an exception or is canceled.
-     * This is designed for use with processes that execute more than once.
+     * Executes the process without setting its result, and then resets this ProgressTask to its initial state, failing
+     * to do so if the computation encounters an exception or is canceled. This is designed for use with processes that
+     * execute more than once.
      *
      * @return true if successfully run and reset
      */
@@ -121,13 +128,12 @@ public class ProgressTask implements Runnable, Progress {
     /**
      * Synchronization control for ProgressTask.
      *
-     * <p>This must be a non-static inner class in order to invoke the protected done method. For
-     * clarity, all inner class support methods are same as outer, prefixed with "inner".
+     * <p>This must be a non-static inner class in order to invoke the protected done method. For clarity, all inner
+     * class support methods are same as outer, prefixed with "inner".
      *
      * <p>Uses AQS synchronizer state to represent run status
      */
-    private final class Synchronizer extends AbstractQueuedSynchronizer
-            implements ProgressListener {
+    private final class Synchronizer extends AbstractQueuedSynchronizer implements ProgressListener {
 
         private static final long serialVersionUID = 6633428077533811475L;
 
@@ -151,8 +157,8 @@ public class ProgressTask implements Runnable, Progress {
         private Throwable exception;
 
         /**
-         * The thread running process. When it is nulled after set/cancel, this indicates that the
-         * results are now accessible. This must be volatile to ensure visibility upon completion.
+         * The thread running process. When it is nulled after set/cancel, this indicates that the results are now
+         * accessible. This must be volatile to ensure visibility upon completion.
          */
         private volatile Thread runningThread;
 
@@ -175,8 +181,7 @@ public class ProgressTask implements Runnable, Progress {
         }
 
         /**
-         * Implements AQS base release to always signal after setting final done status by nulling
-         * the runningThread.
+         * Implements AQS base release to always signal after setting final done status by nulling the runningThread.
          */
         @Override
         protected boolean tryReleaseShared(int ignore) {
@@ -304,46 +309,57 @@ public class ProgressTask implements Runnable, Progress {
             }
         }
 
+        @Override
         public void complete() {
             // ignore
         }
 
+        @Override
         public void dispose() {
             // ignore
         }
 
+        @Override
         public void exceptionOccurred(Throwable t) {
             innerSetException(t);
         }
 
+        @Override
         public float getProgress() {
             return percentComplete;
         }
 
+        @Override
         public InternationalString getTask() {
             return processName;
         }
 
+        @Override
         public boolean isCanceled() {
             return innerIsCancelled();
         }
 
+        @Override
         public void progress(float percent) {
             this.percentComplete = percent;
         }
 
+        @Override
         public void setCanceled(boolean stop) {
             innerCancel(stop);
         }
 
+        @Override
         public void setTask(InternationalString name) {
             this.processName = name;
         }
 
+        @Override
         public void started() {
             // ignore
         }
 
+        @Override
         public void warningOccurred(String arg0, String arg1, String arg2) {
             // ignore
         }

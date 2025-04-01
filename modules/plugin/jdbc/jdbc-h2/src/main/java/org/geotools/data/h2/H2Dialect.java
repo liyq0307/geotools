@@ -27,6 +27,12 @@ import java.sql.Types;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.Geometries;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.SQLDialect;
@@ -44,16 +50,10 @@ import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
 import org.locationtech.jts.io.WKTWriter;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Delegate for {@link H2DialectBasic} and {@link H2DialectPrepared} which implements the common
- * parts of the dialect api.
+ * Delegate for {@link H2DialectBasic} and {@link H2DialectPrepared} which implements the common parts of the dialect
+ * api.
  *
  * @author Justin Deoliveira, OpenGEO
  */
@@ -65,6 +65,7 @@ public class H2Dialect extends SQLDialect {
         super(dataStore);
     }
 
+    @Override
     public String getNameEscape() {
         return "\"";
     }
@@ -76,8 +77,7 @@ public class H2Dialect extends SQLDialect {
     }
 
     @Override
-    public boolean includeTable(String schemaName, String tableName, Connection cx)
-            throws SQLException {
+    public boolean includeTable(String schemaName, String tableName, Connection cx) throws SQLException {
         if ("_GEODB".equals(tableName) || tableName.endsWith("_HATBOX")) {
             return false;
         }
@@ -150,7 +150,9 @@ public class H2Dialect extends SQLDialect {
             // try to narrow down the type with a comment
             Class binding = att.getType().getBinding();
             if (isConcreteGeometry(binding)) {
-                sql.append(" COMMENT '").append(binding.getSimpleName().toUpperCase()).append("'");
+                sql.append(" COMMENT '")
+                        .append(binding.getSimpleName().toUpperCase())
+                        .append("'");
             }
         }
     }
@@ -170,8 +172,7 @@ public class H2Dialect extends SQLDialect {
     }
 
     @Override
-    public void postCreateTable(String schemaName, SimpleFeatureType featureType, Connection cx)
-            throws SQLException {
+    public void postCreateTable(String schemaName, SimpleFeatureType featureType, Connection cx) throws SQLException {
 
         Statement st = cx.createStatement();
         try {
@@ -181,7 +182,9 @@ public class H2Dialect extends SQLDialect {
             for (PropertyDescriptor ad : featureType.getDescriptors()) {
                 if (ad instanceof GeometryDescriptor) {
                     GeometryDescriptor gd = (GeometryDescriptor) ad;
-                    Class binding = ad.getType().getBinding();
+                    @SuppressWarnings("unchecked")
+                    Class<? extends Geometry> binding =
+                            (Class<? extends Geometry>) ad.getType().getBinding();
                     String propertyName = ad.getName().getLocalPart();
 
                     // create a spatial index
@@ -239,28 +242,21 @@ public class H2Dialect extends SQLDialect {
 
     @Override
     public void postCreateFeatureType(
-            SimpleFeatureType featureType,
-            DatabaseMetaData metadata,
-            String schemaName,
-            Connection cx)
+            SimpleFeatureType featureType, DatabaseMetaData metadata, String schemaName, Connection cx)
             throws SQLException {
         // figure out if the table has a spatial index and mark the feature type as so
         if (featureType.getGeometryDescriptor() == null) {
             return;
         }
         String idxTableName = featureType.getTypeName() + "_HATBOX";
-        ResultSet rs =
-                metadata.getTables(
-                        null,
-                        dataStore.escapeNamePattern(metadata, schemaName),
-                        dataStore.escapeNamePattern(metadata, idxTableName),
-                        new String[] {"TABLE"});
+        ResultSet rs = metadata.getTables(
+                null,
+                dataStore.escapeNamePattern(metadata, schemaName),
+                dataStore.escapeNamePattern(metadata, idxTableName),
+                new String[] {"TABLE"});
         try {
             if (rs.next()) {
-                featureType
-                        .getGeometryDescriptor()
-                        .getUserData()
-                        .put(H2_SPATIAL_INDEX, idxTableName);
+                featureType.getGeometryDescriptor().getUserData().put(H2_SPATIAL_INDEX, idxTableName);
             }
         } finally {
             dataStore.closeSafe(rs);
@@ -268,8 +264,7 @@ public class H2Dialect extends SQLDialect {
     }
 
     @Override
-    public void preDropTable(String schemaName, SimpleFeatureType featureType, Connection cx)
-            throws SQLException {
+    public void preDropTable(String schemaName, SimpleFeatureType featureType, Connection cx) throws SQLException {
         String tableName = featureType.getTypeName();
         Statement st = cx.createStatement();
 
@@ -321,8 +316,8 @@ public class H2Dialect extends SQLDialect {
                 || MultiPolygon.class.isAssignableFrom(binding);
     }
 
-    public Integer getGeometrySRID(
-            String schemaName, String tableName, String columnName, Connection cx)
+    @Override
+    public Integer getGeometrySRID(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
 
         // first try getting from table metadata
@@ -369,6 +364,7 @@ public class H2Dialect extends SQLDialect {
         }
     }
 
+    @Override
     public void encodeGeometryEnvelope(String tableName, String geometryColumn, StringBuffer sql) {
         // TODO: change spatialdbbox to use envelope
         sql.append("ST_Envelope(");
@@ -377,8 +373,7 @@ public class H2Dialect extends SQLDialect {
     }
 
     @Override
-    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx)
-            throws SQLException, IOException {
+    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx) throws SQLException, IOException {
 
         // TODO: change spatialdb in a box to return ReferencedEnvelope
         return (Envelope) rs.getObject(column);
@@ -396,6 +391,7 @@ public class H2Dialect extends SQLDialect {
         }
     }
 
+    @Override
     public Geometry decodeGeometryValue(
             GeometryDescriptor descriptor,
             ResultSet rs,
@@ -419,14 +415,14 @@ public class H2Dialect extends SQLDialect {
         // return JTS.geometryFromBytes( bytes );
     }
 
+    @Override
     public void encodePrimaryKey(String column, StringBuffer sql) {
         encodeColumnName(null, column, sql);
         sql.append(" int AUTO_INCREMENT(1) PRIMARY KEY");
     }
 
     @Override
-    public String getSequenceForColumn(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public String getSequenceForColumn(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
 
         String sequenceName = tableName + "_" + columnName + "_SEQUENCE";
@@ -456,8 +452,7 @@ public class H2Dialect extends SQLDialect {
     }
 
     @Override
-    public Object getNextSequenceValue(String schemaName, String sequenceName, Connection cx)
-            throws SQLException {
+    public Object getNextSequenceValue(String schemaName, String sequenceName, Connection cx) throws SQLException {
 
         Statement st = cx.createStatement();
         try {
@@ -485,55 +480,40 @@ public class H2Dialect extends SQLDialect {
 
     @Override
     @SuppressWarnings("PMD.CheckResultSet")
-    public Object getNextAutoGeneratedValue(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public Object getNextAutoGeneratedValue(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
 
-        Statement st = cx.createStatement();
-        try {
+        try (Statement st = cx.createStatement()) {
             // figure out which sequence to query
             String sequence = null;
-            ResultSet rs =
-                    st.executeQuery(
-                            "SELECT b.COLUMN_DEFAULT "
-                                    + " FROM INFORMATION_SCHEMA.INDEXES A, INFORMATION_SCHEMA.COLUMNS B "
-                                    + "WHERE a.TABLE_NAME = b.TABLE_NAME "
-                                    + " AND a.COLUMN_NAME = b.COLUMN_NAME "
-                                    + " AND a.TABLE_NAME = '"
-                                    + tableName
-                                    + "' "
-                                    + " AND a.COLUMN_NAME = '"
-                                    + columnName
-                                    + "' "
-                                    + " AND a.PRIMARY_KEY = TRUE");
-            try {
+            try (ResultSet rs = st.executeQuery("SELECT b.COLUMN_DEFAULT "
+                    + " FROM INFORMATION_SCHEMA.INDEXES A, INFORMATION_SCHEMA.COLUMNS B "
+                    + "WHERE a.TABLE_NAME = b.TABLE_NAME "
+                    + " AND a.COLUMN_NAME = b.COLUMN_NAME "
+                    + " AND a.TABLE_NAME = '"
+                    + tableName
+                    + "' "
+                    + " AND a.COLUMN_NAME = '"
+                    + columnName
+                    + "' "
+                    + " AND a.PRIMARY_KEY = TRUE")) {
                 if (!rs.next()) {
                     throw new SQLException("Could not grab the next auto generated value");
                 }
 
                 String string = rs.getString(1);
                 sequence = string.substring(string.indexOf("SYSTEM_SEQUENCE"), string.length() - 1);
-            } finally {
-                dataStore.closeSafe(rs);
             }
 
-            try {
-                if (schemaName != null) {
-                    rs = st.executeQuery("SELECT CURRVAL('" + schemaName + "','" + sequence + "')");
-                } else {
-                    rs = st.executeQuery("SELECT CURRVAL('" + sequence + "')");
-                }
-
+            try (ResultSet rs = schemaName != null
+                    ? st.executeQuery("SELECT CURRVAL('" + schemaName + "','" + sequence + "')")
+                    : st.executeQuery("SELECT CURRVAL('" + sequence + "')")) {
                 rs.next();
 
                 int value = rs.getInt(1);
 
                 return Integer.valueOf(value + 1);
-            } finally {
-                dataStore.closeSafe(rs);
             }
-        } finally {
-            dataStore.closeSafe(st);
         }
     }
 
@@ -564,5 +544,10 @@ public class H2Dialect extends SQLDialect {
     @Override
     public void registerSqlTypeToSqlTypeNameOverrides(Map<Integer, String> overrides) {
         overrides.put(Types.BLOB, "BYTEA");
+    }
+
+    @Override
+    public boolean canGroupOnGeometry() {
+        return true;
     }
 }

@@ -17,9 +17,13 @@
 
 package org.geotools.gml3.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import org.geotools.api.feature.ComplexAttribute;
 import org.geotools.gml3.ComplexAttributeTestSupport;
 import org.geotools.gml3.GML;
-import org.opengis.feature.ComplexAttribute;
+import org.junit.Test;
 import org.w3c.dom.Document;
 
 public class CodeTypeBindingTest extends ComplexAttributeTestSupport {
@@ -28,6 +32,7 @@ public class CodeTypeBindingTest extends ComplexAttributeTestSupport {
 
     private static String TEST_NAME_CODESPACE = "urn:x-test:SomeNamingAuthority";
 
+    @Test
     public void testEncode() throws Exception {
         ComplexAttribute myCode = gmlCodeType(GML.name, TEST_NAME_VALUE, TEST_NAME_CODESPACE);
         Document dom = encode(myCode, GML.name);

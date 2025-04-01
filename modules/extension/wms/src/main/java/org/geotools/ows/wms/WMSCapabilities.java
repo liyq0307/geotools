@@ -16,8 +16,7 @@
  */
 package org.geotools.ows.wms;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import org.geotools.data.ows.Capabilities;
 
@@ -30,7 +29,12 @@ public class WMSCapabilities extends Capabilities {
     private WMSRequest request;
     private Layer layer;
 
-    private List<Layer> layers; // cache
+    /**
+     * Cached immutable list of layers, built on demand at {@link #getLayerList()}, reset to {@code null} at
+     * {@link #setLayer(Layer)}
+     */
+    private List<Layer> layers;
+
     private String[] exceptions;
 
     /**
@@ -54,6 +58,7 @@ public class WMSCapabilities extends Capabilities {
 
     public void setLayer(Layer layer) {
         this.layer = layer;
+        this.layers = null;
         if (getVersion() != null) {
             boolean forceXY = !getVersion().startsWith("1.3");
             fixLayerBoundingBox(layer, forceXY);
@@ -66,7 +71,6 @@ public class WMSCapabilities extends Capabilities {
      *
      * <p>Call layer.clearCache() after this method.
      *
-     * @param layer
      * @param forceXY true prior to WMS 1.3.0, false after WMS 1.3.0
      */
     static void fixLayerBoundingBox(Layer layer, boolean forceXY) {
@@ -87,18 +91,19 @@ public class WMSCapabilities extends Capabilities {
     /**
      * Access a flat view of the layers available in the WMS.
      *
-     * <p>The information available here is the same as doing a top down walk of all the layers
-     * available via getLayer().
+     * <p>The information available here is the same as doing a top down walk of all the layers available via
+     * getLayer().
      *
      * @return List of all available layers
      */
     public List<Layer> getLayerList() {
         if (layers == null) {
-            layers = new ArrayList<Layer>();
-            layers.add(layer);
-            addChildrenRecursive(layers, layer);
+            List<Layer> target = new LinkedList<>();
+            target.add(layer);
+            addChildrenRecursive(target, layer);
+            this.layers = List.copyOf(target);
         }
-        return Collections.unmodifiableList(layers);
+        return layers;
     }
 
     private void addChildrenRecursive(List<Layer> layers, Layer layer) {
@@ -111,8 +116,8 @@ public class WMSCapabilities extends Capabilities {
     }
 
     /**
-     * The request contains information about possible Requests that can be made against this
-     * server, including URLs and formats.
+     * The request contains information about possible Requests that can be made against this server, including URLs and
+     * formats.
      *
      * @return Returns the request.
      */
@@ -126,8 +131,8 @@ public class WMSCapabilities extends Capabilities {
     }
 
     /**
-     * Exceptions declare what kind of formats this server can return exceptions in. They are used
-     * during subsequent requests.
+     * Exceptions declare what kind of formats this server can return exceptions in. They are used during subsequent
+     * requests.
      */
     public String[] getExceptions() {
         return exceptions;

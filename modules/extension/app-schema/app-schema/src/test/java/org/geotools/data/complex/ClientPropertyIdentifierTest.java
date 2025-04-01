@@ -17,39 +17,43 @@
 
 package org.geotools.data.complex;
 
-import static org.geotools.data.complex.SweValuesTest.*;
+import static org.geotools.data.complex.SweValuesTest.GML_NS;
+import static org.geotools.data.complex.SweValuesTest.OBSERVATION_FEATURE;
+import static org.geotools.data.complex.SweValuesTest.OM_NS;
+import static org.geotools.data.complex.SweValuesTest.SWE_NS;
+import static org.geotools.data.complex.SweValuesTest.SWE_VALUES_MAPPING;
+import static org.geotools.data.complex.SweValuesTest.XLINK_NS;
+import static org.geotools.data.complex.SweValuesTest.size;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.appschema.filter.FilterFactoryImplNamespaceAware;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.junit.Before;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
  * Checks that gml:id attribute can be retrieved also when it is mapped as a regular <code>
- * &lt;ClientProperty&gt;</code> rather than an identifier (using <code>&lt;idExpression&gt;</code>
- * ).
+ * &lt;ClientProperty&gt;</code> rather than an identifier (using <code>&lt;idExpression&gt;</code> ).
  *
  * @author Stefano Costa, GeoSolutions
  */
 public class ClientPropertyIdentifierTest {
-
-    private FilterFactory2 ff;
 
     private NamespaceSupport namespaces = new NamespaceSupport();
 
@@ -60,19 +64,13 @@ public class ClientPropertyIdentifierTest {
         namespaces.declarePrefix("swe", SWE_NS);
         namespaces.declarePrefix("gml", GML_NS);
         namespaces.declarePrefix("xlink", XLINK_NS);
-        ff = new FilterFactoryImplNamespaceAware(namespaces);
     }
 
-    /**
-     * Load all the data accesses.
-     *
-     * @return
-     * @throws Exception
-     */
+    /** Load all the data accesses. */
     @Before
     public void loadDataAccess() throws Exception {
         /** Load observation data access */
-        Map dsParams = new HashMap();
+        Map<String, Serializable> dsParams = new HashMap<>();
         URL url = SweValuesTest.class.getResource(SWE_VALUES_MAPPING);
         assertNotNull(url);
 
@@ -84,15 +82,15 @@ public class ClientPropertyIdentifierTest {
         FeatureType observationFeatureType = omsoDataAccess.getSchema(OBSERVATION_FEATURE);
         assertNotNull(observationFeatureType);
 
-        obsSource = (FeatureSource) omsoDataAccess.getFeatureSource(OBSERVATION_FEATURE);
+        obsSource = omsoDataAccess.getFeatureSource(OBSERVATION_FEATURE);
         assertNotNull(obsSource);
-        FeatureCollection obsFeatures = (FeatureCollection) obsSource.getFeatures();
+        FeatureCollection obsFeatures = obsSource.getFeatures();
         assertEquals(2, size(obsFeatures));
     }
 
     @Test
     public void testRetrieveTimeInstantGmlId() throws IOException {
-        FilterFactory2 ff = new FilterFactoryImplNamespaceAware(namespaces);
+        FilterFactory ff = new FilterFactoryImplNamespaceAware(namespaces);
         PropertyName gmlIdProperty = ff.property("om:resultTime/gml:TimeInstant/@gml:id");
         try (FeatureIterator featureIt = obsSource.getFeatures().features()) {
             Feature f = featureIt.next();

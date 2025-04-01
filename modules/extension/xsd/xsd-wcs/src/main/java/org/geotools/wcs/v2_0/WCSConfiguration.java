@@ -46,6 +46,7 @@ public class WCSConfiguration extends Configuration {
         addDependency(new OWSConfiguration());
     }
 
+    @Override
     protected void configureContext(MutablePicoContainer container) {
         container.registerComponentInstance(Ows20Factory.eINSTANCE);
 
@@ -60,17 +61,15 @@ public class WCSConfiguration extends Configuration {
      *
      * @generated
      */
+    @Override
     @SuppressWarnings("unchecked")
     protected final void registerBindings(Map bindings) {
         // manually setup bindings
         bindings.put(WCS.ExtensionType, new ExtensionTypeBinding());
 
         // "automatic" bindings
-        bindings.put(
-                WCS.CapabilitiesType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.CapabilitiesType));
-        bindings.put(
-                WCS.ContentsType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.ContentsType));
+        bindings.put(WCS.CapabilitiesType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.CapabilitiesType));
+        bindings.put(WCS.ContentsType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.ContentsType));
         bindings.put(
                 WCS.CoverageDescriptionsType,
                 new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.CoverageDescriptionsType));
@@ -78,44 +77,22 @@ public class WCSConfiguration extends Configuration {
                 WCS.CoverageDescriptionType,
                 new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.CoverageDescriptionType));
         bindings.put(
-                WCS.CoverageOfferingsType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.CoverageOfferingsType));
+                WCS.CoverageOfferingsType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.CoverageOfferingsType));
         bindings.put(
                 WCS.CoverageSubtypeParentType,
                 new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.CoverageSubtypeParentType));
+        bindings.put(WCS.CoverageSummaryType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.CoverageSummaryType));
+        bindings.put(WCS.DescribeCoverageType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.DescribeCoverageType));
+        bindings.put(WCS.DimensionSliceType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.DimensionSliceType));
+        bindings.put(WCS.DimensionSubsetType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.DimensionSubsetType));
+        bindings.put(WCS.DimensionTrimType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.DimensionTrimType));
+        bindings.put(WCS.GetCapabilitiesType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.GetCapabilitiesType));
+        bindings.put(WCS.GetCoverageType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.GetCoverageType));
+        bindings.put(WCS.OfferedCoverageType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.OfferedCoverageType));
+        bindings.put(WCS.RequestBaseType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.RequestBaseType));
+        bindings.put(WCS.ServiceMetadataType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.ServiceMetadataType));
         bindings.put(
-                WCS.CoverageSummaryType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.CoverageSummaryType));
-        bindings.put(
-                WCS.DescribeCoverageType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.DescribeCoverageType));
-        bindings.put(
-                WCS.DimensionSliceType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.DimensionSliceType));
-        bindings.put(
-                WCS.DimensionSubsetType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.DimensionSubsetType));
-        bindings.put(
-                WCS.DimensionTrimType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.DimensionTrimType));
-        bindings.put(
-                WCS.GetCapabilitiesType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.GetCapabilitiesType));
-        bindings.put(
-                WCS.GetCoverageType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.GetCoverageType));
-        bindings.put(
-                WCS.OfferedCoverageType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.OfferedCoverageType));
-        bindings.put(
-                WCS.RequestBaseType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.RequestBaseType));
-        bindings.put(
-                WCS.ServiceMetadataType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.ServiceMetadataType));
-        bindings.put(
-                WCS.ServiceParametersType,
-                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.ServiceParametersType));
+                WCS.ServiceParametersType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS.ServiceParametersType));
         // bindings.put(WCS.VersionStringType, new ComplexEMFBinding(Wcs20Factory.eINSTANCE,
         // WCS.VersionStringType));
         /*
@@ -141,22 +118,17 @@ public class WCSConfiguration extends Configuration {
         */
     }
 
-    /**
-     * Generates the bindings registrations for this class
-     *
-     * @param args
-     */
+    /** Generates the bindings registrations for this class */
     @SuppressWarnings("PMD.SystemPrintln")
     public static void main(String[] args) {
         for (Field f : WCS.class.getFields()) {
             if ((f.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) != 0
                     && f.getType().equals(QName.class)) {
-                System.out.println(
-                        "bindings.put(WCS."
-                                + f.getName()
-                                + ", new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS."
-                                + f.getName()
-                                + "));");
+                System.out.println("bindings.put(WCS."
+                        + f.getName()
+                        + ", new ComplexEMFBinding(Wcs20Factory.eINSTANCE, WCS."
+                        + f.getName()
+                        + "));");
             }
         }
     }

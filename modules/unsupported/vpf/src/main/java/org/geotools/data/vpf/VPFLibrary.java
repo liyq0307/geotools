@@ -17,8 +17,14 @@
 
 package org.geotools.data.vpf;
 
-import static org.geotools.data.vpf.ifc.FileConstants.*;
-import static org.geotools.data.vpf.ifc.VPFLibraryIfc.*;
+import static org.geotools.data.vpf.ifc.FileConstants.COVERAGE_ATTRIBUTE_TABLE;
+import static org.geotools.data.vpf.ifc.FileConstants.GEOGRAPHIC_REFERENCE_TABLE;
+import static org.geotools.data.vpf.ifc.FileConstants.LIBRARY_HEADER_TABLE;
+import static org.geotools.data.vpf.ifc.VPFLibraryIfc.FIELD_TILE_NAME;
+import static org.geotools.data.vpf.ifc.VPFLibraryIfc.FIELD_XMAX;
+import static org.geotools.data.vpf.ifc.VPFLibraryIfc.FIELD_XMIN;
+import static org.geotools.data.vpf.ifc.VPFLibraryIfc.FIELD_YMAX;
+import static org.geotools.data.vpf.ifc.VPFLibraryIfc.FIELD_YMIN;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,10 +34,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 import java.util.logging.Level;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
@@ -40,11 +50,6 @@ import org.geotools.data.vpf.file.VPFFileFactory;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.SchemaException;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /*
  * A data store for a VPF library. A library is identified by
@@ -99,7 +104,7 @@ public class VPFLibrary extends ContentDataStore {
     /** The name of the library */
     private final String libraryName;
     /** The coverages that are in the library */
-    private final List coverages = new Vector();
+    private final List<VPFCoverage> coverages = new ArrayList<>();
     /** The coordinate reference system used through this library */
     private CoordinateReferenceSystem crs;
     /** Signals if an error has already been logged for a CRS related exception */
@@ -117,10 +122,7 @@ public class VPFLibrary extends ContentDataStore {
         }
     }
 
-    /**
-     * The namespace to create FeatureTypes with. Set with a reasonable default of
-     * http://vpf.org/default.
-     */
+    /** The namespace to create FeatureTypes with. Set with a reasonable default of http://vpf.org/default. */
     private URI namespace = DEFAULT_NAMESPACE;
 
     /**
@@ -128,7 +130,6 @@ public class VPFLibrary extends ContentDataStore {
      *
      * @param libraryFeature a feature from the library attribute table
      * @param dir the containing directory
-     * @throws IOException
      * @throws SchemaException For problems making one of the feature classes as a FeatureType.
      */
     /*
@@ -146,11 +147,10 @@ public class VPFLibrary extends ContentDataStore {
     */
 
     /**
-     * Constructor that adds a namespace to the File only constructor. If using another constructor
-     * then use setNamespace(URI) ((javadocTODO: add the correct link to previous method.))
+     * Constructor that adds a namespace to the File only constructor. If using another constructor then use
+     * setNamespace(URI) ((javadocTODO: add the correct link to previous method.))
      *
      * @param dir the containing directory
-     * @throws IOException
      * @throws SchemaException for problems making a featureType.
      */
     /*
@@ -160,16 +160,14 @@ public class VPFLibrary extends ContentDataStore {
     */
 
     /**
-     * Constructor which defaults the containing database to null and looks up the first (and
-     * presumably only) entry in the library attribute table
+     * Constructor which defaults the containing database to null and looks up the first (and presumably only) entry in
+     * the library attribute table
      *
      * @param dir the containing directory
      * @param namespace the namespace to create features with.
-     * @throws IOException
      * @throws SchemaException For problems making one of the feature classes as a FeatureType.
      */
-    public VPFLibrary(SimpleFeature libraryFeature, File dir, URI namespace)
-            throws IOException, SchemaException {
+    public VPFLibrary(SimpleFeature libraryFeature, File dir, URI namespace) throws IOException, SchemaException {
         // read libraries info
         String vpfTableName = new File(dir, LIBRARY_HEADER_TABLE).toString();
         VPFFile lhtFile = VPFFileFactory.getInstance().getFile(vpfTableName);
@@ -178,7 +176,7 @@ public class VPFLibrary extends ContentDataStore {
         try {
             lhtFile.readFeature(); // check for errors
         } catch (IllegalAttributeException exc) {
-            exc.printStackTrace();
+            LOGGER.log(Level.FINE, "", exc);
             throw new IOException("Illegal values in library attribute table");
         }
         if (libraryFeature != null) {
@@ -202,7 +200,6 @@ public class VPFLibrary extends ContentDataStore {
     /**
      * Determines the coverages contained by this library
      *
-     * @throws IOException
      * @throws SchemaException For problems making one of the feature classes as a FeatureType.
      */
     private void setCoverages() throws IOException, SchemaException {
@@ -246,8 +243,8 @@ public class VPFLibrary extends ContentDataStore {
 
                 List featureTypes = coverage.getFeatureTypes();
 
-                for (int ift = 0; ift < featureTypes.size(); ift++) {
-                    VPFFeatureType featureType = (VPFFeatureType) featureTypes.get(ift);
+                for (Object type : featureTypes) {
+                    VPFFeatureType featureType = (VPFFeatureType) type;
                     VPFFeatureClass featureClass = featureType.getFeatureClass();
                     String featureTypeName = featureType.getTypeName();
                     if (debug) {
@@ -264,8 +261,8 @@ public class VPFLibrary extends ContentDataStore {
                         VPFLogger.log("   file count :   " + fileList.size());
                     }
 
-                    for (int ifl = 0; ifl < fileList.size(); ifl++) {
-                        VPFFile vpfClassFile = (VPFFile) fileList.get(ifl);
+                    for (Object o : fileList) {
+                        VPFFile vpfClassFile = (VPFFile) o;
                         if (debug) {
                             if (vpfClassFile == null) {
                                 VPFLogger.log("null");
@@ -283,7 +280,7 @@ public class VPFLibrary extends ContentDataStore {
      *
      * @return a <code>List</code> value which contains VPFCoverage objects
      */
-    public List getCoverages() {
+    public List<VPFCoverage> getCoverages() {
         return coverages;
     }
 
@@ -326,26 +323,20 @@ public class VPFLibrary extends ContentDataStore {
      *  (non-Javadoc)
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
         return String.format(
-                "{"
-                        + "library: \"%s\","
-                        + "xmin: %f,"
-                        + "xmax: %f,"
-                        + "ymin: %f,"
-                        + "ymax: %f"
-                        + "}",
+                "{" + "library: \"%s\"," + "xmin: %f," + "xmax: %f," + "ymin: %f," + "ymax: %f" + "}",
                 libraryName, getXmin(), getXmax(), getYmin(), getYmax());
     }
     /** A map containing the tiles used by this library */
-    private final Map tileMap = new HashMap();
+    private final Map<Short, String> tileMap = new HashMap<>();
     /**
-     * Returns a map containing the tiles used by this library. The map has string keys and and
-     * string values.
+     * Returns a map containing the tiles used by this library. The map has Short keys and and string values.
      *
      * @return a <code>Map</code> value
      */
-    public Map getTileMap() {
+    public Map<Short, String> getTileMap() {
         return tileMap;
     }
     /**
@@ -356,7 +347,7 @@ public class VPFLibrary extends ContentDataStore {
     private void createTilingSchema(VPFCoverage coverage) throws IOException {
         //            File tilefile = new File(directory, "tilereft.tft");
 
-        VPFFeatureType tileType = (VPFFeatureType) coverage.getFeatureTypes().get(0);
+        VPFFeatureType tileType = coverage.getFeatureTypes().get(0);
 
         // VPFFile tileFile = (VPFFile) tileType.getFeatureClass().getFileList().get(0);
         // Iterator rowsIter = tileFile.readAllRows().iterator();
@@ -365,7 +356,7 @@ public class VPFLibrary extends ContentDataStore {
 
         while (rowsIter.hasNext()) {
             SimpleFeature row = (SimpleFeature) rowsIter.next();
-            Short rowId = Short.valueOf(Short.parseShort(row.getAttribute("id").toString()));
+            Short rowId = Short.parseShort(row.getAttribute("id").toString());
             String value = row.getAttribute(FIELD_TILE_NAME).toString();
 
             // Mangle tile directory from DOS style directory splits to a system
@@ -416,15 +407,16 @@ public class VPFLibrary extends ContentDataStore {
     /* (non-Javadoc)
      * @see org.geotools.data.ContentDataStore#getNames()
      */
+    @Override
     public List<Name> getNames() {
         // Get the type names for each coverage
-        ArrayList<Name> result = new ArrayList<Name>();
+        ArrayList<Name> result = new ArrayList<>();
         int coveragesCount = coverages.size();
         int featureTypesCount = 0;
         // int index = 0;
         List[] coverageTypes = new List[coveragesCount];
         for (int inx = 0; inx < coveragesCount; inx++) {
-            coverageTypes[inx] = ((VPFCoverage) coverages.get(inx)).getFeatureTypes();
+            coverageTypes[inx] = coverages.get(inx).getFeatureTypes();
             featureTypesCount += coverageTypes[inx].size();
         }
         // result = new String[featureTypesCount];
@@ -535,12 +527,12 @@ public class VPFLibrary extends ContentDataStore {
     public SimpleFeatureType getTypeSchema(String typeName) throws IOException {
         // Look through all of the coverages to find a matching feature type
         SimpleFeatureType result = null;
-        Iterator coverageIter = coverages.iterator();
+        Iterator<VPFCoverage> coverageIter = coverages.iterator();
         Iterator featureTypesIter;
         SimpleFeatureType temp;
         boolean breakOut = false;
         while (coverageIter.hasNext() && !breakOut) {
-            featureTypesIter = ((VPFCoverage) coverageIter.next()).getFeatureTypes().iterator();
+            featureTypesIter = coverageIter.next().getFeatureTypes().iterator();
             while (featureTypesIter.hasNext()) {
                 temp = (SimpleFeatureType) featureTypesIter.next();
                 if (temp.getTypeName().equals(typeName)) {
@@ -554,8 +546,8 @@ public class VPFLibrary extends ContentDataStore {
     }
 
     /**
-     * Returns the coordinate reference system appropriate for this library. If the coordinate
-     * reference system cannot be determined null will be returned.
+     * Returns the coordinate reference system appropriate for this library. If the coordinate reference system cannot
+     * be determined null will be returned.
      */
     public CoordinateReferenceSystem getCoordinateReferenceSystem() {
         if (crs == null) {
@@ -577,7 +569,7 @@ public class VPFLibrary extends ContentDataStore {
             } catch (Exception ex) {
                 // Don't know what else can be done here, just dump it
                 if (!loggedCRSException) {
-                    ex.printStackTrace();
+                    LOGGER.log(Level.SEVERE, "", ex);
                     loggedCRSException = true;
                 }
             }

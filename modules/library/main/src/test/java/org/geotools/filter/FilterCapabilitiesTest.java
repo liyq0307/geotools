@@ -17,70 +17,43 @@
 package org.geotools.filter;
 
 import java.util.logging.Logger;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNull;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.And;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNull;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Unit test for FilterCapabilities.
  *
  * @author Chris Holmes, TOPP
  */
-public class FilterCapabilitiesTest extends TestCase {
+public class FilterCapabilitiesTest {
     /** Standard logging instance */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(FilterCapabilitiesTest.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(FilterCapabilitiesTest.class);
 
     /** Feature on which to preform tests */
-    private org.opengis.filter.Filter gFilter;
+    private org.geotools.api.filter.Filter gFilter;
 
-    private org.opengis.filter.Filter compFilter;
-    private org.opengis.filter.Filter logFilter;
+    private org.geotools.api.filter.Filter compFilter;
+    private org.geotools.api.filter.Filter logFilter;
     private FilterCapabilities capabilities;
-    private FilterFactory2 fact = CommonFactoryFinder.getFilterFactory2();
-
-    /** Test suite for this test case */
-    TestSuite suite = null;
-
-    /** Constructor with test name. */
-    String dataFolder = "";
+    private FilterFactory fact = CommonFactoryFinder.getFilterFactory();
 
     boolean setup = false;
 
-    public FilterCapabilitiesTest(String testName) {
-        super(testName);
-    }
-
-    /** Main for test runner. */
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(suite());
-    }
-
-    /**
-     * Required suite builder.
-     *
-     * @return A test suite for this unit test.
-     */
-    public static Test suite() {
-        // _log.getLoggerRepository().setThreshold(Level.DEBUG);
-        TestSuite suite = new TestSuite(FilterCapabilitiesTest.class);
-
-        return suite;
-    }
-
     /** Sets up a schema and a test feature. */
-    protected void setUp() {
+    @Before
+    public void setUp() {
         LOGGER.finer("Setting up FilterCapabilitiesTest");
 
         if (setup) {
@@ -105,42 +78,40 @@ public class FilterCapabilitiesTest extends TestCase {
         capabilities.addType(PropertyIsBetween.class);
     }
 
+    @Test
     public void testAdd() {
         capabilities.addType(PropertyIsGreaterThan.class);
         capabilities.addType(PropertyIsLessThan.class);
         capabilities.addType(PropertyIsNull.class);
-        assertTrue(capabilities.supports(PropertyIsNull.class));
+        Assert.assertTrue(capabilities.supports(PropertyIsNull.class));
     }
 
+    @Test
     public void testShortSupports() {
-        assertTrue(capabilities.supports(And.class));
-        assertTrue(!(capabilities.supports(PropertyIsLike.class)));
+        Assert.assertTrue(capabilities.supports(And.class));
+        Assert.assertFalse(capabilities.supports(PropertyIsLike.class));
     }
 
+    @Test
     public void testFilterSupports() {
-        assertTrue(capabilities.supports(compFilter));
-        assertTrue(!(capabilities.supports(gFilter)));
+        Assert.assertTrue(capabilities.supports(compFilter));
+        Assert.assertFalse(capabilities.supports(gFilter));
     }
 
+    @Test
     public void testFullySupports() {
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory();
         try {
             logFilter = ff.and(gFilter, compFilter);
-            assertTrue(capabilities.fullySupports(compFilter));
-            assertTrue(!(capabilities.fullySupports(gFilter)));
-            assertTrue(!(capabilities.fullySupports(logFilter)));
-            logFilter =
-                    ff.and(
-                            compFilter,
-                            ff.between(ff.property("sample"), ff.literal(1), ff.literal(2)));
-            assertTrue(capabilities.fullySupports(logFilter));
-            logFilter =
-                    ff.or(
-                            logFilter,
-                            ff.between(ff.property("sample"), ff.literal(1), ff.literal(2)));
-            assertTrue(capabilities.fullySupports(logFilter));
+            Assert.assertTrue(capabilities.fullySupports(compFilter));
+            Assert.assertFalse(capabilities.fullySupports(gFilter));
+            Assert.assertFalse(capabilities.fullySupports(logFilter));
+            logFilter = ff.and(compFilter, ff.between(ff.property("sample"), ff.literal(1), ff.literal(2)));
+            Assert.assertTrue(capabilities.fullySupports(logFilter));
+            logFilter = ff.or(logFilter, ff.between(ff.property("sample"), ff.literal(1), ff.literal(2)));
+            Assert.assertTrue(capabilities.fullySupports(logFilter));
             logFilter = ff.and(logFilter, gFilter);
-            assertTrue(!(capabilities.fullySupports(logFilter)));
+            Assert.assertFalse(capabilities.fullySupports(logFilter));
         } catch (IllegalFilterException e) {
             LOGGER.fine("Bad filter " + e);
         }

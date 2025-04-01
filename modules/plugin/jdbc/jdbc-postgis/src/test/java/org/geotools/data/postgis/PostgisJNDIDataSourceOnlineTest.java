@@ -17,6 +17,8 @@
 
 package org.geotools.data.postgis;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.List;
 import org.geotools.jdbc.JDBCDataStoreFactory;
 import org.geotools.jdbc.JDBCJNDIDataSourceOnlineTest;
@@ -25,6 +27,7 @@ import org.geotools.jdbc.JDBCJNDITestSetup;
 
 public class PostgisJNDIDataSourceOnlineTest extends JDBCJNDIDataSourceOnlineTest {
 
+    @Override
     protected JDBCJNDITestSetup createTestSetup() {
         return new JDBCJNDITestSetup(new PostGISTestSetup());
     }
@@ -40,6 +43,7 @@ public class PostgisJNDIDataSourceOnlineTest extends JDBCJNDIDataSourceOnlineTes
     }
 
     /** Make sure the JNDI factory exposes all the extra params that the non JNDI one exposes */
+    @Override
     public void testExtraParams() {
         List<String> baseParams = getBaseParams();
         List<String> standardParams = getParamKeys(getDataStoreFactory());
@@ -48,6 +52,7 @@ public class PostgisJNDIDataSourceOnlineTest extends JDBCJNDIDataSourceOnlineTes
         standardParams.remove(PostgisNGDataStoreFactory.CREATE_DB_IF_MISSING.key);
         standardParams.remove(PostgisNGDataStoreFactory.CREATE_PARAMS.key);
         standardParams.remove(PostgisNGDataStoreFactory.SSL_MODE.key);
+        standardParams.remove(PostgisNGDataStoreFactory.REWRITE_BATCHED_INSERTS.key);
         standardParams.removeAll(baseParams);
         List<String> baseJndiParams = getBaseJNDIParams();
         List<String> jndiParams = getParamKeys(getJNDIStoreFactory());

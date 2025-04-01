@@ -26,8 +26,7 @@ public final class TEST extends XSD {
 
     // types
     public static QName TestFeatureType = new QName(NAMESPACE, "TestFeatureType");
-    public static QName TestFeatureCollectionType =
-            new QName(NAMESPACE, "TestFeatureCollectionType");
+    public static QName TestFeatureCollectionType = new QName(NAMESPACE, "TestFeatureCollectionType");
 
     // elements
     public static QName TestFeature = new QName(NAMESPACE, "TestFeature");
@@ -39,14 +38,17 @@ public final class TEST extends XSD {
         return instance;
     }
 
-    protected void addDependencies(Set dependencies) {
+    @Override
+    protected void addDependencies(Set<XSD> dependencies) {
         dependencies.add(GML.getInstance());
     }
 
+    @Override
     public String getNamespaceURI() {
         return NAMESPACE;
     }
 
+    @Override
     public String getSchemaLocation() {
         return getClass().getResource("test.xsd").toString();
     }

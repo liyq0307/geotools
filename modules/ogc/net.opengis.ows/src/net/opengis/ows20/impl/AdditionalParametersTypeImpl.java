@@ -66,9 +66,10 @@ public class AdditionalParametersTypeImpl extends AdditionalParametersBaseTypeIm
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<AdditionalParameterType> getAdditionalParameter1() {
     if (additionalParameter1 == null) {
-      additionalParameter1 = new EObjectContainmentEList<AdditionalParameterType>(AdditionalParameterType.class, this, Ows20Package.ADDITIONAL_PARAMETERS_TYPE__ADDITIONAL_PARAMETER1);
+      additionalParameter1 = new EObjectContainmentEList<>(AdditionalParameterType.class, this, Ows20Package.ADDITIONAL_PARAMETERS_TYPE__ADDITIONAL_PARAMETER1);
     }
     return additionalParameter1;
   }

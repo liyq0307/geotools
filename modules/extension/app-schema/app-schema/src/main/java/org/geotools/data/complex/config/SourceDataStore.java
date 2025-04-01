@@ -33,12 +33,11 @@ public class SourceDataStore implements Serializable {
 
     private String id;
 
-    private Map params = Collections.EMPTY_MAP;
+    private Map<String, Serializable> params = Collections.emptyMap();
 
     /**
-     * True if we have the data store connection params but we want to connect to a data access
-     * that's connected to the data store. This requires the data access to be registered in
-     * DataAccessRegistry upon creation.
+     * True if we have the data store connection params but we want to connect to a data access that's connected to the
+     * data store. This requires the data access to be registered in DataAccessRegistry upon creation.
      */
     private boolean isDataAccess;
 
@@ -50,19 +49,19 @@ public class SourceDataStore implements Serializable {
         this.id = id;
     }
 
-    public Map getParams() {
-        return new HashMap(params);
+    public Map<String, Serializable> getParams() {
+        return new HashMap<>(params);
     }
 
-    public void setParams(Map params) {
-        this.params = new CheckedHashMap(Serializable.class, Serializable.class);
+    public void setParams(Map<String, Serializable> params) {
+        this.params = new CheckedHashMap<>(String.class, Serializable.class);
         if (params != null) {
             this.params.putAll(params);
         }
     }
 
     public void setDataAccess(String isDataAccess) {
-        this.isDataAccess = Boolean.valueOf(isDataAccess).booleanValue();
+        this.isDataAccess = Boolean.parseBoolean(isDataAccess);
     }
 
     public boolean isDataAccess() {

@@ -1,11 +1,13 @@
 /*
- * GeoTools - The Open Source Java GIS Toolkit
- * http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- * (C) 2010-2014, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- * This file is hereby placed into the Public Domain. This means anyone is
- * free to do whatever they wish with this file. Use it well and enjoy!
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.tutorial.csv;
 
@@ -22,29 +24,29 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFinder;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFinder;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.filter.text.cql2.CQL;
 import org.geotools.referencing.CRS;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.FeatureId;
 
 public class CSVTest {
 
@@ -77,7 +79,7 @@ public class CSVTest {
 
         DataStore store = DataStoreFinder.getDataStore(params);
 
-        String names[] = store.getTypeNames();
+        String[] names = store.getTypeNames();
         System.out.println("typenames: " + names.length);
         System.out.println("typename[0]: " + names[0]);
         // example1 end
@@ -103,8 +105,7 @@ public class CSVTest {
         // access by list
         for (AttributeDescriptor descriptor : type.getAttributeDescriptors()) {
             System.out.print("  " + descriptor.getName());
-            System.out.print(
-                    " (" + descriptor.getMinOccurs() + "," + descriptor.getMaxOccurs() + ",");
+            System.out.print(" (" + descriptor.getMinOccurs() + "," + descriptor.getMaxOccurs() + ",");
             System.out.print((descriptor.isNillable() ? "nillable" : "manditory") + ")");
             System.out.print(" type: " + descriptor.getType().getName());
             System.out.println(" binding: " + descriptor.getType().getBinding().getSimpleName());
@@ -112,23 +113,27 @@ public class CSVTest {
         // access by index
         AttributeDescriptor attributeDescriptor = type.getDescriptor(0);
         System.out.println("attribute 0    name: " + attributeDescriptor.getName());
-        System.out.println("attribute 0    type: " + attributeDescriptor.getType().toString());
-        System.out.println("attribute 0 binding: " + attributeDescriptor.getType().getBinding());
+        System.out.println(
+                "attribute 0    type: " + attributeDescriptor.getType().toString());
+        System.out.println(
+                "attribute 0 binding: " + attributeDescriptor.getType().getBinding());
 
         // access by name
         AttributeDescriptor cityDescriptor = type.getDescriptor("CITY");
         System.out.println("attribute 'CITY'    name: " + cityDescriptor.getName());
-        System.out.println("attribute 'CITT'    type: " + cityDescriptor.getType().toString());
-        System.out.println("attribute 'CITY' binding: " + cityDescriptor.getType().getBinding());
+        System.out.println(
+                "attribute 'CITT'    type: " + cityDescriptor.getType().toString());
+        System.out.println(
+                "attribute 'CITY' binding: " + cityDescriptor.getType().getBinding());
 
         // default geometry
         GeometryDescriptor geometryDescriptor = type.getGeometryDescriptor();
         System.out.println("default geom    name: " + geometryDescriptor.getName());
-        System.out.println("default geom    type: " + geometryDescriptor.getType().toString());
-        System.out.println("default geom binding: " + geometryDescriptor.getType().getBinding());
         System.out.println(
-                "default geom     crs: "
-                        + CRS.toSRS(geometryDescriptor.getCoordinateReferenceSystem()));
+                "default geom    type: " + geometryDescriptor.getType().toString());
+        System.out.println(
+                "default geom binding: " + geometryDescriptor.getType().getBinding());
+        System.out.println("default geom     crs: " + CRS.toSRS(geometryDescriptor.getCoordinateReferenceSystem()));
 
         // example2 end
         System.out.println("\nexample2 end\n");
@@ -147,9 +152,8 @@ public class CSVTest {
         Query query = new Query("locations");
 
         System.out.println("open feature reader");
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader =
-                datastore.getFeatureReader(query, Transaction.AUTO_COMMIT);
-        try {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                datastore.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
             int count = 0;
             while (reader.hasNext()) {
                 SimpleFeature feature = reader.next();
@@ -158,8 +162,6 @@ public class CSVTest {
             }
             System.out.println("close feature reader");
             System.out.println("read in " + count + " features");
-        } finally {
-            reader.close();
         }
         // example3 end
         System.out.println("\nexample3 end\n");
@@ -184,10 +186,8 @@ public class CSVTest {
         Filter filter = ff.id(selection);
         Query query = new Query("locations", filter);
 
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader =
-                store.getFeatureReader(query, Transaction.AUTO_COMMIT);
-
-        try {
+        try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
+                store.getFeatureReader(query, Transaction.AUTO_COMMIT)) {
             while (reader.hasNext()) {
                 SimpleFeature feature = reader.next();
                 System.out.println("feature " + feature.getID());
@@ -199,8 +199,6 @@ public class CSVTest {
                     System.out.println(property.getValue());
                 }
             }
-        } finally {
-            reader.close();
         }
         // example4 end
         System.out.println("\nexample4 end\n");

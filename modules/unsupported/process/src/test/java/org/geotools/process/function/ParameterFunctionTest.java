@@ -1,13 +1,15 @@
 package org.geotools.process.function;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Function;
 import org.geotools.factory.CommonFactoryFinder;
 import org.junit.Test;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Function;
 
 public class ParameterFunctionTest {
 
@@ -28,6 +30,7 @@ public class ParameterFunctionTest {
     public void testContext() {
         Object context = new Object();
         Function param = ff.function("parameter", ff.literal("argument"));
+        @SuppressWarnings("unchecked")
         Map<String, Object> result = (Map<String, Object>) param.evaluate(context);
         assertEquals(1, result.size());
         assertEquals("argument", result.keySet().iterator().next());
@@ -38,6 +41,7 @@ public class ParameterFunctionTest {
     public void testOne() {
         Object value = new Object();
         Function param = ff.function("parameter", ff.literal("argument"), ff.literal(value));
+        @SuppressWarnings("unchecked")
         Map<String, Object> result = (Map<String, Object>) param.evaluate(null);
         assertEquals(1, result.size());
         assertEquals("argument", result.keySet().iterator().next());
@@ -48,15 +52,12 @@ public class ParameterFunctionTest {
     public void testMany() {
         Object value1 = new Object();
         Object value2 = new Object();
-        Function param =
-                ff.function(
-                        "parameter",
-                        ff.literal("argument"),
-                        ff.literal(value1),
-                        ff.literal(value2));
+        Function param = ff.function("parameter", ff.literal("argument"), ff.literal(value1), ff.literal(value2));
+        @SuppressWarnings("unchecked")
         Map<String, Object> result = (Map<String, Object>) param.evaluate(null);
         assertEquals(1, result.size());
         assertEquals("argument", result.keySet().iterator().next());
+        @SuppressWarnings("unchecked")
         List<Object> value = (List<Object>) result.values().iterator().next();
         assertEquals(2, value.size());
         assertSame(value1, value.get(0));

@@ -19,13 +19,13 @@
 package org.geotools.gml4wcs.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.coverage.grid.GridEnvelope;
 import org.geotools.coverage.grid.GeneralGridEnvelope;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.gml4wcs.GML;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.coverage.grid.GridEnvelope;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -54,6 +54,7 @@ import org.w3c.dom.Element;
 public class GridEnvelopeTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.GridEnvelopeType;
     }
@@ -65,6 +66,7 @@ public class GridEnvelopeTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return GridEnvelope.class;
     }
@@ -76,6 +78,7 @@ public class GridEnvelopeTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         if (node.getChild("low") != null) {
             int[] l = (int[]) node.getChildValue("low");
@@ -88,18 +91,18 @@ public class GridEnvelopeTypeBinding extends AbstractComplexBinding {
         return null;
     }
 
+    @Override
     public Element encode(Object object, Document document, Element value) throws Exception {
-        GeneralEnvelope envelope = (GeneralEnvelope) object;
+        GeneralBounds envelope = (GeneralBounds) object;
 
         if (envelope.isNull()) {
-            value.appendChild(
-                    document.createElementNS(
-                            GML.NAMESPACE, org.geotools.gml3.GML.Null.getLocalPart()));
+            value.appendChild(document.createElementNS(GML.NAMESPACE, org.geotools.gml3.GML.Null.getLocalPart()));
         }
 
         return null;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) {
         GridEnvelope envelope = (GridEnvelope) object;
 

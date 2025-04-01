@@ -25,15 +25,10 @@ import java.util.concurrent.TimeUnit;
 public class ThreadPoolProcessExecutor extends ThreadPoolExecutor implements ProcessExecutor {
 
     public ThreadPoolProcessExecutor(int nThreads, ThreadFactory threadFactory) {
-        super(
-                nThreads,
-                nThreads,
-                0L,
-                TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(),
-                threadFactory);
+        super(nThreads, nThreads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), threadFactory);
     }
 
+    @Override
     public Progress submit(Process task, Map<String, Object> input) {
         if (task == null) throw new NullPointerException();
         ProgressTask ftask = new ProgressTask(task, input);

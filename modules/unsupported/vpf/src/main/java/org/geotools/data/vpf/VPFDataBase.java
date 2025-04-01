@@ -20,17 +20,17 @@ import static org.geotools.data.vpf.ifc.FileConstants.LIBRARY_ATTTIBUTE_TABLE;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.vpf.file.VPFFile;
 import org.geotools.data.vpf.file.VPFFileFactory;
 import org.geotools.feature.SchemaException;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
- * This class is not completely implemented due to a decision that the VPFDataStore shall correspond
- * to the VPFLibrary class, not this class
+ * This class is not completely implemented due to a decision that the VPFDataStore shall correspond to the VPFLibrary
+ * class, not this class
  *
  * @author <a href="mailto:kobit@users.sourceforge.net">Artur Hefczyc</a>
  * @author <a href="mailto:knuterik@onemap.org">Knut-Erik Johnsen</a>, Project OneMap
@@ -39,23 +39,19 @@ import org.opengis.feature.simple.SimpleFeature;
  */
 public class VPFDataBase {
     /** The libraries in the database */
-    private final List libraries = new Vector();
+    private final List<VPFLibrary> libraries = new ArrayList<>();
     /**
      * Constructor
      *
      * @param directory A <code>File</code> representing the base directory of the database
-     * @throws IOException
-     * @throws SchemaException
      */
     public VPFDataBase(File directory) throws IOException, SchemaException {
-        VPFFile vpfTable;
-        String vpfTableName;
         SimpleFeature feature;
         VPFLibrary library;
 
         // read libraries info
-        vpfTableName = new File(directory, LIBRARY_ATTTIBUTE_TABLE).toString();
-        vpfTable = VPFFileFactory.getInstance().getFile(vpfTableName);
+        String vpfTableName = new File(directory, LIBRARY_ATTTIBUTE_TABLE).toString();
+        VPFFile vpfTable = VPFFileFactory.getInstance().getFile(vpfTableName);
 
         Iterator iter = vpfTable.readAllRows().iterator();
 
@@ -198,6 +194,7 @@ public class VPFDataBase {
      *  (non-Javadoc)
      * @see java.lang.Object#toString()
      */
+    @Override
     public String toString() {
         return "VPF database with the following extents: \n"
                 + getMinX()

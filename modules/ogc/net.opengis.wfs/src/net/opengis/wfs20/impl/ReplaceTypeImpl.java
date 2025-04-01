@@ -26,7 +26,7 @@ import org.eclipse.emf.ecore.util.BasicFeatureMap;
 import org.eclipse.emf.ecore.util.EDataTypeUniqueEList;
 import org.eclipse.emf.ecore.util.FeatureMap;
 import org.eclipse.emf.ecore.util.InternalEList;
-import org.opengis.filter.Filter;
+import org.geotools.api.filter.Filter;
 
 /**
  * <!-- begin-user-doc -->
@@ -148,9 +148,10 @@ public class ReplaceTypeImpl extends AbstractTransactionActionTypeImpl implement
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<Object> getAny() {
     if (any == null) {
-      any = new EDataTypeUniqueEList<Object>(Object.class, this, Wfs20Package.REPLACE_TYPE__ANY);
+      any = new EDataTypeUniqueEList<>(Object.class, this, Wfs20Package.REPLACE_TYPE__ANY);
     }
     return any;
   }
@@ -160,6 +161,7 @@ public class ReplaceTypeImpl extends AbstractTransactionActionTypeImpl implement
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public Filter getFilter() {
     return filter;
   }
@@ -169,6 +171,7 @@ public class ReplaceTypeImpl extends AbstractTransactionActionTypeImpl implement
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setFilter(Filter newFilter) {
     Filter oldFilter = filter;
     filter = newFilter;
@@ -181,6 +184,7 @@ public class ReplaceTypeImpl extends AbstractTransactionActionTypeImpl implement
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public String getInputFormat() {
     return inputFormat;
   }
@@ -190,6 +194,7 @@ public class ReplaceTypeImpl extends AbstractTransactionActionTypeImpl implement
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setInputFormat(String newInputFormat) {
     String oldInputFormat = inputFormat;
     inputFormat = newInputFormat;
@@ -204,6 +209,7 @@ public class ReplaceTypeImpl extends AbstractTransactionActionTypeImpl implement
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void unsetInputFormat() {
     String oldInputFormat = inputFormat;
     boolean oldInputFormatESet = inputFormatESet;
@@ -218,6 +224,7 @@ public class ReplaceTypeImpl extends AbstractTransactionActionTypeImpl implement
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public boolean isSetInputFormat() {
     return inputFormatESet;
   }
@@ -227,6 +234,7 @@ public class ReplaceTypeImpl extends AbstractTransactionActionTypeImpl implement
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public String getSrsName() {
     return srsName;
   }
@@ -236,6 +244,7 @@ public class ReplaceTypeImpl extends AbstractTransactionActionTypeImpl implement
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public void setSrsName(String newSrsName) {
     String oldSrsName = srsName;
     srsName = newSrsName;

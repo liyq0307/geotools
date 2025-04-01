@@ -17,8 +17,6 @@
 package org.geotools.swing.process;
 
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +26,8 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
+import org.geotools.api.feature.type.Name;
 import org.geotools.process.ProcessFactory;
 import org.geotools.swing.wizard.JDoubleField;
 import org.geotools.swing.wizard.JField;
@@ -36,7 +35,6 @@ import org.geotools.swing.wizard.JGeometryField;
 import org.geotools.swing.wizard.JPage;
 import org.geotools.swing.wizard.ParamField;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.type.Name;
 
 /**
  * This page is responsible making a user interface based on the provided ProcessFactory.
@@ -55,7 +53,7 @@ public class ProcessParameterPage extends JPage {
     Map<String, Object> input;
 
     // map of ParamField to keys, but value is a list of ParamFields
-    Map<String, List<ParamField>> fields = new HashMap<String, List<ParamField>>();
+    Map<String, List<ParamField>> fields = new HashMap<>();
 
     // map of keys with values for the input parameters, the value is a list of "values"
     Map<String, Object> paramMap = null;
@@ -77,10 +75,12 @@ public class ProcessParameterPage extends JPage {
         return this.factory;
     }
 
+    @Override
     public String getBackPageIdentifier() {
         return "select";
     }
 
+    @Override
     public String getNextPageIdentifier() {
         createParamMap();
         // validate the params first...
@@ -93,19 +93,19 @@ public class ProcessParameterPage extends JPage {
     }
 
     /**
-     * Run through the current values in the widgets and make a process param map out of them for
-     * running an actual process
+     * Run through the current values in the widgets and make a process param map out of them for running an actual
+     * process
      */
     private void createParamMap() {
-        if (fields.size() == 0) {
+        if (fields.isEmpty()) {
             return;
         }
-        paramMap = new HashMap<String, Object>();
+        paramMap = new HashMap<>();
         for (String key : fields.keySet()) {
-            List<ParamField> pws = (List<ParamField>) (fields.get(key));
+            List<ParamField> pws = fields.get(key);
             if (pws.size() > 1) {
                 // param has a list of values from multiple widgets
-                List<Object> values = new ArrayList<Object>();
+                List<Object> values = new ArrayList<>();
                 for (ParamField pw : pws) {
                     if (pw.getValue() != null) {
                         values.add(pw.getValue());
@@ -121,6 +121,7 @@ public class ProcessParameterPage extends JPage {
         }
     }
 
+    @Override
     public void preDisplayPanel() {
         JPanel page = getPanel();
         page.removeAll();
@@ -147,7 +148,7 @@ public class ProcessParameterPage extends JPage {
 
             // create a list for the widgets this parameter (even if there is only
             // one widget)
-            List<ParamField> widgets = new ArrayList<ParamField>();
+            List<ParamField> widgets = new ArrayList<>();
 
             // loop through and create the min number of widgets for this param
             for (int i = 0; i < min; i++) {
@@ -161,31 +162,23 @@ public class ProcessParameterPage extends JPage {
 
     private void createAddButton(final Parameter<?> parameter) {
         JPanel page = getPanel();
-        JLabel buttLabel;
-        buttLabel = new JLabel("Press '+' to add a new " + parameter.title + " field: ");
+        JLabel buttLabel = new JLabel("Press '+' to add a new " + parameter.title + " field: ");
         page.add(buttLabel);
 
         JButton butt = new JButton("+");
-        butt.addActionListener(
-                new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        createNewField(parameter, true);
-                    }
-                });
+        butt.addActionListener(e -> createNewField(parameter, true));
         page.add(butt);
     }
 
     /**
      * Create a new widget and label for the given parameter
      *
-     * @param parameter
      * @param resize whether to resize the wizard after adding or not
      */
     private ParamField createNewField(Parameter<?> parameter, boolean resize) {
         JPanel page = getPanel();
 
-        JLabel label;
-        label = new JLabel(parameter.title.toString());
+        JLabel label = new JLabel(parameter.title.toString());
         page.add(label);
 
         ParamField widget;

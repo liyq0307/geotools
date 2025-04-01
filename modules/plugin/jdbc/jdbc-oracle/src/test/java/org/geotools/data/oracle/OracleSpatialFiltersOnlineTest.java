@@ -16,23 +16,25 @@
  */
 package org.geotools.data.oracle;
 
-import org.geotools.data.Query;
+import static org.junit.Assert.assertEquals;
+
+import org.geotools.api.data.Query;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.DWithin;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.jdbc.JDBCDataStoreAPITestSetup;
 import org.geotools.jdbc.JDBCSpatialFiltersOnlineTest;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.DWithin;
 
 public class OracleSpatialFiltersOnlineTest extends JDBCSpatialFiltersOnlineTest {
 
@@ -41,6 +43,7 @@ public class OracleSpatialFiltersOnlineTest extends JDBCSpatialFiltersOnlineTest
         return new OracleDataStoreAPITestSetup(new OracleTestSetup());
     }
 
+    @Test
     public void testLooseBboxFilter() throws Exception {
         ((OracleDialect) dataStore.getSQLDialect()).setLooseBBOXEnabled(true);
 
@@ -52,6 +55,7 @@ public class OracleSpatialFiltersOnlineTest extends JDBCSpatialFiltersOnlineTest
     }
 
     // As reported in GEOS-4384 (http://jira.codehaus.org/browse/GEOS-4384)
+    @Test
     public void testSDODWithinOGCUnits() throws Exception {
         // express the same distance in different ways and check results
         validateOGCUnitUsage(10, "kilometers");
@@ -79,12 +83,12 @@ public class OracleSpatialFiltersOnlineTest extends JDBCSpatialFiltersOnlineTest
         Geometry[] geometries = {point};
         GeometryCollection geometry = new GeometryCollection(geometries, factory);
 
-        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
         PropertyName geomName = ff.property(aname("geom"));
         Literal lit = ff.literal(geometry);
 
-        DWithin dwithinGeomFilter = ((FilterFactory2) ff).dwithin(geomName, lit, distance, unit);
+        DWithin dwithinGeomFilter = ff.dwithin(geomName, lit, distance, unit);
         Query query = new Query(tname("road"), dwithinGeomFilter);
         SimpleFeatureCollection features =
                 dataStore.getFeatureSource(tname("road")).getFeatures(query);

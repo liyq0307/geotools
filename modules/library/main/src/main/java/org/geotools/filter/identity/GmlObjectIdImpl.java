@@ -16,10 +16,10 @@
  */
 package org.geotools.filter.identity;
 
-import org.opengis.filter.identity.GmlObjectId;
+import org.geotools.api.filter.identity.GmlObjectId;
 
 /**
- * Implementation of {@link org.opengis.filter.identity.GmlObjectId}.
+ * Implementation of {@link org.geotools.api.filter.identity.GmlObjectId}.
  *
  * @author Justin Deoliveira, The Open Planning Project
  */
@@ -35,23 +35,27 @@ public class GmlObjectIdImpl implements GmlObjectId {
         }
     }
 
+    @Override
     public String getID() {
         return gmlId;
     }
 
+    @Override
     public boolean matches(Object object) {
-        if (object instanceof org.opengis.feature.Feature) {
-            return new FeatureIdImpl(gmlId).matches((org.opengis.feature.Feature) object);
+        if (object instanceof org.geotools.api.feature.Feature) {
+            return new FeatureIdImpl(gmlId).matches((org.geotools.api.feature.Feature) object);
         }
 
         // TODO: geometries
         return false;
     }
 
+    @Override
     public String toString() {
         return gmlId;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (obj instanceof GmlObjectIdImpl) {
             GmlObjectIdImpl other = (GmlObjectIdImpl) obj;
@@ -61,6 +65,7 @@ public class GmlObjectIdImpl implements GmlObjectId {
         return false;
     }
 
+    @Override
     public int hashCode() {
         return gmlId.hashCode();
     }

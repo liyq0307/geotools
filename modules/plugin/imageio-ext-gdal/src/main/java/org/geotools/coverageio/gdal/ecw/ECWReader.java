@@ -17,12 +17,12 @@
 package org.geotools.coverageio.gdal.ecw;
 
 import it.geosolutions.imageio.plugins.ecw.ECWImageReaderSpi;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.coverage.grid.GridCoverageReader;
+import org.geotools.api.data.DataSourceException;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverageio.gdal.BaseGDALGridCoverage2DReader;
-import org.geotools.data.DataSourceException;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.coverage.grid.GridCoverageReader;
 
 /**
  * This class can read a ECW data source and create a {@link GridCoverage2D} from the data.
@@ -38,7 +38,6 @@ public final class ECWReader extends BaseGDALGridCoverage2DReader implements Gri
      * Creates a new instance of a {@link ECWReader}. I assume nothing about file extension.
      *
      * @param input Source object for which we want to build an {@link ECWReader}.
-     * @throws DataSourceException
      */
     public ECWReader(Object input) throws DataSourceException {
         this(input, null);
@@ -49,13 +48,13 @@ public final class ECWReader extends BaseGDALGridCoverage2DReader implements Gri
      *
      * @param input Source object for which we want to build an {@link ECWReader}.
      * @param hints Hints to be used by this reader throughout his life.
-     * @throws DataSourceException
      */
     public ECWReader(Object input, Hints hints) throws DataSourceException {
         super(input, hints, worldFileExt, new ECWImageReaderSpi());
     }
 
-    /** @see org.opengis.coverage.grid.GridCoverageReader#getFormat() */
+    /** @see org.geotools.api.coverage.grid.GridCoverageReader#getFormat() */
+    @Override
     public Format getFormat() {
         return new ECWFormat();
     }

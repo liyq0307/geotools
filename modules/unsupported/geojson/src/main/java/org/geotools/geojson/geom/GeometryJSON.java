@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.geojson.GeoJSONUtil;
 import org.geotools.geojson.IContentHandler;
 import org.json.simple.JSONAware;
@@ -40,7 +41,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.geometry.BoundingBox;
 
 /**
  * Reads and writes geometry objects to and from geojson.
@@ -75,8 +75,8 @@ public class GeometryJSON {
     }
 
     /**
-     * Constructs a geometry json instance specifying the number of decimals to use when encoding
-     * floating point numbers.
+     * Constructs a geometry json instance specifying the number of decimals to use when encoding floating point
+     * numbers.
      */
     public GeometryJSON(int decimals) {
         this.decimals = decimals;
@@ -218,7 +218,7 @@ public class GeometryJSON {
     }
 
     Map<String, Object> createPoint(Point point) {
-        LinkedHashMap obj = new LinkedHashMap();
+        LinkedHashMap<String, Object> obj = new LinkedHashMap<>();
 
         obj.put("type", "Point");
         obj.put("coordinates", new CoordinateSequenceEncoder(point.getCoordinateSequence(), scale));
@@ -272,7 +272,7 @@ public class GeometryJSON {
     }
 
     Map<String, Object> createLine(LineString line) {
-        LinkedHashMap obj = new LinkedHashMap();
+        LinkedHashMap<String, Object> obj = new LinkedHashMap<>();
 
         obj.put("type", "LineString");
         obj.put("coordinates", new CoordinateSequenceEncoder(line.getCoordinateSequence(), scale));
@@ -326,7 +326,7 @@ public class GeometryJSON {
     }
 
     Map<String, Object> createPolygon(Polygon poly) {
-        LinkedHashMap obj = new LinkedHashMap();
+        LinkedHashMap<String, Object> obj = new LinkedHashMap<>();
 
         obj.put("type", "Polygon");
         obj.put("coordinates", toList(poly));
@@ -380,7 +380,7 @@ public class GeometryJSON {
     }
 
     Map<String, Object> createMultiPoint(MultiPoint mpoint) {
-        LinkedHashMap obj = new LinkedHashMap();
+        LinkedHashMap<String, Object> obj = new LinkedHashMap<>();
 
         obj.put("type", "MultiPoint");
         obj.put("coordinates", toList(mpoint));
@@ -434,7 +434,7 @@ public class GeometryJSON {
     }
 
     Map<String, Object> createMultiLine(MultiLineString mline) {
-        LinkedHashMap obj = new LinkedHashMap();
+        LinkedHashMap<String, Object> obj = new LinkedHashMap<>();
 
         obj.put("type", "MultiLineString");
         obj.put("coordinates", toList(mline));
@@ -488,7 +488,7 @@ public class GeometryJSON {
     }
 
     Map<String, Object> createMultiPolygon(MultiPolygon mpoly) {
-        LinkedHashMap obj = new LinkedHashMap();
+        LinkedHashMap<String, Object> obj = new LinkedHashMap<>();
 
         obj.put("type", "MultiPolygon");
         obj.put("coordinates", toList(mpoly));
@@ -537,15 +537,14 @@ public class GeometryJSON {
      * @param gcol The geometry collection.
      * @param output The output stream.
      */
-    public void writeGeometryCollection(GeometryCollection gcol, OutputStream output)
-            throws IOException {
+    public void writeGeometryCollection(GeometryCollection gcol, OutputStream output) throws IOException {
         writeGeometryCollection(gcol, (Object) output);
     }
 
     Map<String, Object> createGeometryCollection(GeometryCollection gcol) {
-        LinkedHashMap obj = new LinkedHashMap();
+        LinkedHashMap<String, Object> obj = new LinkedHashMap<>();
 
-        ArrayList geoms = new ArrayList(gcol.getNumGeometries());
+        ArrayList<Map<String, Object>> geoms = new ArrayList<>(gcol.getNumGeometries());
         for (int i = 0; i < gcol.getNumGeometries(); i++) {
             geoms.add(create(gcol.getGeometryN(i)));
         }
@@ -627,31 +626,25 @@ public class GeometryJSON {
         GeoJSONUtil.encode(obj, output);
     }
 
-    List toList(Polygon poly) {
-        ArrayList list = new ArrayList();
-        list.add(
-                new CoordinateSequenceEncoder(
-                        poly.getExteriorRing().getCoordinateSequence(), scale));
+    List<CoordinateSequenceEncoder> toList(Polygon poly) {
+        ArrayList<CoordinateSequenceEncoder> list = new ArrayList<>();
+        list.add(new CoordinateSequenceEncoder(poly.getExteriorRing().getCoordinateSequence(), scale));
 
         for (int i = 0; i < poly.getNumInteriorRing(); i++) {
-            list.add(
-                    new CoordinateSequenceEncoder(
-                            poly.getInteriorRingN(i).getCoordinateSequence(), scale));
+            list.add(new CoordinateSequenceEncoder(poly.getInteriorRingN(i).getCoordinateSequence(), scale));
         }
 
         return list;
     }
 
     List toList(GeometryCollection mgeom) {
-        ArrayList list = new ArrayList(mgeom.getNumGeometries());
+        ArrayList<Object> list = new ArrayList<>(mgeom.getNumGeometries());
         for (int i = 0; i < mgeom.getNumGeometries(); i++) {
             Geometry g = mgeom.getGeometryN(i);
             if (g instanceof Polygon) {
                 list.add(toList((Polygon) g));
             } else if (g instanceof LineString) {
-                list.add(
-                        new CoordinateSequenceEncoder(
-                                ((LineString) g).getCoordinateSequence(), scale));
+                list.add(new CoordinateSequenceEncoder(((LineString) g).getCoordinateSequence(), scale));
             } else if (g instanceof Point) {
                 list.add(new CoordinateSequenceEncoder(((Point) g).getCoordinateSequence(), scale));
             }
@@ -662,14 +655,14 @@ public class GeometryJSON {
     static class CoordinateSequenceEncoder implements JSONAware /*, JSONStreamAware*/ {
 
         /**
-         * The min value at which the decimal notation is used (below it, the computerized
-         * scientific one is used instead)
+         * The min value at which the decimal notation is used (below it, the computerized scientific one is used
+         * instead)
          */
         private static final double DECIMAL_MIN = Math.pow(10, -3);
 
         /**
-         * The max value at which the decimal notation is used (above it, the computerized
-         * scientific one is used instead)
+         * The max value at which the decimal notation is used (above it, the computerized scientific one is used
+         * instead)
          */
         private static final double DECIMAL_MAX = Math.pow(10, 7);
 
@@ -681,6 +674,7 @@ public class GeometryJSON {
             this.scale = scale;
         }
 
+        @Override
         public String toJSONString() {
             int size = seq.size();
 

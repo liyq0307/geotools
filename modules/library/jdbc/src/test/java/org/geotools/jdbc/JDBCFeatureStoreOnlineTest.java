@@ -16,24 +16,35 @@
  */
 package org.geotools.jdbc;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.geotools.api.data.FeatureEvent.Type;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.CollectionFeatureReader;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureEvent.Type;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.store.ContentFeatureCollection;
@@ -43,32 +54,26 @@ import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.util.factory.Hints;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Id;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.identity.FeatureId;
 
 public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
     JDBCFeatureStore featureStore;
 
+    @Override
     protected void connect() throws Exception {
         super.connect();
 
         featureStore = (JDBCFeatureStore) dataStore.getFeatureSource(tname("ft1"));
     }
 
+    @Test
     public void testAddFeatures() throws IOException {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(featureStore.getSchema());
-        DefaultFeatureCollection collection =
-                new DefaultFeatureCollection(null, featureStore.getSchema());
+        DefaultFeatureCollection collection = new DefaultFeatureCollection(null, featureStore.getSchema());
 
         FeatureEventWatcher watcher = new FeatureEventWatcher();
 
@@ -88,8 +93,7 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
 
         FilterFactory ff = dataStore.getFilterFactory();
 
-        for (Iterator f = fids.iterator(); f.hasNext(); ) {
-            FeatureId identifier = (FeatureId) f.next();
+        for (FeatureId identifier : fids) {
             String fid = identifier.getID();
             Id filter = ff.id(Collections.singleton(identifier));
 
@@ -99,7 +103,7 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
             try (SimpleFeatureIterator iterator = features.features()) {
                 assertTrue(iterator.hasNext());
 
-                SimpleFeature feature = (SimpleFeature) iterator.next();
+                SimpleFeature feature = iterator.next();
                 assertEquals(fid, feature.getID());
                 assertFalse(iterator.hasNext());
             }
@@ -107,12 +111,10 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
     }
 
     /**
-     * Tests that returned keys are actually allowing the code to get back the same feature inserted
-     * (SQLServer code used to rely on a key generation approach that failed this test)
-     *
-     * @throws IOException
-     * @throws InterruptedException
+     * Tests that returned keys are actually allowing the code to get back the same feature inserted (SQLServer code
+     * used to rely on a key generation approach that failed this test)
      */
+    @Test
     public void testMultithreadedAddFeatures() throws IOException, InterruptedException {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(featureStore.getSchema());
 
@@ -126,19 +128,15 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
                 final Integer theValue = Integer.valueOf(i + 3);
                 b.set(theProperty, theValue);
                 SimpleFeature feature = b.buildFeature(null);
-                cs.submit(
-                        () -> {
-                            List<FeatureId> ids = featureStore.addFeatures(Arrays.asList(feature));
-                            Filter filter =
-                                    dataStore
-                                            .getFilterFactory()
-                                            .id(Collections.singleton(ids.get(0)));
-                            ContentFeatureCollection features = featureStore.getFeatures(filter);
-                            assertEquals(1, features.size());
-                            SimpleFeature found = DataUtilities.first(features);
-                            assertEquals(theValue, found.getAttribute(theProperty));
-                            return null;
-                        });
+                cs.submit(() -> {
+                    List<FeatureId> ids = featureStore.addFeatures(Arrays.asList(feature));
+                    Filter filter = dataStore.getFilterFactory().id(Collections.singleton(ids.get(0)));
+                    ContentFeatureCollection features = featureStore.getFeatures(filter);
+                    assertEquals(1, features.size());
+                    SimpleFeature found = DataUtilities.first(features);
+                    assertEquals(theValue, found.getAttribute(theProperty));
+                    return null;
+                });
             }
 
             // gather the results to make sure there are no exceptions
@@ -151,13 +149,13 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testAddFeaturesUseProvidedFid() throws IOException {
         // check we advertise the ability to reuse feature ids
         assertTrue(featureStore.getQueryCapabilities().isUseProvidedFIDSupported());
 
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(featureStore.getSchema());
-        DefaultFeatureCollection collection =
-                new DefaultFeatureCollection(null, featureStore.getSchema());
+        DefaultFeatureCollection collection = new DefaultFeatureCollection(null, featureStore.getSchema());
 
         String typeName = b.getFeatureType().getTypeName();
         for (int i = 3; i < 6; i++) {
@@ -169,24 +167,16 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         List<FeatureId> fids = featureStore.addFeatures((SimpleFeatureCollection) collection);
 
         assertEquals(3, fids.size());
-        assertTrue(
-                fids.contains(
-                        SimpleFeatureBuilder.createDefaultFeatureIdentifier(typeName + ".30")));
-        assertTrue(
-                fids.contains(
-                        SimpleFeatureBuilder.createDefaultFeatureIdentifier(typeName + ".40")));
-        assertTrue(
-                fids.contains(
-                        SimpleFeatureBuilder.createDefaultFeatureIdentifier(typeName + ".50")));
+        assertTrue(fids.contains(SimpleFeatureBuilder.createDefaultFeatureIdentifier(typeName + ".30")));
+        assertTrue(fids.contains(SimpleFeatureBuilder.createDefaultFeatureIdentifier(typeName + ".40")));
+        assertTrue(fids.contains(SimpleFeatureBuilder.createDefaultFeatureIdentifier(typeName + ".50")));
 
         SimpleFeatureCollection features = featureStore.getFeatures();
         assertEquals(6, features.size());
 
         FilterFactory ff = dataStore.getFilterFactory();
 
-        for (Iterator f = fids.iterator(); f.hasNext(); ) {
-            FeatureId identifier = (FeatureId) f.next();
-            String fid = identifier.getID();
+        for (FeatureId identifier : fids) {
             Id filter = ff.id(Collections.singleton(identifier));
 
             features = featureStore.getFeatures(filter);
@@ -194,10 +184,10 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testAddInTransaction() throws IOException {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(featureStore.getSchema());
-        DefaultFeatureCollection collection =
-                new DefaultFeatureCollection(null, featureStore.getSchema());
+        DefaultFeatureCollection collection = new DefaultFeatureCollection(null, featureStore.getSchema());
 
         b.set(aname("intProperty"), Integer.valueOf(3));
         b.set(aname("geometry"), new GeometryFactory().createPoint(new Coordinate(3, 3)));
@@ -207,9 +197,8 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         try (Transaction t = new DefaultTransaction()) {
             featureStore.setTransaction(t);
             featureStore.addFeatureListener(watcher);
-            JDBCFeatureStore featureStore2 =
-                    (JDBCFeatureStore)
-                            dataStore.getFeatureSource(featureStore.getName().getLocalPart());
+            JDBCFeatureStore featureStore2 = (JDBCFeatureStore)
+                    dataStore.getFeatureSource(featureStore.getName().getLocalPart());
             List<FeatureId> fids = featureStore.addFeatures((SimpleFeatureCollection) collection);
 
             assertEquals(1, fids.size());
@@ -226,10 +215,10 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testExternalConnection() throws IOException, SQLException {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(featureStore.getSchema());
-        DefaultFeatureCollection collection =
-                new DefaultFeatureCollection(null, featureStore.getSchema());
+        DefaultFeatureCollection collection = new DefaultFeatureCollection(null, featureStore.getSchema());
 
         b.set(aname("intProperty"), Integer.valueOf(3));
         b.set(aname("geometry"), new GeometryFactory().createPoint(new Coordinate(3, 3)));
@@ -242,11 +231,9 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
             try (Transaction t = dataStore.buildTransaction(conn)) {
                 featureStore.setTransaction(t);
                 featureStore.addFeatureListener(watcher);
-                JDBCFeatureStore featureStore2 =
-                        (JDBCFeatureStore)
-                                dataStore.getFeatureSource(featureStore.getName().getLocalPart());
-                List<FeatureId> fids =
-                        featureStore.addFeatures((SimpleFeatureCollection) collection);
+                JDBCFeatureStore featureStore2 = (JDBCFeatureStore)
+                        dataStore.getFeatureSource(featureStore.getName().getLocalPart());
+                List<FeatureId> fids = featureStore.addFeatures((SimpleFeatureCollection) collection);
 
                 assertEquals(1, fids.size());
 
@@ -272,22 +259,16 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         }
     }
 
-    /**
-     * Check null encoding is working properly
-     *
-     * @throws IOException
-     */
+    /** Check null encoding is working properly */
+    @Test
     public void testAddNullAttributes() throws IOException {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(featureStore.getSchema());
         SimpleFeature nullFeature = b.buildFeature("testId");
         featureStore.addFeatures(Arrays.asList(nullFeature));
     }
 
-    /**
-     * Check null encoding is working properly
-     *
-     * @throws IOException
-     */
+    /** Check null encoding is working properly */
+    @Test
     public void testModifyNullAttributes() throws IOException {
         String[] attributeNames = new String[featureStore.getSchema().getAttributeCount()];
         for (int i = 0; i < attributeNames.length; i++) {
@@ -297,10 +278,10 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         featureStore.modifyFeatures(attributeNames, nulls, Filter.INCLUDE);
     }
 
+    @Test
     public void testSetFeatures() throws IOException {
         SimpleFeatureBuilder b = new SimpleFeatureBuilder(featureStore.getSchema());
-        DefaultFeatureCollection collection =
-                new DefaultFeatureCollection(null, featureStore.getSchema());
+        DefaultFeatureCollection collection = new DefaultFeatureCollection(null, featureStore.getSchema());
 
         for (int i = 3; i < 6; i++) {
             b.set(aname("intProperty"), Integer.valueOf(i));
@@ -309,8 +290,7 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         }
 
         try (FeatureReader<SimpleFeatureType, SimpleFeature> reader =
-                new CollectionFeatureReader(
-                        (SimpleFeatureCollection) collection, collection.getSchema())) {
+                new CollectionFeatureReader((SimpleFeatureCollection) collection, collection.getSchema())) {
             featureStore.setFeatures(reader);
         }
 
@@ -318,30 +298,26 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         assertEquals(3, features.size());
 
         try (SimpleFeatureIterator iterator = features.features()) {
-            HashSet<Integer> numbers = new HashSet<Integer>();
+            HashSet<Integer> numbers = new HashSet<>();
             numbers.add(Integer.valueOf(3));
             numbers.add(Integer.valueOf(4));
             numbers.add(Integer.valueOf(5));
 
-            for (int i = 3; iterator.hasNext(); i++) {
-                SimpleFeature feature = (SimpleFeature) iterator.next();
-                assertTrue(
-                        numbers.contains(
-                                ((Number) feature.getAttribute(aname("intProperty"))).intValue()));
+            while (iterator.hasNext()) {
+                SimpleFeature feature = iterator.next();
+                assertTrue(numbers.contains(((Number) feature.getAttribute(aname("intProperty"))).intValue()));
                 numbers.remove(feature.getAttribute(aname("intProperty")));
             }
         }
     }
 
+    @Test
     public void testModifyFeatures() throws IOException {
         FeatureEventWatcher watcher = new FeatureEventWatcher();
-        SimpleFeatureType t = featureStore.getSchema();
 
         featureStore.addFeatureListener(watcher);
         featureStore.modifyFeatures(
-                new Name[] {new NameImpl(aname("stringProperty"))},
-                new Object[] {"foo"},
-                Filter.INCLUDE);
+                new Name[] {new NameImpl(aname("stringProperty"))}, new Object[] {"foo"}, Filter.INCLUDE);
 
         assertTrue("check that at least one event was issued", watcher.count > 0);
         assertEquals("Should be an update event", Type.CHANGED, watcher.type);
@@ -352,34 +328,33 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
             assertTrue(i.hasNext());
 
             while (i.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) i.next();
+                SimpleFeature feature = i.next();
                 assertEquals("foo", feature.getAttribute(aname("stringProperty")));
             }
         }
     }
 
+    @Test
     public void testModifyGeometry() throws IOException {
         // GEOT-2371
-        SimpleFeatureType t = featureStore.getSchema();
         GeometryFactory gf = new GeometryFactory();
         Point point = gf.createPoint(new Coordinate(-10, 0));
-        featureStore.modifyFeatures(
-                new Name[] {new NameImpl(aname("geometry"))}, new Object[] {point}, Filter.INCLUDE);
+        featureStore.modifyFeatures(new Name[] {new NameImpl(aname("geometry"))}, new Object[] {point}, Filter.INCLUDE);
 
         SimpleFeatureCollection features = featureStore.getFeatures();
         try (SimpleFeatureIterator i = features.features()) {
             assertTrue(i.hasNext());
 
             while (i.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) i.next();
+                SimpleFeature feature = i.next();
                 assertTrue(point.equalsExact((Geometry) feature.getAttribute(aname("geometry"))));
             }
         }
     }
 
+    @Test
     public void testModifyMadeUpGeometry() throws IOException {
         // GEOT-2371
-        SimpleFeatureType t = featureStore.getSchema();
         GeometryFactory gf = new GeometryFactory();
         Point point = gf.createPoint(new Coordinate(-10, 0));
 
@@ -395,14 +370,14 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
             assertTrue(i.hasNext());
 
             while (i.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) i.next();
+                SimpleFeature feature = i.next();
                 assertTrue(point.equalsExact((Geometry) feature.getAttribute(aname("geometry"))));
             }
         }
     }
 
+    @Test
     public void testModifyFeaturesSingleAttribute() throws IOException {
-        SimpleFeatureType t = featureStore.getSchema();
         featureStore.modifyFeatures(new NameImpl(aname("stringProperty")), "foo", Filter.INCLUDE);
 
         SimpleFeatureCollection features = featureStore.getFeatures();
@@ -410,25 +385,20 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
             assertTrue(i.hasNext());
 
             while (i.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) i.next();
+                SimpleFeature feature = i.next();
                 assertEquals("foo", feature.getAttribute(aname("stringProperty")));
             }
         }
     }
 
+    @Test(expected = Exception.class)
     public void testModifyFeaturesInvalidFilter() throws IOException {
-        SimpleFeatureType t = featureStore.getSchema();
         FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         PropertyIsEqualTo f = ff.equals(ff.property("invalidAttribute"), ff.literal(5));
-
-        try {
-            featureStore.modifyFeatures(new NameImpl(aname("stringProperty")), "foo", f);
-            fail("This should have failed with an exception reporting the invalid filter");
-        } catch (Exception e) {
-            //  fine
-        }
+        featureStore.modifyFeatures(new NameImpl(aname("stringProperty")), "foo", f);
     }
 
+    @Test
     public void testRemoveFeatures() throws IOException {
         FilterFactory ff = dataStore.getFilterFactory();
         Filter filter = ff.equals(ff.property(aname("intProperty")), ff.literal(1));
@@ -443,16 +413,10 @@ public abstract class JDBCFeatureStoreOnlineTest extends JDBCTestSupport {
         assertEquals(0, features.size());
     }
 
+    @Test(expected = Exception.class)
     public void testRemoveFeaturesWithInvalidFilter() throws IOException {
-        SimpleFeatureType t = featureStore.getSchema();
         FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
         PropertyIsEqualTo f = ff.equals(ff.property("invalidAttribute"), ff.literal(5));
-
-        try {
-            featureStore.removeFeatures(f);
-            fail("This should have failed with an exception reporting the invalid filter");
-        } catch (Exception e) {
-            //  fine
-        }
+        featureStore.removeFeatures(f);
     }
 }

@@ -18,63 +18,63 @@ package org.geotools.xml.filter;
 
 import java.util.Set;
 import javax.xml.transform.TransformerException;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.filter.identity.Identifier;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.gml.producer.GeometryTransformer;
 import org.geotools.xml.transform.TransformerBase;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.filter.And;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.helpers.AttributesImpl;
 
@@ -94,13 +94,13 @@ public class FilterTransformer extends TransformerBase {
         return super.transform(f);
     }
 
+    @Override
     public org.geotools.xml.transform.Translator createTranslator(ContentHandler handler) {
         return new FilterTranslator(handler);
     }
 
     public static class FilterTranslator extends TranslatorSupport
-            implements org.opengis.filter.FilterVisitor,
-                    org.opengis.filter.expression.ExpressionVisitor {
+            implements org.geotools.api.filter.FilterVisitor, org.geotools.api.filter.expression.ExpressionVisitor {
         GeometryTransformer.GeometryTranslator geometryEncoder;
 
         public FilterTranslator(ContentHandler handler) {
@@ -111,6 +111,7 @@ public class FilterTransformer extends TransformerBase {
             addNamespaceDeclarations(geometryEncoder);
         }
 
+        @Override
         public Object visit(ExcludeFilter filter, Object extraData) {
             // Exclude filter represents "null" when the default action is to not accept any content
             // the code calling the FilterTransformer should of checked for this case
@@ -118,6 +119,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData; // should we consider throwing an illegal state exception?
         }
 
+        @Override
         public Object visit(IncludeFilter filter, Object extraData) {
             // Include filter represents "null" when the default action is to include all content
             // the code calling the FilterTransformer should of checked for this case
@@ -125,15 +127,17 @@ public class FilterTransformer extends TransformerBase {
             return extraData; // should we consider throwing an illegal state exception?
         }
 
+        @Override
         public Object visit(And filter, Object extraData) {
             start("And");
-            for (org.opengis.filter.Filter child : filter.getChildren()) {
+            for (org.geotools.api.filter.Filter child : filter.getChildren()) {
                 child.accept(this, extraData);
             }
             end("And");
             return extraData;
         }
 
+        @Override
         public Object visit(Id filter, Object extraData) {
             Set<Identifier> fids = filter.getIdentifiers();
             for (Identifier fid : fids) {
@@ -144,6 +148,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Not filter, Object extraData) {
             start("Not");
             filter.getFilter().accept(this, extraData);
@@ -151,19 +156,21 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Or filter, Object extraData) {
             start("Or");
-            for (org.opengis.filter.Filter child : filter.getChildren()) {
+            for (org.geotools.api.filter.Filter child : filter.getChildren()) {
                 child.accept(this, extraData);
             }
             end("Or");
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyIsBetween filter, Object extraData) {
-            Expression left = (Expression) filter.getLowerBoundary();
-            Expression mid = (Expression) filter.getExpression();
-            Expression right = (Expression) filter.getUpperBoundary();
+            Expression left = filter.getLowerBoundary();
+            Expression mid = filter.getExpression();
+            Expression right = filter.getUpperBoundary();
 
             String type = "PropertyIsBetween";
 
@@ -180,6 +187,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyIsEqualTo filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -193,6 +201,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyIsNotEqualTo filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -206,6 +215,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyIsGreaterThan filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -219,6 +229,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyIsGreaterThanOrEqualTo filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -232,6 +243,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyIsLessThan filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -245,6 +257,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyIsLessThanOrEqualTo filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -258,6 +271,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyIsLike filter, Object extraData) {
             String wcm = filter.getWildCard();
             String wcs = filter.getSingleChar();
@@ -279,8 +293,9 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyIsNull filter, Object extraData) {
-            Expression expr = (Expression) filter.getExpression();
+            Expression expr = filter.getExpression();
 
             String type = "PropertyIsNull";
             start(type);
@@ -289,8 +304,9 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyIsNil filter, Object extraData) {
-            Expression expr = (Expression) filter.getExpression();
+            Expression expr = filter.getExpression();
 
             AttributesImpl atts = new AttributesImpl();
             if (filter.getNilReason() != null) {
@@ -305,6 +321,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(BBOX filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -327,6 +344,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Beyond filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -342,6 +360,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Contains filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -355,6 +374,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Crosses filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -368,6 +388,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Disjoint filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -381,6 +402,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(DWithin filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -395,6 +417,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Equals filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -408,6 +431,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Intersects filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -421,6 +445,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Overlaps filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -434,6 +459,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Touches filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -447,6 +473,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Within filter, Object extraData) {
             Expression left = filter.getExpression1();
             Expression right = filter.getExpression2();
@@ -460,11 +487,13 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visitNullFilter(Object extraData) {
             // We do not have an expression? how to represent?
             return extraData;
         }
 
+        @Override
         public void encode(Object o) throws IllegalArgumentException {
             if (o instanceof Filter) {
                 Filter filter = (Filter) o;
@@ -473,19 +502,20 @@ public class FilterTransformer extends TransformerBase {
                 Expression expression = (Expression) o;
                 expression.accept(this, null);
             } else {
-                throw new IllegalArgumentException(
-                        "Cannot encode "
-                                + (o == null ? "null" : o.getClass().getName())
-                                + " should be Filter or Expression");
+                throw new IllegalArgumentException("Cannot encode "
+                        + (o == null ? "null" : o.getClass().getName())
+                        + " should be Filter or Expression");
             }
         }
 
+        @Override
         public Object visit(NilExpression expression, Object extraData) {
             // We do not have an expression? how to represent? <Literal></Literal>?
             element("Literal", "");
             return extraData;
         }
 
+        @Override
         public Object visit(Add expression, Object extraData) {
             String type = "Add";
             start(type);
@@ -495,6 +525,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Divide expression, Object extraData) {
             String type = "Div";
             start(type);
@@ -504,20 +535,22 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Function expression, Object extraData) {
-            String type = (String) "Function";
+            String type = "Function";
 
             AttributesImpl atts = new AttributesImpl();
             atts.addAttribute("", "name", "name", "", expression.getName());
             start(type, atts);
 
-            for (org.opengis.filter.expression.Expression parameter : expression.getParameters()) {
+            for (org.geotools.api.filter.expression.Expression parameter : expression.getParameters()) {
                 parameter.accept(this, extraData);
             }
             end(type);
             return extraData;
         }
 
+        @Override
         public Object visit(Literal expression, Object extraData) {
             Object value = expression.getValue();
             if (value == null) {
@@ -534,6 +567,7 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(Multiply expression, Object extraData) {
             String type = "Mul";
             start(type);
@@ -543,11 +577,13 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(PropertyName expression, Object extraData) {
             element("PropertyName", expression.getPropertyName());
             return extraData;
         }
 
+        @Override
         public Object visit(Subtract expression, Object extraData) {
             String type = "Sub";
             start(type);
@@ -557,60 +593,74 @@ public class FilterTransformer extends TransformerBase {
             return extraData;
         }
 
+        @Override
         public Object visit(After after, Object extraData) {
-            return visit((BinaryTemporalOperator) after, After.NAME, extraData);
+            return visit(after, After.NAME, extraData);
         }
 
+        @Override
         public Object visit(AnyInteracts anyInteracts, Object extraData) {
-            return visit((BinaryTemporalOperator) anyInteracts, AnyInteracts.NAME, extraData);
+            return visit(anyInteracts, AnyInteracts.NAME, extraData);
         }
 
+        @Override
         public Object visit(Before before, Object extraData) {
-            return visit((BinaryTemporalOperator) before, Before.NAME, extraData);
+            return visit(before, Before.NAME, extraData);
         }
 
+        @Override
         public Object visit(Begins begins, Object extraData) {
-            return visit((BinaryTemporalOperator) begins, Begins.NAME, extraData);
+            return visit(begins, Begins.NAME, extraData);
         }
 
+        @Override
         public Object visit(BegunBy begunBy, Object extraData) {
-            return visit((BinaryTemporalOperator) begunBy, BegunBy.NAME, extraData);
+            return visit(begunBy, BegunBy.NAME, extraData);
         }
 
+        @Override
         public Object visit(During during, Object extraData) {
-            return visit((BinaryTemporalOperator) during, During.NAME, extraData);
+            return visit(during, During.NAME, extraData);
         }
 
+        @Override
         public Object visit(EndedBy endedBy, Object extraData) {
-            return visit((BinaryTemporalOperator) endedBy, EndedBy.NAME, extraData);
+            return visit(endedBy, EndedBy.NAME, extraData);
         }
 
+        @Override
         public Object visit(Ends ends, Object extraData) {
-            return visit((BinaryTemporalOperator) ends, Ends.NAME, extraData);
+            return visit(ends, Ends.NAME, extraData);
         }
 
+        @Override
         public Object visit(Meets meets, Object extraData) {
-            return visit((BinaryTemporalOperator) meets, Meets.NAME, extraData);
+            return visit(meets, Meets.NAME, extraData);
         }
 
+        @Override
         public Object visit(MetBy metBy, Object extraData) {
-            return visit((BinaryTemporalOperator) metBy, MetBy.NAME, extraData);
+            return visit(metBy, MetBy.NAME, extraData);
         }
 
+        @Override
         public Object visit(OverlappedBy overlappedBy, Object extraData) {
-            return visit((BinaryTemporalOperator) overlappedBy, OverlappedBy.NAME, extraData);
+            return visit(overlappedBy, OverlappedBy.NAME, extraData);
         }
 
+        @Override
         public Object visit(TContains contains, Object extraData) {
-            return visit((BinaryTemporalOperator) contains, TContains.NAME, extraData);
+            return visit(contains, TContains.NAME, extraData);
         }
 
+        @Override
         public Object visit(TEquals equals, Object extraData) {
-            return visit((BinaryTemporalOperator) equals, TEquals.NAME, extraData);
+            return visit(equals, TEquals.NAME, extraData);
         }
 
+        @Override
         public Object visit(TOverlaps contains, Object extraData) {
-            return visit((BinaryTemporalOperator) contains, TOverlaps.NAME, extraData);
+            return visit(contains, TOverlaps.NAME, extraData);
         }
 
         protected Object visit(BinaryTemporalOperator filter, String name, Object data) {

@@ -17,7 +17,14 @@
 package org.geotools.data.sqlserver;
 
 import static org.geotools.data.sqlserver.SQLServerDataStoreFactory.INSTANCE;
-import static org.geotools.jdbc.JDBCDataStoreFactory.*;
+import static org.geotools.jdbc.JDBCDataStoreFactory.DATABASE;
+import static org.geotools.jdbc.JDBCDataStoreFactory.DBTYPE;
+import static org.geotools.jdbc.JDBCDataStoreFactory.HOST;
+import static org.geotools.jdbc.JDBCDataStoreFactory.PASSWD;
+import static org.geotools.jdbc.JDBCDataStoreFactory.PORT;
+import static org.geotools.jdbc.JDBCDataStoreFactory.USER;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +33,7 @@ import org.geotools.data.sqlserver.jtds.JTDSSqlServerDataStoreFactory;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.jdbc.JDBCTestSupport;
+import org.junit.Test;
 
 public class SQLServerDataStoreFactoryOnlineTest extends JDBCTestSupport {
 
@@ -34,20 +42,22 @@ public class SQLServerDataStoreFactoryOnlineTest extends JDBCTestSupport {
         return new SQLServerTestSetup();
     }
 
+    @Test
     public void testCreateDataStore() throws Exception {
         checkConnection(false);
     }
 
+    @Test
     public void testCreateDataStoreWithDatabase() throws Exception {
         checkConnection(true);
     }
 
     void checkConnection(boolean includedb) throws Exception {
-        Properties db = fixture;
+        Properties db = getFixture();
 
         // db.load(getClass().getResourceAsStream("factory.properties"));
 
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put(HOST.key, db.getProperty(HOST.key));
         if (includedb) {
             params.put(DATABASE.key, db.getProperty(DATABASE.key));
@@ -66,8 +76,7 @@ public class SQLServerDataStoreFactoryOnlineTest extends JDBCTestSupport {
         params.put(PASSWD.key, password);
         // since we use the same test for SQLServer and JTDSSQLServer
         SQLServerDataStoreFactory factory = null;
-        if (db.getProperty("driver")
-                .equalsIgnoreCase("com.microsoft.sqlserver.jdbc.SQLServerDriver")) {
+        if (db.getProperty("driver").equalsIgnoreCase("com.microsoft.sqlserver.jdbc.SQLServerDriver")) {
             factory = new SQLServerDataStoreFactory();
 
         } else {

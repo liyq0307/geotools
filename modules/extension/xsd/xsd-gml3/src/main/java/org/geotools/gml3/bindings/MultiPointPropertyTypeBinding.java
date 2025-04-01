@@ -49,17 +49,18 @@ import org.locationtech.jts.geom.MultiPoint;
  */
 public class MultiPointPropertyTypeBinding extends GeometryPropertyTypeBindingBase {
 
-    public MultiPointPropertyTypeBinding(
-            GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry) {
+    public MultiPointPropertyTypeBinding(GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry) {
         super(encodingUtils, idRegistry);
         // TODO Auto-generated constructor stub
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MultiPointPropertyType;
     }
 
+    @Override
     public Class<? extends Geometry> getGeometryType() {
         return MultiPoint.class;
     }

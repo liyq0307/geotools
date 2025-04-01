@@ -16,16 +16,19 @@
  */
 package org.geotools.jdbc;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsEqualTo;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsEqualTo;
+import org.junit.Test;
 
 /**
  * Tests data modification when the expose primary key flag is raised
@@ -40,11 +43,10 @@ public abstract class JDBCFeatureStoreExposePkOnlineTest extends JDBCFeatureStor
         featureStore.setExposePrimaryKeyColumns(true);
     }
 
+    @Test
     public void testModifyExposedPk() throws IOException {
-        SimpleFeatureType t = featureStore.getSchema();
         FilterFactory ff = CommonFactoryFinder.getFilterFactory();
-        PropertyIsEqualTo filter =
-                ff.equal(ff.property(aname("stringProperty")), ff.literal("zero"), false);
+        PropertyIsEqualTo filter = ff.equal(ff.property(aname("stringProperty")), ff.literal("zero"), false);
         featureStore.modifyFeatures(
                 new Name[] {new NameImpl(aname("stringProperty")), new NameImpl(aname("id"))},
                 new Object[] {"foo", 123},
@@ -56,7 +58,7 @@ public abstract class JDBCFeatureStoreExposePkOnlineTest extends JDBCFeatureStor
             assertTrue(i.hasNext());
 
             while (i.hasNext()) {
-                SimpleFeature feature = (SimpleFeature) i.next();
+                SimpleFeature feature = i.next();
                 // this has been updated
                 assertEquals("foo", feature.getAttribute(aname("stringProperty")));
                 // the pk did not

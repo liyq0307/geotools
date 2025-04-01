@@ -18,6 +18,8 @@ package org.geotools.gce.imagemosaic.properties;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
@@ -26,8 +28,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
 
 /** @author Niels Charlier */
 class FSDateExtractor extends PropertiesCollector {
@@ -43,13 +45,38 @@ class FSDateExtractor extends PropertiesCollector {
     @Override
     public PropertiesCollector collect(final File file) {
         try {
-            BasicFileAttributes attributes =
-                    Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+            BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
             date = new Date(attributes.creationTime().to(TimeUnit.MILLISECONDS));
         } catch (IOException e) {
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.log(Level.FINE, e.getLocalizedMessage(), e);
             }
+        }
+        return this;
+    }
+
+    @Override
+    public PropertiesCollector collect(URL url) {
+        super.collect(url);
+        String warningMessage = null;
+        try {
+            URLConnection connection = url.openConnection();
+            long lastModified = connection.getHeaderFieldDate("Last-Modified", -1);
+            if (lastModified != -1) {
+                date = new Date(lastModified);
+            } else {
+                date = new Date();
+                warningMessage = "Unable to extract the last modified date from the provided url " + url;
+            }
+
+        } catch (IOException ioe) {
+            warningMessage = "Unable to extract the last modified date from the provided url "
+                    + url
+                    + " due to "
+                    + ioe.getLocalizedMessage();
+        }
+        if (warningMessage != null && LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine(warningMessage);
         }
         return this;
     }

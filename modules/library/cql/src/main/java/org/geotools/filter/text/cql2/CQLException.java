@@ -42,11 +42,7 @@ public class CQLException extends ParseException {
      * @param cause the cause
      * @param cqlSource string analyzed
      */
-    public CQLException(
-            final String message,
-            final IToken token,
-            final Throwable cause,
-            final String cqlSource) {
+    public CQLException(final String message, final IToken token, final Throwable cause, final String cqlSource) {
         super(message);
 
         assert message != null : "message can not be null";
@@ -68,21 +64,12 @@ public class CQLException extends ParseException {
         this(message, token, null, cqlSource);
     }
 
-    /**
-     * New instance of CQLException
-     *
-     * @param message
-     * @param cqlSource
-     */
+    /** New instance of CQLException */
     public CQLException(final String message, final String cqlSource) {
         this(message, null, null, cqlSource);
     }
 
-    /**
-     * New instance of CQLException
-     *
-     * @param message
-     */
+    /** New instance of CQLException */
     public CQLException(final String message) {
         this(message, null, null, "");
     }
@@ -92,6 +79,7 @@ public class CQLException extends ParseException {
      *
      * @return the cause
      */
+    @Override
     public Throwable getCause() {
         return cause;
     }
@@ -101,6 +89,7 @@ public class CQLException extends ParseException {
      *
      * @return a message
      */
+    @Override
     public String getMessage() {
 
         return super.getMessage() + " Parsing : " + this.cqlSource + ".";

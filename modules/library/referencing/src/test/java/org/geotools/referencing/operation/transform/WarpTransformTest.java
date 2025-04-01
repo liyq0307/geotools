@@ -16,7 +16,10 @@
  */
 package org.geotools.referencing.operation.transform;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -27,9 +30,9 @@ import javax.media.jai.Warp;
 import javax.media.jai.WarpAffine;
 import javax.media.jai.WarpPolynomial;
 import javax.media.jai.WarpQuadratic;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.util.Classes;
-import org.junit.*;
-import org.opengis.referencing.operation.TransformException;
+import org.junit.Test;
 
 /**
  * Tests the {@link WarpTransform2D} and {@link WarpAdapter} classes.
@@ -41,22 +44,16 @@ public final class WarpTransformTest {
     /** Width and height of a pseudo-image source image. */
     private static final int WIDTH = 1000, HEIGHT = 2000;
 
-    /**
-     * Transforms in place a point. This is used for testing affine, quadratic and cubic warp from
-     * know formulas.
-     */
+    /** Transforms in place a point. This is used for testing affine, quadratic and cubic warp from know formulas. */
     private static interface Formula {
         String message();
 
         void transform(Point point);
     }
 
-    /**
-     * Constructs a warp and tests the transformations. Coefficients will be tested later (by the
-     * caller).
-     */
-    private static WarpPolynomial executeTest(
-            final Formula formula, final int degree, final float EPS) throws TransformException {
+    /** Constructs a warp and tests the transformations. Coefficients will be tested later (by the caller). */
+    private static WarpPolynomial executeTest(final Formula formula, final int degree, final float EPS)
+            throws TransformException {
         /*
          * Creates a set of points and transform them according the formula supplied in argument.
          */
@@ -74,16 +71,15 @@ public final class WarpTransformTest {
          */
         final Point ext = new Point(WIDTH, HEIGHT);
         formula.transform(ext);
-        final WarpTransform2D transform =
-                new WarpTransform2D(
-                        new Rectangle(0, 0, WIDTH, HEIGHT),
-                        sources,
-                        0,
-                        new Rectangle(0, 0, ext.x, ext.y),
-                        dest,
-                        0,
-                        sources.length,
-                        degree);
+        final WarpTransform2D transform = new WarpTransform2D(
+                new Rectangle(0, 0, WIDTH, HEIGHT),
+                sources,
+                0,
+                new Rectangle(0, 0, ext.x, ext.y),
+                dest,
+                0,
+                sources.length,
+                degree);
         final WarpTransform2D inverse = (WarpTransform2D) transform.inverse();
         assertNotNull("WKT formatting test", transform.toString());
         /*
@@ -108,21 +104,17 @@ public final class WarpTransformTest {
             //
             // Try using transform(float[], ...)
             //
-            if (true) {
-                final float[] array = new float[] {source.x, source.y};
-                transform.transform(array, 0, array, 0, 1);
-                assertEquals(message, expected.x, array[0], EPS * expected.x);
-                assertEquals(message, expected.y, array[1], EPS * expected.y);
-            }
+            final float[] farray = {source.x, source.y};
+            transform.transform(farray, 0, farray, 0, 1);
+            assertEquals(message, expected.x, farray[0], EPS * expected.x);
+            assertEquals(message, expected.y, farray[1], EPS * expected.y);
             //
             // Try using transform(double[], ...)
             //
-            if (true) {
-                final double[] array = new double[] {source.x, source.y};
-                transform.transform(array, 0, array, 0, 1);
-                assertEquals(message, expected.x, array[0], EPS * expected.x);
-                assertEquals(message, expected.y, array[1], EPS * expected.y);
-            }
+            final double[] darray = {source.x, source.y};
+            transform.transform(darray, 0, darray, 0, 1);
+            assertEquals(message, expected.x, darray[0], EPS * expected.x);
+            assertEquals(message, expected.y, darray[1], EPS * expected.y);
             //
             // Tests inverse transform
             //
@@ -144,23 +136,23 @@ public final class WarpTransformTest {
         for (int i = 0; i < scalesX.length; i++) {
             final int scaleX = scalesX[i];
             final int scaleY = scalesY[i];
-            final WarpPolynomial warp =
-                    executeTest(
-                            new Formula() {
-                                public String message() {
-                                    return "WarpAffine[" + scaleX + ',' + scaleY + ']';
-                                }
+            final WarpPolynomial warp = executeTest(
+                    new Formula() {
+                        @Override
+                        public String message() {
+                            return "WarpAffine[" + scaleX + ',' + scaleY + ']';
+                        }
 
-                                public void transform(final Point point) {
-                                    point.x *= scaleX;
-                                    point.y *= scaleY;
-                                }
-                            },
-                            1,
-                            1E-5f);
+                        @Override
+                        public void transform(final Point point) {
+                            point.x *= scaleX;
+                            point.y *= scaleY;
+                        }
+                    },
+                    1,
+                    1E-5f);
             assertTrue(
-                    "Expected an affine warp but got " + Classes.getShortClassName(warp),
-                    warp instanceof WarpAffine);
+                    "Expected an affine warp but got " + Classes.getShortClassName(warp), warp instanceof WarpAffine);
         }
     }
 
@@ -172,20 +164,21 @@ public final class WarpTransformTest {
         for (int i = 0; i < scalesX.length; i++) {
             final int scaleX = scalesX[i];
             final int scaleY = scalesY[i];
-            final WarpPolynomial warp =
-                    executeTest(
-                            new Formula() {
-                                public String message() {
-                                    return "WarpQuadratic[" + scaleX + ',' + scaleY + ']';
-                                }
+            final WarpPolynomial warp = executeTest(
+                    new Formula() {
+                        @Override
+                        public String message() {
+                            return "WarpQuadratic[" + scaleX + ',' + scaleY + ']';
+                        }
 
-                                public void transform(final Point point) {
-                                    point.x *= scaleX * point.x;
-                                    point.y *= scaleY;
-                                }
-                            },
-                            2,
-                            1E-2f);
+                        @Override
+                        public void transform(final Point point) {
+                            point.x *= scaleX * point.x;
+                            point.y *= scaleY;
+                        }
+                    },
+                    2,
+                    1E-2f);
             assertTrue(
                     "Expected a quatratic warp but got " + Classes.getShortClassName(warp),
                     warp instanceof WarpQuadratic);
@@ -202,8 +195,7 @@ public final class WarpTransformTest {
         final WarpAdapter adapter = new WarpAdapter("test", transform);
         final Random random = new Random(-854734760285695284L);
         for (int i = 0; i < 200; i++) {
-            Point2D source =
-                    new Point2D.Double(random.nextDouble() * 100, random.nextDouble() * 100);
+            Point2D source = new Point2D.Double(random.nextDouble() * 100, random.nextDouble() * 100);
             Point2D expected = warp.mapDestPoint(source);
             Point2D computed = adapter.mapDestPoint(source);
             assertEquals("X", expected.getX(), computed.getX(), 1E-5);

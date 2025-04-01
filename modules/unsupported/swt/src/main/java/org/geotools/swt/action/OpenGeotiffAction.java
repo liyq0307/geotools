@@ -27,9 +27,9 @@ import org.geotools.coverage.grid.io.GridFormatFinder;
 import org.geotools.map.GridReaderLayer;
 import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
-import org.geotools.styling.RasterSymbolizer;
+import org.geotools.api.style.RasterSymbolizer;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
+import org.geotools.api.style.Style;
 import org.geotools.styling.StyleFactoryImpl;
 import org.geotools.swt.control.JFileImageChooser;
 import org.geotools.swt.utils.ImageCache;
@@ -43,7 +43,7 @@ public class OpenGeotiffAction extends MapAction implements ISelectionChangedLis
 
     public OpenGeotiffAction() {
         super(
-                "Open Image",
+                "Open Image@Shift+O",
                 "Load an image file into the viewer.",
                 ImageCache.getInstance().getImage(ImageCache.OPEN));
     }

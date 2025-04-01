@@ -92,9 +92,10 @@ public class TimeNodeTypeImpl extends AbstractTimeTopologyPrimitiveTypeImpl impl
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<TimeEdgePropertyType> getPreviousEdge() {
         if (previousEdge == null) {
-            previousEdge = new EObjectContainmentEList<TimeEdgePropertyType>(TimeEdgePropertyType.class, this, Gml311Package.TIME_NODE_TYPE__PREVIOUS_EDGE);
+            previousEdge = new EObjectContainmentEList<>(TimeEdgePropertyType.class, this, Gml311Package.TIME_NODE_TYPE__PREVIOUS_EDGE);
         }
         return previousEdge;
     }
@@ -104,9 +105,10 @@ public class TimeNodeTypeImpl extends AbstractTimeTopologyPrimitiveTypeImpl impl
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<TimeEdgePropertyType> getNextEdge() {
         if (nextEdge == null) {
-            nextEdge = new EObjectContainmentEList<TimeEdgePropertyType>(TimeEdgePropertyType.class, this, Gml311Package.TIME_NODE_TYPE__NEXT_EDGE);
+            nextEdge = new EObjectContainmentEList<>(TimeEdgePropertyType.class, this, Gml311Package.TIME_NODE_TYPE__NEXT_EDGE);
         }
         return nextEdge;
     }
@@ -116,6 +118,7 @@ public class TimeNodeTypeImpl extends AbstractTimeTopologyPrimitiveTypeImpl impl
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public TimeInstantPropertyType getPosition() {
         return position;
     }
@@ -140,6 +143,7 @@ public class TimeNodeTypeImpl extends AbstractTimeTopologyPrimitiveTypeImpl impl
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setPosition(TimeInstantPropertyType newPosition) {
         if (newPosition != position) {
             NotificationChain msgs = null;

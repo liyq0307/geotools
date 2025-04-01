@@ -48,8 +48,8 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.xpath.XPathFactory;
 
 /**
- * CommandLine Utility to be used in order to create an ImageMosaic indexer.xml as well as the
- * related NetCDF low-level indexer (_auxiliary.xml) for a prototype NetCDF.
+ * CommandLine Utility to be used in order to create an ImageMosaic indexer.xml as well as the related NetCDF low-level
+ * indexer (_auxiliary.xml) for a prototype NetCDF.
  *
  * <p>Arguments to be provided are, in the following order: " /path/to/sampleFile.nc " " -p
  * /path/to/netcdfprojectionsfile" " [/path/to/optional/outputFolder]"
@@ -70,12 +70,11 @@ public class CreateIndexer {
     @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     public static void main(String[] args) throws JDOMException, IOException, TransformerException {
         if (args.length < 1) {
-            System.out.println(
-                    "Usage: java -jar CreateIndexer"
-                            + " /path/to/sampleFile.nc "
-                            + "[-P /path/to/netcdfprojectionsfile]\n "
-                            + "[-cd [=create sample_datastore.properties]]\n "
-                            + "[/path/to/optional/outputFolder]\n");
+            System.out.println("Usage: java -jar CreateIndexer"
+                    + " /path/to/sampleFile.nc "
+                    + "[-P /path/to/netcdfprojectionsfile]\n "
+                    + "[-cd [=create sample_datastore.properties]]\n "
+                    + "[/path/to/optional/outputFolder]\n");
             System.exit(1);
         }
 
@@ -146,11 +145,10 @@ public class CreateIndexer {
         SAXBuilder saxBuilder = new SAXBuilder();
         Document doc = saxBuilder.build(finalAuxFile);
         Element root = doc.getRootElement();
-        Set<String> timeAttributes = new HashSet<String>();
-        Set<String> elevationAttributes = new HashSet<String>();
+        Set<String> timeAttributes = new HashSet<>();
+        Set<String> elevationAttributes = new HashSet<>();
         getAttributes(timeAttributes, elevationAttributes, root);
-        final StringBuilder builder =
-                new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        final StringBuilder builder = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         builder.append("<Indexer>\n");
         setDomains(timeAttributes, elevationAttributes, builder);
         boolean longNameFound = setCoverages(root, builder);
@@ -169,21 +167,20 @@ public class CreateIndexer {
 
     @SuppressWarnings("PMD.SystemPrintln")
     private static void writeDatastorePropertyFile(String datastorePath) throws IOException {
-        PrintWriter out;
         System.out.println("Writing the sample datastore.properties: " + datastorePath);
-        out = new PrintWriter(new File(datastorePath));
-        out.write("SPI=org.geotools.data.postgis.PostgisNGDataStoreFactory\n");
-        out.write("host=localhost\n");
-        out.write("port=5432\n");
-        out.write("database=sampledb\n");
-        out.write("user=postgres\n");
-        out.write("passwd=postgres\n");
-        out.write("schema=myschema\n");
-        out.write("Estimated\\ extends=false\n");
-        out.write("Loose\\ bbox=true\n");
-        out.write("driver=org.postgresql.Driver");
-        out.flush();
-        out.close();
+        try (PrintWriter out = new PrintWriter(new File(datastorePath))) {
+            out.write("SPI=org.geotools.data.postgis.PostgisNGDataStoreFactory\n");
+            out.write("host=localhost\n");
+            out.write("port=5432\n");
+            out.write("database=sampledb\n");
+            out.write("user=postgres\n");
+            out.write("passwd=postgres\n");
+            out.write("schema=myschema\n");
+            out.write("Estimated\\ extends=false\n");
+            out.write("Loose\\ bbox=true\n");
+            out.write("driver=org.postgresql.Driver");
+            out.flush();
+        }
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
@@ -206,13 +203,12 @@ public class CreateIndexer {
     }
 
     @SuppressWarnings("PMD.SystemPrintln")
-    private static void writeIndexer(String xml, String indexerFilePath)
-            throws FileNotFoundException {
+    private static void writeIndexer(String xml, String indexerFilePath) throws FileNotFoundException {
         System.out.println("Writing the indexer.xml: " + indexerFilePath);
-        PrintWriter out = new PrintWriter(indexerFilePath);
-        out.println(xml);
-        out.flush();
-        out.close();
+        try (PrintWriter out = new PrintWriter(indexerFilePath)) {
+            out.println(xml);
+            out.flush();
+        }
     }
 
     private static void formatAuxiliaryXml(File auxiliaryFile, File finalAuxFile)
@@ -223,41 +219,23 @@ public class CreateIndexer {
 
         // initialize StreamResult with File object to save to file
         StreamResult result = new StreamResult(new StringWriter());
-        InputStream is = null;
-        PrintWriter out = null;
-        try {
-            is = new FileInputStream(auxiliaryFile);
+        try (InputStream is = new FileInputStream(auxiliaryFile);
+                PrintWriter out = new PrintWriter(finalAuxFile); ) {
 
             transformer.transform(new StreamSource(is), result);
             String xmlString = result.getWriter().toString();
 
-            out = new PrintWriter(finalAuxFile);
             out.println(xmlString);
             out.flush();
 
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Exception e) {
-                    // does nothing
-                }
-            }
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (Exception e) {
-                    // does nothing
-                }
-            }
+        } catch (Exception e) {
+            // does nothing
         }
     }
 
-    private static void setParameters(
-            String auxiliaryFilePath, StringBuilder builder, boolean longNameFound) {
+    private static void setParameters(String auxiliaryFilePath, StringBuilder builder, boolean longNameFound) {
         builder.append("  <parameters>\n");
-        builder.append(
-                "    <parameter name=\"AuxiliaryFile\" value=\"" + auxiliaryFilePath + "\" />\n");
+        builder.append("    <parameter name=\"AuxiliaryFile\" value=\"" + auxiliaryFilePath + "\" />\n");
         builder.append("    <parameter name=\"AbsolutePath\" value=\"true\" />\n");
         if (longNameFound) {
             builder.append("    <parameter name=\"WrapStore\" value=\"true\" />\n");
@@ -268,7 +246,8 @@ public class CreateIndexer {
 
     private static boolean setCoverages(Element root, StringBuilder builder) throws JDOMException {
         builder.append("  <coverages>\n");
-        List<?> coverages = XPathFactory.instance().compile("coverages/coverage").evaluate(root);
+        List<?> coverages =
+                XPathFactory.instance().compile("coverages/coverage").evaluate(root);
         boolean longName = false;
         for (Object cov : coverages) {
             if (cov instanceof Element) {
@@ -293,8 +272,7 @@ public class CreateIndexer {
         Element schemaAttributesElement =
                 (Element) XPathFactory.instance().compile("attributes").evaluateFirst(schema);
         String schemaAttribs = schemaAttributesElement.getText();
-        schemaAttribs =
-                schemaAttribs.replace("imageindex:Integer", "imageindex:Integer,location:String");
+        schemaAttribs = schemaAttribs.replace("imageindex:Integer", "imageindex:Integer,location:String");
         builder.append("        <attributes>" + schemaAttribs + "</attributes>\n");
         builder.append("      </schema>\n");
 
@@ -304,15 +282,14 @@ public class CreateIndexer {
     }
 
     private static void addDomainsToCoverage(String schemaAttribs, StringBuilder builder) {
-        Set<String> domains = new HashSet<String>();
+        Set<String> domains = new HashSet<>();
         String[] schemaAttributesValues = schemaAttribs.split(",");
         for (String schemaAttr : schemaAttributesValues) {
             if (schemaAttr.contains(TIME_ATTRIB_TYPE)) {
                 String[] nameTypePair = schemaAttr.split(":");
                 domains.add(nameTypePair[0]);
             }
-            if (schemaAttr.contains(ELEVATION_ATTRIB_TYPE_FLOAT)
-                    || schemaAttr.contains(ELEVATION_ATTRIB_TYPE_DOUBLE)) {
+            if (schemaAttr.contains(ELEVATION_ATTRIB_TYPE_FLOAT) || schemaAttr.contains(ELEVATION_ATTRIB_TYPE_DOUBLE)) {
                 String[] nameTypePair = schemaAttr.split(":");
                 domains.add(nameTypePair[0]);
             }
@@ -327,13 +304,11 @@ public class CreateIndexer {
         }
     }
 
-    private static void getAttributes(
-            Set<String> timeAttributes, Set<String> elevationAttributes, Element root)
+    private static void getAttributes(Set<String> timeAttributes, Set<String> elevationAttributes, Element root)
             throws JDOMException {
-        List<?> schemaAttributes =
-                XPathFactory.instance()
-                        .compile("coverages/coverage/schema/attributes")
-                        .evaluate(root);
+        List<?> schemaAttributes = XPathFactory.instance()
+                .compile("coverages/coverage/schema/attributes")
+                .evaluate(root);
 
         for (Object e : schemaAttributes) {
             if (e instanceof Element) {
@@ -360,8 +335,7 @@ public class CreateIndexer {
         }
     }
 
-    private static void setDomains(
-            Set<String> timeAttributes, Set<String> elevationAttributes, StringBuilder builder) {
+    private static void setDomains(Set<String> timeAttributes, Set<String> elevationAttributes, StringBuilder builder) {
         builder.append("  <domains>\n");
         for (String timeDomain : timeAttributes) {
             setDomain(builder, timeDomain);

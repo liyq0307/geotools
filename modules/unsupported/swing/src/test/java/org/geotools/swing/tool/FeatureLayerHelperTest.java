@@ -17,13 +17,17 @@
 
 package org.geotools.swing.tool;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
@@ -32,7 +36,6 @@ import org.geotools.swing.testutils.TestDataUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Unit tests for FeatureLayerHelper.
@@ -81,11 +84,8 @@ public class FeatureLayerHelperTest {
         helper.setLayer(layer);
 
         ReferencedEnvelope bounds = layer.getBounds();
-        DirectPosition2D pos =
-                new DirectPosition2D(
-                        bounds.getCoordinateReferenceSystem(),
-                        bounds.getMinX() - 1,
-                        bounds.getMinY() - 1);
+        Position2D pos =
+                new Position2D(bounds.getCoordinateReferenceSystem(), bounds.getMinX() - 1, bounds.getMinY() - 1);
 
         InfoToolResult info = helper.getInfo(pos);
         assertNotNull(info);
@@ -99,9 +99,8 @@ public class FeatureLayerHelperTest {
         helper.setMapContent(mapContent);
         helper.setLayer(layer);
 
-        SimpleFeatureIterator iter =
-                ((SimpleFeatureSource) layer.getFeatureSource()).getFeatures().features();
-        try {
+        try (SimpleFeatureIterator iter =
+                ((SimpleFeatureSource) layer.getFeatureSource()).getFeatures().features()) {
             int n = 0;
             while (iter.hasNext() && n < maxFeatures) {
                 SimpleFeature feature = iter.next();
@@ -110,13 +109,12 @@ public class FeatureLayerHelperTest {
             }
 
         } finally {
-            iter.close();
             mapContent.dispose();
         }
     }
 
     private void assertGetInfo(SimpleFeature feature) throws Exception {
-        DirectPosition2D pos = TestDataUtils.getPosInFeature(feature);
+        Position2D pos = TestDataUtils.getPosInFeature(feature);
         InfoToolResult info = helper.getInfo(pos);
         assertFalse(info.getNumFeatures() < 1);
 
@@ -142,7 +140,9 @@ public class FeatureLayerHelperTest {
 
             if (value instanceof Geometry) {
                 assertEquals(
-                        "Attribute " + e.getKey(), e.getValue(), value.getClass().getSimpleName());
+                        "Attribute " + e.getKey(),
+                        e.getValue(),
+                        value.getClass().getSimpleName());
             } else {
                 assertEquals("Attribute " + e.getKey(), e.getValue(), value);
             }

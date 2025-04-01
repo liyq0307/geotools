@@ -28,9 +28,9 @@ import org.geotools.util.factory.Hints;
  */
 public class EnumerationConverterFactory implements ConverterFactory {
 
+    @Override
     public Converter createConverter(Class<?> source, Class<?> target, Hints hints) {
-        if ((String.class.equals(source) && target.isEnum())
-                || (source.isEnum() && String.class.equals(source))) {
+        if ((String.class.equals(source) && target.isEnum()) || (source.isEnum() && String.class.equals(source))) {
             return new EnumConverter();
         } else {
             return null;
@@ -39,6 +39,8 @@ public class EnumerationConverterFactory implements ConverterFactory {
 
     private static class EnumConverter implements Converter {
 
+        @Override
+        @SuppressWarnings("unchecked")
         public <T> T convert(Object source, Class<T> target) throws Exception {
             if (source instanceof String && target.isEnum()) {
                 return (T) Enum.valueOf((Class<Enum>) target, (String) source);

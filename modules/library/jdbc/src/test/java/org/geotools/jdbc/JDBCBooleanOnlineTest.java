@@ -16,25 +16,29 @@
  */
 package org.geotools.jdbc;
 
-import org.geotools.data.FeatureReader;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import static org.junit.Assert.assertEquals;
+
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.junit.Test;
 
 public abstract class JDBCBooleanOnlineTest extends JDBCTestSupport {
 
     @Override
     protected abstract JDBCBooleanTestSetup createTestSetup();
 
+    @Test
     public void testGetSchema() throws Exception {
         SimpleFeatureType ft = dataStore.getSchema(tname("b"));
         assertEquals(Boolean.class, ft.getDescriptor("boolProperty").getType().getBinding());
     }
 
+    @Test
     public void testGetFeatures() throws Exception {
-        try (FeatureReader r =
-                dataStore.getFeatureReader(new Query(tname("b")), Transaction.AUTO_COMMIT)) {
+        try (FeatureReader r = dataStore.getFeatureReader(new Query(tname("b")), Transaction.AUTO_COMMIT)) {
             r.hasNext();
             SimpleFeature f = (SimpleFeature) r.next();
             assertEquals(Boolean.FALSE, f.getAttribute("boolProperty"));

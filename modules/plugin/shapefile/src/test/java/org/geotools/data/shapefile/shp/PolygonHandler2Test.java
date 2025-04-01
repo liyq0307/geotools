@@ -16,13 +16,15 @@
  */
 package org.geotools.data.shapefile.shp;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Dimension;
 import java.util.ArrayList;
+import java.util.List;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.PrecisionModel;
@@ -41,10 +43,10 @@ public class PolygonHandler2Test extends org.geotools.data.shapefile.TestCaseSup
         c[2] = new Coordinate(1, 2, 3);
 
         PolygonHandler handler = new PolygonHandler(new GeometryFactory());
-        assertTrue(handler.getShapeType() == ShapeType.POLYGON);
+        assertSame(handler.getShapeType(), ShapeType.POLYGON);
 
-        for (int i = 0, ii = c.length; i < ii; i++) {
-            assertTrue(handler.pointInList(c[i], c));
+        for (Coordinate coordinate : c) {
+            assertTrue(handler.pointInList(coordinate, c));
         }
     }
 
@@ -53,8 +55,8 @@ public class PolygonHandler2Test extends org.geotools.data.shapefile.TestCaseSup
         Dimension ps = new Dimension(500, 500);
         PrecisionModel precision = new PrecisionModel();
 
-        ArrayList shells = new ArrayList();
-        ArrayList holes = new ArrayList();
+        ArrayList<LinearRing> shells = new ArrayList<>();
+        ArrayList<LinearRing> holes = new ArrayList<>();
 
         int x = 10;
         int y = 10;
@@ -70,22 +72,16 @@ public class PolygonHandler2Test extends org.geotools.data.shapefile.TestCaseSup
 
         for (int i = 0; i < nx; i++) {
             for (int j = 0; j < ny; j++) {
-                holes.add(
-                        copyTo(
-                                x + s + (i * (w + s)),
-                                y + s + (j * (h + s)),
-                                w,
-                                h,
-                                rectangle(precision, 0)));
+                holes.add(copyTo(x + s + (i * (w + s)), y + s + (j * (h + s)), w, h, rectangle(precision, 0)));
             }
         }
 
         PolygonHandler ph = new PolygonHandler(new GeometryFactory());
-        ArrayList assigned = ph.assignHolesToShells(shells, holes);
-        assertEquals(((ArrayList) assigned.get(0)).size(), holes.size());
+        List<List<LinearRing>> assigned = ph.assignHolesToShells(shells, holes);
+        assertEquals(assigned.get(0).size(), holes.size());
     }
 
-    public static Geometry rectangle(PrecisionModel pm, int SRID) {
+    public static LinearRing rectangle(PrecisionModel pm, int SRID) {
         Coordinate[] coords = new Coordinate[5];
 
         for (int i = 0; i < coords.length; i++) {
@@ -95,13 +91,9 @@ public class PolygonHandler2Test extends org.geotools.data.shapefile.TestCaseSup
         return new GeometryFactory().createLinearRing(coords);
     }
 
-    public static Geometry copyTo(double x, double y, double w, double h, Geometry g) {
+    public static LinearRing copyTo(double x, double y, double w, double h, LinearRing g) {
         if (g.getNumPoints() != 5) {
             throw new IllegalArgumentException("Geometry must have 5 points");
-        }
-
-        if (!LinearRing.class.isAssignableFrom(g.getClass())) {
-            throw new IllegalArgumentException("Geometry must be linear ring");
         }
 
         Coordinate[] coords = g.getCoordinates();

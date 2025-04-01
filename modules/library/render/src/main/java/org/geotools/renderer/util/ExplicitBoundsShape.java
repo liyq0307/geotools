@@ -24,9 +24,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 /**
- * Decorator on top of the {@link Shape}. It extends the Shape interface to include a method
- * 'setBounds' for explicitly defining a bounding box (which is not necessarily associated with the
- * actual shape's bounds).
+ * Decorator on top of the {@link Shape}. It extends the Shape interface to include a method 'setBounds' for explicitly
+ * defining a bounding box (which is not necessarily associated with the actual shape's bounds).
  *
  * @author fmoura
  */
@@ -46,72 +45,75 @@ public class ExplicitBoundsShape implements Shape {
         this.shape = shape;
     }
 
-    /**
-     * Sets the explicitly defined bounds for this shape.
-     *
-     * @param bounds
-     */
+    /** Sets the explicitly defined bounds for this shape. */
     public void setBounds(Rectangle2D bounds) {
         this.bounds = bounds;
     }
 
+    @Override
     public boolean contains(double x, double y, double w, double h) {
         return shape.contains(x, y, w, h);
     }
 
+    @Override
     public boolean contains(double x, double y) {
         return shape.contains(x, y);
     }
 
+    @Override
     public boolean contains(Point2D p) {
-        return shape.contains((Point2D) p);
+        return shape.contains(p);
     }
 
+    @Override
     public boolean contains(Rectangle2D r) {
-        return shape.contains((Rectangle2D) r);
+        return shape.contains(r);
     }
 
     /**
-     * Returns the explicitly defined bounds for this shape. If no bounds were explicitly set, it
-     * delegates the call to the actual shape.
+     * Returns the explicitly defined bounds for this shape. If no bounds were explicitly set, it delegates the call to
+     * the actual shape.
      *
      * @return the Rectangle representing the Shape's bounding box.
      * @see Shape
      */
+    @Override
     public Rectangle getBounds() {
         if (bounds != null)
             return new Rectangle(
-                    (int) bounds.getMinX(),
-                    (int) bounds.getMinY(),
-                    (int) bounds.getWidth(),
-                    (int) bounds.getHeight());
+                    (int) bounds.getMinX(), (int) bounds.getMinY(), (int) bounds.getWidth(), (int) bounds.getHeight());
         return shape.getBounds();
     }
 
     /**
-     * Returns the explicitly defined bounds for this shape. If no bounds were explicitly set, it
-     * delegates the call to the actual shape.
+     * Returns the explicitly defined bounds for this shape. If no bounds were explicitly set, it delegates the call to
+     * the actual shape.
      *
      * @return the Rectangle2D representing the Shape's bounding box.
      * @see Shape
      */
+    @Override
     public Rectangle2D getBounds2D() {
         if (bounds != null) return bounds;
         return shape.getBounds2D();
     }
 
+    @Override
     public PathIterator getPathIterator(AffineTransform at, double flatness) {
         return shape.getPathIterator(at, flatness);
     }
 
+    @Override
     public PathIterator getPathIterator(AffineTransform at) {
         return shape.getPathIterator(at);
     }
 
+    @Override
     public boolean intersects(double x, double y, double w, double h) {
         return shape.intersects(x, y, w, h);
     }
 
+    @Override
     public boolean intersects(Rectangle2D r) {
         return shape.intersects(r);
     }

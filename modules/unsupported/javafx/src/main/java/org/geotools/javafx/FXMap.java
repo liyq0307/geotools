@@ -50,24 +50,25 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
-import org.geotools.data.ows.Layer;
-import org.geotools.data.ows.WMSCapabilities;
-import org.geotools.data.wms.WebMapServer;
+import org.geotools.api.geometry.Bounds;
 import org.geotools.feature.DefaultFeatureCollection;
-import org.geotools.geometry.GeneralEnvelope;
+import org.geotools.geometry.GeneralBounds;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.MapContent;
-import org.geotools.map.WMSLayer;
+import org.geotools.ows.wms.Layer;
+import org.geotools.ows.wms.WMSCapabilities;
+import org.geotools.ows.wms.WebMapServer;
+import org.geotools.ows.wms.map.WMSLayer;
 import org.geotools.referencing.CRS;
 import org.geotools.renderer.lite.StreamingRenderer;
 import org.geotools.styling.StyleBuilder;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.style.StyleFactory;
 import org.jfree.fx.FXGraphics2D;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * This class is going to Manage the Display of a Map based on a WFS Service. It should have some
@@ -90,12 +91,12 @@ public class FXMap extends Parent {
     private static final String POLYGON_LAYER_TITLE = "polygon-layer";
     private static final Logger log = Logger.getLogger(FXMap.class.getName());
     private WMSCapabilities capabilities;
-    private List layers;
+    private List<Layer> layers;
     private VBox vBox;
     private Label sourceLabel;
 
-    private GeneralEnvelope layerBBox;
-    private GeneralEnvelope maxBBox;
+    private GeneralBounds layerBBox;
+    private GeneralBounds maxBBox;
 
     private TextField epsgField;
     private Button updateImageButton;
@@ -151,7 +152,7 @@ public class FXMap extends Parent {
     private GeometryDescriptor geomDesc;
     private String geometryAttributeName;
     private String source;
-    private FilterFactory2 ff;
+    private FilterFactory ff;
     private StyleFactory sf;
     private StyleBuilder sb;
 
@@ -168,7 +169,7 @@ public class FXMap extends Parent {
      * @return the children of the node
      */
     @Override
-    public ObservableList getChildren() {
+    public ObservableList<Node> getChildren() {
         return super.getChildren();
     }
 
@@ -196,7 +197,7 @@ public class FXMap extends Parent {
             Layer layer,
             int dimensionX,
             int dimensionY,
-            org.opengis.geometry.Envelope bounds)
+            Bounds bounds)
             throws NoSuchAuthorityCodeException, FactoryException {
 
         System.setProperty("org.geotools.referencing.forceXY", "true");
@@ -204,11 +205,11 @@ public class FXMap extends Parent {
         gc = mapCanvas.getGraphicsContext2D();
         zoomLevel = 0;
         lastZoomLevel = 0;
-        GeneralEnvelope layerBounds = null;
+        GeneralBounds layerBounds = null;
         this.crs = CRS.decode(this.INIT_SPACIAL_REF_SYS);
         layerBounds = layer.getEnvelope(crs);
 
-        this.layerBBox = new GeneralEnvelope(bounds);
+        this.layerBBox = new GeneralBounds(bounds);
         this.layerBBox.setCoordinateReferenceSystem(this.crs);
         this.maxBBox = layerBBox;
 
@@ -218,7 +219,7 @@ public class FXMap extends Parent {
         this.dimensionX = dimensionX;
         this.dimensionY = dimensionY;
 
-        layers = new ArrayList<Layer>(0);
+        layers = new ArrayList<>(0);
         layers.add(layer);
 
         WMSLayer wmsLayer = new WMSLayer(wms, displayLayer);
@@ -270,7 +271,7 @@ public class FXMap extends Parent {
 
     /** Clears all drawn shapes */
     public void clearShapes() {
-        ArrayList<Object> list = new ArrayList<Object>(1);
+        ArrayList<Object> list = new ArrayList<>(1);
         list.add(this.vBox);
         this.getChildren().retainAll(list);
         markerCount = 0;
@@ -359,11 +360,7 @@ public class FXMap extends Parent {
         return this.mapContent.layers();
     }
 
-    /**
-     * Scales the map to zoom in/out without reloading the map
-     *
-     * @param zoomDelta
-     */
+    /** Scales the map to zoom in/out without reloading the map */
     private void scaleMap(double zoomDelta) {
         Point2D.Double lower;
         Point2D.Double upper;
@@ -411,9 +408,9 @@ public class FXMap extends Parent {
         this.mapContent.getViewport().setCoordinateReferenceSystem(crs);
         try {
             this.maxBBox =
-                    new GeneralEnvelope(new ReferencedEnvelope(maxBBox).transform(crs, true));
+                    new GeneralBounds(new ReferencedEnvelope(maxBBox).transform(crs, true));
             this.layerBBox =
-                    new GeneralEnvelope(new ReferencedEnvelope(layerBBox).transform(crs, true));
+                    new GeneralBounds(new ReferencedEnvelope(layerBBox).transform(crs, true));
         } catch (Exception tEx) {
             log.log(Level.SEVERE, tEx.getMessage());
         }
@@ -448,7 +445,6 @@ public class FXMap extends Parent {
     /**
      * Zooms in/out. TODO: center zoom on mouse position
      *
-     * @param zoomDelta
      * @param x Mouse position x
      * @param y Mouse position y
      */
@@ -675,6 +671,7 @@ public class FXMap extends Parent {
             zoomTimer = new Timer(true);
             zoomTask =
                     new TimerTask() {
+                        @Override
                         public void run() {
                             int zoomDelta = zoomLevel - lastZoomLevel;
                             zoom(zoomDelta, e.getX(), e.getY());

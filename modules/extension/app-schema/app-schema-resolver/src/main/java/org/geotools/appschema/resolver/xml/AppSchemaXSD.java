@@ -18,7 +18,6 @@
 package org.geotools.appschema.resolver.xml;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 import org.eclipse.xsd.XSDSchema;
 import org.eclipse.xsd.util.XSDSchemaLocator;
@@ -29,8 +28,8 @@ import org.geotools.xsd.SchemaLocator;
 import org.geotools.xsd.XSD;
 
 /**
- * {@link XSD} that uses {@link SchemaResolver} to locate schema resources in a catalog, on the
- * classpath, or in a cache.
+ * {@link XSD} that uses {@link SchemaResolver} to locate schema resources in a catalog, on the classpath, or in a
+ * cache.
  *
  * @author Ben Caradoc-Davies (CSIRO Earth Science and Resource Engineering)
  * @author Niels Charlier (Curtin University of Technology)
@@ -47,11 +46,7 @@ public class AppSchemaXSD extends XSD {
     /** The {@link Configuration} used to encode documents with this schema. */
     private AppSchemaConfiguration configuration;
 
-    /**
-     * @param namespaceUri
-     * @param schemaLocation
-     * @param resolver
-     */
+    /** */
     public AppSchemaXSD(String namespaceUri, String schemaLocation, SchemaResolver resolver) {
         this.namespaceUri = namespaceUri;
         this.schemaLocation = resolver.resolve(schemaLocation);
@@ -82,11 +77,11 @@ public class AppSchemaXSD extends XSD {
     }
 
     /** @see XSD#addDependencies(java.util.Set) */
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings("unchecked")
     @Override
     protected void addDependencies(Set dependencies) {
         if (configuration != null) {
-            for (Configuration dependency : (List<Configuration>) configuration.getDependencies()) {
+            for (Configuration dependency : configuration.getDependencies()) {
                 dependencies.add(dependency.getXSD());
             }
         }
@@ -95,6 +90,7 @@ public class AppSchemaXSD extends XSD {
     @Override
     public SchemaLocator createSchemaLocator() {
         return new SchemaLocator(this) {
+            @Override
             public boolean canHandle(
                     XSDSchema schema,
                     String namespaceURI,

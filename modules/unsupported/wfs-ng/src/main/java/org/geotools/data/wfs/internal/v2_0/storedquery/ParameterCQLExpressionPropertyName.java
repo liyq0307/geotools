@@ -17,8 +17,8 @@
 
 package org.geotools.data.wfs.internal.v2_0.storedquery;
 
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.PropertyName;
 import org.xml.sax.helpers.NamespaceSupport;
 
 public abstract class ParameterCQLExpressionPropertyName implements PropertyName {
@@ -40,7 +40,7 @@ public abstract class ParameterCQLExpressionPropertyName implements PropertyName
     @Override
     public <T> T evaluate(Object object, Class<T> context) {
         ParameterMappingContext contextObj = (ParameterMappingContext) object;
-        return (T) get(contextObj);
+        return context.cast(get(contextObj));
     }
 
     @Override

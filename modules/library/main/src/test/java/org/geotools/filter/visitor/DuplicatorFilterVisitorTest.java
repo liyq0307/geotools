@@ -18,36 +18,35 @@ package org.geotools.filter.visitor;
 
 import java.util.ArrayList;
 import java.util.List;
-import junit.framework.TestCase;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.InternalFunction;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.expression.InternalVolatileFunction;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.InternalFunction;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Unit test for DuplicatorFilterVisitor.
  *
  * @author Cory Horner, Refractions Research Inc.
  */
-public class DuplicatorFilterVisitorTest extends TestCase {
+public class DuplicatorFilterVisitorTest {
     FilterFactory fac;
 
-    public DuplicatorFilterVisitorTest(String testName) {
-        super(testName);
-    }
-
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         fac = CommonFactoryFinder.getFilterFactory(null);
     }
 
+    @Test
     public void testLogicFilterDuplication() throws IllegalFilterException {
-        List filters = new ArrayList();
+        List<Filter> filters = new ArrayList<>();
         // create a filter
         Filter filter1 = fac.greater(fac.literal(2), fac.literal(1));
         filters.add(filter1);
@@ -56,14 +55,15 @@ public class DuplicatorFilterVisitorTest extends TestCase {
 
         And oldFilter = fac.and(filters);
         // duplicate it
-        DuplicatingFilterVisitor visitor = new DuplicatingFilterVisitor((FilterFactory2) fac);
+        DuplicatingFilterVisitor visitor = new DuplicatingFilterVisitor((FilterFactory) fac);
         Filter newFilter = (Filter) oldFilter.accept(visitor, null);
 
         // compare it
-        assertNotNull(newFilter);
+        Assert.assertNotNull(newFilter);
         // TODO: a decent comparison
     }
 
+    @Test
     public void testDuplicateInternalFunction() throws IllegalFilterException {
         class TestInternalFunction extends InternalVolatileFunction {
 
@@ -81,13 +81,13 @@ public class DuplicatorFilterVisitorTest extends TestCase {
         Expression internalFunction = new TestInternalFunction();
         Filter filter = fac.isNull(internalFunction);
 
-        DuplicatingFilterVisitor visitor = new DuplicatingFilterVisitor((FilterFactory2) fac);
+        DuplicatingFilterVisitor visitor = new DuplicatingFilterVisitor((FilterFactory) fac);
         Filter newFilter = (Filter) filter.accept(visitor, null);
 
-        assertTrue(newFilter instanceof PropertyIsNull);
+        Assert.assertTrue(newFilter instanceof PropertyIsNull);
         Expression newExpression = ((PropertyIsNull) newFilter).getExpression();
-        assertNotNull(newExpression);
-        assertTrue(newExpression instanceof TestInternalFunction);
-        assertNotSame(internalFunction, newExpression);
+        Assert.assertNotNull(newExpression);
+        Assert.assertTrue(newExpression instanceof TestInternalFunction);
+        Assert.assertNotSame(internalFunction, newExpression);
     }
 }

@@ -23,10 +23,13 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Query;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.store.ContentState;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -36,9 +39,6 @@ import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.WKTWriter;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * Uses PropertyAttributeWriter to generate a property file on disk.
@@ -63,8 +63,7 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
     SimpleFeature live = null;
     private ContentState state;
 
-    public PropertyFeatureWriter(
-            ContentFeatureSource source, ContentState contentState, Query query, boolean append)
+    public PropertyFeatureWriter(ContentFeatureSource source, ContentState contentState, Query query, boolean append)
             throws IOException {
         this.state = contentState;
         this.featureSource = source;
@@ -89,12 +88,14 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
     // constructor end
 
     // getFeatureType start
+    @Override
     public SimpleFeatureType getFeatureType() {
         return state.getFeatureType();
     }
     // getFeatureType end
 
     // hasNext start
+    @Override
     public boolean hasNext() throws IOException {
         if (writer == null) {
             return false; // writer has been closed
@@ -165,6 +166,7 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
     // writeImplementation end
 
     // next start
+    @Override
     public SimpleFeature next() throws IOException {
         if (writer == null) {
             throw new IOException("Writer has been closed");
@@ -175,7 +177,7 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
                 delegate.next(); // grab next line
 
                 fid = delegate.fid;
-                Object values[] = new Object[type.getAttributeCount()];
+                Object[] values = new Object[type.getAttributeCount()];
                 for (int i = 0; i < type.getAttributeCount(); i++) {
                     values[i] = delegate.read(i);
                 }
@@ -185,7 +187,7 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
                 return live;
             } else {
                 fid = type.getTypeName() + "." + System.currentTimeMillis();
-                Object values[] = DataUtilities.defaultValues(type);
+                Object[] values = DataUtilities.defaultValues(type);
 
                 origional = null;
                 live = SimpleFeatureBuilder.build(type, values, fid);
@@ -199,6 +201,7 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
     // next end
 
     // write start
+    @Override
     public void write() throws IOException {
         if (live == null) {
             throw new IOException("No current feature to write");
@@ -226,6 +229,7 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
     // write end
 
     // remove start
+    @Override
     public void remove() throws IOException {
         if (live == null) {
             throw new IOException("No current feature to remove");
@@ -243,6 +247,7 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
     // remove end
 
     // close start
+    @Override
     public void close() throws IOException {
         if (writer == null) {
             throw new IOException("writer already closed");
@@ -262,22 +267,16 @@ public class PropertyFeatureWriter implements FeatureWriter<SimpleFeatureType, S
         read.delete();
 
         if (write.exists() && !write.renameTo(read)) {
-            FileOutputStream outStream = new FileOutputStream(read);
-            FileInputStream inStream = new FileInputStream(write);
-            FileChannel out = outStream.getChannel();
-            FileChannel in = inStream.getChannel();
-            try {
+            try (FileOutputStream outStream = new FileOutputStream(read);
+                    FileInputStream inStream = new FileInputStream(write);
+                    FileChannel out = outStream.getChannel();
+                    FileChannel in = inStream.getChannel()) {
                 long len = in.size();
                 long copied = out.transferFrom(in, 0, in.size());
 
                 if (len != copied) {
                     throw new IOException("unable to complete write");
                 }
-            } finally {
-                in.close();
-                out.close();
-                inStream.close();
-                outStream.close();
             }
         }
         read = null;

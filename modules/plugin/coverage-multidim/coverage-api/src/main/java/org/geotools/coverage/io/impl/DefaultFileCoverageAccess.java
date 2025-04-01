@@ -22,21 +22,17 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.Parameter;
 import org.geotools.coverage.io.Driver;
 import org.geotools.coverage.io.FileCoverageAccess;
-import org.geotools.data.DataSourceException;
-import org.geotools.data.Parameter;
 
 /** @author Simone Giannecchini, GeoSolutions */
 public class DefaultFileCoverageAccess extends DefaultCoverageAccess implements FileCoverageAccess {
 
     protected final URL source;
 
-    /**
-     * @param driver
-     * @param allowedAccessTypes
-     * @param accessParams
-     */
+    /** */
     public DefaultFileCoverageAccess(
             Driver driver,
             EnumSet<AccessType> allowedAccessTypes,

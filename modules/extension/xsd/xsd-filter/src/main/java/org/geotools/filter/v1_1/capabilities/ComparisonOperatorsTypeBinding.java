@@ -18,13 +18,13 @@ package org.geotools.filter.v1_1.capabilities;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.ComparisonOperators;
+import org.geotools.api.filter.capability.Operator;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.capability.ComparisonOperators;
-import org.opengis.filter.capability.Operator;
 
 /**
  * Binding object for the type http://www.opengis.net/ogc:ComparisonOperatorsType.
@@ -52,6 +52,7 @@ public class ComparisonOperatorsTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.ComparisonOperatorsType;
     }
@@ -63,7 +64,8 @@ public class ComparisonOperatorsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
-    public Class getType() {
+    @Override
+    public Class<?> getType() {
         return ComparisonOperators.class;
     }
 
@@ -74,12 +76,14 @@ public class ComparisonOperatorsTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        List ops = node.getChildValues(Operator.class);
+        List<Operator> ops = node.getChildValues(Operator.class);
 
-        return factory.comparisonOperators((Operator[]) ops.toArray(new Operator[ops.size()]));
+        return factory.comparisonOperators(ops.toArray(new Operator[ops.size()]));
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("ComparisonOperator".equals(name.getLocalPart())) {
             ComparisonOperators ops = (ComparisonOperators) object;

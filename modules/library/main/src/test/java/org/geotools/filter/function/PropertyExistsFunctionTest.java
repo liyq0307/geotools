@@ -18,6 +18,12 @@ package org.geotools.filter.function;
 
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.metadata.citation.Citation;
 import org.geotools.data.DataUtilities;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -25,14 +31,7 @@ import org.geotools.metadata.iso.citation.CitationImpl;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.metadata.citation.Citation;
 
 /**
  * @since 2.4
@@ -58,7 +57,7 @@ public class PropertyExistsFunctionTest {
         Assert.assertEquals("propertyexists", f.getName().toLowerCase());
     }
 
-    @Ignore
+    @Test
     public void testFind() {
         Function function = ff.function("propertyexists", ff.property("testPropName"));
         Assert.assertNotNull(function);

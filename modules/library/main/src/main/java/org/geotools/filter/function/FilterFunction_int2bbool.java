@@ -20,19 +20,19 @@ package org.geotools.filter.function;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_int2bbool extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl("int2bbool", Boolean.class, parameter("int", Integer.class));
+    public static FunctionName NAME = new FunctionNameImpl("int2bbool", Boolean.class, parameter("int", Integer.class));
 
     public FilterFunction_int2bbool() {
         super(NAME);
     }
 
+    @Override
     public Object evaluate(Object feature) {
         int arg0;
 

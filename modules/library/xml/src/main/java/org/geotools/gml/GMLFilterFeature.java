@@ -16,14 +16,15 @@
  */
 package org.geotools.gml;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.XMLFilterImpl;
@@ -31,11 +32,10 @@ import org.xml.sax.helpers.XMLFilterImpl;
 /**
  * LEVEL3 GML filter: translates JTS elements and attribute data into features.
  *
- * <p>This filter simply reads in the events and coordinates passed to it by its GMLFilterDocument
- * child and converts them into JTS objects. Note that it passes through anything not specifically
- * sent to it by GMLFilterDocument (i.e. more or less everything not in geometry.xsd). The parent of
- * this filter must implement GMLHandlerJTS in order to receive the JTS objects passed by this
- * filter.
+ * <p>This filter simply reads in the events and coordinates passed to it by its GMLFilterDocument child and converts
+ * them into JTS objects. Note that it passes through anything not specifically sent to it by GMLFilterDocument (i.e.
+ * more or less everything not in geometry.xsd). The parent of this filter must implement GMLHandlerJTS in order to
+ * receive the JTS objects passed by this filter.
  *
  * @author Rob Hranac, Vision for New York
  * @version $Id$
@@ -45,8 +45,7 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
     // Static Globals to handle some expected elements
 
     /** The logger for the GML module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(GMLFilterFeature.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(GMLFilterFeature.class);
 
     /** GML namespace string. */
 
@@ -62,9 +61,9 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
     // private Feature currentFeature; // = new FeatureFlat();
 
     /** Stores current feature attributes. */
-    private Vector attributes = new Vector();
+    private List<Object> attributes = new ArrayList<>();
 
-    private Vector attributeNames = new Vector();
+    private List<String> attributeNames = new ArrayList<>();
     private String fid = null;
 
     /** Stores current feature attributes. */
@@ -88,8 +87,8 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
     private String typeName = "GenericFeature";
 
     /**
-     * Collects string chunks in {@link #characters(char[], int, int)} callback to be handled at the
-     * beggining of {@link #endElement(String, String, String)}
+     * Collects string chunks in {@link #characters(char[], int, int)} callback to be handled at the beggining of
+     * {@link #endElement(String, String, String)}
      */
     private StringBuffer characters = new StringBuffer();
 
@@ -106,24 +105,24 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
     public void setSchema(String uri) {}
 
     /**
-     * Manages the start of a new main or sub geometry. This method looks at the status of the
-     * current handler and either returns a new sub-handler (if the last one was successfully
-     * returned already) or passes the element start notification along to the current handler as a
-     * sub geometry notice.
+     * Manages the start of a new main or sub geometry. This method looks at the status of the current handler and
+     * either returns a new sub-handler (if the last one was successfully returned already) or passes the element start
+     * notification along to the current handler as a sub geometry notice.
      *
      * @param geometry The geometry from the child.
      */
+    @Override
     public void geometry(Geometry geometry) {
         // insideGeometry = true;
         // _log.debug("adding geometry with name "+attName);
         if (insideFeature) {
             if (attName.equals("")) {
-                attributeNames.addElement("geometry");
+                attributeNames.add("geometry");
             } else {
-                attributeNames.addElement(attName);
+                attributeNames.add(attName);
             }
 
-            attributes.addElement(geometry);
+            attributes.add(geometry);
             endAttribute();
 
             // currentFeature.setGeometry(geometry);
@@ -135,9 +134,9 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
     }
 
     /**
-     * Checks for GML element start and - if not a coordinates element - sends it directly on down
-     * the chain to the appropriate parent handler. If it is a coordinates (or coord) element, it
-     * uses internal methods to set the current state of the coordinates reader appropriately.
+     * Checks for GML element start and - if not a coordinates element - sends it directly on down the chain to the
+     * appropriate parent handler. If it is a coordinates (or coord) element, it uses internal methods to set the
+     * current state of the coordinates reader appropriately.
      *
      * @param namespaceURI The namespace of the element.
      * @param localName The local name of the element.
@@ -146,8 +145,8 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
      * @throws SAXException Some parsing error occured while reading coordinates.
      * @task HACK:The method for determining if something is a feature or not is too crude.
      */
-    public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
-            throws SAXException {
+    @Override
+    public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException {
         characters.setLength(0);
 
         if (localName.endsWith("Collection")) {
@@ -159,8 +158,8 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
         // if it ends with Member we'll assume it's a feature for the time being
         // nasty hack to fix members of multi lines and polygons
         if (isFeatureMember(localName)) {
-            attributes = new Vector();
-            attributeNames = new Vector();
+            attributes = new ArrayList<>();
+            attributeNames = new ArrayList<>();
 
             // currentFeature = new FeatureFlat();
             insideFeature = true;
@@ -212,15 +211,15 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
     }
 
     /**
-     * Reads the only internal characters read by pure GML parsers, which are coordinates. These
-     * coordinates are sent to the coordinates reader class which interprets them appropriately,
-     * depending on the its current state.
+     * Reads the only internal characters read by pure GML parsers, which are coordinates. These coordinates are sent to
+     * the coordinates reader class which interprets them appropriately, depending on the its current state.
      *
      * @param ch Raw coordinate string from the GML document.
      * @param start Beginning character position of raw coordinate string.
      * @param length Length of the character string.
      * @throws SAXException Some parsing error occurred while reading coordinates.
      */
+    @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
         characters.append(ch, start, length);
     }
@@ -247,17 +246,17 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
     }
 
     /**
-     * Checks for GML element end and - if not a coordinates element - sends it directly on down the
-     * chain to the appropriate parent handler. If it is a coordinates (or coord) element, it uses
-     * internal methods to set the current state of the coordinates reader appropriately.
+     * Checks for GML element end and - if not a coordinates element - sends it directly on down the chain to the
+     * appropriate parent handler. If it is a coordinates (or coord) element, it uses internal methods to set the
+     * current state of the coordinates reader appropriately.
      *
      * @param namespaceURI Namespace of the element.
      * @param localName Local name of the element.
      * @param qName Full name of the element, including namespace prefix.
      * @throws SAXException Parsing error occurred while reading coordinates.
      */
-    public void endElement(String namespaceURI, String localName, String qName)
-            throws SAXException {
+    @Override
+    public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
         handleCharacters();
         if (isFeatureMember(localName)) {
             SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
@@ -290,7 +289,7 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
             //            }
             //            insideFeature = false;
             for (int i = 0, ii = attributes.size(); i < ii; i++) {
-                String name = (String) attributeNames.get(i);
+                String name = attributeNames.get(i);
                 Class clazz = attributes.get(i).getClass();
                 tb.add(name, clazz);
             }
@@ -317,7 +316,6 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
 
                 attributes.add(tempValue);
                 attributeNames.add(attName);
-                tempValue = null;
             }
 
             endAttribute();
@@ -341,6 +339,7 @@ public class GMLFilterFeature extends XMLFilterImpl implements GMLHandlerJTS {
         }
 
         // _log.debug("attName now equals " + attName);
+        tempValue = null;
         insideAttribute = false;
     }
 }

@@ -17,12 +17,12 @@
 package org.geotools.filter.v1_0;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.expression.Expression;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -57,6 +57,7 @@ public class OGCPropertyIsBetweenTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return OGC.PropertyIsBetweenType;
     }
@@ -68,6 +69,7 @@ public class OGCPropertyIsBetweenTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return PropertyIsBetween.class;
     }
@@ -79,6 +81,7 @@ public class OGCPropertyIsBetweenTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -88,6 +91,7 @@ public class OGCPropertyIsBetweenTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Expression e = (Expression) node.getChildValue(0);
         Expression l = (Expression) node.getChildValue(1);
@@ -96,6 +100,7 @@ public class OGCPropertyIsBetweenTypeBinding extends AbstractComplexBinding {
         return factory.between(e, l, u);
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         PropertyIsBetween between = (PropertyIsBetween) object;
 

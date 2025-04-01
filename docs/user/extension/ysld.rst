@@ -13,7 +13,7 @@ References:
 
 * :geoserver:`YSLD <styling/ysld/index>` (GeoServer User Guide)
 * :doc:`gt-main style layer descriptor </library/main/sld>` (interfaces)
-* :doc:`gt-opengis symbology encoding</library/opengis/se>` (interfaces)
+* :doc:`gt-api symbology encoding</library/api/se>` (interfaces)
 * :doc:`style </tutorial/map/style>` (tutorial)
 * :doc:`gt-render style </library/render/style>` (code examples)
 
@@ -224,6 +224,23 @@ Style definition:
     feature-styles:
     - <feature style>
 
+Optional top-level sld and layer definition:
+
+.. code-block:: yaml
+   
+   # sld definition
+   sld-name: <text>
+   sld-title: <text>
+   sld-abstract: <text>
+   
+   # named layer definition
+   layer-name: <text>
+
+   # user layer definition
+   user-name: <text>
+   user-remote: <text>
+   user-service: <text>
+
 Feature style definition:
 
 .. code-block:: yaml
@@ -254,6 +271,7 @@ Rule definition:
       zoom: [<min>,<max>]
       symbolizers:
       - <symbolizers>
+      x-inclusion: <text>
 
 Line symbolizer definition:
 

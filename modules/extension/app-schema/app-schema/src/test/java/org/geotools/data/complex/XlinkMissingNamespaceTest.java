@@ -35,13 +35,10 @@ import org.junit.Test;
  */
 public class XlinkMissingNamespaceTest extends AppSchemaTestSupport {
     /**
-     * Illustrates that if xlink namespace has not been declared in the app-schema mapping file,the
-     * client property is set as if for href (in the no-name namespace).
+     * Illustrates that if xlink namespace has not been declared in the app-schema mapping file,the client property is
+     * set as if for href (in the no-name namespace).
      *
-     * <p>This test shows correct behaviour by throwing an exception reporting the undeclared
-     * namespace.
-     *
-     * @throws IllegalArgumentException
+     * <p>This test shows correct behaviour by throwing an exception reporting the undeclared namespace.
      */
     @Test
     public void testGetClientProperties() throws IOException {

@@ -26,18 +26,16 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
-import org.geotools.data.Parameter;
+import org.geotools.api.data.Parameter;
 import org.geotools.swing.wizard.JPage;
 import org.geotools.swing.wizard.ParamField;
 import org.geotools.util.Converters;
 
 /**
- * A wizard page that will prompt the user for a file of the supplied format ask for any additional
- * information.
+ * A wizard page that will prompt the user for a file of the supplied format ask for any additional information.
  *
- * <p>This page will allow the user to edit and modify the provided connectionParameters map - but
- * will only show parameters that match the indicated "level". If level is null it assumed to be
- * "user".
+ * <p>This page will allow the user to edit and modify the provided connectionParameters map - but will only show
+ * parameters that match the indicated "level". If level is null it assumed to be "user".
  */
 public class JParameterListPage extends JPage {
     String title;
@@ -45,16 +43,13 @@ public class JParameterListPage extends JPage {
     List<Parameter<?>> contents;
 
     /** Map of user interface ParamFields displayed to the user */
-    private Map<Parameter<?>, ParamField> fields = new HashMap<Parameter<?>, ParamField>();
+    private Map<Parameter<?>, ParamField> fields = new HashMap<>();
 
     /** Connection params for datastore */
     protected Map<String, Object> connectionParameters;
 
     public JParameterListPage(
-            String title,
-            String description,
-            List<Parameter<?>> contents,
-            Map<String, Object> params) {
+            String title, String description, List<Parameter<?>> contents, Map<String, Object> params) {
         this.title = title;
         this.description = description;
         this.contents = contents;
@@ -101,9 +96,8 @@ public class JParameterListPage extends JPage {
         for (Entry<Parameter<?>, ParamField> entry : fields.entrySet()) {
             Parameter<?> param = entry.getKey();
             ParamField field = entry.getValue();
-            Object value = null;
             Object object = connectionParameters.get(param.key);
-            value = Converters.convert(object, param.type);
+            Object value = Converters.convert(object, param.type);
             if (value == null) {
                 value = object;
             }

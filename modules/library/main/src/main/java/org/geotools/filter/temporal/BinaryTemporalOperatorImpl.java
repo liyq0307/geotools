@@ -9,18 +9,17 @@
  */
 package org.geotools.filter.temporal;
 
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.Period;
+import org.geotools.api.temporal.RelativePosition;
+import org.geotools.api.temporal.TemporalPrimitive;
 import org.geotools.filter.visitor.OperatorNameFilterVisitor;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.Period;
-import org.opengis.temporal.RelativePosition;
-import org.opengis.temporal.TemporalPrimitive;
 
 public abstract class BinaryTemporalOperatorImpl implements BinaryTemporalOperator {
 
-    private static final OperatorNameFilterVisitor operationNameVisitor =
-            new OperatorNameFilterVisitor();
+    private static final OperatorNameFilterVisitor operationNameVisitor = new OperatorNameFilterVisitor();
 
     protected Expression e1, e2;
     protected MatchAction matchAction;
@@ -35,18 +34,22 @@ public abstract class BinaryTemporalOperatorImpl implements BinaryTemporalOperat
         this.matchAction = matchAction;
     }
 
+    @Override
     public Expression getExpression1() {
         return e1;
     }
 
+    @Override
     public Expression getExpression2() {
         return e2;
     }
 
+    @Override
     public MatchAction getMatchAction() {
         return matchAction;
     }
 
+    @Override
     public boolean evaluate(Object object) {
         TemporalPrimitive left = toTemporal(object, e1);
         TemporalPrimitive right = toTemporal(object, e2);

@@ -20,7 +20,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,27 +33,27 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.LockingManager;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.LockingManager;
-import org.geotools.data.Query;
-import org.geotools.data.ServiceInfo;
-import org.geotools.data.Transaction;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.data.transform.Definition;
 import org.geotools.data.transform.TransformFactory;
 import org.geotools.feature.NameImpl;
 import org.geotools.referencing.CRS;
 import org.geotools.util.URLs;
 import org.geotools.util.Utilities;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * A data store wrapper around a {@link DataStore} object.
@@ -73,8 +72,7 @@ public abstract class DataStoreWrapper implements DataStore {
 
     protected static final String COORDINATE_REFERENCE_SYSTEM = "CRS";
 
-    protected static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(DataStoreWrapper.class);
+    protected static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(DataStoreWrapper.class);
 
     /** Auxiliary folder which contains properties file with mapping information */
     protected File auxiliaryFolder;
@@ -83,37 +81,25 @@ public abstract class DataStoreWrapper implements DataStore {
     protected final DataStore datastore;
 
     /** Mapping between typeNames and FeatureTypeMapper */
-    protected final Map<Name, FeatureTypeMapper> mapping =
-            new ConcurrentHashMap<Name, FeatureTypeMapper>();
+    protected final Map<Name, FeatureTypeMapper> mapping = new ConcurrentHashMap<>();
 
     /** Quick access typeNames list */
-    private List<String> typeNames = new ArrayList<String>();
+    private List<String> typeNames = new ArrayList<>();
 
-    /**
-     * Base constructor
-     *
-     * @param datastore
-     * @param auxFolderPath
-     */
+    /** Base constructor */
     public DataStoreWrapper(DataStore datastore, String auxFolderPath) {
         this(datastore, auxFolderPath, HIDDEN_FOLDER);
     }
 
-    /**
-     * Base constructor with custom hidden folder
-     *
-     * @param datastore
-     * @param auxFolderPath
-     * @param subFolderName
-     */
+    /** Base constructor with custom hidden folder */
     public DataStoreWrapper(DataStore datastore, String auxFolderPath, String subFolderName) {
         this.datastore = datastore;
         initMapping(auxFolderPath + File.separatorChar + subFolderName);
     }
 
     /**
-     * Initialize the mapping by creating proper {@link FeatureTypeMapper}s on top of the available
-     * property files which contain mapping information.
+     * Initialize the mapping by creating proper {@link FeatureTypeMapper}s on top of the available property files which
+     * contain mapping information.
      *
      * @param auxFolderPath the path of the folder containing mapping properties files
      */
@@ -137,25 +123,16 @@ public abstract class DataStoreWrapper implements DataStore {
             this.auxiliaryFolder = file;
         } catch (MalformedURLException e) {
             if (LOGGER.isLoggable(Level.WARNING)) {
-                LOGGER.warning(
-                        "The specified config folder for datastore wrapping is not valid: "
-                                + auxFolderPath);
+                LOGGER.warning("The specified config folder for datastore wrapping is not valid: " + auxFolderPath);
             }
         } catch (Exception e) {
             if (LOGGER.isLoggable(Level.SEVERE)) {
-                LOGGER.severe(
-                        "Unable to initialize the wrapping mapping for this folder: "
-                                + auxFolderPath);
+                LOGGER.severe("Unable to initialize the wrapping mapping for this folder: " + auxFolderPath);
             }
         }
     }
 
-    /**
-     * Load information from property files and initialize the related {@link FeatureTypeMapper}s
-     *
-     * @param file
-     * @throws Exception
-     */
+    /** Load information from property files and initialize the related {@link FeatureTypeMapper}s */
     private void loadMappers(final File file) throws Exception {
         // TODO we should do a lazy load initialization
         final String[] files = file.list();
@@ -164,8 +141,7 @@ public abstract class DataStoreWrapper implements DataStore {
         // Loop over files
         if (files != null) {
             for (String element : files) {
-                final Properties properties =
-                        loadProperties(parentPath + File.separatorChar + element);
+                final Properties properties = loadProperties(parentPath + File.separatorChar + element);
                 final FeatureTypeMapper mapper = getFeatureTypeMapper(properties);
                 final Name name = mapper.getName();
                 mapping.put(name, mapper);
@@ -174,21 +150,12 @@ public abstract class DataStoreWrapper implements DataStore {
         }
     }
 
-    /**
-     * Utility method which load mapping properties from a propertiesFile.
-     *
-     * @param propertiesFile
-     * @return
-     */
+    /** Utility method which load mapping properties from a propertiesFile. */
     private static Properties loadProperties(final String propertiesFile) {
         Properties properties = new Properties();
         File propertiesFileP = new File(propertiesFile);
         try (InputStream inStream = new BufferedInputStream(new FileInputStream(propertiesFileP))) {
             properties.load(inStream);
-        } catch (FileNotFoundException e) {
-            if (LOGGER.isLoggable(Level.WARNING)) {
-                LOGGER.warning("Unable to store the mapping " + e.getLocalizedMessage());
-            }
         } catch (IOException e) {
             if (LOGGER.isLoggable(Level.WARNING)) {
                 LOGGER.warning("Unable to store the mapping " + e.getLocalizedMessage());
@@ -241,22 +208,11 @@ public abstract class DataStoreWrapper implements DataStore {
         }
     }
 
-    /**
-     * Store the properties on disk
-     *
-     * @param properties
-     * @param typeName
-     */
+    /** Store the properties on disk */
     protected void storeProperties(Properties properties, String typeName) {
-        final String propertiesPath =
-                auxiliaryFolder.getAbsolutePath() + File.separatorChar + typeName + ".properties";
-        try (OutputStream outStream =
-                new BufferedOutputStream(new FileOutputStream(new File(propertiesPath)))) {
+        final String propertiesPath = auxiliaryFolder.getAbsolutePath() + File.separatorChar + typeName + ".properties";
+        try (OutputStream outStream = new BufferedOutputStream(new FileOutputStream(new File(propertiesPath)))) {
             properties.store(outStream, null);
-        } catch (FileNotFoundException e) {
-            if (LOGGER.isLoggable(Level.WARNING)) {
-                LOGGER.warning("Unable to store the mapping " + e.getLocalizedMessage());
-            }
         } catch (IOException e) {
             if (LOGGER.isLoggable(Level.WARNING)) {
                 LOGGER.warning("Unable to store the mapping " + e.getLocalizedMessage());
@@ -271,7 +227,7 @@ public abstract class DataStoreWrapper implements DataStore {
 
     @Override
     public List<Name> getNames() throws IOException {
-        return new ArrayList<Name>(mapping.keySet());
+        return new ArrayList<>(mapping.keySet());
     }
 
     @Override
@@ -321,9 +277,7 @@ public abstract class DataStoreWrapper implements DataStore {
 
     @Override
     public String[] getTypeNames() throws IOException {
-        return typeNames != null
-                ? (String[]) typeNames.toArray(new String[typeNames.size()])
-                : null;
+        return typeNames != null ? typeNames.toArray(new String[typeNames.size()]) : null;
     }
 
     @Override
@@ -338,8 +292,7 @@ public abstract class DataStoreWrapper implements DataStore {
         if (mapper == null) {
             throw new IOException("No wrapper found for " + typeName);
         } else {
-            SimpleFeatureStore source =
-                    (SimpleFeatureStore) datastore.getFeatureSource(mapper.getMappedName());
+            SimpleFeatureStore source = (SimpleFeatureStore) datastore.getFeatureSource(mapper.getMappedName());
             if (source == null) {
                 throw new IOException("No feature source available for " + typeName);
             }
@@ -347,14 +300,14 @@ public abstract class DataStoreWrapper implements DataStore {
         }
     }
 
-    protected SimpleFeatureSource transformFeatureStore(
-            SimpleFeatureStore source, FeatureTypeMapper mapper) throws IOException {
+    protected SimpleFeatureSource transformFeatureStore(SimpleFeatureStore source, FeatureTypeMapper mapper)
+            throws IOException {
         return TransformFactory.transform(source, mapper.getName(), mapper.getDefinitions());
     }
 
     @Override
-    public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(
-            Query query, Transaction transaction) throws IOException {
+    public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(Query query, Transaction transaction)
+            throws IOException {
         throw new UnsupportedOperationException();
     }
 
@@ -365,8 +318,8 @@ public abstract class DataStoreWrapper implements DataStore {
     }
 
     @Override
-    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(
-            String typeName, Transaction transaction) throws IOException {
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(String typeName, Transaction transaction)
+            throws IOException {
         throw new UnsupportedOperationException();
     }
 
@@ -381,12 +334,7 @@ public abstract class DataStoreWrapper implements DataStore {
         return datastore.getLockingManager();
     }
 
-    /**
-     * Return the mapper for the specified typeName
-     *
-     * @param typeName
-     * @return
-     */
+    /** Return the mapper for the specified typeName */
     private FeatureTypeMapper getMapper(Name typeName) {
         FeatureTypeMapper mapper = null;
         Utilities.ensureNonNull("typeName", typeName);
@@ -396,11 +344,7 @@ public abstract class DataStoreWrapper implements DataStore {
         return mapper;
     }
 
-    /**
-     * Store the {@link FeatureTypeMapper} instance
-     *
-     * @param mapper
-     */
+    /** Store the {@link FeatureTypeMapper} instance */
     protected void storeMapper(FeatureTypeMapper mapper) {
         final Properties properties = new Properties();
         final String typeName = mapper.getName().toString();
@@ -420,39 +364,25 @@ public abstract class DataStoreWrapper implements DataStore {
         schema = schema.substring(0, schema.length() - 1);
         properties.setProperty(SCHEMA, schema);
         properties.setProperty(
-                COORDINATE_REFERENCE_SYSTEM, mapper.getCoordinateReferenceSystem().toWKT());
+                COORDINATE_REFERENCE_SYSTEM,
+                mapper.getCoordinateReferenceSystem().toWKT());
 
         // Storing properties
         storeProperties(properties, typeName);
     }
 
     /**
-     * Return a specific {@link FeatureTypeMapper} by parsing mapping properties contained within
-     * the specified {@link Properties} object
-     *
-     * @param featureType
-     * @return
-     * @throws Exception
+     * Return a specific {@link FeatureTypeMapper} by parsing mapping properties contained within the specified
+     * {@link Properties} object
      */
     protected FeatureTypeMapper getFeatureTypeMapper(final Properties props) throws Exception {
-        SimpleFeatureType indexSchema;
         // Creating schema
-        indexSchema = DataUtilities.createType(props.getProperty(NAME), props.getProperty(SCHEMA));
-        CoordinateReferenceSystem crs =
-                CRS.parseWKT(props.getProperty(COORDINATE_REFERENCE_SYSTEM));
-        indexSchema =
-                DataUtilities.createSubType(
-                        indexSchema, DataUtilities.attributeNames(indexSchema), crs);
+        SimpleFeatureType indexSchema = DataUtilities.createType(props.getProperty(NAME), props.getProperty(SCHEMA));
+        CoordinateReferenceSystem crs = CRS.parseWKT(props.getProperty(COORDINATE_REFERENCE_SYSTEM));
+        indexSchema = DataUtilities.createSubType(indexSchema, DataUtilities.attributeNames(indexSchema), crs);
         return getFeatureTypeMapper(indexSchema);
     }
 
-    /**
-     * Return a specific {@link FeatureTypeMapper} instance on top of an input featureType
-     *
-     * @param featureType
-     * @return
-     * @throws Exception
-     */
-    protected abstract FeatureTypeMapper getFeatureTypeMapper(final SimpleFeatureType featureType)
-            throws Exception;
+    /** Return a specific {@link FeatureTypeMapper} instance on top of an input featureType */
+    protected abstract FeatureTypeMapper getFeatureTypeMapper(final SimpleFeatureType featureType) throws Exception;
 }

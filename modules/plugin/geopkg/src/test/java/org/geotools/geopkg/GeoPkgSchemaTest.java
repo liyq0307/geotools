@@ -40,8 +40,7 @@ public class GeoPkgSchemaTest {
 
     @Before
     public void setUp() throws Exception {
-        geopackage =
-                new GeoPackage(File.createTempFile("GeoPkgSchemaTest", "db", new File("target")));
+        geopackage = new GeoPackage(File.createTempFile("GeoPkgSchemaTest", "db", new File("target")));
         geopackage.init();
     }
 
@@ -169,9 +168,9 @@ public class GeoPkgSchemaTest {
 
     private ArrayList<Map<String, Object>> getTableSchema(String tableName) throws SQLException {
         ArrayList<Map<String, Object>> columnDefinitions = new ArrayList<>();
-        Connection cx = geopackage.getDataSource().getConnection();
-        try (Statement st = cx.createStatement()) {
-            ResultSet rs = st.executeQuery(String.format("PRAGMA table_info('%s')", tableName));
+        try (Connection cx = geopackage.getDataSource().getConnection();
+                Statement st = cx.createStatement();
+                ResultSet rs = st.executeQuery(String.format("PRAGMA table_info('%s')", tableName))) {
             while (rs.next()) {
                 Map<String, Object> columnDefinition = new HashMap<>();
                 columnDefinition.put("cid", rs.getInt("cid"));
@@ -184,8 +183,6 @@ public class GeoPkgSchemaTest {
             }
         } catch (Exception e) {
             fail(e.getMessage());
-        } finally {
-            cx.close();
         }
         return columnDefinitions;
     }

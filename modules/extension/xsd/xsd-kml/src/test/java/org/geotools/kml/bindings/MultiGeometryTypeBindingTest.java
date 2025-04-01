@@ -16,9 +16,14 @@
  */
 package org.geotools.kml.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import org.geotools.kml.KML;
 import org.geotools.kml.KMLTestSupport;
 import org.geotools.xsd.Binding;
+import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
@@ -33,21 +38,22 @@ import org.locationtech.jts.geom.impl.CoordinateArraySequence;
 import org.w3c.dom.Document;
 
 public class MultiGeometryTypeBindingTest extends KMLTestSupport {
-
+    @Test
     public void testType() {
         assertEquals(GeometryCollection.class, binding(KML.MultiGeometryType).getType());
     }
 
+    @Test
     public void testExecutionMode() {
         assertEquals(Binding.OVERRIDE, binding(KML.MultiGeometryType).getExecutionMode());
     }
 
+    @Test
     public void testParseMultiPoint() throws Exception {
-        String xml =
-                "<MultiGeometry>"
-                        + "<Point><coordinates>0,0</coordinates></Point>"
-                        + "<Point><coordinates>1,1</coordinates></Point>"
-                        + "</MultiGeometry>";
+        String xml = "<MultiGeometry>"
+                + "<Point><coordinates>0,0</coordinates></Point>"
+                + "<Point><coordinates>1,1</coordinates></Point>"
+                + "</MultiGeometry>";
 
         buildDocument(xml);
 
@@ -55,22 +61,21 @@ public class MultiGeometryTypeBindingTest extends KMLTestSupport {
         assertEquals(2, mp.getNumPoints());
     }
 
+    @Test
     public void testEncodeMultiPoint() throws Exception {
         GeometryFactory gf = new GeometryFactory();
-        MultiPoint mp =
-                gf.createMultiPoint(
-                        new CoordinateArraySequence(
-                                new Coordinate[] {new Coordinate(0, 0), new Coordinate(1, 1)}));
+        MultiPoint mp = gf.createMultiPoint(
+                new CoordinateArraySequence(new Coordinate[] {new Coordinate(0, 0), new Coordinate(1, 1)}));
         Document dom = encode(mp, KML.MultiGeometry);
         assertEquals(2, getElementsByQName(dom, KML.Point).getLength());
     }
 
+    @Test
     public void testParseMultiLineString() throws Exception {
-        String xml =
-                "<MultiGeometry>"
-                        + "<LineString><coordinates>0,0 1,1</coordinates></LineString>"
-                        + "<LineString><coordinates>2,2 3,3</coordinates></LineString>"
-                        + "</MultiGeometry>";
+        String xml = "<MultiGeometry>"
+                + "<LineString><coordinates>0,0 1,1</coordinates></LineString>"
+                + "<LineString><coordinates>2,2 3,3</coordinates></LineString>"
+                + "</MultiGeometry>";
 
         buildDocument(xml);
 
@@ -78,28 +83,25 @@ public class MultiGeometryTypeBindingTest extends KMLTestSupport {
         assertEquals(2, ml.getNumGeometries());
     }
 
+    @Test
     public void testEncodeMultiLineString() throws Exception {
         GeometryFactory gf = new GeometryFactory();
-        MultiLineString ml =
-                gf.createMultiLineString(
-                        new LineString[] {
-                            gf.createLineString(
-                                    new Coordinate[] {new Coordinate(0, 0), new Coordinate(1, 1)}),
-                            gf.createLineString(
-                                    new Coordinate[] {new Coordinate(2, 2), new Coordinate(3, 3)})
-                        });
+        MultiLineString ml = gf.createMultiLineString(new LineString[] {
+            gf.createLineString(new Coordinate[] {new Coordinate(0, 0), new Coordinate(1, 1)}),
+            gf.createLineString(new Coordinate[] {new Coordinate(2, 2), new Coordinate(3, 3)})
+        });
         Document dom = encode(ml, KML.MultiGeometry);
         assertEquals(2, getElementsByQName(dom, KML.LineString).getLength());
     }
 
+    @Test
     public void testParseMultiPolygon() throws Exception {
-        String xml =
-                "<MultiGeometry>"
-                        + "<Polygon>"
-                        + "<outerBoundaryIs><LinearRing><coordinates>0,0 1,1 2,2 0,0</coordinates></LinearRing></outerBoundaryIs></Polygon>"
-                        + "<Polygon>"
-                        + "<outerBoundaryIs><LinearRing><coordinates>0,0 1,1 2,2 0,0</coordinates></LinearRing></outerBoundaryIs></Polygon>"
-                        + "</MultiGeometry>";
+        String xml = "<MultiGeometry>"
+                + "<Polygon>"
+                + "<outerBoundaryIs><LinearRing><coordinates>0,0 1,1 2,2 0,0</coordinates></LinearRing></outerBoundaryIs></Polygon>"
+                + "<Polygon>"
+                + "<outerBoundaryIs><LinearRing><coordinates>0,0 1,1 2,2 0,0</coordinates></LinearRing></outerBoundaryIs></Polygon>"
+                + "</MultiGeometry>";
 
         buildDocument(xml);
 
@@ -107,18 +109,14 @@ public class MultiGeometryTypeBindingTest extends KMLTestSupport {
         assertEquals(2, ml.getNumGeometries());
     }
 
+    @Test
     public void testEncodeMultiPolygon() throws Exception {
         GeometryFactory gf = new GeometryFactory();
-        Polygon p =
-                gf.createPolygon(
-                        gf.createLinearRing(
-                                new Coordinate[] {
-                                    new Coordinate(0, 0),
-                                    new Coordinate(1, 1),
-                                    new Coordinate(2, 2),
-                                    new Coordinate(0, 0)
-                                }),
-                        null);
+        Polygon p = gf.createPolygon(
+                gf.createLinearRing(new Coordinate[] {
+                    new Coordinate(0, 0), new Coordinate(1, 1), new Coordinate(2, 2), new Coordinate(0, 0)
+                }),
+                null);
 
         MultiPolygon mp = gf.createMultiPolygon(new Polygon[] {p, p});
 
@@ -126,14 +124,14 @@ public class MultiGeometryTypeBindingTest extends KMLTestSupport {
         assertEquals(2, getElementsByQName(dom, KML.Polygon).getLength());
     }
 
+    @Test
     public void testParseMultiGeometry() throws Exception {
-        String xml =
-                "<MultiGeometry>"
-                        + "<Point><coordinates>0,0</coordinates></Point>"
-                        + "<LineString><coordinates>0,0 1,1</coordinates></LineString>"
-                        + "<Polygon>"
-                        + "<outerBoundaryIs><LinearRing><coordinates>0,0 1,1 2,2 0,0</coordinates></LinearRing></outerBoundaryIs></Polygon>"
-                        + "</MultiGeometry>";
+        String xml = "<MultiGeometry>"
+                + "<Point><coordinates>0,0</coordinates></Point>"
+                + "<LineString><coordinates>0,0 1,1</coordinates></LineString>"
+                + "<Polygon>"
+                + "<outerBoundaryIs><LinearRing><coordinates>0,0 1,1 2,2 0,0</coordinates></LinearRing></outerBoundaryIs></Polygon>"
+                + "</MultiGeometry>";
         buildDocument(xml);
 
         GeometryCollection gc = (GeometryCollection) parse();
@@ -143,24 +141,18 @@ public class MultiGeometryTypeBindingTest extends KMLTestSupport {
         assertTrue(gc.getGeometryN(2) instanceof Polygon);
     }
 
+    @Test
     public void testEncodeMultiGeometry() throws Exception {
         GeometryFactory gf = new GeometryFactory();
-        GeometryCollection gc =
-                gf.createGeometryCollection(
-                        new Geometry[] {
-                            gf.createPoint(new Coordinate(0, 0)),
-                            gf.createLineString(
-                                    new Coordinate[] {new Coordinate(0, 0), new Coordinate(1, 1)}),
-                            gf.createPolygon(
-                                    gf.createLinearRing(
-                                            new Coordinate[] {
-                                                new Coordinate(0, 0),
-                                                new Coordinate(1, 1),
-                                                new Coordinate(2, 2),
-                                                new Coordinate(0, 0)
-                                            }),
-                                    null)
-                        });
+        GeometryCollection gc = gf.createGeometryCollection(new Geometry[] {
+            gf.createPoint(new Coordinate(0, 0)),
+            gf.createLineString(new Coordinate[] {new Coordinate(0, 0), new Coordinate(1, 1)}),
+            gf.createPolygon(
+                    gf.createLinearRing(new Coordinate[] {
+                        new Coordinate(0, 0), new Coordinate(1, 1), new Coordinate(2, 2), new Coordinate(0, 0)
+                    }),
+                    null)
+        });
 
         Document dom = encode(gc, KML.MultiGeometry);
         assertNotNull(getElementByQName(dom, KML.Point));

@@ -19,69 +19,68 @@ package org.geotools.xml.filter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
+import javax.xml.crypto.Data;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.BinaryComparisonOperator;
+import org.geotools.api.filter.BinaryLogicOperator;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsGreaterThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNil;
+import org.geotools.api.filter.PropertyIsNotEqualTo;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.Beyond;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.DWithin;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.SpatialOperator;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.AnyInteracts;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.BinaryTemporalOperator;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.Meets;
+import org.geotools.api.filter.temporal.MetBy;
+import org.geotools.api.filter.temporal.OverlappedBy;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.filter.temporal.TEquals;
+import org.geotools.api.filter.temporal.TOverlaps;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.xml.XMLHandlerHints;
-import org.opengis.filter.And;
-import org.opengis.filter.BinaryComparisonOperator;
-import org.opengis.filter.BinaryLogicOperator;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.Id;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsGreaterThanOrEqualTo;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNil;
-import org.opengis.filter.PropertyIsNotEqualTo;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.Beyond;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.DWithin;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.SpatialOperator;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.AnyInteracts;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.Meets;
-import org.opengis.filter.temporal.MetBy;
-import org.opengis.filter.temporal.OverlappedBy;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.filter.temporal.TEquals;
-import org.opengis.filter.temporal.TOverlaps;
 
 /**
- * Prepares a filter for XML encoded for interoperability with another system. It will behave
- * differently depending on the compliance level chosen. A new request will have to be made and the
- * features will have to be tested again on the client side if there are any FidFilters in the
- * filter. Consider the following to understand why:
+ * Prepares a filter for XML encoded for interoperability with another system. It will behave differently depending on
+ * the compliance level chosen. A new request will have to be made and the features will have to be tested again on the
+ * client side if there are any FidFilters in the filter. Consider the following to understand why:
  *
  * <pre>
  * and {
@@ -93,8 +92,7 @@ import org.opengis.filter.temporal.TOverlaps;
  * }
  * </pre>
  *
- * for strict it would throw an exception, for low it would be left alone, but for Medium it would
- * end up as:
+ * for strict it would throw an exception, for low it would be left alone, but for Medium it would end up as:
  *
  * <pre>
  * and{
@@ -105,16 +103,14 @@ import org.opengis.filter.temporal.TOverlaps;
  *
  * and getFids() would return the fids in the fidFilter.
  *
- * <p>So the final filter would (this is not standard but a common implementation) return the
- * results of the and filter as well as all the features that match the fids. Which is more than the
- * original filter would accept.
+ * <p>So the final filter would (this is not standard but a common implementation) return the results of the and filter
+ * as well as all the features that match the fids. Which is more than the original filter would accept.
  *
- * <p>The XML Document writer can operate at different levels of compliance. The geotools level is
- * extremely flexible and forgiving.
+ * <p>The XML Document writer can operate at different levels of compliance. The geotools level is extremely flexible
+ * and forgiving.
  *
- * <p>All NOT(FidFilter) are changed to Filter.INCLUDE. So make sure that the filter is processed
- * again on the client with the original filter For a description of the difference Compliance
- * levels that can be used see
+ * <p>All NOT(FidFilter) are changed to Filter.INCLUDE. So make sure that the filter is processed again on the client
+ * with the original filter For a description of the difference Compliance levels that can be used see
  *
  * <ul>
  *   <li>{@link XMLHandlerHints#VALUE_FILTER_COMPLIANCE_LOW}
@@ -124,13 +120,14 @@ import org.opengis.filter.temporal.TOverlaps;
  *
  * @author Jesse Eichar
  */
+@SuppressWarnings("unchecked") // gigantic mess, too much untyped structures and methods to work on them
 public class FilterEncodingPreProcessor implements FilterVisitor {
     private static final int LOW = 0;
     private static final int MEDIUM = 1;
     private static final int HIGH = 2;
     private int complianceInt;
-    private Stack<Data> current = new Stack<Data>();
-    FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    private Stack<Data> current = new Stack<>();
+    FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     private boolean requiresPostProcessing = false;
 
@@ -153,21 +150,21 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
     public Id getFidFilter() {
         if (current.isEmpty()) {
             Set<FeatureId> empty = Collections.emptySet();
-            return (Id) ff.id(empty);
+            return ff.id(empty);
         }
 
-        Data data = (Data) current.peek();
+        Data data = current.peek();
 
-        if (data.fids.size() > 0) {
-            Set<FeatureId> set = new HashSet<FeatureId>();
+        if (data.fids.isEmpty()) {
+            Set<FeatureId> empty = Collections.emptySet();
+            return ff.id(empty);
+        } else {
+            Set<FeatureId> set = new HashSet<>();
             Set<String> fids = data.fids;
             for (String fid : fids) {
                 set.add(ff.featureId(fid));
             }
-            return (Id) ff.id(set);
-        } else {
-            Set<FeatureId> empty = Collections.emptySet();
-            return (Id) ff.id(empty);
+            return ff.id(set);
         }
     }
 
@@ -176,9 +173,9 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
      *
      * @return the filter that can be encoded.
      */
-    public org.opengis.filter.Filter getFilter() {
+    public org.geotools.api.filter.Filter getFilter() {
         if (current.isEmpty()) return Filter.EXCLUDE;
-        return ((Data) this.current.peek()).filter;
+        return this.current.peek().filter;
     }
 
     public void visit(Filter filter) {
@@ -261,7 +258,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
                     break;
 
                 case MEDIUM:
-                    for (org.opengis.filter.Filter component : filter.getChildren()) {
+                    for (org.geotools.api.filter.Filter component : filter.getChildren()) {
                         component.accept(this, null);
                     }
                     current.push(createMediumLevelLogicFilter(filter, startSize));
@@ -269,7 +266,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
                     break;
 
                 case HIGH:
-                    for (org.opengis.filter.Filter component : filter.getChildren()) {
+                    for (org.geotools.api.filter.Filter component : filter.getChildren()) {
                         component.accept(this, null);
                     }
                     current.push(createHighLevelLogicFilter(filter, startSize));
@@ -288,8 +285,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         }
     }
 
-    private Data createMediumLevelLogicFilter(Filter filter, int startOfFilterStack)
-            throws IllegalFilterException {
+    private Data createMediumLevelLogicFilter(Filter filter, int startOfFilterStack) throws IllegalFilterException {
         Data resultingFilter;
 
         if (filter instanceof And) {
@@ -297,8 +293,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
             resultingFilter = buildFilter(filter, startOfFilterStack);
             resultingFilter.fids.addAll(fids);
 
-            if (resultingFilter.filter != Filter.EXCLUDE && !fids.isEmpty())
-                requiresPostProcessing = true;
+            if (resultingFilter.filter != Filter.EXCLUDE && !fids.isEmpty()) requiresPostProcessing = true;
         } else if (filter instanceof Or) {
             Set fids = orFids(startOfFilterStack);
             resultingFilter = buildFilter(filter, startOfFilterStack);
@@ -316,7 +311,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         Set set = new HashSet();
 
         for (int i = startOfFilterStack; i < current.size(); i++) {
-            Data data = (Data) current.get(i);
+            Data data = current.get(i);
 
             if (!data.fids.isEmpty()) {
                 set.addAll(data.fids);
@@ -328,15 +323,15 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
 
     private Set andFids(int startOfFilterStack) {
         if (!hasFidFilter(startOfFilterStack)) {
-            return Collections.EMPTY_SET;
+            return Collections.emptySet();
         }
 
         Set toRemove = new HashSet();
-        List fidSet = new ArrayList();
+        List<Set> fidSet = new ArrayList<>();
         boolean doRemove = true;
 
         for (int i = startOfFilterStack; i < current.size(); i++) {
-            Data data = (Data) current.get(i);
+            Data data = current.get(i);
 
             if (data.fids.isEmpty()) {
                 toRemove.add(data);
@@ -353,21 +348,19 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
             current.removeAll(toRemove);
         }
 
-        if (fidSet.size() == 0) {
-            return Collections.EMPTY_SET;
+        if (fidSet.isEmpty()) {
+            return Collections.emptySet();
         }
 
         if (fidSet.size() == 1) {
-            return (Set) fidSet.get(0);
+            return fidSet.get(0);
         }
 
         HashSet set = new HashSet();
 
-        for (int i = 0; i < fidSet.size(); i++) {
-            Set tmp = (Set) fidSet.get(i);
-
-            for (Iterator iter = tmp.iterator(); iter.hasNext(); ) {
-                String fid = (String) iter.next();
+        for (Set tmp : fidSet) {
+            for (Object o : tmp) {
+                String fid = (String) o;
 
                 if (allContain(fid, fidSet)) {
                     set.add(fid);
@@ -379,8 +372,8 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
     }
 
     private boolean allContain(String fid, List fidSets) {
-        for (int i = 0; i < fidSets.size(); i++) {
-            Set tmp = (Set) fidSets.get(i);
+        for (Object fidSet : fidSets) {
+            Set tmp = (Set) fidSet;
 
             if (!tmp.contains(fid)) {
                 return false;
@@ -400,20 +393,20 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         }
 
         if (current.size() == (startOfFilterStack + 1)) {
-            return (Data) current.pop();
+            return current.pop();
         }
 
-        List<org.opengis.filter.Filter> filterList = new ArrayList<org.opengis.filter.Filter>();
+        List<org.geotools.api.filter.Filter> filterList = new ArrayList<>();
 
         while (current.size() > startOfFilterStack) {
-            Data data = (Data) current.pop();
+            Data data = current.pop();
 
             if (data.filter != Filter.EXCLUDE) {
                 filterList.add(data.filter);
             }
         }
 
-        org.opengis.filter.Filter f;
+        org.geotools.api.filter.Filter f;
         if (filter instanceof And) {
             f = ff.and(filterList);
         } else if (filter instanceof Or) {
@@ -425,19 +418,19 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         return new Data(compressFilter(filter, (BinaryLogicOperator) f));
     }
 
-    private org.opengis.filter.Filter compressFilter(Filter filter, BinaryLogicOperator f)
+    private org.geotools.api.filter.Filter compressFilter(Filter filter, BinaryLogicOperator f)
             throws IllegalFilterException {
         BinaryLogicOperator result;
         int added = 0;
-        List<org.opengis.filter.Filter> resultList = new ArrayList<org.opengis.filter.Filter>();
+        List<org.geotools.api.filter.Filter> resultList = new ArrayList<>();
 
         if (filter instanceof And) {
             if (contains(f, Filter.EXCLUDE)) {
                 return Filter.EXCLUDE;
             }
 
-            for (org.opengis.filter.Filter child : f.getChildren()) {
-                if (child == org.opengis.filter.Filter.INCLUDE) {
+            for (org.geotools.api.filter.Filter child : f.getChildren()) {
+                if (child == org.geotools.api.filter.Filter.INCLUDE) {
                     continue;
                 }
                 added++;
@@ -455,7 +448,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
             }
 
             for (Object item : f.getChildren()) {
-                org.opengis.filter.Filter child = (org.opengis.filter.Filter) item;
+                org.geotools.api.filter.Filter child = (org.geotools.api.filter.Filter) item;
                 if (child == Filter.EXCLUDE) {
                     continue;
                 }
@@ -485,8 +478,8 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         }
     }
 
-    private boolean contains(BinaryLogicOperator f, org.opengis.filter.Filter toFind) {
-        for (org.opengis.filter.Filter filter : f.getChildren()) {
+    private boolean contains(BinaryLogicOperator f, org.geotools.api.filter.Filter toFind) {
+        for (org.geotools.api.filter.Filter filter : f.getChildren()) {
             if (toFind.equals(filter)) {
                 return true;
             }
@@ -512,8 +505,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         }
     }
 
-    private Data createHighLevelLogicFilter(Filter filter, int startOfFilterStack)
-            throws IllegalFilterException {
+    private Data createHighLevelLogicFilter(Filter filter, int startOfFilterStack) throws IllegalFilterException {
         if (hasFidFilter(startOfFilterStack)) {
             Set fids;
 
@@ -601,7 +593,7 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         public static final Data NONE = new Data(Filter.EXCLUDE);
         public static final Data ALL = new Data(Filter.INCLUDE);
         final Set fids = new HashSet();
-        org.opengis.filter.Filter filter;
+        org.geotools.api.filter.Filter filter;
 
         public Data() {
             this(Filter.EXCLUDE);
@@ -611,29 +603,28 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
             filter = f;
         }
 
+        @Override
         public String toString() {
             return filter + ":" + fids;
         }
     }
 
     /**
-     * Returns true if the filter was one where the request to the server is more general than the
-     * actual filter. See {@link XMLHandlerHints#VALUE_FILTER_COMPLIANCE_MEDIUM} and example of when
-     * this can happen.
+     * Returns true if the filter was one where the request to the server is more general than the actual filter. See
+     * {@link XMLHandlerHints#VALUE_FILTER_COMPLIANCE_MEDIUM} and example of when this can happen.
      *
-     * @return true if the filter was one where the request to the server is more general than the
-     *     actual filter.
+     * @return true if the filter was one where the request to the server is more general than the actual filter.
      */
     public boolean requiresPostProcessing() {
         return requiresPostProcessing;
     }
 
     // FilterVisitor2 methods formally from FilterVisitorFilterWrapper
-    protected void visitLogicFilter(org.opengis.filter.Filter filter) {
+    protected void visitLogicFilter(org.geotools.api.filter.Filter filter) {
         visit((BinaryLogicOperator) filter);
     }
 
-    protected void visitCompareFilter(org.opengis.filter.Filter filter) {
+    protected void visitCompareFilter(org.geotools.api.filter.Filter filter) {
         if (filter instanceof PropertyIsNull) {
             visit((PropertyIsNull) filter);
             return;
@@ -658,11 +649,13 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         }
     }
 
+    @Override
     public Object visit(And filter, Object extraData) {
         visitLogicFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Id filter, Object extraData) {
         Data data = new Data();
         data.fids.addAll(filter.getIDs());
@@ -671,15 +664,18 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
         return extraData;
     }
 
+    @Override
     public Object visitNullFilter(Object extraData) {
         return extraData;
     }
 
+    @Override
     public Object visit(IncludeFilter filter, Object extraData) {
         visit(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(ExcludeFilter filter, Object extraData) {
         visit(filter);
         return extraData;
@@ -687,117 +683,140 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
     //
     // Filter Visitor Methods
     //
+    @Override
     public Object visit(Not filter, Object extraData) {
         visitLogicFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Or filter, Object extraData) {
         visitLogicFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(PropertyIsBetween filter, Object extraData) {
         current.push(new Data(filter));
         visitCompareFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(PropertyIsEqualTo filter, Object extraData) {
         visitCompareFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(PropertyIsNotEqualTo filter, Object extraData) {
         visitCompareFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(PropertyIsGreaterThan filter, Object extraData) {
         visitCompareFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(PropertyIsGreaterThanOrEqualTo filter, Object extraData) {
         visitCompareFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(PropertyIsLessThan filter, Object extraData) {
         visitCompareFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(PropertyIsLessThanOrEqualTo filter, Object extraData) {
         visitCompareFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(PropertyIsLike filter, Object extraData) {
         visitCompareFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(PropertyIsNull filter, Object extraData) {
         visitCompareFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(PropertyIsNil filter, Object extraData) {
         visitCompareFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(BBOX filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Beyond filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Contains filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Crosses filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Disjoint filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(DWithin filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Equals filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Intersects filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Overlaps filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Touches filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
     }
 
+    @Override
     public Object visit(Within filter, Object extraData) {
         visitGeometryFilter(filter);
         return extraData;
@@ -806,60 +825,74 @@ public class FilterEncodingPreProcessor implements FilterVisitor {
     // Temporal Filters (UNSUPPORTED)
     //
 
+    @Override
     public Object visit(After after, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) after);
+        return visitTemporalFilter(after);
     }
 
+    @Override
     public Object visit(AnyInteracts anyInteracts, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) anyInteracts);
+        return visitTemporalFilter(anyInteracts);
     }
 
+    @Override
     public Object visit(Before before, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) before);
+        return visitTemporalFilter(before);
     }
 
+    @Override
     public Object visit(Begins begins, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) begins);
+        return visitTemporalFilter(begins);
     }
 
+    @Override
     public Object visit(BegunBy begunBy, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) begunBy);
+        return visitTemporalFilter(begunBy);
     }
 
+    @Override
     public Object visit(During during, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) during);
+        return visitTemporalFilter(during);
     }
 
+    @Override
     public Object visit(EndedBy endedBy, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) endedBy);
+        return visitTemporalFilter(endedBy);
     }
 
+    @Override
     public Object visit(Ends ends, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) ends);
+        return visitTemporalFilter(ends);
     }
 
+    @Override
     public Object visit(Meets meets, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) meets);
+        return visitTemporalFilter(meets);
     }
 
+    @Override
     public Object visit(MetBy metBy, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) metBy);
+        return visitTemporalFilter(metBy);
     }
 
+    @Override
     public Object visit(OverlappedBy overlappedBy, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) overlappedBy);
+        return visitTemporalFilter(overlappedBy);
     }
 
+    @Override
     public Object visit(TContains contains, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) contains);
+        return visitTemporalFilter(contains);
     }
 
+    @Override
     public Object visit(TEquals equals, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) equals);
+        return visitTemporalFilter(equals);
     }
 
+    @Override
     public Object visit(TOverlaps contains, Object extraData) {
-        return visitTemporalFilter((BinaryTemporalOperator) contains);
+        return visitTemporalFilter(contains);
     }
 
     protected Object visitTemporalFilter(BinaryTemporalOperator filter) {

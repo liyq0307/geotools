@@ -17,7 +17,7 @@
 
 package org.geotools.swing.dialog;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.awt.AWTEvent;
 import java.awt.Dialog;
@@ -44,14 +44,13 @@ import org.junit.runner.RunWith;
 @RunWith(GraphicsTestRunner.class)
 public class JExceptionReporterTest extends GraphicsTestBase<DialogFixture, Dialog, DialogDriver> {
 
-    private static final Class<? extends Dialog> DIALOG_CLASS =
-            JExceptionReporter.ReportingDialog.class;
+    private static final Class<? extends Dialog> DIALOG_CLASS = JExceptionReporter.ReportingDialog.class;
 
-    private WindowActivatedListener listener;
+    private WindowActivatedListener<DialogFixture, Dialog, DialogDriver> listener;
 
     @Before
     public void setup() {
-        listener = new WindowActivatedListener(DIALOG_CLASS);
+        listener = new WindowActivatedListener<>(DIALOG_CLASS);
         Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.WINDOW_EVENT_MASK);
     }
 

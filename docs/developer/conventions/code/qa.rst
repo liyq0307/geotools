@@ -1,14 +1,16 @@
 Automatic Quality Assurance checks
 ----------------------------------
 
-The GeoTools builds on Travis and `https://build.geoserver.org/ <https://build.geoserver.org/>`_ apply a handful of tools
+The GeoTools jenkins `build.geoserver.org <https://build.geoserver.org/>`_ and GitHub workflow apply a handful of tools
 to statically check code quality and fail the build in case of rule violation:
 
-* `PMD <https://pmd.github.io/>`_, 
-* `Error Prone <https://errorprone.info/>`_, 
+* `Palantir Java formattng <https://github.com/palantir/palantir-java-format>`_
+* `POM formatting <https://github.com/Ekryd/sortpom>`_
+* `PMD <https://pmd.github.io/>`_
+* `Error Prone <https://errorprone.info/>`_
 * `Spotbugs <https://spotbugs.github.io/>`_
 * `CheckStyle <http://checkstyle.sourceforge.net/>`_ on build servers .
-* ``javac`` own linting abilities, in particular, checking calls to deprecated APIs
+* ``javac`` own linting abilities, in particular, checking calls to deprecated APIs and unchecked warnings.
 
 Each tool is setup to run on high priority checks in order to limit the number of false positives,
 but some might still happen, the rest of this document shows how errors are reported and what
@@ -20,6 +22,22 @@ In case you want to just run the build with the full checks locally, use the fol
 
 Add extra parameters as you see fit, like ``-T1C -nsu`` to speed up the build, or ``-Dfmt.skip=true -DskipTests``
 to avoid running tests and code formatting.
+
+Formatting
+^^^^^^^^^^
+
+Source code is automatically formatted during a Maven build using the `Spotless <https://github.com/diffplug/spotless/tree/main/plugin-maven>`_
+Maven plugin. In particular, the `Palantir Java formatter <https://github.com/palantir/palantir-java-format>`_
+is automatically enforced (4 spaces indent, 120 columns, streams and lambda friendly).
+Plugins that enforce the same formatting are available for the major IDEs.
+
+POM files are automatically formatted during a Maven build using the `sortpom <https://github.com/Ekryd/sortpom>`_
+Maven plugin, ensuring proper indentation and consistent ordering of the pom file sections.
+At the time of writing, no IDE plugin is available to apply the same formatting.
+
+For both source code and pom files, the right formatting is automatically applied while doing
+a Maven build, which is a strongly recommended practice, before preparing a GIT commit, 
+and more importantly, before preparing a pull request).
 
 PMD checks
 ^^^^^^^^^^
@@ -125,7 +143,7 @@ or if it's a general one that should be ignored, the ``${geotoolsBaseDir}/spotbu
 Checkstyle
 ^^^^^^^^^^
 
-Google Format is already in use to keep the code formatted, so Checkstyle is used mainly to verify javadocs errors
+Palantir Java Format is already in use to keep the code formatted, so Checkstyle is used mainly to verify javadocs errors
 and presence of copyright headers, which none of the other tools can cover.
 
 Any failure to comply with the rules will show up as a compiler error in the build output, e.g.::
@@ -138,8 +156,12 @@ javac
 ^^^^^
 
 The Java compiler has a set of options to "lint" the source code. The build server in particular
-enable checks for deprecated APIs, making javac return a compile error any time a deprecated method
-or object is used. 
+enables:
+
+* Checks for deprecated APIs, making javac return a compile error any time a deprecated method 
+  or object is used.
+* Unchecked warnings, making javac return a compile error any time an unchecked cast happens
+  (typically a mixup between raw types and types with generics).
 
 In most cases, one should check the javadoc of the API in question, learn about replacements, and
 stop using the deprecated API. This is not always possible, for example, when creating an object
@@ -152,3 +174,25 @@ the compiler error. It's often possible to simply "refactor away" the call point
 other automated operations. If that is not feasible, manually resolving deprecated call will provide
 a good perspective on what the library users will have to face, and help improve suggestions for
 replacement in the deprecated API javadocs.
+
+Regarding unchecked warnings, they normally happen when a raw type is mixed with generic types.
+Specifying corresponding generics normally solves them problem.
+Many parts of GeoTools support converting between types, or extracting a specific object type
+out of a generic container (e.g., the Feature user map). In these cases an unchecked warning
+is unavoidable, and needs to be suppressed. The ``@SuppressWarnings("unchecked")`` annotation
+can be placed in a few different places:
+
+* On a variable/field declaration, allowing surgical suppression just in the place where is needed.
+* By annotating a full method, useful in case the method would require many internal suppressions.
+* By annotating a full class, useful in case the class contents are beyond repair in terrm of
+  type safety.
+
+Another common source of unchecked warnings is casting a generic method result to the type variable
+"T" before returning the value. In this case, either declare a local variable of type ``T`` and
+suppress the warning there, or, if a ``Class<T>`` is available in scope, use ``theClass.cast(value)``
+to perform the conversion.
+
+More information about generics and unchecked warnings can be found here:
+
+* `Excerpt about unchecked warning removal <https://www.informit.com/articles/article.aspx?p=2861454&seqNum=2>`_, from Effective Java.
+* `Java tutorial about generics <https://docs.oracle.com/javase/tutorial/java/generics/index.html>`_.

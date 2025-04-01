@@ -16,15 +16,14 @@
  */
 package org.geotools.util;
 
+import java.text.MessageFormat;
 import java.util.Date;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 
 /**
- * A central place to register transformations between an arbitrary class and a {@link Number}. For
- * example, it is sometime convenient to consider {@link Date} objects as if they were {@link Long}
- * objects for computation purpose in generic algorithms. Client can call the following method to
- * convert an arbitrary object to a {@link Number}:
+ * A central place to register transformations between an arbitrary class and a {@link Number}. For example, it is
+ * sometime convenient to consider {@link Date} objects as if they were {@link Long} objects for computation purpose in
+ * generic algorithms. Client can call the following method to convert an arbitrary object to a {@link Number}:
  *
  * <blockquote>
  *
@@ -39,32 +38,31 @@ import org.geotools.metadata.i18n.Errors;
  * @version $Id$
  * @author Martin Desruisseaux (IRD)
  */
+@SuppressWarnings("PMD.UseShortArrayInitializer")
 public abstract class ClassChanger<S extends Comparable<S>, T extends Number> {
     /** Wrapper classes sorted by their wide. */
     @SuppressWarnings("unchecked")
     private static final Class<? extends Number>[] TYPES_BY_SIZE =
-            new Class[] {
-                Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class
-            };
+            new Class[] {Byte.class, Short.class, Integer.class, Long.class, Float.class, Double.class};
 
     /**
-     * A list of class objects that can be converted to numbers. This list is initialized to a few
-     * commons {@link ClassChanger} instances for some standard Java classes like {@link Date}. More
-     * objects can be added dynamically. This list must be <u>ordered</u>: subclasses must be listed
-     * before parent classes.
+     * A list of class objects that can be converted to numbers. This list is initialized to a few commons
+     * {@link ClassChanger} instances for some standard Java classes like {@link Date}. More objects can be added
+     * dynamically. This list must be <u>ordered</u>: subclasses must be listed before parent classes.
      */
-    private static ClassChanger<?, ?>[] changers =
-            new ClassChanger[] {
-                new ClassChanger<Date, Long>(Date.class, Long.class) {
-                    protected Long convert(final Date object) {
-                        return object.getTime();
-                    }
+    private static ClassChanger<?, ?>[] changers = new ClassChanger[] {
+        new ClassChanger<Date, Long>(Date.class, Long.class) {
+            @Override
+            protected Long convert(final Date object) {
+                return object.getTime();
+            }
 
-                    protected Date inverseConvert(final Long value) {
-                        return new Date(value.longValue());
-                    }
-                }
-            };
+            @Override
+            protected Date inverseConvert(final Long value) {
+                return new Date(value.longValue());
+            }
+        }
+    };
 
     /** Parent class for {@link #convert}'s input objects. */
     private final Class<S> source;
@@ -113,9 +111,8 @@ public abstract class ClassChanger<S extends Comparable<S>, T extends Number> {
     }
 
     /**
-     * Registers a new converter. All registered {@link ClassChanger} will be taken in account by
-     * the {@link #toNumber} method. The example below register a conversion for the {@link Date}
-     * class:
+     * Registers a new converter. All registered {@link ClassChanger} will be taken in account by the {@link #toNumber}
+     * method. The example below register a conversion for the {@link Date} class:
      *
      * <blockquote>
      *
@@ -134,12 +131,11 @@ public abstract class ClassChanger<S extends Comparable<S>, T extends Number> {
      * </blockquote>
      *
      * @param converter The {@link ClassChanger} to add.
-     * @throws IllegalStateException if an other {@link ClassChanger} was already registered for the
-     *     same {@code source} class. This is usually not a concern since the registration usually
-     *     take place during the class initialization ("static" constructor).
+     * @throws IllegalStateException if an other {@link ClassChanger} was already registered for the same {@code source}
+     *     class. This is usually not a concern since the registration usually take place during the class
+     *     initialization ("static" constructor).
      */
-    public static synchronized void register(final ClassChanger<?, ?> converter)
-            throws IllegalStateException {
+    public static synchronized void register(final ClassChanger<?, ?> converter) throws IllegalStateException {
         int i;
         for (i = 0; i < changers.length; i++) {
             if (changers[i].source.isAssignableFrom(converter.source)) {
@@ -167,10 +163,9 @@ public abstract class ClassChanger<S extends Comparable<S>, T extends Number> {
      * @return The class changer for the specified class.
      * @throws ClassNotFoundException if {@code source} is not a registered class.
      */
-    private static synchronized <S extends Comparable<S>> ClassChanger<S, ?> getClassChanger(
-            final Class<S> source) throws ClassNotFoundException {
-        for (int i = 0; i < changers.length; i++) {
-            final ClassChanger<?, ?> candidate = changers[i];
+    private static synchronized <S extends Comparable<S>> ClassChanger<S, ?> getClassChanger(final Class<S> source)
+            throws ClassNotFoundException {
+        for (final ClassChanger<?, ?> candidate : changers) {
             if (candidate.source.isAssignableFrom(source)) {
                 @SuppressWarnings("unchecked")
                 final ClassChanger<S, ?> c = (ClassChanger<S, ?>) candidate;
@@ -181,16 +176,16 @@ public abstract class ClassChanger<S extends Comparable<S>, T extends Number> {
     }
 
     /**
-     * Returns the target class for the specified source class, if a suitable transformation is
-     * known. The source class is a {@link Comparable} subclass that will be specified as input to
-     * {@link #convert}. The target class is a {@link Number} subclass that will be returned as
-     * output by {@link #convert}. If no suitable mapping is found, then {@code source} is returned.
+     * Returns the target class for the specified source class, if a suitable transformation is known. The source class
+     * is a {@link Comparable} subclass that will be specified as input to {@link #convert}. The target class is a
+     * {@link Number} subclass that will be returned as output by {@link #convert}. If no suitable mapping is found,
+     * then {@code source} is returned.
      */
     public static synchronized Class<?> getTransformedClass(final Class<?> source) {
         if (source != null) {
-            for (int i = 0; i < changers.length; i++) {
-                if (changers[i].source.isAssignableFrom(source)) {
-                    return changers[i].target;
+            for (ClassChanger<?, ?> changer : changers) {
+                if (changer.source.isAssignableFrom(source)) {
+                    return changer.target;
                 }
             }
         }
@@ -199,24 +194,22 @@ public abstract class ClassChanger<S extends Comparable<S>, T extends Number> {
 
     /**
      * Returns the numeric value for the specified object. For example the code <code>
-     * toNumber(new&nbsp;Date())</code> returns the {@link Date#getTime()} value of the specified
-     * date object as a {@link Long}.
+     * toNumber(new&nbsp;Date())</code> returns the {@link Date#getTime()} value of the specified date object as a
+     * {@link Long}.
      *
      * @param object Object to convert (may be null).
-     * @return {@code null} if {@code object} was null; otherwise {@code object} if the supplied
-     *     object is already an instance of {@link Number}; otherwise a new number with the
-     *     numerical value.
+     * @return {@code null} if {@code object} was null; otherwise {@code object} if the supplied object is already an
+     *     instance of {@link Number}; otherwise a new number with the numerical value.
      * @throws ClassNotFoundException if {@code object} is not an instance of a registered class.
      */
     @SuppressWarnings("unchecked")
-    public static Number toNumber(final Comparable<?> object) throws ClassNotFoundException {
+    public static <K> K toNumber(final Comparable<K> object) throws ClassNotFoundException {
         if (object != null) {
             if (object instanceof Number) {
-                return (Number) object;
+                return (K) object;
             }
-            @SuppressWarnings("rawtypes")
             ClassChanger changer = getClassChanger(object.getClass());
-            return changer.convert(object);
+            return (K) changer.convert(object);
         }
         return null;
     }
@@ -224,22 +217,20 @@ public abstract class ClassChanger<S extends Comparable<S>, T extends Number> {
     /**
      * Wraps the specified number as an instance of the specified classe. For example <code>
      * toComparable(new&nbsp;Long(time),&nbsp;Date.class)</code> is equivalent to <code>
-     * new&nbsp;Date(time)</code>. There is of course no point to use this method if the destination
-     * class is know at compile time. This method is useful for creating instance of classes choosen
-     * dynamically at run time.
+     * new&nbsp;Date(time)</code>. There is of course no point to use this method if the destination class is know at
+     * compile time. This method is useful for creating instance of classes choosen dynamically at run time.
      *
      * @param value The numerical value (may be null).
      * @param classe The desired classe for return value.
      * @throws ClassNotFoundException if {@code classe} is not a registered class.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings("unchecked")
     public static <C extends Comparable> C toComparable(final Number value, final Class<C> classe)
             throws ClassNotFoundException {
         if (value != null) {
             if (Number.class.isAssignableFrom(classe)) {
                 return classe.cast(value);
             }
-            @SuppressWarnings("rawtypes")
             ClassChanger changer = getClassChanger(classe);
             final Comparable<?> c = changer.inverseConvert(value);
             return classe.cast(c);
@@ -288,12 +279,11 @@ public abstract class ClassChanger<S extends Comparable<S>, T extends Number> {
     }
 
     /**
-     * Casts the number to the specified class. The class must by one of {@link Byte}, {@link
-     * Short}, {@link Integer}, {@link Long}, {@link Float} or {@link Double}.
+     * Casts the number to the specified class. The class must by one of {@link Byte}, {@link Short}, {@link Integer},
+     * {@link Long}, {@link Float} or {@link Double}.
      */
     @SuppressWarnings("unchecked")
-    public static <N extends Number> N cast(final Number n, final Class<N> c)
-            throws IllegalArgumentException {
+    public static <N extends Number> N cast(final Number n, final Class<N> c) throws IllegalArgumentException {
         if (n == null || n.getClass().equals(c)) {
             return (N) n;
         }
@@ -307,37 +297,34 @@ public abstract class ClassChanger<S extends Comparable<S>, T extends Number> {
     }
 
     /**
-     * Returns the class of the widest type. Numbers {@code n1} and {@code n2} must be instance of
-     * any of {@link Byte}, {@link Short}, {@link Integer}, {@link Long}, {@link Float} or {@link
-     * Double} types. At most one of the argument can be null.
+     * Returns the class of the widest type. Numbers {@code n1} and {@code n2} must be instance of any of {@link Byte},
+     * {@link Short}, {@link Integer}, {@link Long}, {@link Float} or {@link Double} types. At most one of the argument
+     * can be null.
      */
     public static Class<? extends Number> getWidestClass(final Number n1, final Number n2)
             throws IllegalArgumentException {
-        return getWidestClass(
-                (n1 != null) ? n1.getClass() : null, (n2 != null) ? n2.getClass() : null);
+        return getWidestClass((n1 != null) ? n1.getClass() : null, (n2 != null) ? n2.getClass() : null);
     }
 
     /**
-     * Returns the class of the widest type. Classes {@code c1} and {@code c2} must be of any of
-     * {@link Byte}, {@link Short}, {@link Integer}, {@link Long}, {@link Float} or {@link Double}
-     * types. At most one of the argument can be null.
+     * Returns the class of the widest type. Classes {@code c1} and {@code c2} must be of any of {@link Byte},
+     * {@link Short}, {@link Integer}, {@link Long}, {@link Float} or {@link Double} types. At most one of the argument
+     * can be null.
      */
     public static Class<? extends Number> getWidestClass(
-            final Class<? extends Number> c1, final Class<? extends Number> c2)
-            throws IllegalArgumentException {
+            final Class<? extends Number> c1, final Class<? extends Number> c2) throws IllegalArgumentException {
         if (c1 == null) return c2;
         if (c2 == null) return c1;
         return TYPES_BY_SIZE[Math.max(getRank(c1), getRank(c2))];
     }
 
     /**
-     * Returns the class of the finest type. Classes {@code c1} and {@code c2} must be of any of
-     * {@link Byte}, {@link Short}, {@link Integer}, {@link Long}, {@link Float} or {@link Double}
-     * types. At most one of the argument can be null.
+     * Returns the class of the finest type. Classes {@code c1} and {@code c2} must be of any of {@link Byte},
+     * {@link Short}, {@link Integer}, {@link Long}, {@link Float} or {@link Double} types. At most one of the argument
+     * can be null.
      */
     public static Class<? extends Number> getFinestClass(
-            final Class<? extends Number> c1, final Class<? extends Number> c2)
-            throws IllegalArgumentException {
+            final Class<? extends Number> c1, final Class<? extends Number> c2) throws IllegalArgumentException {
         if (c1 == null) return c2;
         if (c2 == null) return c1;
         return TYPES_BY_SIZE[Math.min(getRank(c1), getRank(c2))];
@@ -371,6 +358,6 @@ public abstract class ClassChanger<S extends Comparable<S>, T extends Number> {
 
     /** Returns an exception for an unnkown type. */
     private static IllegalArgumentException unknownType(final Class<?> type) {
-        return new IllegalArgumentException(Errors.format(ErrorKeys.UNKNOW_TYPE_$1, type));
+        return new IllegalArgumentException(MessageFormat.format(ErrorKeys.UNKNOW_TYPE_$1, type));
     }
 }

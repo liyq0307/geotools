@@ -19,11 +19,11 @@ package org.geotools.data.complex;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.complex.IndexQueryManager.PartialIndexQueryManager;
-import org.opengis.feature.Feature;
-import org.opengis.filter.Filter;
 
 /**
  * MappingFeatureIterator with partial index query support
@@ -62,8 +62,8 @@ public class PartialIndexedMappingFeatureIterator extends IndexedMappingFeatureI
     }
 
     /**
-     * Build the query for execute on index source partial Implementation manages pagination by
-     * itself, so remove bounds from query
+     * Build the query for execute on index source partial Implementation manages pagination by itself, so remove bounds
+     * from query
      *
      * @return Query
      */
@@ -101,9 +101,8 @@ public class PartialIndexedMappingFeatureIterator extends IndexedMappingFeatureI
         nextQuery.setMaxFeatures(Integer.MAX_VALUE);
         // instance appschema feature iterator:
         try {
-            sourceIterator =
-                    MappingFeatureIteratorFactory.getInstance(
-                            store, mapping, nextQuery, unrolledFilter, transaction, false);
+            sourceIterator = MappingFeatureIteratorFactory.getInstance(
+                    store, mapping, nextQuery, unrolledFilter, transaction, false);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -123,11 +122,7 @@ public class PartialIndexedMappingFeatureIterator extends IndexedMappingFeatureI
         sourceIterator.close();
     }
 
-    /**
-     * Iterate until startIndex
-     *
-     * @param start
-     */
+    /** Iterate until startIndex */
     private boolean fastForward(int start) {
         while (sourceFeaturesCounter < start) {
             if (hasNext()) {

@@ -19,20 +19,20 @@ package org.geotools.xs.bindings;
 import javax.xml.namespace.QName;
 import org.geotools.xs.TestSchema;
 import org.geotools.xs.XS;
+import org.junit.Test;
 
 public class XSLongStrategyTest extends TestSchema {
     /**
-     * long has a lexical representation consisting of an optional sign followed by a finite-length
-     * sequence of decimal digits (#x30-#x39). If the sign is omitted, "+" is assumed.
+     * long has a lexical representation consisting of an optional sign followed by a finite-length sequence of decimal
+     * digits (#x30-#x39). If the sign is omitted, "+" is assumed.
      *
      * <p>For example: -1, 0, 12678967543233, +100000.
-     *
-     * @throws Exception
      */
 
     /*
      * Test method for 'org.geotools.xml.strategies.xs.XSLongStrategy.parse(Element, Node[], Object)'
      */
+    @Test
     public void testParse() throws Exception {
         validateValues("-1", Long.valueOf(-1));
         validateValues("0", Long.valueOf(0));
@@ -40,7 +40,15 @@ public class XSLongStrategyTest extends TestSchema {
         validateValues("+100000", Long.valueOf(100000));
     }
 
+    @Override
     protected QName getQName() {
         return XS.LONG;
+    }
+
+    /** GEOT-7072: Non-comformant WFS implementations tend to send empty elements (e.g. {@code <value></value>}) */
+    @Test
+    public void testParseEmptyStringAsNull() throws Exception {
+        validateValues("", null);
+        validateValues("\t", null);
     }
 }

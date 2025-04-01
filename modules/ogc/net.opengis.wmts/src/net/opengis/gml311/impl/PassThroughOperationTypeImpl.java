@@ -81,9 +81,10 @@ public class PassThroughOperationTypeImpl extends AbstractCoordinateOperationTyp
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<BigInteger> getModifiedCoordinate() {
         if (modifiedCoordinate == null) {
-            modifiedCoordinate = new EDataTypeEList<BigInteger>(BigInteger.class, this, Gml311Package.PASS_THROUGH_OPERATION_TYPE__MODIFIED_COORDINATE);
+            modifiedCoordinate = new EDataTypeEList<>(BigInteger.class, this, Gml311Package.PASS_THROUGH_OPERATION_TYPE__MODIFIED_COORDINATE);
         }
         return modifiedCoordinate;
     }
@@ -93,6 +94,7 @@ public class PassThroughOperationTypeImpl extends AbstractCoordinateOperationTyp
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public OperationRefType getUsesOperation() {
         return usesOperation;
     }
@@ -117,6 +119,7 @@ public class PassThroughOperationTypeImpl extends AbstractCoordinateOperationTyp
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public void setUsesOperation(OperationRefType newUsesOperation) {
         if (newUsesOperation != usesOperation) {
             NotificationChain msgs = null;

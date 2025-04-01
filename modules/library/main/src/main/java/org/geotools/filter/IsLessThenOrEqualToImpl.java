@@ -16,32 +16,26 @@
  */
 package org.geotools.filter;
 
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.expression.Expression;
 
-public class IsLessThenOrEqualToImpl extends MultiCompareFilterImpl
-        implements PropertyIsLessThanOrEqualTo {
+public class IsLessThenOrEqualToImpl extends MultiCompareFilterImpl implements PropertyIsLessThanOrEqualTo {
 
     protected IsLessThenOrEqualToImpl(Expression expression1, Expression expression2) {
         this(expression1, expression2, false);
     }
 
-    protected IsLessThenOrEqualToImpl(
-            Expression expression1, Expression expression2, boolean matchCase) {
+    protected IsLessThenOrEqualToImpl(Expression expression1, Expression expression2, boolean matchCase) {
         super(expression1, expression2, matchCase);
     }
 
-    protected IsLessThenOrEqualToImpl(
-            Expression expression1, Expression expression2, MatchAction matchAction) {
+    protected IsLessThenOrEqualToImpl(Expression expression1, Expression expression2, MatchAction matchAction) {
         this(expression1, expression2, false, matchAction);
     }
 
     protected IsLessThenOrEqualToImpl(
-            Expression expression1,
-            Expression expression2,
-            boolean matchCase,
-            MatchAction matchAction) {
+            Expression expression1, Expression expression2, boolean matchCase, MatchAction matchAction) {
         super(expression1, expression2, matchCase, matchAction);
     }
 
@@ -54,6 +48,7 @@ public class IsLessThenOrEqualToImpl extends MultiCompareFilterImpl
         return value1 != null && value2 != null && compare(value1, value2) <= 0;
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }

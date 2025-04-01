@@ -17,12 +17,12 @@
 package org.geotools.se.v1_1.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Graphic;
 import org.geotools.se.v1_1.SE;
 import org.geotools.sld.bindings.SLDGraphicStrokeBinding;
-import org.geotools.styling.Graphic;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Binding object for the element http://www.opengis.net/se:GraphicStroke.
@@ -48,10 +48,12 @@ import org.opengis.filter.expression.Expression;
 public class GraphicStrokeBinding extends SLDGraphicStrokeBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.GraphicStroke;
     }
 
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Graphic g = (Graphic) super.parse(instance, node, value);
 

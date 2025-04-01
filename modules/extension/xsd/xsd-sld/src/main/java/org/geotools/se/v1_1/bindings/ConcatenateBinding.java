@@ -18,12 +18,12 @@ package org.geotools.se.v1_1.bindings;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.se.v1_1.SE;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Binding object for the element http://www.opengis.net/se:Concatenate.
@@ -69,6 +69,7 @@ public class ConcatenateBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SE.Concatenate;
     }
@@ -80,6 +81,7 @@ public class ConcatenateBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Expression.class;
     }
@@ -91,9 +93,11 @@ public class ConcatenateBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         // &lt;xsd:element maxOccurs="unbounded" ref="se:StringValue"/&gt;
+        @SuppressWarnings("unchecked")
         List<Expression> values = node.getChildValues("StringValue");
         Expression e = values.get(0);
         for (int i = 1; i < values.size(); i++) {

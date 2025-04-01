@@ -17,9 +17,9 @@
 package org.geotools.sld.bindings;
 
 import javax.xml.namespace.QName;
-import org.geotools.styling.ChannelSelection;
-import org.geotools.styling.SelectedChannelType;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.style.ChannelSelection;
+import org.geotools.api.style.SelectedChannelType;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -64,6 +64,7 @@ public class SLDChannelSelectionBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.CHANNELSELECTION;
     }
@@ -75,6 +76,7 @@ public class SLDChannelSelectionBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -86,6 +88,7 @@ public class SLDChannelSelectionBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return ChannelSelection.class;
     }
@@ -97,6 +100,7 @@ public class SLDChannelSelectionBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -106,6 +110,7 @@ public class SLDChannelSelectionBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         ChannelSelection cs = styleFactory.createChannelSelection(null);
@@ -113,12 +118,11 @@ public class SLDChannelSelectionBinding extends AbstractComplexBinding {
         if (node.hasChild("GrayChannel")) {
             cs.setGrayChannel((SelectedChannelType) node.getChildValue("GrayChannel"));
         } else {
-            SelectedChannelType[] rgb =
-                    new SelectedChannelType[] {
-                        (SelectedChannelType) node.getChildValue("RedChannel"),
-                        (SelectedChannelType) node.getChildValue("GreenChannel"),
-                        (SelectedChannelType) node.getChildValue("BlueChannel")
-                    };
+            SelectedChannelType[] rgb = {
+                (SelectedChannelType) node.getChildValue("RedChannel"),
+                (SelectedChannelType) node.getChildValue("GreenChannel"),
+                (SelectedChannelType) node.getChildValue("BlueChannel")
+            };
             cs.setRGBChannels(rgb);
         }
 

@@ -18,21 +18,21 @@
 
 package org.geotools.brewer.styling.filter.expression;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
 import org.geotools.brewer.styling.builder.Builder;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
 
 /** ExpressionBuilder acting as a simple wrapper around an Expression. */
 public class ExpressionBuilder implements Builder<Expression> {
-    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory2(null);
+    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
     protected boolean unset = false;
     protected Builder<? extends Expression> delegate = new NilBuilder();
 
@@ -110,6 +110,7 @@ public class ExpressionBuilder implements Builder<Expression> {
     }
 
     /** Build the expression. */
+    @Override
     public Expression build() {
         if (unset) {
             return null;
@@ -117,12 +118,14 @@ public class ExpressionBuilder implements Builder<Expression> {
         return delegate.build();
     }
 
+    @Override
     public ExpressionBuilder reset() {
         this.delegate = new NilBuilder();
         this.unset = false;
         return this;
     }
 
+    @Override
     public ExpressionBuilder reset(Expression original) {
         if (original == null) {
             return unset();
@@ -148,6 +151,7 @@ public class ExpressionBuilder implements Builder<Expression> {
         return this;
     }
 
+    @Override
     public ExpressionBuilder unset() {
         this.unset = true;
         this.delegate = new NilBuilder();

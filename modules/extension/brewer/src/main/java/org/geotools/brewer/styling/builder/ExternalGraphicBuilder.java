@@ -21,9 +21,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javax.swing.Icon;
-import org.geotools.styling.ExternalGraphic;
-import org.opengis.metadata.citation.OnLineResource;
-import org.opengis.style.ColorReplacement;
+import org.geotools.api.metadata.citation.OnLineResource;
+import org.geotools.api.style.ColorReplacement;
+import org.geotools.api.style.ExternalGraphic;
 
 public class ExternalGraphicBuilder extends AbstractStyleBuilder<ExternalGraphic> {
     private Icon inline;
@@ -34,7 +34,7 @@ public class ExternalGraphicBuilder extends AbstractStyleBuilder<ExternalGraphic
 
     private String location;
 
-    private Set<ColorReplacementBuilder> replacements = new HashSet<ColorReplacementBuilder>();
+    private Set<ColorReplacementBuilder> replacements = new HashSet<>();
 
     public ExternalGraphicBuilder() {
         this(null);
@@ -83,12 +83,13 @@ public class ExternalGraphicBuilder extends AbstractStyleBuilder<ExternalGraphic
         return this;
     }
 
+    @Override
     public ExternalGraphic build() {
         if (unset) {
             return null;
         }
         ExternalGraphic externalGraphic;
-        Collection<ColorReplacement> set = new HashSet<ColorReplacement>();
+        Collection<ColorReplacement> set = new HashSet<>();
         for (ColorReplacementBuilder replacement : replacements) {
             set.add(replacement.build());
         }
@@ -104,15 +105,18 @@ public class ExternalGraphicBuilder extends AbstractStyleBuilder<ExternalGraphic
         return externalGraphic;
     }
 
+    @Override
     public ExternalGraphicBuilder reset() {
         unset = false;
         return this;
     }
 
+    @Override
     public ExternalGraphicBuilder unset() {
         return (ExternalGraphicBuilder) super.unset();
     }
 
+    @Override
     public ExternalGraphicBuilder reset(ExternalGraphic original) {
         this.unset = false;
         this.format = original.getFormat();

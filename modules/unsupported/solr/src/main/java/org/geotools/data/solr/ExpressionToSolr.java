@@ -23,31 +23,31 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Divide;
+import org.geotools.api.filter.expression.ExpressionVisitor;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.Multiply;
+import org.geotools.api.filter.expression.NilExpression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
+import org.geotools.api.filter.temporal.After;
+import org.geotools.api.filter.temporal.Before;
+import org.geotools.api.filter.temporal.Begins;
+import org.geotools.api.filter.temporal.BegunBy;
+import org.geotools.api.filter.temporal.During;
+import org.geotools.api.filter.temporal.EndedBy;
+import org.geotools.api.filter.temporal.Ends;
+import org.geotools.api.filter.temporal.TContains;
+import org.geotools.api.temporal.Period;
 import org.geotools.geometry.jts.JTS;
 import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.Filter;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Divide;
-import org.opengis.filter.expression.ExpressionVisitor;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.Multiply;
-import org.opengis.filter.expression.NilExpression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
-import org.opengis.filter.temporal.After;
-import org.opengis.filter.temporal.Before;
-import org.opengis.filter.temporal.Begins;
-import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.During;
-import org.opengis.filter.temporal.EndedBy;
-import org.opengis.filter.temporal.Ends;
-import org.opengis.filter.temporal.TContains;
-import org.opengis.temporal.Period;
 
 /**
  * Encodes a OGC expression into a SOLR query syntax
@@ -55,8 +55,7 @@ import org.opengis.temporal.Period;
  * @see {@link FilterToSolr}
  */
 public class ExpressionToSolr implements ExpressionVisitor {
-    private static Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ExpressionToSolr.class);
+    private static Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ExpressionToSolr.class);
     private static final Envelope WORLD = new Envelope(-180, 180, -90, 90);
     private static final double SOLR_DISTANCE_TOLERANCE = 180;
 
@@ -141,35 +140,32 @@ public class ExpressionToSolr implements ExpressionVisitor {
         } else if (literal instanceof Period) {
             if (filter instanceof After) {
                 Period period = (Period) literal;
-                temp.append(dateFormatUTC.format(period.getEnding().getPosition().getDate()));
+                temp.append(
+                        dateFormatUTC.format(period.getEnding().getPosition().getDate()));
             }
             if (filter instanceof Before || filter instanceof Begins || filter instanceof BegunBy) {
                 Period period = (Period) literal;
-                temp.append(
-                        "\""
-                                + dateFormatUTC.format(
-                                        period.getBeginning().getPosition().getDate())
-                                + "\"");
+                temp.append("\""
+                        + dateFormatUTC.format(
+                                period.getBeginning().getPosition().getDate())
+                        + "\"");
             }
             if (filter instanceof Ends || filter instanceof EndedBy) {
                 Period period = (Period) literal;
-                temp.append(
-                        "\""
-                                + dateFormatUTC.format(period.getEnding().getPosition().getDate())
-                                + "\"");
+                temp.append("\""
+                        + dateFormatUTC.format(period.getEnding().getPosition().getDate())
+                        + "\"");
             }
             if (filter instanceof During || filter instanceof TContains) {
                 Period period = (Period) literal;
-                temp.append(
-                        "\""
-                                + dateFormatUTC.format(
-                                        period.getBeginning().getPosition().getDate())
-                                + "\"");
+                temp.append("\""
+                        + dateFormatUTC.format(
+                                period.getBeginning().getPosition().getDate())
+                        + "\"");
                 temp.append(" TO ");
-                temp.append(
-                        "\""
-                                + dateFormatUTC.format(period.getEnding().getPosition().getDate())
-                                + "\"");
+                temp.append("\""
+                        + dateFormatUTC.format(period.getEnding().getPosition().getDate())
+                        + "\"");
             }
         } else {
             String escaped = FilterToSolr.escapeSpecialCharacters(literal.toString());
@@ -189,12 +185,10 @@ public class ExpressionToSolr implements ExpressionVisitor {
     /** Handles a Geometry literal encoding. */
     private void handle(StringBuffer buff, Geometry geometry) {
         if (spatialStrategy == null) {
-            throw new IllegalStateException(
-                    "Attempt to encode geometry literal but spatialStrategy is null");
+            throw new IllegalStateException("Attempt to encode geometry literal but spatialStrategy is null");
         }
 
-        if (!WORLD.contains(geometry.getEnvelopeInternal())
-                && !WORLD.equals(geometry.getEnvelopeInternal())) {
+        if (!WORLD.contains(geometry.getEnvelopeInternal()) && !WORLD.equals(geometry.getEnvelopeInternal())) {
             if (LOGGER.isLoggable(Level.FINE)) {
                 LOGGER.fine(
                         "SOLR cannot deal with filters using geometries that span beyond the whole world, clip feature geometry to world");
@@ -235,13 +229,12 @@ public class ExpressionToSolr implements ExpressionVisitor {
     }
 
     /**
-     * Helper method that searches the attribute name in the available feature type that corresponds
-     * to the provided property name expression. If no feature type is available we simple return
-     * the property name.
+     * Helper method that searches the attribute name in the available feature type that corresponds to the provided
+     * property name expression. If no feature type is available we simple return the property name.
      *
      * @param expression property name expression
-     * @return the name of the attribute that corresponds to property name expression if a feature
-     *     type is available, otherwise returns the property name
+     * @return the name of the attribute that corresponds to property name expression if a feature type is available,
+     *     otherwise returns the property name
      */
     private String encodePropertyName(PropertyName expression) {
         if (expression == null) {
@@ -264,8 +257,8 @@ public class ExpressionToSolr implements ExpressionVisitor {
     }
 
     /**
-     * Helper method that just retrieves the name of a property name expression. IF the property
-     * name is NULL an warning will be logged.
+     * Helper method that just retrieves the name of a property name expression. IF the property name is NULL an warning
+     * will be logged.
      *
      * @param expression property name expression
      * @return the property name or NULL

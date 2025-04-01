@@ -82,11 +82,7 @@ public class GeometryRenderer extends AbstractXYItemRenderer {
 
     @Override
     public XYItemRendererState initialise(
-            Graphics2D g2,
-            Rectangle2D dataArea,
-            XYPlot plot,
-            XYDataset data,
-            PlotRenderingInfo info) {
+            Graphics2D g2, Rectangle2D dataArea, XYPlot plot, XYDataset data, PlotRenderingInfo info) {
 
         return super.initialise(g2, dataArea, plot, data, info);
     }
@@ -136,6 +132,7 @@ public class GeometryRenderer extends AbstractXYItemRenderer {
         return renderCoordinates ? 2 : 1;
     }
 
+    @Override
     public void drawItem(
             Graphics2D g2,
             XYItemRendererState state,
@@ -186,26 +183,10 @@ public class GeometryRenderer extends AbstractXYItemRenderer {
         if (g instanceof GeometryCollection) {
             GeometryCollection gc = (GeometryCollection) g;
             for (int i = 0; i < gc.getNumGeometries(); i++) {
-                drawGeometry(
-                        gc.getGeometryN(i),
-                        g2,
-                        series,
-                        item,
-                        dataArea,
-                        plot,
-                        domainAxis,
-                        rangeAxis);
+                drawGeometry(gc.getGeometryN(i), g2, series, item, dataArea, plot, domainAxis, rangeAxis);
             }
         } else if (g instanceof Point) {
-            drawCoordinate(
-                    ((Point) g).getCoordinate(),
-                    g2,
-                    series,
-                    item,
-                    dataArea,
-                    plot,
-                    domainAxis,
-                    rangeAxis);
+            drawCoordinate(g.getCoordinate(), g2, series, item, dataArea, plot, domainAxis, rangeAxis);
         } else if (g instanceof LineString) {
             g2.draw(new TranslatedLiteShape(g, dataArea, plot, domainAxis, rangeAxis));
         } else {
@@ -214,12 +195,7 @@ public class GeometryRenderer extends AbstractXYItemRenderer {
                 Paint p = getSeriesPaint(series);
                 if (p instanceof Color) {
                     Color c = (Color) p;
-                    p =
-                            new Color(
-                                    c.getRed() / 255f,
-                                    c.getGreen() / 255f,
-                                    c.getBlue() / 255f,
-                                    polygonFillOpacity);
+                    p = new Color(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f, polygonFillOpacity);
                 }
                 g2.setPaint(p);
                 g2.fill(new TranslatedLiteShape(g, dataArea, plot, domainAxis, rangeAxis));
@@ -281,11 +257,7 @@ public class GeometryRenderer extends AbstractXYItemRenderer {
         ValueAxis domainAxis, rangeAxis;
 
         public TranslatedLiteShape(
-                Geometry geom,
-                Rectangle2D dataArea,
-                XYPlot plot,
-                ValueAxis domainAxis,
-                ValueAxis rangeAxis) {
+                Geometry geom, Rectangle2D dataArea, XYPlot plot, ValueAxis domainAxis, ValueAxis rangeAxis) {
 
             super(geom, new AffineTransform(), false);
             this.dataArea = dataArea;
@@ -307,19 +279,15 @@ public class GeometryRenderer extends AbstractXYItemRenderer {
                 this.delegate = delegate;
             }
 
+            @Override
             public int currentSegment(float[] coords) {
                 int i = delegate.currentSegment(coords);
-                coords[0] =
-                        (float)
-                                domainAxis.valueToJava2D(
-                                        coords[0], dataArea, plot.getDomainAxisEdge());
-                coords[1] =
-                        (float)
-                                rangeAxis.valueToJava2D(
-                                        coords[1], dataArea, plot.getRangeAxisEdge());
+                coords[0] = (float) domainAxis.valueToJava2D(coords[0], dataArea, plot.getDomainAxisEdge());
+                coords[1] = (float) rangeAxis.valueToJava2D(coords[1], dataArea, plot.getRangeAxisEdge());
                 return i;
             }
 
+            @Override
             public int currentSegment(double[] coords) {
                 int i = delegate.currentSegment(coords);
                 coords[0] = domainAxis.valueToJava2D(coords[0], dataArea, plot.getDomainAxisEdge());
@@ -327,14 +295,17 @@ public class GeometryRenderer extends AbstractXYItemRenderer {
                 return i;
             }
 
+            @Override
             public int getWindingRule() {
                 return delegate.getWindingRule();
             }
 
+            @Override
             public boolean isDone() {
                 return delegate.isDone();
             }
 
+            @Override
             public void next() {
                 delegate.next();
             }

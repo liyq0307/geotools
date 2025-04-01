@@ -26,16 +26,15 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 // import java.util.concurrent.locks.ReentrantWriterPreferenceReadWriteLock;
 
 /**
- * Caching implementation for {@link ObjectCache}. This instance is used when actual caching is
- * desired.
+ * Caching implementation for {@link ObjectCache}. This instance is used when actual caching is desired.
  *
  * @since 2.5
  * @version $Id$
  * @author Cory Horner (Refractions Research)
  */
-final class DefaultObjectCache implements ObjectCache {
+final class DefaultObjectCache<K, V> implements ObjectCache<K, V> {
     /** The cached values for each key. */
-    private final Map /*<Object,ObjectCacheEntry>*/ cache;
+    private final Map<K, ObjectCacheEntry<V>> cache;
 
     /**
      * An entry in the {@link DefaultObjectCache}.
@@ -69,15 +68,14 @@ final class DefaultObjectCache implements ObjectCache {
      *
      * @todo change from edu.oswego to java.concurrent
      */
-    static final class ObjectCacheEntry {
+    static final class ObjectCacheEntry<V> {
         /**
          * Value of this cache entry, managed by the {@linkplain #lock}.
          *
-         * @todo According {@link java.util.concurrent.locks.ReentrantReadWriteLock} documentation,
-         *     we don't need to declare this field as volatile. Revisit when we will be allowed to
-         *     compile for J2SE 1.5.
+         * @todo According {@link java.util.concurrent.locks.ReentrantReadWriteLock} documentation, we don't need to
+         *     declare this field as volatile. Revisit when we will be allowed to compile for J2SE 1.5.
          */
-        private volatile Object value;
+        private volatile V value;
 
         /** The lock used to manage the {@linkplain #value}. */
         private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -87,13 +85,13 @@ final class DefaultObjectCache implements ObjectCache {
         public ObjectCacheEntry() {}
 
         /** Creates an entry with the specified initial value. */
-        public ObjectCacheEntry(final Object value) {
+        public ObjectCacheEntry(final V value) {
             this.value = value;
         }
 
         /**
-         * Acquires a write lock, obtains the value, unlocks, and returns the value. If another
-         * thread already has the read or write lock, this method will block.
+         * Acquires a write lock, obtains the value, unlocks, and returns the value. If another thread already has the
+         * read or write lock, this method will block.
          *
          * <blockquote>
          *
@@ -109,7 +107,7 @@ final class DefaultObjectCache implements ObjectCache {
          *
          * </blockquote>
          */
-        public Object peek() {
+        public V peek() {
             try {
                 lock.writeLock().lock();
                 return value;
@@ -123,12 +121,12 @@ final class DefaultObjectCache implements ObjectCache {
         }
 
         /**
-         * Acquires a read lock, obtains the value, unlocks, and returns the value. If another
-         * thread already has the write lock, this method will block.
+         * Acquires a read lock, obtains the value, unlocks, and returns the value. If another thread already has the
+         * write lock, this method will block.
          *
          * @return cached value or null if empty
          */
-        public Object getValue() {
+        public V getValue() {
             try {
                 lock.readLock().lock();
                 return value;
@@ -143,12 +141,10 @@ final class DefaultObjectCache implements ObjectCache {
         }
 
         /**
-         * Stores the value in the entry, using the write lock. It is common to use this method
-         * while already holding the writeLock (since writeLock is re-entrant).
-         *
-         * @param value
+         * Stores the value in the entry, using the write lock. It is common to use this method while already holding
+         * the writeLock (since writeLock is re-entrant).
          */
-        public void setValue(Object value) {
+        public void setValue(V value) {
             try {
                 lock.writeLock().lock();
                 this.value = value;
@@ -161,9 +157,9 @@ final class DefaultObjectCache implements ObjectCache {
         }
 
         /**
-         * Acquires a write lock. This will block other readers and writers (on this entry only),
-         * and other readers and writers will need to be cleared before the write lock can be
-         * acquired, unless it is the same thread attempting to read or write.
+         * Acquires a write lock. This will block other readers and writers (on this entry only), and other readers and
+         * writers will need to be cleared before the write lock can be acquired, unless it is the same thread
+         * attempting to read or write.
          */
         public boolean writeLock() {
             lock.writeLock().lock();
@@ -178,15 +174,16 @@ final class DefaultObjectCache implements ObjectCache {
 
     /** Creates a new cache. */
     public DefaultObjectCache() {
-        cache = new HashMap();
+        cache = new HashMap<>();
     }
 
     /** Creates a new cache using the indicated initialSize. */
     public DefaultObjectCache(final int initialSize) {
-        cache = new HashMap(initialSize);
+        cache = new HashMap<>(initialSize);
     }
 
     /** Removes all entries from this map. */
+    @Override
     public void clear() {
         synchronized (cache) {
             cache.clear();
@@ -196,28 +193,28 @@ final class DefaultObjectCache implements ObjectCache {
     /**
      * Check if an entry exists in the cache.
      *
-     * @param key
      * @return boolean
      */
-    public boolean containsKey(final Object key) {
+    public boolean containsKey(final K key) {
         return cache.containsKey(key);
     }
 
     /**
      * Returns the object from the cache.
      *
-     * <p>Please note that a read lock is maintained on the cache contents; you may be stuck waiting
-     * for a writer to produce the result over the course of calling this method. The contents (of
-     * course) may be null.
+     * <p>Please note that a read lock is maintained on the cache contents; you may be stuck waiting for a writer to
+     * produce the result over the course of calling this method. The contents (of course) may be null.
      *
      * @param key The authority code.
      * @todo Consider logging a message here to the finer or finest level.
      */
-    public Object get(final Object key) {
+    @Override
+    public V get(final K key) {
         return getEntry(key).getValue();
     }
 
-    public Object peek(final Object key) {
+    @Override
+    public V peek(final K key) {
         synchronized (cache) {
             if (!cache.containsKey(key)) {
                 // no entry for this key - so no value
@@ -227,11 +224,13 @@ final class DefaultObjectCache implements ObjectCache {
         }
     }
 
-    public void writeLock(final Object key) {
+    @Override
+    public void writeLock(final K key) {
         getEntry(key).writeLock();
     }
 
-    public void writeUnLock(final Object key) {
+    @Override
+    public void writeUnLock(final K key) {
         synchronized (cache) {
             if (!cache.containsKey(key)) {
                 throw new IllegalStateException("Cannot unlock prior to locking");
@@ -241,21 +240,21 @@ final class DefaultObjectCache implements ObjectCache {
     }
 
     /** Stores a value */
-    public void put(final Object key, final Object object) {
+    @Override
+    public void put(final K key, final V object) {
         getEntry(key).setValue(object);
     }
 
     /**
      * Retrieve cache entry, will create one if needed.
      *
-     * @param key
      * @return ObjectCacheEntry
      */
-    private ObjectCacheEntry getEntry(Object key) {
+    private ObjectCacheEntry<V> getEntry(K key) {
         synchronized (cache) {
-            ObjectCacheEntry entry = (ObjectCacheEntry) cache.get(key);
+            ObjectCacheEntry<V> entry = cache.get(key);
             if (entry == null) {
-                entry = new ObjectCacheEntry();
+                entry = new ObjectCacheEntry<>();
                 cache.put(key, entry);
             }
             return entry;
@@ -267,16 +266,16 @@ final class DefaultObjectCache implements ObjectCache {
      *
      * @return Set of keys
      */
-    public Set<Object> getKeys() {
-        Set<Object> ret = null;
+    @Override
+    public Set<K> getKeys() {
         synchronized (cache) {
-            ret = new HashSet<Object>(cache.keySet());
+            return new HashSet<>(cache.keySet());
         }
-        return ret;
     }
 
     /** Removes this item from the object cache. */
-    public void remove(Object key) {
+    @Override
+    public void remove(K key) {
         synchronized (cache) {
             cache.remove(key);
         }

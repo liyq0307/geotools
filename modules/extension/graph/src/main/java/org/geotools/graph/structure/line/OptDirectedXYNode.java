@@ -20,9 +20,8 @@ import org.geotools.graph.structure.opt.OptDirectedNode;
 import org.locationtech.jts.geom.Coordinate;
 
 /**
- * Optimized implementation of XYNode extended from OptDirectedNode. Instead of storing an
- * underlying coordinate object, only a set of (x,y) values are stored eliminating the storage of
- * additional oordinate dimensions.
+ * Optimized implementation of XYNode extended from OptDirectedNode. Instead of storing an underlying coordinate object,
+ * only a set of (x,y) values are stored eliminating the storage of additional oordinate dimensions.
  *
  * @see org.geotools.graph.structure.opt.OptDirectedNode
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
@@ -40,6 +39,7 @@ public class OptDirectedXYNode extends OptDirectedNode implements XYNode {
      *
      * @see XYNode#getCoordinate()
      */
+    @Override
     public Coordinate getCoordinate() {
         return (new Coordinate(m_x, m_y));
     }
@@ -49,6 +49,7 @@ public class OptDirectedXYNode extends OptDirectedNode implements XYNode {
      *
      * @see XYNode#setCoordinate(Coordinate)
      */
+    @Override
     public void setCoordinate(Coordinate c) {
         m_x = c.x;
         m_y = c.y;

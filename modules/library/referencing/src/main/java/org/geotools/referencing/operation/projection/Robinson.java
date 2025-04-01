@@ -20,24 +20,26 @@
  */
 package org.geotools.referencing.operation.projection;
 
-import static java.lang.Math.*;
+import static java.lang.Math.PI;
+import static java.lang.Math.abs;
+import static java.lang.Math.floor;
+import static java.lang.Math.toDegrees;
+import static java.lang.Math.toRadians;
 
 import java.awt.geom.Point2D;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * Robinson projection
  *
- * @see <A HREF="http://en.wikipedia.org/wiki/Robinson_projection">Robinson projection on
- *     Wikipedia</A>
- * @see <A HREF="http://www.remotesensing.org/geotiff/proj_list/robinson.html">"Robinson" on
- *     RemoteSensing.org</A>
+ * @see <A HREF="http://en.wikipedia.org/wiki/Robinson_projection">Robinson projection on Wikipedia</A>
+ * @see <A HREF="http://www.remotesensing.org/geotiff/proj_list/robinson.html">"Robinson" on RemoteSensing.org</A>
  * @since 2.6.3
  * @author Andrea Aime
  */
@@ -74,7 +76,7 @@ public class Robinson extends MapProjection {
     }
 
     /** X translation table */
-    private static final Coeff X[] = {
+    private static final Coeff[] X = {
         new Coeff(1, -5.67239e-12, -7.15511e-05, 3.11028e-06),
         new Coeff(0.9986, -0.000482241, -2.4897e-05, -1.33094e-06),
         new Coeff(0.9954, -0.000831031, -4.4861e-05, -9.86588e-07),
@@ -97,7 +99,7 @@ public class Robinson extends MapProjection {
     };
 
     /** Y translation table */
-    private static final Coeff Y[] = {
+    private static final Coeff[] Y = {
         new Coeff(0, 0.0124, 3.72529e-10, 1.15484e-09),
         new Coeff(0.062, 0.0124001, 1.76951e-08, -5.92321e-09),
         new Coeff(0.124, 0.0123998, -7.09668e-08, 2.25753e-08),
@@ -138,16 +140,17 @@ public class Robinson extends MapProjection {
     }
 
     /** {@inheritDoc} */
+    @Override
     public ParameterDescriptorGroup getParameterDescriptors() {
         return Provider.PARAMETERS;
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
-    protected Point2D transformNormalized(double lam, double phi, final Point2D ptDst)
-            throws ProjectionException {
+    @Override
+    protected Point2D transformNormalized(double lam, double phi, final Point2D ptDst) throws ProjectionException {
 
         double dphi = abs(phi);
         int i = (int) floor(dphi * C1);
@@ -169,19 +172,15 @@ public class Robinson extends MapProjection {
         }
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
-    protected Point2D inverseTransformNormalized(double x, double y, final Point2D ptDst)
-            throws ProjectionException {
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
+    @Override
+    protected Point2D inverseTransformNormalized(double x, double y, final Point2D ptDst) throws ProjectionException {
         double lam = x / FXC;
         double phi = abs(y / FYC);
         if (phi >= 1d) {
             /* simple pathologic cases */
             if (phi > ONEEPS) {
-                throw new ProjectionException(
-                        "Tolerance error occurred appling inverse Robinson projection");
+                throw new ProjectionException("Tolerance error occurred appling inverse Robinson projection");
             } else {
                 phi = y < 0. ? -PI / 2 : PI / 2;
                 lam /= X[NODES].c0;
@@ -242,8 +241,8 @@ public class Robinson extends MapProjection {
     //////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for the Robinson projection (not part of the EPSG database).
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for the
+     * Robinson projection (not part of the EPSG database).
      *
      * @since 2.6.3
      * @author Andrea Aime
@@ -254,13 +253,13 @@ public class Robinson extends MapProjection {
         private static final long serialVersionUID = 3586488124601927036L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.GEOTOOLS, "Robinson"),
-                            new NamedIdentifier(Citations.ESRI, "Robinson")
-                        },
-                        new ParameterDescriptor[] {SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN});
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.GEOTOOLS, "Robinson"),
+                    new NamedIdentifier(Citations.ESRI, "Robinson"),
+                    new NamedIdentifier(Citations.PROJ, "robin")
+                },
+                new ParameterDescriptor[] {SEMI_MAJOR, SEMI_MINOR, CENTRAL_MERIDIAN, FALSE_EASTING, FALSE_NORTHING});
 
         /** Constructs a new provider. */
         public Provider() {
@@ -274,6 +273,7 @@ public class Robinson extends MapProjection {
          * @return The created math transform.
          * @throws ParameterNotFoundException if a required parameter was not found.
          */
+        @Override
         protected MathTransform createMathTransform(final ParameterValueGroup parameters)
                 throws ParameterNotFoundException {
             return new Robinson(parameters);
@@ -342,7 +342,7 @@ public class Robinson extends MapProjection {
     //        }
     //    }
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         // System.out.println(PI / 2d);
     }
 }

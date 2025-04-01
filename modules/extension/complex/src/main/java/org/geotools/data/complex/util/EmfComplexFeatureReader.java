@@ -16,9 +16,16 @@
  */
 package org.geotools.data.complex.util;
 
+import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
 import org.geotools.appschema.resolver.xml.AppSchemaConfiguration;
 import org.geotools.xml.resolver.SchemaCatalog;
 import org.geotools.xml.resolver.SchemaResolver;
@@ -26,29 +33,24 @@ import org.geotools.xsd.Binding;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.SchemaIndex;
 import org.geotools.xsd.Schemas;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.xmlpull.mxp1.MXParser;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 
 /**
- * Parses an application schema given by a gtxml {@link Configuration} into a set of {@link
- * AttributeType}s and {@link AttributeDescriptor}s.
+ * Parses an application schema given by a gtxml {@link Configuration} into a set of {@link AttributeType}s and
+ * {@link AttributeDescriptor}s.
  *
- * <p>All the XSD schema locations that comprise the application schema are obtained from the main
- * {@link Configuration} and its dependencies.
+ * <p>All the XSD schema locations that comprise the application schema are obtained from the main {@link Configuration}
+ * and its dependencies.
  *
- * <p>Of particular interest might be the {@link ApplicationSchemaConfiguration} object, which
- * allows to provide the location of the root xsd schema for a given application schema.
+ * <p>Of particular interest might be the {@link ApplicationSchemaConfiguration} object, which allows to provide the
+ * location of the root xsd schema for a given application schema.
  *
  * @author Gabriel Roldan
  * @since 2.4
  */
 public class EmfComplexFeatureReader {
     /**
-     * The initial resolver has support for only file and classpath resolution. Anything more than a
-     * test should probably set this to something more useful.
+     * The initial resolver has support for only file and classpath resolution. Anything more than a test should
+     * probably set this to something more useful.
      */
     private SchemaResolver resolver = new SchemaResolver();
 
@@ -64,23 +66,17 @@ public class EmfComplexFeatureReader {
         this.resolver = resolver;
     }
 
-    /**
-     * Set resolver based on catalog. Use this for testing only, because it does not support cached
-     * downloads.
-     *
-     * @param catalogLocation
-     */
+    /** Set resolver based on catalog. Use this for testing only, because it does not support cached downloads. */
     public void setResolver(URL catalogLocation) {
         this.resolver = new SchemaResolver(SchemaCatalog.build(catalogLocation));
     }
 
     /**
-     * Parses the GML schema represented by the <code>configuration</code>'s {@link
-     * Configuration#getSchemaFileURL() schema location} into a {@link SchemaIndex}.
+     * Parses the GML schema represented by the <code>configuration</code>'s {@link Configuration#getSchemaFileURL()
+     * schema location} into a {@link SchemaIndex}.
      *
-     * @param configuration configuration object used to access the XSDSchema to parse. This
-     *     configuration object might contain {@link Binding}s
-     * @throws IOException
+     * @param configuration configuration object used to access the XSDSchema to parse. This configuration object might
+     *     contain {@link Binding}s
      */
     public SchemaIndex parse(Configuration configuration) throws IOException {
         // find out the schemas involved in the app schema configuration
@@ -93,24 +89,22 @@ public class EmfComplexFeatureReader {
      * Parses the schema referenced by <code>location</code> into a {@link SchemaIndex}
      *
      * @param nameSpace the location namespace
-     * @param schemaLocation the physical location of the root xsd schema that comprises the
-     *     application schema to parse.
-     * @throws IOException if any non recoverable problem occurs while parsing the application
-     *     schema pointed out by <code>location</code> or one of its dependencies.
+     * @param schemaLocation the physical location of the root xsd schema that comprises the application schema to
+     *     parse.
+     * @throws IOException if any non recoverable problem occurs while parsing the application schema pointed out by
+     *     <code>location</code> or one of its dependencies.
      */
     public SchemaIndex parse(String nameSpace, String schemaLocation) throws IOException {
-        AppSchemaConfiguration configuration =
-                new AppSchemaConfiguration(nameSpace, schemaLocation, resolver);
+        AppSchemaConfiguration configuration = new AppSchemaConfiguration(nameSpace, schemaLocation, resolver);
         return parse(configuration);
     }
 
     /**
      * Parses the gml schema referenced by <code>location</code> into a {@link SchemaIndex}
      *
-     * @param location the physical location of the root xsd schema that comprises the application
-     *     schema to parse.
-     * @throws IOException if any non recoverable problem occurs while parsing the application
-     *     schema pointed out by <code>location</code> or one of its dependencies.
+     * @param location the physical location of the root xsd schema that comprises the application schema to parse.
+     * @throws IOException if any non recoverable problem occurs while parsing the application schema pointed out by
+     *     <code>location</code> or one of its dependencies.
      */
     public SchemaIndex parse(final URL location) throws IOException {
 
@@ -121,48 +115,42 @@ public class EmfComplexFeatureReader {
         return parse(nameSpace, schemaLocation);
     }
 
-    /**
-     * Finds out the targetNamespace of the xsd schema referenced by <code>location</code>
-     *
-     * @param location
-     * @return
-     * @throws IOException
-     */
+    /** Finds out the targetNamespace of the xsd schema referenced by <code>location</code> */
     public String findSchemaNamespace(URL location) throws IOException {
         String targetNamespace = null;
         // parse some of the instance document to find out the
         // schema location
         URL resolvedLocation = new URL(resolver.resolve(location.toExternalForm()));
-        InputStream input = resolvedLocation.openStream();
 
         // create stream parser
-        XmlPullParser parser = null;
 
-        try {
-            // parse root element
-            parser = new MXParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true);
-            parser.setInput(input, "UTF-8");
-            parser.nextTag();
+        try (InputStream input = resolvedLocation.openStream()) {
+            XMLInputFactory factory = XMLInputFactory.newFactory();
+            // disable DTDs
+            factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+            // disable external entities
+            factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+            XMLStreamReader parser = factory.createXMLStreamReader(input, "UTF-8");
+            // position at root element
+            while (parser.hasNext()) {
+                if (START_ELEMENT == parser.next()) {
+                    break;
+                }
+            }
 
             // look for schema location
             for (int i = 0; i < parser.getAttributeCount(); i++) {
-                if ("targetNamespace".equals(parser.getAttributeName(i))) {
+                if ("targetNamespace".equals(parser.getAttributeLocalName(i))) {
                     targetNamespace = parser.getAttributeValue(i);
                     break;
                 }
             }
-            // reset input stream
-            parser.setInput(null);
-        } catch (XmlPullParserException e) {
+        } catch (XMLStreamException e) {
             String msg = "Cannot find target namespace for schema document " + resolvedLocation;
             throw (RuntimeException) new RuntimeException(msg).initCause(e);
-        } finally {
-            input.close();
         }
         if (targetNamespace == null) {
-            throw new IllegalArgumentException(
-                    "Input document does not specifies a targetNamespace");
+            throw new IllegalArgumentException("Input document does not specifies a targetNamespace");
         }
         return targetNamespace;
     }

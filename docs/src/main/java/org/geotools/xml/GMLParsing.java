@@ -1,18 +1,13 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2005-2008, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.xml;
 
@@ -26,12 +21,12 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.IOUtils;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.gml3.GMLConfiguration;
 import org.geotools.xsd.Parser;
 import org.geotools.xsd.StreamingParser;
-import org.opengis.feature.simple.SimpleFeature;
 import org.w3c.dom.Document;
 
 /**
@@ -67,10 +62,7 @@ public class GMLParsing {
         System.out.println("Number of features: " + nfeatures);
     }
 
-    /**
-     * Parses GML3 without specifying a schema location, and illusrates the use of the streaming
-     * parser.
-     */
+    /** Parses GML3 without specifying a schema location, and illusrates the use of the streaming parser. */
     public static void streamParseGML3() throws Exception {
         InputStream in = GMLParsing.class.getResourceAsStream("states.xml");
         GMLConfiguration gml = new GMLConfiguration();
@@ -89,8 +81,8 @@ public class GMLParsing {
     /**
      * Parses GML3 by specifying the schema location.
      *
-     * <p>This example first transforms the original file states.xml, and sets its schemaLocation to
-     * the states.xsd file.
+     * <p>This example first transforms the original file states.xml, and sets its schemaLocation to the states.xsd
+     * file.
      */
     public static void schemaParseGML3() throws Exception {
         File xml = setSchemaLocation();
@@ -120,14 +112,10 @@ public class GMLParsing {
         DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
         Document d = db.parse(GMLParsing.class.getResourceAsStream("states.xml"));
         d.getDocumentElement()
-                .setAttribute(
-                        "xsi:schemaLocation",
-                        "http://www.openplans.org/topp " + xsd.getCanonicalPath());
+                .setAttribute("xsi:schemaLocation", "http://www.openplans.org/topp " + xsd.getCanonicalPath());
 
         File xml = File.createTempFile("states", "xml");
-        TransformerFactory.newInstance()
-                .newTransformer()
-                .transform(new DOMSource(d), new StreamResult(xml));
+        TransformerFactory.newInstance().newTransformer().transform(new DOMSource(d), new StreamResult(xml));
         return xml;
     }
 }

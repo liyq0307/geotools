@@ -7,17 +7,17 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import org.geotools.TestData;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.identity.FeatureId;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.util.URLs;
 import org.junit.Test;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.identity.FeatureId;
 
 public class DuplicateColumnNameReaderTest extends TestCaseSupport {
 
@@ -39,12 +39,12 @@ public class DuplicateColumnNameReaderTest extends TestCaseSupport {
         SimpleFeatureSource source = store.getFeatureSource();
 
         // read the first feature
-        SimpleFeatureIterator iter = source.getFeatures().features();
-        SimpleFeature feature = iter.next();
-        iter.close();
+        try (SimpleFeatureIterator iter = source.getFeatures().features()) {
+            SimpleFeature feature = iter.next();
 
-        // get the value of the duplicate column & compare it against expectation
-        assertEquals(expectedValue, feature.getAttribute(testColumn));
+            // get the value of the duplicate column & compare it against expectation
+            assertEquals(expectedValue, feature.getAttribute(testColumn));
+        }
 
         // cleanup
         store.dispose();
@@ -60,28 +60,26 @@ public class DuplicateColumnNameReaderTest extends TestCaseSupport {
         ShapefileDataStore indexedstore = new ShapefileDataStore(shpFile.toURI().toURL());
 
         // get a random feature id from one of the stores
-        SimpleFeatureIterator it = indexedstore.getFeatureSource().getFeatures().features();
-        FeatureId fid = it.next().getIdentifier();
-        it.close();
+        try (SimpleFeatureIterator it =
+                indexedstore.getFeatureSource().getFeatures().features()) {
+            FeatureId fid = it.next().getIdentifier();
 
-        // query the datastore
-        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
-        Filter idFilter = ff.id(Collections.singleton(fid));
-        final Query query =
-                new Query(
-                        indexedstore.getSchema().getName().getLocalPart(),
-                        idFilter,
-                        new String[] {testColumn});
-        final SimpleFeatureCollection indexedfeatures =
-                indexedstore.getFeatureSource().getFeatures(query);
+            // query the datastore
+            FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
+            Filter idFilter = ff.id(Collections.singleton(fid));
+            final Query query =
+                    new Query(indexedstore.getSchema().getName().getLocalPart(), idFilter, new String[] {testColumn});
+            final SimpleFeatureCollection indexedfeatures =
+                    indexedstore.getFeatureSource().getFeatures(query);
 
-        // compare the results
-        SimpleFeatureIterator indexIterator = indexedfeatures.features();
-        SimpleFeature indexedFeature = indexIterator.next();
-        indexIterator.close();
+            // compare the results
+            try (SimpleFeatureIterator indexIterator = indexedfeatures.features()) {
+                SimpleFeature indexedFeature = indexIterator.next();
 
-        // get the value of the duplicate column & compare it against expectation
-        assertEquals(expectedValue, indexedFeature.getAttribute(testColumn));
+                // get the value of the duplicate column & compare it against expectation
+                assertEquals(expectedValue, indexedFeature.getAttribute(testColumn));
+            }
+        }
 
         // cleanup
         indexedstore.dispose();

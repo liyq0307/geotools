@@ -50,6 +50,7 @@ import org.geotools.xsd.InstanceComponent;
  */
 public class XSNameBinding extends AbstractSimpleBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.NAME;
     }
@@ -61,6 +62,7 @@ public class XSNameBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -68,12 +70,12 @@ public class XSNameBinding extends AbstractSimpleBinding {
     /**
      *
      * <!-- begin-user-doc -->
-     * This binding simply delegates to its parent binding which returns an object of type {@link
-     * String}.
+     * This binding simply delegates to its parent binding which returns an object of type {@link String}.
      * <!-- end-user-doc -->
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return String.class;
     }
@@ -81,12 +83,12 @@ public class XSNameBinding extends AbstractSimpleBinding {
     /**
      *
      * <!-- begin-user-doc -->
-     * This binding simply delegates to its parent binding which returns an object of type {@link
-     * String}.
+     * This binding simply delegates to its parent binding which returns an object of type {@link String}.
      * <!-- end-user-doc -->
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         // TODO need to implement a pattern facet. Simply return string value for now
         return value;

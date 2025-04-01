@@ -19,23 +19,24 @@ package org.geotools.referencing.factory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.geotools.api.referencing.AuthorityFactory;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CRSAuthorityFactory;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.GeographicCRS;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.factory.FactoryNotFoundException;
 import org.geotools.util.factory.Hints;
 import org.junit.Test;
-import org.opengis.referencing.AuthorityFactory;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CRSAuthorityFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.crs.GeographicCRS;
 
 /**
  * Tests for {@link HTTP_URI_AuthorityFactory}.
@@ -74,7 +75,7 @@ public class HTTP_URI_AuthorityFactoryTest {
         assertSame(crs, CRS.decode("http://www.opengis.net/def/crs/CRS/1.3/84"));
         assertSame(crs, CRS.decode("CRS:84"));
         assertNotSame(crs, DefaultGeographicCRS.WGS84);
-        assertFalse(DefaultGeographicCRS.WGS84.equals(crs));
+        assertNotEquals(DefaultGeographicCRS.WGS84, crs);
         assertTrue(CRS.equalsIgnoreMetadata(DefaultGeographicCRS.WGS84, crs));
         crs = factory.createGeographicCRS("http://www.opengis.net/def/crs/CRS/1.3/83");
         assertSame(crs, CRS.decode("CRS:83"));
@@ -82,8 +83,8 @@ public class HTTP_URI_AuthorityFactoryTest {
     }
 
     /**
-     * Tests fetching the HTTP URI CRS factory when the "longitude first axis order" hint is set.
-     * This test ensures that the factory ignores this hint.
+     * Tests fetching the HTTP URI CRS factory when the "longitude first axis order" hint is set. This test ensures that
+     * the factory ignores this hint.
      */
     @Test
     public void testWhenForceXY() throws FactoryException {
@@ -96,8 +97,7 @@ public class HTTP_URI_AuthorityFactoryTest {
             } catch (FactoryNotFoundException e) {
                 // success
             }
-            CoordinateReferenceSystem crs =
-                    CRS.decode("http://www.opengis.net/def/crs/CRS/0/84", true);
+            CoordinateReferenceSystem crs = CRS.decode("http://www.opengis.net/def/crs/CRS/0/84", true);
             assertTrue(CRS.equalsIgnoreMetadata(DefaultGeographicCRS.WGS84, crs));
             crs = CRS.decode("http://www.opengis.net/def/crs/CRS/0/84");
             assertTrue(CRS.equalsIgnoreMetadata(DefaultGeographicCRS.WGS84, crs));
@@ -109,9 +109,15 @@ public class HTTP_URI_AuthorityFactoryTest {
 
     @Test
     public void testDecode() throws NoSuchAuthorityCodeException, FactoryException {
-        assertTrue(
-                CRS.equalsIgnoreMetadata(
-                        DefaultGeographicCRS.WGS84,
-                        CRS.decode("http://www.opengis.net/def/crs/CRS/0/84")));
+        assertTrue(CRS.equalsIgnoreMetadata(
+                DefaultGeographicCRS.WGS84, CRS.decode("http://www.opengis.net/def/crs/CRS/0/84")));
+    }
+
+    @Test
+    public void testOGCAPI() throws FactoryException {
+        CRSAuthorityFactory factory =
+                ReferencingFactoryFinder.getCRSAuthorityFactory("http://www.opengis.net/def", null);
+        GeographicCRS crs = factory.createGeographicCRS("http://www.opengis.net/def/crs/OGC/1.3/CRS84");
+        assertTrue(CRS.equalsIgnoreMetadata(crs, DefaultGeographicCRS.WGS84));
     }
 }

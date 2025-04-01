@@ -18,18 +18,18 @@
  */
 package org.geotools.filter.function;
 
-import static org.geotools.filter.capability.FunctionNameImpl.*;
+import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.visitor.CalcResult;
 import org.geotools.feature.visitor.CountVisitor;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
  * Calculates the count value of an attribute for a given SimpleFeatureCollection and Expression.
@@ -39,18 +39,14 @@ import org.opengis.filter.capability.FunctionName;
  */
 public class Collection_CountFunction extends FunctionExpressionImpl {
     /** The logger for the filter module. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(Collection_CountFunction.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(Collection_CountFunction.class);
 
     SimpleFeatureCollection previousFeatureCollection = null;
 
     Object count = null;
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "Collection_Count",
-                    parameter("count", Number.class),
-                    parameter("features", Object.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "Collection_Count", parameter("count", Number.class), parameter("features", Object.class));
 
     /** Creates a new instance of Collection_CountFunction */
     public Collection_CountFunction() {
@@ -62,16 +58,14 @@ public class Collection_CountFunction extends FunctionExpressionImpl {
      *
      * @param collection collection to calculate the count
      * @return An object containing the count value of the attributes
-     * @throws IllegalFilterException
-     * @throws IOException
      */
-    static CalcResult calculateCount(SimpleFeatureCollection collection)
-            throws IllegalFilterException, IOException {
+    static CalcResult calculateCount(SimpleFeatureCollection collection) throws IllegalFilterException, IOException {
         CountVisitor countVisitor = new CountVisitor();
         collection.accepts(countVisitor, null);
         return countVisitor.getResult();
     }
 
+    @Override
     public Object evaluate(Object feature) {
         if (feature == null) {
             return Integer.valueOf(0); // no features were visited in the making of this answer
@@ -86,9 +80,7 @@ public class Collection_CountFunction extends FunctionExpressionImpl {
                     if (result != null) {
                         count = result.getValue();
                     }
-                } catch (IllegalFilterException e) {
-                    LOGGER.log(Level.FINER, e.getLocalizedMessage(), e);
-                } catch (IOException e) {
+                } catch (IllegalFilterException | IOException e) {
                     LOGGER.log(Level.FINER, e.getLocalizedMessage(), e);
                 }
             }

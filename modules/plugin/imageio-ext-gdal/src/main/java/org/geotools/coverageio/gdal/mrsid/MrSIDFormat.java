@@ -19,11 +19,11 @@ package org.geotools.coverageio.gdal.mrsid;
 import it.geosolutions.imageio.plugins.mrsid.MrSIDImageReaderSpi;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.geometry.MismatchedDimensionException;
 import org.geotools.coverageio.gdal.BaseGDALGridFormat;
-import org.geotools.data.DataSourceException;
 import org.geotools.util.factory.Hints;
-import org.opengis.coverage.grid.Format;
-import org.opengis.geometry.MismatchedDimensionException;
 
 /**
  * An implementation of {@link Format} for the MrSID format.
@@ -33,8 +33,7 @@ import org.opengis.geometry.MismatchedDimensionException;
  * @since 2.5.x
  */
 public final class MrSIDFormat extends BaseGDALGridFormat implements Format {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(MrSIDFormat.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(MrSIDFormat.class);
 
     /** Creates an instance and sets the metadata. */
     public MrSIDFormat() {
@@ -50,19 +49,17 @@ public final class MrSIDFormat extends BaseGDALGridFormat implements Format {
     private static InfoWrapper INFO = new InfoWrapper("MrSID Coverage Format", "MrSID");
 
     /** Sets the metadata information. */
+    @Override
     protected void setInfo() {
         setInfo(INFO);
     }
 
     /** @see org.geotools.data.coverage.grid.AbstractGridFormat#getReader(Object, Hints) */
+    @Override
     public MrSIDReader getReader(Object source, Hints hints) {
         try {
             return new MrSIDReader(source, hints);
-        } catch (MismatchedDimensionException e) {
-            final RuntimeException re = new RuntimeException();
-            re.initCause(e);
-            throw re;
-        } catch (DataSourceException e) {
+        } catch (MismatchedDimensionException | DataSourceException e) {
             final RuntimeException re = new RuntimeException();
             re.initCause(e);
             throw re;

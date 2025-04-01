@@ -16,15 +16,20 @@
  */
 package org.geotools.referencing.datum;
 
-import static org.geotools.referencing.datum.DefaultTemporalDatum.*;
-import static org.junit.Assert.*;
+import static org.geotools.referencing.datum.DefaultTemporalDatum.DUBLIN_JULIAN;
+import static org.geotools.referencing.datum.DefaultTemporalDatum.JULIAN;
+import static org.geotools.referencing.datum.DefaultTemporalDatum.MODIFIED_JULIAN;
+import static org.geotools.referencing.datum.DefaultTemporalDatum.TRUNCATED_JULIAN;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
-import org.junit.*;
-import org.opengis.referencing.datum.TemporalDatum;
+import org.geotools.api.referencing.datum.TemporalDatum;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests the {@link DefaultTemporalDatum} class.

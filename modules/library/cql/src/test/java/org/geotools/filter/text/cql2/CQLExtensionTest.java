@@ -17,29 +17,28 @@
 package org.geotools.filter.text.cql2;
 
 import java.util.List;
+import org.geotools.api.filter.ExcludeFilter;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.IncludeFilter;
+import org.geotools.api.filter.PropertyIsBetween;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.PropertyIsGreaterThan;
+import org.geotools.api.filter.PropertyIsLessThan;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.filter.function.FilterFunction_relatePattern;
 import org.geotools.filter.function.FilterFunction_strConcat;
 import org.geotools.filter.text.ecql.ECQL;
 import org.junit.Assert;
 import org.junit.Test;
-import org.opengis.filter.ExcludeFilter;
-import org.opengis.filter.Filter;
-import org.opengis.filter.IncludeFilter;
-import org.opengis.filter.PropertyIsBetween;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.PropertyIsGreaterThan;
-import org.opengis.filter.PropertyIsLessThan;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
 
 /**
  * Test the extensions in CQL.
  *
- * <p>We adds some extension to Common CQL thinking in convenient uses. In the future we could have
- * different dialects of CQL. That will required extend the interface to allow selecting the dialect
- * to use.
+ * <p>We adds some extension to Common CQL thinking in convenient uses. In the future we could have different dialects
+ * of CQL. That will required extend the interface to allow selecting the dialect to use.
  *
  * @author Mauricio Pazos (Axios Engineering)
  * @since 2.5
@@ -48,16 +47,12 @@ import org.opengis.filter.expression.PropertyName;
 public class CQLExtensionTest {
     private static final String DELIMITER = ";";
 
-    /**
-     * An INCLUDE token is parsed as {@link Filter#INCLUDE}
-     *
-     * @throws Exception
-     */
+    /** An INCLUDE token is parsed as {@link Filter#INCLUDE} */
     @Test
     public void testIncludeFilter() throws Exception {
         Filter filter = CQL.toFilter("INCLUDE");
         Assert.assertNotNull(filter);
-        Assert.assertTrue(Filter.INCLUDE.equals(filter));
+        Assert.assertEquals(Filter.INCLUDE, filter);
 
         filter = CQL.toFilter("INCLUDE and a < 1");
         Assert.assertNotNull(filter);
@@ -65,23 +60,19 @@ public class CQLExtensionTest {
 
         filter = CQL.toFilter("INCLUDE or a < 1");
         Assert.assertNotNull(filter);
-        Assert.assertTrue(Filter.INCLUDE.equals(filter));
+        Assert.assertEquals(Filter.INCLUDE, filter);
     }
 
-    /**
-     * An EXCLUDE token is parsed as {@link Filter#EXCLUDE}
-     *
-     * @throws Exception
-     */
+    /** An EXCLUDE token is parsed as {@link Filter#EXCLUDE} */
     @Test
     public void testExcludeFilter() throws Exception {
         Filter filter = CQL.toFilter("EXCLUDE");
         Assert.assertNotNull(filter);
-        Assert.assertTrue(Filter.EXCLUDE.equals(filter));
+        Assert.assertEquals(Filter.EXCLUDE, filter);
 
         filter = CQL.toFilter("EXCLUDE and a < 1");
         Assert.assertNotNull(filter);
-        Assert.assertTrue(Filter.EXCLUDE.equals(filter));
+        Assert.assertEquals(Filter.EXCLUDE, filter);
 
         filter = CQL.toFilter("EXCLUDE or a < 1");
         Assert.assertNotNull(filter);
@@ -101,8 +92,6 @@ public class CQLExtensionTest {
      * </pre>
      *
      * <p>
-     *
-     * @throws Exception
      */
     @Test
     public void testSequenceOfSearchConditionsWithOneFilter() throws Exception {
@@ -132,8 +121,6 @@ public class CQLExtensionTest {
      * </pre>
      *
      * <p>Sample: attr1 > 5;attr2 between 1 and 7;attr3
-     *
-     * @throws Exception
      */
     @Test
     public void testSequenceOfSearchConditionsWithManyFilters() throws Exception {
@@ -141,13 +128,7 @@ public class CQLExtensionTest {
 
         // "attr1 > 5; attr2 between 1 and 7; attr3 = 'text;with;delimiter
         final String filterListStr =
-                "attr1 > 5"
-                        + DELIMITER
-                        + "attr2 between 1 and 7"
-                        + DELIMITER
-                        + "attr3 = '"
-                        + valueWithDelimiter
-                        + "'";
+                "attr1 > 5" + DELIMITER + "attr2 between 1 and 7" + DELIMITER + "attr3 = '" + valueWithDelimiter + "'";
 
         List<Filter> filters = CQL.toFilterList(filterListStr);
         Assert.assertNotNull(filters);
@@ -170,24 +151,14 @@ public class CQLExtensionTest {
         Assert.assertEquals(valueWithDelimiter, ((Literal) equals.getExpression2()).getValue());
     }
 
-    /**
-     * An empty filter int the constraints list shall be parsed as {@link Filter#INCLUDE}
-     *
-     * @throws Exception
-     */
+    /** An empty filter int the constraints list shall be parsed as {@link Filter#INCLUDE} */
     @Test
     public void testParseFilterListWithEmptyFilter() throws Exception {
         String valueWithDelimiter = "text" + DELIMITER + "with" + DELIMITER + "delimiter";
 
         // "attr1 > 5;INCLUDE;attr3 = 'text;with;delimiter'"
         String filterListStr =
-                "attr1 > 5"
-                        + DELIMITER
-                        + "INCLUDE"
-                        + DELIMITER
-                        + " attr3 = '"
-                        + valueWithDelimiter
-                        + "'";
+                "attr1 > 5" + DELIMITER + "INCLUDE" + DELIMITER + " attr3 = '" + valueWithDelimiter + "'";
         List<Filter> filters = CQL.toFilterList(filterListStr);
         Assert.assertNotNull(filters);
         Assert.assertEquals(3, filters.size());
@@ -203,25 +174,14 @@ public class CQLExtensionTest {
         Assert.assertEquals("attr3", ((PropertyName) equals.getExpression1()).getPropertyName());
         Assert.assertEquals(valueWithDelimiter, ((Literal) equals.getExpression2()).getValue());
 
-        filterListStr =
-                "EXCLUDE"
-                        + DELIMITER
-                        + "INCLUDE"
-                        + DELIMITER
-                        + "attr3 = '"
-                        + valueWithDelimiter
-                        + "'";
+        filterListStr = "EXCLUDE" + DELIMITER + "INCLUDE" + DELIMITER + "attr3 = '" + valueWithDelimiter + "'";
 
         filters = CQL.toFilterList(filterListStr);
         Assert.assertTrue(filters.get(0) instanceof ExcludeFilter);
         Assert.assertTrue(filters.get(1) instanceof IncludeFilter);
         Assert.assertTrue(filters.get(2) instanceof PropertyIsEqualTo);
     }
-    /**
-     * Tests null factory as parameter.
-     *
-     * @throws Exception
-     */
+    /** Tests null factory as parameter. */
     @Test
     public void testNullFilterFactory() throws Exception {
 
@@ -234,19 +194,14 @@ public class CQLExtensionTest {
      * Test Function Expression
      *
      * <p>Note: this solves the bug GEOT-1167
-     *
-     * @throws Exception
      */
     @Test
     public void testFuncitionExpression() throws Exception {
-        Expression arg1;
-        Expression arg2;
-        Expression resultExpr;
 
         final String cqlExpression = "strConcat(A, B)";
 
         // simple attribute as argument
-        resultExpr = CQL.toExpression(cqlExpression);
+        Expression resultExpr = CQL.toExpression(cqlExpression);
 
         Assert.assertNotNull(resultExpr);
         Assert.assertTrue(resultExpr instanceof Function);
@@ -254,11 +209,11 @@ public class CQLExtensionTest {
         Function function1 = (Function) resultExpr;
         Assert.assertEquals(2, function1.getParameters().size());
 
-        arg1 = (Expression) function1.getParameters().get(0);
+        Expression arg1 = function1.getParameters().get(0);
         Assert.assertTrue(arg1 instanceof PropertyName);
         Assert.assertEquals("A", ((PropertyName) arg1).getPropertyName());
 
-        arg2 = (Expression) function1.getParameters().get(1);
+        Expression arg2 = function1.getParameters().get(1);
         Assert.assertTrue(arg2 instanceof PropertyName);
         Assert.assertEquals("B", ((PropertyName) arg2).getPropertyName());
 
@@ -276,13 +231,13 @@ public class CQLExtensionTest {
         Function function = (Function) resultExpr;
         Assert.assertEquals(2, function.getParameters().size());
 
-        arg1 = (Expression) function.getParameters().get(0);
+        arg1 = function.getParameters().get(0);
         Assert.assertTrue(arg1 instanceof PropertyName);
 
         final String arg1Expected = arg1Name.replace('.', '/');
         Assert.assertEquals(arg1Expected, ((PropertyName) arg1).getPropertyName());
 
-        arg2 = (Expression) function.getParameters().get(1);
+        arg2 = function.getParameters().get(1);
         Assert.assertTrue(arg2 instanceof PropertyName);
 
         final String arg2Expected = arg2Name.replace('.', '/');
@@ -304,17 +259,13 @@ public class CQLExtensionTest {
      *   |   &lt;function&gt;           [*]
      *   |   &lt;binary expression&gt;  [*]
      * </pre>
-     *
-     * @throws Exception
      */
     @Test
     public void testFunctionComposition() throws Exception {
-        String cqlExpression;
-        Expression expression;
 
         // Test 1
-        cqlExpression = "strConcat(A, abs(B))";
-        expression = CQL.toExpression(cqlExpression);
+        String cqlExpression = "strConcat(A, abs(B))";
+        Expression expression = CQL.toExpression(cqlExpression);
 
         // Test 2
         cqlExpression = "strConcat(A, strConcat(B, strConcat(C, '.')))";
@@ -325,42 +276,37 @@ public class CQLExtensionTest {
         Function function = (Function) expression;
         Assert.assertEquals(2, function.getParameters().size());
 
-        Expression propertyName = (Expression) function.getParameters().get(0);
+        Expression propertyName = function.getParameters().get(0);
         Assert.assertTrue(propertyName instanceof PropertyName);
         Assert.assertEquals("A", ((PropertyName) propertyName).getPropertyName());
 
-        Expression arg2 = (Expression) function.getParameters().get(1);
+        Expression arg2 = function.getParameters().get(1);
         Assert.assertTrue(arg2 instanceof Function);
 
         function = (Function) arg2;
-        propertyName = (Expression) function.getParameters().get(0);
+        propertyName = function.getParameters().get(0);
         Assert.assertTrue(propertyName instanceof PropertyName);
         Assert.assertEquals("B", ((PropertyName) propertyName).getPropertyName());
 
-        arg2 = (Expression) function.getParameters().get(1);
+        arg2 = function.getParameters().get(1);
         Assert.assertTrue(arg2 instanceof Function);
 
         function = (Function) arg2;
-        propertyName = (Expression) function.getParameters().get(0);
+        propertyName = function.getParameters().get(0);
         Assert.assertTrue(propertyName instanceof PropertyName);
         Assert.assertEquals("C", ((PropertyName) propertyName).getPropertyName());
 
-        arg2 = (Expression) function.getParameters().get(1);
+        arg2 = function.getParameters().get(1);
         Assert.assertTrue(arg2 instanceof Literal);
         Assert.assertEquals(".", ((Literal) arg2).getValue());
     }
 
-    /**
-     * complex case Created to analyze http://jira.codehaus.org/browse/GEOT-1655
-     *
-     * @throws Exception
-     */
+    /** complex case Created to analyze http://jira.codehaus.org/browse/GEOT-1655 */
     @Test
     public void testFunctionCompositionComplexCase() throws Exception {
 
-        Expression result =
-                CQL.toExpression(
-                        "strConcat( strConcat(QS, strConcat('/', RT)), strConcat(strConcat('/', NUMB), strConcat('/', BSUFF)) )");
+        Expression result = CQL.toExpression(
+                "strConcat( strConcat(QS, strConcat('/', RT)), strConcat(strConcat('/', NUMB), strConcat('/', BSUFF)) )");
 
         assertFunctionCompositionComplex(result);
     }
@@ -369,10 +315,9 @@ public class CQLExtensionTest {
     public void testFunctionCompositionComplexCaseInFilter() throws Exception {
 
         final String propName = "A";
-        Filter result =
-                CQL.toFilter(
-                        propName
-                                + " = strConcat( strConcat(QS, strConcat('/', RT)), strConcat(strConcat('/', NUMB), strConcat('/', BSUFF)) )");
+        Filter result = CQL.toFilter(
+                propName
+                        + " = strConcat( strConcat(QS, strConcat('/', RT)), strConcat(strConcat('/', NUMB), strConcat('/', BSUFF)) )");
 
         Assert.assertTrue(result instanceof PropertyIsEqualTo);
         PropertyIsEqualTo eq = (PropertyIsEqualTo) result;
@@ -386,8 +331,8 @@ public class CQLExtensionTest {
         assertFunctionCompositionComplex(expr2);
     }
     /**
-     * @param result strConcat( strConcat(QS, strConcat('/', RT)), strConcat(strConcat('/', NUMB),
-     *     strConcat('/', BSUFF)) )")
+     * @param result strConcat( strConcat(QS, strConcat('/', RT)), strConcat(strConcat('/', NUMB), strConcat('/',
+     *     BSUFF)) )")
      */
     private void assertFunctionCompositionComplex(final Expression result) {
 
@@ -397,7 +342,7 @@ public class CQLExtensionTest {
         Assert.assertEquals(2, function.getParameters().size());
 
         // asserts for strConcat(QS, strConcat('/', RT))
-        Expression arg1 = (Expression) function.getParameters().get(0);
+        Expression arg1 = function.getParameters().get(0);
         Assert.assertTrue(arg1 instanceof Function);
 
         Function function1 = (Function) arg1;
@@ -407,16 +352,16 @@ public class CQLExtensionTest {
         Assert.assertTrue(funcion1Arg1 instanceof PropertyName);
         Assert.assertEquals("QS", ((PropertyName) funcion1Arg1).getPropertyName());
 
-        Expression arg11 = (Expression) function1.getParameters().get(1);
+        Expression arg11 = function1.getParameters().get(1);
         Assert.assertTrue(arg11 instanceof Function);
         Function function11 = (Function) arg11;
 
-        Expression funcion11Arg1 = (Expression) function11.getParameters().get(0);
+        Expression funcion11Arg1 = function11.getParameters().get(0);
         Assert.assertTrue(funcion11Arg1 instanceof Literal);
         Assert.assertEquals("/", ((Literal) funcion11Arg1).getValue());
 
         // asserts for strConcat(strConcat('/', NUMB), strConcat('/', BSUFF)) )"
-        Expression arg2 = (Expression) function.getParameters().get(1);
+        Expression arg2 = function.getParameters().get(1);
         Assert.assertTrue(arg2 instanceof Function);
     }
 
@@ -436,16 +381,13 @@ public class CQLExtensionTest {
      */
     @Test
     public void testUnaryExpressionFunction() throws Exception {
-        Filter result;
-        Filter expected;
-        String cqlUnaryExp;
 
-        cqlUnaryExp = FilterCQLSample.FILTER_WITH_FUNCTION_ABS;
-        result = CQL.toFilter(cqlUnaryExp);
+        String cqlUnaryExp = FilterCQLSample.FILTER_WITH_FUNCTION_ABS;
+        Filter result = CQL.toFilter(cqlUnaryExp);
 
         Assert.assertNotNull("filter expected", result);
 
-        expected = FilterCQLSample.getSample(cqlUnaryExp);
+        Filter expected = FilterCQLSample.getSample(cqlUnaryExp);
 
         Assert.assertEquals("Equals Functions is expected", expected, result);
 
@@ -458,8 +400,7 @@ public class CQLExtensionTest {
 
         Assert.assertTrue("Functions", result instanceof PropertyIsEqualTo);
         Assert.assertTrue(
-                "Attribute is expecteced",
-                ((PropertyIsEqualTo) result).getExpression1() instanceof PropertyName);
+                "Attribute is expecteced", ((PropertyIsEqualTo) result).getExpression1() instanceof PropertyName);
         Assert.assertTrue(
                 "Attribute is expecteced",
                 ((PropertyIsEqualTo) result).getExpression2() instanceof FilterFunction_strConcat);
@@ -477,8 +418,8 @@ public class CQLExtensionTest {
         Function function = (Function) expression;
         Assert.assertEquals(2, function.getParameters().size());
 
-        Expression arg1 = (Expression) function.getParameters().get(0);
-        Expression arg2 = (Expression) function.getParameters().get(1);
+        Expression arg1 = function.getParameters().get(0);
+        Expression arg2 = function.getParameters().get(1);
         Assert.assertTrue(arg1 instanceof PropertyName);
         Assert.assertTrue(arg2 instanceof Literal);
 
@@ -490,22 +431,18 @@ public class CQLExtensionTest {
     public void relateFunction() throws CQLException {
 
         Filter resultFilter =
-                ECQL.toFilter(
-                        "ATTR = relatePattern(the_geom, 'LINESTRING (27.3 37, 27.3 37.6)', '**1****') ");
+                ECQL.toFilter("ATTR = relatePattern(the_geom, 'LINESTRING (27.3 37, 27.3 37.6)', '**1****') ");
 
         Assert.assertTrue(resultFilter instanceof PropertyIsEqualTo);
 
         // relate function in an equal predicate
-        resultFilter =
-                ECQL.toFilter(
-                        "relatePattern(the_geom, 'LINESTRING (27.3 37, 27.3 37.6)', '**1****') = TRUE");
+        resultFilter = ECQL.toFilter("relatePattern(the_geom, 'LINESTRING (27.3 37, 27.3 37.6)', '**1****') = TRUE");
 
         Assert.assertTrue(resultFilter instanceof PropertyIsEqualTo);
 
         // relate function to expression
         Expression resultExpression =
-                ECQL.toExpression(
-                        "relatePattern(the_geom, 'LINESTRING (27.3 37, 27.3 37.6)', '**1****') ");
+                ECQL.toExpression("relatePattern(the_geom, 'LINESTRING (27.3 37, 27.3 37.6)', '**1****') ");
 
         Assert.assertTrue(resultExpression instanceof FilterFunction_relatePattern);
     }

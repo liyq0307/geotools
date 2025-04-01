@@ -22,14 +22,16 @@ import java.util.Map;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
 
 /**
- * @author rgould TODO To change the template for this generated type comment go to Window -
- *     Preferences - Java - Code Style - Code Templates
+ * @author rgould TODO To change the template for this generated type comment go to Window - Preferences - Java - Code
+ *     Style - Code Templates
  */
 public final class WorldImageFormatFactory implements GridFormatFactorySpi {
+    @Override
     public WorldImageFormat createFormat() {
         return new WorldImageFormat();
     }
 
+    @Override
     public boolean isAvailable() {
         boolean available = true;
 
@@ -46,7 +48,8 @@ public final class WorldImageFormatFactory implements GridFormatFactorySpi {
     }
 
     /** Returns the implementation hints. The default implementation returns en empty map. */
-    public Map getImplementationHints() {
-        return Collections.EMPTY_MAP;
+    @Override
+    public Map<java.awt.RenderingHints.Key, ?> getImplementationHints() {
+        return Collections.emptyMap();
     }
 }

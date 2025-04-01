@@ -18,15 +18,16 @@ package org.geotools.sld.bindings;
 
 import java.util.List;
 import javax.xml.namespace.QName;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Rule;
+import org.geotools.api.style.SemanticType;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.NameImpl;
 import org.geotools.sld.CssParameter;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.style.SemanticType;
-import org.opengis.util.InternationalString;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -68,6 +69,7 @@ public class SLDFeatureTypeStyleBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.FEATURETYPESTYLE;
     }
@@ -79,6 +81,7 @@ public class SLDFeatureTypeStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -90,6 +93,7 @@ public class SLDFeatureTypeStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return FeatureTypeStyle.class;
     }
@@ -101,6 +105,7 @@ public class SLDFeatureTypeStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -110,6 +115,7 @@ public class SLDFeatureTypeStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         FeatureTypeStyle featureTypeStyle = styleFactory.createFeatureTypeStyle();
 
@@ -120,16 +126,12 @@ public class SLDFeatureTypeStyleBinding extends AbstractComplexBinding {
 
         // &lt;xsd:element ref="sld:Title" minOccurs="0"/&gt;
         if (node.hasChild("Title")) {
-            featureTypeStyle
-                    .getDescription()
-                    .setTitle((InternationalString) node.getChildValue("Title"));
+            featureTypeStyle.getDescription().setTitle((InternationalString) node.getChildValue("Title"));
         }
 
         // &lt;xsd:element ref="sld:Abstract" minOccurs="0"/&gt;
         if (node.hasChild("Abstract")) {
-            featureTypeStyle
-                    .getDescription()
-                    .setAbstract((InternationalString) node.getChildValue("Abstract"));
+            featureTypeStyle.getDescription().setAbstract((InternationalString) node.getChildValue("Abstract"));
         }
 
         // &lt;xsd:element ref="sld:FeatureTypeName" minOccurs="0"/&gt;
@@ -138,33 +140,30 @@ public class SLDFeatureTypeStyleBinding extends AbstractComplexBinding {
             Object ftn = node.getChildValue("FeatureTypeName");
             if (ftn instanceof QName) {
                 QName qn = (QName) ftn;
-                ftn =
-                        qn.getPrefix() != null && !"".equals(qn.getPrefix().trim())
-                                ? qn.getPrefix() + ":" + qn.getLocalPart()
-                                : qn.getLocalPart();
+                ftn = qn.getPrefix() != null && !"".equals(qn.getPrefix().trim())
+                        ? qn.getPrefix() + ":" + qn.getLocalPart()
+                        : qn.getLocalPart();
             }
             featureTypeStyle.featureTypeNames().add(new NameImpl(ftn.toString()));
         }
 
         // &lt;xsd:element ref="sld:SemanticTypeIdentifier" minOccurs="0" maxOccurs="unbounded"/&gt;
         if (node.hasChild("SemanticTypeIdentifier")) {
-            List ids = node.getChildValues("SemanticTypeIdentifier");
-            ids.forEach(
-                    id ->
-                            featureTypeStyle
-                                    .semanticTypeIdentifiers()
-                                    .add(SemanticType.valueOf((String) id)));
+            @SuppressWarnings("unchecked")
+            List<String> ids = node.getChildValues("SemanticTypeIdentifier");
+            ids.forEach(id -> featureTypeStyle.semanticTypeIdentifiers().add(SemanticType.valueOf((String) id)));
         }
 
         // &lt;xsd:element ref="sld:Rule" maxOccurs="unbounded"/&gt;
         if (node.hasChild("Rule")) {
-            List rules = node.getChildValues("Rule");
+            @SuppressWarnings("unchecked")
+            List<Rule> rules = node.getChildValues("Rule");
             featureTypeStyle.rules().clear();
             featureTypeStyle.rules().addAll(rules);
         }
 
         // &lt;xsd:element ref="sld:VendorOption" minOccurs="0" maxOccurs="unbounded"/&gt;
-        for (CssParameter param : (List<CssParameter>) node.getChildValues(CssParameter.class)) {
+        for (CssParameter param : node.getChildValues(CssParameter.class)) {
             featureTypeStyle
                     .getOptions()
                     .put(param.getName(), param.getExpression().evaluate(null, String.class));

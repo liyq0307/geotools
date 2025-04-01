@@ -18,19 +18,18 @@ package org.geotools.filter.text.ecql;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.PropertyIsLike;
+import org.geotools.api.filter.PropertyIsNull;
+import org.geotools.api.filter.expression.Add;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.Subtract;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.util.factory.Hints;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Not;
-import org.opengis.filter.PropertyIsLike;
-import org.opengis.filter.PropertyIsNull;
-import org.opengis.filter.expression.Add;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.Subtract;
 
 /**
  * Filter Samples for ECQL language
@@ -38,9 +37,8 @@ import org.opengis.filter.expression.Subtract;
  * @author Mauricio Pazos (Axios Engineering)
  * @since 2.6
  */
-final class FilterECQLSample {
-    protected static final FilterFactory FACTORY =
-            CommonFactoryFinder.getFilterFactory((Hints) null);
+public final class FilterECQLSample {
+    protected static final FilterFactory FACTORY = CommonFactoryFinder.getFilterFactory(null);
 
     // ECQL Samples
     public static final String ABS_FUNCTION_LESS_PROPERTY = "abs(10) < aProperty";
@@ -81,11 +79,9 @@ final class FilterECQLSample {
 
     public static final String LITERAL_BETWEEN_TWO_EXPRESSIONS = "2 BETWEEN (2-1) AND (2+1)";
 
-    public static final String FUNCTION_BETWEEN_LITERALS =
-            "area( the_geom ) BETWEEN 10000 AND 30000";
+    public static final String FUNCTION_BETWEEN_LITERALS = "area( the_geom ) BETWEEN 10000 AND 30000";
 
-    public static final String FUNCTION_BETWEEN_FUNCTIONS =
-            "area( the_geom ) BETWEEN abs(10000) AND abs(30000)";
+    public static final String FUNCTION_BETWEEN_FUNCTIONS = "area( the_geom ) BETWEEN abs(10000) AND abs(30000)";
 
     public static final String FUNCTION_IS_NULL = "centroid( the_geom ) IS NULL";
 
@@ -94,16 +90,15 @@ final class FilterECQLSample {
     public static final String EXPRESSIONS_WITH_PROPERTIES = "(x+4) > (y - 5)";
 
     /** Maintains the ECQL predicates (input) and the expected filters (output) */
-    public static Map<String, Object> SAMPLES = new HashMap<String, Object>();
+    public static Map<String, Object> SAMPLES = new HashMap<>();
 
     static {
-        Filter filter;
 
         // (1+3)
         Add simpleAddExpression = FACTORY.add(FACTORY.literal(1), FACTORY.literal(3));
 
         // sample "(1+3) > prop1"
-        filter = FACTORY.greater(simpleAddExpression, FACTORY.property("aProperty"));
+        Filter filter = FACTORY.greater(simpleAddExpression, FACTORY.property("aProperty"));
 
         SAMPLES.put(EXPRESION_GREATER_PROPERTY, filter);
 
@@ -138,8 +133,7 @@ final class FilterECQLSample {
         SAMPLES.put(FUNC_AREA_LESS_FUNC_ABS, filter);
 
         // (1+3) > (4-5)
-        Subtract simpleSubtractExpression =
-                FACTORY.subtract(FACTORY.literal(4), FACTORY.literal(5));
+        Subtract simpleSubtractExpression = FACTORY.subtract(FACTORY.literal(4), FACTORY.literal(5));
 
         filter = FACTORY.greater(simpleAddExpression, simpleSubtractExpression);
 
@@ -195,9 +189,7 @@ final class FilterECQLSample {
 
         // -1.05 + (-4.6* -10) > aPrpoerty
         Add nestedExpr =
-                FACTORY.add(
-                        FACTORY.literal(-1.05),
-                        FACTORY.multiply(FACTORY.literal(-4.6), FACTORY.literal(-10)));
+                FACTORY.add(FACTORY.literal(-1.05), FACTORY.multiply(FACTORY.literal(-4.6), FACTORY.literal(-10)));
 
         filter = FACTORY.greater(nestedExpr, aProperty);
 
@@ -239,11 +231,10 @@ final class FilterECQLSample {
         SAMPLES.put(LITERAL_BETWEEN_TWO_LITERALS, filter);
 
         // 2 BETWEEN (2-1) AND (2+1)
-        filter =
-                FACTORY.between(
-                        FACTORY.literal(2),
-                        FACTORY.subtract(FACTORY.literal(2), FACTORY.literal(1)),
-                        FACTORY.add(FACTORY.literal(2), FACTORY.literal(1)));
+        filter = FACTORY.between(
+                FACTORY.literal(2),
+                FACTORY.subtract(FACTORY.literal(2), FACTORY.literal(1)),
+                FACTORY.add(FACTORY.literal(2), FACTORY.literal(1)));
 
         SAMPLES.put(LITERAL_BETWEEN_TWO_EXPRESSIONS, filter);
 
@@ -284,10 +275,7 @@ final class FilterECQLSample {
         SAMPLES.put(FUNCTION_IS_NOT_NULL, notIsNullFilter);
     }
 
-    /**
-     * @param predcateRequested
-     * @return the filter expected for the predicate required
-     */
+    /** @return the filter expected for the predicate required */
     public static Filter getSample(final String predcateRequested) {
         Filter sample = (Filter) SAMPLES.get(predcateRequested);
         assert (sample != null) : "There is not a sample for " + predcateRequested;

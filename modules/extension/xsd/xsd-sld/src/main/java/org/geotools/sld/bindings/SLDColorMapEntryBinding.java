@@ -17,13 +17,13 @@
 package org.geotools.sld.bindings;
 
 import javax.xml.namespace.QName;
-import org.geotools.styling.ColorMapEntry;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.ColorMapEntry;
+import org.geotools.api.style.StyleFactory;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -57,6 +57,7 @@ public class SLDColorMapEntryBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.COLORMAPENTRY;
     }
@@ -68,6 +69,7 @@ public class SLDColorMapEntryBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -79,6 +81,7 @@ public class SLDColorMapEntryBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return ColorMapEntry.class;
     }
@@ -90,6 +93,7 @@ public class SLDColorMapEntryBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -99,10 +103,11 @@ public class SLDColorMapEntryBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         ColorMapEntry entry = styleFactory.createColorMapEntry();
 
-        Expression color = filterFactory.literal((String) node.getAttributeValue("color"));
+        Expression color = filterFactory.literal(node.getAttributeValue("color"));
         entry.setColor(color);
 
         if (node.getAttributeValue("opacity") != null) {

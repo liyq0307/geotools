@@ -17,19 +17,26 @@
  */
 package org.geotools.referencing.operation.projection;
 
-import static java.lang.Math.*;
+import static java.lang.Math.PI;
+import static java.lang.Math.abs;
+import static java.lang.Math.atan;
+import static java.lang.Math.atan2;
+import static java.lang.Math.cos;
+import static java.lang.Math.hypot;
+import static java.lang.Math.sin;
+import static java.lang.Math.sqrt;
 
 import java.awt.geom.Point2D;
 import java.util.Collection;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.i18n.ErrorKeys;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
 import si.uom.NonSI;
 
 /**
@@ -73,6 +80,7 @@ public final class Gnomonic extends MapProjection {
     }
 
     /** {@inheritDoc} */
+    @Override
     public ParameterDescriptorGroup getParameterDescriptors() {
         return Provider.PARAMETERS;
     }
@@ -89,12 +97,11 @@ public final class Gnomonic extends MapProjection {
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
     @Override
-    protected Point2D transformNormalized(double lambda, double phi, Point2D ptDst)
-            throws ProjectionException {
+    protected Point2D transformNormalized(double lambda, double phi, Point2D ptDst) throws ProjectionException {
         final double sinPhi = sin(phi);
         final double cosPhi = cos(phi);
         final double sinLam = sin(lambda);
@@ -116,8 +123,7 @@ public final class Gnomonic extends MapProjection {
         final double x = height * cosPhi * sinLam;
 
         final double y =
-                height * (cosPhi0 * sinPhi - sinPhi0 * cosPhi * cosLam)
-                        - delta_projected_cylindrical_z * cosPhi0;
+                height * (cosPhi0 * sinPhi - sinPhi0 * cosPhi * cosLam) - delta_projected_cylindrical_z * cosPhi0;
 
         if (ptDst != null) {
             ptDst.setLocation(x, y);
@@ -126,14 +132,10 @@ public final class Gnomonic extends MapProjection {
         return new Point2D.Double(x, y);
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
     @Override
     protected Point2D inverseTransformNormalized(double x, double y, Point2D ptDst) {
-        final double normalisedCylindricalZ =
-                sinPhi0 * (primeVert0 * (1.0 - excentricitySquared)) + cosPhi0 * y;
+        final double normalisedCylindricalZ = sinPhi0 * (primeVert0 * (1.0 - excentricitySquared)) + cosPhi0 * y;
 
         final double primeVerticalCylindricalRadius = cosPhi0 * primeVert0 - sinPhi0 * y;
 
@@ -141,8 +143,7 @@ public final class Gnomonic extends MapProjection {
 
         final double normalisedCylindricalRadius = hypot(x, primeVerticalCylindricalRadius);
 
-        final double phi =
-                getLatitudeFromPolar(normalisedCylindricalRadius, normalisedCylindricalZ);
+        final double phi = getLatitudeFromPolar(normalisedCylindricalRadius, normalisedCylindricalZ);
 
         if (ptDst != null) {
             ptDst.setLocation(lambda, phi);
@@ -151,15 +152,11 @@ public final class Gnomonic extends MapProjection {
         return new Point2D.Double(lambda, phi);
     }
 
-    /**
-     * calculates, iteratively, a latitude from cylindrical polar coordinates based at the centre of
-     * the spheroid.
-     */
+    /** calculates, iteratively, a latitude from cylindrical polar coordinates based at the centre of the spheroid. */
     private double getLatitudeFromPolar(double normalisedCylindricalRadius, double normalisedZ) {
         final double eccentricityRatio = excentricitySquared / sqrt(1.0 - excentricitySquared);
         final double modifiedRadiusSq =
-                (normalisedCylindricalRadius * normalisedCylindricalRadius)
-                        / (1.0 - excentricitySquared);
+                (normalisedCylindricalRadius * normalisedCylindricalRadius) / (1.0 - excentricitySquared);
 
         double zExtension = 1.0;
         double estimate = 0.0;
@@ -167,8 +164,7 @@ public final class Gnomonic extends MapProjection {
             zExtension = estimate;
             final double producedZ = normalisedZ + zExtension;
 
-            estimate =
-                    eccentricityRatio * producedZ / sqrt(modifiedRadiusSq + producedZ * producedZ);
+            estimate = eccentricityRatio * producedZ / sqrt(modifiedRadiusSq + producedZ * producedZ);
         }
 
         final double latitude;
@@ -200,6 +196,7 @@ public final class Gnomonic extends MapProjection {
     }
 
     /** Returns a hash value for this map projection. */
+    @Override
     public int hashCode() {
         final long code = Double.doubleToLongBits(latitudeOfCentre);
         return ((int) code ^ (int) (code >>> 32)) + 37 * super.hashCode();
@@ -214,8 +211,8 @@ public final class Gnomonic extends MapProjection {
     //////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for a {@linkplain Gnomonic} projection
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for a
+     * {@linkplain Gnomonic} projection
      *
      * @since 2.4
      * @version $Id$
@@ -227,53 +224,53 @@ public final class Gnomonic extends MapProjection {
         private static final long serialVersionUID = 7216851295693867026L;
 
         /**
-         * The operation parameter descriptor for the {@link #latitudeOfOrigin} parameter value.
-         * Valid values range is from -90 to 90°. Default value is 0.
+         * The operation parameter descriptor for the {@link #latitudeOfOrigin} parameter value. Valid values range is
+         * from -90 to 90°. Default value is 0.
          */
-        public static final ParameterDescriptor LATITUDE_OF_CENTRE =
-                createDescriptor(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.OGC, "latitude_of_center"),
-                            new NamedIdentifier(Citations.EPSG, "Latitude of natural origin"),
-                            new NamedIdentifier(Citations.EPSG, "Spherical latitude of origin"),
-                            new NamedIdentifier(Citations.ESRI, "Latitude_Of_Origin"),
-                            new NamedIdentifier(Citations.GEOTIFF, "ProjCenterLat")
-                        },
-                        0,
-                        -90,
-                        90,
-                        NonSI.DEGREE_ANGLE);
+        public static final ParameterDescriptor LATITUDE_OF_CENTRE = createDescriptor(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.OGC, "latitude_of_center"),
+                    new NamedIdentifier(Citations.EPSG, "Latitude of natural origin"),
+                    new NamedIdentifier(Citations.EPSG, "Spherical latitude of origin"),
+                    new NamedIdentifier(Citations.ESRI, "Latitude_Of_Origin"),
+                    new NamedIdentifier(Citations.GEOTIFF, "ProjCenterLat"),
+                    new NamedIdentifier(Citations.PROJ, "lat_0")
+                },
+                0,
+                -90,
+                90,
+                NonSI.DEGREE_ANGLE);
 
         /**
-         * The operation parameter descriptor for the {@link #centralMeridian} parameter value.
-         * Valid values range is from -180 to 180°. Default value is 0.
+         * The operation parameter descriptor for the {@link #centralMeridian} parameter value. Valid values range is
+         * from -180 to 180°. Default value is 0.
          */
-        public static final ParameterDescriptor LONGITUDE_OF_CENTRE =
-                createDescriptor(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.OGC, "longitude_of_center"),
-                            new NamedIdentifier(Citations.EPSG, "Longitude of natural origin"),
-                            new NamedIdentifier(Citations.EPSG, "Spherical longitude of origin"),
-                            new NamedIdentifier(Citations.ESRI, "Central_Meridian"),
-                            new NamedIdentifier(Citations.GEOTIFF, "ProjCenterLong")
-                        },
-                        0,
-                        -180,
-                        180,
-                        NonSI.DEGREE_ANGLE);
+        public static final ParameterDescriptor LONGITUDE_OF_CENTRE = createDescriptor(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.OGC, "longitude_of_center"),
+                    new NamedIdentifier(Citations.EPSG, "Longitude of natural origin"),
+                    new NamedIdentifier(Citations.EPSG, "Spherical longitude of origin"),
+                    new NamedIdentifier(Citations.ESRI, "Central_Meridian"),
+                    new NamedIdentifier(Citations.GEOTIFF, "ProjCenterLong"),
+                    new NamedIdentifier(Citations.PROJ, "lon_0")
+                },
+                0,
+                -180,
+                180,
+                NonSI.DEGREE_ANGLE);
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new NamedIdentifier[] {
-                            new NamedIdentifier(Citations.OGC, "Gnomonic"),
-                            new NamedIdentifier(Citations.GEOTIFF, "CT_Gnomonic"),
-                        },
-                        new ParameterDescriptor[] {
-                            SEMI_MAJOR, SEMI_MINOR,
-                            LATITUDE_OF_CENTRE, LONGITUDE_OF_CENTRE,
-                            FALSE_EASTING, FALSE_NORTHING
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new NamedIdentifier[] {
+                    new NamedIdentifier(Citations.OGC, "Gnomonic"),
+                    new NamedIdentifier(Citations.GEOTIFF, "CT_Gnomonic"),
+                    new NamedIdentifier(Citations.PROJ, "gnom")
+                },
+                new ParameterDescriptor[] {
+                    SEMI_MAJOR, SEMI_MINOR,
+                    LATITUDE_OF_CENTRE, LONGITUDE_OF_CENTRE,
+                    FALSE_EASTING, FALSE_NORTHING
+                });
 
         /** Constructs a new provider. */
         public Provider() {
@@ -287,6 +284,7 @@ public final class Gnomonic extends MapProjection {
          * @return The created math transform.
          * @throws ParameterNotFoundException if a required parameter was not found.
          */
+        @Override
         public MathTransform createMathTransform(final ParameterValueGroup parameters)
                 throws ParameterNotFoundException {
             return new Gnomonic(parameters);

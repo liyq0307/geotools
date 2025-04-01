@@ -17,6 +17,7 @@
 package org.geotools.gml3.bindings;
 
 import java.util.ArrayList;
+import java.util.List;
 import javax.xml.namespace.QName;
 import org.geotools.gml3.GML;
 import org.geotools.xsd.AbstractComplexBinding;
@@ -64,6 +65,7 @@ public class MultiPointTypeBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.MultiPointType;
     }
@@ -75,10 +77,12 @@ public class MultiPointTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return MultiPoint.class;
     }
 
+    @Override
     public int getExecutionMode() {
         return BEFORE;
     }
@@ -90,22 +94,24 @@ public class MultiPointTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        ArrayList points = new ArrayList();
+        List<Point> points = new ArrayList<>();
 
         if (node.hasChild(Point.class)) {
             points.addAll(node.getChildValues(Point.class));
         }
 
         if (node.hasChild(Point[].class)) {
-            Point[] p = (Point[]) node.getChildValue(Point[].class);
+            Point[] p = node.getChildValue(Point[].class);
 
-            for (int i = 0; i < p.length; i++) points.add(p[i]);
+            for (Point point : p) points.add(point);
         }
 
-        return gFactory.createMultiPoint((Point[]) points.toArray(new Point[points.size()]));
+        return gFactory.createMultiPoint(points.toArray(new Point[points.size()]));
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("pointMember".equals(name.getLocalPart())) {
             MultiPoint multiPoint = (MultiPoint) object;

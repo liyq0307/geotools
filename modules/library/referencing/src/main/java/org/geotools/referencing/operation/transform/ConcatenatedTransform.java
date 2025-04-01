@@ -19,9 +19,17 @@ package org.geotools.referencing.operation.transform;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.Serializable;
-import org.geotools.geometry.GeneralDirectPosition;
+import java.text.MessageFormat;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransform1D;
+import org.geotools.api.referencing.operation.MathTransform2D;
+import org.geotools.api.referencing.operation.Matrix;
+import org.geotools.api.referencing.operation.NoninvertibleTransformException;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.geometry.GeneralPosition;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.operation.LinearTransform;
 import org.geotools.referencing.operation.matrix.GeneralMatrix;
 import org.geotools.referencing.operation.matrix.Matrix3;
@@ -29,18 +37,10 @@ import org.geotools.referencing.operation.matrix.XMatrix;
 import org.geotools.referencing.wkt.Formatter;
 import org.geotools.util.Classes;
 import org.geotools.util.Utilities;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransform1D;
-import org.opengis.referencing.operation.MathTransform2D;
-import org.opengis.referencing.operation.Matrix;
-import org.opengis.referencing.operation.NoninvertibleTransformException;
-import org.opengis.referencing.operation.TransformException;
 
 /**
- * Base class for concatenated transform. Concatenated transforms are serializable if all their step
- * transforms are serializables.
+ * Base class for concatenated transform. Concatenated transforms are serializable if all their step transforms are
+ * serializables.
  *
  * @since 2.0
  * @version $Id$
@@ -54,10 +54,9 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     private static final double EPSILON = 1E-10;
 
     /**
-     * Maximum length of temporary {@double[]} arrays to be created, used for performing
-     * transformations in batch. A value of 256 will consumes 2 kilobytes of memory. It is better to
-     * avoid too high values since allocating and initializing the array elements to zero have a
-     * cost.
+     * Maximum length of temporary {@double[]} arrays to be created, used for performing transformations in batch. A
+     * value of 256 will consumes 2 kilobytes of memory. It is better to avoid too high values since allocating and
+     * initializing the array elements to zero have a cost.
      */
     private static final int TEMPORARY_ARRAY_LENGTH = 256;
 
@@ -68,36 +67,30 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     public final MathTransform transform2;
 
     /**
-     * The inverse transform. This field will be computed only when needed. But it is serialized in
-     * order to avoid rounding error if the inverse transform is serialized instead of the original
-     * one.
+     * The inverse transform. This field will be computed only when needed. But it is serialized in order to avoid
+     * rounding error if the inverse transform is serialized instead of the original one.
      */
     private ConcatenatedTransform inverse;
 
     /**
-     * Constructs a concatenated transform. This constructor is for subclasses only. To create a
-     * concatenated transform, use the factory method {@link #create} instead.
+     * Constructs a concatenated transform. This constructor is for subclasses only. To create a concatenated transform,
+     * use the factory method {@link #create} instead.
      *
      * @param transform1 The first math transform.
      * @param transform2 The second math transform.
      */
-    protected ConcatenatedTransform(
-            final MathTransform transform1, final MathTransform transform2) {
+    protected ConcatenatedTransform(final MathTransform transform1, final MathTransform transform2) {
         this.transform1 = transform1;
         this.transform2 = transform2;
         if (!isValid()) {
+            final Object arg0 = getName(transform1);
+            final Object arg1 = getName(transform2);
             throw new IllegalArgumentException(
-                    Errors.format(
-                            ErrorKeys.CANT_CONCATENATE_TRANSFORMS_$2,
-                            getName(transform1),
-                            getName(transform2)));
+                    MessageFormat.format(ErrorKeys.CANT_CONCATENATE_TRANSFORMS_$2, arg0, arg1));
         }
     }
 
-    /**
-     * Returns the underlying matrix for the specified transform, or {@code null} if the matrix is
-     * unavailable.
-     */
+    /** Returns the underlying matrix for the specified transform, or {@code null} if the matrix is unavailable. */
     private static XMatrix getMatrix(final MathTransform transform) {
         if (transform instanceof LinearTransform) {
             return toXMatrix(((LinearTransform) transform).getMatrix());
@@ -109,13 +102,12 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     }
 
     /**
-     * Tests if one math transform is the inverse of the other. This implementation can't detect
-     * every case. It just detect the case when {@code tr2} is an instance of {@link
-     * AbstractMathTransform.Inverse}.
+     * Tests if one math transform is the inverse of the other. This implementation can't detect every case. It just
+     * detect the case when {@code tr2} is an instance of {@link AbstractMathTransform.Inverse}.
      *
-     * @todo We could make this test more general (just compare with tr2.inverse(), no matter if it
-     *     is an instance of AbstractMathTransform.Inverse or not, and catch the exception if one is
-     *     thrown). Would it be too expensive to create inconditionnaly the inverse transform?
+     * @todo We could make this test more general (just compare with tr2.inverse(), no matter if it is an instance of
+     *     AbstractMathTransform.Inverse or not, and catch the exception if one is thrown). Would it be too expensive to
+     *     create inconditionnaly the inverse transform?
      */
     private static boolean areInverse(final MathTransform tr1, final MathTransform tr2) {
         if (tr2 instanceof AbstractMathTransform.Inverse) {
@@ -125,33 +117,30 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     }
 
     /**
-     * Constructs a concatenated transform. This factory method checks for step transforms
-     * dimension. The returned transform will implements {@link MathTransform2D} if source and
-     * target dimensions are equal to 2. Likewise, it will implements {@link MathTransform1D} if
-     * source and target dimensions are equal to 1. {@link MathTransform} implementations are
-     * available in two version: direct and non-direct. The "non-direct" version use an intermediate
-     * buffer when performing transformations; they are slower and consume more memory. They are
-     * used only as a fallback when a "direct" version can't be created.
+     * Constructs a concatenated transform. This factory method checks for step transforms dimension. The returned
+     * transform will implements {@link MathTransform2D} if source and target dimensions are equal to 2. Likewise, it
+     * will implements {@link MathTransform1D} if source and target dimensions are equal to 1. {@link MathTransform}
+     * implementations are available in two version: direct and non-direct. The "non-direct" version use an intermediate
+     * buffer when performing transformations; they are slower and consume more memory. They are used only as a fallback
+     * when a "direct" version can't be created.
      *
      * @param tr1 The first math transform.
      * @param tr2 The second math transform.
      * @return The concatenated transform.
-     * @todo We could add one more optimisation: if one transform is a matrix and the other
-     *     transform is a PassThroughTransform, and if the matrix as 0 elements for all rows
-     *     matching the PassThrough sub-transform, then we can get ride of the whole
-     *     PassThroughTransform object.
+     * @todo We could add one more optimisation: if one transform is a matrix and the other transform is a
+     *     PassThroughTransform, and if the matrix as 0 elements for all rows matching the PassThrough sub-transform,
+     *     then we can get ride of the whole PassThroughTransform object.
      */
     public static MathTransform create(MathTransform tr1, MathTransform tr2) {
         final int dim1 = tr1.getTargetDimensions();
         final int dim2 = tr2.getSourceDimensions();
         if (dim1 != dim2) {
+            final Object arg0 = getName(tr1);
+            final Object arg1 = getName(tr2);
             throw new IllegalArgumentException(
-                    Errors.format(
-                                    ErrorKeys.CANT_CONCATENATE_TRANSFORMS_$2,
-                                    getName(tr1),
-                                    getName(tr2))
+                    MessageFormat.format(ErrorKeys.CANT_CONCATENATE_TRANSFORMS_$2, arg0, arg1)
                             + ' '
-                            + Errors.format(ErrorKeys.MISMATCHED_DIMENSION_$2, dim1, dim2));
+                            + MessageFormat.format(ErrorKeys.MISMATCHED_DIMENSION_$2, dim1, dim2));
         }
         MathTransform mt = createOptimized(tr1, tr2);
         if (mt != null) {
@@ -218,9 +207,9 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     }
 
     /**
-     * Tries to returns an optimized concatenation, for example by merging to affine transforms into
-     * a single one. If no optimized cases has been found, returns {@code null}. In the later case,
-     * the caller will need to create a more heavy {@link ConcatenatedTransform} instance.
+     * Tries to returns an optimized concatenation, for example by merging to affine transforms into a single one. If no
+     * optimized cases has been found, returns {@code null}. In the later case, the caller will need to create a more
+     * heavy {@link ConcatenatedTransform} instance.
      */
     private static MathTransform createOptimized(final MathTransform tr1, final MathTransform tr2) {
         /*
@@ -288,11 +277,10 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     }
 
     /**
-     * Continue the construction started by {@link #create}. The construction step is available
-     * separatly for testing purpose (in a JUnit test), and for {@link #inverse()} implementation.
+     * Continue the construction started by {@link #create}. The construction step is available separatly for testing
+     * purpose (in a JUnit test), and for {@link #inverse()} implementation.
      */
-    static ConcatenatedTransform createConcatenatedTransform(
-            final MathTransform tr1, final MathTransform tr2) {
+    static ConcatenatedTransform createConcatenatedTransform(final MathTransform tr1, final MathTransform tr2) {
         final int dimSource = tr1.getSourceDimensions();
         final int dimTarget = tr2.getTargetDimensions();
         /*
@@ -300,8 +288,7 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
          */
         if (dimSource == 1 && dimTarget == 1) {
             if (tr1 instanceof MathTransform1D && tr2 instanceof MathTransform1D) {
-                return new ConcatenatedTransformDirect1D(
-                        (MathTransform1D) tr1, (MathTransform1D) tr2);
+                return new ConcatenatedTransformDirect1D((MathTransform1D) tr1, (MathTransform1D) tr2);
             } else {
                 return new ConcatenatedTransform1D(tr1, tr2);
             }
@@ -311,8 +298,7 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
          */
         if (dimSource == 2 && dimTarget == 2) {
             if (tr1 instanceof MathTransform2D && tr2 instanceof MathTransform2D) {
-                return new ConcatenatedTransformDirect2D(
-                        (MathTransform2D) tr1, (MathTransform2D) tr2);
+                return new ConcatenatedTransformDirect2D((MathTransform2D) tr1, (MathTransform2D) tr2);
             } else {
                 return new ConcatenatedTransform2D(tr1, tr2);
             }
@@ -341,27 +327,25 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
         return Classes.getShortClassName(transform);
     }
 
-    /**
-     * Checks if transforms are compatibles. The default implementation check if transfert dimension
-     * match.
-     */
+    /** Checks if transforms are compatibles. The default implementation check if transfert dimension match. */
     boolean isValid() {
         return transform1.getTargetDimensions() == transform2.getSourceDimensions();
     }
 
     /** Gets the dimension of input points. */
+    @Override
     public final int getSourceDimensions() {
         return transform1.getSourceDimensions();
     }
 
     /** Gets the dimension of output points. */
+    @Override
     public final int getTargetDimensions() {
         return transform2.getTargetDimensions();
     }
 
     /**
-     * Returns the number of {@linkplain MathTransform math transform} steps performed by this
-     * concatenated transform.
+     * Returns the number of {@linkplain MathTransform math transform} steps performed by this concatenated transform.
      *
      * @return The number of transform steps.
      * @since 2.5
@@ -371,9 +355,8 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     }
 
     /**
-     * Returns the number of {@linkplain MathTransform math transform} steps performed by the given
-     * transform. As a special case, we returns 0 for the identity transform since it should be
-     * omitted from the final chain.
+     * Returns the number of {@linkplain MathTransform math transform} steps performed by the given transform. As a
+     * special case, we returns 0 for the identity transform since it should be omitted from the final chain.
      */
     private static int getStepCount(final MathTransform transform) {
         if (transform.isIdentity()) {
@@ -387,8 +370,7 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
 
     /** Transforms the specified {@code ptSrc} and stores the result in {@code ptDst}. */
     @Override
-    public DirectPosition transform(final DirectPosition ptSrc, final DirectPosition ptDst)
-            throws TransformException {
+    public Position transform(final Position ptSrc, final Position ptDst) throws TransformException {
         assert isValid();
         //  Note: If we know that the transfert dimension is the same than source
         //        and target dimension, then we don't need to use an intermediate
@@ -397,12 +379,12 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     }
 
     /**
-     * Transforms a list of coordinate point ordinal values. The source points are first transformed
-     * by {@link #transform1}, then the intermediate points are transformed by {@link #transform2}.
-     * The transformations are performed without intermediate buffer if it can be avoided.
+     * Transforms a list of coordinate point ordinal values. The source points are first transformed by
+     * {@link #transform1}, then the intermediate points are transformed by {@link #transform2}. The transformations are
+     * performed without intermediate buffer if it can be avoided.
      */
-    public void transform(
-            final double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts)
+    @Override
+    public void transform(final double[] srcPts, int srcOff, final double[] dstPts, int dstOff, int numPts)
             throws TransformException {
         assert isValid();
         final int intermDim = transform1.getTargetDimensions();
@@ -446,15 +428,13 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     }
 
     /**
-     * Transforms a list of coordinate point ordinal values. The source points are first copied in a
-     * temporary array of type {@code double[]}, transformed by {@link #transform1} first, then by
-     * {@link #transform2} and finally the result is casted to {@code float} primitive type and
-     * stored in the destination array. The use of {@code double} primitive type for intermediate
-     * results is necesssary for reducing rounding errors.
+     * Transforms a list of coordinate point ordinal values. The source points are first copied in a temporary array of
+     * type {@code double[]}, transformed by {@link #transform1} first, then by {@link #transform2} and finally the
+     * result is casted to {@code float} primitive type and stored in the destination array. The use of {@code double}
+     * primitive type for intermediate results is necesssary for reducing rounding errors.
      */
     @Override
-    public void transform(
-            final float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts)
+    public void transform(final float[] srcPts, int srcOff, final float[] dstPts, int dstOff, int numPts)
             throws TransformException {
         assert isValid();
         if (numPts <= 0) {
@@ -501,9 +481,9 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     }
 
     /**
-     * Gets the derivative of this transform at a point. This method delegates to the {@link
-     * #derivative(DirectPosition)} method because the transformation steps {@link #transform1} and
-     * {@link #transform2} may not be instances of {@link MathTransform2D}.
+     * Gets the derivative of this transform at a point. This method delegates to the {@link #derivative(Position)}
+     * method because the transformation steps {@link #transform1} and {@link #transform2} may not be instances of
+     * {@link MathTransform2D}.
      *
      * @param point The coordinate point where to evaluate the derivative.
      * @return The derivative at the specified point as a 2&times;2 matrix.
@@ -511,7 +491,7 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
      */
     @Override
     public Matrix derivative(final Point2D point) throws TransformException {
-        return derivative(new GeneralDirectPosition(point));
+        return derivative(new GeneralPosition(point));
     }
 
     /**
@@ -522,7 +502,7 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
      * @throws TransformException if the derivative can't be evaluated at the specified point.
      */
     @Override
-    public Matrix derivative(final DirectPosition point) throws TransformException {
+    public Matrix derivative(final Position point) throws TransformException {
         final Matrix matrix1 = transform1.derivative(point);
         final Matrix matrix2 = transform2.derivative(transform1.transform(point, null));
         // Compute "matrix = matrix2 * matrix1". Reuse an existing matrix object
@@ -542,8 +522,8 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
     }
 
     /**
-     * Tests whether this transform does not move any points. Default implementation check if the
-     * two transforms are identity.
+     * Tests whether this transform does not move any points. Default implementation check if the two transforms are
+     * identity.
      */
     @Override
     public final boolean isIdentity() {
@@ -573,8 +553,8 @@ public class ConcatenatedTransform extends AbstractMathTransform implements Seri
 
     /**
      * Format the inner part of a <A
-     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well
-     * Known Text</cite> (WKT)</A> element.
+     * HREF="http://geoapi.sourceforge.net/snapshot/javadoc/org/opengis/referencing/doc-files/WKT.html"><cite>Well Known
+     * Text</cite> (WKT)</A> element.
      *
      * @param formatter The formatter to use.
      * @return The WKT element name.

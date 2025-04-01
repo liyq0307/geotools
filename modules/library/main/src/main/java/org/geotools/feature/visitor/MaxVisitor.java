@@ -18,13 +18,14 @@ package org.geotools.feature.visitor;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.IllegalFilterException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Calculates the maximum value of an attribute.
@@ -35,7 +36,6 @@ import org.opengis.filter.expression.Expression;
 public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
     private Expression expr;
     Comparable maxvalue;
-    Comparable curvalue;
     boolean visited = false;
     int countNull = 0;
     int countNaN = 0;
@@ -45,8 +45,7 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
         expr = factory.property(attributeTypeName);
     }
 
-    public MaxVisitor(int attributeTypeIndex, SimpleFeatureType type)
-            throws IllegalFilterException {
+    public MaxVisitor(int attributeTypeIndex, SimpleFeatureType type) throws IllegalFilterException {
         FilterFactory factory = CommonFactoryFinder.getFilterFactory(null);
         expr = factory.property(type.getDescriptor(attributeTypeIndex).getLocalName());
     }
@@ -69,16 +68,22 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
         return Arrays.asList(expr);
     }
 
+    @Override
+    public Optional<List<Class>> getResultType(List<Class> inputTypes) {
+        return CalcUtil.reflectInputTypes(1, inputTypes);
+    }
+
     /**
      * Visitor function, which looks at each feature and finds the maximum.
      *
      * @param feature the feature to be visited
      */
     public void visit(SimpleFeature feature) {
-        visit((org.opengis.feature.Feature) feature);
+        visit((org.geotools.api.feature.Feature) feature);
     }
 
-    public void visit(org.opengis.feature.Feature feature) {
+    @Override
+    public void visit(org.geotools.api.feature.Feature feature) {
         Object attribValue = expr.evaluate(feature);
 
         if (attribValue == null) {
@@ -94,14 +99,22 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
             }
         }
 
-        curvalue = (Comparable) attribValue;
+        Comparable curvalue = (Comparable) attribValue;
 
-        if ((!visited) || (curvalue.compareTo(maxvalue) > 0)) {
+        if (!visited || compare(curvalue)) {
             maxvalue = curvalue;
             visited = true;
         }
 
         // throw new IllegalStateException("Expression is not comparable!");
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean compare(Comparable curvalue) {
+        if (maxvalue == null) {
+            throw new IllegalStateException("maxvalue shouldn't be null when visited = true");
+        }
+        return curvalue.compareTo(maxvalue) > 0;
     }
 
     /**
@@ -130,7 +143,7 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
     public void reset() {
         /** Reset the count and current maximum */
         this.visited = false;
-        this.maxvalue = Integer.valueOf(Integer.MIN_VALUE);
+        this.maxvalue = null;
         this.countNaN = 0;
         this.countNull = 0;
     }
@@ -139,6 +152,7 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
         return expr;
     }
 
+    @Override
     public CalcResult getResult() {
         if (!visited) {
             return CalcResult.NULL_RESULT;
@@ -148,12 +162,10 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
     }
 
     /**
-     * Overwrites the result stored by the visitor. This should only be used by optimizations which
-     * will tell the visitor the answer rather than visiting all features.
+     * Overwrites the result stored by the visitor. This should only be used by optimizations which will tell the
+     * visitor the answer rather than visiting all features.
      *
      * <p>For 'max', the value stored is of type 'Comparable'.
-     *
-     * @param result
      */
     public void setValue(Object result) {
         visited = true;
@@ -167,12 +179,14 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
             maxValue = newMaxValue;
         }
 
+        @Override
         public Object getValue() {
-            Comparable max = (Comparable) maxValue;
+            Comparable max = maxValue;
 
             return max;
         }
 
+        @Override
         public boolean isCompatible(CalcResult targetResults) {
             // list each calculation result which can merge with this type of result
             if (targetResults instanceof MaxResult || targetResults == CalcResult.NULL_RESULT) {
@@ -182,6 +196,8 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
             return false;
         }
 
+        @Override
+        @SuppressWarnings("unchecked")
         public CalcResult merge(CalcResult resultsToAdd) {
             if (!isCompatible(resultsToAdd)) {
                 throw new IllegalArgumentException("Parameter is not a compatible type");
@@ -196,13 +212,10 @@ public class MaxVisitor implements FeatureCalc, FeatureAttributeVisitor {
                 Comparable toAdd = (Comparable) resultsToAdd.getValue();
                 Comparable newMax = maxValue;
 
-                if (newMax.getClass()
-                        != toAdd.getClass()) { // 2 different data types, therefore convert
-                    Class bestClass = CalcUtil.bestClass(new Object[] {toAdd, newMax});
-                    if (bestClass != toAdd.getClass())
-                        toAdd = (Comparable) CalcUtil.convert(toAdd, bestClass);
-                    if (bestClass != newMax.getClass())
-                        newMax = (Comparable) CalcUtil.convert(newMax, bestClass);
+                if (newMax.getClass() != toAdd.getClass()) { // 2 different data types, therefore convert
+                    Class bestClass = CalcUtil.bestClass(toAdd, newMax);
+                    if (bestClass != toAdd.getClass()) toAdd = (Comparable) CalcUtil.convert(toAdd, bestClass);
+                    if (bestClass != newMax.getClass()) newMax = (Comparable) CalcUtil.convert(newMax, bestClass);
                 }
                 if (newMax.compareTo(toAdd) < 0) {
                     newMax = toAdd;

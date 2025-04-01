@@ -23,10 +23,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import org.geotools.data.Base64;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
 import org.geotools.geometry.jts.LiteCoordinateSequence;
 import org.geotools.geometry.jts.LiteCoordinateSequenceFactory;
+import org.geotools.util.Base64;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.CoordinateSequences;
 import org.locationtech.jts.geom.Geometry;
@@ -41,9 +41,9 @@ import org.locationtech.jts.io.ByteArrayInStream;
 import org.locationtech.jts.io.WKBWriter;
 
 /**
- * A helper ransforming a TWKB into a Geometry from a byte[] or {@link ResultSet}, without having to
- * reallocate a InStream over and over for each geometry parsed during a database read. This class
- * is stateful as a consequence, thus not thread safe, use a separate instance per thread.
+ * A helper ransforming a TWKB into a Geometry from a byte[] or {@link ResultSet}, without having to reallocate a
+ * InStream over and over for each geometry parsed during a database read. This class is stateful as a consequence, thus
+ * not thread safe, use a separate instance per thread.
  */
 class TWKBAttributeIO {
     TWKBReader twkbReader;
@@ -51,25 +51,21 @@ class TWKBAttributeIO {
     GeometryFactory gf;
     boolean base64EncodingEnabled;
 
-    /**
-     * A variation of TWKBReader tha optimizes conversion of collapsed point expressed using
-     * LiteCoordinateSequence
-     */
+    /** A variation of TWKBReader tha optimizes conversion of collapsed point expressed using LiteCoordinateSequence */
     static final class LiteTWKBReader extends TWKBReader {
 
         public LiteTWKBReader(GeometryFactory geometryFactory) {
             super(geometryFactory);
         }
 
-        protected CoordinateSequence readCoordinateSequence(int numPts, TWKBMetadata metadata)
-                throws IOException {
+        @Override
+        protected CoordinateSequence readCoordinateSequence(int numPts, TWKBMetadata metadata) throws IOException {
             if (!(csFactory instanceof LiteCoordinateSequenceFactory)) {
                 return super.readCoordinateSequence(numPts, metadata);
             }
 
             final int dims = metadata.getDims();
-            final LiteCoordinateSequence seq =
-                    (LiteCoordinateSequence) csFactory.create(numPts, dims);
+            final LiteCoordinateSequence seq = (LiteCoordinateSequence) csFactory.create(numPts, dims);
             final double[] ordinates = new double[numPts * dims];
             final double[] scales = new double[dims];
             for (int i = 0; i < scales.length; i++) {
@@ -122,10 +118,9 @@ class TWKBAttributeIO {
      * This method will convert a Well Known Binary representation to a JTS Geometry object.
      *
      * @param wkbBytes the TWKB encoded byte array
-     * @return a JTS Geometry object that is equivalent to the WTB representation passed in by param
-     *     wkb
-     * @throws IOException if more than one geometry object was found in the WTB representation, or
-     *     if the parser could not parse the WKB representation.
+     * @return a JTS Geometry object that is equivalent to the WTB representation passed in by param wkb
+     * @throws IOException if more than one geometry object was found in the WTB representation, or if the parser could
+     *     not parse the WKB representation.
      */
     private Geometry wkb2Geometry(byte[] wkbBytes) throws IOException {
         if (wkbBytes == null) return null;
@@ -140,7 +135,7 @@ class TWKBAttributeIO {
     /** @see org.geotools.data.jdbc.attributeio.AttributeIO#read(ResultSet, int) */
     public Object read(ResultSet rs, String columnName) throws IOException {
         try {
-            byte bytes[] = rs.getBytes(columnName);
+            byte[] bytes = rs.getBytes(columnName);
             if (bytes == null) // ie. its a null column -> return a null geometry!
             return null;
             if (base64EncodingEnabled) {
@@ -155,7 +150,7 @@ class TWKBAttributeIO {
     /** @see org.geotools.data.jdbc.attributeio.AttributeIO#read(ResultSet, int) */
     public Object read(ResultSet rs, int columnIndex, Class<?> binding) throws IOException {
         try {
-            byte bytes[] = rs.getBytes(columnIndex);
+            byte[] bytes = rs.getBytes(columnIndex);
             if (bytes == null) // ie. its a null column -> return a null geometry!
             return null;
 
@@ -177,7 +172,7 @@ class TWKBAttributeIO {
     /** @see org.geotools.data.jdbc.attributeio.AttributeIO#read(ResultSet, int) */
     public Object read(ResultSet rs, String columnName, Class<?> binding) throws IOException {
         try {
-            byte bytes[] = rs.getBytes(columnName);
+            byte[] bytes = rs.getBytes(columnName);
             if (bytes == null) // ie. its a null column -> return a null geometry!
             return null;
 
@@ -191,9 +186,8 @@ class TWKBAttributeIO {
     }
 
     /**
-     * The TWKB encoding collapses geometries into points and encodes them as such, causing an
-     * inefficient conversion to be called later down the road, handle this case in a special way to
-     * ensure better performance
+     * The TWKB encoding collapses geometries into points and encodes them as such, causing an inefficient conversion to
+     * be called later down the road, handle this case in a special way to ensure better performance
      */
     public Geometry adaptToBinding(Geometry g, Class<?> binding) {
         if (g instanceof Point && !binding.isInstance(g)) {
@@ -214,14 +208,12 @@ class TWKBAttributeIO {
     }
 
     public LineString toLineString(CoordinateSequence cs) {
-        CoordinateSequence lineSequence =
-                CoordinateSequences.extend(gf.getCoordinateSequenceFactory(), cs, 2);
+        CoordinateSequence lineSequence = CoordinateSequences.extend(gf.getCoordinateSequenceFactory(), cs, 2);
         return gf.createLineString(lineSequence);
     }
 
     public Polygon toPolygon(CoordinateSequence cs) {
-        CoordinateSequence ringSequence =
-                CoordinateSequences.ensureValidRing(gf.getCoordinateSequenceFactory(), cs);
+        CoordinateSequence ringSequence = CoordinateSequences.ensureValidRing(gf.getCoordinateSequenceFactory(), cs);
         LinearRing shell = gf.createLinearRing(ringSequence);
         return gf.createPolygon(shell);
     }
@@ -239,11 +231,7 @@ class TWKBAttributeIO {
         }
     }
 
-    /**
-     * Turns a char that encodes four bits in hexadecimal notation into a byte
-     *
-     * @param c
-     */
+    /** Turns a char that encodes four bits in hexadecimal notation into a byte */
     public static byte getFromChar(char c) {
         if (c <= '9') {
             return (byte) (c - '0');

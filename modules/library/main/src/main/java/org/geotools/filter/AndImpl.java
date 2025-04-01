@@ -17,9 +17,9 @@
 package org.geotools.filter;
 
 import java.util.List;
-import org.opengis.filter.And;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterVisitor;
+import org.geotools.api.filter.And;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterVisitor;
 
 /**
  * Direct implementation of And filter.
@@ -32,6 +32,7 @@ public class AndImpl extends LogicFilterImpl implements And {
         super(children);
     }
 
+    @Override
     public boolean evaluate(Object object) {
         for (Filter filter : children) {
             if (!filter.evaluate(object)) {
@@ -41,6 +42,7 @@ public class AndImpl extends LogicFilterImpl implements And {
         return true;
     }
 
+    @Override
     public Object accept(FilterVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }

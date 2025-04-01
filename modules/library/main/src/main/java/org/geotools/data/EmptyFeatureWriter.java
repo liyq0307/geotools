@@ -18,8 +18,9 @@ package org.geotools.data;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 /**
  * Represents an Empty, Typed, FeatureWriter.
@@ -29,16 +30,13 @@ import org.opengis.feature.simple.SimpleFeatureType;
 public class EmptyFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleFeature> {
     SimpleFeatureType featureType;
 
-    /**
-     * An Empty FeatureWriter of the provided <code>featureType</code>.
-     *
-     * @param featureType
-     */
+    /** An Empty FeatureWriter of the provided <code>featureType</code>. */
     public EmptyFeatureWriter(SimpleFeatureType featureType) {
         this.featureType = featureType;
     }
 
-    /** @see org.geotools.data.FeatureWriter#getFeatureType() */
+    /** @see FeatureWriter#getFeatureType() */
+    @Override
     public SimpleFeatureType getFeatureType() {
         return featureType;
     }
@@ -47,19 +45,21 @@ public class EmptyFeatureWriter implements FeatureWriter<SimpleFeatureType, Simp
      * Throws NoSuchElementException as this is an Empty FeatureWriter.
      *
      * @return Does not return
-     * @throws NoSuchElementException
-     * @see org.geotools.data.FeatureWriter#next()
+     * @see FeatureWriter#next()
      */
+    @Override
     public SimpleFeature next() throws NoSuchElementException {
         throw new NoSuchElementException("FeatureWriter is empty");
     }
 
-    /** @see org.geotools.data.FeatureWriter#remove() */
+    /** @see FeatureWriter#remove() */
+    @Override
     public void remove() throws IOException {
         throw new IOException("FeatureWriter is empty and does not support remove()");
     }
 
-    /** @see org.geotools.data.FeatureWriter#remove() */
+    /** @see FeatureWriter#remove() */
+    @Override
     public void write() throws IOException {
         throw new IOException("FeatureWriter is empty and does not support write()");
     }
@@ -68,8 +68,9 @@ public class EmptyFeatureWriter implements FeatureWriter<SimpleFeatureType, Simp
      * There is no next Feature.
      *
      * @return <code>false</code>
-     * @see org.geotools.data.FeatureWriter#hasNext()
+     * @see FeatureWriter#hasNext()
      */
+    @Override
     public boolean hasNext() {
         return false;
     }
@@ -77,8 +78,9 @@ public class EmptyFeatureWriter implements FeatureWriter<SimpleFeatureType, Simp
     /**
      * Cleans up after Empty FeatureWriter.
      *
-     * @see org.geotools.data.FeatureWriter#close()
+     * @see FeatureWriter#close()
      */
+    @Override
     public void close() {
         featureType = null;
     }

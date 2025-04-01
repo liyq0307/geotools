@@ -33,9 +33,8 @@ import org.geotools.util.URLs;
 import org.geotools.util.logging.Logging;
 
 /**
- * A cache for memory mapped buffers, used to avoid generating over and over read only memory mapped
- * buffers. Mapping a file is a synchronized operation, plus by generating light copies the same
- * buffer can be shared by various threads
+ * A cache for memory mapped buffers, used to avoid generating over and over read only memory mapped buffers. Mapping a
+ * file is a synchronized operation, plus by generating light copies the same buffer can be shared by various threads
  *
  * @author Andrea Aime - OpenGeo
  */
@@ -43,11 +42,9 @@ class MemoryMapCache {
 
     static final Logger LOGGER = Logging.getLogger(MemoryMapCache.class);
 
-    SoftValueHashMap<MappingKey, MappedByteBuffer> buffers =
-            new SoftValueHashMap<MappingKey, MappedByteBuffer>(0, new BufferCleaner());
+    SoftValueHashMap<MappingKey, MappedByteBuffer> buffers = new SoftValueHashMap<>(0, new BufferCleaner());
 
-    MappedByteBuffer map(FileChannel wrapped, URL url, MapMode mode, long position, long size)
-            throws IOException {
+    MappedByteBuffer map(FileChannel wrapped, URL url, MapMode mode, long position, long size) throws IOException {
         if (mode != MapMode.READ_ONLY) {
             return wrapped.map(mode, position, size);
         }
@@ -76,10 +73,8 @@ class MemoryMapCache {
     }
 
     /**
-     * Cleans up all memory mapped regions for a specified file. It is necessary to call this method
-     * before any attempt to open a file for writing on Windows
-     *
-     * @param file
+     * Cleans up all memory mapped regions for a specified file. It is necessary to call this method before any attempt
+     * to open a file for writing on Windows
      */
     void cleanFileCache(URL url) {
         try {
@@ -89,7 +84,7 @@ class MemoryMapCache {
                 return;
             }
             File file = rawFile.getCanonicalFile();
-            List<MappingKey> keys = new ArrayList<MappingKey>(buffers.keySet());
+            List<MappingKey> keys = new ArrayList<>(buffers.keySet());
             for (MappingKey key : keys) {
                 if (key.file.equals(file)) {
                     MappedByteBuffer buffer = buffers.remove(key);
@@ -100,15 +95,12 @@ class MemoryMapCache {
                 }
             }
         } catch (Throwable t) {
-            LOGGER.log(
-                    Level.WARNING,
-                    "An error occurred while trying to clean the memory map cache",
-                    t);
+            LOGGER.log(Level.WARNING, "An error occurred while trying to clean the memory map cache", t);
         }
     }
 
     void clean() {
-        List<MappingKey> keys = new ArrayList<MappingKey>(buffers.keySet());
+        List<MappingKey> keys = new ArrayList<>(buffers.keySet());
         for (MappingKey key : keys) {
             MappedByteBuffer buffer = buffers.remove(key);
             NIOUtilities.clean(buffer, true);
@@ -161,10 +153,10 @@ class MemoryMapCache {
      *
      * @author Andrea Aime
      */
-    public class BufferCleaner implements ValueCleaner {
+    public class BufferCleaner implements ValueCleaner<MappingKey, MappedByteBuffer> {
 
-        public void clean(Object key, Object object) {
-            MappedByteBuffer buffer = (MappedByteBuffer) object;
+        @Override
+        public void clean(MappingKey key, MappedByteBuffer buffer) {
             NIOUtilities.clean(buffer, true);
         }
     }

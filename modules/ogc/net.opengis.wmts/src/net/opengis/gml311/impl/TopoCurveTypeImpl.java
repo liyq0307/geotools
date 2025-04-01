@@ -66,9 +66,10 @@ public class TopoCurveTypeImpl extends AbstractTopologyTypeImpl implements TopoC
      * <!-- end-user-doc -->
      * @generated
      */
+    @Override
     public EList<DirectedEdgePropertyType> getDirectedEdge() {
         if (directedEdge == null) {
-            directedEdge = new EObjectContainmentEList<DirectedEdgePropertyType>(DirectedEdgePropertyType.class, this, Gml311Package.TOPO_CURVE_TYPE__DIRECTED_EDGE);
+            directedEdge = new EObjectContainmentEList<>(DirectedEdgePropertyType.class, this, Gml311Package.TOPO_CURVE_TYPE__DIRECTED_EDGE);
         }
         return directedEdge;
     }

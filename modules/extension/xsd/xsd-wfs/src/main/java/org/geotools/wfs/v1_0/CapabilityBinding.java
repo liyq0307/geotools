@@ -39,7 +39,6 @@ public class CapabilityBinding extends AbstractComplexEMFBinding {
         return WFSCapabilities.Capability;
     }
 
-    @SuppressWarnings("rawtypes")
     @Override
     public Class getType() {
         return OperationsMetadataType.class;
@@ -53,9 +52,7 @@ public class CapabilityBinding extends AbstractComplexEMFBinding {
 
         Node request = node.getChild("Request");
 
-        OperationType operation;
-
-        operation = getCapabilities(request.getChild("GetCapabilities"), ows10Factory);
+        OperationType operation = getCapabilities(request.getChild("GetCapabilities"), ows10Factory);
         addOperation(om, operation);
 
         operation = dft(request.getChild("DescribeFeatureType"), ows10Factory);
@@ -98,8 +95,7 @@ public class CapabilityBinding extends AbstractComplexEMFBinding {
         return operationType;
     }
 
-    private OperationType createOperation(
-            String opetationName, Node node, Ows10Factory ows10Factory) {
+    private OperationType createOperation(String opetationName, Node node, Ows10Factory ows10Factory) {
         if (node == null) {
             return null;
         }
@@ -109,12 +105,7 @@ public class CapabilityBinding extends AbstractComplexEMFBinding {
         return operationType;
     }
 
-    @SuppressWarnings("unchecked")
-    private void addParameter(
-            Node node,
-            Ows10Factory ows10Factory,
-            OperationType operationType,
-            String parameterName) {
+    private void addParameter(Node node, Ows10Factory ows10Factory, OperationType operationType, String parameterName) {
         Node paramParentNode = node.getChild(parameterName);
         List<String> paramValues = childNames(paramParentNode);
 
@@ -127,13 +118,12 @@ public class CapabilityBinding extends AbstractComplexEMFBinding {
         operationType.getParameter().add(domain);
     }
 
-    @SuppressWarnings("unchecked")
     private List<String> childNames(Node node) {
         if (null == node) {
             return Collections.emptyList();
         }
         List<Node> children = node.getChildren();
-        List<String> names = new ArrayList<String>(children.size());
+        List<String> names = new ArrayList<>(children.size());
         for (Node child : children) {
             InstanceComponent component = child.getComponent();
             String paramValue = component.getName();
@@ -152,7 +142,6 @@ public class CapabilityBinding extends AbstractComplexEMFBinding {
         return operationType;
     }
 
-    @SuppressWarnings("unchecked")
     private void addDCPTypes(Node node, OperationType operationType) {
         List<Node> dcpNodes = node.getChildren(DCPType.class);
         for (Node dcpNode : dcpNodes) {
@@ -161,7 +150,6 @@ public class CapabilityBinding extends AbstractComplexEMFBinding {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void addOperation(OperationsMetadataType om, OperationType operation) {
         if (operation != null) {
             om.getOperation().add(operation);

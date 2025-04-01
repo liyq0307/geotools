@@ -39,19 +39,15 @@ public class NormalizeCoverageProcessTest {
 
     @Test
     public void test() throws Exception {
-        float[][] grid =
-                new float[][] {
-                    {1, 2, 3, 4},
-                    {5, 6, 8, 9},
-                    {10, 11, 12, 13},
-                    {14, 15, 16, 17},
-                };
+        float[][] grid = {
+            {1, 2, 3, 4},
+            {5, 6, 8, 9},
+            {10, 11, 12, 13},
+            {14, 15, 16, 17},
+        };
 
         GridCoverage2D cov =
-                covFactory.create(
-                        "test",
-                        grid,
-                        new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84));
+                covFactory.create("test", grid, new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84));
         NormalizeCoverageProcess p = new NormalizeCoverageProcess();
         GridCoverage2D norm = p.execute(cov);
 
@@ -63,23 +59,19 @@ public class NormalizeCoverageProcessTest {
 
     @Test
     public void testZeroCoverage() throws Exception {
-        float[][] grid =
-                new float[][] {
-                    {0, 0},
-                    {0, 0},
-                };
+        float[][] grid = {
+            {0, 0},
+            {0, 0},
+        };
 
         GridCoverage2D cov =
-                covFactory.create(
-                        "test",
-                        grid,
-                        new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84));
+                covFactory.create("test", grid, new ReferencedEnvelope(0, 10, 0, 10, DefaultGeographicCRS.WGS84));
         NormalizeCoverageProcess p = new NormalizeCoverageProcess();
         GridCoverage2D norm = p.execute(cov);
 
         float[] data = data(norm);
-        for (int i = 0; i < data.length; i++) {
-            assertEquals(0f, data[i], 1E-9);
+        for (float datum : data) {
+            assertEquals(0f, datum, 1E-9);
         }
     }
 

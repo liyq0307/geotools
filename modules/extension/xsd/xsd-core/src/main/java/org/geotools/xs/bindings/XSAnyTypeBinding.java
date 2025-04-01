@@ -18,7 +18,6 @@ package org.geotools.xs.bindings;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.xml.namespace.QName;
@@ -53,6 +52,7 @@ import org.picocontainer.MutablePicoContainer;
  */
 public class XSAnyTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.ANYTYPE;
     }
@@ -64,6 +64,7 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return OVERRIDE;
     }
@@ -76,6 +77,7 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class<Object> getType() {
         return Object.class;
     }
@@ -87,6 +89,7 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -94,14 +97,15 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
      * <!-- begin-user-doc -->
      * A quick approx of the available content:
      *
-     * <p>This method returns a {@link Map} in which the names of children and attributes are keys,
-     * and the parsed children and attributes are the values. If the element being parsed contains
-     * child text, it is available under the <code>nulll</code> key.
+     * <p>This method returns a {@link Map} in which the names of children and attributes are keys, and the parsed
+     * children and attributes are the values. If the element being parsed contains child text, it is available under
+     * the <code>nulll</code> key.
      *
      * @return Map,
      *     <!-- end-user-doc -->
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         String text = null;
 
@@ -125,7 +129,7 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
 
         // if there is a single attribute, return it
         if ((node.getAttributes().size() == 1) && node.getChildren().isEmpty() && (text == null)) {
-            return ((Node) node.getAttributes().get(0)).getValue();
+            return node.getAttributes().get(0).getValue();
         }
 
         // create a map of the elements and attributes
@@ -143,8 +147,8 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
     }
 
     private void mapBinding(Map<String, Object> map, List attributes) {
-        for (Iterator i = attributes.iterator(); i.hasNext(); ) {
-            Node attribute = (Node) i.next();
+        for (Object o : attributes) {
+            Node attribute = (Node) o;
             String name = attribute.getComponent().getName();
             Object value = attribute.getValue();
 
@@ -153,9 +157,11 @@ public class XSAnyTypeBinding extends AbstractComplexBinding {
                 Object obj = map.get(name);
 
                 if (obj instanceof List) {
-                    values = (List<Object>) obj;
+                    @SuppressWarnings("unchecked")
+                    List<Object> cast = (List<Object>) obj;
+                    values = cast;
                 } else {
-                    values = new ArrayList<Object>();
+                    values = new ArrayList<>();
                     values.add(obj);
                     map.put(name, values);
                 }

@@ -19,13 +19,12 @@ package org.geotools.feature.visitor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.expression.Expression;
 
 /**
- * Obtains the data needed for a Quantile operation (classification of features into classes of
- * equal size).
+ * Obtains the data needed for a Quantile operation (classification of features into classes of equal size).
  *
  * <p>The result contains an array of lists with the expression values in each.
  *
@@ -35,13 +34,14 @@ public class QuantileListVisitor implements FeatureCalc {
     private Expression expr;
     private int count = 0;
     private int bins;
-    private List items = new ArrayList();
-    private List[] bin;
+    private List<Comparable> items = new ArrayList<>();
+    private List<Comparable>[] bin;
 
     boolean visited = false;
     int countNull = 0;
     int countNaN = 0;
 
+    @SuppressWarnings("unchecked")
     public QuantileListVisitor(Expression expr, int bins) {
         this.expr = expr;
         this.bins = bins;
@@ -52,6 +52,8 @@ public class QuantileListVisitor implements FeatureCalc {
         // do nothing
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
     public CalcResult getResult() {
         if (bins == 0 || count == 0) {
             return CalcResult.NULL_RESULT;
@@ -66,7 +68,7 @@ public class QuantileListVisitor implements FeatureCalc {
         }
 
         // calculate number of items to put into each of the larger bins
-        int binPop = Double.valueOf(Math.ceil((double) count / bins)).intValue();
+        int binPop = (int) (Math.ceil((double) count / bins));
         // determine index of bin where the next bin has one less item
         int lastBigBin = count % bins;
         if (lastBigBin == 0) lastBigBin = bins;
@@ -75,14 +77,14 @@ public class QuantileListVisitor implements FeatureCalc {
         // put the items into their respective bins
         int item = 0;
         for (int binIndex = 0; binIndex < bins; binIndex++) {
-            bin[binIndex] = new ArrayList();
+            bin[binIndex] = new ArrayList<>();
             for (int binMember = 0; binMember < binPop; binMember++) {
                 bin[binIndex].add(items.get(item++));
             }
-            if (lastBigBin == binIndex)
-                binPop--; // decrease the number of items in a bin for the next item
+            if (lastBigBin == binIndex) binPop--; // decrease the number of items in a bin for the next item
         }
         return new AbstractCalcResult() {
+            @Override
             public Object getValue() {
                 return bin;
             }
@@ -90,10 +92,11 @@ public class QuantileListVisitor implements FeatureCalc {
     }
 
     public void visit(SimpleFeature feature) {
-        visit((org.opengis.feature.Feature) feature);
+        visit((org.geotools.api.feature.Feature) feature);
     }
 
-    public void visit(org.opengis.feature.Feature feature) {
+    @Override
+    public void visit(org.geotools.api.feature.Feature feature) {
         Object value = expr.evaluate(feature);
 
         if (value == null) {
@@ -110,14 +113,16 @@ public class QuantileListVisitor implements FeatureCalc {
         }
 
         count++;
-        items.add(value);
+        Comparable cast = (Comparable) value;
+        items.add(cast);
     }
 
+    @SuppressWarnings("unchecked")
     public void reset(int bins) {
         this.bins = bins;
         this.count = 0;
-        this.items = new ArrayList();
-        this.bin = new ArrayList[bins];
+        this.items = new ArrayList<>();
+        this.bin = new List[bins];
         this.countNull = 0;
         this.countNaN = 0;
     }

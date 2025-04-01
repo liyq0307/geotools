@@ -18,13 +18,13 @@ package org.geotools.brewer.styling.builder;
 
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
-import org.geotools.styling.PointSymbolizer;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.PointSymbolizer;
 
 public class PointSymbolizerBuilder extends SymbolizerBuilder<PointSymbolizer> {
     Expression geometry;
 
-    GraphicBuilder graphic = new GraphicBuilder(this).unset();
+    GraphicBuilder graphic = (GraphicBuilder) new GraphicBuilder(this).unset();
 
     Unit<Length> uom = null;
 
@@ -56,6 +56,7 @@ public class PointSymbolizerBuilder extends SymbolizerBuilder<PointSymbolizer> {
         return this;
     }
 
+    @Override
     public PointSymbolizer build() {
         if (unset) {
             return null;
@@ -73,6 +74,7 @@ public class PointSymbolizerBuilder extends SymbolizerBuilder<PointSymbolizer> {
         return ps;
     }
 
+    @Override
     public PointSymbolizerBuilder reset() {
         this.geometry = null;
         this.graphic.reset(); // TODO: See what the actual default is
@@ -82,23 +84,10 @@ public class PointSymbolizerBuilder extends SymbolizerBuilder<PointSymbolizer> {
         return this;
     }
 
-    public Builder<PointSymbolizer> reset(PointSymbolizer original) {
+    @Override
+    public Builder<PointSymbolizer> reset(org.geotools.api.style.PointSymbolizer original) {
         if (original == null) {
             return unset();
-        }
-        this.geometry = original.getGeometry();
-        this.graphic.reset(original.getGraphic());
-        this.uom = original.getUnitOfMeasure();
-        unset = false;
-
-        return this;
-    }
-
-    public Builder<PointSymbolizer> reset(org.opengis.style.PointSymbolizer original) {
-        if (original == null) {
-            return unset();
-        } else if (original instanceof PointSymbolizer) {
-            return reset((PointSymbolizer) original);
         }
         this.geometry = property(original.getGeometryPropertyName());
         this.graphic.reset(original.getGraphic());
@@ -108,6 +97,7 @@ public class PointSymbolizerBuilder extends SymbolizerBuilder<PointSymbolizer> {
         return this;
     }
 
+    @Override
     public PointSymbolizerBuilder unset() {
         return (PointSymbolizerBuilder) super.unset();
     }

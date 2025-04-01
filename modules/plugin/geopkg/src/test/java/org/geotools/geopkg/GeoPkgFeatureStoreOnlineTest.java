@@ -16,20 +16,22 @@
  */
 package org.geotools.geopkg;
 
+import static org.junit.Assert.assertTrue;
+
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.sql.SQLException;
-import org.geotools.data.Query;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.util.ScreenMap;
 import org.geotools.jdbc.JDBCFeatureStoreOnlineTest;
 import org.geotools.jdbc.JDBCTestSetup;
 import org.geotools.referencing.operation.transform.AffineTransform2D;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
+import org.junit.Test;
 
 public class GeoPkgFeatureStoreOnlineTest extends JDBCFeatureStoreOnlineTest {
 
@@ -58,24 +60,20 @@ public class GeoPkgFeatureStoreOnlineTest extends JDBCFeatureStoreOnlineTest {
         // same table
     }
 
+    @Test
     public void testScreenMapSkip() throws Exception {
         SimpleFeatureSource fs = dataStore.getFeatureSource(tname("ft1"));
         assertTrue(fs.getSupportedHints().contains(Hints.SCREENMAP));
 
         Query q = new Query(tname("ft1"));
-        q.setPropertyNames(new String[] {"stringProperty", "geometry"});
+        q.setPropertyNames("stringProperty", "geometry");
         FilterFactory ff = dataStore.getFilterFactory();
-        q.setSortBy(new SortBy[] {ff.sort("doubleProperty", SortOrder.ASCENDING)});
+        q.setSortBy(ff.sort("doubleProperty", SortOrder.ASCENDING));
 
         // setup the screenmap so that we have a feature that gets skipped due to screenmap
         // but the next one is not
         ScreenMap screenMap =
-                new ScreenMap(
-                        -1,
-                        -1,
-                        10,
-                        10,
-                        new AffineTransform2D(AffineTransform.getScaleInstance(0.5, 0.5)));
+                new ScreenMap(-1, -1, 10, 10, new AffineTransform2D(AffineTransform.getScaleInstance(0.5, 0.5)));
         screenMap.setSpans(1, 1);
         Hints hints = new Hints(Hints.SCREENMAP, screenMap);
         q.setHints(hints);

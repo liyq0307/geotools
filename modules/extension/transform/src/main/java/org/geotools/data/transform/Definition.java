@@ -18,17 +18,18 @@ package org.geotools.data.transform;
 
 import java.util.Arrays;
 import java.util.List;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Defines a transformed attribute to be used in {@link TransformFeatureSource}
@@ -44,16 +45,27 @@ public class Definition {
 
     CoordinateReferenceSystem crs;
 
-    static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    InternationalString description;
+
+    static final FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
     /**
-     * Creates a new transformed property that mirrors 1-1 an existing property in the source type,
-     * without even renaming it
+     * Creates a new transformed property that mirrors 1-1 an existing property in the source type, without even
+     * renaming it
      *
      * @param name The property name
      */
     public Definition(String name) {
         this(name, null, null);
+    }
+    /**
+     * Creates a new property definition with a description
+     *
+     * @param name The property name
+     * @param description The property description
+     */
+    public Definition(String name, InternationalString description) {
+        this(name, null, null, null, description);
     }
 
     /**
@@ -71,8 +83,8 @@ public class Definition {
      *
      * @param name The property name
      * @param source The expression generating the property
-     * @param binding The property type. Optional, the store will try to figure out the type from
-     *     the expression in case it's missing
+     * @param binding The property type. Optional, the store will try to figure out the type from the expression in case
+     *     it's missing
      */
     public Definition(String name, Expression source, Class binding) {
         this(name, source, binding, null);
@@ -83,13 +95,30 @@ public class Definition {
      *
      * @param name The property name
      * @param source The expression generating the property
-     * @param binding The property type. Optional, the store will try to figure out the type from
-     *     the expression in case it's missing
-     * @param crs The coordinate reference system of the property, to be used only for geometry
-     *     properties
+     * @param binding The property type. Optional, the store will try to figure out the type from the expression in case
+     *     it's missing
+     * @param crs The coordinate reference system of the property, to be used only for geometry properties
+     */
+    public Definition(String name, Expression source, Class binding, CoordinateReferenceSystem crs) {
+        this(name, source, binding, crs, null);
+    }
+
+    /**
+     * Creates a new transformed property
+     *
+     * @param name The property name
+     * @param source The expression generating the property
+     * @param binding The property type. Optional, the store will try to figure out the type from the expression in case
+     *     it's missing
+     * @param crs The coordinate reference system of the property, to be used only for geometry properties
+     * @param description The property description
      */
     public Definition(
-            String name, Expression source, Class binding, CoordinateReferenceSystem crs) {
+            String name,
+            Expression source,
+            Class binding,
+            CoordinateReferenceSystem crs,
+            InternationalString description) {
         this.name = name;
         if (source == null) {
             this.expression = TransformFeatureSource.FF.property(name);
@@ -98,6 +127,7 @@ public class Definition {
         }
         this.binding = binding;
         this.crs = crs;
+        this.description = description;
     }
 
     public String getName() {
@@ -112,14 +142,17 @@ public class Definition {
         return binding;
     }
 
+    public InternationalString getDescription() {
+        return description;
+    }
+
     /**
-     * Returns the inverse to this Definition, that is, the definition of the source attribute
-     * corresponding to this computed attribute, if any. Only a small set of expression are
-     * invertible in general, and a smaller subset of that can be inverted by this method.
-     * Implementor can override this method to provide a custom inversion logic.
+     * Returns the inverse to this Definition, that is, the definition of the source attribute corresponding to this
+     * computed attribute, if any. Only a small set of expression are invertible in general, and a smaller subset of
+     * that can be inverted by this method. Implementor can override this method to provide a custom inversion logic.
      *
-     * @return The inverse of this definition, or null if not invertible or if the inversion logic
-     *     for the specified case is missing
+     * @return The inverse of this definition, or null if not invertible or if the inversion logic for the specified
+     *     case is missing
      */
     public List<Definition> inverse() {
         if (expression instanceof PropertyName) {
@@ -138,12 +171,9 @@ public class Definition {
     }
 
     /**
-     * Computes the output attribute descriptor for this {@link Definition} given a sample feature
-     * of the original feature type. The code will first attempt a static analysis on the original
-     * feature type, if that fails it will try to evaluate the expression on the sample feature.
-     *
-     * @param originalFeature
-     * @return
+     * Computes the output attribute descriptor for this {@link Definition} given a sample feature of the original
+     * feature type. The code will first attempt a static analysis on the original feature type, if that fails it will
+     * try to evaluate the expression on the sample feature.
      */
     public AttributeDescriptor getAttributeDescriptor(SimpleFeature originalFeature) {
         // try the static analysis
@@ -171,20 +201,24 @@ public class Definition {
             ab.setCRS(computedCRS);
         }
 
+        if (description != null) {
+            ab.setDescription(description);
+        }
+
         return ab.buildDescriptor(name);
     }
 
     /**
-     * Computes the output attribute descriptor for this {@link Definition} given only the original
-     * feature type. The code will attempt a static analysis on the original feature type, if that
-     * fails it will return null
-     *
-     * @param originalFeature
-     * @return
+     * Computes the output attribute descriptor for this {@link Definition} given only the original feature type. The
+     * code will attempt a static analysis on the original feature type, if that fails it will return null
      */
     public AttributeDescriptor getAttributeDescriptor(SimpleFeatureType originalSchema) {
         AttributeTypeBuilder ab = new AttributeTypeBuilder();
         ExpressionTypeEvaluator typeEvaluator = new ExpressionTypeEvaluator(originalSchema);
+
+        if (description != null) {
+            ab.setDescription(description);
+        }
 
         if (binding != null) {
 
@@ -208,11 +242,13 @@ public class Definition {
                 AttributeDescriptor descriptor = originalSchema.getDescriptor(pn.getPropertyName());
 
                 if (descriptor == null) {
-                    throw new IllegalArgumentException(
-                            "Original feature type does not have a property named " + name);
+                    throw new IllegalArgumentException("Original feature type does not have a property named " + name);
                 } else {
                     ab.init(descriptor);
                     ab.setName(name);
+                    if (description != null) {
+                        ab.setDescription(description);
+                    }
                     return ab.buildDescriptor(name);
                 }
             } else {
@@ -258,8 +294,7 @@ public class Definition {
     }
 
     private CoordinateReferenceSystem evaluateCRS(SimpleFeatureType originalSchema) {
-        return (CoordinateReferenceSystem)
-                expression.accept(new CRSEvaluator(originalSchema), null);
+        return (CoordinateReferenceSystem) expression.accept(new CRSEvaluator(originalSchema), null);
     }
 
     @Override
@@ -270,6 +305,7 @@ public class Definition {
         result = prime * result + ((crs == null) ? 0 : crs.hashCode());
         result = prime * result + ((expression == null) ? 0 : expression.hashCode());
         result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((description == null) ? 0 : description.hashCode());
         return result;
     }
 
@@ -291,6 +327,9 @@ public class Definition {
         if (name == null) {
             if (other.name != null) return false;
         } else if (!name.equals(other.name)) return false;
+        if (description == null) {
+            if (other.description != null) return false;
+        } else if (!description.equals(other.description)) return false;
         return true;
     }
 
@@ -304,6 +343,8 @@ public class Definition {
                 + crs
                 + ", expression="
                 + expression
+                + ", description="
+                + description
                 + "]";
     }
 }

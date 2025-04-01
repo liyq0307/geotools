@@ -33,14 +33,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.bson.types.ObjectId;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.mongodb.complex.MongoComplexUtilities;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.logging.Logging;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
 
 /** @author tkunicki@boundlessgeo.com */
 public class MongoInferredMapper extends AbstractCollectionMapper {
@@ -71,9 +71,7 @@ public class MongoInferredMapper extends AbstractCollectionMapper {
     @Override
     public String getPropertyPath(String property) {
         AttributeDescriptor descriptor = schema.getDescriptor(property);
-        return descriptor == null
-                ? null
-                : (String) descriptor.getUserData().get(MongoDataStore.KEY_mapping);
+        return descriptor == null ? null : (String) descriptor.getUserData().get(MongoDataStore.KEY_mapping);
     }
 
     @Override
@@ -101,17 +99,16 @@ public class MongoInferredMapper extends AbstractCollectionMapper {
         // Map<String, Class<?>> mappedFields = MongoUtil.findMappableFields(collection);
         // if we have valid schemainitParams use a DB cursor for inferring schema. Else use the
         // first object as default.
-        Map<String, Class> mappedFields =
-                schemainitParams.getIds().isEmpty() && schemainitParams.getMaxObjects() == 1
-                        ? MongoComplexUtilities.findMappings(collection.findOne())
-                        : generateMappedFields(collection);
+        Map<String, Class> mappedFields = schemainitParams.getIds().isEmpty() && schemainitParams.getMaxObjects() == 1
+                ? MongoComplexUtilities.findMappings(collection.findOne())
+                : generateMappedFields(collection);
 
         // don't need to worry about indexed properties we've found in our scan...
         indexedFields.removeAll(mappedFields.keySet());
 
         // remove geometries from indexed and mapped sets
         indexedFields.removeAll(indexedGeometries);
-        for (String mappedProperty : new ArrayList<String>(mappedFields.keySet())) {
+        for (String mappedProperty : new ArrayList<>(mappedFields.keySet())) {
             for (String indexedGeometry : indexedGeometries) {
                 if (mappedProperty.startsWith(indexedGeometry)) {
                     mappedFields.remove(mappedProperty);
@@ -146,10 +143,9 @@ public class MongoInferredMapper extends AbstractCollectionMapper {
         ftBuilder.userData(MongoDataStore.KEY_mapping, geometryField);
         ftBuilder.userData(MongoDataStore.KEY_encoding, "GeoJSON");
         ftBuilder.add(geometryField, Geometry.class, DefaultGeographicCRS.WGS84);
-        LOG.log(
-                Level.INFO,
-                "building type {0}: mapping geometry field {1} from collection {2}",
-                new Object[] {name, geometryField, collection.getFullName()});
+        LOG.log(Level.INFO, "building type {0}: mapping geometry field {1} from collection {2}", new Object[] {
+            name, geometryField, collection.getFullName()
+        });
 
         for (Map.Entry<String, Class> mappedField : mappedFields.entrySet()) {
             String field = mappedField.getKey();
@@ -181,15 +177,14 @@ public class MongoInferredMapper extends AbstractCollectionMapper {
 
     private Map<String, Class> generateMappedFields(DBCollection collection) {
         final Map<String, Class> resultMap = new HashMap<>();
+        @SuppressWarnings("PMD.CloseResource") // closed in findMappings
         final DBCursor idsCursor = obtainCursorByIds(collection);
         Map<String, Class> idsMappings =
-                idsCursor != null
-                        ? MongoComplexUtilities.findMappings(idsCursor)
-                        : Collections.emptyMap();
+                idsCursor != null ? MongoComplexUtilities.findMappings(idsCursor) : Collections.emptyMap();
         int max = schemainitParams.getMaxObjects() - idsMappings.size();
+        @SuppressWarnings("PMD.CloseResource") // closed in findMappings
         final DBCursor maxObjectsCursor = obtainCursorByMaxObjects(collection, max);
-        if (maxObjectsCursor != null)
-            resultMap.putAll(MongoComplexUtilities.findMappings(maxObjectsCursor));
+        if (maxObjectsCursor != null) resultMap.putAll(MongoComplexUtilities.findMappings(maxObjectsCursor));
         if (!idsMappings.isEmpty()) resultMap.putAll(idsMappings);
         return resultMap;
     }
@@ -207,9 +202,9 @@ public class MongoInferredMapper extends AbstractCollectionMapper {
     }
 
     private DBCursor queryByIds(DBCollection collection, List<String> ids) {
-        List<ObjectId> oidList =
-                ids.stream().map(id -> new ObjectId(id)).collect(Collectors.toList());
-        DBObject query = QueryBuilder.start("_id").in(oidList.toArray(new ObjectId[] {})).get();
+        List<ObjectId> oidList = ids.stream().map(id -> new ObjectId(id)).collect(Collectors.toList());
+        DBObject query =
+                QueryBuilder.start("_id").in(oidList.toArray(new ObjectId[] {})).get();
         LOG.log(Level.INFO, "IDs query for execute: {0}", query);
         return collection.find(query);
     }
@@ -217,11 +212,10 @@ public class MongoInferredMapper extends AbstractCollectionMapper {
     private void logIdsOnCursor(DBCursor cursor, List<String> ids) {
         final Set<String> idsOnCursor = new HashSet<>();
         try {
-            cursor.forEach(
-                    dbo -> {
-                        ObjectId oid = (ObjectId) dbo.get("_id");
-                        idsOnCursor.add(oid.toHexString());
-                    });
+            cursor.forEach(dbo -> {
+                ObjectId oid = (ObjectId) dbo.get("_id");
+                idsOnCursor.add(oid.toHexString());
+            });
         } finally {
             cursor.close();
         }

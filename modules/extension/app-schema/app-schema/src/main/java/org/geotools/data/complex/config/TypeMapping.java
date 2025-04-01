@@ -31,8 +31,7 @@ import org.geotools.util.CheckedArrayList;
  * @since 2.4
  */
 public class TypeMapping implements Serializable {
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(TypeMapping.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(TypeMapping.class);
 
     private static final long serialVersionUID = 1444252634598922057L;
 
@@ -46,14 +45,12 @@ public class TypeMapping implements Serializable {
     private String itemXpath;
 
     /**
-     * True if we don't want to create a new feature, but want to add attributes to the feature
-     * returned from the backend Data access.
+     * True if we don't want to create a new feature, but want to add attributes to the feature returned from the
+     * backend Data access.
      */
     private boolean isXmlDataStore;
 
-    /**
-     * True if data is multiple rows represent 1 feature. The safe default is to assume it's true.
-     */
+    /** True if data is multiple rows represent 1 feature. The safe default is to assume it's true. */
     private boolean isDenormalised = true;
     /** True if isDenormalised has been set in config. */
     private boolean isDenormalisedSet = false;
@@ -62,24 +59,21 @@ public class TypeMapping implements Serializable {
 
     private String defaultGeometryXPath;
 
-    private List attributeMappings = Collections.EMPTY_LIST;
+    private List<AttributeMapping> attributeMappings = Collections.emptyList();
 
-    /**
-     * Optional unique identifier for a FeatureTypeMapping, useful for multiple mappings of the same
-     * type.
-     */
+    /** Optional unique identifier for a FeatureTypeMapping, useful for multiple mappings of the same type. */
     private String mappingName;
 
     public TypeMapping() {
         // no-op
     }
 
-    public List getAttributeMappings() {
-        return new ArrayList(attributeMappings);
+    public List<AttributeMapping> getAttributeMappings() {
+        return new ArrayList<>(attributeMappings);
     }
 
-    public void setAttributeMappings(List attributeMappings) {
-        this.attributeMappings = new CheckedArrayList(AttributeMapping.class);
+    public void setAttributeMappings(List<AttributeMapping> attributeMappings) {
+        this.attributeMappings = new CheckedArrayList<>(AttributeMapping.class);
         if (attributeMappings != null) {
             this.attributeMappings.addAll(attributeMappings);
         }
@@ -126,7 +120,7 @@ public class TypeMapping implements Serializable {
     }
 
     public void setXmlDataStore(String isXmlDataStore) {
-        this.isXmlDataStore = Boolean.valueOf(isXmlDataStore).booleanValue();
+        this.isXmlDataStore = Boolean.parseBoolean(isXmlDataStore);
     }
 
     public boolean isXmlDataStore() {
@@ -135,18 +129,17 @@ public class TypeMapping implements Serializable {
 
     public boolean isDenormalised() {
         if (!isDenormalisedSet) {
-            LOGGER.info(
-                    "isDenormalised is not set in app-schema mapping file for: "
-                            + (mappingName == null ? targetElementName : mappingName)
-                            + ".\n"
-                            + "Setting isDenormalised can result in more efficient SQL queries.");
+            LOGGER.info("isDenormalised is not set in app-schema mapping file for: "
+                    + (mappingName == null ? targetElementName : mappingName)
+                    + ".\n"
+                    + "Setting isDenormalised can result in more efficient SQL queries.");
         }
         return isDenormalised;
     }
 
     public void setIsDenormalised(String isDenormalised) {
         this.isDenormalisedSet = true;
-        this.isDenormalised = Boolean.valueOf(isDenormalised).booleanValue();
+        this.isDenormalised = Boolean.parseBoolean(isDenormalised);
     }
 
     public void setMappingName(final String mappingName) {
@@ -173,6 +166,7 @@ public class TypeMapping implements Serializable {
         this.indexTypeName = indexTypeName;
     }
 
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("TypeMappingDTO[");

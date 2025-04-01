@@ -16,14 +16,14 @@
  */
 package org.geotools.brewer.styling.filter.expression;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Subtract;
 import org.geotools.brewer.styling.builder.Builder;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Subtract;
 
 public class SubtractBuilder implements Builder<Subtract> {
 
-    protected FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     boolean unset = false;
 
@@ -39,27 +39,31 @@ public class SubtractBuilder implements Builder<Subtract> {
         reset(expression);
     }
 
+    @Override
     public SubtractBuilder reset() {
         unset = false;
-        expr1 = new ChildExpressionBuilder<SubtractBuilder>(this);
-        expr2 = new ChildExpressionBuilder<SubtractBuilder>(this);
+        expr1 = new ChildExpressionBuilder<>(this);
+        expr2 = new ChildExpressionBuilder<>(this);
         return this;
     }
 
+    @Override
     public SubtractBuilder reset(Subtract original) {
         unset = false;
-        expr1 = new ChildExpressionBuilder<SubtractBuilder>(this, original.getExpression1());
-        expr2 = new ChildExpressionBuilder<SubtractBuilder>(this, original.getExpression2());
+        expr1 = new ChildExpressionBuilder<>(this, original.getExpression1());
+        expr2 = new ChildExpressionBuilder<>(this, original.getExpression2());
         return this;
     }
 
+    @Override
     public SubtractBuilder unset() {
         unset = true;
-        expr1 = new ChildExpressionBuilder<SubtractBuilder>(this).unset();
+        expr1 = new ChildExpressionBuilder<>(this).unset();
         expr2 = null;
         return this;
     }
 
+    @Override
     public Subtract build() {
         if (unset) {
             return null;

@@ -39,7 +39,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import org.apache.maven.plugin.AbstractMojo;
@@ -57,30 +56,28 @@ import org.javacc.parser.Main;
 // Note: javadoc in class and fields descriptions must be XHTML.
 /**
  * Generates <code>.java</code> sources from <code>.jjt</code> files during Geotools build. This <A
- * HREF="http://maven.apache.org/maven2/">Maven 2</A> plugin executes <code>jjtree</code> first,
- * followed by <code>javacc</code>. Both of them are part of the <A
- * HREF="https://javacc.dev.java.net/">JavaCC</A> project.
+ * HREF="http://maven.apache.org/maven2/">Maven 2</A> plugin executes <code>jjtree</code> first, followed by <code>
+ * javacc</code>. Both of them are part of the <A HREF="https://javacc.dev.java.net/">JavaCC</A> project.
  *
  * <p>This code is a derived work from the Mojo <code>
- * <A HREF="http://mojo.codehaus.org/maven-javacc-plugin/">maven-javacc-plugin</A></code>, which
- * explain why we retains the Apache copyright header. We didn't used The Mojo JavaCC plugin
- * because:
+ * <A HREF="http://mojo.codehaus.org/maven-javacc-plugin/">maven-javacc-plugin</A></code>, which explain why we retains
+ * the Apache copyright header. We didn't used The Mojo JavaCC plugin because:
  *
  * <p>
  *
  * <ul>
  *   <li>It seems easier to control execution order in a single plugin (obviously <code>jjtree
- *       </code> must be executed before <code>javacc</code>, but I don't know how to enforce this
- *       order if both of them are independent plugins registered in the <code>generate-sources
+ *       </code> must be executed before <code>javacc</code>, but I don't know how to enforce this order if both of them
+ *       are independent plugins registered in the <code>generate-sources
  *       </code> build phase).
- *   <li><code>maven-javacc-plugin</code> overwrites the values specified in the <code>.jjt</code>
- *       file with its own default values, even if no such values were specified in the <code>
+ *   <li><code>maven-javacc-plugin</code> overwrites the values specified in the <code>.jjt</code> file with its own
+ *       default values, even if no such values were specified in the <code>
  *       pom.xml</code> file. This behavior conflicts with Geotools setting for the <code>STATIC
  *       </code> option.
  * </ul>
  *
- * Note: The default directories in this plugin are Maven default, even if this plugin target
- * Geotools build (which use a different directory structure).
+ * Note: The default directories in this plugin are Maven default, even if this plugin target Geotools build (which use
+ * a different directory structure).
  *
  * @goal generate
  * @phase generate-sources
@@ -100,8 +97,8 @@ public class JJTreeJavaCC extends AbstractMojo {
     private String nodePackage;
 
     /**
-     * Directory where user-specified <code>Node.java</code> and <code>SimpleNode.java</code> files
-     * are located. If no node exist, JJTree will create ones.
+     * Directory where user-specified <code>Node.java</code> and <code>SimpleNode.java</code> files are located. If no
+     * node exist, JJTree will create ones.
      *
      * @parameter expression="${basedir}/src/main/jjtree"
      * @required
@@ -124,9 +121,7 @@ public class JJTreeJavaCC extends AbstractMojo {
      */
     private String outputDirectory;
 
-    /**
-     * Concatenation of {@link #outputDirectory} with {@link #nodePackage}. For internal use only.
-     */
+    /** Concatenation of {@link #outputDirectory} with {@link #nodePackage}. For internal use only. */
     private File outputPackageDirectory;
 
     /**
@@ -137,8 +132,7 @@ public class JJTreeJavaCC extends AbstractMojo {
     private String timestampDirectory;
 
     /**
-     * The granularity in milliseconds of the last modification date for testing whether a source
-     * needs recompilation
+     * The granularity in milliseconds of the last modification date for testing whether a source needs recompilation
      *
      * @parameter expression="${lastModGranularityMs}" default-value="0"
      */
@@ -153,12 +147,12 @@ public class JJTreeJavaCC extends AbstractMojo {
     private MavenProject project;
 
     /**
-     * Generates the source code from all {@code .jjt} and {@code .jj} files found in the source
-     * directory. First, all {@code .jjt} files are processed using {@code jjtree}. Then, all
-     * generated {@code .jj} files are processed.
+     * Generates the source code from all {@code .jjt} and {@code .jj} files found in the source directory. First, all
+     * {@code .jjt} files are processed using {@code jjtree}. Then, all generated {@code .jj} files are processed.
      *
      * @throws MojoExecutionException if the plugin execution failed.
      */
+    @Override
     @SuppressWarnings("PMD.SystemPrintln")
     public void execute() throws MojoExecutionException, MojoFailureException {
         // if not windows, don't rewrite file
@@ -175,8 +169,8 @@ public class JJTreeJavaCC extends AbstractMojo {
          * properly subpackages.
          */
         final Set userNodes = searchNodeFiles();
-        for (final Iterator it = userNodes.iterator(); it.hasNext(); ) {
-            final File nodeFile = (File) it.next();
+        for (Object userNode : userNodes) {
+            final File nodeFile = (File) userNode;
             try {
                 FileUtils.copyFileToDirectory(nodeFile, outputPackageDirectory);
             } catch (IOException e) {
@@ -189,8 +183,8 @@ public class JJTreeJavaCC extends AbstractMojo {
          * javacc output yet, but it will).
          */
         final Set staleTrees = searchStaleGrammars(new File(sourceDirectory), ".jjt");
-        for (final Iterator it = staleTrees.iterator(); it.hasNext(); ) {
-            final File sourceFile = (File) it.next();
+        for (Object staleTree : staleTrees) {
+            final File sourceFile = (File) staleTree;
             final JJTree parser = new JJTree();
             final String[] args = generateJJTreeArgumentList(sourceFile.getPath());
             final int status = parser.main(args);
@@ -207,8 +201,8 @@ public class JJTreeJavaCC extends AbstractMojo {
          * Reprocess the .jj files found in the generated-sources directory.
          */
         final Set staleGrammars = searchStaleGrammars(new File(outputDirectory), ".jj");
-        for (final Iterator it = staleGrammars.iterator(); it.hasNext(); ) {
-            final File sourceFile = (File) it.next();
+        for (Object staleGrammar : staleGrammars) {
+            final File sourceFile = (File) staleGrammar;
             try {
                 if (windowsOs) {
                     fixHeader(sourceFile);
@@ -237,11 +231,10 @@ public class JJTreeJavaCC extends AbstractMojo {
          */
         if (windowsOs) {
             try {
-                String[] files =
-                        FileUtils.getFilesFromExtension(outputDirectory, new String[] {"java"});
-                for (int i = 0; i < files.length; i++) {
-                    System.out.println("Fixing " + files[i]);
-                    fixHeader(new File(files[i]));
+                String[] files = FileUtils.getFilesFromExtension(outputDirectory, new String[] {"java"});
+                for (String file : files) {
+                    System.out.println("Fixing " + file);
+                    fixHeader(new File(file));
                 }
             } catch (IOException e) {
                 throw new MojoExecutionException("Failed to fix header for java file.", e);
@@ -257,20 +250,16 @@ public class JJTreeJavaCC extends AbstractMojo {
     }
 
     /**
-     * Takes a file generated from javacc, and changes the first line so that it does not contain
-     * escape characters on windows (the filename may contain things like \ u which are invalid
-     * escape chars)
+     * Takes a file generated from javacc, and changes the first line so that it does not contain escape characters on
+     * windows (the filename may contain things like \ u which are invalid escape chars)
      *
      * @param sourceFile the file to process.
      * @throws IOException if the file can't be read or the resutl can't be writen.
      */
     private void fixHeader(final File sourceFile) throws IOException {
-        BufferedReader reader = null;
-        BufferedWriter writer = null;
         File fixedFile = new File(sourceFile.getParentFile(), sourceFile.getName() + ".fix");
-        try {
-            reader = new BufferedReader(new FileReader(sourceFile));
-            writer = new BufferedWriter(new FileWriter(fixedFile));
+        try (BufferedReader reader = new BufferedReader(new FileReader(sourceFile));
+                BufferedWriter writer = new BufferedWriter(new FileWriter(fixedFile))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("/*@bgen(jjtree) Generated By:JJTree:")
@@ -280,18 +269,14 @@ public class JJTreeJavaCC extends AbstractMojo {
                 writer.write(line);
                 writer.newLine();
             }
-        } finally {
-            if (reader != null) reader.close();
-            if (writer != null) writer.close();
         }
         sourceFile.delete();
         fixedFile.renameTo(sourceFile);
     }
 
     /**
-     * Returns the concatenation of {@code directory} with {@link #nodePackage}. This is used in
-     * order to construct a directory path which include the Java package. The directory will be
-     * created if it doesn't exists.
+     * Returns the concatenation of {@code directory} with {@link #nodePackage}. This is used in order to construct a
+     * directory path which include the Java package. The directory will be created if it doesn't exists.
      */
     private File createPackageDirectory(final String directory) throws MojoExecutionException {
         File packageDirectory = new File(directory);
@@ -307,9 +292,9 @@ public class JJTreeJavaCC extends AbstractMojo {
     }
 
     /**
-     * Gets the set of user-specified {@code Node.java} files. If none are found, {@code jjtree}
-     * will generate automatically a default one. This method search only in the package defined in
-     * the {@link #nodePackage} attribute.
+     * Gets the set of user-specified {@code Node.java} files. If none are found, {@code jjtree} will generate
+     * automatically a default one. This method search only in the package defined in the {@link #nodePackage}
+     * attribute.
      */
     private Set searchNodeFiles() throws MojoExecutionException {
         final SuffixMapping mapping = new SuffixMapping(".java", ".java");
@@ -322,7 +307,7 @@ public class JJTreeJavaCC extends AbstractMojo {
             directory = new File(directory, nodePackage.replace('.', '/'));
         }
         if (!directory.isDirectory()) {
-            return Collections.EMPTY_SET;
+            return Collections.emptySet();
         }
         final File outDir = new File(timestampDirectory);
         try {
@@ -339,8 +324,7 @@ public class JJTreeJavaCC extends AbstractMojo {
      * @param sourceDir The source directory.
      * @param ext The extension to search of ({@code .jjt} or {@code .jj}).
      */
-    private Set searchStaleGrammars(final File sourceDir, final String ext)
-            throws MojoExecutionException {
+    private Set searchStaleGrammars(final File sourceDir, final String ext) throws MojoExecutionException {
         final String extCAP = ext.toUpperCase();
         final SuffixMapping mapping = new SuffixMapping(ext, ext);
         final SuffixMapping mappingCAP = new SuffixMapping(extCAP, extCAP);
@@ -352,10 +336,7 @@ public class JJTreeJavaCC extends AbstractMojo {
             return scanner.getIncludedSources(sourceDir, outDir);
         } catch (InclusionScanException e) {
             throw new MojoExecutionException(
-                    "Error scanning source root \""
-                            + sourceDir.getPath()
-                            + "\" for stale grammars to reprocess.",
-                    e);
+                    "Error scanning source root \"" + sourceDir.getPath() + "\" for stale grammars to reprocess.", e);
         }
     }
 
@@ -366,14 +347,14 @@ public class JJTreeJavaCC extends AbstractMojo {
      * @return The arguments to pass to {@code jjtree}.
      */
     private String[] generateJJTreeArgumentList(final String sourceFilename) {
-        final List argsList = new ArrayList();
+        final List<String> argsList = new ArrayList<>();
         if (nodePackage != null && nodePackage.trim().length() != 0) {
             argsList.add("-NODE_PACKAGE:" + nodePackage);
         }
         argsList.add("-OUTPUT_DIRECTORY:" + outputPackageDirectory.getPath());
         argsList.add(sourceFilename);
         getLog().debug("jjtree arguments list: " + argsList.toString());
-        return (String[]) argsList.toArray(new String[argsList.size()]);
+        return argsList.toArray(new String[argsList.size()]);
     }
 
     /**
@@ -383,10 +364,10 @@ public class JJTreeJavaCC extends AbstractMojo {
      * @return The arguments to pass to {@code javacc}.
      */
     private String[] generateJavaCCArgumentList(final String sourceInput) {
-        final List argsList = new ArrayList();
+        final List<String> argsList = new ArrayList<>();
         argsList.add("-OUTPUT_DIRECTORY:" + outputPackageDirectory.getPath());
         argsList.add(sourceInput);
         getLog().debug("javacc arguments list: " + argsList.toString());
-        return (String[]) argsList.toArray(new String[argsList.size()]);
+        return argsList.toArray(new String[argsList.size()]);
     }
 }

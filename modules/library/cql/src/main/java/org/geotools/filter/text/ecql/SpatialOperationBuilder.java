@@ -17,21 +17,20 @@
 
 package org.geotools.filter.text.ecql;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.filter.spatial.Contains;
+import org.geotools.api.filter.spatial.Crosses;
+import org.geotools.api.filter.spatial.Disjoint;
+import org.geotools.api.filter.spatial.Equals;
+import org.geotools.api.filter.spatial.Intersects;
+import org.geotools.api.filter.spatial.Overlaps;
+import org.geotools.api.filter.spatial.Touches;
+import org.geotools.api.filter.spatial.Within;
 import org.geotools.filter.text.commons.BuildResultStack;
 import org.geotools.filter.text.cql2.CQLException;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.filter.spatial.Contains;
-import org.opengis.filter.spatial.Crosses;
-import org.opengis.filter.spatial.Disjoint;
-import org.opengis.filter.spatial.Equals;
-import org.opengis.filter.spatial.Intersects;
-import org.opengis.filter.spatial.Overlaps;
-import org.opengis.filter.spatial.Touches;
-import org.opengis.filter.spatial.Within;
 
 /**
  * Builds an instance of one {@link BinarySpatialOperator} subclass.
@@ -42,21 +41,21 @@ import org.opengis.filter.spatial.Within;
 class SpatialOperationBuilder {
 
     private final BuildResultStack resultStack;
-    private final FilterFactory2 filterFactory;
+    private final FilterFactory filterFactory;
 
     public SpatialOperationBuilder(BuildResultStack resultStack, FilterFactory filterFactory) {
         assert resultStack != null;
         assert filterFactory != null;
 
         this.resultStack = resultStack;
-        this.filterFactory = (FilterFactory2) filterFactory;
+        this.filterFactory = (FilterFactory) filterFactory;
     }
 
     protected final BuildResultStack getResultStack() {
         return resultStack;
     }
 
-    protected final FilterFactory2 getFilterFactory() {
+    protected final FilterFactory getFilterFactory() {
         return filterFactory;
     }
 
@@ -64,7 +63,6 @@ class SpatialOperationBuilder {
      * Retrieve the parameters of spatial operation from stack result
      *
      * @return Expression array with the parameters in the natural order
-     * @throws CQLException
      */
     private Expression[] buildParameters() throws CQLException {
 
@@ -81,10 +79,7 @@ class SpatialOperationBuilder {
         throw new UnsupportedOperationException("must be implemented");
     }
 
-    /**
-     * @return new instance of {@link Contains} operation
-     * @throws CQLException
-     */
+    /** @return new instance of {@link Contains} operation */
     protected Contains buildContains() throws CQLException {
 
         Expression[] params = buildParameters();
@@ -92,20 +87,14 @@ class SpatialOperationBuilder {
         return getFilterFactory().contains(params[0], params[1]);
     }
 
-    /**
-     * @return new instance of {@link Equals} operation
-     * @throws CQLException
-     */
+    /** @return new instance of {@link Equals} operation */
     public Equals buildEquals() throws CQLException {
 
         Expression[] params = buildParameters();
 
         return getFilterFactory().equal(params[0], params[1]);
     }
-    /**
-     * @return new instance of {@link Disjoint} operation
-     * @throws CQLException
-     */
+    /** @return new instance of {@link Disjoint} operation */
     public Disjoint buildDisjoint() throws CQLException {
 
         Expression[] params = buildParameters();
@@ -113,20 +102,14 @@ class SpatialOperationBuilder {
         return getFilterFactory().disjoint(params[0], params[1]);
     }
 
-    /**
-     * @return new instance of {@link Intersects} operation
-     * @throws CQLException
-     */
+    /** @return new instance of {@link Intersects} operation */
     public Intersects buildIntersects() throws CQLException {
         Expression[] params = buildParameters();
 
         return getFilterFactory().intersects(params[0], params[1]);
     }
 
-    /**
-     * @return new instance of {@link Touches} operation
-     * @throws CQLException
-     */
+    /** @return new instance of {@link Touches} operation */
     public Touches buildTouches() throws CQLException {
 
         Expression[] params = buildParameters();
@@ -134,10 +117,7 @@ class SpatialOperationBuilder {
         return getFilterFactory().touches(params[0], params[1]);
     }
 
-    /**
-     * @return new instance of {@link Crosses} operation
-     * @throws CQLException
-     */
+    /** @return new instance of {@link Crosses} operation */
     public Crosses buildCrosses() throws CQLException {
 
         Expression[] params = buildParameters();
@@ -145,10 +125,7 @@ class SpatialOperationBuilder {
         return getFilterFactory().crosses(params[0], params[1]);
     }
 
-    /**
-     * @return new instance of {@link Within} operation
-     * @throws CQLException
-     */
+    /** @return new instance of {@link Within} operation */
     public Within buildWithin() throws CQLException {
 
         Expression[] params = buildParameters();
@@ -156,10 +133,7 @@ class SpatialOperationBuilder {
         return getFilterFactory().within(params[0], params[1]);
     }
 
-    /**
-     * @return new instance of {@link Within} operation
-     * @throws CQLException
-     */
+    /** @return new instance of {@link Within} operation */
     public Overlaps buildOverlaps() throws CQLException {
 
         Expression[] params = buildParameters();
@@ -171,7 +145,6 @@ class SpatialOperationBuilder {
      * Builds a bbox using the stack subproducts
      *
      * @return {@link BBOX}}
-     * @throws CQLException
      */
     public BBOX buildBBoxWithCRS() throws CQLException {
 
@@ -185,7 +158,6 @@ class SpatialOperationBuilder {
      * Builds a bbox using the stack subproducts
      *
      * @return {@link BBOX}}
-     * @throws CQLException
      */
     public BBOX buildBBox() throws CQLException {
 
@@ -197,9 +169,7 @@ class SpatialOperationBuilder {
     /**
      * build a bbox using the stack subproducts and the crs parameter
      *
-     * @param crs
      * @return {@link BBOX}}
-     * @throws CQLException
      */
     private BBOX buildBBox(final String crs) throws CQLException {
 
@@ -210,7 +180,7 @@ class SpatialOperationBuilder {
 
         Expression expr = getResultStack().popExpression();
 
-        FilterFactory2 ff = (FilterFactory2) getFilterFactory();
+        FilterFactory ff = getFilterFactory();
 
         BBOX bbox = ff.bbox(expr, minX, minY, maxX, maxY, crs);
         return bbox;

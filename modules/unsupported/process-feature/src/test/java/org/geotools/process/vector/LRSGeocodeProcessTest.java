@@ -18,10 +18,12 @@ package org.geotools.process.vector;
 
 import java.io.File;
 import java.io.IOException;
-import org.geotools.data.DataStore;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
 import org.geotools.data.property.PropertyDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
-import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.process.ProcessException;
@@ -31,7 +33,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.Feature;
 
 public class LRSGeocodeProcessTest {
     private DataStore featureSource;
@@ -54,7 +55,7 @@ public class LRSGeocodeProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result = process.execute(origional, "from_lrs_bad", "to_lrs", 1.0);
+            process.execute(origional, "from_lrs_bad", "to_lrs", 1.0);
             Assert.fail("Expected error from bad from_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -68,7 +69,7 @@ public class LRSGeocodeProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result = process.execute(origional, "from_lrs", "to_lrs_bad", 1.0);
+            process.execute(origional, "from_lrs", "to_lrs_bad", 1.0);
             Assert.fail("Expected error from bad to_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -82,7 +83,7 @@ public class LRSGeocodeProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result = process.execute(origional, null, "to_lrs", 1.0);
+            process.execute(origional, null, "to_lrs", 1.0);
             Assert.fail("Expected error from bad from_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -96,7 +97,7 @@ public class LRSGeocodeProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result = process.execute(origional, "from_lrs", null, 1.0);
+            process.execute(origional, "from_lrs", null, 1.0);
             Assert.fail("Expected error from bad to_lrs name");
         } catch (ProcessException e) {
             // Successful
@@ -110,7 +111,7 @@ public class LRSGeocodeProcessTest {
         SimpleFeatureCollection origional = source.getFeatures();
 
         try {
-            FeatureCollection result = process.execute(origional, "from_lrs", "to_lrs_bad", null);
+            process.execute(origional, "from_lrs", "to_lrs_bad", null);
             Assert.fail("Expected error from bad measure value");
         } catch (ProcessException e) {
             // Successful
@@ -120,9 +121,10 @@ public class LRSGeocodeProcessTest {
     @Test
     public void testNoFeaturesGiven() throws Exception {
         LRSGeocodeProcess process = new LRSGeocodeProcess();
-        FeatureCollection origional = new DefaultFeatureCollection();
+        DefaultFeatureCollection origional = new DefaultFeatureCollection();
 
-        FeatureCollection result = process.execute(origional, "from_lrs", "to_lrs", 1.0);
+        FeatureCollection<? extends FeatureType, ? extends Feature> result =
+                process.execute(origional, "from_lrs", "to_lrs", 1.0);
         Assert.assertEquals(0, result.size());
     }
 

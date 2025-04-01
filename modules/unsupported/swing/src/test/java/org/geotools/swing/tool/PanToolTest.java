@@ -17,7 +17,9 @@
 
 package org.geotools.swing.tool;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
@@ -63,8 +65,7 @@ public class PanToolTest extends CursorToolTestBase {
 
         Point screenPos = mapPaneFixture.target().getLocationOnScreen();
 
-        Point mouseStartPos =
-                new Point(screenPos.x + startWindowPos.x, screenPos.y + startWindowPos.y);
+        Point mouseStartPos = new Point(screenPos.x + startWindowPos.x, screenPos.y + startWindowPos.y);
 
         Point mouseEndPos = new Point(screenPos.x + endWindowPos.x, screenPos.y + endWindowPos.y);
 
@@ -79,12 +80,8 @@ public class PanToolTest extends CursorToolTestBase {
 
         ReferencedEnvelope endEnv = mapPane.getDisplayArea();
 
-        Point2D expectedDelta =
-                tr.deltaTransform(
-                        new Point(
-                                startWindowPos.x - endWindowPos.x,
-                                startWindowPos.y - endWindowPos.y),
-                        null);
+        Point2D expectedDelta = tr.deltaTransform(
+                new Point(startWindowPos.x - endWindowPos.x, startWindowPos.y - endWindowPos.y), null);
 
         assertEquals(startEnv.getMinX() + expectedDelta.getX(), endEnv.getMinX(), TOL);
         assertEquals(startEnv.getMinY() + expectedDelta.getY(), endEnv.getMinY(), TOL);

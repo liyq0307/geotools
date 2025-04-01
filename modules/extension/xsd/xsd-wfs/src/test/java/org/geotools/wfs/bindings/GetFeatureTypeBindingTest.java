@@ -16,6 +16,9 @@
  */
 package org.geotools.wfs.bindings;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.math.BigInteger;
 import java.net.URL;
 import java.util.List;
@@ -26,21 +29,17 @@ import org.geotools.test.TestData;
 import org.geotools.wfs.WFS;
 import org.geotools.wfs.WFSTestSupport;
 import org.geotools.xsd.Binding;
+import org.junit.Test;
 import org.w3c.dom.Document;
 
-/**
- * Unit test suite for {@link GetFeatureTypeBinding}
- *
- * @author Justin Deoliveira
- * @version $Id: GetFeatureTypeBindingTest.java 27749 2007-11-05 09:51:33Z groldan $
- * @since 2.5.x
- */
 public class GetFeatureTypeBindingTest extends WFSTestSupport {
     public GetFeatureTypeBindingTest() {
         super(WFS.GetFeatureType, GetFeatureType.class, Binding.OVERRIDE);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
+    @Test
     public void testEncode() throws Exception {
         GetFeatureType getFeature = factory.createGetFeatureType();
         getFeature.setHandle("handle");
@@ -54,6 +53,8 @@ public class GetFeatureTypeBindingTest extends WFSTestSupport {
         assertEquals(2, getElementsByQName(dom, WFS.Query).getLength());
     }
 
+    @Override
+    @Test
     public void testParse() throws Exception {
         final URL resource = TestData.getResource(this, "GetFeatureTypeBindingTest.xml");
         buildDocument(resource);

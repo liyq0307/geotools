@@ -20,29 +20,23 @@ import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
-import org.opengis.filter.capability.FunctionName;
 
 /**
- * Apply an expression to each item of a list, resulting in a new list. Provide a list and an
- * expression as input, returns a new list as output. Use the "." symbol inside the expression to
- * refer to each item of the list.
+ * Apply an expression to each item of a list, resulting in a new list. Provide a list and an expression as input,
+ * returns a new list as output. Use the "." symbol inside the expression to refer to each item of the list.
  *
  * @author Niels Charlier
  */
 public class LapplyFunction extends FunctionExpressionImpl {
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "lapply",
-                    parameter("result", List.class, "Result", "The new list"),
-                    parameter("source", List.class, "Source", "The original list"),
-                    parameter(
-                            "expression",
-                            Object.class,
-                            "Expression",
-                            "Expression to apply to each item in the list."));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "lapply",
+            parameter("result", List.class, "Result", "The new list"),
+            parameter("source", List.class, "Source", "The original list"),
+            parameter("expression", Object.class, "Expression", "Expression to apply to each item in the list."));
 
     public LapplyFunction() {
         super(NAME);
@@ -55,7 +49,7 @@ public class LapplyFunction extends FunctionExpressionImpl {
             return null;
         }
 
-        List<Object> result = new ArrayList<Object>();
+        List<Object> result = new ArrayList<>();
         for (Object item : source) {
             result.add(getExpression(1).evaluate(item));
         }

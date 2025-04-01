@@ -16,16 +16,16 @@
  */
 package org.geotools.filter.function;
 
-import static org.geotools.filter.capability.FunctionNameImpl.*;
+import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.filter.expression.VolatileFunction;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.filter.expression.PropertyName;
-import org.opengis.filter.expression.VolatileFunction;
 
 /**
  * Extracts a property from a feature, taking the property name as a parameter
@@ -34,13 +34,10 @@ import org.opengis.filter.expression.VolatileFunction;
  */
 public class FilterFunction_property extends FunctionExpressionImpl implements VolatileFunction {
 
-    FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2();
+    FilterFactory FF = CommonFactoryFinder.getFilterFactory();
 
-    public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "property",
-                    parameter("propertyValue", Object.class),
-                    parameter("propertyName", String.class));
+    public static FunctionName NAME = new FunctionNameImpl(
+            "property", parameter("propertyValue", Object.class), parameter("propertyName", String.class));
 
     /** Cache the last PropertyName used in a thead safe way */
     volatile PropertyName lastPropertyName;
@@ -50,7 +47,7 @@ public class FilterFunction_property extends FunctionExpressionImpl implements V
     }
 
     @Override
-    public Object evaluate(Object object, Class context) {
+    public <T> T evaluate(Object object, Class<T> context) {
         Object result = evaluate(object);
         if (result == null) {
             return null;
@@ -59,6 +56,7 @@ public class FilterFunction_property extends FunctionExpressionImpl implements V
         }
     }
 
+    @Override
     public Object evaluate(Object feature) {
         String name = getExpression(0).evaluate(feature, String.class);
 

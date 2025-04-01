@@ -20,9 +20,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.PropertyName;
+import org.geotools.api.style.Description;
+import org.geotools.api.style.Symbolizer;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.PropertyName;
 
 public abstract class AbstractSymbolizer implements Symbolizer {
     protected String name;
@@ -37,8 +39,7 @@ public abstract class AbstractSymbolizer implements Symbolizer {
 
     protected AbstractSymbolizer() {}
 
-    public AbstractSymbolizer(
-            String name, Description description, Expression geometry, Unit<Length> unitOfMeasure) {
+    public AbstractSymbolizer(String name, Description description, Expression geometry, Unit<Length> unitOfMeasure) {
         this.name = name;
         this.description = description;
         this.geometry = geometry;
@@ -46,48 +47,54 @@ public abstract class AbstractSymbolizer implements Symbolizer {
     }
 
     public AbstractSymbolizer(
-            String name,
-            Description description,
-            String geometryPropertyName,
-            Unit<Length> unitOfMeasure) {
+            String name, Description description, String geometryPropertyName, Unit<Length> unitOfMeasure) {
         this.name = name;
         this.description = description;
         this.unitOfMeasure = unitOfMeasure;
         setGeometryPropertyName(geometryPropertyName);
     }
 
+    @Override
     public Description getDescription() {
         return description;
     }
 
-    public void setDescription(org.opengis.style.Description description) {
+    @Override
+    public void setDescription(org.geotools.api.style.Description description) {
         this.description = DescriptionImpl.cast(description);
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    @Override
     public void setUnitOfMeasure(Unit<Length> uom) {
         this.unitOfMeasure = uom;
     }
 
+    @Override
     public Unit<Length> getUnitOfMeasure() {
         return unitOfMeasure;
     }
 
+    @Override
     public Expression getGeometry() {
         return geometry;
     }
 
+    @Override
     public void setGeometry(Expression geometry) {
         this.geometry = geometry;
     }
 
+    @Override
     public String getGeometryPropertyName() {
         if (geometry instanceof PropertyName) {
             PropertyName pg = (PropertyName) geometry;
@@ -96,22 +103,25 @@ public abstract class AbstractSymbolizer implements Symbolizer {
         return null;
     }
 
+    @Override
     public void setGeometryPropertyName(String geometryPropertyName) {
         if (geometryPropertyName == null) {
             geometry = null;
         } else {
-            org.opengis.filter.FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
+            org.geotools.api.filter.FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
             geometry = ff.property(geometryPropertyName);
         }
     }
 
+    @Override
     public boolean hasOption(String key) {
         return options != null && options.containsKey(key);
     }
 
+    @Override
     public Map<String, String> getOptions() {
         if (options == null) {
-            options = new LinkedHashMap<String, String>();
+            options = new LinkedHashMap<>();
         }
         return options;
     }

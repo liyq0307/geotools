@@ -17,27 +17,25 @@
 package org.geotools.temporal.reference;
 
 import java.util.Collection;
+import org.geotools.api.metadata.extent.Extent;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.temporal.OrdinalEra;
+import org.geotools.api.temporal.OrdinalReferenceSystem;
 import org.geotools.util.Utilities;
-import org.opengis.metadata.extent.Extent;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.temporal.OrdinalEra;
-import org.opengis.temporal.OrdinalReferenceSystem;
 
 /** @author Mehdi Sidhoum (Geomatys) */
-public class DefaultOrdinalReferenceSystem extends DefaultTemporalReferenceSystem
-        implements OrdinalReferenceSystem {
+public class DefaultOrdinalReferenceSystem extends DefaultTemporalReferenceSystem implements OrdinalReferenceSystem {
 
     /** An ordinal temporal reference system consists of a set of ordinal eras. */
     private Collection<OrdinalEra> ordinalEraSequence;
 
     public DefaultOrdinalReferenceSystem(
-            ReferenceIdentifier name,
-            Extent domainOfValidity,
-            Collection<OrdinalEra> ordinalEraSequence) {
+            ReferenceIdentifier name, Extent domainOfValidity, Collection<OrdinalEra> ordinalEraSequence) {
         super(name, domainOfValidity);
         this.ordinalEraSequence = ordinalEraSequence;
     }
 
+    @Override
     public Collection<OrdinalEra> getOrdinalEraSequence() {
         return ordinalEraSequence;
     }
@@ -63,11 +61,7 @@ public class DefaultOrdinalReferenceSystem extends DefaultTemporalReferenceSyste
     @Override
     public int hashCode() {
         int hash = super.hashCode();
-        hash =
-                37 * hash
-                        + (this.ordinalEraSequence != null
-                                ? this.ordinalEraSequence.hashCode()
-                                : 0);
+        hash = 37 * hash + (this.ordinalEraSequence != null ? this.ordinalEraSequence.hashCode() : 0);
         return hash;
     }
 

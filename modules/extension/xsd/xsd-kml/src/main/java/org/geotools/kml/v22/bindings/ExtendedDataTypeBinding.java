@@ -53,6 +53,7 @@ import org.geotools.xsd.Node;
 public class ExtendedDataTypeBinding extends AbstractComplexBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return KML.ExtendedDataType;
     }
@@ -64,7 +65,7 @@ public class ExtendedDataTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
-    @SuppressWarnings("rawtypes")
+    @Override
     public Class getType() {
         return Map.class;
     }
@@ -76,22 +77,22 @@ public class ExtendedDataTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
-    @SuppressWarnings("unchecked")
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
-        Map<String, Object> extendedData = new HashMap<String, Object>();
+        Map<String, Object> extendedData = new HashMap<>();
 
-        Map<String, Object> unTypedData = new LinkedHashMap<String, Object>();
-        for (Node n : (List<Node>) node.getChildren("Data")) {
+        Map<String, Object> unTypedData = new LinkedHashMap<>();
+        for (Node n : node.getChildren("Data")) {
             unTypedData.put((String) n.getAttributeValue("name"), n.getChildValue("value"));
         }
 
-        Map<String, Object> typedData = new LinkedHashMap<String, Object>();
-        List<URI> schemas = new ArrayList<URI>();
-        for (Node schemaData : (List<Node>) node.getChildren("SchemaData")) {
+        Map<String, Object> typedData = new LinkedHashMap<>();
+        List<URI> schemas = new ArrayList<>();
+        for (Node schemaData : node.getChildren("SchemaData")) {
             URI schemaUrl = (URI) schemaData.getAttributeValue("schemaUrl");
             if (schemaUrl != null) {
-                for (Node n : (List<Node>) schemaData.getChildren("SimpleData")) {
+                for (Node n : schemaData.getChildren("SimpleData")) {
                     typedData.put((String) n.getAttributeValue("name"), n.getValue());
                 }
                 schemas.add(schemaUrl);
@@ -99,9 +100,8 @@ public class ExtendedDataTypeBinding extends AbstractComplexBinding {
         }
 
         /**
-         * Schema-less extended data (see
-         * https://developers.google.com/kml/documentation/extendeddata especially the "Adding
-         * Untyped Name/Value Pairs" section):
+         * Schema-less extended data (see https://developers.google.com/kml/documentation/extendeddata especially the
+         * "Adding Untyped Name/Value Pairs" section):
          *
          * <p><ExtendedData> <Data name="string"> <displayName>...</displayName>
          * <!-- string -->
@@ -109,8 +109,8 @@ public class ExtendedDataTypeBinding extends AbstractComplexBinding {
          * <!-- string -->
          * </Data> </ExtendedData>
          */
-        for (Node freeExtendedData : (List<Node>) node.getChildren("Data")) {
-            for (Node n : (List<Node>) freeExtendedData.getChildren("Data")) {
+        for (Node freeExtendedData : node.getChildren("Data")) {
+            for (Node n : freeExtendedData.getChildren("Data")) {
                 Node v = n.getChild("value");
                 if (v != null) typedData.put((String) n.getAttributeValue("name"), v.getValue());
             }
@@ -122,6 +122,7 @@ public class ExtendedDataTypeBinding extends AbstractComplexBinding {
         return extendedData;
     }
 
+    @Override
     public Object getProperty(Object object, QName name) throws Exception {
         if ("Data".equals(name.getLocalPart())) {
             return object;

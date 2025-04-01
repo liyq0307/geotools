@@ -50,13 +50,14 @@ import org.locationtech.jts.geom.GeometryFactory;
  *
  * @generated
  */
-public class CurveTypeBinding extends org.geotools.gml3.bindings.CurveTypeBinding
-        implements Comparable {
+@SuppressWarnings("ComparableType")
+public class CurveTypeBinding extends org.geotools.gml3.bindings.CurveTypeBinding implements Comparable {
 
     public CurveTypeBinding(GeometryFactory gf) {
         super(gf);
     }
 
+    @Override
     public int compareTo(Object o) {
         if (o instanceof LineStringTypeBinding) {
             return -1;

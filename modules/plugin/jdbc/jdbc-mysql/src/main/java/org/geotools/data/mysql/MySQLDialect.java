@@ -25,6 +25,11 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.Map;
 import java.util.logging.Level;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.Geometries;
 import org.geotools.jdbc.JDBCDataStore;
 import org.geotools.jdbc.SQLDialect;
@@ -42,15 +47,9 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * Delegate for {@link MySQLDialectBasic} and {@link MySQLDialectPrepared} which implements the
- * common part of the api.
+ * Delegate for {@link MySQLDialectBasic} and {@link MySQLDialectPrepared} which implements the common part of the api.
  *
  * @author Justin Deoliveira, OpenGEO
  */
@@ -69,10 +68,12 @@ public class MySQLDialect extends SQLDialect {
     protected String storageEngine;
 
     /**
-     * flag that indicates that precise spatial operation should be used (should apply to MySQL
-     * versions 5.6 and above)
+     * flag that indicates that precise spatial operation should be used (should apply to MySQL versions 5.6 and above)
      */
     protected boolean usePreciseSpatialOps;
+
+    /** flag indicating we are using MySQL v8.0 or higher. */
+    protected boolean isMySqlVersion80OrAbove;
 
     public MySQLDialect(JDBCDataStore dataStore) {
         super(dataStore);
@@ -94,19 +95,28 @@ public class MySQLDialect extends SQLDialect {
         return usePreciseSpatialOps;
     }
 
+    public boolean isMySqlVersion80OrAbove() {
+        return this.isMySqlVersion80OrAbove;
+    }
+
+    public void setMySqlVersion80OrAbove(boolean mySqlVersion80OrAbove) {
+        this.isMySqlVersion80OrAbove = mySqlVersion80OrAbove;
+    }
+
     @Override
-    public boolean includeTable(String schemaName, String tableName, Connection cx)
-            throws SQLException {
+    public boolean includeTable(String schemaName, String tableName, Connection cx) throws SQLException {
         if ("geometry_columns".equalsIgnoreCase(tableName)) {
             return false;
         }
         return super.includeTable(schemaName, tableName, cx);
     }
 
+    @Override
     public String getNameEscape() {
-        return "";
+        return (usePreciseSpatialOps ? "`" : "");
     }
 
+    @Override
     public String getGeometryTypeName(Integer type) {
         if (POINT.equals(type)) {
             return "POINT";
@@ -139,8 +149,8 @@ public class MySQLDialect extends SQLDialect {
         return super.getGeometryTypeName(type);
     }
 
-    public Integer getGeometrySRID(
-            String schemaName, String tableName, String columnName, Connection cx)
+    @Override
+    public Integer getGeometrySRID(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
 
         // first check the geometry_columns table
@@ -186,7 +196,11 @@ public class MySQLDialect extends SQLDialect {
 
         // execute SELECT srid(<columnName>) FROM <tableName> LIMIT 1;
         sql = new StringBuffer();
-        sql.append("SELECT srid(");
+        if (this.usePreciseSpatialOps) {
+            sql.append("SELECT ST_SRID(");
+        } else {
+            sql.append("SELECT srid(");
+        }
         encodeColumnName(null, columnName, sql);
         sql.append(") ");
         sql.append("FROM ");
@@ -223,36 +237,74 @@ public class MySQLDialect extends SQLDialect {
     }
 
     @Override
-    public void encodeGeometryColumn(
-            GeometryDescriptor gatt, String prefix, int srid, Hints hints, StringBuffer sql) {
-        sql.append("asWKB(");
+    public void encodeGeometryColumn(GeometryDescriptor gatt, String prefix, int srid, Hints hints, StringBuffer sql) {
+        if (this.usePreciseSpatialOps) {
+            sql.append("ST_asWKB(");
+        } else {
+            sql.append("asWKB(");
+        }
         encodeColumnName(prefix, gatt.getLocalName(), sql);
         sql.append(")");
     }
 
+    @Override
     public void encodeGeometryEnvelope(String tableName, String geometryColumn, StringBuffer sql) {
-        sql.append("asWKB(");
-        sql.append("envelope(");
-        encodeColumnName(null, geometryColumn, sql);
+        if (this.usePreciseSpatialOps) {
+            if (this.isMySqlVersion80OrAbove) {
+                // since mysql 8 fails to execute st_envelope on geography we need to
+                // work around that casting to srid:0 and back. Example:
+                //
+                //            SELECT ST_asWkB(
+                //                -- restore srid
+                //                ST_srid(
+                //                    -- get envelope
+                //                    ST_Envelope(
+                //                            -- cast to cartesian/srid 0
+                //                            ST_srid(geom, 0)
+                //                    ),
+                //                    ST_SRID(geom)
+                //                )
+                //            ) FROM `road`
+                sql.append("ST_asWKB(ST_SRID(ST_Envelope(ST_SRID(");
+                encodeColumnName(null, geometryColumn, sql);
+                sql.append(",0)),ST_SRID(");
+                encodeColumnName(null, geometryColumn, sql);
+                sql.append(")");
+            } else {
+                // 5.6/5.7 has a different syntax for ST_SRID so we can't use the above
+                // also it doesn't care about projections
+                sql.append("ST_asWKB(ST_Envelope(");
+                encodeColumnName(null, geometryColumn, sql);
+            }
+        } else {
+            sql.append("asWKB(");
+            sql.append("envelope(");
+            encodeColumnName(null, geometryColumn, sql);
+        }
         sql.append("))");
     }
 
-    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx)
-            throws SQLException, IOException {
-        // String wkb = rs.getString( column );
+    @Override
+    public Envelope decodeGeometryEnvelope(ResultSet rs, int column, Connection cx) throws SQLException, IOException {
         byte[] wkb = rs.getBytes(column);
 
         try {
+            /**
+             * As of MySQL 5.7.6, if the argument is a point or a vertical or horizontal line segment, ST_Envelope()
+             * returns the point or the line segment as its MBR rather than returning an invalid polygon therefore we
+             * must override behavior and check for a geometry and not a polygon
+             */
             // TODO: srid
-            Polygon polygon = (Polygon) new WKBReader().read(wkb);
+            Geometry geom = new WKBReader().read(wkb);
 
-            return polygon.getEnvelopeInternal();
+            return geom.getEnvelopeInternal();
         } catch (ParseException e) {
             String msg = "Error decoding wkb for envelope";
             throw (IOException) new IOException(msg).initCause(e);
         }
     }
 
+    @Override
     public Geometry decodeGeometryValue(
             GeometryDescriptor descriptor,
             ResultSet rs,
@@ -273,6 +325,7 @@ public class MySQLDialect extends SQLDialect {
         }
     }
 
+    @Override
     public void registerClassToSqlMappings(Map<Class<?>, Integer> mappings) {
         super.registerClassToSqlMappings(mappings);
 
@@ -285,6 +338,7 @@ public class MySQLDialect extends SQLDialect {
         mappings.put(Geometry.class, GEOMETRY);
     }
 
+    @Override
     public void registerSqlTypeToClassMappings(Map<Integer, Class<?>> mappings) {
         super.registerSqlTypeToClassMappings(mappings);
 
@@ -297,6 +351,7 @@ public class MySQLDialect extends SQLDialect {
         mappings.put(GEOMETRY, Geometry.class);
     }
 
+    @Override
     public void registerSqlTypeNameToClassMappings(Map<String, Class<?>> mappings) {
         super.registerSqlTypeNameToClassMappings(mappings);
 
@@ -307,14 +362,16 @@ public class MySQLDialect extends SQLDialect {
         mappings.put("MULTILINESTRING", MultiLineString.class);
         mappings.put("MULTIPOLYGON", MultiPolygon.class);
         mappings.put("GEOMETRY", Geometry.class);
-        mappings.put("GEOMETRYCOLLETION", GeometryCollection.class);
+        mappings.put("GEOMETRYCOLLECTION", GeometryCollection.class);
     }
 
     @Override
     public void registerSqlTypeToSqlTypeNameOverrides(Map<Integer, String> overrides) {
         overrides.put(Types.BOOLEAN, "BOOL");
+        overrides.put(Types.CLOB, "TEXT");
     }
 
+    @Override
     public void encodePostCreateTable(String tableName, StringBuffer sql) {
         // TODO: make this configurable
         sql.append("ENGINE=" + storageEngine);
@@ -334,14 +391,13 @@ public class MySQLDialect extends SQLDialect {
     public void postCreateTable(String schemaName, SimpleFeatureType featureType, Connection cx)
             throws SQLException, IOException {
 
-        // create teh geometry_columns table if necessary
+        // create the geometry_columns table if necessary
         DatabaseMetaData md = cx.getMetaData();
-        ResultSet rs =
-                md.getTables(
-                        null,
-                        dataStore.escapeNamePattern(md, schemaName),
-                        dataStore.escapeNamePattern(md, "geometry_columns"),
-                        new String[] {"TABLE"});
+        ResultSet rs = md.getTables(
+                null,
+                dataStore.escapeNamePattern(md, schemaName),
+                dataStore.escapeNamePattern(md, "geometry_columns"),
+                new String[] {"TABLE"});
         try {
             if (!rs.next()) {
                 // create it
@@ -401,7 +457,7 @@ public class MySQLDialect extends SQLDialect {
             }
 
             CoordinateReferenceSystem crs = gd.getCoordinateReferenceSystem();
-            int srid = -1;
+            int srid = 0;
             if (crs != null) {
                 Integer i = null;
                 try {
@@ -434,9 +490,13 @@ public class MySQLDialect extends SQLDialect {
             sql.append("2, ");
             sql.append(srid).append(", ");
 
-            Geometries g =
-                    Geometries.getForBinding((Class<? extends Geometry>) gd.getType().getBinding());
-            sql.append("'").append(g != null ? g.getName().toUpperCase() : "GEOMETRY").append("')");
+            @SuppressWarnings("unchecked")
+            Class<? extends Geometry> gc =
+                    (Class<? extends Geometry>) gd.getType().getBinding();
+            Geometries g = Geometries.getForBinding(gc);
+            sql.append("'")
+                    .append(g != null ? g.getName().toUpperCase() : "GEOMETRY")
+                    .append("')");
 
             LOGGER.fine(sql.toString());
             Statement st = cx.createStatement();
@@ -448,6 +508,7 @@ public class MySQLDialect extends SQLDialect {
         }
     }
 
+    @Override
     public void encodePrimaryKey(String column, StringBuffer sql) {
         encodeColumnName(null, column, sql);
         sql.append(" int AUTO_INCREMENT PRIMARY KEY");
@@ -459,8 +520,7 @@ public class MySQLDialect extends SQLDialect {
     }
 
     @Override
-    public Object getLastAutoGeneratedValue(
-            String schemaName, String tableName, String columnName, Connection cx)
+    public Object getLastAutoGeneratedValue(String schemaName, String tableName, String columnName, Connection cx)
             throws SQLException {
         Statement st = cx.createStatement();
         try {
@@ -499,8 +559,7 @@ public class MySQLDialect extends SQLDialect {
     }
 
     @Override
-    public void dropIndex(
-            Connection cx, SimpleFeatureType schema, String databaseSchema, String indexName)
+    public void dropIndex(Connection cx, SimpleFeatureType schema, String databaseSchema, String indexName)
             throws SQLException {
         StringBuffer sql = new StringBuffer();
         String escape = getNameEscape();
@@ -529,5 +588,10 @@ public class MySQLDialect extends SQLDialect {
             dataStore.closeSafe(st);
             dataStore.closeSafe(cx);
         }
+    }
+
+    @Override
+    public boolean canGroupOnGeometry() {
+        return true;
     }
 }

@@ -9,12 +9,18 @@
  */
 package org.geotools.filter.temporal;
 
-import org.opengis.temporal.Instant;
-import org.opengis.temporal.Period;
-import org.opengis.temporal.TemporalPrimitive;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.geotools.api.temporal.Instant;
+import org.geotools.api.temporal.Period;
+import org.geotools.api.temporal.TemporalPrimitive;
+import org.junit.Test;
 
 public class BegunByImplTest extends TemporalFilterTestSupport {
 
+    @Test
     public void test() throws Exception {
         Instant i1 = instant("2001-07-05T12:08:56.235-0700");
         Instant i2 = instant("2001-07-04T12:08:56.235-0700");

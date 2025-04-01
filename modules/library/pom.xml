@@ -7,18 +7,14 @@
                                                                                 
         Version: $Id$              
      ======================================================================= -->
-  <project xmlns="http://maven.apache.org/POM/4.0.0" 
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-           xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                               http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                                 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.geotools</groupId>
     <artifactId>modules</artifactId>
-    <version>23-SNAPSHOT</version>
+    <version>33-SNAPSHOT</version>
   </parent>
-  
 
   <!-- =========================================================== -->
   <!--     Module Description                                      -->
@@ -27,9 +23,7 @@
   <artifactId>library</artifactId>
   <packaging>pom</packaging>
   <name>Geotools libraries</name>
-  <description>
-    Geotools core modules.
-  </description>
+  <description>Geotools core modules.</description>
 
   <licenses>
     <license>
@@ -38,13 +32,12 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
-  
-  
+
   <!-- =========================================================== -->
   <!--     Modules included in the build                           -->
   <!-- =========================================================== -->
   <modules>
-    <module>opengis</module>
+    <module>api</module>
     <module>sample-data</module>
     <module>metadata</module>
     <module>referencing</module>
@@ -52,8 +45,11 @@
     <module>main</module>
     <module>xml</module>
     <module>cql</module>
+    <module>cql2-text</module>
+    <module>cql2-json</module>
     <module>render</module>
     <module>jdbc</module>
+    <module>http</module>
   </modules>
 
 </project>

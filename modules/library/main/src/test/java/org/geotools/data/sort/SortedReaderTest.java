@@ -7,9 +7,14 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Date;
 import java.util.NoSuchElementException;
+import org.geotools.api.data.SimpleFeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.sort.SortBy;
+import org.geotools.api.filter.sort.SortOrder;
 import org.geotools.data.simple.DelegateSimpleFeatureReader;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureReader;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
@@ -22,11 +27,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.sort.SortOrder;
 
 public class SortedReaderTest {
 
@@ -69,7 +69,7 @@ public class SortedReaderTest {
         typeBuilder.add("otherGeom", LineString.class);
         typeBuilder.setDefaultGeometry("defaultGeom");
 
-        schema = (SimpleFeatureType) typeBuilder.buildFeatureType();
+        schema = typeBuilder.buildFeatureType();
 
         SimpleFeatureBuilder builder = new SimpleFeatureBuilder(schema);
 
@@ -95,11 +95,8 @@ public class SortedReaderTest {
             builder.add(new java.sql.Time(System.currentTimeMillis()));
             builder.add(new java.sql.Timestamp(System.currentTimeMillis()));
 
-            LineString line =
-                    gf.createLineString(
-                            new Coordinate[] {
-                                new Coordinate(x + i, y + i), new Coordinate(x + i + 1, y + i + 1)
-                            });
+            LineString line = gf.createLineString(
+                    new Coordinate[] {new Coordinate(x + i, y + i), new Coordinate(x + i + 1, y + i + 1)});
             line.setUserData(DefaultGeographicCRS.WGS84);
             builder.add(line);
 
@@ -138,65 +135,39 @@ public class SortedReaderTest {
     @Test
     public void testMemorySort() throws IOException {
         // make it so that we are not going to hit the disk
-        SimpleFeatureReader sr = null;
-        try {
-            sr = new SortedFeatureReader(fr, peopleAsc, 1000);
+        try (SimpleFeatureReader sr = new SortedFeatureReader(fr, peopleAsc, 1000)) {
             assertSortedOnPeopleAsc(sr);
-        } finally {
-            if (sr != null) {
-                sr.close();
-            }
         }
     }
 
     @Test
     public void testFileSortDate() throws IOException {
         // make it so that we are going to hit the disk
-        SimpleFeatureReader sr = null;
-        try {
-            sr = new SortedFeatureReader(fr, dateAsc, 100);
+        try (SimpleFeatureReader sr = new SortedFeatureReader(fr, dateAsc, 100)) {
             assertSortedOnDateAsc(sr);
-        } finally {
-            if (sr != null) {
-                sr.close();
-            }
         }
     }
 
     @Test
     public void testFileSortPeople() throws IOException {
         // make it so that we are going to hit the disk
-        SimpleFeatureReader sr = null;
-        try {
-            sr = new SortedFeatureReader(fr, peopleAsc, 5);
+        try (SimpleFeatureReader sr = new SortedFeatureReader(fr, peopleAsc, 5)) {
             assertSortedOnPeopleAsc(sr);
-        } finally {
-            if (sr != null) {
-                sr.close();
-            }
         }
     }
 
     @Test
     public void testIteratorSortReduce() throws IOException {
         // make it so that we are not going to hit the disk
-        SimpleFeatureIterator fi = null;
-        try {
-            fi = new SortedFeatureIterator(fc.features(), schema, peopleAsc, 1000);
+        try (SimpleFeatureIterator fi = new SortedFeatureIterator(fc.features(), schema, peopleAsc, 1000)) {
             assertSortedOnPeopleAsc(fi);
-        } finally {
-            if (fi != null) {
-                fi.close();
-            }
         }
     }
 
     @Test
     public void testSortDescending() throws IOException {
         // make it so that we are not going to hit the disk
-        SimpleFeatureReader sr = null;
-        try {
-            sr = new SortedFeatureReader(fr, peopleDesc, 1000);
+        try (SimpleFeatureReader sr = new SortedFeatureReader(fr, peopleDesc, 1000)) {
             double prev = -1;
             while (sr.hasNext()) {
                 SimpleFeature f = sr.next();
@@ -206,19 +177,13 @@ public class SortedReaderTest {
                 }
                 prev = curr;
             }
-        } finally {
-            if (sr != null) {
-                sr.close();
-            }
         }
     }
 
     @Test
     public void testSortNatural() throws IOException {
         // make it so that we are not going to hit the disk
-        SimpleFeatureReader sr = null;
-        try {
-            sr = new SortedFeatureReader(fr, fidAsc, 1000);
+        try (SimpleFeatureReader sr = new SortedFeatureReader(fr, fidAsc, 1000)) {
             String prev = null;
             while (sr.hasNext()) {
                 SimpleFeature f = sr.next();
@@ -228,10 +193,6 @@ public class SortedReaderTest {
                 }
                 prev = id;
             }
-        } finally {
-            if (sr != null) {
-                sr.close();
-            }
         }
     }
 
@@ -240,10 +201,8 @@ public class SortedReaderTest {
         // make it so that we are not going to hit the disk, but
         // some of the data won't fit in the last page, used to be
         // left in memory and forgotten
-        SimpleFeatureReader sr = null;
-        try {
-            final int PRIME = 173;
-            sr = new SortedFeatureReader(fr, fidAsc, PRIME);
+        final int PRIME = 173;
+        try (SimpleFeatureReader sr = new SortedFeatureReader(fr, fidAsc, PRIME)) {
             String prev = null;
             int count = 0;
             while (sr.hasNext()) {
@@ -256,10 +215,6 @@ public class SortedReaderTest {
                 count++;
             }
             assertEquals(fc.size(), count);
-        } finally {
-            if (sr != null) {
-                sr.close();
-            }
         }
     }
 

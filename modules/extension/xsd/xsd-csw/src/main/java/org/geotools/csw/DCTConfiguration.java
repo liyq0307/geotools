@@ -46,7 +46,8 @@ public class DCTConfiguration extends Configuration {
      *
      * @generated
      */
-    protected void registerBindings(Map bindings) {
+    @Override
+    protected void registerBindings(Map<QName, Object> bindings) {
         bindings.put(DCT.recordAbstract, new SimpleLiteralBinding(DC.SimpleLiteral));
         bindings.put(DCT.accessRights, new SimpleLiteralBinding(DC.SimpleLiteral));
         bindings.put(DCT.alternative, new SimpleLiteralBinding(DC.SimpleLiteral));
@@ -85,20 +86,14 @@ public class DCTConfiguration extends Configuration {
         bindings.put(DCT.valid, new SimpleLiteralBinding(DC.SimpleLiteral));
     }
 
-    /**
-     * Generates the bindings registrations for this class
-     *
-     * @param args
-     */
+    /** Generates the bindings registrations for this class */
     @SuppressWarnings("PMD.SystemPrintln")
     public static void main(String[] args) {
         for (Field f : DCT.class.getFields()) {
             if ((f.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) != 0
                     && f.getType().equals(QName.class)) {
                 System.out.println(
-                        "bindings.put(DCT."
-                                + f.getName()
-                                + ", new SimpleLiteralBinding(DC.SimpleLiteral));");
+                        "bindings.put(DCT." + f.getName() + ", new SimpleLiteralBinding(DC.SimpleLiteral));");
             }
         }
     }

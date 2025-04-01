@@ -20,24 +20,24 @@ package org.geotools.filter.function.math;
 
 import static org.geotools.filter.capability.FunctionNameImpl.parameter;
 
+import org.geotools.api.filter.capability.FunctionName;
 import org.geotools.filter.FunctionExpressionImpl;
 import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.util.Converters;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.capability.FunctionName;
 
 public class FilterFunction_cos extends FunctionExpressionImpl {
 
     // public static FunctionName NAME = new FunctionNameImpl("cos","radians");
     public static FunctionName NAME =
-            new FunctionNameImpl(
-                    "cos", parameter("cosine", Double.class), parameter("radians", Double.class));
+            new FunctionNameImpl("cos", parameter("cosine", Double.class), parameter("radians", Double.class));
 
     public FilterFunction_cos() {
         super("cos");
         functionName = NAME;
     }
 
+    @Override
     public Object evaluate(Object feature) {
 
         Object arg0 = getExpression(0).evaluate(feature);

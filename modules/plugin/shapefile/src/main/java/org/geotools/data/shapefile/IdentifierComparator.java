@@ -17,7 +17,7 @@
 package org.geotools.data.shapefile;
 
 import java.util.Comparator;
-import org.opengis.filter.identity.Identifier;
+import org.geotools.api.filter.identity.Identifier;
 
 /**
  * Compares two filter identifiers
@@ -32,6 +32,7 @@ class IdentifierComparator implements Comparator<Identifier> {
         this.prefix = typeName + ".";
     }
 
+    @Override
     public int compare(Identifier o1, Identifier o2) {
         String s1 = o1.toString();
         String s2 = o2.toString();

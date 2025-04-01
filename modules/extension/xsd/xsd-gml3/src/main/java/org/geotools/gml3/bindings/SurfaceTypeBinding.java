@@ -74,6 +74,7 @@ import org.locationtech.jts.geom.MultiPolygon;
  *
  * @generated
  */
+@SuppressWarnings("ComparableType")
 public class SurfaceTypeBinding extends AbstractComplexBinding implements Comparable {
 
     GeometryFactory gf;
@@ -83,6 +84,7 @@ public class SurfaceTypeBinding extends AbstractComplexBinding implements Compar
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.SurfaceType;
     }
@@ -99,6 +101,7 @@ public class SurfaceTypeBinding extends AbstractComplexBinding implements Compar
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return MultiPolygon.class;
     }
@@ -110,10 +113,12 @@ public class SurfaceTypeBinding extends AbstractComplexBinding implements Compar
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return new MultiPolygonTypeBinding(gf).parse(instance, node, value);
     }
 
+    @Override
     public int compareTo(Object o) {
         // JD: HACK here, since we map SurfaceType and MultiSurfaceType to MultiPolygon, there is a
         // conflict when it comes to encoding where the actual type is not specifically specifid.

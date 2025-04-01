@@ -17,11 +17,11 @@
 package org.geotools.gml2.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.gml2.GML;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * Binding object for the type http://www.opengis.net/gml:FeatureAssociationType.
@@ -56,6 +56,7 @@ import org.opengis.feature.simple.SimpleFeature;
  */
 public class GMLFeatureAssociationTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.FeatureAssociationType;
     }
@@ -67,6 +68,7 @@ public class GMLFeatureAssociationTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return SimpleFeature.class;
     }
@@ -78,6 +80,7 @@ public class GMLFeatureAssociationTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return node.getChildValue(SimpleFeature.class);
 

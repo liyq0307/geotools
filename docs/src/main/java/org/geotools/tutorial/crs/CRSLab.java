@@ -1,29 +1,13 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2019, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
- */
-
-/*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
- *
- *    (C) 2006-2014, Open Source Geospatial Foundation (OSGeo)
- *
- *    This file is hereby placed into the Public Domain. This means anyone is
- *    free to do whatever they wish with this file. Use it well and enjoy!
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 // docs start source
 package org.geotools.tutorial.crs;
@@ -38,19 +22,28 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingWorker;
-import org.geotools.data.DataStore;
-import org.geotools.data.DataStoreFactorySpi;
+import org.geotools.api.data.DataStore;
+import org.geotools.api.data.DataStoreFactorySpi;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.data.Query;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.FeatureVisitor;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.style.Style;
+import org.geotools.api.util.ProgressListener;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
-import org.geotools.data.Query;
-import org.geotools.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.map.FeatureLayer;
@@ -58,20 +51,11 @@ import org.geotools.map.Layer;
 import org.geotools.map.MapContent;
 import org.geotools.referencing.CRS;
 import org.geotools.styling.SLD;
-import org.geotools.styling.Style;
 import org.geotools.swing.JMapFrame;
 import org.geotools.swing.JProgressWindow;
 import org.geotools.swing.action.SafeAction;
 import org.geotools.swing.data.JFileDataStoreChooser;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.Feature;
-import org.opengis.feature.FeatureVisitor;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.util.ProgressListener;
 
 /** This is a visual example of changing the coordinate reference system of a feature layer. */
 public class CRSLab {
@@ -126,10 +110,7 @@ public class CRSLab {
     }
     // docs end display
 
-    /**
-     * Export features to a new shapefile using the map projection in which they are currently
-     * displayed
-     */
+    /** Export features to a new shapefile using the map projection in which they are currently displayed */
     // docs start export
     private void exportToShapefile() throws Exception {
         SimpleFeatureType schema = featureSource.getSchema();
@@ -196,10 +177,7 @@ public class CRSLab {
     }
     // docs end export
 
-    /**
-     * Export features to a new shapefile using the map projection in which they are currently
-     * displayed
-     */
+    /** Export features to a new shapefile using the map projection in which they are currently displayed */
     // docs start export2
     private void exportToShapefile2() throws Exception {
         FeatureType schema = featureSource.getSchema();
@@ -214,8 +192,7 @@ public class CRSLab {
 
         File file = chooser.getSelectedFile();
         if (file.equals(sourceFile)) {
-            JOptionPane.showMessageDialog(
-                    null, "Cannot replace " + file, "File warning", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Cannot replace " + file, "File warning", JOptionPane.WARNING_MESSAGE);
             return;
         }
         // We can now query to retrieve a FeatureCollection in the desired crs
@@ -234,22 +211,17 @@ public class CRSLab {
 
         newDataStore.createSchema(featureCollection.getSchema());
         Transaction transaction = new DefaultTransaction("Reproject");
-        SimpleFeatureStore featureStore;
-        featureStore = (SimpleFeatureStore) newDataStore.getFeatureSource(typeName);
+        SimpleFeatureStore featureStore = (SimpleFeatureStore) newDataStore.getFeatureSource(typeName);
         featureStore.setTransaction(transaction);
         try {
             featureStore.addFeatures(featureCollection);
             transaction.commit();
             JOptionPane.showMessageDialog(
-                    null,
-                    "Export to shapefile complete",
-                    "Export",
-                    JOptionPane.INFORMATION_MESSAGE);
+                    null, "Export to shapefile complete", "Export", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception problem) {
             transaction.rollback();
             problem.printStackTrace();
-            JOptionPane.showMessageDialog(
-                    null, "Export to shapefile failed", "Export", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Export to shapefile failed", "Export", JOptionPane.ERROR_MESSAGE);
         } finally {
             transaction.close();
         }
@@ -257,11 +229,11 @@ public class CRSLab {
     // docs end export2
 
     /**
-     * Check the Geometry (point, line or polygon) of each feature to make sure that it is
-     * topologically valid and report on any errors found.
+     * Check the Geometry (point, line or polygon) of each feature to make sure that it is topologically valid and
+     * report on any errors found.
      *
-     * <p>See also the nested ValidateGeometryAction class below which runs this method in a
-     * background thread and reports on the results
+     * <p>See also the nested ValidateGeometryAction class below which runs this method in a background thread and
+     * reports on the results
      *
      * @return the number of invalid geometries found
      */
@@ -278,7 +250,7 @@ public class CRSLab {
                 Geometry geom = (Geometry) feature.getDefaultGeometry();
                 if (geom != null && !geom.isValid()) {
                     numInvalidGeometries++;
-                    System.out.println("Invalid Geoemtry: " + feature.getID());
+                    System.out.println("Invalid geometry: " + feature.getID());
                 }
             }
         }
@@ -292,9 +264,8 @@ public class CRSLab {
     // docs end validate
 
     /**
-     * This class performs the task of exporting the features to a new shapefile using the map
-     * projection that they are currently displayed in. It also supplies the name and tool tip for
-     * the toolbar button.
+     * This class performs the task of exporting the features to a new shapefile using the map projection that they are
+     * currently displayed in. It also supplies the name and tool tip for the toolbar button.
      */
     // docs start export action
     class ExportShapefileAction extends SafeAction {
@@ -310,8 +281,8 @@ public class CRSLab {
     // docs end export action
 
     /**
-     * This class performs the task of checking that the Geometry of each feature is topologically
-     * valid and reports on the results. It also supplies the name and tool tip.
+     * This class performs the task of checking that the Geometry of each feature is topologically valid and reports on
+     * the results. It also supplies the name and tool tip.
      */
     // docs start validate action
     class ValidateGeometryAction extends SafeAction {
@@ -328,15 +299,14 @@ public class CRSLab {
             } else {
                 msg = "Invalid geometries: " + numInvalid;
             }
-            JOptionPane.showMessageDialog(
-                    null, msg, "Geometry results", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(null, msg, "Geometry results", JOptionPane.INFORMATION_MESSAGE);
         }
     }
     // docs end validate action
 
     /**
-     * This class performs the task of checking that the Geometry of each feature is topologically
-     * valid and reports on the results. It also supplies the name and tool tip.
+     * This class performs the task of checking that the Geometry of each feature is topologically valid and reports on
+     * the results. It also supplies the name and tool tip.
      */
     // docs start validate action2
     class ValidateGeometryAction2 extends SafeAction {
@@ -349,33 +319,29 @@ public class CRSLab {
             // Here we use the SwingWorker helper class to run the validation routine in a
             // background thread, otherwise the GUI would wait and the progress bar would not be
             // displayed properly
-            SwingWorker worker =
-                    new SwingWorker<String, Object>() {
-                        protected String doInBackground() throws Exception {
-                            // For shapefiles with many features its nice to display a progress bar
-                            final JProgressWindow progress = new JProgressWindow(null);
-                            progress.setTitle("Validating feature geometry");
+            SwingWorker worker = new SwingWorker<String, Object>() {
+                protected String doInBackground() throws Exception {
+                    // For shapefiles with many features its nice to display a progress bar
+                    final JProgressWindow progress = new JProgressWindow(null);
+                    progress.setTitle("Validating feature geometry");
 
-                            int numInvalid = validateFeatureGeometry(progress);
-                            if (numInvalid == 0) {
-                                return "All feature geometries are valid";
-                            } else {
-                                return "Invalid geometries: " + numInvalid;
-                            }
-                        }
+                    int numInvalid = validateFeatureGeometry(progress);
+                    if (numInvalid == 0) {
+                        return "All feature geometries are valid";
+                    } else {
+                        return "Invalid geometries: " + numInvalid;
+                    }
+                }
 
-                        protected void done() {
-                            try {
-                                Object result = get();
-                                JOptionPane.showMessageDialog(
-                                        null,
-                                        result,
-                                        "Geometry results",
-                                        JOptionPane.INFORMATION_MESSAGE);
-                            } catch (Exception ignore) {
-                            }
-                        }
-                    };
+                protected void done() {
+                    try {
+                        Object result = get();
+                        JOptionPane.showMessageDialog(
+                                null, result, "Geometry results", JOptionPane.INFORMATION_MESSAGE);
+                    } catch (Exception ignore) {
+                    }
+                }
+            };
             // This statement runs the validation method in a background thread
             worker.execute();
         }

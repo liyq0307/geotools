@@ -30,10 +30,10 @@ public class DB2DataStoreTestSetup extends JDBCDelegatingTestSetup {
         super(delegate);
     }
 
+    @Override
     protected final void setUpData() throws Exception {
         // remove the srs
-        Connection con = getConnection();
-        try {
+        try (Connection con = getConnection()) {
             try {
 
                 removeSRS(con);
@@ -41,8 +41,6 @@ public class DB2DataStoreTestSetup extends JDBCDelegatingTestSetup {
             }
             // create the SRS
             createSRS(con);
-        } finally {
-            if (con != null) con.close();
         }
         super.setUpData();
     }

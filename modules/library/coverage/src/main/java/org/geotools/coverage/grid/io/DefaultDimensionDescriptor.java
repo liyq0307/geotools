@@ -16,6 +16,8 @@
  */
 package org.geotools.coverage.grid.io;
 
+import java.util.Objects;
+
 /**
  * Default implementation of the {@link DimensionDescriptor} interface
  *
@@ -34,11 +36,7 @@ public class DefaultDimensionDescriptor implements DimensionDescriptor {
     private String endAttribute;
 
     public DefaultDimensionDescriptor(
-            String name,
-            String units,
-            String unitSymbol,
-            String startAttribute,
-            String endAttribute) {
+            String name, String units, String unitSymbol, String startAttribute, String endAttribute) {
         super();
         this.name = name;
         this.unitSymbol = unitSymbol;
@@ -47,22 +45,27 @@ public class DefaultDimensionDescriptor implements DimensionDescriptor {
         this.endAttribute = endAttribute;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public String getUnitSymbol() {
         return unitSymbol;
     }
 
+    @Override
     public String getUnits() {
         return units;
     }
 
+    @Override
     public String getStartAttribute() {
         return startAttribute;
     }
 
+    @Override
     public String getEndAttribute() {
         return endAttribute;
     }
@@ -106,5 +109,22 @@ public class DefaultDimensionDescriptor implements DimensionDescriptor {
                 + endAttribute
                 + '\''
                 + '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DefaultDimensionDescriptor that = (DefaultDimensionDescriptor) o;
+        return Objects.equals(name, that.name)
+                && Objects.equals(unitSymbol, that.unitSymbol)
+                && Objects.equals(units, that.units)
+                && Objects.equals(startAttribute, that.startAttribute)
+                && Objects.equals(endAttribute, that.endAttribute);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, unitSymbol, units, startAttribute, endAttribute);
     }
 }

@@ -17,6 +17,7 @@
 package org.geotools.coverage;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -24,10 +25,10 @@ import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Random;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.util.Range;
 import org.geotools.util.XArray;
 import org.junit.Test;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Tests the {@link CategoryList} implementation.
@@ -36,12 +37,6 @@ import org.opengis.referencing.operation.TransformException;
  * @author Martin Desruisseaux (IRD)
  */
 public final class CategoryListTest {
-    /** Set to {@code true} in order to print diagnostic messages. */
-    private static final boolean VERBOSE = false;
-
-    /** Small value for comparaisons. */
-    private static final double EPS = 1E-9;
-
     /** Random number generator for this test. */
     private static final Random random = new Random(1471753385855374101L);
 
@@ -74,13 +69,13 @@ public final class CategoryListTest {
             for (int i = 0; i < categories.length; i++) {
                 categories[i] = new Category(String.valueOf(i), null, random.nextInt(100));
             }
-            Arrays.sort(categories, new CategoryList(new Category[0], null));
+            Arrays.sort(categories, CategoryList.COMPARATOR);
             assertTrue("isSorted", CategoryList.isSorted(categories));
             for (int i = 0; i < categories.length; i++) {
                 array[i] = categories[i].minimum;
             }
-            for (int i = 0; i < categories.length; i++) {
-                final double expected = categories[i].minimum;
+            for (Category category : categories) {
+                final double expected = category.minimum;
                 final int foundAt = CategoryList.binarySearch(array, expected);
                 final double actual = categories[foundAt].minimum;
                 assertEquals("binarySearch", toHexString(expected), toHexString(actual));
@@ -91,31 +86,23 @@ public final class CategoryListTest {
     /** Tests the {@link CategoryList} constructor. */
     @Test
     public void testArgumentChecks() {
-        Category[] categories;
-        categories =
-                new Category[] {
-                    new Category("No data", null, 0),
-                    new Category("Land", null, 10),
-                    new Category("Clouds", null, 2),
-                    new Category("Land again", null, 10) // Range overlaps.
-                };
+        Category[] categories = {
+            new Category("No data", null, 0),
+            new Category("Land", null, 10),
+            new Category("Clouds", null, 2),
+            new Category("Land again", null, 10) // Range overlaps.
+        };
         try {
             new CategoryList(categories, null);
             fail("Argument check");
         } catch (IllegalArgumentException exception) {
-            if (VERBOSE) {
-                // System.out.println(exception.getLocalizedMessage());
-                // This is the expected exception.
-            }
+            // expected
         }
         try {
             new CategoryList(categories, null);
             fail("Argument check");
         } catch (IllegalArgumentException exception) {
-            if (VERBOSE) {
-                // System.out.println(exception.getLocalizedMessage());
-                // This is the expected exception.
-            }
+            // expected
         }
         // Removes the wrong category. Now, construction should succed.
         categories = XArray.resize(categories, categories.length - 1);
@@ -123,21 +110,19 @@ public final class CategoryListTest {
     }
 
     /**
-     * Tests the {@link CategoryList#getCategory} method and a limited set of {@link
-     * CategoryList#transform} calls.
+     * Tests the {@link CategoryList#getCategory} method and a limited set of {@link CategoryList#transform} calls.
      *
      * @throws TransformException If an error occured while transforming a value.
      */
     @Test
     public void testGetCategory() throws TransformException {
-        final Category[] categories =
-                new Category[] {
-                    /*[0]*/ new Category("No data", null, 0),
-                    /*[1]*/ new Category("Land", null, 7),
-                    /*[2]*/ new Category("Clouds", null, 3),
-                    /*[3]*/ new Category("Temperature", null, 10, 100),
-                    /*[4]*/ new Category("Foo", null, 100, 120)
-                };
+        final Category[] categories = {
+            /*[0]*/ new Category("No data", null, 0),
+            /*[1]*/ new Category("Land", null, 7),
+            /*[2]*/ new Category("Clouds", null, 3),
+            /*[3]*/ new Category("Temperature", null, 10, 100),
+            /*[4]*/ new Category("Foo", null, 100, 120)
+        };
         CategoryList list;
         boolean searchNearest = false;
         do {
@@ -147,8 +132,8 @@ public final class CategoryListTest {
             final Range range = list.getRange();
             assertEquals("min", 0, ((Number) range.getMinValue()).doubleValue(), 0);
             assertEquals("max", 120, ((Number) range.getMaxValue()).doubleValue(), 0);
-            assertTrue("min included", range.isMinIncluded() == true);
-            assertTrue("max included", range.isMaxIncluded() == false);
+            assertTrue("min included", range.isMinIncluded());
+            assertFalse("max included", range.isMaxIncluded());
             /*
              * Checks category search.
              */

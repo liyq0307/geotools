@@ -16,14 +16,14 @@
  */
 package org.geotools.brewer.styling.filter.expression;
 
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.brewer.styling.builder.Builder;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.PropertyName;
 
 public class PropertyNameBuilder implements Builder<PropertyName> {
-    protected FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
     String xpath = null; // will result in Expression.NIL
     Name name = null;
     boolean unset = false;
@@ -54,6 +54,7 @@ public class PropertyNameBuilder implements Builder<PropertyName> {
         return this;
     }
 
+    @Override
     public PropertyName build() {
         if (unset) {
             return null;
@@ -65,18 +66,21 @@ public class PropertyNameBuilder implements Builder<PropertyName> {
         }
     }
 
+    @Override
     public PropertyNameBuilder reset() {
         unset = false;
         xpath = null;
         return this;
     }
 
+    @Override
     public PropertyNameBuilder reset(PropertyName original) {
         unset = false;
         xpath = original.getPropertyName();
         return this;
     }
 
+    @Override
     public PropertyNameBuilder unset() {
         unset = true;
         xpath = null;

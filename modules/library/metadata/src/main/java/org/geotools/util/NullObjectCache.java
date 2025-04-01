@@ -20,52 +20,59 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * Null implementation for the {@link ObjectCache}. Used for cases where caching is
- * <strong>not</strong> desired.
+ * Null implementation for the {@link ObjectCache}. Used for cases where caching is <strong>not</strong> desired.
  *
  * @since 2.5
  * @version $Id$
  * @author Cory Horner (Refractions Research)
  */
-final class NullObjectCache implements ObjectCache {
+final class NullObjectCache<K, V> implements ObjectCache<K, V> {
     /** The singleton instance. */
-    public static final NullObjectCache INSTANCE = new NullObjectCache();
+    public static final NullObjectCache<Object, Object> INSTANCE = new NullObjectCache<>();
 
     /** Do not allow instantiation of this class, since a singleton is enough. */
     private NullObjectCache() {}
 
     /** Do nothing since this map is already empty. */
+    @Override
     public void clear() {}
 
     /** Returns {@code null} since this map is empty. */
-    public Object get(Object key) {
+    @Override
+    public V get(K key) {
         return null;
     }
 
     /** Returns {@code null} since this map is empty. */
-    public Object peek(Object key) {
+    @Override
+    public V peek(K key) {
         return null;
     }
 
     /** Do nothing since this map does not cache anything. */
-    public void put(Object key, Object object) {}
+    @Override
+    public void put(K key, V object) {}
 
     /** There is no cache, therefore a cache miss is a safe assumption. */
-    public boolean containsKey(Object key) {
+    public boolean containsKey(K key) {
         return false;
     }
 
     /** Do nothing since there is no write lock. */
-    public void writeLock(Object key) {}
+    @Override
+    public void writeLock(K key) {}
 
     /** Do nothing since there is no write lock. */
-    public void writeUnLock(Object key) {}
+    @Override
+    public void writeUnLock(K key) {}
 
     /** Return an empty set. */
-    public Set<Object> getKeys() {
+    @Override
+    public Set<K> getKeys() {
         return Collections.emptySet();
     }
 
     /** Do nothing since there is nothing to remove. */
-    public void remove(Object key) {}
+    @Override
+    public void remove(K key) {}
 }

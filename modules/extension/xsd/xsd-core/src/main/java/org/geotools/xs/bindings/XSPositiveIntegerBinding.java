@@ -45,6 +45,7 @@ import org.geotools.xsd.SimpleBinding;
  */
 public class XSPositiveIntegerBinding implements SimpleBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return XS.POSITIVEINTEGER;
     }
@@ -56,6 +57,7 @@ public class XSPositiveIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -68,6 +70,7 @@ public class XSPositiveIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return BigInteger.class;
     }
@@ -77,20 +80,19 @@ public class XSPositiveIntegerBinding implements SimpleBinding {
      * <!-- begin-user-doc -->
      * Restriction of integer to positive values.
      *
-     * <p>Please just treat this as a Number, actual value returned may be BigInteger or Long or
-     * Integer.
+     * <p>Please just treat this as a Number, actual value returned may be BigInteger or Long or Integer.
      *
      * @param instance with text to be parsed
      * @param value Number from parent XSNonNegativeIntegerStratagy
      * @return Number positive in range 1 to ...
      *     <!-- begin-user-doc -->
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         Number number = (Number) value;
 
         if (number.longValue() < 1) {
-            throw new IllegalArgumentException(
-                    "positiveInteger value '" + number + "' must be positive.");
+            throw new IllegalArgumentException("positiveInteger value '" + number + "' must be positive.");
         }
 
         return BigInteger.valueOf(number.longValue());
@@ -103,12 +105,12 @@ public class XSPositiveIntegerBinding implements SimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public String encode(Object object, String value) throws Exception {
         Number number = (Number) object;
 
         if (number.longValue() == 0) {
-            throw new IllegalArgumentException(
-                    "positiveInteger value '" + number + "' must be positive.");
+            throw new IllegalArgumentException("positiveInteger value '" + number + "' must be positive.");
         }
 
         return value;

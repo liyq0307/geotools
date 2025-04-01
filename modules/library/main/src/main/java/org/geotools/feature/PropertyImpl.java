@@ -18,11 +18,11 @@ package org.geotools.feature;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
+import org.geotools.api.feature.type.PropertyType;
 import org.geotools.util.Utilities;
-import org.opengis.feature.Property;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
-import org.opengis.feature.type.PropertyType;
 
 /**
  * Implementation of Property.
@@ -34,47 +34,59 @@ public abstract class PropertyImpl implements Property {
     protected Object value;
     /** descriptor of the property */
     protected PropertyDescriptor descriptor;
-    /** user data */
-    protected final Map<Object, Object> userData;
+    /** user data, lazily initialized at {@link #getUserData()} / {@link #getUserData(Object)} */
+    private Map<Object, Object> userData;
 
     protected PropertyImpl(Object value, PropertyDescriptor descriptor) {
         this.value = value;
         this.descriptor = descriptor;
-        userData = new HashMap<Object, Object>();
-
         if (descriptor == null) {
             throw new NullPointerException("descriptor");
         }
     }
 
+    @Override
     public Object getValue() {
         return value;
     }
 
+    @Override
     public void setValue(Object value) {
         this.value = value;
     }
 
+    @Override
     public PropertyDescriptor getDescriptor() {
         return descriptor;
     }
 
+    @Override
     public Name getName() {
         return getDescriptor().getName();
     }
 
+    @Override
     public PropertyType getType() {
         return getDescriptor().getType();
     }
 
+    @Override
     public boolean isNillable() {
         return getDescriptor().isNillable();
     }
 
+    @Override
     public Map<Object, Object> getUserData() {
+        if (userData == null) userData = new HashMap<>();
         return userData;
     }
 
+    public Object getUserData(Object key) {
+        Map<Object, Object> ud = userData;
+        return ud == null ? null : ud.get(key);
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -93,10 +105,12 @@ public abstract class PropertyImpl implements Property {
         return true;
     }
 
+    @Override
     public int hashCode() {
         return 37 * descriptor.hashCode() + (37 * (value == null ? 0 : value.hashCode()));
     }
 
+    @Override
     public String toString() {
         StringBuffer sb = new StringBuffer(getClass().getSimpleName()).append(":");
         sb.append(getDescriptor().getName().getLocalPart());

@@ -16,14 +16,14 @@
  */
 package org.geotools.brewer.styling.filter.expression;
 
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Multiply;
 import org.geotools.brewer.styling.builder.Builder;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Multiply;
 
 public class MultiplyBuilder implements Builder<Multiply> {
 
-    protected FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+    protected FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
     boolean unset = false;
 
@@ -39,27 +39,31 @@ public class MultiplyBuilder implements Builder<Multiply> {
         reset(expression);
     }
 
+    @Override
     public MultiplyBuilder reset() {
         unset = false;
-        expr1 = new ChildExpressionBuilder<MultiplyBuilder>(this);
-        expr2 = new ChildExpressionBuilder<MultiplyBuilder>(this);
+        expr1 = new ChildExpressionBuilder<>(this);
+        expr2 = new ChildExpressionBuilder<>(this);
         return this;
     }
 
+    @Override
     public MultiplyBuilder reset(Multiply original) {
         unset = false;
-        expr1 = new ChildExpressionBuilder<MultiplyBuilder>(this, original.getExpression1());
-        expr2 = new ChildExpressionBuilder<MultiplyBuilder>(this, original.getExpression2());
+        expr1 = new ChildExpressionBuilder<>(this, original.getExpression1());
+        expr2 = new ChildExpressionBuilder<>(this, original.getExpression2());
         return this;
     }
 
+    @Override
     public MultiplyBuilder unset() {
         unset = true;
-        expr1 = new ChildExpressionBuilder<MultiplyBuilder>(this).unset();
+        expr1 = new ChildExpressionBuilder<>(this).unset();
         expr2 = null;
         return this;
     }
 
+    @Override
     public Multiply build() {
         if (unset) {
             return null;

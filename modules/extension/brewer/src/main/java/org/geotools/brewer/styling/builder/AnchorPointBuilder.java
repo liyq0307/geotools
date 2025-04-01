@@ -16,8 +16,8 @@
  */
 package org.geotools.brewer.styling.builder;
 
-import org.geotools.styling.AnchorPoint;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.AnchorPoint;
 
 /**
  * AnchorPoint allows you specify which part of a graphic indicates the location.
@@ -56,6 +56,7 @@ public class AnchorPointBuilder extends AbstractStyleBuilder<AnchorPoint> {
         reset();
     }
 
+    @Override
     public AnchorPoint build() {
         if (unset) {
             return null;
@@ -95,6 +96,7 @@ public class AnchorPointBuilder extends AbstractStyleBuilder<AnchorPoint> {
         return y(cqlExpression(cqlExpression));
     }
 
+    @Override
     public AnchorPointBuilder reset() {
         x = literal(defaultX);
         y = literal(defaultY);
@@ -102,21 +104,13 @@ public class AnchorPointBuilder extends AbstractStyleBuilder<AnchorPoint> {
         return this;
     }
 
-    public AnchorPointBuilder reset(AnchorPoint anchorPoint) {
-        if (anchorPoint == null) {
-            return reset();
-        }
-        x = anchorPoint.getAnchorPointX();
-        y = anchorPoint.getAnchorPointY();
-        unset = false;
-        return this;
-    }
-
+    @Override
     public AnchorPointBuilder unset() {
         return (AnchorPointBuilder) super.unset();
     }
 
-    public AnchorPointBuilder reset(org.opengis.style.AnchorPoint anchorPoint) {
+    @Override
+    public AnchorPointBuilder reset(org.geotools.api.style.AnchorPoint anchorPoint) {
         if (anchorPoint == null) {
             return unset();
         }
@@ -128,6 +122,12 @@ public class AnchorPointBuilder extends AbstractStyleBuilder<AnchorPoint> {
 
     @Override
     protected void buildStyleInternal(StyleBuilder sb) {
-        sb.featureTypeStyle().rule().text().labelText("label").pointPlacement().anchor().init(this);
+        sb.featureTypeStyle()
+                .rule()
+                .text()
+                .labelText("label")
+                .pointPlacement()
+                .anchor()
+                .init(this);
     }
 }

@@ -19,20 +19,19 @@ package org.geotools.data.store;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.sort.SortBy;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FeatureReader;
 import org.geotools.data.collection.DelegateFeatureReader;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
 import org.geotools.feature.collection.DecoratingFeatureCollection;
 import org.geotools.filter.visitor.BindingFilterVisitor;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.sort.SortBy;
 
 /**
  * Decorates a feature collection with one that filters content.
@@ -53,71 +52,77 @@ public class FilteringFeatureCollection<T extends FeatureType, F extends Feature
         this.filter = (Filter) filter.accept(new BindingFilterVisitor(delegate.getSchema()), null);
     }
 
+    @Override
     public FeatureCollection<T, F> subCollection(Filter filter) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public FeatureCollection<T, F> sort(SortBy order) {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public int size() {
         int count = 0;
-        FeatureIterator<F> i = features();
-        try {
+        try (FeatureIterator<F> i = features()) {
             while (i.hasNext()) {
                 count++;
                 i.next();
             }
 
             return count;
-        } finally {
-            i.close();
         }
     }
 
+    @Override
     public boolean isEmpty() {
-        return size() == 0;
+        try (FeatureIterator<F> i = features()) {
+            return !i.hasNext();
+        }
     }
 
+    @Override
     public Object[] toArray() {
         return toArray(new Object[size()]);
     }
 
+    @Override
     public <O> O[] toArray(O[] a) {
-        List<F> list = new ArrayList<F>();
-        FeatureIterator<F> i = features();
-        try {
+        List<F> list = new ArrayList<>();
+        try (FeatureIterator<F> i = features()) {
             while (i.hasNext()) {
                 list.add(i.next());
             }
             return list.toArray(a);
-        } finally {
-            i.close();
         }
     }
 
+    @Override
     public boolean contains(Object o) {
         return delegate.contains(o) && filter.evaluate(o);
     }
 
+    @Override
     public boolean containsAll(Collection<?> c) {
-        for (Iterator<?> i = c.iterator(); i.hasNext(); ) {
-            if (!contains(i.next())) {
+        for (Object o : c) {
+            if (!contains(o)) {
                 return false;
             }
         }
         return true;
     }
 
+    @Override
     public FeatureIterator<F> features() {
-        return new FilteringFeatureIterator<F>(delegate.features(), filter);
+        return new FilteringFeatureIterator<>(delegate.features(), filter);
     }
 
     public FeatureReader<T, F> reader() throws IOException {
-        return new DelegateFeatureReader<T, F>(getSchema(), features());
+        return new DelegateFeatureReader<>(getSchema(), features());
     }
 
+    @Override
     public ReferencedEnvelope getBounds() {
         // calculate manually
         return DataUtilities.bounds(this);

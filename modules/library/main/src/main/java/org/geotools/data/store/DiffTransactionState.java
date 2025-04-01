@@ -17,17 +17,17 @@
 package org.geotools.data.store;
 
 import java.io.IOException;
-import org.geotools.data.DataSourceException;
+import org.geotools.api.data.DataSourceException;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FeatureWriter;
+import org.geotools.api.data.Transaction;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
 import org.geotools.data.Diff;
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.Transaction;
 import org.geotools.util.factory.Hints;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 
 /** Transaction state responsible for holding an in memory {@link Diff} of any modifications. */
 public class DiffTransactionState implements Transaction.State {
@@ -36,9 +36,7 @@ public class DiffTransactionState implements Transaction.State {
     /** The transaction (ie session) associated with this state */
     protected Transaction transaction;
 
-    /**
-     * ContentState for this transaction used to hold information for FeatureReader implementations
-     */
+    /** ContentState for this transaction used to hold information for FeatureReader implementations */
     protected ContentState state;
 
     /**
@@ -73,8 +71,8 @@ public class DiffTransactionState implements Transaction.State {
     @Override
 
     /**
-     * We are already holding onto our transaction from ContentState; however this method does check
-     * that the transaction is correct.
+     * We are already holding onto our transaction from ContentState; however this method does check that the
+     * transaction is correct.
      */
     public synchronized void setTransaction(Transaction transaction) {
         if (this.transaction != null && transaction == null) {
@@ -89,8 +87,8 @@ public class DiffTransactionState implements Transaction.State {
     /**
      * Will apply differences to store.
      *
-     * <p>The provided diff will be modified as the differences are applied, If the operations are
-     * all successful diff will be empty at the end of this process.
+     * <p>The provided diff will be modified as the differences are applied, If the operations are all successful diff
+     * will be empty at the end of this process.
      *
      * <p>diff can be used to represent the following operations:
      *
@@ -104,36 +102,27 @@ public class DiffTransactionState implements Transaction.State {
      * @param diff differences to apply to FeatureWriter
      * @throws IOException If the entire diff cannot be writen out
      * @t
-     * @see org.geotools.data.Transaction.State#commit()
+     * @see Transaction.State#commit()
      */
     public synchronized void commit() throws IOException {
         if (diff.isEmpty()) {
             return; // nothing to do
         }
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
-        ContentFeatureStore store;
         ContentEntry entry = state.getEntry();
         Name name = entry.getName();
         ContentDataStore dataStore = entry.getDataStore();
         ContentFeatureSource source = (ContentFeatureSource) dataStore.getFeatureSource(name);
-        if (source instanceof ContentFeatureStore) {
-            // request a plain writer with no events, filtering or locking checks
-            store = (ContentFeatureStore) dataStore.getFeatureSource(name, transaction);
-            writer = store.getWriter(Filter.INCLUDE, ContentDataStore.WRITER_COMMIT);
-        } else {
-            throw new UnsupportedOperationException("not writable");
-        }
         SimpleFeature feature;
         SimpleFeature update;
 
         Throwable cause = null;
-        try {
+        try (FeatureWriter<SimpleFeatureType, SimpleFeature> writer = getWriter(name, dataStore, source)) {
             while (writer.hasNext()) {
-                feature = (SimpleFeature) writer.next();
+                feature = writer.next();
                 String fid = feature.getID();
 
                 if (diff.getModified().containsKey(fid)) {
-                    update = (SimpleFeature) diff.getModified().get(fid);
+                    update = diff.getModified().get(fid);
 
                     if (update == Diff.NULL) {
                         writer.remove();
@@ -157,7 +146,7 @@ public class DiffTransactionState implements Transaction.State {
                 for (String fid : diff.getAddedOrder()) {
                     addedFeature = diff.getAdded().get(fid);
 
-                    nextFeature = (SimpleFeature) writer.next();
+                    nextFeature = writer.next();
 
                     if (nextFeature == null) {
                         throw new DataSourceException("Could not add " + fid);
@@ -172,9 +161,7 @@ public class DiffTransactionState implements Transaction.State {
                                         (String) addedFeature.getUserData().get(Hints.PROVIDED_FID);
                                 nextFeature.getUserData().put(Hints.PROVIDED_FID, providedFid);
                             } else {
-                                nextFeature
-                                        .getUserData()
-                                        .put(Hints.PROVIDED_FID, addedFeature.getID());
+                                nextFeature.getUserData().put(Hints.PROVIDED_FID, addedFeature.getID());
                             }
                             // }
                             writer.write();
@@ -185,22 +172,13 @@ public class DiffTransactionState implements Transaction.State {
                     }
                 }
             }
-        } catch (IOException e) {
-            cause = e;
-            throw e;
-        } catch (RuntimeException e) {
+        } catch (IOException | RuntimeException e) {
             cause = e;
             throw e;
         } finally {
             try {
-                writer.close();
                 state.fireBatchFeatureEvent(true);
                 diff.clear();
-            } catch (IOException e) {
-                if (cause != null) {
-                    e.initCause(cause);
-                }
-                throw e;
             } catch (RuntimeException e) {
                 if (cause != null) {
                     e.initCause(cause);
@@ -210,8 +188,22 @@ public class DiffTransactionState implements Transaction.State {
         }
     }
 
+    private FeatureWriter<SimpleFeatureType, SimpleFeature> getWriter(
+            Name name, ContentDataStore dataStore, ContentFeatureSource source) throws IOException {
+        ContentFeatureStore store;
+        FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
+        if (source instanceof ContentFeatureStore) {
+            // request a plain writer with no events, filtering or locking checks
+            store = (ContentFeatureStore) dataStore.getFeatureSource(name, transaction);
+            writer = store.getWriter(Filter.INCLUDE, ContentDataStore.WRITER_COMMIT);
+        } else {
+            throw new UnsupportedOperationException("not writable");
+        }
+        return writer;
+    }
+
     @Override
-    /** @see org.geotools.data.Transaction.State#rollback() */
+    /** @see Transaction.State#rollback() */
     public synchronized void rollback() throws IOException {
         diff.clear(); // rollback differences
         state.fireBatchFeatureEvent(false);
@@ -219,7 +211,7 @@ public class DiffTransactionState implements Transaction.State {
 
     @Override
 
-    /** @see org.geotools.data.Transaction.State#addAuthorization(java.lang.String) */
+    /** @see Transaction.State#addAuthorization(java.lang.String) */
     public synchronized void addAuthorization(String AuthID) throws IOException {
         // not required for TransactionStateDiff
     }
@@ -232,8 +224,7 @@ public class DiffTransactionState implements Transaction.State {
      * @return FeatureWriter with diff support
      */
     public FeatureWriter<SimpleFeatureType, SimpleFeature> diffWriter(
-            ContentFeatureStore contentFeatureStore,
-            FeatureReader<SimpleFeatureType, SimpleFeature> reader) {
+            ContentFeatureStore contentFeatureStore, FeatureReader<SimpleFeatureType, SimpleFeature> reader) {
 
         return new DiffContentFeatureWriter(contentFeatureStore, diff, reader);
     }

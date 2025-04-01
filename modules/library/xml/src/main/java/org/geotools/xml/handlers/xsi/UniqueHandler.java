@@ -26,8 +26,8 @@ import org.xml.sax.SAXNotRecognizedException;
 /**
  * UniqueHandler purpose.
  *
- * <p>represents a unique element. This class is not currently used except as a placeholder. TODO
- * used this class semantically
+ * <p>represents a unique element. This class is not currently used except as a placeholder. TODO used this class
+ * semantically
  *
  * @author dzwiers, Refractions Research, Inc. http://www.refractions.net
  * @author $Author:$ (last modification)
@@ -40,9 +40,10 @@ public class UniqueHandler extends XSIElementHandler {
     private String id;
     private String xpath;
     private SelectorHandler selector;
-    private List fields;
+    private List<FieldHandler> fields;
 
     /** @see java.lang.Object#hashCode() */
+    @Override
     @SuppressWarnings("PMD.OverrideBothEqualsAndHashcode")
     public int hashCode() {
         return LOCALNAME.hashCode()
@@ -52,6 +53,7 @@ public class UniqueHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String) */
+    @Override
     public XSIElementHandler getHandler(String namespaceURI, String localName) throws SAXException {
         if (SchemaHandler.namespaceURI.equalsIgnoreCase(namespaceURI)) {
             // child types
@@ -60,7 +62,7 @@ public class UniqueHandler extends XSIElementHandler {
             // field
             if (FieldHandler.LOCALNAME.equalsIgnoreCase(localName)) {
                 if (fields == null) {
-                    fields = new LinkedList();
+                    fields = new LinkedList<>();
                 }
 
                 FieldHandler fh = new FieldHandler();
@@ -87,9 +89,9 @@ public class UniqueHandler extends XSIElementHandler {
     }
 
     /**
-     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
-     *     org.xml.sax.Attributes)
+     * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
+    @Override
     public void startElement(String namespaceURI, String localName, Attributes atts) {
         id = atts.getValue("", "id");
 
@@ -105,6 +107,7 @@ public class UniqueHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getLocalName() */
+    @Override
     public String getLocalName() {
         return LOCALNAME;
     }
@@ -130,11 +133,13 @@ public class UniqueHandler extends XSIElementHandler {
     }
 
     /** @see org.geotools.xml.XSIElementHandler#getHandlerType() */
+    @Override
     public int getHandlerType() {
         return DEFAULT;
     }
 
     /** @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String) */
+    @Override
     public void endElement(String namespaceURI, String localName) {
         // do nothing
     }

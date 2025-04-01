@@ -26,20 +26,22 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.Attribute;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.PropertyName;
 import org.geotools.data.complex.PathAttributeList.Pair;
 import org.geotools.data.complex.util.XPathUtil.Step;
 import org.geotools.data.complex.util.XPathUtil.StepList;
 import org.geotools.data.complex.xml.XmlFeatureSource;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.LiteralExpressionImpl;
-import org.opengis.feature.Attribute;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.PropertyName;
 import org.xml.sax.helpers.NamespaceSupport;
 
 /**
@@ -60,7 +62,7 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
     private static final String AS_XPATH_FUNCTION = "asXpath";
 
     /** Output xpath to input xpath map */
-    private Map<String, Expression> mapping = new HashMap<String, Expression>();
+    private Map<String, Expression> mapping = new HashMap<>();
 
     /** List of labelled AttributeMappings */
     private AttributeCreateOrderList attOrderedTypeList = null;
@@ -72,7 +74,7 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
 
     private FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
     /** Attributes that don't have their own label, therefore are children of another node. */
-    List<AttributeMapping> setterAttributes = new ArrayList<AttributeMapping>();
+    List<AttributeMapping> setterAttributes = new ArrayList<>();
 
     PathAttributeList elements;
 
@@ -80,11 +82,11 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
 
     /** No parameters constructor for use by the digester configuration engine as a JavaBean */
     public XmlFeatureTypeMapping() {
-        super(null, null, new LinkedList<AttributeMapping>(), new NamespaceSupport());
+        super(null, null, new LinkedList<>(), new NamespaceSupport());
     }
 
     public XmlFeatureTypeMapping(
-            FeatureSource source,
+            FeatureSource<? extends FeatureType, ? extends Feature> source,
             AttributeDescriptor target,
             List<AttributeMapping> mappings,
             NamespaceSupport namespaces,
@@ -96,13 +98,12 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
         try {
             populateFeatureData();
         } catch (IOException ex) {
-            throw new RuntimeException(
-                    "Error occured when trying to create attribute mappings", ex);
+            throw new RuntimeException("Error occured when trying to create attribute mappings", ex);
         }
     }
 
     public List<Expression> getExpressionsIgnoreIndex(final StepList targetPath) {
-        List<Expression> mappings = new ArrayList<Expression>();
+        List<Expression> mappings = new ArrayList<>();
         String path = targetPath.toString();
 
         Collection<String> c = mapping.keySet();
@@ -151,18 +152,17 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
     /**
      * Finds the attribute mappings for the given source expression.
      *
-     * @param sourceExpression
      * @return list of matching attribute mappings
      */
-    public List<AttributeMapping> getAttributeMappingsByExpression(
-            final Expression sourceExpression) {
+    @Override
+    public List<AttributeMapping> getAttributeMappingsByExpression(final Expression sourceExpression) {
         AttributeMapping attMapping;
         List<AttributeMapping> mappings = Collections.emptyList();
-        for (Iterator<AttributeMapping> it = attributeMappings.iterator(); it.hasNext(); ) {
-            attMapping = (AttributeMapping) it.next();
+        for (AttributeMapping attributeMapping : attributeMappings) {
+            attMapping = attributeMapping;
             if (sourceExpression.equals(attMapping.getSourceExpression())) {
-                if (mappings.size() == 0) {
-                    mappings = new ArrayList<AttributeMapping>(2);
+                if (mappings.isEmpty()) {
+                    mappings = new ArrayList<>(2);
                 }
                 mappings.add(attMapping);
             }
@@ -178,8 +178,8 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
      */
     public AttributeMapping getAttributeMappingByLabel(String label) {
         AttributeMapping attMapping;
-        for (Iterator<AttributeMapping> it = attributeMappings.iterator(); it.hasNext(); ) {
-            attMapping = (AttributeMapping) it.next();
+        for (AttributeMapping attributeMapping : attributeMappings) {
+            attMapping = attributeMapping;
             if (label.equals(attMapping.getLabel())) {
                 return attMapping;
             }
@@ -191,13 +191,12 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
      * Finds the attribute mapping for the target expression <code>exactPath</code>
      *
      * @param exactPath the xpath expression on the target schema to find the mapping for
-     * @return the attribute mapping that match 1:1 with <code>exactPath</code> or <code>null</code>
-     *     if
+     * @return the attribute mapping that match 1:1 with <code>exactPath</code> or <code>null</code> if
      */
     public AttributeMapping getStringMapping(final StepList exactPath) {
         AttributeMapping attMapping;
-        for (Iterator<AttributeMapping> it = attributeMappings.iterator(); it.hasNext(); ) {
-            attMapping = (AttributeMapping) it.next();
+        for (AttributeMapping attributeMapping : attributeMappings) {
+            attMapping = attributeMapping;
             if (exactPath.equals(attMapping.getTargetXPath())) {
                 return attMapping;
             }
@@ -212,10 +211,9 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
             initialiseAttributeLists(attMap);
         }
         // create required elements
-        String xpath =
-                rootAttribute.getInstanceXpath() == null
-                        ? itemXpath
-                        : itemXpath + XPATH_SEPARATOR + rootAttribute.getInstanceXpath();
+        String xpath = rootAttribute.getInstanceXpath() == null
+                ? itemXpath
+                : itemXpath + XPATH_SEPARATOR + rootAttribute.getInstanceXpath();
 
         elements.put(rootAttribute.getLabel(), xpath, null);
         Expression idExpression = rootAttribute.getIdentifierExpression();
@@ -245,8 +243,7 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
 
             List<Pair> ls = elements.get(attMapping.getParentLabel());
             if (ls != null) {
-                for (int i = 0; i < ls.size(); i++) {
-                    Pair parentAttribute = ls.get(i);
+                for (Pair parentAttribute : ls) {
                     String instancePath = attMapping.getInstanceXpath();
                     int count = 1;
                     String countXpath = parentAttribute.getXpath();
@@ -259,23 +256,18 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
                         final String bracketIndex = "";
                         String xpath;
                         if (instancePath == null) {
-                            xpath =
-                                    parentAttribute.getXpath()
-                                            + XPATH_SEPARATOR
-                                            + sourceExpression.toString();
+                            xpath = parentAttribute.getXpath() + XPATH_SEPARATOR + sourceExpression.toString();
                         } else {
-                            xpath =
-                                    parentAttribute.getXpath()
-                                            + XPATH_SEPARATOR
-                                            + instancePath
-                                            + bracketIndex
-                                            + XPATH_SEPARATOR
-                                            + sourceExpression.toString();
+                            xpath = parentAttribute.getXpath()
+                                    + XPATH_SEPARATOR
+                                    + instancePath
+                                    + bracketIndex
+                                    + XPATH_SEPARATOR
+                                    + sourceExpression.toString();
                         }
                         String label = getFullQueryPath(attMapping);
 
-                        mapping.put(
-                                label + XPATH_PROPERTY_SEPARATOR + "gml:id", ff.property(xpath));
+                        mapping.put(label + XPATH_PROPERTY_SEPARATOR + "gml:id", ff.property(xpath));
 
                         StepList sl = attMapping.getTargetXPath();
                         setPathIndex(j, sl);
@@ -291,8 +283,7 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
         for (AttributeMapping attMapping : setterAttributes) {
             List<Pair> ls = elements.get(attMapping.getParentLabel());
             if (ls != null) {
-                for (int i = 0; i < ls.size(); i++) {
-                    Pair parentPair = ls.get(i);
+                for (Pair parentPair : ls) {
                     final Expression sourceExpression = attMapping.getSourceExpression();
                     String prefix = parentPair.getXpath();
 
@@ -317,14 +308,13 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
 
     private void addClientProperties(AttributeMapping attMapping, String prefix, String label) {
         Map<Name, Expression> clientProperties = attMapping.getClientProperties();
-        if (clientProperties.size() != 0) {
+        if (!clientProperties.isEmpty()) {
 
             for (Map.Entry<Name, Expression> entry : clientProperties.entrySet()) {
                 Name propName = entry.getKey();
                 Expression propExpr = entry.getValue();
                 Expression xPath = getValue(prefix, propExpr, attMapping);
-                mapping.put(
-                        label + XPATH_PROPERTY_SEPARATOR + getPropertyNameXpath(propName), xPath);
+                mapping.put(label + XPATH_PROPERTY_SEPARATOR + getPropertyNameXpath(propName), xPath);
             }
         }
     }
@@ -382,8 +372,8 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
     }
 
     /**
-     * Find asXpath in a function, which might be the function itself or a parameter of the
-     * function, and extract the xpath value including itemXpath and instancePath prefixes.
+     * Find asXpath in a function, which might be the function itself or a parameter of the function, and extract the
+     * xpath value including itemXpath and instancePath prefixes.
      *
      * @param func The function
      * @param mapping The attribute mapping
@@ -439,7 +429,7 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
         }
 
         attOrderedTypeList = new AttributeCreateOrderList(rootAttribute.getLabel());
-        indexAttributeList = new HashMap<String, AttributeMapping>();
+        indexAttributeList = new HashMap<>();
         indexAttributeList.put(rootAttribute.getLabel(), rootAttribute);
 
         for (AttributeMapping attMapping : mappings) {
@@ -494,16 +484,12 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
     /**
      * Looks up for attribute mappings matching the xpath expression <code>propertyName</code>.
      *
-     * <p>If any step in <code>propertyName</code> has index greater than 1, any mapping for the
-     * same property applies, regardless of the mapping. For example, if there are mappings for
-     * <code>gml:name[1]</code>, <code>gml:name[2]</code> and <code>gml:name[3]</code>, but
-     * propertyName is just <code>gml:name</code>, all three mappings apply.
-     *
-     * @return
+     * <p>If any step in <code>propertyName</code> has index greater than 1, any mapping for the same property applies,
+     * regardless of the mapping. For example, if there are mappings for <code>gml:name[1]</code>, <code>gml:name[2]
+     * </code> and <code>gml:name[3]</code>, but propertyName is just <code>gml:name</code>, all three mappings apply.
      */
     @Override
-    public List<Expression> findMappingsFor(
-            final StepList propertyName, boolean includeNestedMappings) {
+    public List<Expression> findMappingsFor(final StepList propertyName, boolean includeNestedMappings) {
         List<Expression> expressions = null;
 
         // get all matching mappings if index is not specified, otherwise
@@ -513,7 +499,7 @@ public class XmlFeatureTypeMapping extends FeatureTypeMapping {
             expressions = getExpressionsIgnoreIndex(propertyName);
         } else {
             // get specified mapping if indexed
-            expressions = new ArrayList<Expression>(1);
+            expressions = new ArrayList<>(1);
             AttributeMapping mapping = getStringMapping(propertyName);
             if (mapping != null) {
                 expressions.add(mapping.getSourceExpression());

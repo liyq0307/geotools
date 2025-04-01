@@ -16,31 +16,30 @@
  */
 package org.geotools.referencing.operation.projection;
 
-import static java.lang.Math.*;
+import static java.lang.Math.PI;
 
 import java.awt.geom.Point2D;
 import java.util.Collection;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.ReferenceIdentifier;
+import org.geotools.api.referencing.operation.MathTransform;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.metadata.math.Complex;
 import org.geotools.referencing.NamedIdentifier;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.ReferenceIdentifier;
-import org.opengis.referencing.operation.MathTransform;
 
 /**
  * The NZMG (New Zealand Map Grid) projection.
  *
- * <p>This is an implementation of algorithm published by <a
- * href="http://www.govt.nz/record?recordid=28">Land Information New Zealand</a>. The algorithm is
- * documented <a href="http://www.linz.govt.nz/rcs/linz/6137/">here</a>.
+ * <p>This is an implementation of algorithm published by <a href="http://www.govt.nz/record?recordid=28">Land
+ * Information New Zealand</a>. The algorithm is documented <a href="http://www.linz.govt.nz/rcs/linz/6137/">here</a>.
  *
  * <p><b>Implementation note</b><br>
- * This class make extensive use of {@link Complex} type which may be costly unless the compiler can
- * inline on the stack. We assume that Jave 6 and above can do this optimization.
+ * This class make extensive use of {@link Complex} type which may be costly unless the compiler can inline on the
+ * stack. We assume that Jave 6 and above can do this optimization.
  *
  * @since 2.2
  * @version $Id$
@@ -72,33 +71,23 @@ public class NewZealandMapGrid extends MapProjection {
     };
 
     /** Coefficients for inverse projection. */
-    private static final double[] TPHI =
-            new double[] {
-                1.5627014243,
-                0.5185406398,
-                -0.03333098,
-                -0.1052906,
-                -0.0368594,
-                0.007317,
-                0.01220,
-                0.00394,
-                -0.0013
-            };
+    private static final double[] TPHI = {
+        1.5627014243, 0.5185406398, -0.03333098, -0.1052906, -0.0368594, 0.007317, 0.01220, 0.00394, -0.0013
+    };
 
     /** Coefficients for forward projection. */
-    private static final double[] TPSI =
-            new double[] {
-                0.6399175073,
-                -0.1358797613,
-                0.063294409,
-                -0.02526853,
-                0.0117879,
-                -0.0055161,
-                0.0026906,
-                -0.001333,
-                0.00067,
-                -0.00034
-            };
+    private static final double[] TPSI = {
+        0.6399175073,
+        -0.1358797613,
+        0.063294409,
+        -0.02526853,
+        0.0117879,
+        -0.0055161,
+        0.0026906,
+        -0.001333,
+        0.00067,
+        -0.00034
+    };
 
     /** Constructs a new map projection with default parameter values. */
     protected NewZealandMapGrid() {
@@ -111,39 +100,39 @@ public class NewZealandMapGrid extends MapProjection {
      * @param parameters The parameter values in standard units.
      * @throws ParameterNotFoundException if a mandatory parameter is missing.
      */
-    protected NewZealandMapGrid(final ParameterValueGroup parameters)
-            throws ParameterNotFoundException {
+    protected NewZealandMapGrid(final ParameterValueGroup parameters) throws ParameterNotFoundException {
         super(parameters);
     }
 
     /** {@inheritDoc} */
+    @Override
     public ParameterDescriptorGroup getParameterDescriptors() {
         return Provider.PARAMETERS;
     }
 
     /**
-     * Must be overridden because {@link Provider} uses instances of {@link
-     * ModifiedParameterDescriptor}. This hack was needed because the New Zeland map projection uses
-     * particular default values for parameters like "False Easting", etc.
+     * Must be overridden because {@link Provider} uses instances of {@link ModifiedParameterDescriptor}. This hack was
+     * needed because the New Zeland map projection uses particular default values for parameters like "False Easting",
+     * etc.
      */
     @Override
     final boolean isExpectedParameter(
-            final Collection<GeneralParameterDescriptor> expected,
-            final ParameterDescriptor param) {
+            final Collection<GeneralParameterDescriptor> expected, final ParameterDescriptor param) {
         return ModifiedParameterDescriptor.contains(expected, param);
     }
 
     /**
-     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in
-     * radians) and stores the result in {@code ptDst} (linear distance on a unit sphere).
+     * Transforms the specified (<var>&lambda;</var>,<var>&phi;</var>) coordinates (units in radians) and stores the
+     * result in {@code ptDst} (linear distance on a unit sphere).
      */
+    @Override
     protected Point2D transformNormalized(final double x, final double y, final Point2D ptDst)
             throws ProjectionException {
         final double dphi = (y - latitudeOfOrigin) * (180 / PI * 3600E-5);
         double dphi_pow_i = dphi;
         double dpsi = 0;
-        for (int i = 0; i < TPSI.length; i++) {
-            dpsi += (TPSI[i] * dphi_pow_i);
+        for (double v : TPSI) {
+            dpsi += (v * dphi_pow_i);
             dphi_pow_i *= dphi;
         }
         // See implementation note in class javadoc.
@@ -162,12 +151,10 @@ public class NewZealandMapGrid extends MapProjection {
         return new Point2D.Double(z.imag, z.real);
     }
 
-    /**
-     * Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in
-     * {@code ptDst}.
-     */
-    protected Point2D inverseTransformNormalized(
-            final double x, final double y, final Point2D ptDst) throws ProjectionException {
+    /** Transforms the specified (<var>x</var>,<var>y</var>) coordinates and stores the result in {@code ptDst}. */
+    @Override
+    protected Point2D inverseTransformNormalized(final double x, final double y, final Point2D ptDst)
+            throws ProjectionException {
         // See implementation note in class javadoc.
         final Complex z = new Complex(y, x);
         final Complex power = new Complex(z);
@@ -226,8 +213,8 @@ public class NewZealandMapGrid extends MapProjection {
     //////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform
-     * provider} for {@linkplain NewZealandMapGrid New Zealand Map Grid} (EPSG code 27200).
+     * The {@linkplain org.geotools.referencing.operation.MathTransformProvider math transform provider} for
+     * {@linkplain NewZealandMapGrid New Zealand Map Grid} (EPSG code 27200).
      *
      * @since 2.2
      * @version $Id$
@@ -239,22 +226,21 @@ public class NewZealandMapGrid extends MapProjection {
         private static final long serialVersionUID = -7716733400419275656L;
 
         /** The parameters group. */
-        static final ParameterDescriptorGroup PARAMETERS =
-                createDescriptorGroup(
-                        new ReferenceIdentifier[] {
-                            new NamedIdentifier(Citations.OGC, "New_Zealand_Map_Grid"),
-                            new NamedIdentifier(Citations.EPSG, "New Zealand Map Grid"),
-                            new NamedIdentifier(Citations.EPSG, "27200")
-                        },
-                        new ParameterDescriptor[] {
-                            new ModifiedParameterDescriptor(SEMI_MAJOR, 6378388.0),
-                            new ModifiedParameterDescriptor(
-                                    SEMI_MINOR, 6378388.0 * (1 - 1 / 297.0)),
-                            new ModifiedParameterDescriptor(LATITUDE_OF_ORIGIN, -41.0),
-                            new ModifiedParameterDescriptor(CENTRAL_MERIDIAN, 173.0),
-                            new ModifiedParameterDescriptor(FALSE_EASTING, 2510000.0),
-                            new ModifiedParameterDescriptor(FALSE_NORTHING, 6023150.0)
-                        });
+        static final ParameterDescriptorGroup PARAMETERS = createDescriptorGroup(
+                new ReferenceIdentifier[] {
+                    new NamedIdentifier(Citations.OGC, "New_Zealand_Map_Grid"),
+                    new NamedIdentifier(Citations.EPSG, "New Zealand Map Grid"),
+                    new NamedIdentifier(Citations.EPSG, "27200"),
+                    new NamedIdentifier(Citations.PROJ, "nzmg"),
+                },
+                new ParameterDescriptor[] {
+                    new ModifiedParameterDescriptor(SEMI_MAJOR, 6378388.0),
+                    new ModifiedParameterDescriptor(SEMI_MINOR, 6378388.0 * (1 - 1 / 297.0)),
+                    new ModifiedParameterDescriptor(LATITUDE_OF_ORIGIN, -41.0),
+                    new ModifiedParameterDescriptor(CENTRAL_MERIDIAN, 173.0),
+                    new ModifiedParameterDescriptor(FALSE_EASTING, 2510000.0),
+                    new ModifiedParameterDescriptor(FALSE_NORTHING, 6023150.0)
+                });
 
         /** Constructs a new provider. */
         public Provider() {
@@ -262,14 +248,14 @@ public class NewZealandMapGrid extends MapProjection {
         }
 
         /**
-         * Creates a transform from the specified group of parameter values. This method doesn't
-         * check for the spherical case, since the New Zealand Map Grid projection is used with the
-         * International 1924 ellipsoid.
+         * Creates a transform from the specified group of parameter values. This method doesn't check for the spherical
+         * case, since the New Zealand Map Grid projection is used with the International 1924 ellipsoid.
          *
          * @param parameters The group of parameter values.
          * @return The created math transform.
          * @throws ParameterNotFoundException if a required parameter was not found.
          */
+        @Override
         public MathTransform createMathTransform(final ParameterValueGroup parameters)
                 throws ParameterNotFoundException {
             return new NewZealandMapGrid(parameters);

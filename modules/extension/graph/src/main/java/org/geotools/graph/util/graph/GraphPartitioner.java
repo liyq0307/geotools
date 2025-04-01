@@ -31,11 +31,13 @@ import org.geotools.graph.traverse.basic.BasicGraphTraversal;
 import org.geotools.graph.traverse.standard.DepthFirstIterator;
 
 /**
- * Creates a collection of connected graphs from a single graph. A connected graph in which for
- * every two pair of nodes, there is a path between them.
+ * Creates a collection of connected graphs from a single graph. A connected graph in which for every two pair of nodes,
+ * there is a path between them.
  *
  * @author Justin Deoliveira, Refractions Research Inc, jdeolive@refractions.net
  */
+// this is mixing Graph and List<Serializable> in the same containers, refuse to untangle it
+@SuppressWarnings("unchecked")
 public class GraphPartitioner implements GraphWalker {
 
     /** graph to be partitioned into connected components * */
@@ -103,14 +105,14 @@ public class GraphPartitioner implements GraphWalker {
             HashSet<Edge> edges = null;
             ArrayList<Serializable> graphs = new ArrayList<>();
 
-            for (Iterator<Serializable> itr = m_partitions.iterator(); itr.hasNext(); ) {
-                m_partition = (ArrayList<Serializable>) itr.next();
-                if (m_partition.size() == 0) continue;
+            for (Serializable mPartition : m_partitions) {
+                m_partition = (ArrayList<Serializable>) mPartition;
+                if (m_partition.isEmpty()) continue;
 
                 nodes = new HashSet<>();
                 edges = new HashSet<>();
-                for (Iterator<Serializable> nitr = m_partition.iterator(); nitr.hasNext(); ) {
-                    Node node = (Node) nitr.next();
+                for (Serializable serializable : m_partition) {
+                    Node node = (Node) serializable;
                     nodes.add(node);
                     edges.addAll(node.getEdges());
                 }

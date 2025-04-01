@@ -19,11 +19,11 @@ package org.geotools.gce.imagemosaic.properties.string;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollector;
 import org.geotools.gce.imagemosaic.properties.PropertiesCollectorSPI;
 import org.geotools.gce.imagemosaic.properties.RegExPropertiesCollector;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
 
 /**
  * {@link PropertiesCollector} that is able to collect properties from a file name.
@@ -33,8 +33,7 @@ import org.opengis.feature.simple.SimpleFeature;
 class StringFileNameExtractor extends RegExPropertiesCollector {
     private static final Logger LOGGER = Logging.getLogger(StringFileNameExtractor.class);
 
-    public StringFileNameExtractor(
-            PropertiesCollectorSPI spi, List<String> propertyNames, String regex) {
+    public StringFileNameExtractor(PropertiesCollectorSPI spi, List<String> propertyNames, String regex) {
         super(spi, propertyNames, regex, false);
     }
 
@@ -45,9 +44,8 @@ class StringFileNameExtractor extends RegExPropertiesCollector {
         List<String> matches = getMatches();
 
         // set the properties, only if we have matches!
-        if (matches.size() <= 0) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.fine("No matches found for this property extractor:");
+        if (matches.isEmpty()) {
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("No matches found for this property extractor:");
         }
         int index = 0;
         for (String propertyName : getPropertyNames()) {

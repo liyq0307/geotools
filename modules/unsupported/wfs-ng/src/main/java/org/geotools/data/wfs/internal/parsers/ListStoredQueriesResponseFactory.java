@@ -20,13 +20,13 @@ package org.geotools.data.wfs.internal.parsers;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.wfs.internal.ListStoredQueriesRequest;
 import org.geotools.data.wfs.internal.ListStoredQueriesResponse;
 import org.geotools.data.wfs.internal.WFSOperationType;
 import org.geotools.data.wfs.internal.WFSRequest;
 import org.geotools.data.wfs.internal.WFSResponse;
 import org.geotools.data.wfs.internal.WFSResponseFactory;
+import org.geotools.http.HTTPResponse;
 import org.geotools.ows.ServiceException;
 
 public class ListStoredQueriesResponseFactory implements WFSResponseFactory {
@@ -53,10 +53,9 @@ public class ListStoredQueriesResponseFactory implements WFSResponseFactory {
     }
 
     @Override
-    public WFSResponse createResponse(WFSRequest request, HTTPResponse response)
-            throws IOException {
+    public WFSResponse createResponse(WFSRequest request, HTTPResponse response) throws IOException {
         try {
-            return new ListStoredQueriesResponse((ListStoredQueriesRequest) request, response);
+            return new ListStoredQueriesResponse(request, response);
         } catch (ServiceException e) {
             throw new IOException(e);
         }

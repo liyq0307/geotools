@@ -23,19 +23,22 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.util.logging.Logging;
-import org.opengis.geometry.Envelope;
-import org.opengis.referencing.FactoryException;
 
+/** The well known contents of the metadata table */
 public class MBTilesMetadata {
 
     private static Logger LOGGER = Logging.getLogger(MBTilesMetadata.class);
 
     protected static Pattern patternEnvelope =
-            Pattern.compile(
-                    " *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *");
+            Pattern.compile(" *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *");
+
+    protected static Pattern patternCenter =
+            Pattern.compile(" *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *, *(\\-?[0-9\\.]*) *");
 
     public enum t_type {
         OVERLAY("overlay"),
@@ -51,10 +54,7 @@ public class MBTilesMetadata {
             return Arrays.stream(t_type.values())
                     .filter((t) -> t.identifier.equalsIgnoreCase(s))
                     .findAny()
-                    .orElseThrow(
-                            () ->
-                                    new IllegalArgumentException(
-                                            String.format("Unknown mbtiles type '%s'", s)));
+                    .orElseThrow(() -> new IllegalArgumentException(String.format("Unknown mbtiles type '%s'", s)));
         }
     };
 
@@ -77,13 +77,17 @@ public class MBTilesMetadata {
 
     protected t_format format;
 
-    protected Envelope bounds;
+    protected Bounds bounds;
 
     protected String attribution;
 
     protected int minZoom;
 
     protected int maxZoom;
+
+    protected String json;
+
+    protected double[] center;
 
     public String getName() {
         return name;
@@ -125,12 +129,20 @@ public class MBTilesMetadata {
         this.format = format;
     }
 
-    public Envelope getBounds() {
+    public Bounds getBounds() {
         return bounds;
     }
 
-    public void setBounds(Envelope bounds) {
+    public void setBounds(Bounds bounds) {
         this.bounds = bounds;
+    }
+
+    public double[] getCenter() {
+        return center;
+    }
+
+    public void setCenter(double[] center) {
+        this.center = center;
     }
 
     public String getAttribution() {
@@ -187,6 +199,14 @@ public class MBTilesMetadata {
         }
     }
 
+    public String getCenterStr() {
+        if (center == null) {
+            return null;
+        } else {
+            return center[0] + "," + center[1] + "," + center[2];
+        }
+    }
+
     public void setTypeStr(final String typeStr) {
         if (typeStr == null) {
             setType(null);
@@ -194,10 +214,8 @@ public class MBTilesMetadata {
             if (typeStr.equalsIgnoreCase("BASE_LAYER")) {
                 LOGGER.log(
                         Level.WARNING,
-                        () ->
-                                String.format(
-                                        "MBTiles file has invalid type '%s', using '%s' instead",
-                                        typeStr, t_type.BASE_LAYER));
+                        () -> String.format(
+                                "MBTiles file has invalid type '%s', using '%s' instead", typeStr, t_type.BASE_LAYER));
                 setType(t_type.BASE_LAYER);
             } else {
                 setType(t_type.lookUp(typeStr));
@@ -219,20 +237,32 @@ public class MBTilesMetadata {
         } else {
             Matcher matcherEnvelope = patternEnvelope.matcher(boundsStr);
             if (!matcherEnvelope.matches()) {
-                throw new IllegalArgumentException(
-                        "Envelope not in correct format: minx,miny,maxx,maxy");
+                throw new IllegalArgumentException("Envelope not in correct format: minx,miny,maxx,maxy");
             }
             double minx = Double.parseDouble(matcherEnvelope.group(1));
             double miny = Double.parseDouble(matcherEnvelope.group(2));
             double maxx = Double.parseDouble(matcherEnvelope.group(3));
             double maxy = Double.parseDouble(matcherEnvelope.group(4));
             try {
-                setBounds(
-                        new ReferencedEnvelope(
-                                minx, maxx, miny, maxy, CRS.decode("EPSG:4326", true)));
+                setBounds(new ReferencedEnvelope(minx, maxx, miny, maxy, CRS.decode("EPSG:4326", true)));
             } catch (FactoryException e) {
                 LOGGER.log(Level.SEVERE, e.getMessage(), e);
             }
+        }
+    }
+
+    public void setCenterStr(String centerStr) {
+        if (centerStr == null) {
+            setCenter(null);
+        } else {
+            Matcher matcherCenter = patternCenter.matcher(centerStr);
+            if (!matcherCenter.matches()) {
+                throw new IllegalArgumentException("Center not in correct format: longitude,latitude,zoom level");
+            }
+            double lon = Double.parseDouble(matcherCenter.group(1));
+            double lat = Double.parseDouble(matcherCenter.group(2));
+            double zoomLevel = Double.parseDouble(matcherCenter.group(3));
+            setCenter(new double[] {lon, lat, zoomLevel});
         }
     }
 
@@ -250,5 +280,17 @@ public class MBTilesMetadata {
         } else {
             maxZoom = Integer.parseInt(maxZoomStr);
         }
+    }
+
+    /**
+     * The description of vector tiles internal structure is a JSON document added in the "json" key (by mbtiles
+     * specification)
+     */
+    public String getJson() {
+        return json;
+    }
+
+    public void setJson(String json) {
+        this.json = json;
     }
 }

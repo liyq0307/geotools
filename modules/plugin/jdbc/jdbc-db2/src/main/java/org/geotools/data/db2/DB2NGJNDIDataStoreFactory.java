@@ -24,17 +24,19 @@ import org.geotools.jdbc.JDBCJNDIDataStoreFactory;
  *
  * @author Christian Mueller
  */
+// temporary work around, the factory parameters map will be fixed separately
+@SuppressWarnings("unchecked")
 public class DB2NGJNDIDataStoreFactory extends JDBCJNDIDataStoreFactory {
 
     public DB2NGJNDIDataStoreFactory() {
         super(new DB2NGDataStoreFactory());
     }
 
+    @Override
     protected void setupParameters(Map parameters) {
         super.setupParameters(parameters);
         parameters.put(DBTYPE.key, DBTYPE);
         parameters.put(DB2NGDataStoreFactory.LOOSEBBOX.key, DB2NGDataStoreFactory.LOOSEBBOX);
-        parameters.put(
-                DB2NGDataStoreFactory.USE_SELECTIVITY.key, DB2NGDataStoreFactory.USE_SELECTIVITY);
+        parameters.put(DB2NGDataStoreFactory.USE_SELECTIVITY.key, DB2NGDataStoreFactory.USE_SELECTIVITY);
     }
 }

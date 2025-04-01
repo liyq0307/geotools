@@ -54,10 +54,10 @@ public class JLayeredMapPane extends AbstractMapPane {
 
     public JLayeredMapPane(MapContent content, RenderingExecutor executor) {
         super(content, executor);
-        operandLookup = new HashMap<Layer, LayerOperands>();
+        operandLookup = new HashMap<>();
         labelCache = new SynchronizedLabelCache();
 
-        renderingHints = new HashMap<Object, Object>();
+        renderingHints = new HashMap<>();
         renderingHints.put(StreamingRenderer.LABEL_CACHE_KEY, labelCache);
     }
 
@@ -99,7 +99,7 @@ public class JLayeredMapPane extends AbstractMapPane {
     }
 
     private List<RenderingOperands> getOperands(boolean recreate) {
-        List<RenderingOperands> ops = new ArrayList<RenderingOperands>();
+        List<RenderingOperands> ops = new ArrayList<>();
         Rectangle r = getVisibleRect();
 
         for (Layer layer : mapContent.layers()) {
@@ -117,11 +117,10 @@ public class JLayeredMapPane extends AbstractMapPane {
         }
 
         if (op.image == null || recreate) {
-            op.image =
-                    GraphicsEnvironment.getLocalGraphicsEnvironment()
-                            .getDefaultScreenDevice()
-                            .getDefaultConfiguration()
-                            .createCompatibleImage(r.width, r.height, Transparency.TRANSLUCENT);
+            op.image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                    .getDefaultScreenDevice()
+                    .getDefaultConfiguration()
+                    .createCompatibleImage(r.width, r.height, Transparency.TRANSLUCENT);
 
             if (op.graphics != null) {
                 op.graphics.dispose();

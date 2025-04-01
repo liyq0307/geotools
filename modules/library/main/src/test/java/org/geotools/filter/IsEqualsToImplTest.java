@@ -16,16 +16,20 @@
  */
 package org.geotools.filter;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.math.BigDecimal;
-import junit.framework.TestCase;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.factory.CommonFactoryFinder;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
+import org.junit.Test;
 
-public class IsEqualsToImplTest extends TestCase {
+public class IsEqualsToImplTest {
 
-    org.opengis.filter.FilterFactory filterFactory = CommonFactoryFinder.getFilterFactory(null);
+    org.geotools.api.filter.FilterFactory filterFactory = CommonFactoryFinder.getFilterFactory(null);
 
+    @Test
     public void testOperandsSameType() {
         Expression e1 = filterFactory.literal(1);
         Expression e2 = filterFactory.literal(1);
@@ -34,6 +38,7 @@ public class IsEqualsToImplTest extends TestCase {
         assertTrue(equal.evaluate(null));
     }
 
+    @Test
     public void testOperandsShort() {
         Expression literalShort42 = filterFactory.literal((short) 42);
         Expression literalString42 = filterFactory.literal("42");
@@ -51,6 +56,7 @@ public class IsEqualsToImplTest extends TestCase {
         assertTrue(filterFactory.equals(literalShort42, literalDouble42).evaluate(null));
     }
 
+    @Test
     public void testOperandsIntString() {
         Expression e1 = filterFactory.literal(1);
         Expression e2 = filterFactory.literal("1");
@@ -59,6 +65,7 @@ public class IsEqualsToImplTest extends TestCase {
         assertTrue(equal.evaluate(null));
     }
 
+    @Test
     public void testOperandsIntFloatString() {
         Expression e1 = filterFactory.literal(1);
         Expression e2 = filterFactory.literal("1.2");
@@ -67,6 +74,7 @@ public class IsEqualsToImplTest extends TestCase {
         assertFalse(equal.evaluate(null));
     }
 
+    @Test
     public void testOperandsLongInt() {
         Expression e1 = filterFactory.literal(1);
         Expression e2 = filterFactory.literal(1l);
@@ -75,6 +83,7 @@ public class IsEqualsToImplTest extends TestCase {
         assertTrue(equal.evaluate(null));
     }
 
+    @Test
     public void testOperandsFloatInt() {
         Expression e1 = filterFactory.literal(1.0f);
         Expression e2 = filterFactory.literal(1);
@@ -83,6 +92,7 @@ public class IsEqualsToImplTest extends TestCase {
         assertTrue(equal.evaluate(null));
     }
 
+    @Test
     public void testOperandsDoubleLong() {
         Expression e1 = filterFactory.literal(1.0);
         Expression e2 = filterFactory.literal(1l);
@@ -91,21 +101,34 @@ public class IsEqualsToImplTest extends TestCase {
         assertTrue(equal.evaluate(null));
     }
 
+    @Test
     public void testOperandsDoubleLongOutOfRange() {
-        Expression e1 =
-                filterFactory.literal(Double.valueOf(Long.MAX_VALUE).doubleValue() + 10000.0);
+        Expression e1 = filterFactory.literal(Long.MAX_VALUE + 10000d);
         Expression e2 = filterFactory.literal(Long.MAX_VALUE);
 
         PropertyIsEqualTo equal = filterFactory.equals(e1, e2);
         assertFalse(equal.evaluate(null));
     }
 
+    @Test
     public void testCaseSensitivity() {
         Expression e1 = filterFactory.literal("foo");
         Expression e2 = filterFactory.literal("FoO");
 
         PropertyIsEqualTo caseSensitive = filterFactory.equal(e1, e2, true);
         assertFalse(caseSensitive.evaluate(null));
+
+        PropertyIsEqualTo caseInsensitive = filterFactory.equal(e1, e2, false);
+        assertTrue(caseInsensitive.evaluate(null));
+    }
+
+    @Test
+    public void testLiteralConversion() {
+        Expression e1 = filterFactory.literal("true");
+        Expression e2 = filterFactory.literal(Boolean.TRUE);
+
+        PropertyIsEqualTo caseSensitive = filterFactory.equal(e1, e2, true);
+        assertTrue(caseSensitive.evaluate(null));
 
         PropertyIsEqualTo caseInsensitive = filterFactory.equal(e1, e2, false);
         assertTrue(caseInsensitive.evaluate(null));

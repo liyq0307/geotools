@@ -1,11 +1,13 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2017, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This file is hereby placed into the Public Domain. This means anyone is
- *    free to do whatever they wish with this file. Use it well and enjoy!
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 package org.geotools.po.bindings;
 
@@ -53,8 +55,7 @@ public final class PO extends XSD {
     /** @generated */
     public static final QName Items = new QName("http://www.geotools.org/po", "Items");
     /** @generated */
-    public static final QName PurchaseOrderType =
-            new QName("http://www.geotools.org/po", "PurchaseOrderType");
+    public static final QName PurchaseOrderType = new QName("http://www.geotools.org/po", "PurchaseOrderType");
     /** @generated */
     public static final QName SKU = new QName("http://www.geotools.org/po", "SKU");
     /** @generated */
@@ -66,8 +67,7 @@ public final class PO extends XSD {
     /** @generated */
     public static final QName comment = new QName("http://www.geotools.org/po", "comment");
     /** @generated */
-    public static final QName purchaseOrder =
-            new QName("http://www.geotools.org/po", "purchaseOrder");
+    public static final QName purchaseOrder = new QName("http://www.geotools.org/po", "purchaseOrder");
 
     /* Attributes */
 

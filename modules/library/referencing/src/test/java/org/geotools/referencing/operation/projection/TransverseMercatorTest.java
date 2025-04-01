@@ -16,29 +16,34 @@
  */
 package org.geotools.referencing.operation.projection;
 
-import static org.geotools.referencing.operation.projection.MapProjection.AbstractProvider.*;
-import static org.junit.Assert.*;
+import static org.geotools.referencing.operation.projection.MapProjection.AbstractProvider.CENTRAL_MERIDIAN;
+import static org.geotools.referencing.operation.projection.MapProjection.AbstractProvider.FALSE_EASTING;
+import static org.geotools.referencing.operation.projection.MapProjection.AbstractProvider.FALSE_NORTHING;
+import static org.geotools.referencing.operation.projection.MapProjection.AbstractProvider.LATITUDE_OF_ORIGIN;
+import static org.geotools.referencing.operation.projection.MapProjection.AbstractProvider.SCALE_FACTOR;
+import static org.geotools.referencing.operation.projection.MapProjection.AbstractProvider.SEMI_MAJOR;
+import static org.geotools.referencing.operation.projection.MapProjection.AbstractProvider.SEMI_MINOR;
+import static org.junit.Assert.assertEquals;
 
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.MathTransformFactory;
 import org.geotools.referencing.ReferencingFactoryFinder;
 import org.junit.Test;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.MathTransformFactory;
 
 /** Unit tests of {@link TransverseMercator}. */
 public class TransverseMercatorTest {
 
     /**
-     * Tests the example provided by the EPSG guidance. See "OGP Surveying and Positioning Guidance
-     * Note number 7, part 2 – April 2018", pages 53-57
+     * Tests the example provided by the EPSG guidance. See "OGP Surveying and Positioning Guidance Note number 7, part
+     * 2 – April 2018", pages 53-57
      */
     @Test
     public void testEpsgExample() throws Exception {
         MathTransformFactory mtFactory = ReferencingFactoryFinder.getMathTransformFactory(null);
-        final ParameterValueGroup parameters =
-                mtFactory.getDefaultParameters("Transverse_Mercator");
+        final ParameterValueGroup parameters = mtFactory.getDefaultParameters("Transverse_Mercator");
 
         // build the transformation using the guidance provided values
         parameter(SEMI_MAJOR, parameters).setValue(6377563.396);
@@ -51,8 +56,8 @@ public class TransverseMercatorTest {
         MathTransform transform = mtFactory.createParameterizedTransform(parameters);
 
         // results as provided by the EPSG guidance
-        final double[] point = new double[] {dmsToDegree(0, 30, 0), dmsToDegree(50, 30, 0)};
-        final double[] expected = new double[] {577274.99, 69740.50};
+        final double[] point = {dmsToDegree(0, 30, 0), dmsToDegree(50, 30, 0)};
+        final double[] expected = {577274.99, 69740.50};
 
         // check forward transform
         final double[] forward = new double[2];

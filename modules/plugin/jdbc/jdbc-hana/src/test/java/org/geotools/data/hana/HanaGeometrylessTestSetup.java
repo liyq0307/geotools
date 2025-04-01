@@ -34,33 +34,23 @@ public class HanaGeometrylessTestSetup extends JDBCGeometrylessTestSetup {
     @Override
     protected void createPersonTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.createTestSchema();
 
-            String[][] cols = {
-                {"fid", "INT PRIMARY KEY"}, {"id", "INT"}, {"name", "VARCHAR(255)"}, {"age", "INT"}
-            };
+            String[][] cols = {{"fid", "INT PRIMARY KEY"}, {"id", "INT"}, {"name", "VARCHAR(255)"}, {"age", "INT"}};
             htu.createRegisteredTestTable(PERSON_TABLE, cols);
 
             htu.insertIntoTestTable(
-                    PERSON_TABLE,
-                    htu.nextTestSequenceValueForColumn(PERSON_TABLE, "fid"),
-                    0,
-                    "Paul",
-                    32);
+                    PERSON_TABLE, htu.nextTestSequenceValueForColumn(PERSON_TABLE, "fid"), 0, "Paul", 32);
             htu.insertIntoTestTable(
-                    PERSON_TABLE,
-                    htu.nextTestSequenceValueForColumn(PERSON_TABLE, "fid"),
-                    1,
-                    "Anne",
-                    40);
+                    PERSON_TABLE, htu.nextTestSequenceValueForColumn(PERSON_TABLE, "fid"), 1, "Anne", 40);
         }
     }
 
     @Override
     protected void dropPersonTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.dropTestTableCascade(PERSON_TABLE);
         }
     }
@@ -68,7 +58,7 @@ public class HanaGeometrylessTestSetup extends JDBCGeometrylessTestSetup {
     @Override
     protected void dropZipCodeTable() throws Exception {
         try (Connection conn = getConnection()) {
-            HanaTestUtil htu = new HanaTestUtil(conn);
+            HanaTestUtil htu = new HanaTestUtil(conn, fixture);
             htu.dropTestTableCascade(ZIPCODE_TABLE);
         }
     }

@@ -28,16 +28,16 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.text.MessageFormat;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
+import org.geotools.api.referencing.FactoryException;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.factory.ReferencingFactory;
 import org.geotools.util.SoftValueHashMap;
 import org.geotools.util.URLs;
 import org.geotools.util.factory.BufferedFactory;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.FactoryException;
 
 /**
  * Loads and caches NADCON grid shifts
@@ -93,7 +93,7 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
 
     /** Constructs a factory with the default priority. */
     public NADCONGridShiftFactory() {
-        gridCache = new SoftValueHashMap<NADCONKey, NADConGridShift>(GRID_CACHE_HARD_REFERENCES);
+        gridCache = new SoftValueHashMap<>(GRID_CACHE_HARD_REFERENCES);
     }
 
     public NADConGridShift loadGridShift(URL latGridURL, URL longGridURL) throws FactoryException {
@@ -109,13 +109,11 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
                     return grid; // - Return
                 }
             }
-            throw new FactoryException(
-                    "NTv2 Grid " + latGridURL + ", " + longGridURL + " could not be created.");
+            throw new FactoryException("NTv2 Grid " + latGridURL + ", " + longGridURL + " could not be created.");
         }
     }
 
-    private NADConGridShift loadGridShiftInternal(URL latGridURL, URL longGridURL)
-            throws FactoryException {
+    private NADConGridShift loadGridShiftInternal(URL latGridURL, URL longGridURL) throws FactoryException {
         // decide if text or binary grid will be used
         String latGridName = URLs.urlToFile(latGridURL).getPath();
         String longGridName = URLs.urlToFile(longGridURL).getPath();
@@ -127,11 +125,10 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
                     || (latGridName.endsWith(".LAA") && longGridName.endsWith(".LOA"))) {
                 return loadTextGrid(latGridURL, longGridURL);
             } else {
-                throw new FactoryException(
-                        Errors.format(
-                                ErrorKeys.UNSUPPORTED_FILE_TYPE_$2,
-                                latGridName.substring(latGridName.lastIndexOf('.') + 1),
-                                longGridName.substring(longGridName.lastIndexOf('.') + 1)));
+                throw new FactoryException(MessageFormat.format(
+                        ErrorKeys.UNSUPPORTED_FILE_TYPE_$2,
+                        latGridName.substring(latGridName.lastIndexOf('.') + 1),
+                        longGridName.substring(longGridName.lastIndexOf('.') + 1)));
                 // Note: the +1 above hide the dot, but also make sure that the code is
                 // valid even if the path do not contains '.' at all (-1 + 1 == 0).
             }
@@ -145,15 +142,13 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
     }
 
     /**
-     * Reads latitude and longitude binary grid shift file data into {@link grid}. The file is
-     * organized into records, with the first record containing the header information, followed by
-     * the shift data. The header values are: text describing grid (64 bytes), num. columns (int),
-     * num. rows (int), num. z (int), min x (float), delta x (float), min y (float), delta y (float)
-     * and angle (float). Each record is num. columns 4 bytes + 4 byte separator long and the file
-     * contains num. rows + 1 (for the header) records. The data records (with the grid shift
-     * values) are all floats and have a 4 byte separator (0's) before the data. Row records are
-     * organized from low y (latitude) to high and columns are orderd from low longitude to high.
-     * Everything is written in low byte order.
+     * Reads latitude and longitude binary grid shift file data into {@link grid}. The file is organized into records,
+     * with the first record containing the header information, followed by the shift data. The header values are: text
+     * describing grid (64 bytes), num. columns (int), num. rows (int), num. z (int), min x (float), delta x (float),
+     * min y (float), delta y (float) and angle (float). Each record is num. columns 4 bytes + 4 byte separator long and
+     * the file contains num. rows + 1 (for the header) records. The data records (with the grid shift values) are all
+     * floats and have a 4 byte separator (0's) before the data. Row records are organized from low y (latitude) to high
+     * and columns are orderd from low longitude to high. Everything is written in low byte order.
      *
      * @param latGridUrl URL to the binary latitude shift file (.las extention).
      * @param longGridUrl URL to the binary longitude shift file (.los extention).
@@ -165,20 +160,16 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
         final int HEADER_BYTES = 96;
         final int SEPARATOR_BYTES = 4;
         final int DESCRIPTION_LENGTH = 64;
-        ReadableByteChannel latChannel = null;
-        ReadableByteChannel longChannel = null;
         NADConGridShift gridShift = null;
         ByteBuffer latBuffer;
         ByteBuffer longBuffer;
 
-        try {
+        try (ReadableByteChannel latChannel = getReadChannel(latGridUrl);
+                ReadableByteChannel longChannel = getReadChannel(longGridUrl)) {
             // //////////////////////
             // setup
             // //////////////////////
-            latChannel = getReadChannel(latGridUrl);
             latBuffer = fillBuffer(latChannel, HEADER_BYTES);
-
-            longChannel = getReadChannel(longGridUrl);
             longBuffer = fillBuffer(longChannel, HEADER_BYTES);
 
             // //////////////////////
@@ -212,7 +203,7 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
                     || (ymin != longBuffer.getFloat())
                     || (dy != longBuffer.getFloat())
                     || (angle != longBuffer.getFloat())) {
-                throw new FactoryException(Errors.format(ErrorKeys.GRID_LOCATIONS_UNEQUAL));
+                throw new FactoryException(ErrorKeys.GRID_LOCATIONS_UNEQUAL);
             }
 
             // //////////////////////
@@ -237,28 +228,19 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
                 longBuffer.position(longBuffer.position() + SEPARATOR_BYTES);
 
                 for (j = 0; j < nc; j++) {
-                    gridShift.setLocalizationPoint(
-                            j, i, longBuffer.getFloat(), latBuffer.getFloat());
+                    gridShift.setLocalizationPoint(j, i, longBuffer.getFloat(), latBuffer.getFloat());
                 }
             }
 
             assert i == nr : i;
             assert j == nc : j;
-        } finally {
-            if (latChannel != null) {
-                latChannel.close();
-            }
-            if (longChannel != null) {
-                longChannel.close();
-            }
         }
 
         return gridShift;
     }
 
     /**
-     * Returns a new bytebuffer, of numBytes length and little endian byte order, filled from the
-     * channel.
+     * Returns a new bytebuffer, of numBytes length and little endian byte order, filled from the channel.
      *
      * @param channel the channel to fill the buffer from
      * @param numBytes number of bytes to read
@@ -270,7 +252,7 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
         ByteBuffer buf = ByteBuffer.allocate(numBytes);
 
         if (fill(buf, channel) == -1) {
-            throw new EOFException(Errors.format(ErrorKeys.END_OF_DATA_FILE));
+            throw new EOFException(ErrorKeys.END_OF_DATA_FILE);
         }
 
         buf.flip();
@@ -304,14 +286,14 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
     }
 
     /**
-     * Obtain a ReadableByteChannel from the given URL. If the url protocol is file, a FileChannel
-     * will be returned. Otherwise a generic channel will be obtained from the urls input stream.
-     * Code swiped from ShapefileDataStore.
+     * Obtain a ReadableByteChannel from the given URL. If the url protocol is file, a FileChannel will be returned.
+     * Otherwise a generic channel will be obtained from the urls input stream. Code swiped from ShapefileDataStore.
      *
      * @param url URL to create the channel from
      * @return a new PeadableByteChannel from the input url
      * @throws IOException if there is a problem creating the channel
      */
+    @SuppressWarnings("PMD.CloseResource") // returns a Channel, cannot close its input stream
     private ReadableByteChannel getReadChannel(URL url) throws IOException {
         ReadableByteChannel channel = null;
 
@@ -319,7 +301,7 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
             File file = URLs.urlToFile(url);
 
             if (!file.exists() || !file.canRead()) {
-                throw new IOException(Errors.format(ErrorKeys.FILE_DOES_NOT_EXIST_$1, file));
+                throw new IOException(MessageFormat.format(ErrorKeys.FILE_DOES_NOT_EXIST_$1, file));
             }
 
             FileInputStream in = new FileInputStream(file);
@@ -333,20 +315,18 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
     }
 
     /**
-     * Reads latitude and longitude text grid shift file data into {@link grid}. The first two lines
-     * of the shift data file contain the header, with the first being a description of the grid.
-     * The second line contains 8 values separated by spaces: num. columns, num. rows, num. z, min
-     * x, delta x, min y, delta y and angle. Shift data values follow this and are also separated by
-     * spaces. Row records are organized from low y (latitude) to high and columns are orderd from
-     * low longitude to high.
+     * Reads latitude and longitude text grid shift file data into {@link grid}. The first two lines of the shift data
+     * file contain the header, with the first being a description of the grid. The second line contains 8 values
+     * separated by spaces: num. columns, num. rows, num. z, min x, delta x, min y, delta y and angle. Shift data values
+     * follow this and are also separated by spaces. Row records are organized from low y (latitude) to high and columns
+     * are orderd from low longitude to high.
      *
      * @param latGridUrl URL to the text latitude shift file (.laa extention).
      * @param longGridUrl URL to the text longitude shift file (.loa extention).
      * @throws IOException if the data files cannot be read.
      * @throws FactoryException if there is an inconsistency in the data
      */
-    private NADConGridShift loadTextGrid(URL latGridUrl, URL longGridUrl)
-            throws IOException, FactoryException {
+    private NADConGridShift loadTextGrid(URL latGridUrl, URL longGridUrl) throws IOException, FactoryException {
         String latLine;
         String longLine;
         StringTokenizer latSt;
@@ -355,103 +335,93 @@ public class NADCONGridShiftFactory extends ReferencingFactory implements Buffer
         // //////////////////////
         // setup
         // //////////////////////
-        InputStreamReader latIsr = new InputStreamReader(latGridUrl.openStream());
-        BufferedReader latBr = new BufferedReader(latIsr);
+        try (BufferedReader latBr = new BufferedReader(new InputStreamReader(latGridUrl.openStream()));
+                BufferedReader longBr = new BufferedReader(new InputStreamReader(longGridUrl.openStream()))) {
+            // //////////////////////
+            // read header info
+            // //////////////////////
+            latBr.readLine(); // skip header description
+            latLine = latBr.readLine();
+            if (latLine == null) {
+                throw new IOException("Invalid lat grid file, does not contain a grid");
+            }
+            latSt = new StringTokenizer(latLine, " ");
 
-        InputStreamReader longIsr = new InputStreamReader(longGridUrl.openStream());
-        BufferedReader longBr = new BufferedReader(longIsr);
+            if (latSt.countTokens() != 8) {
+                final Object arg0 = String.valueOf(latSt.countTokens());
+                throw new FactoryException(MessageFormat.format(ErrorKeys.HEADER_UNEXPECTED_LENGTH_$1, arg0));
+            }
 
-        // //////////////////////
-        // read header info
-        // //////////////////////
-        latBr.readLine(); // skip header description
-        latLine = latBr.readLine();
-        if (latLine == null) {
-            throw new IOException("Invalid lat grid file, does not contain a grid");
-        }
-        latSt = new StringTokenizer(latLine, " ");
+            int nc = Integer.parseInt(latSt.nextToken());
+            int nr = Integer.parseInt(latSt.nextToken());
+            int nz = Integer.parseInt(latSt.nextToken());
 
-        if (latSt.countTokens() != 8) {
-            throw new FactoryException(
-                    Errors.format(
-                            ErrorKeys.HEADER_UNEXPECTED_LENGTH_$1,
-                            String.valueOf(latSt.countTokens())));
-        }
+            float xmin = Float.parseFloat(latSt.nextToken());
+            float dx = Float.parseFloat(latSt.nextToken());
+            float ymin = Float.parseFloat(latSt.nextToken());
+            float dy = Float.parseFloat(latSt.nextToken());
 
-        int nc = Integer.parseInt(latSt.nextToken());
-        int nr = Integer.parseInt(latSt.nextToken());
-        int nz = Integer.parseInt(latSt.nextToken());
+            float angle = Float.parseFloat(latSt.nextToken());
+            float xmax = xmin + ((nc - 1) * dx);
+            float ymax = ymin + ((nr - 1) * dy);
 
-        float xmin = Float.parseFloat(latSt.nextToken());
-        float dx = Float.parseFloat(latSt.nextToken());
-        float ymin = Float.parseFloat(latSt.nextToken());
-        float dy = Float.parseFloat(latSt.nextToken());
+            // now read long shift grid
+            longBr.readLine(); // skip header description
+            longLine = longBr.readLine();
+            if (longLine == null) {
+                throw new IOException("Invalid lon grid file, does not contain a grid");
+            }
+            longSt = new StringTokenizer(longLine, " ");
 
-        float angle = Float.parseFloat(latSt.nextToken());
-        float xmax = xmin + ((nc - 1) * dx);
-        float ymax = ymin + ((nr - 1) * dy);
+            if (longSt.countTokens() != 8) {
+                final Object arg0 = String.valueOf(longSt.countTokens());
+                throw new FactoryException(MessageFormat.format(ErrorKeys.HEADER_UNEXPECTED_LENGTH_$1, arg0));
+            }
 
-        // now read long shift grid
-        longBr.readLine(); // skip header description
-        longLine = longBr.readLine();
-        if (longLine == null) {
-            throw new IOException("Invalid lon grid file, does not contain a grid");
-        }
-        longSt = new StringTokenizer(longLine, " ");
+            // check that latitude grid header is the same as for latitude grid
+            if ((nc != Integer.parseInt(longSt.nextToken()))
+                    || (nr != Integer.parseInt(longSt.nextToken()))
+                    || (nz != Integer.parseInt(longSt.nextToken()))
+                    || (xmin != Float.parseFloat(longSt.nextToken()))
+                    || (dx != Float.parseFloat(longSt.nextToken()))
+                    || (ymin != Float.parseFloat(longSt.nextToken()))
+                    || (dy != Float.parseFloat(longSt.nextToken()))
+                    || (angle != Float.parseFloat(longSt.nextToken()))) {
+                throw new FactoryException(ErrorKeys.GRID_LOCATIONS_UNEQUAL);
+            }
 
-        if (longSt.countTokens() != 8) {
-            throw new FactoryException(
-                    Errors.format(
-                            ErrorKeys.HEADER_UNEXPECTED_LENGTH_$1,
-                            String.valueOf(longSt.countTokens())));
-        }
+            // //////////////////////
+            // read grid shift data into LocalizationGrid
+            // //////////////////////
+            NADConGridShift gridShift = new NADConGridShift(xmin, ymin, xmax, ymax, dx, dy, nc, nr);
 
-        // check that latitude grid header is the same as for latitude grid
-        if ((nc != Integer.parseInt(longSt.nextToken()))
-                || (nr != Integer.parseInt(longSt.nextToken()))
-                || (nz != Integer.parseInt(longSt.nextToken()))
-                || (xmin != Float.parseFloat(longSt.nextToken()))
-                || (dx != Float.parseFloat(longSt.nextToken()))
-                || (ymin != Float.parseFloat(longSt.nextToken()))
-                || (dy != Float.parseFloat(longSt.nextToken()))
-                || (angle != Float.parseFloat(longSt.nextToken()))) {
-            throw new FactoryException(Errors.format(ErrorKeys.GRID_LOCATIONS_UNEQUAL));
-        }
+            int i = 0;
+            int j = 0;
+            for (i = 0; i < nr; i++) {
+                for (j = 0; j < nc; ) {
+                    latLine = latBr.readLine();
+                    if (latLine == null) {
+                        throw new IOException("Was expecting one more line in the lat file");
+                    }
+                    latSt = new StringTokenizer(latLine, " ");
+                    longLine = longBr.readLine();
+                    if (longLine == null) {
+                        throw new IOException("Was expecting one more line in the lat file");
+                    }
+                    longSt = new StringTokenizer(longLine, " ");
 
-        // //////////////////////
-        // read grid shift data into LocalizationGrid
-        // //////////////////////
-        NADConGridShift gridShift = new NADConGridShift(xmin, ymin, xmax, ymax, dx, dy, nc, nr);
-
-        int i = 0;
-        int j = 0;
-        for (i = 0; i < nr; i++) {
-            for (j = 0; j < nc; ) {
-                latLine = latBr.readLine();
-                if (latLine == null) {
-                    throw new IOException("Was expecting one more line in the lat file");
-                }
-                latSt = new StringTokenizer(latLine, " ");
-                longLine = longBr.readLine();
-                if (longLine == null) {
-                    throw new IOException("Was expecting one more line in the lat file");
-                }
-                longSt = new StringTokenizer(longLine, " ");
-
-                while (latSt.hasMoreTokens() && longSt.hasMoreTokens()) {
-                    gridShift.setLocalizationPoint(
-                            j,
-                            i,
-                            (double) Float.parseFloat(longSt.nextToken()),
-                            (double) Float.parseFloat(latSt.nextToken()));
-                    ++j;
+                    while (latSt.hasMoreTokens() && longSt.hasMoreTokens()) {
+                        gridShift.setLocalizationPoint(
+                                j, i, Float.parseFloat(longSt.nextToken()), Float.parseFloat(latSt.nextToken()));
+                        ++j;
+                    }
                 }
             }
+
+            assert i == nr : i;
+            assert j == nc : j;
+
+            return gridShift;
         }
-
-        assert i == nr : i;
-        assert j == nc : j;
-
-        return gridShift;
     }
 }

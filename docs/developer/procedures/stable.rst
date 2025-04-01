@@ -6,25 +6,35 @@ For one we are not adding new features, and we need to back out changes that fai
 
 Let us start with what is restricted:
 
-* Changing **any** API.
-* Breaking any client code that previously worked
+* Changing **any** API. Additive-only API changes may be backported from main after one month, where technically feasible.
+* Breaking any client code that previously worked.
 
 With that in mind here is what we can do on a stable branch:
 
 * applying a fix
 * creating a new plugin
 * create an additional plug-in
+
+
+Applying a fix may also involve upgrading a dependency. When doing so, make sure the API of the dependency has not changed - you should treat an API change in a dependency the same as an API change in GeoTools, as code that depends on your module may also depend upon the funcionality of its dependencies. In some cases, upgrading a dependency to fix a bug may also bring with it API changes in the dependency. Consider whether a backport is really necessary in such cases. Security fixes may need to force an api change.
   
 Since plugins are optional, and the functionality is available through the interfaces of the core library new plugins can be added to the library as there will be required change in client code.
 
 Applying a Fix to the Stable Branch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Do you have a Jira issue? Chances are any change worth doing on the branch has a jira issue
+Do you have a Jira issue? Chances are any change worth doing on the branch has a Jira issue. If not, create one.
 
-#. Pull from the canonical repository
+Has the fix been applied to main? Before applying a fix to the stable branch, it must have been commited to main, unless doing so is impossible or unnecessary for some reason. If not, see "Applying your change to main", below.
+
+#. Pull from the canonical repository (use the stable branch instead of 8.x)
+
+      git checkout 8.x
+      git pull geotools 8.x
+
 #. Do the full maven cycle of maven build, maven createRelease
-#. Commit and push your change
+#. Checkout a working branch
+#. Commit and push your change, and create a pull request against the stable branch.
    
    You did clear it with the module maintainer first?
 
@@ -34,16 +44,13 @@ Do you have a Jira issue? Chances are any change worth doing on the branch has a
    * The Fix Version (8.0-RC1, 8.1, etc...)
    * Commit: 9e6b6fca (Usually the first 7-8 characters of a git revision are sufficient)
    
-   This will help when applying your change to master....
+   This will help when applying your change to main....
 
-Applying your Change to master
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Applying your Change to main
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It is nice to do this after every fix, or you may want to save up a couple.
-Please try to apply your fixes to trunk before the next trunk Milestone release (we like to release the best code we can - and that includes your fixes).
-
-#. Grab the commit id's
-#. From your master check out apply the patch::
+#. Grab the commit ids of the fix
+#. From your main check out apply the patch::
      
      git cherry-pick 9e6b6fca
      
@@ -51,10 +58,7 @@ Please try to apply your fixes to trunk before the next trunk Milestone release 
    applied on the stable branch.
 
 #. Do the complete maven cycle of: clean, build, createRelease
-#. If the change works all is well commit::
-     
-     git pull --rebase geotools master
-     git push geotools master
+#. If the change works all is well commit and push your change, and create a pull request against the main branch.
      
 #. If not back out the change ... and open a jira bug on the matter.::
      
@@ -62,10 +66,10 @@ Please try to apply your fixes to trunk before the next trunk Milestone release 
 
    Note: this will essentially remove all local commits.
 
-Applying a fix from master
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Applying a fix from main
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-To merge in a change you will need:
+To merge in an existing fix from main you will need:
 
 * The commit(s) for the changes to merge
 
@@ -74,18 +78,16 @@ To merge in a change you will need:
       git checkout 8.x
       git pull geotools 8.x
       
-#. Cherry-pick the commits from master::
+#. Cherry-pick the commits from main::
       
       git cherry-pick <commit>
       ...
       
    If cherry picking multiple commits be sure to pick them in the same order as they were
-   applied on the master branch.
+   applied on the main branch.
 
 #. Do the complete maven cycle of: clean, build, createRelease
-#. If the change works all is well push changes::
-     
-      git push geotools 8.x
+#. If the change works all is well push changes and open a pull request against the stable branch.
 
 #. If not back out the change ... and (re)open a Jira bug about it.::
       
@@ -108,9 +110,6 @@ If you find out later that a change is bad sometime after your commit, all is no
    
      git revert <commit1>..<commitN>
 
-#. Push changes::
-
-     git pull --rebase geotools master
-     git push  geotools master
+#. Push the changes and open a pull request against the applicable branch.
      
 #. Remember to (re)open any associated Jira issue.

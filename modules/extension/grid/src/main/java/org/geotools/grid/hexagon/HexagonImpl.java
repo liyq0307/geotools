@@ -17,13 +17,13 @@
 
 package org.geotools.grid.hexagon;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Default implementation of {@code Hexagon}.
@@ -51,16 +51,11 @@ public class HexagonImpl implements Hexagon {
      * @param minX the min X ordinate of the bounding rectangle
      * @param minY the min Y ordinate of the bounding rectangle
      * @param sideLen the side length
-     * @param orientation either {@code Hexagon.Orientation.FLAT} or {@code
-     *     Hexagon.Orientation.ANGLED}
+     * @param orientation either {@code Hexagon.Orientation.FLAT} or {@code Hexagon.Orientation.ANGLED}
      * @param crs the coordinate reference system (may be {@code null})
      */
     public HexagonImpl(
-            double minX,
-            double minY,
-            double sideLen,
-            HexagonOrientation orientation,
-            CoordinateReferenceSystem crs) {
+            double minX, double minY, double sideLen, HexagonOrientation orientation, CoordinateReferenceSystem crs) {
 
         if (sideLen <= 0.0) {
             throw new IllegalArgumentException("side length must be > 0");
@@ -81,16 +76,19 @@ public class HexagonImpl implements Hexagon {
     }
 
     /** {@inheritDoc} */
+    @Override
     public double getSideLength() {
         return sideLen;
     }
 
     /** {@inheritDoc} */
+    @Override
     public double getArea() {
         return area;
     }
 
     /** {@inheritDoc} */
+    @Override
     public HexagonOrientation getOrientation() {
         return orientation;
     }
@@ -100,6 +98,7 @@ public class HexagonImpl implements Hexagon {
      *
      * @return an array of copies of the vertex {@code Coordinates}
      */
+    @Override
     public Coordinate[] getVertices() {
         Coordinate[] copy = new Coordinate[6];
         for (int i = 0; i < 6; i++) {
@@ -109,18 +108,18 @@ public class HexagonImpl implements Hexagon {
     }
 
     /** {@inheritDoc} */
+    @Override
     public ReferencedEnvelope getBounds() {
         if (orientation == HexagonOrientation.FLAT) {
-            return new ReferencedEnvelope(
-                    minX, minX + 2.0 * sideLen, minY, minY + ROOT3 * sideLen, crs);
+            return new ReferencedEnvelope(minX, minX + 2.0 * sideLen, minY, minY + ROOT3 * sideLen, crs);
 
         } else { // ANGLED
-            return new ReferencedEnvelope(
-                    minX, minX + ROOT3 * sideLen, minY, minY + 2.0 * sideLen, crs);
+            return new ReferencedEnvelope(minX, minX + ROOT3 * sideLen, minY, minY + 2.0 * sideLen, crs);
         }
     }
 
     /** {@inheritDoc} */
+    @Override
     public Coordinate getCenter() {
         if (orientation == HexagonOrientation.FLAT) {
             return new Coordinate(minX + sideLen, minY + ROOT3 * 0.5 * sideLen);
@@ -130,6 +129,7 @@ public class HexagonImpl implements Hexagon {
     }
 
     /** {@inheritDoc} */
+    @Override
     public Geometry toGeometry() {
         Coordinate[] ring = new Coordinate[7];
         System.arraycopy(vertices, 0, ring, 0, 6);
@@ -143,6 +143,7 @@ public class HexagonImpl implements Hexagon {
      *
      * @throws IllegalArgumentException if {@code maxSpacing} is not a positive value
      */
+    @Override
     public Geometry toDenseGeometry(double maxSpacing) {
         if (maxSpacing <= 0.0) {
             throw new IllegalArgumentException("maxSpacing must be a positive value");

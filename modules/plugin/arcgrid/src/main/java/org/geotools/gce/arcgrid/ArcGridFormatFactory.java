@@ -22,8 +22,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.api.coverage.grid.Format;
 import org.geotools.coverage.grid.io.GridFormatFactorySpi;
-import org.opengis.coverage.grid.Format;
 
 /**
  * Implementation of the {@link Format} service provider interface for arc grid files.
@@ -33,14 +33,14 @@ import org.opengis.coverage.grid.Format;
  */
 public final class ArcGridFormatFactory implements GridFormatFactorySpi {
     /** Logger. */
-    private static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(ArcGridFormatFactory.class);
+    private static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(ArcGridFormatFactory.class);
 
     /**
      * Tells me if the coverage plugin to access Ascii grids is available or not.
      *
      * @return True if the plugin is available, False otherwise.
      */
+    @Override
     public boolean isAvailable() {
         boolean available = true;
 
@@ -53,8 +53,7 @@ public final class ArcGridFormatFactory implements GridFormatFactorySpi {
             Class.forName("it.geosolutions.imageio.plugins.arcgrid.AsciiGridsImageMetadata");
             if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("ArcGridFormatFactory is available.");
         } catch (ClassNotFoundException cnf) {
-            if (LOGGER.isLoggable(Level.FINE))
-                LOGGER.fine("ArcGridFormatFactory is not available.");
+            if (LOGGER.isLoggable(Level.FINE)) LOGGER.fine("ArcGridFormatFactory is not available.");
             available = false;
         }
 
@@ -66,11 +65,13 @@ public final class ArcGridFormatFactory implements GridFormatFactorySpi {
      *
      * @return An {@link ArcGridFormat}.;
      */
+    @Override
     public ArcGridFormat createFormat() {
         return new ArcGridFormat();
     }
 
     /** Returns the implementation hints. The default implementation returns en empty map. */
+    @Override
     public Map<RenderingHints.Key, ?> getImplementationHints() {
         return Collections.emptyMap();
     }

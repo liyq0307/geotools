@@ -91,9 +91,10 @@ public class DescriptionTypeImpl extends EObjectImpl implements DescriptionType 
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<LanguageStringType> getTitle() {
     if (title == null) {
-      title = new EObjectContainmentEList<LanguageStringType>(LanguageStringType.class, this, Ows20Package.DESCRIPTION_TYPE__TITLE);
+      title = new EObjectContainmentEList<>(LanguageStringType.class, this, Ows20Package.DESCRIPTION_TYPE__TITLE);
     }
     return title;
   }
@@ -103,9 +104,10 @@ public class DescriptionTypeImpl extends EObjectImpl implements DescriptionType 
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<LanguageStringType> getAbstract() {
     if (abstract_ == null) {
-      abstract_ = new EObjectContainmentEList<LanguageStringType>(LanguageStringType.class, this, Ows20Package.DESCRIPTION_TYPE__ABSTRACT);
+      abstract_ = new EObjectContainmentEList<>(LanguageStringType.class, this, Ows20Package.DESCRIPTION_TYPE__ABSTRACT);
     }
     return abstract_;
   }
@@ -115,9 +117,10 @@ public class DescriptionTypeImpl extends EObjectImpl implements DescriptionType 
      * <!-- end-user-doc -->
    * @generated
    */
+    @Override
     public EList<KeywordsType> getKeywords() {
     if (keywords == null) {
-      keywords = new EObjectContainmentEList<KeywordsType>(KeywordsType.class, this, Ows20Package.DESCRIPTION_TYPE__KEYWORDS);
+      keywords = new EObjectContainmentEList<>(KeywordsType.class, this, Ows20Package.DESCRIPTION_TYPE__KEYWORDS);
     }
     return keywords;
   }

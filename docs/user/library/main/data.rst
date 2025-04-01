@@ -35,23 +35,32 @@ FeatureType Creation
 * ``DataUtilities.createType( namespace, typeName, specification)``
   
   This is great for quickly whipping up a ``FeatureType`` when making test cases. For more
-  control use ``SimpleFeatureTypeBuilder`` as described in ``gt-opengis``.
+  control use ``SimpleFeatureTypeBuilder`` as described in ``gt-api``.
   
-  If you just want to quickly describe some information::
-    
-    SimpleFeatureType lineType = DataUtilities.createType("LINE", "centerline:LineString,name:\"\",id:0");
+  If to quickly describe some information:
   
-  I admit that looks a bit strange, you can also use a Java class names if it makes you happy::
+  .. code-block:: java
     
-    SimpleFeatureType schema = DataUtilities.createType("EDGE", "edge:Polygon,name:String,timestamp:java.util.Date");
+     SimpleFeatureType lineType = DataUtilities.createType("LINE", "centerline:LineString,name:\"\",id:0");
   
-  If you need to set the coordinate reference system as well::
-    
-    SimpleFeatureType lineType = DataUtilities.createType("LINE", "centerline:LineString:srid=32615,name:\"\",id:0");
+  I admit that looks a bit strange, you can also use a Java class names if it makes you happy:
 
-  If you are into names spaces that can be handled as well::
+  .. code-block:: java
+
+     SimpleFeatureType schema = DataUtilities.createType("EDGE", "edge:Polygon,name:String,timestamp:java.util.Date");
   
-    SimpleFeatureType lineType = DataUtilities.createType("http://somewhere.net/","LINE", "centerline:LineString,name:\"\",id:0");
+  If you need to set the coordinate reference system as well (with optional CRS authority, if not using ``EPSG``):
+  
+  .. code-block:: java
+    
+     SimpleFeatureType lineType = DataUtilities.createType("LINE", "centerline:LineString:srid=32615,name:\"\",id:0");
+     SimpleFeatureType marsLineType = DataUtilities.createType("LINE", "marsPath:LineString:authority:IAU;srid=49900,name:\"\",id:0");
+
+  If you are into names spaces that can be handled as well:
+  
+  .. code-block:: java
+  
+     SimpleFeatureType lineType = DataUtilities.createType("http://somewhere.net/","LINE", "centerline:LineString,name:\"\",id:0");
 
   Now we don't want to see you writing code to build up your initial "definition" String, that means you are doing something
   general (and dynamic!) and   should go figure out ``SimpleFeatureTypeBuilder`` and ``SimpleFeatureBuilder``.
@@ -95,7 +104,7 @@ return a modified copy.
 FeatureType Summary
 '''''''''''''''''''
 
-``FeatureType`` forms an interesting little data structure as shown in the ``gt-opengis`` diagrams.
+``FeatureType`` forms an interesting little data structure as shown in the ``gt-api`` diagrams.
 
 The following methods traverse this data structure for you building up a summary to answer specific questions.
 
@@ -120,11 +129,20 @@ The following methods traverse this data structure for you building up a summary
   0      if ``schema1`` and ``schema2`` are the same
   -1     if ``schema1`` and ``schema2`` are not related
   ====== ==========================================================
+  
+* ``compareNames(schema1, schema2)``
+  Similar to ``compare(schema1, schema2)`` but considers only schemas attribute descriptors during comparison
 
 * ``isMatch(AttributeDescriptor, AttributeDescriptor)``
   
   Used to check if values from the two attribute descriptors have a hope of matching.
   Both the name and the binding to a Java class are checked.
+
+* ``isMatch(AttributeDescriptor, AttributeDescriptor, boolean)``  
+  Used to check if values from the two attribute descriptors have a hope of matching.
+  Boolean argument determines whether equality is determined by descriptor name only (false) or java class binding will also be considered (true)
+  Internally used by  ``compareNames`` 
+
 
 Feature
 ^^^^^^^
@@ -366,10 +384,10 @@ perform the task you have in mind.
 
 We have a number of methods to list required attributes for a ``Filter`` or ``Expression``:
 
-* ``DataUtilities.atttributeNames( Filter )``
-* ``DataUtilities.atttributeNames( Filter, FeatureType )``
-* ``DataUtilities.attributenNames( Expression )``
-* ``DataUtilities.attributenNames( Expression, FeatureType )``
+* ``DataUtilities.attributeNames( Filter )``
+* ``DataUtilities.attributeNames( Filter, FeatureType )``
+* ``DataUtilities.attributeNames( Expression )``
+* ``DataUtilities.attributeNames( Expression, FeatureType )``
   
   The optional ``FeatureType`` is used as a reference point and can resolve any ambiguities
   between the simple XPath expressions, and the names used in the ``FeatureType``.

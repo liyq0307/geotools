@@ -88,6 +88,12 @@ The following connection parameters are defined for WFS.
 |                                              | use also ``OtherSRS`` if available.                              |
 |                                              | The false value is currently supported in 1.1.0 protocol only.   |
 +----------------------------------------------+------------------------------------------------------------------+
+| ``WFSDataStoreFactory:SCHEMA_CACHE_LOCATION``| Optional used for having a cache of the XSD-files. In each       |
+|                                              | response there will be a header with a set of corresponding      |
+|                                              | schema files. To avoid downloading these each time, we will by   |
+|                                              | this parameter specify a location on disk that should be used    |
+|                                              | for downloading files.                                           |
++----------------------------------------------+------------------------------------------------------------------+
 
 Historical Note: We apologize for the long connection parameter keys, WFS was one of the first ``DataStores`` written and we were unsure at the
 time if they keys for each datastore would need to be unique or not. On the plus side you can see our devotion to stability.
@@ -128,20 +134,20 @@ You can connect to a Web Feature Server via the DataStore API; the connection pa
   // Step 2 - connection
   DataStore data = DataStoreFinder.getDataStore( connectionParameters );
   
-  // Step 3 - discouvery
+  // Step 3 - discovery
   String typeNames[] = data.getTypeNames();
   String typeName = typeNames[0];
   SimpleFeatureType schema = data.getSchema( typeName );
   
   // Step 4 - target
   FeatureSource<SimpleFeatureType, SimpleFeature> source = data.getFeatureSource( typeName );
-  System.out.println( "Metadata Bounds:"+ source.getBounds() );
+  System.out.println( "Metadata Bounds: " + source.getBounds() );
   
   // Step 5 - query
   String geomName = schema.getDefaultGeometry().getLocalName();
   Envelope bbox = new Envelope( -100.0, -70, 25, 40 );
   
-  FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2( GeoTools.getDefaultHints() );
+  FilterFactory ff = CommonFactoryFinder.getFilterFactory( GeoTools.getDefaultHints() );
   Object polygon = JTS.toGeometry( bbox );
   Intersects filter = ff.intersects( ff.property( geomName ), ff.literal( polygon ) );
   
@@ -151,12 +157,11 @@ You can connect to a Web Feature Server via the DataStore API; the connection pa
   ReferencedEnvelope bounds = new ReferencedEnvelope();
   Iterator<SimpleFeature> iterator = features.iterator();
   try {
-      while( iterator.hasNext() ){
+      while( iterator.hasNext() ) {
           Feature feature = (Feature) iterator.next();
-      bounds.include( feature.getBounds() );
-  }
-      System.out.println( "Calculated Bounds:"+ bounds );
-  }
-  finally {
+          bounds.include( feature.getBounds() );
+      }
+      System.out.println( "Calculated Bounds: " + bounds );
+  } finally {
       features.close( iterator );
   }

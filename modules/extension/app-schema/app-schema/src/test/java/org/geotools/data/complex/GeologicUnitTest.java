@@ -27,9 +27,13 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.geotools.data.DataAccess;
-import org.geotools.data.DataAccessFinder;
-import org.geotools.data.FeatureSource;
+import org.geotools.api.data.DataAccess;
+import org.geotools.api.data.DataAccessFinder;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.feature.type.Name;
 import org.geotools.data.complex.config.AppSchemaDataAccessConfigurator;
 import org.geotools.data.complex.config.AppSchemaDataAccessDTO;
 import org.geotools.data.complex.config.AppSchemaFeatureTypeRegistry;
@@ -43,11 +47,6 @@ import org.geotools.xsd.SchemaIndex;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.opengis.feature.Feature;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.Name;
 
 /**
  * This is to ensure we have a working GeologicUnit configuration test.
@@ -81,7 +80,6 @@ public class GeologicUnitTest extends AppSchemaTestSupport {
      * Load schema
      *
      * @param location schema location path that can be found through getClass().getResource()
-     * @return
      */
     private SchemaIndex loadSchema(final String location) throws IOException {
         final URL catalogLocation = getClass().getResource(schemaBase + "mappedPolygons.oasis.xml");
@@ -90,10 +88,8 @@ public class GeologicUnitTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Tests if the schema-to-FM parsing code developed for complex data store configuration loading
-     * can parse the GeoSciML types
-     *
-     * @throws Exception
+     * Tests if the schema-to-FM parsing code developed for complex data store configuration loading can parse the
+     * GeoSciML types
      */
     @Test
     public void testParseSchema() throws Exception {
@@ -118,11 +114,7 @@ public class GeologicUnitTest extends AppSchemaTestSupport {
         }
     }
 
-    /**
-     * Test that mappings are loaded OK.
-     *
-     * @throws Exception
-     */
+    /** Test that mappings are loaded OK. */
     @Test
     public void testLoadMappingsConfig() throws Exception {
         XMLConfigDigester reader = new XMLConfigDigester();
@@ -137,17 +129,15 @@ public class GeologicUnitTest extends AppSchemaTestSupport {
     }
 
     /**
-     * Tests that a {@link FeatureSource} can be obtained for all names returned by {@link
-     * AppSchemaDataAccess#getNames()}.
-     *
-     * @throws Exception
+     * Tests that a {@link FeatureSource} can be obtained for all names returned by
+     * {@link AppSchemaDataAccess#getNames()}.
      */
     @Test
     public void testGetNamesAndFeatureSources() throws Exception {
         /*
          * Initiate data accesses and make sure they have the mappings
          */
-        final Map<String, Serializable> dsParams = new HashMap<String, Serializable>();
+        final Map<String, Serializable> dsParams = new HashMap<>();
         URL url = getClass().getResource(schemaBase + "GeologicUnit.xml");
         assertNotNull(url);
         dsParams.put("dbtype", "app-schema");
@@ -162,17 +152,13 @@ public class GeologicUnitTest extends AppSchemaTestSupport {
         }
     }
 
-    /**
-     * Test that geologic unit features are returned correctly.
-     *
-     * @throws Exception
-     */
+    /** Test that geologic unit features are returned correctly. */
     @Test
     public void testGetFeatures() throws Exception {
         /*
          * Initiate data accesses and make sure they have the mappings
          */
-        final Map dsParams = new HashMap();
+        final Map<String, Serializable> dsParams = new HashMap<>();
         URL url = getClass().getResource(schemaBase + "GeologicUnit.xml");
         assertNotNull(url);
         dsParams.put("dbtype", "app-schema");
@@ -191,32 +177,26 @@ public class GeologicUnitTest extends AppSchemaTestSupport {
         DataAccess mfDataAccess = DataAccessFinder.getDataStore(dsParams);
         assertNotNull(mfDataAccess);
 
-        FeatureSource guSource =
-                (FeatureSource) guDataStore.getFeatureSource(FeatureChainingTest.GEOLOGIC_UNIT);
+        FeatureSource guSource = guDataStore.getFeatureSource(FeatureChainingTest.GEOLOGIC_UNIT);
 
-        FeatureCollection guFeatures = (FeatureCollection) guSource.getFeatures();
+        FeatureCollection guFeatures = guSource.getFeatures();
         assertEquals(3, size(guFeatures));
 
-        FeatureSource cpSource =
-                DataAccessRegistry.getFeatureSource(FeatureChainingTest.COMPOSITION_PART);
-        FeatureCollection cpFeatures = (FeatureCollection) cpSource.getFeatures();
+        FeatureSource cpSource = DataAccessRegistry.getFeatureSource(FeatureChainingTest.COMPOSITION_PART);
+        FeatureCollection cpFeatures = cpSource.getFeatures();
         assertEquals(4, size(cpFeatures));
 
-        FeatureSource cgiSource =
-                DataAccessRegistry.getFeatureSource(FeatureChainingTest.CGI_TERM_VALUE);
-        FeatureCollection cgiFeatures = (FeatureCollection) cgiSource.getFeatures();
+        FeatureSource cgiSource = DataAccessRegistry.getFeatureSource(FeatureChainingTest.CGI_TERM_VALUE);
+        FeatureCollection cgiFeatures = cgiSource.getFeatures();
         assertEquals(6, size(cgiFeatures));
     }
 
-    private int size(FeatureCollection<FeatureType, Feature> features) {
+    private int size(FeatureCollection features) {
         int size = 0;
-        FeatureIterator<Feature> i = features.features();
-        try {
+        try (FeatureIterator i = features.features()) {
             for (; i.hasNext(); i.next()) {
                 size++;
             }
-        } finally {
-            i.close();
         }
         return size;
     }

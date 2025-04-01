@@ -21,19 +21,19 @@ package org.geotools.metadata.iso.citation;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import net.opengis.ows11.ResponsiblePartySubsetType;
+import org.geotools.api.metadata.citation.Contact;
+import org.geotools.api.metadata.citation.OnLineFunction;
+import org.geotools.api.metadata.citation.OnLineResource;
+import org.geotools.api.metadata.citation.ResponsibleParty;
+import org.geotools.api.metadata.citation.Role;
+import org.geotools.api.util.InternationalString;
 import org.geotools.metadata.iso.MetadataEntity;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.logging.Logging;
-import org.opengis.metadata.citation.Contact;
-import org.opengis.metadata.citation.OnLineFunction;
-import org.opengis.metadata.citation.OnLineResource;
-import org.opengis.metadata.citation.ResponsibleParty;
-import org.opengis.metadata.citation.Role;
-import org.opengis.util.InternationalString;
 
 /**
- * Identification of, and means of communication with, person(s) and organizations associated with
- * the dataset.
+ * Identification of, and means of communication with, person(s) and organizations associated with the dataset.
  *
  * @since 2.1
  * @version $Id$
@@ -49,12 +49,11 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
      *
      * @todo Localize.
      */
-    static final InternationalString OGC_NAME =
-            new SimpleInternationalString("Open Geospatial Consortium");
+    static final InternationalString OGC_NAME = new SimpleInternationalString("Open Geospatial Consortium");
 
     /**
-     * Creates a responsible party metadata entry for OGC involvement. The organisation name is
-     * automatically set to "Open Geospatial Consortium".
+     * Creates a responsible party metadata entry for OGC involvement. The organisation name is automatically set to
+     * "Open Geospatial Consortium".
      *
      * @param role The OGC role (point of contact, owner, etc.) for a resource.
      * @param resource The URI to the resource.
@@ -74,16 +73,15 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
     }
 
     /**
-     * Creates a responsible party metadata entry for OGC involvement. The organisation name is
-     * automatically set to "Open Geospatial Consortium".
+     * Creates a responsible party metadata entry for OGC involvement. The organisation name is automatically set to
+     * "Open Geospatial Consortium".
      *
      * @param role The OGC role (point of contact, owner, etc.) for a resource.
      * @param function The OGC function (information, download, etc.) for a resource.
      * @param onlineResource The URI to the resource.
      * @return Responsible party describing OGC involvement.
      */
-    public static ResponsibleParty OGC(
-            final Role role, final OnLineFunction function, final URI onlineResource) {
+    public static ResponsibleParty OGC(final Role role, final OnLineFunction function, final URI onlineResource) {
         final OnLineResourceImpl resource = new OnLineResourceImpl(onlineResource);
         resource.setFunction(function);
         resource.freeze();
@@ -91,16 +89,15 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
     }
 
     /**
-     * Creates a responsible party metadata entry for OGC involvement. The organisation name is
-     * automatically set to "Open Geospatial Consortium".
+     * Creates a responsible party metadata entry for OGC involvement. The organisation name is automatically set to
+     * "Open Geospatial Consortium".
      *
      * @param role The OGC role (point of contact, owner, etc.) for a resource.
      * @param function The OGC function (information, download, etc.) for a resource.
      * @param onlineResource The URI on the resource.
      * @return Responsible party describing OGC involvement.
      */
-    static ResponsibleParty OGC(
-            final Role role, final OnLineFunction function, final String onlineResource) {
+    static ResponsibleParty OGC(final Role role, final OnLineFunction function, final String onlineResource) {
         try {
             return OGC(role, function, new URI(onlineResource));
         } catch (URISyntaxException badContact) {
@@ -110,8 +107,8 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
     }
 
     /**
-     * The <A HREF="http://www.opengeospatial.org">Open Geospatial consortium</A> responsible party.
-     * "Open Geospatial consortium" is the new name for "OpenGIS consortium".
+     * The <A HREF="http://www.opengeospatial.org">Open Geospatial consortium</A> responsible party. "Open Geospatial
+     * consortium" is the new name for "OpenGIS consortium".
      *
      * @see ContactImpl#OGC
      */
@@ -126,8 +123,8 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
     }
 
     /**
-     * The <A HREF="http://www.opengis.org">OpenGIS consortium</A> responsible party. "OpenGIS
-     * consortium" is the old name for "Open Geospatial consortium".
+     * The <A HREF="http://www.opengis.org">OpenGIS consortium</A> responsible party. "OpenGIS consortium" is the old
+     * name for "Open Geospatial consortium".
      *
      * @see ContactImpl#OPEN_GIS
      */
@@ -157,8 +154,7 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
     }
 
     /**
-     * The <A HREF="http://www.remotesensing.org/geotiff/geotiff.html">GeoTIFF</A> responsible
-     * party.
+     * The <A HREF="http://www.remotesensing.org/geotiff/geotiff.html">GeoTIFF</A> responsible party.
      *
      * @see ContactImpl#GEOTIFF
      */
@@ -185,6 +181,21 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
         r.setContactInfo(ContactImpl.ESRI);
         r.freeze();
         ESRI = r;
+    }
+
+    /**
+     * The <A HREF="https://www.iau.org/">IAU</A> responsible party.
+     *
+     * @see ContactImpl#IAU
+     */
+    public static ResponsibleParty IAU;
+
+    static {
+        final ResponsiblePartyImpl r = new ResponsiblePartyImpl(Role.OWNER);
+        r.setOrganisationName(new SimpleInternationalString("IAU"));
+        r.setContactInfo(ContactImpl.IAU);
+        r.freeze();
+        IAU = r;
     }
 
     /**
@@ -216,6 +227,21 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
         r.setContactInfo(ContactImpl.POSTGIS);
         r.freeze();
         POSTGIS = r;
+    }
+
+    /**
+     * The <A HREF="https://proj.org">PROJ</A> responsible party.
+     *
+     * @see ContactImpl#PROJ
+     */
+    public static ResponsibleParty PROJ;
+
+    static {
+        final ResponsiblePartyImpl r = new ResponsiblePartyImpl(Role.OWNER);
+        r.setOrganisationName(new SimpleInternationalString("PROJ"));
+        r.setContactInfo(ContactImpl.PROJ);
+        r.freeze();
+        PROJ = r;
     }
 
     /**
@@ -268,9 +294,8 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
     public ResponsiblePartyImpl() {}
 
     /**
-     * Constructs a new responsible party initialized to the values specified by the given object.
-     * This constructor performs a shallow copy (i.e. each source attributes are reused without
-     * copying them).
+     * Constructs a new responsible party initialized to the values specified by the given object. This constructor
+     * performs a shallow copy (i.e. each source attributes are reused without copying them).
      *
      * @since 2.2
      */
@@ -278,24 +303,39 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
         super(source);
     }
 
-    /** Constructs a responsability party with the given role. */
+    /** Constructs a responsible party with the given role. */
     public ResponsiblePartyImpl(final Role role) {
         setRole(role);
     }
 
+    public ResponsiblePartyImpl(ResponsiblePartySubsetType rpSubset) {
+
+        if (rpSubset.getContactInfo() != null) {
+            setContactInfo(new ContactImpl(rpSubset.getContactInfo()));
+        }
+
+        if (rpSubset.getIndividualName() != null) {
+            setIndividualName(rpSubset.getIndividualName().toString());
+        }
+        if (rpSubset.getPositionName() != null) {
+            setPositionName(new SimpleInternationalString(rpSubset.getPositionName()));
+        }
+    }
+
     /**
-     * Returns the name of the responsible person- surname, given name, title separated by a
-     * delimiter. Only one of {@code individualName}, {@link #getOrganisationName organisationName}
-     * and {@link #getPositionName positionName} should be provided.
+     * Returns the name of the responsible person- surname, given name, title separated by a delimiter. Only one of
+     * {@code individualName}, {@link #getOrganisationName organisationName} and {@link #getPositionName positionName}
+     * should be provided.
      */
+    @Override
     public String getIndividualName() {
         return individualName;
     }
 
     /**
-     * Set the name of the responsible person- surname, given name, title separated by a delimiter.
-     * Only one of {@code individualName}, {@link #getOrganisationName organisationName} and {@link
-     * #getPositionName positionName} should be provided.
+     * Set the name of the responsible person- surname, given name, title separated by a delimiter. Only one of
+     * {@code individualName}, {@link #getOrganisationName organisationName} and {@link #getPositionName positionName}
+     * should be provided.
      */
     public void setIndividualName(final String newValue) {
         checkWritePermission();
@@ -303,18 +343,17 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
     }
 
     /**
-     * Returns the name of the responsible organization. Only one of {@link #getIndividualName
-     * individualName}, </code>organisationName</code> and {@link #getPositionName positionName}
-     * should be provided.
+     * Returns the name of the responsible organization. Only one of {@link #getIndividualName individualName}, </code>
+     * organisationName</code> and {@link #getPositionName positionName} should be provided.
      */
+    @Override
     public InternationalString getOrganisationName() {
         return organisationName;
     }
 
     /**
-     * Set the name of the responsible organization. Only one of {@link #getIndividualName
-     * individualName}, </code>organisationName</code> and {@link #getPositionName positionName}
-     * should be provided.
+     * Set the name of the responsible organization. Only one of {@link #getIndividualName individualName}, </code>
+     * organisationName</code> and {@link #getPositionName positionName} should be provided.
      */
     public void setOrganisationName(final InternationalString newValue) {
         checkWritePermission();
@@ -322,18 +361,17 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
     }
 
     /**
-     * Returns the role or position of the responsible person Only one of {@link #getIndividualName
-     * individualName}, {@link #getOrganisationName organisationName} and {@code positionName}
-     * should be provided.
+     * Returns the role or position of the responsible person Only one of {@link #getIndividualName individualName},
+     * {@link #getOrganisationName organisationName} and {@code positionName} should be provided.
      */
+    @Override
     public InternationalString getPositionName() {
         return positionName;
     }
 
     /**
-     * set the role or position of the responsible person Only one of {@link #getIndividualName
-     * individualName}, {@link #getOrganisationName organisationName} and {@code positionName}
-     * should be provided.
+     * set the role or position of the responsible person Only one of {@link #getIndividualName individualName},
+     * {@link #getOrganisationName organisationName} and {@code positionName} should be provided.
      */
     public void setPositionName(final InternationalString newValue) {
         checkWritePermission();
@@ -341,6 +379,7 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
     }
 
     /** Returns the address of the responsible party. */
+    @Override
     public Contact getContactInfo() {
         return contactInfo;
     }
@@ -352,6 +391,7 @@ public class ResponsiblePartyImpl extends MetadataEntity implements ResponsibleP
     }
 
     /** Returns the function performed by the responsible party. */
+    @Override
     public Role getRole() {
         return role;
     }

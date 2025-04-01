@@ -17,15 +17,15 @@
 package org.geotools.styling;
 
 import javax.swing.Icon;
-import org.opengis.metadata.citation.OnLineResource;
-import org.opengis.style.StyleVisitor;
+import org.geotools.api.metadata.citation.OnLineResource;
+import org.geotools.api.style.TraversingStyleVisitor;
 
 /**
  * Default implementation of ExternalMark.
  *
  * @version $Id$
  */
-public class ExternalMarkImpl implements org.geotools.styling.ExternalMark {
+public class ExternalMarkImpl implements org.geotools.api.style.ExternalMark {
 
     private OnLineResource onlineResource;
     private Icon inlineContent;
@@ -48,43 +48,52 @@ public class ExternalMarkImpl implements org.geotools.styling.ExternalMark {
         this.format = format;
     }
 
+    @Override
     public String getFormat() {
         return format;
     }
 
+    @Override
     public Icon getInlineContent() {
         return inlineContent;
     }
 
+    @Override
     public int getMarkIndex() {
         return index;
     }
 
+    @Override
     public OnLineResource getOnlineResource() {
         return onlineResource;
     }
 
-    public Object accept(StyleVisitor visitor, Object extraData) {
+    @Override
+    public Object accept(TraversingStyleVisitor visitor, Object extraData) {
         return visitor.visit(this, extraData);
     }
 
+    @Override
     public void setInlineContent(Icon inline) {
         this.inlineContent = inline;
     }
 
+    @Override
     public void setFormat(String mimeType) {
         this.format = mimeType;
     }
 
+    @Override
     public void setMarkIndex(int markIndex) {
         this.index = markIndex;
     }
 
+    @Override
     public void setOnlineResource(OnLineResource resource) {
         this.onlineResource = resource;
     }
 
-    static ExternalMarkImpl cast(org.opengis.style.ExternalMark mark) {
+    static ExternalMarkImpl cast(org.geotools.api.style.ExternalMark mark) {
         if (mark == null) {
             return null;
         } else if (mark instanceof ExternalMarkImpl) {

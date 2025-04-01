@@ -55,6 +55,7 @@ import org.locationtech.jts.geom.Point;
  */
 public class GMLPointPropertyTypeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.PointPropertyType;
     }
@@ -66,6 +67,7 @@ public class GMLPointPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Point.class;
     }
@@ -78,6 +80,7 @@ public class GMLPointPropertyTypeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return node.getChildValue(Point.class);
     }
@@ -88,7 +91,7 @@ public class GMLPointPropertyTypeBinding extends AbstractComplexBinding {
     }
 
     @Override
-    public List getProperties(Object object, XSDElementDeclaration element) throws Exception {
+    public List<Object[]> getProperties(Object object, XSDElementDeclaration element) throws Exception {
         return GML2EncodingUtils.GeometryPropertyType_getProperties((Point) object);
     }
 }

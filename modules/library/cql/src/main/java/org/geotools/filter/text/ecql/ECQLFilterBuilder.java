@@ -21,6 +21,20 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.Id;
+import org.geotools.api.filter.Not;
+import org.geotools.api.filter.Or;
+import org.geotools.api.filter.PropertyIsEqualTo;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.filter.spatial.BinarySpatialOperator;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.filter.text.commons.AbstractFilterBuilder;
 import org.geotools.filter.text.commons.BuildResultStack;
 import org.geotools.filter.text.commons.IToken;
@@ -36,20 +50,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.Id;
-import org.opengis.filter.Not;
-import org.opengis.filter.Or;
-import org.opengis.filter.PropertyIsEqualTo;
-import org.opengis.filter.expression.Expression;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * Builds the filters required by the {@link ECQLCompiler}.
@@ -81,14 +81,12 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
     /**
      * builds the filter id
      *
-     * @param jjtfeature_id_separator_node
      * @return Id
-     * @throws CQLException
      */
     public Id buildFilterId(final int nodeFeatureId) throws CQLException {
 
         // retrieves the id from stack
-        List<FeatureId> idList = new LinkedList<FeatureId>();
+        List<FeatureId> idList = new LinkedList<>();
         while (!getResultStack().empty()) {
 
             Result result = getResultStack().peek();
@@ -101,11 +99,11 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
             idList.add(id);
             getResultStack().popResult();
         }
-        assert idList.size() >= 1 : "must have one or more FeatureIds";
+        assert !idList.isEmpty() : "must have one or more FeatureIds";
 
         // shorts the id list and builds the filter Id
         Collections.reverse(idList);
-        Set<FeatureId> idSet = new LinkedHashSet<FeatureId>(idList);
+        Set<FeatureId> idSet = new LinkedHashSet<>(idList);
         Id filter = getFilterFactory().id(idSet);
 
         return filter;
@@ -115,7 +113,6 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
      * Builds a negative Number
      *
      * @return Negative number
-     * @throws CQLException
      */
     public Literal bulidNegativeNumber() throws CQLException {
 
@@ -144,8 +141,8 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
     }
 
     /**
-     * builds the or filter for the in predicate. The method retrieves the list of expressions and
-     * the property name from stack to make the Or filter.
+     * builds the or filter for the in predicate. The method retrieves the list of expressions and the property name
+     * from stack to make the Or filter.
      *
      * <pre>
      * Thus if the stack have the following predicate
@@ -153,14 +150,10 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
      * this method will produce:
      * (propName = expr1) or (propName = expr2)
      * </pre>
-     *
-     * @param nodeExpression
-     * @return
-     * @throws CQLException
      */
     public Or buildInPredicate(final int nodeExpression) throws CQLException {
         // retrieves the expressions from stack
-        List<Expression> exprList = new LinkedList<Expression>();
+        List<Expression> exprList = new LinkedList<>();
         while (!getResultStack().empty()) {
 
             Result result = getResultStack().peek();
@@ -171,18 +164,18 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
             }
             getResultStack().popResult();
 
-            Expression expr = (Expression) getResultStack().popExpression();
+            Expression expr = getResultStack().popExpression();
             exprList.add(expr);
         }
 
-        assert exprList.size() >= 1 : "must have one or more expressions";
+        assert !exprList.isEmpty() : "must have one or more expressions";
 
         // retrieve the left hand expression from the stack
         final Expression leftHandExpr = getResultStack().popExpression();
 
         // makes one comparison for each expression in the expression list,
         // associated by the Or filter.
-        List<Filter> filterList = new LinkedList<Filter>();
+        List<Filter> filterList = new LinkedList<>();
         for (Expression expression : exprList) {
             PropertyIsEqualTo eq = getFilterFactory().equals(leftHandExpr, expression);
             filterList.add(eq);
@@ -231,12 +224,9 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
     }
 
     /**
-     * Retrieves all points built in previous parsing process from stack and creates the multipoint
-     * geometry.
+     * Retrieves all points built in previous parsing process from stack and creates the multipoint geometry.
      *
-     * @param pointNode
      * @return a MultiPoint
-     * @throws CQLException
      */
     public MultiPoint buildMultiPoint(int pointNode) throws CQLException {
 
@@ -250,14 +240,12 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
     /**
      * Retrieves all linestring built from stack and creates the multilinestring geometry
      *
-     * @param pointNode
      * @return a MultiLineString
      * @throws CQLException ¡
      */
     public MultiLineString buildMultiLineString(final int linestringtextNode) throws CQLException {
 
-        MultiLineStringBuilder builder =
-                new MultiLineStringBuilder(getStatement(), getResultStack());
+        MultiLineStringBuilder builder = new MultiLineStringBuilder(getStatement(), getResultStack());
 
         MultiLineString ml = (MultiLineString) builder.build(linestringtextNode);
 
@@ -269,7 +257,6 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
      *
      * @param polygontextNode .
      * @return MultiPolygon
-     * @throws CQLException
      */
     public MultiPolygon buildMultiPolygon(final int polygontextNode) throws CQLException {
 
@@ -283,15 +270,11 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
     /**
      * Builds a {@link GeometryCollection}
      *
-     * @param jjtgeometryliteral
      * @return GeometryCollection
-     * @throws CQLException
      */
-    public GeometryCollection buildGeometryCollection(final int jjtgeometryliteral)
-            throws CQLException {
+    public GeometryCollection buildGeometryCollection(final int jjtgeometryliteral) throws CQLException {
 
-        GeometryCollectionBuilder builder =
-                new GeometryCollectionBuilder(getStatement(), getResultStack());
+        GeometryCollectionBuilder builder = new GeometryCollectionBuilder(getStatement(), getResultStack());
 
         GeometryCollection gc = (GeometryCollection) builder.build(jjtgeometryliteral);
 
@@ -301,9 +284,7 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
     /**
      * Builds literal geometry
      *
-     * @param geometry
      * @return a Literal Geometry
-     * @throws CQLException
      */
     public Literal buildGeometry() throws CQLException {
 
@@ -323,8 +304,7 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
             Geometry geometry = (Geometry) literal.getValue();
             geometry.setUserData(crs);
         } catch (FactoryException e) {
-            throw new CQLException(
-                    "Failed to build CRS for SRID: " + srid, null, e, getStatement());
+            throw new CQLException("Failed to build CRS for SRID: " + srid, null, e, getStatement());
         }
 
         return literal;
@@ -340,48 +320,48 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
         return getResultStack().popLiteral();
     }
 
+    @Override
     public BinarySpatialOperator buildSpatialEqualFilter() throws CQLException {
 
-        SpatialOperationBuilder builder =
-                new SpatialOperationBuilder(getResultStack(), getFilterFactory());
+        SpatialOperationBuilder builder = new SpatialOperationBuilder(getResultStack(), getFilterFactory());
         BinarySpatialOperator filter = builder.buildEquals();
 
         return filter;
     }
 
+    @Override
     public BinarySpatialOperator buildSpatialDisjointFilter() throws CQLException {
-        SpatialOperationBuilder builder =
-                new SpatialOperationBuilder(getResultStack(), getFilterFactory());
+        SpatialOperationBuilder builder = new SpatialOperationBuilder(getResultStack(), getFilterFactory());
 
         BinarySpatialOperator filter = builder.buildDisjoint();
 
         return filter;
     }
 
+    @Override
     public BinarySpatialOperator buildSpatialIntersectsFilter() throws CQLException {
 
-        SpatialOperationBuilder builder =
-                new SpatialOperationBuilder(getResultStack(), getFilterFactory());
+        SpatialOperationBuilder builder = new SpatialOperationBuilder(getResultStack(), getFilterFactory());
 
         BinarySpatialOperator filter = builder.buildIntersects();
 
         return filter;
     }
 
+    @Override
     public BinarySpatialOperator buildSpatialTouchesFilter() throws CQLException {
 
-        SpatialOperationBuilder builder =
-                new SpatialOperationBuilder(getResultStack(), getFilterFactory());
+        SpatialOperationBuilder builder = new SpatialOperationBuilder(getResultStack(), getFilterFactory());
 
         BinarySpatialOperator filter = builder.buildTouches();
 
         return filter;
     }
 
+    @Override
     public BinarySpatialOperator buildSpatialCrossesFilter() throws CQLException {
 
-        SpatialOperationBuilder builder =
-                new SpatialOperationBuilder(getResultStack(), getFilterFactory());
+        SpatialOperationBuilder builder = new SpatialOperationBuilder(getResultStack(), getFilterFactory());
 
         BinarySpatialOperator filter = builder.buildCrosses();
 
@@ -392,12 +372,10 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
      * Makes an equals to true filter with the relatePattern function
      *
      * @return relatePattern is equal to true
-     * @throws CQLException
      */
     public PropertyIsEqualTo buildRelatePattern() throws CQLException {
 
-        RelatePatternBuilder builder =
-                new RelatePatternBuilder(getResultStack(), getFilterFactory());
+        RelatePatternBuilder builder = new RelatePatternBuilder(getResultStack(), getFilterFactory());
 
         Function relatePattern = builder.build();
 
@@ -411,7 +389,6 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
      * Builds a not equal filter with that evaluate the relate pattern function
      *
      * @return Not filter
-     * @throws CQLException
      */
     public Not buildNotRelatePattern() throws CQLException {
 
@@ -439,20 +416,19 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
 
         // validates the length
         if (pattern.length() != 9) {
-            throw new CQLException(
-                    "the pattern DE-9IM must have nine (9) characters", token, getStatement());
+            throw new CQLException("the pattern DE-9IM must have nine (9) characters", token, getStatement());
         }
 
         // validates that the pattern has only the characters T,F,*,0,1,2
         String patternUC = pattern.toUpperCase();
 
-        char[] validFlags = new char[] {'T', 'F', '*', '0', '1', '2'};
+        char[] validFlags = {'T', 'F', '*', '0', '1', '2'};
         for (int i = 0; i < validFlags.length; i++) {
             char character = patternUC.charAt(i);
 
             boolean found = false;
-            for (int j = 0; j < validFlags.length; j++) {
-                if (validFlags[j] == character) {
+            for (char validFlag : validFlags) {
+                if (validFlag == character) {
                     found = true;
                     break;
                 }
@@ -470,30 +446,30 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
         return patternExpr;
     }
 
+    @Override
     public BinarySpatialOperator buildSpatialWithinFilter() throws CQLException {
 
-        SpatialOperationBuilder builder =
-                new SpatialOperationBuilder(getResultStack(), getFilterFactory());
+        SpatialOperationBuilder builder = new SpatialOperationBuilder(getResultStack(), getFilterFactory());
 
         BinarySpatialOperator filter = builder.buildWithin();
 
         return filter;
     }
 
+    @Override
     public BinarySpatialOperator buildSpatialContainsFilter() throws CQLException {
 
-        SpatialOperationBuilder builder =
-                new SpatialOperationBuilder(getResultStack(), getFilterFactory());
+        SpatialOperationBuilder builder = new SpatialOperationBuilder(getResultStack(), getFilterFactory());
 
         BinarySpatialOperator filter = builder.buildContains();
 
         return filter;
     }
 
+    @Override
     public BinarySpatialOperator buildSpatialOverlapsFilter() throws CQLException {
 
-        SpatialOperationBuilder builder =
-                new SpatialOperationBuilder(getResultStack(), getFilterFactory());
+        SpatialOperationBuilder builder = new SpatialOperationBuilder(getResultStack(), getFilterFactory());
 
         BinarySpatialOperator filter = builder.buildOverlaps();
 
@@ -504,7 +480,6 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
      * An equals filter with to test the relate function
      *
      * @return Relate equals true
-     * @throws CQLException
      */
     public PropertyIsEqualTo buildRelate() throws CQLException {
 
@@ -517,23 +492,38 @@ final class ECQLFilterBuilder extends AbstractFilterBuilder {
         return eq;
     }
 
-    public org.opengis.filter.spatial.BBOX buildBBox() throws CQLException {
+    @Override
+    public org.geotools.api.filter.spatial.BBOX buildBBox() throws CQLException {
 
-        SpatialOperationBuilder builder =
-                new SpatialOperationBuilder(getResultStack(), getFilterFactory());
+        SpatialOperationBuilder builder = new SpatialOperationBuilder(getResultStack(), getFilterFactory());
 
         BBOX filter = builder.buildBBox();
 
         return filter;
     }
 
-    public org.opengis.filter.spatial.BBOX buildBBoxWithCRS() throws CQLException {
+    @Override
+    public org.geotools.api.filter.spatial.BBOX buildBBoxWithCRS() throws CQLException {
 
-        SpatialOperationBuilder builder =
-                new SpatialOperationBuilder(getResultStack(), getFilterFactory());
+        SpatialOperationBuilder builder = new SpatialOperationBuilder(getResultStack(), getFilterFactory());
 
         BBOX filter = builder.buildBBoxWithCRS();
 
         return filter;
+    }
+
+    @Override
+    public Literal buildEnvelope(IToken token) throws CQLException {
+        Literal result = super.buildEnvelope(token);
+
+        // unlike CQL, in ECQL the numbers are tokens loaded on the stack, they need to be
+        // removed
+        BuildResultStack stack = getResultStack();
+        stack.popResult();
+        stack.popResult();
+        stack.popResult();
+        stack.popResult();
+
+        return result;
     }
 }

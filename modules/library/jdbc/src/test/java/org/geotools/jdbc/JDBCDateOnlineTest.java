@@ -1,22 +1,26 @@
 package org.geotools.jdbc;
 
+import static org.junit.Assert.assertEquals;
+
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
-import org.geotools.data.FeatureSource;
-import org.geotools.data.Query;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
+import org.geotools.api.data.FeatureSource;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.filter.FilterFactory;
+import org.junit.Test;
 
 public abstract class JDBCDateOnlineTest extends JDBCTestSupport {
 
     @Override
     protected abstract JDBCDateTestSetup createTestSetup();
 
+    @Test
     public void testMappings() throws Exception {
         SimpleFeatureType ft = dataStore.getSchema(tname("dates"));
 
@@ -25,14 +29,10 @@ public abstract class JDBCDateOnlineTest extends JDBCTestSupport {
         assertEquals(Time.class, ft.getDescriptor(aname("t")).getType().getBinding());
     }
 
+    @Test
     public void testFiltersByDate() throws Exception {
 
-        boolean simple = false;
-        // work around the fact that postgis (and others??) don't handle
-        // programs that change the timezone well.
-        if (dataStore.dialect instanceof PreparedStatementSQLDialect) {
-            simple = true;
-        }
+        boolean simple = useOneTimeZoneOnly();
         FilterFactory ff = dataStore.getFilterFactory();
 
         DateFormat df = new SimpleDateFormat("yyyy-dd-MM");
@@ -62,8 +62,7 @@ public abstract class JDBCDateOnlineTest extends JDBCTestSupport {
                 setup.setUpData();
                 df.setTimeZone(zone);
                 // less than
-                Filter f =
-                        ff.lessOrEqual(ff.property(aname("d")), ff.literal(df.parse("2009-28-06")));
+                Filter f = ff.lessOrEqual(ff.property(aname("d")), ff.literal(df.parse("2009-28-06")));
                 // System.out.println(f);
                 assertEquals(
                         "wrong number of records for " + zone.getDisplayName(),
@@ -86,6 +85,7 @@ public abstract class JDBCDateOnlineTest extends JDBCTestSupport {
         }
     }
 
+    @Test
     public void testFilterByTimeStamp() throws Exception {
         FeatureSource fs = dataStore.getFeatureSource(tname("dates"));
 
@@ -95,28 +95,30 @@ public abstract class JDBCDateOnlineTest extends JDBCTestSupport {
         Filter f = ff.equals(ff.property(aname("dt")), ff.literal("2009-06-28 15:12:41"));
         assertEquals(1, fs.getCount(new Query(tname("dates"), f)));
 
-        f =
-                ff.equals(
-                        ff.property(aname("dt")),
-                        ff.literal(
-                                new SimpleDateFormat("HH:mm:ss,dd-yyyy-MM")
-                                        .parse("15:12:41,28-2009-06")));
+        f = ff.equals(
+                ff.property(aname("dt")),
+                ff.literal(new SimpleDateFormat("HH:mm:ss,dd-yyyy-MM").parse("15:12:41,28-2009-06")));
         assertEquals(1, fs.getCount(new Query(tname("dates"), f)));
     }
 
+    @Test
     public void testFilterByTime() throws Exception {
         FeatureSource fs = dataStore.getFeatureSource(tname("dates"));
-
         FilterFactory ff = dataStore.getFilterFactory();
 
-        // greather than or equal to
+        // greater than or equal to
         Filter f = ff.greaterOrEqual(ff.property(aname("t")), ff.literal("13:10:12"));
         assertEquals(3, fs.getCount(new Query(tname("dates"), f)));
 
-        f =
-                ff.greaterOrEqual(
-                        ff.property(aname("t")),
-                        ff.literal(new SimpleDateFormat("ss:HH:mm").parse("12:13:10")));
+        f = ff.greaterOrEqual(ff.property(aname("t")), ff.literal(new SimpleDateFormat("ss:HH:mm").parse("12:13:10")));
         assertEquals(3, fs.getCount(new Query(tname("dates"), f)));
+    }
+
+    protected boolean useOneTimeZoneOnly() {
+        // Some JDBC drivers cache the default time zone when a statement is prepared.
+        // Prepared statement pooling (enabled by default) will prevent the driver of querying the
+        // default time zone again after it has been changed. So, for prepared statement dialects,
+        // we will use one time zone only by default.
+        return dataStore.dialect instanceof PreparedStatementSQLDialect;
     }
 }

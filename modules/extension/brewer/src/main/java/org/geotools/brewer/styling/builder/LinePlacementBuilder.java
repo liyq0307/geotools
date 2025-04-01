@@ -16,8 +16,8 @@
  */
 package org.geotools.brewer.styling.builder;
 
-import org.geotools.styling.LinePlacement;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.LinePlacement;
 
 public class LinePlacementBuilder extends AbstractStyleBuilder<LinePlacement> {
     private Expression offset;
@@ -76,18 +76,19 @@ public class LinePlacementBuilder extends AbstractStyleBuilder<LinePlacement> {
         reset();
     }
 
+    @Override
     public LinePlacement build() {
         if (unset) {
             return null;
         }
-        LinePlacement linePlacement =
-                sf.linePlacement(offset, initialGap, gap, repeated, aligned, generalizedLine);
+        LinePlacement linePlacement = sf.linePlacement(offset, initialGap, gap, repeated, aligned, generalizedLine);
         if (parent == null) {
             reset();
         }
         return linePlacement;
     }
 
+    @Override
     public LinePlacementBuilder reset() {
         this.aligned = false;
         this.generalizedLine = false;
@@ -100,6 +101,7 @@ public class LinePlacementBuilder extends AbstractStyleBuilder<LinePlacement> {
         return this;
     }
 
+    @Override
     public LinePlacementBuilder reset(LinePlacement placement) {
         if (placement == null) {
             return reset();
@@ -115,10 +117,12 @@ public class LinePlacementBuilder extends AbstractStyleBuilder<LinePlacement> {
         return this;
     }
 
+    @Override
     public LinePlacementBuilder unset() {
         return (LinePlacementBuilder) super.unset();
     }
 
+    @Override
     protected void buildStyleInternal(StyleBuilder sb) {
         sb.featureTypeStyle().rule().text().labelText("label").linePlacement().init(this);
     }

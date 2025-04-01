@@ -27,24 +27,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
-import org.geotools.data.Query;
+import java.util.stream.Collectors;
+import org.geotools.api.data.Query;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureTypeFactory;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.geotools.api.feature.type.GeometryType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.Schema;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.util.InternationalString;
 import org.geotools.feature.AttributeTypeBuilder;
 import org.geotools.feature.NameImpl;
 import org.geotools.feature.type.BasicFeatureTypes;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureTypeFactory;
-import org.opengis.feature.type.GeometryDescriptor;
-import org.opengis.feature.type.GeometryType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.Schema;
-import org.opengis.filter.Filter;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.util.InternationalString;
 
 /**
  * A builder for simple feature types.
@@ -74,19 +75,18 @@ import org.opengis.util.InternationalString;
  *  </code>
  * </pre>
  *
- * This builder builds type by maintaining state. Two types of state are maintained: <i>Global Type
- * State</i> and <i>Per Attribute State</i>. Methods which set global state are named <code>
+ * This builder builds type by maintaining state. Two types of state are maintained: <i>Global Type State</i> and <i>Per
+ * Attribute State</i>. Methods which set global state are named <code>
  * set&lt;property>()</code>. Methods which set per attribute state are named <code>&lt;property>()
  * </code>. Furthermore calls to per attribute
  *
- * <p>Global state is reset after a call to {@link #buildFeatureType()}. Per attribute state is
- * reset after a call to {@link #add}.
+ * <p>Global state is reset after a call to {@link #buildFeatureType()}. Per attribute state is reset after a call to
+ * {@link #add}.
  *
- * <p>A default geometry for the feature type can be specified explictly via {@link
- * #setDefaultGeometry(String)}. However if one is not set the first geometric attribute ({@link
- * GeometryType}) added will be resulting default. So if only specifying a single geometry for the
- * type there is no need to call the method. However if specifying multiple geometries then it is
- * good practice to specify the name of the default geometry type. For instance: <code>
+ * <p>A default geometry for the feature type can be specified explictly via {@link #setDefaultGeometry(String)}.
+ * However if one is not set the first geometric attribute ({@link GeometryType}) added will be resulting default. So if
+ * only specifying a single geometry for the type there is no need to call the method. However if specifying multiple
+ * geometries then it is good practice to specify the name of the default geometry type. For instance: <code>
  * 	<pre>
  *  builder.add( "pointProperty", Point.class );
  *  builder.add( "lineProperty", LineString.class );
@@ -101,8 +101,7 @@ import org.opengis.util.InternationalString;
  */
 public class SimpleFeatureTypeBuilder {
     /** logger */
-    static Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(SimpleFeatureTypeBuilder.class);
+    static Logger LOGGER = org.geotools.util.logging.Logging.getLogger(SimpleFeatureTypeBuilder.class);
 
     /** factories */
     protected FeatureTypeFactory factory;
@@ -148,10 +147,7 @@ public class SimpleFeatureTypeBuilder {
         this(new FeatureTypeFactoryImpl());
     }
 
-    /**
-     * Constructs the builder specifying the factory for creating feature and feature collection
-     * types.
-     */
+    /** Constructs the builder specifying the factory for creating feature and feature collection types. */
     public SimpleFeatureTypeBuilder(FeatureTypeFactory factory) {
         this.factory = factory;
 
@@ -265,8 +261,8 @@ public class SimpleFeatureTypeBuilder {
     /**
      * Sets the coordinate reference system of the next attribute being added.
      *
-     * <p>The supplied coordinate reference is a "default" only used if geometric attributes are
-     * later added to the type without specifying their coordinate reference system.
+     * <p>The supplied coordinate reference is a "default" only used if geometric attributes are later added to the type
+     * without specifying their coordinate reference system.
      *
      * <p>You must call this method prior to calling add for it to function.
      *
@@ -285,8 +281,8 @@ public class SimpleFeatureTypeBuilder {
     }
 
     /**
-     * The fallback coordinate reference system that will be applied to any geometric attributes
-     * added to the type without their own coordinate reference system specified.
+     * The fallback coordinate reference system that will be applied to any geometric attributes added to the type
+     * without their own coordinate reference system specified.
      */
     public CoordinateReferenceSystem getCRS() {
         return defaultCrs;
@@ -323,10 +319,9 @@ public class SimpleFeatureTypeBuilder {
     /**
      * Specifies an attribute type binding.
      *
-     * <p>This method is used to associate an attribute type with a java class. The class is
-     * retreived from <code>type.getBinding()</code>. When the {@link #add(String, Class)} method is
-     * used to add an attribute to the type being built, this binding is used to locate the
-     * attribute type.
+     * <p>This method is used to associate an attribute type with a java class. The class is retreived from <code>
+     * type.getBinding()</code>. When the {@link #add(String, Class)} method is used to add an attribute to the type
+     * being built, this binding is used to locate the attribute type.
      *
      * @param type The attribute type.
      */
@@ -341,8 +336,7 @@ public class SimpleFeatureTypeBuilder {
      * @see {@link #addBinding(AttributeType)}.
      */
     public void addBindings(Schema schema) {
-        for (Iterator<AttributeType> itr = schema.values().iterator(); itr.hasNext(); ) {
-            AttributeType type = itr.next();
+        for (AttributeType type : schema.values()) {
             addBinding(type);
         }
     }
@@ -401,13 +395,33 @@ public class SimpleFeatureTypeBuilder {
     /**
      * Sets a restriction on the field length of the next attribute added to the feature type.
      *
-     * <p>This method is the same as adding a restriction based on length( value ) < length This
-     * value is reset after a call to {@link #add(String, Class)}
-     *
-     * @return length Used to limit the length of the next attribute created
+     * <p>This method is the same as adding a restriction based on length( value ) < length This value is reset after a
+     * call to {@link #add(String, Class)}
      */
     public SimpleFeatureTypeBuilder length(int length) {
         attributeBuilder.setLength(length);
+        return this;
+    }
+
+    /**
+     * Sets a restriction on the possible field values of the next attribute added to the feature type.
+     *
+     * <p>This method is the same as adding a restriction based on value in (option1, option2, ...}. This restriction is
+     * reset after a call to {@link #add(String, Class)}
+     */
+    public SimpleFeatureTypeBuilder options(Object... options) {
+        attributeBuilder.setOptions(Arrays.asList(options));
+        return this;
+    }
+
+    /**
+     * Sets a restriction on the possible field values of the next attribute added to the feature type.
+     *
+     * <p>This method is the same as adding a restriction based on value in (option1, option2, ...}. This restriction is
+     * reset after a call to {@link #add(String, Class)}
+     */
+    public SimpleFeatureTypeBuilder options(List<?> options) {
+        attributeBuilder.setOptions(options);
         return this;
     }
 
@@ -467,8 +481,7 @@ public class SimpleFeatureTypeBuilder {
     /**
      * Sets the srs of the next attribute added to the feature type.
      *
-     * <p>The <tt>srs</tt> parameter is the id of a spatial reference system, for example:
-     * "epsg:4326".
+     * <p>The <tt>srs</tt> parameter is the id of a spatial reference system, for example: "epsg:4326".
      *
      * <p>This only applies if the attribute added is geometric.
      *
@@ -487,8 +500,7 @@ public class SimpleFeatureTypeBuilder {
     /**
      * Sets the srid of the next attribute added to the feature type.
      *
-     * <p>The <tt>srid</tt> parameter is the epsg code of a spatial reference system, for example:
-     * "4326".
+     * <p>The <tt>srid</tt> parameter is the epsg code of a spatial reference system, for example: "4326".
      *
      * <p>This only applies if the attribute added is geometric.
      *
@@ -543,8 +555,7 @@ public class SimpleFeatureTypeBuilder {
      * Adds a new attribute w/ provided name and class.
      *
      * <p>The provided class is used to locate an attribute type binding previously specified by
-     * {@link #addBinding(AttributeType)},{@link #addBindings(Schema)}, or {@link
-     * #setBindings(Schema)}.
+     * {@link #addBinding(AttributeType)},{@link #addBindings(Schema)}, or {@link #setBindings(Schema)}.
      *
      * <p>If not such binding exists then an attribute type is created on the fly.
      *
@@ -564,16 +575,12 @@ public class SimpleFeatureTypeBuilder {
         // feature can be backed by another geometry model (like iso), we need
         // to remove this check
         //
-        if ((defaultGeometry != null && defaultGeometry.equals(name))
-                || Geometry.class.isAssignableFrom(binding)) {
+        if ((defaultGeometry != null && defaultGeometry.equals(name)) || Geometry.class.isAssignableFrom(binding)) {
 
             // if no crs was set, set to defaultCRS
             if (!attributeBuilder.isCRSSet()) {
                 if (defaultCrs == null && !defaultCrsSet) {
-                    LOGGER.fine(
-                            "Creating "
-                                    + name
-                                    + " with null CoordinateReferenceSystem - did you mean to setCRS?");
+                    LOGGER.fine("Creating " + name + " with null CoordinateReferenceSystem - did you mean to setCRS?");
                 }
                 attributeBuilder.setCRS(defaultCrs);
             }
@@ -602,8 +609,7 @@ public class SimpleFeatureTypeBuilder {
      *
      * @param attributeName the name of the AttributeDescriptor to remove
      * @return the AttributeDescriptor with the name attributeName
-     * @throws IllegalArgumentException if there is no AttributeDescriptor with the name
-     *     attributeName
+     * @throws IllegalArgumentException if there is no AttributeDescriptor with the name attributeName
      */
     public AttributeDescriptor remove(String attributeName) {
         for (Iterator<AttributeDescriptor> iterator = attributes.iterator(); iterator.hasNext(); ) {
@@ -616,8 +622,7 @@ public class SimpleFeatureTypeBuilder {
                 return descriptor;
             }
         }
-        throw new IllegalArgumentException(
-                attributeName + " is not an existing attribute descriptor in this builder");
+        throw new IllegalArgumentException(attributeName + " is not an existing attribute descriptor in this builder");
     }
 
     /**
@@ -645,7 +650,7 @@ public class SimpleFeatureTypeBuilder {
      *
      * <p>Use of this method is discouraged. Consider using {@link #add(String, Class)}.
      */
-    public void addAll(AttributeDescriptor[] descriptors) {
+    public void addAll(AttributeDescriptor... descriptors) {
         if (descriptors != null) {
             for (AttributeDescriptor ad : descriptors) {
                 add(ad);
@@ -673,8 +678,7 @@ public class SimpleFeatureTypeBuilder {
     }
 
     /**
-     * Adds a new geometric attribute w/ provided name, class, and spatial reference system
-     * identifier
+     * Adds a new geometric attribute w/ provided name, class, and spatial reference system identifier
      *
      * <p>The <tt>srs</tt> parameter may be <code>null</code>.
      *
@@ -692,8 +696,7 @@ public class SimpleFeatureTypeBuilder {
     }
 
     /**
-     * Adds a new geometric attribute w/ provided name, class, and spatial reference system
-     * identifier
+     * Adds a new geometric attribute w/ provided name, class, and spatial reference system identifier
      *
      * <p>The <tt>srid</tt> parameter may be <code>null</code>.
      *
@@ -721,8 +724,7 @@ public class SimpleFeatureTypeBuilder {
     }
 
     public AttributeDescriptor get(String attributeName) {
-        for (Iterator<AttributeDescriptor> iterator = attributes.iterator(); iterator.hasNext(); ) {
-            AttributeDescriptor descriptor = iterator.next();
+        for (AttributeDescriptor descriptor : attributes) {
             if (descriptor.getLocalName().equals(attributeName)) {
                 return descriptor;
             }
@@ -730,36 +732,20 @@ public class SimpleFeatureTypeBuilder {
         return null;
     }
 
-    /**
-     * Replace the descriptor at the provided index.
-     *
-     * @param index
-     * @param descriptor
-     */
+    /** Replace the descriptor at the provided index. */
     public void set(int index, AttributeDescriptor descriptor) {
         attributes().set(index, descriptor);
     }
-    /**
-     * Replace the descriptor at the provided index.
-     *
-     * @param index
-     * @param descriptor
-     */
+    /** Replace the descriptor at the provided index. */
     public void set(AttributeDescriptor descriptor) {
         int index = indexOf(descriptor.getLocalName());
         if (index == -1) {
             throw new IllegalArgumentException(
-                    descriptor.getLocalName()
-                            + " is not an existing attribute descriptor in this builder");
+                    descriptor.getLocalName() + " is not an existing attribute descriptor in this builder");
         }
         set(index, descriptor);
     }
-    /**
-     * Replace the descriptor at the provided index.
-     *
-     * @param index
-     * @param descriptor
-     */
+    /** Replace the descriptor at the provided index. */
     public void set(String attributeName, AttributeDescriptor descriptor) {
         int index = indexOf(attributeName);
         if (index == -1) {
@@ -772,8 +758,7 @@ public class SimpleFeatureTypeBuilder {
     /** Index of attrbute by name */
     private int indexOf(String attributeName) {
         int i = 0;
-        for (Iterator<AttributeDescriptor> iterator = attributes.iterator(); iterator.hasNext(); ) {
-            AttributeDescriptor d = iterator.next();
+        for (AttributeDescriptor d : attributes) {
             if (d.getLocalName().equals(attributeName)) {
                 return i;
             }
@@ -781,12 +766,7 @@ public class SimpleFeatureTypeBuilder {
         }
         return -1;
     }
-    /**
-     * Replace the descriptor at the provided index.
-     *
-     * @param index
-     * @param descriptor
-     */
+    /** Replace the descriptor at the provided index. */
     public void set(String attributeName, AttributeTypeBuilder attributeBuilder) {
         AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(attributeName);
         set(attributeName, descriptor);
@@ -808,7 +788,7 @@ public class SimpleFeatureTypeBuilder {
      *
      * @param attributes the new list of attributes, or null to reset the list
      */
-    public void setAttributes(AttributeDescriptor[] attributes) {
+    public void setAttributes(AttributeDescriptor... attributes) {
         List<AttributeDescriptor> atts = attributes();
         atts.clear();
         if (attributes != null) atts.addAll(Arrays.asList(attributes));
@@ -833,10 +813,7 @@ public class SimpleFeatureTypeBuilder {
                     // ensure the attribute is a geometry attribute
                     //
                     if (!(att instanceof GeometryDescriptor)) {
-                        LOGGER.warning(
-                                "Default Geometry "
-                                        + this.defaultGeometry
-                                        + " was added as a geoemtry");
+                        LOGGER.warning("Default Geometry " + this.defaultGeometry + " was added as a geometry");
                         attributeBuilder.init(att);
                         attributeBuilder.setCRS(defaultCrs);
                         GeometryType type = attributeBuilder.buildGeometryType();
@@ -851,10 +828,7 @@ public class SimpleFeatureTypeBuilder {
 
             if (defGeom == null) {
                 String msg =
-                        "'"
-                                + this.defaultGeometry
-                                + "' specified as default"
-                                + " but could find no such attribute.";
+                        "'" + this.defaultGeometry + "' specified as default" + " but could find no such attribute.";
                 throw new IllegalArgumentException(msg);
             }
         }
@@ -869,15 +843,8 @@ public class SimpleFeatureTypeBuilder {
             }
         }
 
-        SimpleFeatureType built =
-                factory.createSimpleFeatureType(
-                        name(),
-                        attributes(),
-                        defGeom,
-                        isAbstract,
-                        restrictions(),
-                        superType,
-                        description);
+        SimpleFeatureType built = factory.createSimpleFeatureType(
+                name(), attributes(), defGeom, isAbstract, restrictions(), superType, description);
 
         init();
         return built;
@@ -885,19 +852,16 @@ public class SimpleFeatureTypeBuilder {
 
     // Internal api available for subclasses to override
     /** Creates a new set instance, this default implementation returns {@link HashSet}. */
-    @SuppressWarnings("rawtypes")
     protected Set newSet() {
         return new HashSet();
     }
 
     /** Creates a new list instance, this default impelementation returns {@link ArrayList}. */
-    @SuppressWarnings("rawtypes")
     protected List newList() {
         return new ArrayList();
     }
 
     /** Creates a new map instance, this default implementation returns {@link HashMap} */
-    @SuppressWarnings("rawtypes")
     protected Map newMap() {
         return new HashMap();
     }
@@ -907,12 +871,11 @@ public class SimpleFeatureTypeBuilder {
      *
      * <p>If the new copy can not be created reflectively.. {@link #newList()} is returned.
      */
-    @SuppressWarnings("rawtypes")
     protected List newList(List origional) {
         if (origional == null) {
             return newList();
         }
-        if (origional == Collections.EMPTY_LIST) {
+        if (origional == Collections.emptyList()) {
             return newList();
         }
         try {
@@ -976,17 +939,24 @@ public class SimpleFeatureTypeBuilder {
     }
 
     /**
-     * Create a SimpleFeatureType containing just the descriptors indicated.
+     * Create a SimpleFeatureType containing just the attribute descriptors indicated.
      *
      * @param original SimpleFeatureType
-     * @param types name of types to include in result
+     * @param attributes name of attributes to include in result
      * @return SimpleFeatureType containing just the types indicated by name
      */
-    public static SimpleFeatureType retype(SimpleFeatureType original, String[] types) {
-        return retype(original, Arrays.asList(types));
+    public static SimpleFeatureType retype(SimpleFeatureType original, String... attributes) {
+        return retype(original, Arrays.asList(attributes));
     }
 
-    public static SimpleFeatureType retype(SimpleFeatureType original, List<String> types) {
+    /**
+     * Create a SimpleFeatureType containing just the attribute descriptors indicated.
+     *
+     * @param original SimpleFeatureType
+     * @param attributes name of attributes to include in result
+     * @return SimpleFeatureType containing just the types indicated by name
+     */
+    public static SimpleFeatureType retype(SimpleFeatureType original, List<String> attributes) {
         SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
 
         // initialize the builder
@@ -996,31 +966,30 @@ public class SimpleFeatureTypeBuilder {
         b.attributes().clear();
 
         // add attributes in order
-        for (int i = 0; i < types.size(); i++) {
-            b.add(original.getDescriptor(types.get(i)));
+        for (String type : attributes) {
+            b.add(original.getDescriptor(type));
         }
 
         // handle default geometry
         GeometryDescriptor defaultGeometry = original.getGeometryDescriptor();
-        if (defaultGeometry != null && types.contains(defaultGeometry.getLocalName())) {
-            b.setDefaultGeometry(defaultGeometry.getLocalName());
+        String defaultGeometryName = defaultGeometry != null ? defaultGeometry.getLocalName() : null;
+        if (defaultGeometryName != null && attributes.contains(defaultGeometryName)) {
+            b.setDefaultGeometry(defaultGeometryName);
         } else {
             b.setDefaultGeometry(null);
         }
-
         return b.buildFeatureType();
     }
 
     /**
-     * Create a SimpleFeatureType with the same content; just updating the geometry attribute to
-     * match the provided coordinate reference system.
+     * Create a SimpleFeatureType with the same content; just updating the geometry attribute to match the provided
+     * coordinate reference system.
      *
      * @param original SimpleFeatureType
      * @param crs CoordinateReferenceSystem of result
      * @return SimpleFeatureType updated with the provided CoordinateReferenceSystem
      */
-    public static SimpleFeatureType retype(
-            SimpleFeatureType original, CoordinateReferenceSystem crs) {
+    public static SimpleFeatureType retype(SimpleFeatureType original, CoordinateReferenceSystem crs) {
         SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
 
         // initialize the builder
@@ -1032,26 +1001,24 @@ public class SimpleFeatureTypeBuilder {
         // add attributes in order
         for (AttributeDescriptor descriptor : original.getAttributeDescriptors()) {
             if (descriptor instanceof GeometryDescriptor) {
-                GeometryDescriptor geometryDescriptor = (GeometryDescriptor) descriptor;
-                AttributeTypeBuilder adjust = new AttributeTypeBuilder(b.factory);
-                adjust.init(geometryDescriptor);
-                adjust.setCRS(crs);
-                b.add(adjust.buildDescriptor(geometryDescriptor.getLocalName()));
+                GeometryDescriptor geometryDescriptor = retype(b, (GeometryDescriptor) descriptor, crs);
+                b.add(geometryDescriptor);
                 continue;
             }
             b.add(descriptor);
         }
+        // because all descriptors are accounted for default geometry name is still valid
         return b.buildFeatureType();
     }
 
     /**
-     * Configure expected
+     * Create a SimpleFeatureType with the parameters and coordinate reference system of the query.
      *
-     * @param origional
-     * @param query
-     * @return
+     * @param original SimpleFeatureType
+     * @param query Query defining attributes and coordinate reference system
+     * @return SimpleFeatureType updated with the provided CoordinateReferenceSystem
      */
-    public static SimpleFeatureType retype(SimpleFeatureType origional, Query query) {
+    public static SimpleFeatureType retype(SimpleFeatureType original, Query query) {
         CoordinateReferenceSystem crs = null;
         if (query.getCoordinateSystem() != null) {
             crs = query.getCoordinateSystem();
@@ -1059,17 +1026,81 @@ public class SimpleFeatureTypeBuilder {
         if (query.getCoordinateSystemReproject() != null) {
             crs = query.getCoordinateSystemReproject();
         }
-        return retype(origional, query.getPropertyNames(), crs);
-    }
-
-    private static SimpleFeatureType retype(
-            SimpleFeatureType origional, String[] propertyNames, CoordinateReferenceSystem crs) {
-        // TODO Auto-generated method stub
-        return null;
+        return retype(original, query.getPropertyNames(), crs);
     }
 
     /**
-     * Copys a feature type.
+     * Create a SimpleFeatureType with the parameters and coordinate reference system of the query.
+     *
+     * @param original SimpleFeatureType
+     * @param attributes name of attributes to include in result
+     * @param crs CoordinateReferenceSystem of result
+     * @return SimpleFeatureType updated with the provided CoordinateReferenceSystem
+     */
+    private static SimpleFeatureType retype(
+            SimpleFeatureType original, String[] attributes, CoordinateReferenceSystem crs) {
+        SimpleFeatureTypeBuilder b = new SimpleFeatureTypeBuilder();
+
+        // initialize the builder
+        b.init(original);
+
+        List<String> attributeNames;
+        if (attributes == Query.ALL_NAMES) {
+            attributeNames = original.getAttributeDescriptors().stream()
+                    .map(AttributeDescriptor::getLocalName)
+                    .collect(Collectors.toList());
+        } else {
+            attributeNames = Arrays.asList(attributes);
+        }
+
+        // clear the attributes
+        b.attributes().clear();
+
+        // add attributes in order requested
+        for (String localName : attributeNames) {
+            AttributeDescriptor descriptor = original.getDescriptor(localName);
+            if (descriptor instanceof GeometryDescriptor) {
+                GeometryDescriptor geometryDescriptor = retype(b, (GeometryDescriptor) descriptor, crs);
+                b.add(geometryDescriptor);
+                continue;
+            }
+            b.add(descriptor);
+        }
+
+        // handle default geometry
+        GeometryDescriptor defaultGeometry = original.getGeometryDescriptor();
+        String defaultGeometryName = defaultGeometry != null ? defaultGeometry.getLocalName() : null;
+        if (defaultGeometryName != null && attributeNames.contains(defaultGeometryName)) {
+            b.setDefaultGeometry(defaultGeometryName);
+        } else {
+            b.setDefaultGeometry(null);
+        }
+        return b.buildFeatureType();
+    }
+
+    /**
+     * Retype GeometryDescriptor to provided crs.
+     *
+     * <p>Use {@link CoordinateReferenceSystem#equals(Object)} to check, to allow for change of metadata.
+     *
+     * @param descriptor GeometryDescriptor
+     * @param crs CoordinateReferenceSystem of result
+     * @return GeometryDescriptor updated with the provided CoordinateReferenceSystem
+     */
+    private static GeometryDescriptor retype(
+            SimpleFeatureTypeBuilder b, GeometryDescriptor descriptor, CoordinateReferenceSystem crs) {
+        if (crs != null && !crs.equals(descriptor.getCoordinateReferenceSystem())) {
+            // Check for reprojection with equals, not CRS.equalsIgnoreMetadata
+            AttributeTypeBuilder adjust = new AttributeTypeBuilder(b.factory);
+            adjust.init(descriptor);
+            adjust.setCRS(crs);
+            return (GeometryDescriptor) adjust.buildDescriptor(descriptor.getLocalName());
+        }
+        return descriptor;
+    }
+
+    /**
+     * Copies a feature type.
      *
      * <p>This method does a deep copy in that all individual attributes are copied as well.
      */

@@ -17,12 +17,12 @@
 package org.geotools.styling.visitor;
 
 import java.util.Map;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Expression;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 
 /**
- * This is a style visitor that will produce a copy of the provided style. The copy will be rescaled
- * by a provided factor if UOM is PIXEL.
+ * This is a style visitor that will produce a copy of the provided style. The copy will be rescaled by a provided
+ * factor if UOM is PIXEL.
  */
 public class DpiRescaleStyleVisitor extends RescaleStyleVisitor {
 
@@ -30,7 +30,7 @@ public class DpiRescaleStyleVisitor extends RescaleStyleVisitor {
         super(scale);
     }
 
-    public DpiRescaleStyleVisitor(FilterFactory2 filterFactory, double scale) {
+    public DpiRescaleStyleVisitor(FilterFactory filterFactory, double scale) {
         super(filterFactory, scale);
     }
 
@@ -52,7 +52,7 @@ public class DpiRescaleStyleVisitor extends RescaleStyleVisitor {
 
     @Override
     protected void rescaleOption(Map<String, String> options, String key, double defaultValue) {
-        double scaleFactor = (double) scale.evaluate(null, Double.class);
+        double scaleFactor = scale.evaluate(null, Double.class);
         String value = options.get(key);
         if (value == null) {
             value = String.valueOf(defaultValue);
@@ -65,7 +65,7 @@ public class DpiRescaleStyleVisitor extends RescaleStyleVisitor {
 
     @Override
     protected void rescaleOption(Map<String, String> options, String key, int defaultValue) {
-        double scaleFactor = (double) scale.evaluate(null, Double.class);
+        double scaleFactor = scale.evaluate(null, Double.class);
         String value = options.get(key);
         if (value == null) {
             value = String.valueOf(defaultValue);

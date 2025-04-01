@@ -24,20 +24,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import org.geotools.api.feature.GeometryAttribute;
+import org.geotools.api.feature.IllegalAttributeException;
+import org.geotools.api.feature.Property;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.identity.FeatureId;
+import org.geotools.api.geometry.BoundingBox;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.index.SpatialIndex;
 import org.locationtech.jts.index.quadtree.Quadtree;
-import org.opengis.feature.GeometryAttribute;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.Property;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.identity.FeatureId;
-import org.opengis.geometry.BoundingBox;
 
 /**
  * Captures changes made to a FeatureStore prior to being committed.
@@ -61,8 +61,8 @@ public class Diff {
     private final List<String> addedFidList;
 
     /**
-     * Unmodifiable view of modified features. It is imperative that the user manually synchronize
-     * on the map when iterating over any of its collection views:
+     * Unmodifiable view of modified features. It is imperative that the user manually synchronize on the map when
+     * iterating over any of its collection views:
      *
      * <pre>
      *  Set s = diff.modified2.keySet();  // Needn't be in synchronized block
@@ -81,8 +81,8 @@ public class Diff {
     private final Map<String, SimpleFeature> modified2;
 
     /**
-     * Unmodifiable view of added features. It is imperative that the user manually synchronize on
-     * the map when iterating over any of its collection views:
+     * Unmodifiable view of added features. It is imperative that the user manually synchronize on the map when
+     * iterating over any of its collection views:
      *
      * <pre>
      *  Set s = diff.added.keySet();  // Needn't be in synchronized block
@@ -112,9 +112,9 @@ public class Diff {
     /** Create an empty Diff */
     public Diff() {
         // private fields
-        modifiedFeatures = new ConcurrentHashMap<String, SimpleFeature>();
-        addedFeatures = new ConcurrentHashMap<String, SimpleFeature>();
-        addedFidList = new CopyOnWriteArrayList<String>();
+        modifiedFeatures = new ConcurrentHashMap<>();
+        addedFeatures = new ConcurrentHashMap<>();
+        addedFidList = new CopyOnWriteArrayList<>();
 
         // public "views" requiring synchronised( mutex )
         modified2 = Collections.unmodifiableMap(modifiedFeatures);
@@ -124,16 +124,12 @@ public class Diff {
         mutex = this;
     }
 
-    /**
-     * Diff copy.
-     *
-     * @param other
-     */
+    /** Diff copy. */
     public Diff(Diff other) {
         // copy data
-        modifiedFeatures = new ConcurrentHashMap<String, SimpleFeature>(other.modifiedFeatures);
-        addedFeatures = new ConcurrentHashMap<String, SimpleFeature>(other.addedFeatures);
-        addedFidList = new CopyOnWriteArrayList<String>(other.addedFidList);
+        modifiedFeatures = new ConcurrentHashMap<>(other.modifiedFeatures);
+        addedFeatures = new ConcurrentHashMap<>(other.addedFeatures);
+        addedFidList = new CopyOnWriteArrayList<>(other.addedFidList);
 
         // create public "views"
         modified2 = Collections.unmodifiableMap(modifiedFeatures);
@@ -168,7 +164,6 @@ public class Diff {
     /**
      * Record a modification to the indicated fid
      *
-     * @param fid
      * @param f replacement feature; null to indicate remove
      */
     public void modify(String fid, SimpleFeature f) {
@@ -213,11 +208,11 @@ public class Diff {
             SimpleFeature old = null;
 
             if (addedFeatures.containsKey(fid)) {
-                old = (SimpleFeature) addedFeatures.get(fid);
+                old = addedFeatures.get(fid);
                 addedFeatures.remove(fid);
                 addedFidList.remove(fid);
             } else {
-                old = (SimpleFeature) modifiedFeatures.get(fid);
+                old = modifiedFeatures.get(fid);
                 modifiedFeatures.put(fid, Diff.NULL);
             }
             if (old != null) {
@@ -239,8 +234,8 @@ public class Diff {
     }
 
     /**
-     * Unmodifiable view of modified features. It is imperative that the user manually synchronize
-     * on the map when iterating over any of its collection views:
+     * Unmodifiable view of modified features. It is imperative that the user manually synchronize on the map when
+     * iterating over any of its collection views:
      *
      * <pre>
      *  Set s = diff.modified2.keySet();  // Needn't be in synchronized block
@@ -263,8 +258,8 @@ public class Diff {
     }
 
     /**
-     * Unmodifiable view of added features. It is imperative that the user manually synchronize on
-     * the map when iterating over any of its collection views:
+     * Unmodifiable view of added features. It is imperative that the user manually synchronize on the map when
+     * iterating over any of its collection views:
      *
      * <pre>
      *  Set s = diff.added.keySet();  // Needn't be in synchronized block
@@ -293,15 +288,16 @@ public class Diff {
             Iterator<Entry<String, SimpleFeature>> i = diff.added.entrySet().iterator();
             while (i.hasNext()) {
                 Entry<String, SimpleFeature> e = i.next();
-                SimpleFeature f = (SimpleFeature) e.getValue();
+                SimpleFeature f = e.getValue();
                 if (!diff.modifiedFeatures.containsKey(f.getID())) {
                     tree.insert(ReferencedEnvelope.reference(f.getBounds()), f);
                 }
             }
-            Iterator<Entry<String, SimpleFeature>> j = diff.getModified().entrySet().iterator();
+            Iterator<Entry<String, SimpleFeature>> j =
+                    diff.getModified().entrySet().iterator();
             while (j.hasNext()) {
                 Entry<String, SimpleFeature> e = j.next();
-                SimpleFeature f = (SimpleFeature) e.getValue();
+                SimpleFeature f = e.getValue();
                 tree.insert(ReferencedEnvelope.reference(f.getBounds()), f);
             }
         }
@@ -312,143 +308,176 @@ public class Diff {
     /**
      * A NullObject used to represent the absence of a SimpleFeature.
      *
-     * <p>This class is used by TransactionStateDiff as a placeholder to represent features that
-     * have been removed. The concept is generally useful and may wish to be taken out as a separate
-     * class (used for example to represent deleted rows in a shapefile).
+     * <p>This class is used by TransactionStateDiff as a placeholder to represent features that have been removed. The
+     * concept is generally useful and may wish to be taken out as a separate class (used for example to represent
+     * deleted rows in a shapefile).
      */
-    public static final SimpleFeature NULL =
-            new SimpleFeature() {
-                public Object getAttribute(String path) {
-                    return null;
-                }
+    public static final SimpleFeature NULL = new SimpleFeature() {
+        @Override
+        public Object getAttribute(String path) {
+            return null;
+        }
 
-                public Object getAttribute(int index) {
-                    return null;
-                }
+        @Override
+        public Object getAttribute(int index) {
+            return null;
+        }
 
-                // public Object[] getAttributes(Object[] attributes) {
-                // return null;
-                // }
+        // public Object[] getAttributes(Object[] attributes) {
+        // return null;
+        // }
 
-                public ReferencedEnvelope getBounds() {
-                    return null;
-                }
+        @Override
+        public ReferencedEnvelope getBounds() {
+            return null;
+        }
 
-                public Geometry getDefaultGeometry() {
-                    return null;
-                }
+        @Override
+        public Geometry getDefaultGeometry() {
+            return null;
+        }
 
-                public SimpleFeatureType getFeatureType() {
-                    return null;
-                }
+        @Override
+        public SimpleFeatureType getFeatureType() {
+            return null;
+        }
 
-                public String getID() {
-                    return null;
-                }
+        @Override
+        public String getID() {
+            return null;
+        }
 
-                public FeatureId getIdentifier() {
-                    return null;
-                }
+        @Override
+        public FeatureId getIdentifier() {
+            return null;
+        }
 
-                // public int getNumberOfAttributes() {
-                // return 0;
-                // }
+        // public int getNumberOfAttributes() {
+        // return 0;
+        // }
 
-                public void setAttribute(int position, Object val) {}
+        @Override
+        public void setAttribute(int position, Object val) {}
 
-                public void setAttribute(String path, Object attribute)
-                        throws IllegalAttributeException {}
+        @Override
+        public void setAttribute(String path, Object attribute) throws IllegalAttributeException {}
 
-                // public void setDefaultGeometry(Geometry geometry)
-                // throws IllegalAttributeException {
-                // }
+        // public void setDefaultGeometry(Geometry geometry)
+        // throws IllegalAttributeException {
+        // }
 
-                public Object getAttribute(Name name) {
-                    return null;
-                }
+        @Override
+        public Object getAttribute(Name name) {
+            return null;
+        }
 
-                public int getAttributeCount() {
-                    return 0;
-                }
+        @Override
+        public int getAttributeCount() {
+            return 0;
+        }
 
-                public List<Object> getAttributes() {
-                    return null;
-                }
+        @Override
+        public List<Object> getAttributes() {
+            return null;
+        }
 
-                public SimpleFeatureType getType() {
-                    return null;
-                }
+        @Override
+        public SimpleFeatureType getType() {
+            return null;
+        }
 
-                public void setAttribute(Name name, Object value) {}
+        @Override
+        public void setAttribute(Name name, Object value) {}
 
-                public void setAttributes(List<Object> values) {}
+        @Override
+        public void setAttributes(List<Object> values) {}
 
-                public void setAttributes(Object[] values) {}
+        @Override
+        public void setAttributes(Object[] values) {}
 
-                public void setDefaultGeometry(Object geometry) {}
+        @Override
+        public void setDefaultGeometry(Object geometry) {}
 
-                public GeometryAttribute getDefaultGeometryProperty() {
-                    return null;
-                }
+        @Override
+        public GeometryAttribute getDefaultGeometryProperty() {
+            return null;
+        }
 
-                public void setDefaultGeometryProperty(GeometryAttribute geometryAttribute) {}
+        @Override
+        public void setDefaultGeometryProperty(GeometryAttribute geometryAttribute) {}
 
-                public Collection<Property> getProperties(Name name) {
-                    return null;
-                }
+        @Override
+        public Collection<Property> getProperties(Name name) {
+            return null;
+        }
 
-                public Collection<Property> getProperties() {
-                    return null;
-                }
+        @Override
+        public Collection<Property> getProperties() {
+            return null;
+        }
 
-                public Collection<Property> getProperties(String name) {
-                    return null;
-                }
+        @Override
+        public Collection<Property> getProperties(String name) {
+            return null;
+        }
 
-                public Property getProperty(Name name) {
-                    return null;
-                }
+        @Override
+        public Property getProperty(Name name) {
+            return null;
+        }
 
-                public Property getProperty(String name) {
-                    return null;
-                }
+        @Override
+        public Property getProperty(String name) {
+            return null;
+        }
 
-                public Collection<? extends Property> getValue() {
-                    return null;
-                }
+        @Override
+        public Collection<? extends Property> getValue() {
+            return null;
+        }
 
-                public void setValue(Collection<Property> values) {}
+        @Override
+        public void setValue(Collection<Property> values) {}
 
-                public AttributeDescriptor getDescriptor() {
-                    return null;
-                }
+        @Override
+        public AttributeDescriptor getDescriptor() {
+            return null;
+        }
 
-                public Name getName() {
-                    return null;
-                }
+        @Override
+        public Name getName() {
+            return null;
+        }
 
-                public Map<Object, Object> getUserData() {
-                    return null;
-                }
+        @Override
+        public Map<Object, Object> getUserData() {
+            return null;
+        }
 
-                public boolean isNillable() {
-                    return false;
-                }
+        @Override
+        public boolean isNillable() {
+            return false;
+        }
 
-                public void setValue(Object newValue) {}
+        @Override
+        public void setValue(Object newValue) {}
 
-                public String toString() {
-                    return "<NullFeature>";
-                }
+        @Override
+        public String toString() {
+            return "<NullFeature>";
+        }
 
-                public int hashCode() {
-                    return 0;
-                }
+        @Override
+        public int hashCode() {
+            return 0;
+        }
 
-                public boolean equals(Object arg0) {
-                    return arg0 == this;
-                }
+        @Override
+        public boolean equals(Object arg0) {
+            return arg0 == this;
+        }
 
-                public void validate() {}
-            };
+        @Override
+        public void validate() {}
+    };
 }

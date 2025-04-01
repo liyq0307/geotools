@@ -22,8 +22,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
 /**
- * A ReadableByteChannel that delegates all calls to the underlying ReadableByteChannel but for
- * {@link #close()} it also calls ShapefileFiles.unlock method to release the lock on the URL.
+ * A ReadableByteChannel that delegates all calls to the underlying ReadableByteChannel but for {@link #close()} it also
+ * calls ShapefileFiles.unlock method to release the lock on the URL.
  *
  * @author jesse
  */
@@ -36,10 +36,7 @@ public class ReadableByteChannelDecorator implements ReadableByteChannel {
     private boolean closed;
 
     public ReadableByteChannelDecorator(
-            ReadableByteChannel newChannel,
-            ShpFiles shapefileFiles,
-            URL url,
-            FileReader requestor) {
+            ReadableByteChannel newChannel, ShpFiles shapefileFiles, URL url, FileReader requestor) {
         this.wrapped = newChannel;
         this.shapefileFiles = shapefileFiles;
         this.url = url;
@@ -47,6 +44,7 @@ public class ReadableByteChannelDecorator implements ReadableByteChannel {
         this.closed = false;
     }
 
+    @Override
     public void close() throws IOException {
         try {
             wrapped.close();
@@ -58,10 +56,12 @@ public class ReadableByteChannelDecorator implements ReadableByteChannel {
         }
     }
 
+    @Override
     public boolean isOpen() {
         return wrapped.isOpen();
     }
 
+    @Override
     public int read(ByteBuffer dst) throws IOException {
         return wrapped.read(dst);
     }

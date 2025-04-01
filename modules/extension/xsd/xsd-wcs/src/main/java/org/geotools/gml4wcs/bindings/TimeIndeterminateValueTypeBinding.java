@@ -19,10 +19,10 @@
 package org.geotools.gml4wcs.bindings;
 
 import javax.xml.namespace.QName;
+import org.geotools.api.temporal.IndeterminateValue;
 import org.geotools.gml4wcs.GML;
 import org.geotools.xsd.AbstractSimpleBinding;
 import org.geotools.xsd.InstanceComponent;
-import org.opengis.temporal.IndeterminateValue;
 
 /**
  * Binding object for the type http://www.opengis.net/gml:TimeIndeterminateValueType.
@@ -53,6 +53,7 @@ import org.opengis.temporal.IndeterminateValue;
 public class TimeIndeterminateValueTypeBinding extends AbstractSimpleBinding {
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.TimeIndeterminateValueType;
     }
@@ -64,6 +65,7 @@ public class TimeIndeterminateValueTypeBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return IndeterminateValue.class;
     }
@@ -75,6 +77,7 @@ public class TimeIndeterminateValueTypeBinding extends AbstractSimpleBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(InstanceComponent instance, Object value) throws Exception {
         IndeterminateValue timeValue = IndeterminateValue.valueOf((String) value);
         return timeValue;

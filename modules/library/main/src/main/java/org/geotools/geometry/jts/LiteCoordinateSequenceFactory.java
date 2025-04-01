@@ -31,6 +31,7 @@ public class LiteCoordinateSequenceFactory implements CoordinateSequenceFactory 
     /* (non-Javadoc)
      * @see org.locationtech.jts.geom.CoordinateSequenceFactory#create(org.locationtech.jts.geom.Coordinate[])
      */
+    @Override
     public CoordinateSequence create(Coordinate[] coordinates) {
         return new LiteCoordinateSequence(coordinates);
     }
@@ -38,11 +39,9 @@ public class LiteCoordinateSequenceFactory implements CoordinateSequenceFactory 
     /* (non-Javadoc)
      * @see org.locationtech.jts.geom.CoordinateSequenceFactory#create(org.locationtech.jts.geom.CoordinateSequence)
      */
+    @Override
     public CoordinateSequence create(CoordinateSequence coordSeq) {
-        /**
-         * If copying a LiteCoordinateSequence, use the copy constructor to preserve dimensionality
-         * information.
-         */
+        /** If copying a LiteCoordinateSequence, use the copy constructor to preserve dimensionality information. */
         if (coordSeq instanceof LiteCoordinateSequence)
             return new LiteCoordinateSequence((LiteCoordinateSequence) coordSeq);
         return new LiteCoordinateSequence(coordSeq.toCoordinateArray());
@@ -51,6 +50,7 @@ public class LiteCoordinateSequenceFactory implements CoordinateSequenceFactory 
     /* (non-Javadoc)
      * @see org.locationtech.jts.geom.CoordinateSequenceFactory#create(int, int)
      */
+    @Override
     public CoordinateSequence create(int size, int dimension) {
         return new LiteCoordinateSequence(size, dimension);
     }
@@ -67,15 +67,14 @@ public class LiteCoordinateSequenceFactory implements CoordinateSequenceFactory 
 
     @Override
     public CoordinateSequence create(int size, int dimension, int measures) {
-        return new LiteCoordinateSequence((int) size, (int) dimension, (int) measures);
+        return new LiteCoordinateSequence(size, dimension, measures);
     }
 
     /**
      * Cast to a {@link LiteCoordinateSequence}
      *
-     * <p>This method first checks if <tt>cs</tt> is an instanceof {@link LiteCoordinateSequence},
-     * if it is, itself is returned. If not, <tt>cs</tt> is cloned into a new {@link
-     * LiteCoordinateSequence}
+     * <p>This method first checks if <tt>cs</tt> is an instanceof {@link LiteCoordinateSequence}, if it is, itself is
+     * returned. If not, <tt>cs</tt> is cloned into a new {@link LiteCoordinateSequence}
      *
      * <p>If cs is null, null is returned.
      *

@@ -17,16 +17,17 @@
 package org.geotools.brewer.styling.builder;
 
 import java.awt.Color;
-import org.geotools.styling.Fill;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.style.Fill;
+import org.geotools.styling.FillImpl;
 import org.geotools.util.Converters;
-import org.opengis.filter.expression.Expression;
 
-public class FillBuilder extends AbstractStyleBuilder<org.opengis.style.Fill> {
+public class FillBuilder extends AbstractStyleBuilder<org.geotools.api.style.Fill> {
     Expression color;
 
     Expression opacity;
 
-    GraphicBuilder graphic = new GraphicBuilder(this).unset();
+    GraphicBuilder graphic = (GraphicBuilder) new GraphicBuilder(this).unset();
 
     /** Create a FillBuilder on its own; not part of a larger data structure. */
     public FillBuilder() {
@@ -55,8 +56,7 @@ public class FillBuilder extends AbstractStyleBuilder<org.opengis.style.Fill> {
     public FillBuilder colorHex(String hex) {
         Color color = Converters.convert(hex, Color.class);
         if (color == null) {
-            throw new IllegalArgumentException(
-                    "The provided expression could not be turned into a color: " + hex);
+            throw new IllegalArgumentException("The provided expression could not be turned into a color: " + hex);
         }
         return color(color);
     }
@@ -85,6 +85,7 @@ public class FillBuilder extends AbstractStyleBuilder<org.opengis.style.Fill> {
      *
      * @return Created Fill as defined
      */
+    @Override
     public Fill build() {
         if (unset) {
             return null;
@@ -97,20 +98,23 @@ public class FillBuilder extends AbstractStyleBuilder<org.opengis.style.Fill> {
         return fill;
     }
 
+    @Override
     public FillBuilder unset() {
         return (FillBuilder) super.unset();
     }
 
     /** Reset to produce the default Fill. */
+    @Override
     public FillBuilder reset() {
         unset = false;
-        color = Fill.DEFAULT.getColor();
-        opacity = Fill.DEFAULT.getOpacity();
+        color = FillImpl.DEFAULT.getColor();
+        opacity = FillImpl.DEFAULT.getOpacity();
         graphic.unset();
         return this;
     }
 
-    public FillBuilder reset(org.opengis.style.Fill original) {
+    @Override
+    public FillBuilder reset(org.geotools.api.style.Fill original) {
         if (original == null) {
             return unset();
         }

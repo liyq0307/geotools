@@ -32,18 +32,12 @@ import org.locationtech.jts.geom.MultiLineString;
  */
 final class MultiLineStringBuilder extends GeometryBuilder {
 
-    /**
-     * @param statement
-     * @param resultStack
-     */
+    /** */
     public MultiLineStringBuilder(String statement, BuildResultStack resultStack) {
         super(statement, resultStack);
     }
 
-    /**
-     * Makes a {@link #MultiLineString} geometry using the {@link LineString} presents in the result
-     * stack.
-     */
+    /** Makes a {@link #MultiLineString} geometry using the {@link LineString} presents in the result stack. */
     @Override
     public Geometry build(int linestringtextNode) throws CQLException {
 

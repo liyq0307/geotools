@@ -1,21 +1,14 @@
 /*
- *    GeoTools - The Open Source Java GIS Toolkit
- *    http://geotools.org
+ *    GeoTools Sample code and Tutorials by Open Source Geospatial Foundation, and others
+ *    https://docs.geotools.org
  *
- *    (C) 2019, Open Source Geospatial Foundation (OSGeo)
+ *    To the extent possible under law, the author(s) have dedicated all copyright
+ *    and related and neighboring rights to this software to the public domain worldwide.
+ *    This software is distributed without any warranty.
  *
- *    This library is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation;
- *    version 2.1 of the License.
- *
- *    This library is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
+ *    You should have received a copy of the CC0 Public Domain Dedication along with this
+ *    software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
-
 package org.geotools.tutorial.wms;
 
 import java.net.URL;
@@ -30,13 +23,11 @@ import org.geotools.swing.JMapFrame;
 import org.geotools.swing.wms.WMSChooser;
 import org.geotools.swing.wms.WMSLayerChooser;
 
-/**
- * This is a Web Map Server "quickstart" doing the minimum required to display something on screen.
- */
+/** This is a Web Map Server "quickstart" doing the minimum required to display something on screen. */
 public class WMSLab extends JFrame {
     /**
-     * Prompts the user for a wms service, connects, and asks for a layer and then and displays its
-     * contents on the screen in a map frame.
+     * Prompts the user for a wms service, connects, and asks for a layer and then and displays its contents on the
+     * screen in a map frame.
      */
     public static void main(String[] args) throws Exception {
         // display a data store file chooser dialog for shapefiles

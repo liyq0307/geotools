@@ -45,16 +45,16 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
-import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Position2D;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.map.Layer;
+import org.geotools.map.MapBoundsEvent;
+import org.geotools.map.MapBoundsListener;
 import org.geotools.map.MapContent;
-import org.geotools.map.event.MapBoundsEvent;
-import org.geotools.map.event.MapBoundsListener;
-import org.geotools.map.event.MapLayerEvent;
-import org.geotools.map.event.MapLayerListEvent;
-import org.geotools.map.event.MapLayerListListener;
+import org.geotools.map.MapLayerEvent;
+import org.geotools.map.MapLayerListEvent;
+import org.geotools.map.MapLayerListListener;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.GTRenderer;
@@ -69,9 +69,9 @@ import org.geotools.swt.tool.MapToolManager;
 import org.geotools.swt.utils.CursorManager;
 import org.geotools.swt.utils.Messages;
 import org.geotools.swt.utils.Utils;
-import org.opengis.geometry.Envelope;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
 
 /**
  * A map display pane that works with a GTRenderer and MapContext to display features. It supports
@@ -109,7 +109,7 @@ public class SwtMapPane extends Canvas
     private LabelCache labelCache;
     private MapToolManager toolManager;
     private MapLayerComposite layerTable;
-    private Set<MapPaneListener> listeners = new HashSet<MapPaneListener>();
+    private Set<MapPaneListener> listeners = new HashSet<>();
     private AffineTransform worldToScreen;
     private AffineTransform screenToWorld;
     private Rectangle curPaintArea;
@@ -311,7 +311,7 @@ public class SwtMapPane extends Canvas
             if (renderer instanceof StreamingRenderer) {
                 hints = renderer.getRendererHints();
                 if (hints == null) {
-                    hints = new HashMap<Object, Object>();
+                    hints = new HashMap<>();
                 }
                 if (hints.containsKey(StreamingRenderer.LABEL_CACHE_KEY)) {
                     labelCache = (LabelCache) hints.get(StreamingRenderer.LABEL_CACHE_KEY);
@@ -417,12 +417,18 @@ public class SwtMapPane extends Canvas
 
     public void setCrs(CoordinateReferenceSystem crs) {
         try {
+            if (crs == null) {
+                return;
+            }
             // System.out.println(content.layers().size());
             ReferencedEnvelope rEnv = getDisplayArea();
             // System.out.println(rEnv);
 
             CoordinateReferenceSystem sourceCRS = rEnv.getCoordinateReferenceSystem();
             CoordinateReferenceSystem targetCRS = crs;
+            if (sourceCRS == null) {
+                sourceCRS = targetCRS;
+            }
 
             MathTransform transform = CRS.findMathTransform(sourceCRS, targetCRS);
             org.locationtech.jts.geom.Envelope newJtsEnv = JTS.transform(rEnv, transform);
@@ -459,7 +465,7 @@ public class SwtMapPane extends Canvas
      * @param envelope the bounds of the map to display
      * @throws IllegalStateException if a map context is not set
      */
-    public void setDisplayArea(Envelope envelope) {
+    public void setDisplayArea(Bounds envelope) {
         if (content != null) {
             if (curPaintArea == null || curPaintArea.isEmpty()) {
                 return;
@@ -481,7 +487,7 @@ public class SwtMapPane extends Canvas
      *
      * @param envelope requested display area
      */
-    private void doSetDisplayArea(Envelope envelope) {
+    private void doSetDisplayArea(Bounds envelope) {
         assert (content != null && curPaintArea != null && !curPaintArea.isEmpty());
 
         if (equalsFullExtent(envelope)) {
@@ -516,7 +522,7 @@ public class SwtMapPane extends Canvas
      * @todo My logic here seems overly complex - I'm sure there must be a simpler way for the map
      *     pane to handle this.
      */
-    private boolean equalsFullExtent(final Envelope envelope) {
+    private boolean equalsFullExtent(final Bounds envelope) {
         if (fullExtent == null || envelope == null) {
             return false;
         }
@@ -750,7 +756,7 @@ public class SwtMapPane extends Canvas
         if (env == null) return;
         int dx = imageOrigin.x;
         int dy = imageOrigin.y;
-        DirectPosition2D newPos = new DirectPosition2D(dx, dy);
+        Position2D newPos = new Position2D(dx, dy);
         screenToWorld.transform(newPos, newPos);
 
         env.translate(env.getMinimum(0) - newPos.x, env.getMaximum(1) - newPos.y);
@@ -764,7 +770,7 @@ public class SwtMapPane extends Canvas
      * the layer table is being used, adds the new layer to the table.
      */
     public void layerAdded(MapLayerListEvent event) {
-        Layer layer = event.getElement();
+        Layer layer = event.getLayer();
         if (layerTable != null) {
             layerTable.onAddLayer(layer);
         }
@@ -776,7 +782,8 @@ public class SwtMapPane extends Canvas
         if (firstLayer || atFullExtent) {
             reset();
             if (firstLayer) {
-                setCrs(layer.getBounds().getCoordinateReferenceSystem());
+                ReferencedEnvelope bounds = layer.getBounds();
+                setCrs(bounds.getCoordinateReferenceSystem());
                 return;
             }
         }
@@ -785,7 +792,7 @@ public class SwtMapPane extends Canvas
 
     /** Called when a map layer has been removed */
     public void layerRemoved(MapLayerListEvent event) {
-        Layer layer = event.getElement();
+        Layer layer = event.getLayer();
         if (layerTable != null) {
             layerTable.onRemoveLayer(layer);
         }
@@ -804,7 +811,7 @@ public class SwtMapPane extends Canvas
      */
     public void layerChanged(MapLayerListEvent event) {
         if (layerTable != null) {
-            layerTable.repaint(event.getElement());
+            layerTable.repaint(event.getLayer());
         }
         redrawBaseImage = true;
 
@@ -904,7 +911,7 @@ public class SwtMapPane extends Canvas
      * @param envelope the current map extent (world coordinates)
      * @param paintArea the current map pane extent (screen units)
      */
-    private void setTransforms(final Envelope envelope, final Rectangle paintArea) {
+    private void setTransforms(final Bounds envelope, final Rectangle paintArea) {
         ReferencedEnvelope refEnv = null;
         if (envelope != null) {
             refEnv = new ReferencedEnvelope(envelope);

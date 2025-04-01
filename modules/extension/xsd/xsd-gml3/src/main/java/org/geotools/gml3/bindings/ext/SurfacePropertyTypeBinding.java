@@ -27,25 +27,26 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 
-public class SurfacePropertyTypeBinding
-        extends org.geotools.gml3.bindings.SurfacePropertyTypeBinding implements Comparable {
+@SuppressWarnings("ComparableType")
+public class SurfacePropertyTypeBinding extends org.geotools.gml3.bindings.SurfacePropertyTypeBinding
+        implements Comparable {
 
     GeometryFactory gf;
 
-    public SurfacePropertyTypeBinding(
-            GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry, GeometryFactory gf) {
+    public SurfacePropertyTypeBinding(GML3EncodingUtils encodingUtils, XSDIdRegistry idRegistry, GeometryFactory gf) {
         super(encodingUtils, idRegistry);
         this.gf = gf;
     }
 
+    @Override
     public Class<? extends Geometry> getGeometryType() {
         return MultiPolygon.class;
     }
 
     @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
-        Polygon polygon = (Polygon) node.getChildValue(Polygon.class);
-        MultiPolygon surface = (MultiPolygon) node.getChildValue(MultiPolygon.class);
+        Polygon polygon = node.getChildValue(Polygon.class);
+        MultiPolygon surface = node.getChildValue(MultiPolygon.class);
 
         if (polygon != null) {
             return gf.createMultiPolygon(new Polygon[] {polygon});
@@ -56,8 +57,7 @@ public class SurfacePropertyTypeBinding
 
     @Override
     public Object getProperty(Object object, QName name) throws Exception {
-        if ("_Surface".equals(name.getLocalPart())
-                || "AbstractSurface".equals(name.getLocalPart())) {
+        if ("_Surface".equals(name.getLocalPart()) || "AbstractSurface".equals(name.getLocalPart())) {
             MultiPolygon multiPolygon = (MultiPolygon) object;
             // this MultiPolygon consists of a single Polygon wrapped in a MultiPolygon:
             return multiPolygon.getGeometryN(0);
@@ -66,6 +66,7 @@ public class SurfacePropertyTypeBinding
         return super.getProperty(object, name);
     }
 
+    @Override
     public int compareTo(Object o) {
         if (o instanceof SurfaceTypeBinding) {
             return 1;

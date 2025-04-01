@@ -18,13 +18,14 @@ package org.geotools.sld.bindings;
 
 import java.util.List;
 import javax.xml.namespace.QName;
-import org.geotools.styling.FeatureTypeStyle;
-import org.geotools.styling.Style;
-import org.geotools.styling.StyleFactory;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.style.Fill;
+import org.geotools.api.style.Style;
+import org.geotools.api.style.StyleFactory;
+import org.geotools.api.util.InternationalString;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
-import org.opengis.util.InternationalString;
 import org.picocontainer.MutablePicoContainer;
 
 /**
@@ -64,6 +65,7 @@ public class SLDUserStyleBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.USERSTYLE;
     }
@@ -75,6 +77,7 @@ public class SLDUserStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -86,6 +89,7 @@ public class SLDUserStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Style.class;
     }
@@ -97,6 +101,7 @@ public class SLDUserStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -106,6 +111,7 @@ public class SLDUserStyleBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         Style style = styleFactory.createStyle();
 
@@ -121,8 +127,7 @@ public class SLDUserStyleBinding extends AbstractComplexBinding {
 
         // &lt;xsd:element ref="sld:Abstract" minOccurs="0"/&gt;
         if (node.hasChild("Abstract")) {
-            style.getDescription()
-                    .setAbstract((InternationalString) node.getChildValue("Abstract"));
+            style.getDescription().setAbstract((InternationalString) node.getChildValue("Abstract"));
         }
 
         // &lt;xsd:element ref="sld:IsDefault" minOccurs="0"/&gt;
@@ -130,8 +135,12 @@ public class SLDUserStyleBinding extends AbstractComplexBinding {
             style.setDefault(((Boolean) node.getChildValue("IsDefault")).booleanValue());
         }
 
+        if (node.hasChild("Background")) {
+            style.setBackground((Fill) node.getChildValue("Background", null));
+        }
+
         // &lt;xsd:element ref="sld:FeatureTypeStyle" maxOccurs="unbounded"/&gt;
-        List fts = node.getChildValues(FeatureTypeStyle.class);
+        List<FeatureTypeStyle> fts = node.getChildValues(FeatureTypeStyle.class);
         style.featureTypeStyles().addAll(fts);
 
         return style;

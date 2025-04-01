@@ -30,15 +30,15 @@ public class NetCDFTimeUtilities {
 
     public static final TimeZone UTC_TIMEZONE = TimeZone.getTimeZone("GMT");
 
-    public static final Set<String> MONTH_SET = new HashSet<String>();
+    public static final Set<String> MONTH_SET = new HashSet<>();
 
-    public static final Set<String> DAY_SET = new HashSet<String>();
+    public static final Set<String> DAY_SET = new HashSet<>();
 
-    public static final Set<String> HOUR_SET = new HashSet<String>();
+    public static final Set<String> HOUR_SET = new HashSet<>();
 
-    public static final Set<String> MINUTE_SET = new HashSet<String>();
+    public static final Set<String> MINUTE_SET = new HashSet<>();
 
-    public static final Set<String> SECOND_SET = new HashSet<String>();
+    public static final Set<String> SECOND_SET = new HashSet<>();
 
     static {
         MONTH_SET.add("month");
@@ -73,8 +73,7 @@ public class NetCDFTimeUtilities {
     public static String checkDateDigits(String origin) {
         String digitsCheckedOrigin = "";
         if (origin.indexOf("-") > 0) {
-            String tmp =
-                    (origin.indexOf(" ") > 0 ? origin.substring(0, origin.indexOf(" ")) : origin);
+            String tmp = (origin.indexOf(" ") > 0 ? origin.substring(0, origin.indexOf(" ")) : origin);
             String[] originDateParts = tmp.split("-");
             for (int l = 0; l < originDateParts.length; l++) {
                 String datePart = originDateParts[l];
@@ -89,8 +88,7 @@ public class NetCDFTimeUtilities {
 
         if (origin.indexOf(":") > 0) {
             digitsCheckedOrigin += " ";
-            String tmp =
-                    (origin.indexOf(" ") > 0 ? origin.substring(origin.indexOf(" ") + 1) : origin);
+            String tmp = (origin.indexOf(" ") > 0 ? origin.substring(origin.indexOf(" ") + 1) : origin);
             String[] originDateParts = tmp.split(":");
             for (int l = 0; l < originDateParts.length; l++) {
                 String datePart = originDateParts[l];
@@ -109,22 +107,22 @@ public class NetCDFTimeUtilities {
     }
 
     public static GregorianCalendar fromJulian(double injulian) {
-        int jalpha, ja, jb, jc, jd, je, year, month, day;
+        int jalpha;
         // double julian = injulian + HALFSECOND / 86400.0;
-        ja = (int) injulian;
+        int ja = (int) injulian;
         if (ja >= JGREG) {
             jalpha = (int) (((ja - 1867216) - 0.25) / 36524.25);
             ja = ja + 1 + jalpha - jalpha / 4;
         }
 
-        jb = ja + 1524;
-        jc = (int) (6680.0 + ((jb - 2439870) - 122.1) / 365.25);
-        jd = 365 * jc + jc / 4;
-        je = (int) ((jb - jd) / 30.6001);
-        day = jb - jd - (int) (30.6001 * je);
-        month = je - 1;
+        int jb = ja + 1524;
+        int jc = (int) (6680.0 + ((jb - 2439870) - 122.1) / 365.25);
+        int jd = 365 * jc + jc / 4;
+        int je = (int) ((jb - jd) / 30.6001);
+        int day = jb - jd - (int) (30.6001 * je);
+        int month = je - 1;
         if (month > 12) month = month - 12;
-        year = jc - 4715;
+        int year = jc - 4715;
         if (month > 2) year--;
         if (year <= 0) year--;
 
@@ -209,7 +207,6 @@ public class NetCDFTimeUtilities {
      * Converts NetCDF time units into opportune Calendar ones.
      *
      * @param units {@link String}
-     * @param d
      * @return int
      */
     public static int getTimeUnits(String units, Double vd) {
@@ -279,10 +276,7 @@ public class NetCDFTimeUtilities {
         return -1;
     }
 
-    /**
-     * @param value
-     * @return
-     */
+    /** */
     public static String trimFractionalPart(String value) {
         value = value.trim();
         for (int i = value.length(); --i >= 0; ) {
@@ -330,8 +324,7 @@ public class NetCDFTimeUtilities {
         } else {
             int intVal = (int) val;
             if (intVal != val) {
-                throw new IllegalArgumentException(
-                        "Can't convert " + val + " to an int without losing data");
+                throw new IllegalArgumentException("Can't convert " + val + " to an int without losing data");
             }
             cal.add(unit, intVal);
         }

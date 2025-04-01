@@ -19,8 +19,8 @@ package org.geotools.filter.capability;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.capability.TemporalOperator;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.capability.TemporalOperator;
 
 public class TemporalOperatorImpl implements TemporalOperator {
 
@@ -29,13 +29,15 @@ public class TemporalOperatorImpl implements TemporalOperator {
 
     public TemporalOperatorImpl(String name) {
         this.name = name;
-        operands = new LinkedHashSet<Name>();
+        operands = new LinkedHashSet<>();
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public Collection<Name> getTemporalOperands() {
         return operands;
     }

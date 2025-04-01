@@ -20,58 +20,57 @@ package org.geotools.filter;
 
 import java.util.Date;
 import java.util.logging.Logger;
+import org.geotools.api.filter.FilterVisitor;
+import org.geotools.api.filter.PropertyIsLessThanOrEqualTo;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.util.Converters;
-import org.opengis.filter.FilterVisitor;
-import org.opengis.filter.PropertyIsLessThanOrEqualTo;
-import org.opengis.filter.expression.Expression;
 
 /**
- * Defines a comparison filter (can be a math comparison or generic equals). This filter implements
- * a comparison - of some sort - between two expressions. The comparison may be a math comparison or
- * a generic equals comparison. If it is a math comparison, only math expressions are allowed; if it
- * is an equals comparison, any expression types are allowed. Note that this comparison does not
- * attempt to restrict its expressions to be meaningful. This means that it considers itself a valid
- * filter as long as the expression comparison returns a valid result. It does no checking to see
- * whether or not the expression comparison is meaningful with regard to checking feature
- * attributes. In other words, this is a valid filter: <b>52 = 92</b>, even though it will always
- * return the same result and could be simplified away. It is up the the filter creator, therefore,
- * to attempt to simplify/make meaningful filter logic.
+ * Defines a comparison filter (can be a math comparison or generic equals). This filter implements a comparison - of
+ * some sort - between two expressions. The comparison may be a math comparison or a generic equals comparison. If it is
+ * a math comparison, only math expressions are allowed; if it is an equals comparison, any expression types are
+ * allowed. Note that this comparison does not attempt to restrict its expressions to be meaningful. This means that it
+ * considers itself a valid filter as long as the expression comparison returns a valid result. It does no checking to
+ * see whether or not the expression comparison is meaningful with regard to checking feature attributes. In other
+ * words, this is a valid filter: <b>52 = 92</b>, even though it will always return the same result and could be
+ * simplified away. It is up the the filter creator, therefore, to attempt to simplify/make meaningful filter logic.
  *
  * @author Rob Hranac, Vision for New York
  * @version $Id$
  */
 public abstract class CompareFilterImpl extends BinaryComparisonAbstract {
     /** The logger for the default core module. */
-    static final Logger LOGGER =
-            org.geotools.util.logging.Logging.getLogger(CompareFilterImpl.class);
+    static final Logger LOGGER = org.geotools.util.logging.Logging.getLogger(CompareFilterImpl.class);
 
     protected CompareFilterImpl(
-            org.opengis.filter.expression.Expression e1,
-            org.opengis.filter.expression.Expression e2) {
+            org.geotools.api.filter.expression.Expression e1, org.geotools.api.filter.expression.Expression e2) {
         this(e1, e2, true);
     }
 
     protected CompareFilterImpl(
-            org.opengis.filter.expression.Expression e1,
-            org.opengis.filter.expression.Expression e2,
+            org.geotools.api.filter.expression.Expression e1,
+            org.geotools.api.filter.expression.Expression e2,
             boolean matchCase) {
         super(e1, e2, matchCase);
     }
 
-    public void setExpression1(org.opengis.filter.expression.Expression leftValue) {
+    @Override
+    public void setExpression1(org.geotools.api.filter.expression.Expression leftValue) {
         this.expression1 = leftValue;
     }
 
-    public void setExpression2(org.opengis.filter.expression.Expression rightValue) {
+    @Override
+    public void setExpression2(org.geotools.api.filter.expression.Expression rightValue) {
         this.expression2 = rightValue;
     }
 
     /**
-     * Subclass convenience method which compares to instances of comparables in a pretty lax way,
-     * converting types among String, Number, Double when appropriate.
+     * Subclass convenience method which compares to instances of comparables in a pretty lax way, converting types
+     * among String, Number, Double when appropriate.
      *
      * @return same contract as {@link Comparable#compareTo(java.lang.Object)}.
      */
+    @SuppressWarnings("unchecked")
     protected int compare(Comparable leftObj, Comparable rightObj) {
         if (leftObj == null || rightObj == null) {
             throw new NullPointerException("Left and right objects are meant to be non null)");
@@ -144,6 +143,7 @@ public abstract class CompareFilterImpl extends BinaryComparisonAbstract {
      *
      * @return String representation of the compare filter.
      */
+    @Override
     public String toString() {
         if (this instanceof IsNullImpl) {
             return "[ " + expression1 + " IS NULL ]";
@@ -169,13 +169,13 @@ public abstract class CompareFilterImpl extends BinaryComparisonAbstract {
     }
 
     /**
-     * Compares this filter to the specified object. Returns true if the passed in object is the
-     * same as this filter. Checks to make sure the filter types are the same as well as both of the
-     * values.
+     * Compares this filter to the specified object. Returns true if the passed in object is the same as this filter.
+     * Checks to make sure the filter types are the same as well as both of the values.
      *
      * @param obj - the object to compare this CompareFilter against.
      * @return true if specified object is equal to this filter; false otherwise.
      */
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -203,6 +203,7 @@ public abstract class CompareFilterImpl extends BinaryComparisonAbstract {
      *
      * @return a code to hash this object by.
      */
+    @Override
     public int hashCode() {
         int result = 17;
         result = (37 * result) + this.getClass().hashCode();
@@ -213,13 +214,13 @@ public abstract class CompareFilterImpl extends BinaryComparisonAbstract {
     }
 
     /**
-     * Used by FilterVisitors to perform some action on this filter instance. Typicaly used by
-     * Filter decoders, but may also be used by any thing which needs infomration from filter
-     * structure. Implementations should always call: visitor.visit(this); It is importatant that
-     * this is not left to a parent class unless the parents API is identical.
+     * Used by FilterVisitors to perform some action on this filter instance. Typicaly used by Filter decoders, but may
+     * also be used by any thing which needs infomration from filter structure. Implementations should always call:
+     * visitor.visit(this); It is importatant that this is not left to a parent class unless the parents API is
+     * identical.
      *
-     * @param visitor The visitor which requires access to this filter, the method must call
-     *     visitor.visit(this);
+     * @param visitor The visitor which requires access to this filter, the method must call visitor.visit(this);
      */
+    @Override
     public abstract Object accept(FilterVisitor visitor, Object extraData);
 }

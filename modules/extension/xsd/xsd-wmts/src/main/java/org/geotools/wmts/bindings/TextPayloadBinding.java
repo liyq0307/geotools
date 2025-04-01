@@ -22,7 +22,7 @@ import javax.xml.namespace.QName;
 import net.opengis.wmts.v_1.TextPayloadType;
 import net.opengis.wmts.v_1.wmtsv_1Factory;
 import org.geotools.wmts.WMTS;
-import org.geotools.xsd.AbstractComplexBinding;
+import org.geotools.xsd.AbstractComplexEMFBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
 
@@ -58,7 +58,7 @@ import org.geotools.xsd.Node;
  *
  * @generated
  */
-public class TextPayloadBinding extends AbstractComplexBinding {
+public class TextPayloadBinding extends AbstractComplexEMFBinding {
 
     wmtsv_1Factory factory;
 
@@ -68,6 +68,7 @@ public class TextPayloadBinding extends AbstractComplexBinding {
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return WMTS.TextPayload;
     }
@@ -79,6 +80,7 @@ public class TextPayloadBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return TextPayloadType.class;
     }
@@ -90,6 +92,7 @@ public class TextPayloadBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         TextPayloadType payload = factory.createTextPayloadType();
         payload.setFormat((String) node.getChildValue("Format"));

@@ -18,8 +18,14 @@ package org.geotools.geometry.jts;
 
 // J2SE dependencies
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.MathTransform;
+import org.geotools.api.referencing.operation.TransformException;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.referencing.operation.transform.ProjectiveTransform;
@@ -29,9 +35,6 @@ import org.locationtech.jts.geom.CoordinateSequenceFilter;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.MathTransform;
-import org.opengis.referencing.operation.TransformException;
 
 /**
  * Tests the {@link GeometryCoordinateSequenceTransformer} implementation.
@@ -68,26 +71,20 @@ public class GeometryCoordinateSequenceTransformerTest {
     @Test
     public void testMulti() throws Exception {
         checkTransform(gb.multiPoint(10, 10, 5, 20));
-        checkTransform(
-                gb.multiLineString(gb.lineString(10, 10, 20, 20), gb.lineString(10, 10, 20, 20)));
+        checkTransform(gb.multiLineString(gb.lineString(10, 10, 20, 20), gb.lineString(10, 10, 20, 20)));
         checkTransform(gb.multiPolygon(gb.boxZ(10, 10, 20, 20, 99), gb.boxZ(11, 11, 19, 19, 99)));
     }
 
     @Test
     public void testGeometryCollection() throws Exception {
-        checkTransform(
-                gb.geometryCollection(
-                        gb.point(10, 11), gb.lineString(10, 10, 20, 20), gb.box(10, 10, 20, 20)));
+        checkTransform(gb.geometryCollection(gb.point(10, 11), gb.lineString(10, 10, 20, 20), gb.box(10, 10, 20, 20)));
     }
 
     @Test
     public void testFlipAxisOnCurved() throws Exception {
-        CircularString cs =
-                (CircularString)
-                        new CurvedGeometryFactory(0.1).createCurvedGeometry(2, 0, 1, 1, 2, 2, 1);
+        CircularString cs = (CircularString) new CurvedGeometryFactory(0.1).createCurvedGeometry(2, 0, 1, 1, 2, 2, 1);
 
-        GeometryCoordinateSequenceTransformer transformer =
-                new GeometryCoordinateSequenceTransformer();
+        GeometryCoordinateSequenceTransformer transformer = new GeometryCoordinateSequenceTransformer();
         CoordinateReferenceSystem crsLatLon = CRS.decode("urn:ogc:def:crs:EPSG:4326");
         CoordinateReferenceSystem crsLonLat = CRS.decode("EPSG:4326", true);
         transformer.setCoordinateReferenceSystem(crsLatLon);
@@ -102,12 +99,9 @@ public class GeometryCoordinateSequenceTransformerTest {
 
     @Test
     public void testFullTransformOnCurved() throws Exception {
-        CircularString cs =
-                (CircularString)
-                        new CurvedGeometryFactory(0.1).createCurvedGeometry(2, 0, 1, 1, 2, 2, 1);
+        CircularString cs = (CircularString) new CurvedGeometryFactory(0.1).createCurvedGeometry(2, 0, 1, 1, 2, 2, 1);
 
-        GeometryCoordinateSequenceTransformer transformer =
-                new GeometryCoordinateSequenceTransformer();
+        GeometryCoordinateSequenceTransformer transformer = new GeometryCoordinateSequenceTransformer();
         CoordinateReferenceSystem targetCRS = CRS.decode("EPSG:3857");
         CoordinateReferenceSystem sourceCRS = CRS.decode("EPSG:4326", true);
         transformer.setCoordinateReferenceSystem(targetCRS);
@@ -120,11 +114,7 @@ public class GeometryCoordinateSequenceTransformerTest {
         assertTrue(ls.getCoordinateSequence().size() > 3);
     }
 
-    /**
-     * Confirm that testing method is accurate!
-     *
-     * @throws Exception
-     */
+    /** Confirm that testing method is accurate! */
     @Test
     public void testDifferentDimensionsFailure() throws Exception {
         Geometry g1 = gb.box(10, 10, 20, 20);
@@ -134,22 +124,14 @@ public class GeometryCoordinateSequenceTransformerTest {
 
     private static final double ORD_TOLERANCE = 1.0e-6;
 
-    /**
-     * Check transformation correctness by transforming forwards and backwards using inverse
-     * MathTransforms.
-     *
-     * @param g
-     * @throws TransformException
-     */
+    /** Check transformation correctness by transforming forwards and backwards using inverse MathTransforms. */
     private void checkTransform(Geometry g) throws TransformException {
-        GeometryCoordinateSequenceTransformer gcsTrans =
-                new GeometryCoordinateSequenceTransformer();
+        GeometryCoordinateSequenceTransformer gcsTrans = new GeometryCoordinateSequenceTransformer();
         gcsTrans.setCoordinateReferenceSystem(DefaultGeographicCRS.WGS84);
         MathTransform trans = ProjectiveTransform.createTranslation(2, 100);
         gcsTrans.setMathTransform(trans);
 
-        GeometryCoordinateSequenceTransformer gcsTransInv =
-                new GeometryCoordinateSequenceTransformer();
+        GeometryCoordinateSequenceTransformer gcsTransInv = new GeometryCoordinateSequenceTransformer();
         gcsTransInv.setCoordinateReferenceSystem(DefaultGeographicCRS.WGS84);
         MathTransform transInv = ProjectiveTransform.createTranslation(2, -100);
         gcsTransInv.setMathTransform(transInv);
@@ -158,7 +140,7 @@ public class GeometryCoordinateSequenceTransformerTest {
         Geometry g2 = gcsTransInv.transform(gTrans);
 
         // result better be a different geometry
-        assertTrue(g != g2);
+        assertNotSame(g, g2);
         assertTrue(hasSameValuesAndStructure(g, g2));
     }
 
@@ -167,8 +149,7 @@ public class GeometryCoordinateSequenceTransformerTest {
         if (g1.getFactory() != g2.getFactory()) return false;
 
         CoordinateSequence seq = CoordinateSequenceFinder.find(g1);
-        if (!CoordinateSequenceSchemaChecker.check(g2, seq.getClass(), seq.getDimension()))
-            return false;
+        if (!CoordinateSequenceSchemaChecker.check(g2, seq.getClass(), seq.getDimension())) return false;
         return true;
     }
 
@@ -186,14 +167,17 @@ public class GeometryCoordinateSequenceTransformerTest {
             return firstSeqFound;
         }
 
+        @Override
         public void filter(CoordinateSequence seq, int i) {
             if (firstSeqFound == null) firstSeqFound = seq;
         }
 
+        @Override
         public boolean isDone() {
             return firstSeqFound != null;
         }
 
+        @Override
         public boolean isGeometryChanged() {
             return false;
         }
@@ -202,8 +186,7 @@ public class GeometryCoordinateSequenceTransformerTest {
     static class CoordinateSequenceSchemaChecker implements CoordinateSequenceFilter {
 
         public static boolean check(Geometry g, Class coordSeqClass, int dimension) {
-            CoordinateSequenceSchemaChecker checkCS =
-                    new CoordinateSequenceSchemaChecker(coordSeqClass, dimension);
+            CoordinateSequenceSchemaChecker checkCS = new CoordinateSequenceSchemaChecker(coordSeqClass, dimension);
             g.apply(checkCS);
             return checkCS.isSame();
         }
@@ -223,15 +206,18 @@ public class GeometryCoordinateSequenceTransformerTest {
             return isSame;
         }
 
+        @Override
         public void filter(CoordinateSequence seq, int i) {
             if (seq.getClass() != coordSeqClass) isSame = false;
             if (seq.getDimension() != dimension) isSame = false;
         }
 
+        @Override
         public boolean isDone() {
             return !isSame;
         }
 
+        @Override
         public boolean isGeometryChanged() {
             return false;
         }

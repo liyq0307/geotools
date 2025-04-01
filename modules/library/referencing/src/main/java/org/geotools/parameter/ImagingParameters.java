@@ -18,6 +18,7 @@ package org.geotools.parameter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -29,29 +30,26 @@ import javax.media.jai.ParameterList;
 import javax.media.jai.ParameterListDescriptor;
 import javax.media.jai.ParameterListImpl;
 import javax.media.jai.util.Range;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.InvalidParameterNameException;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterNotFoundException;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
 import org.geotools.metadata.i18n.ErrorKeys;
-import org.geotools.metadata.i18n.Errors;
 import org.geotools.referencing.AbstractIdentifiedObject;
 import org.geotools.util.UnmodifiableArrayList;
 import org.geotools.util.Utilities;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.InvalidParameterNameException;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterNotFoundException;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
 
 /**
- * Wraps a JAI's {@link ParameterList}. Any change to a {@linkplain #parameter parameter value} in
- * this group is reflected into the {@linkplain #parameters underlying parameter list}, and
- * conversely. This adaptor is provided for interoperability with <A
- * HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>. A typical usage is
- * to wrap a JAI {@linkplain OperationDescriptor operation descriptor} into an {@linkplain
- * ImagingParameterDescriptors imaging parameter descriptor} and create instances of {@code
- * ImagingParameters} through the {@link ImagingParameterDescriptors#createValue createValue}
- * method.
+ * Wraps a JAI's {@link ParameterList}. Any change to a {@linkplain #parameter parameter value} in this group is
+ * reflected into the {@linkplain #parameters underlying parameter list}, and conversely. This adaptor is provided for
+ * interoperability with <A HREF="http://java.sun.com/products/java-media/jai/">Java Advanced Imaging</A>. A typical
+ * usage is to wrap a JAI {@linkplain OperationDescriptor operation descriptor} into an
+ * {@linkplain ImagingParameterDescriptors imaging parameter descriptor} and create instances of
+ * {@code ImagingParameters} through the {@link ImagingParameterDescriptors#createValue createValue} method.
  *
  * @since 2.2
  * @version $Id$
@@ -62,25 +60,22 @@ public class ImagingParameters extends AbstractParameter implements ParameterVal
     private static final long serialVersionUID = 1378692626023992530L;
 
     /**
-     * The JAI's parameter list. This is also the backing store for this {@linkplain
-     * ParameterValueGroup parameter value group}: all "ordinary" parameters (i.e.
-     * <strong>not</strong> including {@linkplain ParameterBlockJAI#getSources sources}) are
-     * actually stored in this list.
+     * The JAI's parameter list. This is also the backing store for this {@linkplain ParameterValueGroup parameter value
+     * group}: all "ordinary" parameters (i.e. <strong>not</strong> including {@linkplain ParameterBlockJAI#getSources
+     * sources}) are actually stored in this list.
      *
-     * <p>If the {@linkplain ImagingParameterDescriptors#descriptor JAI descriptor} is an instance
-     * of {@link OperationDescriptor}, then this parameter list is also an instance of {@link
-     * ParameterBlockJAI}. The {@linkplain ParameterBlockJAI#getSources sources} must be handled
-     * separatly, because the source type for a JAI operator (typically {@link
-     * java.awt.image.RenderedImage}) is not the same than the source type for a coverage operation
-     * (typically {@link org.opengis.coverage.GridCoverage}).
+     * <p>If the {@linkplain ImagingParameterDescriptors#descriptor JAI descriptor} is an instance of
+     * {@link OperationDescriptor}, then this parameter list is also an instance of {@link ParameterBlockJAI}. The
+     * {@linkplain ParameterBlockJAI#getSources sources} must be handled separatly, because the source type for a JAI
+     * operator (typically {@link java.awt.image.RenderedImage}) is not the same than the source type for a coverage
+     * operation (typically {@link org.geotools.api.coverage.GridCoverage}).
      */
     public final ParameterList parameters;
 
     /**
-     * The wrappers around each elements in {@link #parameters} as an immutable list. Will be
-     * created by {@link #createElements} only when first needed. Note that while this list may be
-     * immutable, <strong>elements</strong> in this list stay modifiable. The goal is to allows the
-     * following idiom:
+     * The wrappers around each elements in {@link #parameters} as an immutable list. Will be created by
+     * {@link #createElements} only when first needed. Note that while this list may be immutable,
+     * <strong>elements</strong> in this list stay modifiable. The goal is to allows the following idiom:
      *
      * <blockquote>
      *
@@ -101,9 +96,7 @@ public class ImagingParameters extends AbstractParameter implements ParameterVal
         super(descriptor);
         if (descriptor.operation instanceof OperationDescriptor) {
             // Parameters with sources
-            parameters =
-                    new ParameterBlockJAI(
-                            (OperationDescriptor) descriptor.operation, descriptor.registryMode);
+            parameters = new ParameterBlockJAI((OperationDescriptor) descriptor.operation, descriptor.registryMode);
         } else {
             // Parameters without sources
             parameters = new ParameterListImpl(descriptor.descriptor);
@@ -111,8 +104,8 @@ public class ImagingParameters extends AbstractParameter implements ParameterVal
     }
 
     /**
-     * Constructs a parameter group wrapping the specified JAI parameters. A default {@link
-     * ImagingParameterDescriptors} is created.
+     * Constructs a parameter group wrapping the specified JAI parameters. A default {@link ImagingParameterDescriptors}
+     * is created.
      *
      * @param properties Set of properties. Should contains at least {@code "name"}.
      * @param parameters The JAI's parameters.
@@ -124,19 +117,18 @@ public class ImagingParameters extends AbstractParameter implements ParameterVal
     }
 
     /**
-     * Returns {@code true} if the specified OGC descriptor is compatible with the specified JAI
-     * descriptor. Note that the JAI descriptor is allowed to be less strict than the OGC one. This
-     * is okay because {@link ImagingParameter} will keep a reference to the stricter OGC
-     * descriptor, which can be used for performing a strict check if we wish.
+     * Returns {@code true} if the specified OGC descriptor is compatible with the specified JAI descriptor. Note that
+     * the JAI descriptor is allowed to be less strict than the OGC one. This is okay because {@link ImagingParameter}
+     * will keep a reference to the stricter OGC descriptor, which can be used for performing a strict check if we wish.
      *
      * @param descriptor The OGC descriptor.
      * @param listDescriptor The JAI descriptor.
-     * @param names The array returned by {@code listDescriptor.getParamNames()}, obtained once for
+     * @param names The array returned by {@code listDescriptor.getParamNames()}, obtained once for ever by the caller
+     *     for efficienty.
+     * @param types The array returned by {@code listDescriptor.getParamClasses()}, obtained once for ever by the caller
+     *     for efficienty.
+     * @param enumerated The array returned by {@code listDescriptor.getEnumeratedParameterNames()}, obtained once for
      *     ever by the caller for efficienty.
-     * @param types The array returned by {@code listDescriptor.getParamClasses()}, obtained once
-     *     for ever by the caller for efficienty.
-     * @param enumerated The array returned by {@code listDescriptor.getEnumeratedParameterNames()},
-     *     obtained once for ever by the caller for efficienty.
      */
     private static boolean compatible(
             final ParameterDescriptor descriptor,
@@ -159,8 +151,7 @@ public class ImagingParameters extends AbstractParameter implements ParameterVal
         }
         final Range range = listDescriptor.getParamValueRange(name);
         if (range != null) {
-            Comparable c;
-            c = descriptor.getMinimumValue();
+            Comparable c = descriptor.getMinimumValue();
             if (c != null && !range.contains(c)) {
                 return false;
             }
@@ -170,10 +161,9 @@ public class ImagingParameters extends AbstractParameter implements ParameterVal
             }
         }
         if (enumerated != null) {
-            for (int i = 0; i < enumerated.length; i++) {
-                if (name.equalsIgnoreCase(enumerated[i])) {
-                    final EnumeratedParameter[] restrictions;
-                    restrictions = listDescriptor.getEnumeratedParameterValues(name);
+            for (String s : enumerated) {
+                if (name.equalsIgnoreCase(s)) {
+                    final EnumeratedParameter[] restrictions = listDescriptor.getEnumeratedParameterValues(name);
                     final Set<?> valids = descriptor.getValidValues();
                     if (valids == null || !Arrays.asList(restrictions).containsAll(valids)) {
                         return false;
@@ -185,17 +175,14 @@ public class ImagingParameters extends AbstractParameter implements ParameterVal
     }
 
     /**
-     * Creates and fills the {@link #values} list. Note: this method must creates elements
-     * inconditionnally and most not requires synchronization for proper working of the {@link
-     * #clone} method.
+     * Creates and fills the {@link #values} list. Note: this method must creates elements inconditionnally and most not
+     * requires synchronization for proper working of the {@link #clone} method.
      *
-     * @return The array which is backing {@link #values}. This array is returned only in order to
-     *     allow {@link #clone} to modify the values right after the clone. In other cases, this
-     *     array should be discarted.
+     * @return The array which is backing {@link #values}. This array is returned only in order to allow {@link #clone}
+     *     to modify the values right after the clone. In other cases, this array should be discarted.
      */
     private GeneralParameterValue[] createElements() {
-        final ImagingParameterDescriptors descriptor =
-                (ImagingParameterDescriptors) this.descriptor;
+        final ImagingParameterDescriptors descriptor = (ImagingParameterDescriptors) this.descriptor;
         final ParameterListDescriptor listDescriptor = parameters.getParameterListDescriptor();
         final String[] names = listDescriptor.getParamNames();
         final Class[] types = listDescriptor.getParamClasses();
@@ -232,14 +219,9 @@ public class ImagingParameters extends AbstractParameter implements ParameterVal
                 if (i != j) {
                     final ParameterDescriptor d = (ParameterDescriptor) values[i].getDescriptor();
                     if (AbstractIdentifiedObject.nameMatches(d, name)) {
+                        final Object arg0 = d.getName().getCode();
                         throw new InvalidParameterNameException(
-                                Errors.format(
-                                        ErrorKeys.PARAMETER_NAME_CLASH_$4,
-                                        d.getName().getCode(),
-                                        j,
-                                        name,
-                                        i),
-                                name);
+                                MessageFormat.format(ErrorKeys.PARAMETER_NAME_CLASH_$4, arg0, j, name, i), name);
                     }
                 }
             }
@@ -255,61 +237,51 @@ public class ImagingParameters extends AbstractParameter implements ParameterVal
     }
 
     /**
-     * Returns all values in this group as an unmodifiable list. The returned list contains all
-     * parameters found in the {@linkplain #parameters underlying parameter list}. In addition, it
-     * may contains sources found in the JAI's {@linkplain OperationDescriptor operation
-     * descriptor}.
+     * Returns all values in this group as an unmodifiable list. The returned list contains all parameters found in the
+     * {@linkplain #parameters underlying parameter list}. In addition, it may contains sources found in the JAI's
+     * {@linkplain OperationDescriptor operation descriptor}.
      */
+    @Override
     public synchronized List<GeneralParameterValue> values() {
         if (values == null) {
             createElements();
         }
-        assert ((ParameterDescriptorGroup) descriptor).descriptors().size() == values.size()
-                : values;
+        assert ((ParameterDescriptorGroup) descriptor).descriptors().size() == values.size() : values;
         return values;
     }
 
     /**
-     * Returns the value in this group for the specified identifier code. Getter and setter methods
-     * will use directly the JAI's {@linkplain #parameters parameter list} as the underlying backing
-     * store, when applicable.
+     * Returns the value in this group for the specified identifier code. Getter and setter methods will use directly
+     * the JAI's {@linkplain #parameters parameter list} as the underlying backing store, when applicable.
      *
      * @param name The case insensitive identifier code of the parameter to search for.
      * @return The parameter value for the given identifier code.
-     * @throws ParameterNotFoundException if there is no parameter value for the given identifier
-     *     code.
+     * @throws ParameterNotFoundException if there is no parameter value for the given identifier code.
      */
+    @Override
     public synchronized ParameterValue parameter(String name) throws ParameterNotFoundException {
         ensureNonNull("name", name);
         name = name.trim();
         final List<GeneralParameterValue> values = values();
-        final int size = values.size();
-        for (int i = 0; i < size; i++) {
-            final ParameterValue value = (ParameterValue) values.get(i);
+        for (GeneralParameterValue generalParameterValue : values) {
+            final ParameterValue value = (ParameterValue) generalParameterValue;
             if (AbstractIdentifiedObject.nameMatches(value.getDescriptor(), name)) {
                 return value;
             }
         }
-        throw new ParameterNotFoundException(
-                Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name), name);
+        throw new ParameterNotFoundException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name), name);
     }
 
-    /**
-     * Always throws an exception, since JAI's {@linkplain ParameterList parameter list} don't have
-     * subgroups.
-     */
+    /** Always throws an exception, since JAI's {@linkplain ParameterList parameter list} don't have subgroups. */
+    @Override
     public List<ParameterValueGroup> groups(final String name) throws ParameterNotFoundException {
-        throw new ParameterNotFoundException(
-                Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name), name);
+        throw new ParameterNotFoundException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name), name);
     }
 
-    /**
-     * Always throws an exception, since JAI's {@linkplain ParameterList parameter list} don't have
-     * subgroups.
-     */
+    /** Always throws an exception, since JAI's {@linkplain ParameterList parameter list} don't have subgroups. */
+    @Override
     public ParameterValueGroup addGroup(final String name) throws ParameterNotFoundException {
-        throw new ParameterNotFoundException(
-                Errors.format(ErrorKeys.MISSING_PARAMETER_$1, name), name);
+        throw new ParameterNotFoundException(MessageFormat.format(ErrorKeys.MISSING_PARAMETER_$1, name), name);
     }
 
     /** Compares the specified object with this parameter group for equality. */
@@ -327,8 +299,8 @@ public class ImagingParameters extends AbstractParameter implements ParameterVal
     }
 
     /**
-     * Returns a hash value for this parameter group. This value doesn't need to be the same in past
-     * or future versions of this class.
+     * Returns a hash value for this parameter group. This value doesn't need to be the same in past or future versions
+     * of this class.
      */
     @Override
     public int hashCode() {

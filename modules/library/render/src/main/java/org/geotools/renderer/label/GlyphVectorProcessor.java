@@ -38,19 +38,29 @@ abstract class GlyphVectorProcessor {
         return process(processor, false);
     }
 
+    /**
+     * Whether this glyph processor supports multiple lines of text, or if the processing should stop at the first line.
+     * Defaults to true.
+     */
+    public boolean supportsMultLine() {
+        return true;
+    }
+
     public boolean process(GlyphProcessor processor, boolean stopIfTrue) {
         int glyphCount = 0;
         boolean ret = false;
         for (LineInfo lineInfo : painter.lines) {
             for (LineInfo.LineComponent lineComponent : lineInfo.getComponents()) {
                 GlyphVector glyphVector = lineComponent.getGlyphVector();
-                for (int g = 0; g < glyphVector.getNumGlyphs(); g++, glyphCount++) {
+                int numGlyphs = glyphVector.getNumGlyphs();
+                for (int g = 0; g < numGlyphs; g++, glyphCount++) {
                     char c = getChar(lineComponent, glyphVector, g);
                     // warning : do "process || ret", not "ret || process"
                     ret = processor.process(glyphVector, g, transforms.get(glyphCount), c) || ret;
                     if (ret && stopIfTrue) return true;
                 }
             }
+            if (!supportsMultLine()) break;
         }
         return ret;
     }
@@ -61,8 +71,7 @@ abstract class GlyphVectorProcessor {
     }
 
     /**
-     * Create a Straight GlyphVectorProcessor, pre-compute the affine transforms for each glyph
-     * along a straight line.
+     * Create a Straight GlyphVectorProcessor, pre-compute the affine transforms for each glyph along a straight line.
      */
     public static class Straight extends GlyphVectorProcessor {
 
@@ -72,7 +81,8 @@ abstract class GlyphVectorProcessor {
                 for (LineInfo.LineComponent lineComponent : lineInfo.getComponents()) {
                     AffineTransform componentTx = new AffineTransform(tx);
                     componentTx.translate(lineComponent.getX(), lineInfo.getY());
-                    for (int i = 0; i < lineComponent.getGlyphVector().getNumGlyphs(); i++) {
+                    int numGlyphs = lineComponent.getGlyphVector().getNumGlyphs();
+                    for (int i = 0; i < numGlyphs; i++) {
                         transforms.add(componentTx);
                     }
                 }
@@ -81,9 +91,9 @@ abstract class GlyphVectorProcessor {
     }
 
     /**
-     * Create a Curved GlyphVectorProcessor, pre-compute the affine transforms for each glyph along
-     * a curved line. Does not consider letter orientation (only letter position). (taken from
-     * LabelPainter#paintCurvedLabel).
+     * Create a Curved GlyphVectorProcessor, pre-compute the affine transforms for each glyph along a curved line. Does
+     * not consider letter orientation (only letter position). (taken from LabelPainter#paintCurvedLabel). Also,
+     * currenclty does not support multiple lines of text, but a simple single sentence along a line.
      */
     public static class Curved extends GlyphVectorProcessor {
 
@@ -125,9 +135,7 @@ abstract class GlyphVectorProcessor {
                         Point2D p = gv.getGlyphPosition(i);
                         float advance = nextAdvance;
                         nextAdvance =
-                                i < numGlyphs - 1
-                                        ? gv.getGlyphMetrics(i + 1).getAdvance() * 0.5f
-                                        : 0;
+                                i < numGlyphs - 1 ? gv.getGlyphMetrics(i + 1).getAdvance() * 0.5f : 0;
                         c = cursor.getCurrentPosition(c);
                         AffineTransform t = new AffineTransform();
                         t.setToTranslation(c.x, c.y);
@@ -143,6 +151,11 @@ abstract class GlyphVectorProcessor {
                     painter.graphics.setTransform(oldTransform);
                 }
             }
+        }
+
+        @Override
+        public boolean supportsMultLine() {
+            return false;
         }
     }
 }

@@ -22,8 +22,7 @@ import org.geotools.xsd.ComplexEMFBinding;
 import org.geotools.xsd.Configuration;
 
 /**
- * Parser configuration for the http://www.opengis.net/WCS_service-extension_interpolation/1.0
- * schema.
+ * Parser configuration for the http://www.opengis.net/WCS_service-extension_interpolation/1.0 schema.
  *
  * @generated
  */
@@ -43,6 +42,7 @@ public class InterpolationConfiguration extends Configuration {
      *
      * @generated
      */
+    @Override
     @SuppressWarnings("unchecked")
     protected final void registerBindings(Map bindings) {
         // manually setup bindings
@@ -51,8 +51,7 @@ public class InterpolationConfiguration extends Configuration {
                 new ComplexEMFBinding(Wcs20Factory.eINSTANCE, Interpolation.InterpolationType));
         bindings.put(
                 Interpolation.InterpolationMethodType,
-                new ComplexEMFBinding(
-                        Wcs20Factory.eINSTANCE, Interpolation.InterpolationMethodType));
+                new ComplexEMFBinding(Wcs20Factory.eINSTANCE, Interpolation.InterpolationMethodType));
         bindings.put(
                 Interpolation.InterpolationAxesType,
                 new ComplexEMFBinding(Wcs20Factory.eINSTANCE, Interpolation.InterpolationAxesType));

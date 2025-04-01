@@ -33,23 +33,15 @@ public class GeneralizationInfos {
     private String dataSourceName, dataSourceNameSpace;
 
     public GeneralizationInfos() {
-        infoMap = new HashMap<String, GeneralizationInfo>();
+        infoMap = new HashMap<>();
     }
 
-    /**
-     * add a GeneralizationInfo object
-     *
-     * @param info
-     */
+    /** add a GeneralizationInfo object */
     public void addGeneralizationInfo(GeneralizationInfo info) {
         infoMap.put(info.getBaseFeatureName(), info);
     }
 
-    /**
-     * remove a GeneralizationInfo object
-     *
-     * @param info
-     */
+    /** remove a GeneralizationInfo object */
     public void removeGeneralizationInfo(GeneralizationInfo info) {
         infoMap.remove(info.getBaseFeatureName());
     }
@@ -58,7 +50,6 @@ public class GeneralizationInfos {
      * get GeneralizationInfo for baseFeatureName
      *
      * @see GeneralizationInfo for info about baseFeatureName
-     * @param baseFeatureName
      * @return GeneralizationInfo or null
      */
     public GeneralizationInfo getGeneralizationInfoForBaseFeatureName(String baseFeatureName) {
@@ -69,7 +60,6 @@ public class GeneralizationInfos {
      * get GeneralizationInfo for featureName
      *
      * @see GeneralizationInfo for info about featureName
-     * @param featureName
      * @return GeneralizationInfo or null
      */
     public GeneralizationInfo getGeneralizationInfoForFeatureName(String featureName) {
@@ -83,7 +73,7 @@ public class GeneralizationInfos {
      * @return list of base feature names
      */
     public Collection<String> getBaseFeatureNames() {
-        TreeSet<String> names = new TreeSet<String>();
+        TreeSet<String> names = new TreeSet<>();
         names.addAll(infoMap.keySet());
         return names;
     }
@@ -93,14 +83,13 @@ public class GeneralizationInfos {
      * @return list of feature names
      */
     public Collection<String> getFeatureNames() {
-        TreeSet<String> names = new TreeSet<String>();
+        TreeSet<String> names = new TreeSet<>();
         for (GeneralizationInfo info : infoMap.values()) names.add(info.getFeatureName());
         return names;
     }
 
     /**
-     * This data source is the default data source for all GeneraliziationInfo objects in this
-     * container
+     * This data source is the default data source for all GeneraliziationInfo objects in this container
      *
      * @return the data source name or null
      */

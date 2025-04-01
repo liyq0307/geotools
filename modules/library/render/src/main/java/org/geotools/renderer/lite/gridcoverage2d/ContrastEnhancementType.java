@@ -21,6 +21,8 @@ import it.geosolutions.jaiext.lookup.LookupTableFactory;
 import it.geosolutions.jaiext.piecewise.DefaultPiecewiseTransform1D;
 import it.geosolutions.jaiext.piecewise.DefaultPiecewiseTransform1DElement;
 import it.geosolutions.jaiext.piecewise.PiecewiseTransform1D;
+import it.geosolutions.jaiext.range.NoDataContainer;
+import it.geosolutions.jaiext.range.Range;
 import it.geosolutions.jaiext.range.RangeFactory;
 import it.geosolutions.jaiext.utilities.ImageLayout2;
 import java.awt.RenderingHints;
@@ -30,25 +32,24 @@ import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.media.jai.Histogram;
 import javax.media.jai.JAI;
 import javax.media.jai.RasterFactory;
+import org.geotools.api.filter.expression.Expression;
+import org.geotools.api.referencing.operation.TransformException;
+import org.geotools.api.style.ContrastMethod;
 import org.geotools.image.ImageWorker;
 import org.geotools.renderer.i18n.ErrorKeys;
-import org.geotools.renderer.i18n.Errors;
 import org.geotools.styling.AbstractContrastMethodStrategy;
-import org.geotools.styling.ContrastEnhancement;
 import org.geotools.styling.ExponentialContrastMethodStrategy;
 import org.geotools.styling.LogarithmicContrastMethodStrategy;
 import org.geotools.styling.NormalizeContrastMethodStrategy;
 import org.geotools.util.Utilities;
 import org.geotools.util.factory.Hints;
-import org.opengis.filter.expression.Expression;
-import org.opengis.referencing.operation.TransformException;
-import org.opengis.style.ContrastMethod;
 
 /**
  * Starting with version 14.x, {@link ContrastEnhancement} can be customized to support different
@@ -56,16 +57,15 @@ import org.opengis.style.ContrastMethod;
  *
  * <p>This class contains implementations from previously defined algorithm, as well as new ones.
  *
- * <p>Define a new Type for a newly defined Method-Algorithm and implements the {@link
- * ContrastEnhancementType#process(ImageWorker, Hints, Map))} method.
+ * <p>Define a new Type for a newly defined Method-Algorithm and implements the
+ * {@link ContrastEnhancementType#process(ImageWorker, Hints, Map))} method.
  *
  * @author Daniele Romagnoli, GeoSolutions SAS
  */
 public enum ContrastEnhancementType {
     EXPONENTIAL {
         @Override
-        RenderedImage process(
-                ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
+        RenderedImage process(ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
             RenderedImage inputImage = inputWorker.getRenderedImage();
             assert inputImage.getSampleModel().getNumBands() == 1 : inputImage;
             final int dataType = inputImage.getSampleModel().getDataType();
@@ -98,22 +98,17 @@ public enum ContrastEnhancementType {
 
         @Override
         LookupTable createByteLookupTable(Map<String, Object> params) {
-            final byte lut[] = new byte[256];
+            final byte[] lut = new byte[256];
             final double normalizationFactor = 255.0;
             final double correctionFactor = 255.0 / (Math.E - 1);
             for (int i = 1; i < lut.length; i++) {
-                lut[i] =
-                        (byte)
-                                (0.5f
-                                        + correctionFactor
-                                                * (Math.exp(i / normalizationFactor) - 1.0));
+                lut[i] = (byte) (0.5f + correctionFactor * (Math.exp(i / normalizationFactor) - 1.0));
             }
             return generateLookupTableByte(lut);
         }
 
         @Override
-        PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generatePiecewise(
-                Map<String, Object> params) {
+        PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generatePiecewise(Map<String, Object> params) {
             Utilities.ensureNonNull("params", params);
             double minimum = (double) params.get(KEY_MIN);
             double maximum = (double) params.get(KEY_MAX);
@@ -121,39 +116,36 @@ public enum ContrastEnhancementType {
             final double normalizationFactor = maximum;
             final double correctionFactor = normalizationFactor / (Math.E - 1);
 
-            final DefaultPiecewiseTransform1DElement mainElement =
-                    DefaultPiecewiseTransform1DElement.create(
-                            "exponential-contrast-enhancement-transform",
-                            RangeFactory.create(minimum, maximum),
-                            new MathTransformationAdapter() {
+            final DefaultPiecewiseTransform1DElement mainElement = DefaultPiecewiseTransform1DElement.create(
+                    "exponential-contrast-enhancement-transform",
+                    RangeFactory.create(minimum, maximum),
+                    new MathTransformationAdapter() {
 
-                                public double derivative(double value) throws TransformException {
-                                    throw new UnsupportedOperationException(
-                                            Errors.format(ErrorKeys.UNSUPPORTED_OPERATION_$1));
-                                }
+                        @Override
+                        public double derivative(double value) throws TransformException {
+                            throw new UnsupportedOperationException(ErrorKeys.UNSUPPORTED_OPERATION_$1);
+                        }
 
-                                public boolean isIdentity() {
-                                    return false;
-                                }
+                        @Override
+                        public boolean isIdentity() {
+                            return false;
+                        }
 
-                                public double transform(double value) {
-                                    value =
-                                            correctionFactor
-                                                    * (Math.exp(value / normalizationFactor) - 1);
-                                    return value;
-                                }
-                            });
+                        @Override
+                        public double transform(double value) {
+                            value = correctionFactor * (Math.exp(value / normalizationFactor) - 1);
+                            return value;
+                        }
+                    });
 
-            return new DefaultPiecewiseTransform1D<DefaultPiecewiseTransform1DElement>(
-                    new DefaultPiecewiseTransform1DElement[] {mainElement}, 0);
+            return new DefaultPiecewiseTransform1D<>(new DefaultPiecewiseTransform1DElement[] {mainElement}, 0);
         }
     },
 
     LOGARITHMIC {
 
         @Override
-        RenderedImage process(
-                ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
+        RenderedImage process(ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
             RenderedImage inputImage = inputWorker.getRenderedImage();
             assert inputImage.getSampleModel().getNumBands() == 1 : inputImage;
             final int dataType = inputImage.getSampleModel().getDataType();
@@ -187,67 +179,53 @@ public enum ContrastEnhancementType {
 
         @Override
         LookupTable createByteLookupTable(Map<String, Object> params) {
-            final byte lut[] = new byte[256];
+            final byte[] lut = new byte[256];
             final double normalizationFactor = 255.0;
             final double correctionFactor = 100.0;
             for (int i = 1; i < lut.length; i++) {
-                lut[i] =
-                        (byte)
-                                (0.5f
-                                        + normalizationFactor
-                                                * Math.log(
-                                                        (i * correctionFactor / normalizationFactor
-                                                                + 1.0)));
+                lut[i] = (byte)
+                        (0.5f + normalizationFactor * Math.log((i * correctionFactor / normalizationFactor + 1.0)));
             }
             return generateLookupTableByte(lut);
         }
 
         @Override
-        PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generatePiecewise(
-                Map<String, Object> params) {
+        PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generatePiecewise(Map<String, Object> params) {
             Utilities.ensureNonNull("params", params);
             double minimum = (double) params.get(KEY_MIN);
             double maximum = (double) params.get(KEY_MAX);
 
-            final double normalizationFactor = maximum;
+            final double normFactor = maximum;
             final double correctionFactor = 100.0;
 
-            final DefaultPiecewiseTransform1DElement mainElement =
-                    DefaultPiecewiseTransform1DElement.create(
-                            "logarithmic-contrast-enhancement-transform",
-                            RangeFactory.create(minimum, maximum),
-                            new MathTransformationAdapter() {
+            MathTransformationAdapter mt = new MathTransformationAdapter() {
 
-                                public double derivative(double value) throws TransformException {
-                                    throw new UnsupportedOperationException(
-                                            Errors.format(ErrorKeys.UNSUPPORTED_OPERATION_$1));
-                                }
+                @Override
+                public double derivative(double value) {
+                    throw new UnsupportedOperationException(ErrorKeys.UNSUPPORTED_OPERATION_$1);
+                }
 
-                                public boolean isIdentity() {
-                                    return false;
-                                }
+                @Override
+                public boolean isIdentity() {
+                    return false;
+                }
 
-                                public double transform(double value) {
-                                    value =
-                                            normalizationFactor
-                                                    * Math.log(
-                                                            1
-                                                                    + (value
-                                                                            * correctionFactor
-                                                                            / normalizationFactor));
-                                    return value;
-                                }
-                            });
+                @Override
+                public double transform(double value) {
+                    value = normFactor * Math.log(1 + (value * correctionFactor / normFactor));
+                    return value;
+                }
+            };
+            final DefaultPiecewiseTransform1DElement mainElement = DefaultPiecewiseTransform1DElement.create(
+                    "logarithmic-contrast-enhancement-transform", RangeFactory.create(minimum, maximum), mt);
 
-            return new DefaultPiecewiseTransform1D<DefaultPiecewiseTransform1DElement>(
-                    new DefaultPiecewiseTransform1DElement[] {mainElement}, 0);
+            return new DefaultPiecewiseTransform1D<>(new DefaultPiecewiseTransform1DElement[] {mainElement}, 0);
         }
     },
 
     HISTOGRAM {
         @Override
-        RenderedImage process(
-                ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
+        RenderedImage process(ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
             //
             // IT WORKS ONLY ON BYTE DATA TYPE!!!
             //
@@ -259,7 +237,7 @@ public enum ContrastEnhancementType {
             final Histogram h = inputWorker.removeRenderingHints().getHistogram(null, null, null);
 
             // do the actual lookup
-            Map<String, Object> params = new HashMap<String, Object>();
+            Map<String, Object> params = new HashMap<>();
             params.put(KEY_HISTOGRAM, h);
             LookupTable table = createByteLookupTable(params);
             inputWorker.setRenderingHints(hints);
@@ -293,8 +271,7 @@ public enum ContrastEnhancementType {
 
     NORMALIZE_DEFAULT {
         @Override
-        RenderedImage process(
-                ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
+        RenderedImage process(ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
 
             // step 1 do the extrema to get the statistics for this image
             final double[][] extrema = new double[2][];
@@ -334,10 +311,12 @@ public enum ContrastEnhancementType {
                 return inputWorker.getRenderedImage();
             }
 
+            NoDataContainer destinationNoData = getDestinationNoData(inputWorker);
+            double offsetAdjustment = destinationNoData == null ? 0 : 1;
             // compute the scale factors
             final double delta = extrema[1][0] - extrema[0][0];
-            final double scale = (maximum - minimum) / delta;
-            final double offset = minimum - scale * extrema[0][0];
+            final double scale = (maximum - minimum - offsetAdjustment) / delta;
+            final double offset = minimum - scale * extrema[0][0] + offsetAdjustment;
 
             //
             // do the actual rescale
@@ -345,23 +324,26 @@ public enum ContrastEnhancementType {
 
             // create a proper layout to impose the target data type
             final ImageLayout2 layout = new ImageLayout2(inputWorker.getRenderedImage());
-            SampleModel sm =
-                    RasterFactory.createBandedSampleModel(
-                            DataBuffer.TYPE_BYTE,
-                            inputWorker.getRenderedImage().getWidth(),
-                            inputWorker.getRenderedImage().getHeight(),
-                            1);
+            SampleModel sm = RasterFactory.createBandedSampleModel(
+                    DataBuffer.TYPE_BYTE,
+                    inputWorker.getRenderedImage().getWidth(),
+                    inputWorker.getRenderedImage().getHeight(),
+                    1);
             layout.setSampleModel(sm);
-            layout.setColorModel(
-                    new ComponentColorModel(
-                            ColorSpace.getInstance(ColorSpace.CS_GRAY),
-                            false,
-                            false,
-                            Transparency.OPAQUE,
-                            DataBuffer.TYPE_BYTE));
+            layout.setColorModel(new ComponentColorModel(
+                    ColorSpace.getInstance(ColorSpace.CS_GRAY),
+                    false,
+                    false,
+                    Transparency.OPAQUE,
+                    DataBuffer.TYPE_BYTE));
             RenderingHints localHints = hints.clone();
             localHints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
 
+            if (destinationNoData != null) {
+                // rescale op will fill pixel nodata value with background value
+                // let's use the destination nodata as new background.
+                inputWorker.setBackground(new double[] {destinationNoData.getAsSingleValue()});
+            }
             // rescale
             inputWorker.setRenderingHints(localHints);
             inputWorker.rescale(new double[] {scale}, new double[] {offset});
@@ -376,8 +358,7 @@ public enum ContrastEnhancementType {
 
     NORMALIZE_STRETCH_TO_MINMAX {
         @Override
-        RenderedImage process(
-                ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
+        RenderedImage process(ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
             checkParameters(parameters, KEY_MIN, KEY_MAX);
             Map<String, Object> processParams = getMinMaxParams(parameters);
             RenderedImage inputImage = inputWorker.getRenderedImage();
@@ -408,10 +389,12 @@ public enum ContrastEnhancementType {
                 return inputWorker.getRenderedImage();
             }
 
+            NoDataContainer destinationNoData = getDestinationNoData(inputWorker);
+            double offsetAdjustment = destinationNoData == null ? 0 : 1;
             // compute the scale factors
             final double delta = maxData - minData;
-            final double scale = (maximum - minimum) / delta;
-            final double offset = minimum - scale * minData;
+            final double scale = (maximum - minimum - offsetAdjustment) / delta;
+            final double offset = minimum - scale * minData + offsetAdjustment;
 
             //
             // do the actual rescale
@@ -419,21 +402,23 @@ public enum ContrastEnhancementType {
 
             // create a proper layout to impose the target data type
             final ImageLayout2 layout = new ImageLayout2(inputWorker.getRenderedImage());
-            ComponentColorModel colorModel =
-                    new ComponentColorModel(
-                            ColorSpace.getInstance(ColorSpace.CS_GRAY),
-                            false,
-                            false,
-                            Transparency.OPAQUE,
-                            DataBuffer.TYPE_BYTE);
+            ComponentColorModel colorModel = new ComponentColorModel(
+                    ColorSpace.getInstance(ColorSpace.CS_GRAY),
+                    false,
+                    false,
+                    Transparency.OPAQUE,
+                    DataBuffer.TYPE_BYTE);
             layout.setColorModel(colorModel);
-            layout.setSampleModel(
-                    colorModel.createCompatibleSampleModel(
-                            inputWorker.getRenderedImage().getWidth(),
-                            inputWorker.getRenderedImage().getHeight()));
+            layout.setSampleModel(colorModel.createCompatibleSampleModel(
+                    inputWorker.getRenderedImage().getWidth(),
+                    inputWorker.getRenderedImage().getHeight()));
             RenderingHints localHints = hints.clone();
             localHints.add(new RenderingHints(JAI.KEY_IMAGE_LAYOUT, layout));
-
+            if (destinationNoData != null) {
+                // rescale op will fill pixel nodata value with background value
+                // let's use the destination nodata as new background.
+                inputWorker.setBackground(new double[] {destinationNoData.getAsSingleValue()});
+            }
             // rescale
             inputWorker.setRenderingHints(localHints);
             inputWorker.rescale(new double[] {scale}, new double[] {offset});
@@ -451,12 +436,7 @@ public enum ContrastEnhancementType {
             // create the lookup table
             final byte[] lut = new byte[256];
             for (int i = 1; i < lut.length; i++) {
-                lut[i] =
-                        i < min
-                                ? (byte) MIN_BYTE
-                                : (i > max
-                                        ? (byte) MAX_BYTE
-                                        : ((byte) (scale * i + offset + 0.5d)));
+                lut[i] = i < min ? (byte) MIN_BYTE : (i > max ? (byte) MAX_BYTE : ((byte) (scale * i + offset + 0.5d)));
             }
 
             return generateLookupTableByte(lut);
@@ -465,8 +445,7 @@ public enum ContrastEnhancementType {
 
     NORMALIZE_CLIP_TO_MINMAX {
         @Override
-        RenderedImage process(
-                ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
+        RenderedImage process(ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
             checkParameters(parameters, KEY_MIN, KEY_MAX);
             Map<String, Object> processParams = getMinMaxParams(parameters);
             RenderedImage inputImage = inputWorker.getRenderedImage();
@@ -491,8 +470,7 @@ public enum ContrastEnhancementType {
             //
             // STEP 2 use generic piecewise
             //
-            final PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> transform =
-                    generatePiecewise(processParams);
+            final PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> transform = generatePiecewise(processParams);
             inputWorker.piecewise(transform, Integer.valueOf(0));
             return inputWorker.getRenderedImage();
         }
@@ -507,8 +485,7 @@ public enum ContrastEnhancementType {
         }
 
         @Override
-        PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generatePiecewise(
-                Map<String, Object> params) {
+        PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generatePiecewise(Map<String, Object> params) {
             Utilities.ensureNonNull("params", params);
             double minimum = (double) params.get(KEY_MIN);
             double maximum = (double) params.get(KEY_MAX);
@@ -518,8 +495,7 @@ public enum ContrastEnhancementType {
 
     NORMALIZE_CLIP_TO_ZERO {
         @Override
-        RenderedImage process(
-                ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
+        RenderedImage process(ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters) {
             checkParameters(parameters, KEY_MIN, KEY_MAX);
             Map<String, Object> processParams = getMinMaxParams(parameters);
             RenderedImage inputImage = inputWorker.getRenderedImage();
@@ -543,8 +519,7 @@ public enum ContrastEnhancementType {
             // STEP 2 use generic piecewise
             //
             processParams.put(KEY_DATATYPE, dataType);
-            final PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> transform =
-                    generatePiecewise(processParams);
+            final PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> transform = generatePiecewise(processParams);
             inputWorker.piecewise(transform, Integer.valueOf(0));
             return inputWorker.getRenderedImage();
         }
@@ -554,20 +529,27 @@ public enum ContrastEnhancementType {
             double min = (double) params.get(KEY_MIN);
             double max = (double) params.get(KEY_MAX);
             // create the lookup table
-            final byte[] lut =
-                    createClampingLookupTableByte(min, max, (byte) MIN_BYTE, (byte) MIN_BYTE);
+            final byte[] lut = createClampingLookupTableByte(min, max, (byte) MIN_BYTE, (byte) MIN_BYTE);
             return generateLookupTableByte(lut);
         }
 
         @Override
-        PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generatePiecewise(
-                Map<String, Object> params) {
+        PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generatePiecewise(Map<String, Object> params) {
             Utilities.ensureNonNull("params", params);
             double minimum = (double) params.get(KEY_MIN);
             double maximum = (double) params.get(KEY_MAX);
             return generateClampingPiecewise(minimum, maximum, 0, 0);
         }
     };
+
+    private static NoDataContainer getDestinationNoData(ImageWorker inputWorker) {
+        Range nodata = inputWorker.extractNoDataProperty(inputWorker.getRenderedImage());
+        NoDataContainer imposedNoData = null;
+        if (nodata != null) {
+            imposedNoData = new NoDataContainer(0);
+        }
+        return imposedNoData;
+    }
 
     /**
      * Return a Piecewise transform doing clamping outside the central range
@@ -576,24 +558,17 @@ public enum ContrastEnhancementType {
      * @param maximum maximum valid value of the central range
      * @param minValue minValue to be returned from values outside (below) the central range
      * @param maxValue maxValue to be returned from values outside (above) the central range
-     * @return
      */
-    private static PiecewiseTransform1D<DefaultPiecewiseTransform1DElement>
-            generateClampingPiecewise(
-                    double minimum, double maximum, double minValue, double maxValue) {
-        final DefaultPiecewiseTransform1DElement zeroElement =
-                DefaultPiecewiseTransform1DElement.create(
-                        "clamp-to-min", RangeFactory.create(0, true, minimum, false), minValue);
+    private static PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generateClampingPiecewise(
+            double minimum, double maximum, double minValue, double maxValue) {
+        final DefaultPiecewiseTransform1DElement zeroElement = DefaultPiecewiseTransform1DElement.create(
+                "clamp-to-min", RangeFactory.create(0, true, minimum, false), minValue);
         final DefaultPiecewiseTransform1DElement mainElement =
-                DefaultPiecewiseTransform1DElement.create(
-                        "passthrough", RangeFactory.create(minimum, maximum));
-        final DefaultPiecewiseTransform1DElement maxElement =
-                DefaultPiecewiseTransform1DElement.create(
-                        "clamp-to-max",
-                        RangeFactory.create(maximum, false, Double.POSITIVE_INFINITY, true),
-                        maxValue);
+                DefaultPiecewiseTransform1DElement.create("passthrough", RangeFactory.create(minimum, maximum));
+        final DefaultPiecewiseTransform1DElement maxElement = DefaultPiecewiseTransform1DElement.create(
+                "clamp-to-max", RangeFactory.create(maximum, false, Double.POSITIVE_INFINITY, true), maxValue);
 
-        return new DefaultPiecewiseTransform1D<DefaultPiecewiseTransform1DElement>(
+        return new DefaultPiecewiseTransform1D<>(
                 new DefaultPiecewiseTransform1DElement[] {zeroElement, mainElement, maxElement}, 0);
     }
 
@@ -603,14 +578,14 @@ public enum ContrastEnhancementType {
         Expression max = parameters.get(KEY_MAX);
         if (min == null || max == null) {
             throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_PARAMETERS_$2, KEY_MIN, KEY_MAX));
+                    MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_PARAMETERS_$2, KEY_MIN, KEY_MAX));
         }
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         Number minVal = min.evaluate(null, Double.class);
         Number maxVal = max.evaluate(null, Double.class);
         if (minVal == null || maxVal == null) {
             throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.ILLEGAL_ARGUMENT_PARAMETERS_$2, KEY_MIN, KEY_MAX));
+                    MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_PARAMETERS_$2, KEY_MIN, KEY_MAX));
         }
         params.put(KEY_MIN, minVal.doubleValue());
         params.put(KEY_MAX, maxVal.doubleValue());
@@ -618,55 +593,37 @@ public enum ContrastEnhancementType {
     }
 
     /**
-     * Create a LookupTable for passthrough mapping except for values outside [min,max] range which
-     * should be mapped to newMin, newMax respectively.
-     *
-     * @param min
-     * @param max
-     * @param newMin
-     * @param newMax
-     * @return
+     * Create a LookupTable for passthrough mapping except for values outside [min,max] range which should be mapped to
+     * newMin, newMax respectively.
      */
-    private static byte[] createClampingLookupTableByte(
-            double min, double max, byte newMin, byte newMax) {
+    private static byte[] createClampingLookupTableByte(double min, double max, byte newMin, byte newMax) {
         final byte[] lut = new byte[256];
         for (int i = 1; i < lut.length; i++) {
-            lut[i] = i < min ? (byte) newMin : (i > max ? (byte) newMax : (byte) i);
+            lut[i] = i < min ? newMin : (i > max ? newMax : (byte) i);
         }
         return lut;
     }
 
-    /**
-     * Return the max Value for the specified dataType
-     *
-     * @param dataType
-     * @return
-     */
+    /** Return the max Value for the specified dataType */
     private static double getMaxValue(int dataType) {
         switch (dataType) {
             case DataBuffer.TYPE_BYTE:
-                return (double) MAX_BYTE;
+                return MAX_BYTE;
             case DataBuffer.TYPE_SHORT:
-                return (double) Short.MAX_VALUE;
+                return Short.MAX_VALUE;
             case DataBuffer.TYPE_USHORT:
                 return 65535.0;
             case DataBuffer.TYPE_INT:
-                return (double) Integer.MAX_VALUE;
+                return Integer.MAX_VALUE;
             case DataBuffer.TYPE_FLOAT:
-                return (double) Float.MAX_VALUE;
+                return Float.MAX_VALUE;
             case DataBuffer.TYPE_DOUBLE:
-                return (double) Double.MAX_VALUE;
+                return Double.MAX_VALUE;
         }
         return Double.NaN;
     }
 
-    /**
-     * Simple utility method to check Double values equality.
-     *
-     * @param a
-     * @param b
-     * @return
-     */
+    /** Simple utility method to check Double values equality. */
     public static boolean areEqual(double a, double b) {
         if (!Double.isNaN(a) && !Double.isNaN(b)) {
             return Math.abs(a - b) < DELTA;
@@ -674,12 +631,7 @@ public enum ContrastEnhancementType {
         return false;
     }
 
-    /**
-     * Generate a Linear Byte LookupTable to map from [min,max] to [0, 255]
-     *
-     * @param params
-     * @return
-     */
+    /** Generate a Linear Byte LookupTable to map from [min,max] to [0, 255] */
     static LookupTable generateLinearByteLookupTable(Map<String, Object> params) {
         Utilities.ensureNonNull("params", params);
         double min = (double) params.get(KEY_MIN);
@@ -697,39 +649,29 @@ public enum ContrastEnhancementType {
     }
 
     /**
-     * Main processing methods to be implemented by specific contrast enhancement algorithm to
-     * return an enhanced image.
-     *
-     * @param inputWorker
-     * @param hints
-     * @param processParams
-     * @return
+     * Main processing methods to be implemented by specific contrast enhancement algorithm to return an enhanced image.
      */
-    abstract RenderedImage process(
-            ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters);
+    abstract RenderedImage process(ImageWorker inputWorker, Hints hints, Map<String, Expression> parameters);
 
     /**
      * Create a byte LookupTable, specific for optimized byte cases.
      *
      * @param params Parameters (when required) to be used by the specific implementation.
-     * @return
      */
     LookupTable createByteLookupTable(Map<String, Object> params) {
         throw new UnsupportedOperationException();
-    };
+    }
+    ;
 
     /**
-     * Create a {@link PiecewiseTransform1D} for the general case (!= Byte dataType). Different
-     * algorithms may implement it accordingly. Default implementation throws {@link
-     * UnsupportedOperationException}
+     * Create a {@link PiecewiseTransform1D} for the general case (!= Byte dataType). Different algorithms may implement
+     * it accordingly. Default implementation throws {@link UnsupportedOperationException}
      *
-     * @param params Parameters (when required) to be used by specific implementation. Different
-     *     algorithm may requires different parameters. As an instance, some implementations
-     *     requires min and max values whilst some other may require an Histogram.
-     * @return
+     * @param params Parameters (when required) to be used by specific implementation. Different algorithm may requires
+     *     different parameters. As an instance, some implementations requires min and max values whilst some other may
+     *     require an Histogram.
      */
-    PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generatePiecewise(
-            Map<String, Object> params) {
+    PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generatePiecewise(Map<String, Object> params) {
         throw new UnsupportedOperationException();
     }
 
@@ -777,84 +719,58 @@ public enum ContrastEnhancementType {
         return LookupTableFactory.create(lut, DataBuffer.TYPE_BYTE);
     }
 
-    /**
-     * Generate piecewise transformation for gamma correction
-     *
-     * @param minimum
-     * @param maximum
-     * @param gammaValue
-     * @return
-     */
-    public static PiecewiseTransform1D<DefaultPiecewiseTransform1DElement>
-            generateGammaCorrectedPiecewise(
-                    final double minimum, final double maximum, final double gammaValue) {
+    /** Generate piecewise transformation for gamma correction */
+    public static PiecewiseTransform1D<DefaultPiecewiseTransform1DElement> generateGammaCorrectedPiecewise(
+            final double minimum, final double maximum, final double gammaValue) {
 
         final double scale = (maximum - minimum) / (MAX_VALUE - MIN_VALUE);
         final double offset = minimum - MIN_VALUE * scale;
-        final DefaultPiecewiseTransform1DElement mainElement =
-                DefaultPiecewiseTransform1DElement.create(
-                        "gamma-correction-transform",
-                        RangeFactory.create(minimum, maximum),
-                        new MathTransformationAdapter() {
+        final DefaultPiecewiseTransform1DElement mainElement = DefaultPiecewiseTransform1DElement.create(
+                "gamma-correction-transform", RangeFactory.create(minimum, maximum), new MathTransformationAdapter() {
 
-                            public double derivative(double value) throws TransformException {
+                    @Override
+                    public double derivative(double value) throws TransformException {
 
-                                throw new UnsupportedOperationException(
-                                        Errors.format(ErrorKeys.UNSUPPORTED_OPERATION_$1));
-                            }
+                        throw new UnsupportedOperationException(ErrorKeys.UNSUPPORTED_OPERATION_$1);
+                    }
 
-                            public boolean isIdentity() {
-                                return false;
-                            }
+                    @Override
+                    public boolean isIdentity() {
+                        return false;
+                    }
 
-                            public double transform(double value) {
-                                value = (value - offset) / scale;
-                                return offset + Math.pow(value, gammaValue) * scale;
-                            }
-                        });
+                    @Override
+                    public double transform(double value) {
+                        value = (value - offset) / scale;
+                        return offset + Math.pow(value, gammaValue) * scale;
+                    }
+                });
 
-        return new DefaultPiecewiseTransform1D<DefaultPiecewiseTransform1DElement>(
-                new DefaultPiecewiseTransform1DElement[] {mainElement}, 0);
+        return new DefaultPiecewiseTransform1D<>(new DefaultPiecewiseTransform1DElement[] {mainElement}, 0);
     }
 
-    /**
-     * Utility method setting up a Parameters Map containing minimum and maximum values.
-     *
-     * @param minData
-     * @param maxData
-     * @return
-     */
+    /** Utility method setting up a Parameters Map containing minimum and maximum values. */
     private static Map<String, Object> setMinMaxParams(double minData, double maxData) {
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put(KEY_MIN, minData);
         params.put(KEY_MAX, maxData);
         return params;
     }
 
-    /**
-     * Check the parameters map isn't null and contains valid entries
-     *
-     * @param parameters
-     */
-    private static void checkParameters(
-            Map<String, Expression> parameters, String parameter1, String parameter2) {
+    /** Check the parameters map isn't null and contains valid entries */
+    private static void checkParameters(Map<String, Expression> parameters, String parameter1, String parameter2) {
         if (parameters == null) {
-            throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.NULL_ARGUMENT_$1, parameters));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.NULL_ARGUMENT_$1, parameters));
         }
         if (parameters.isEmpty()) {
             throw new IllegalArgumentException(
-                    Errors.format(
-                            ErrorKeys.ILLEGAL_ARGUMENT_PARAMETERS_$2, parameter1, parameter2));
+                    MessageFormat.format(ErrorKeys.ILLEGAL_ARGUMENT_PARAMETERS_$2, parameter1, parameter2));
         }
     }
 
     /**
-     * Return a proper {@link ContrastEnhancementType} instance depending on the provided {@link
-     * AbstractContrastMethodStrategy}.
-     *
-     * @param method
-     * @return
+     * Return a proper {@link ContrastEnhancementType} instance depending on the provided
+     * {@link AbstractContrastMethodStrategy}.
      */
     public static ContrastEnhancementType getType(AbstractContrastMethodStrategy method) {
         if (method instanceof NormalizeContrastMethodStrategy) {
@@ -868,8 +784,7 @@ public enum ContrastEnhancementType {
             } else if (NORMALIZE_CLIP_TO_ZERO_NAME.equals(algorithmType)) {
                 return NORMALIZE_CLIP_TO_ZERO;
             }
-            throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.UNSUPPORTED_ALGORITHM_$1, algorithmType));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.UNSUPPORTED_ALGORITHM_$1, algorithmType));
         } else if (method instanceof LogarithmicContrastMethodStrategy) {
             return LOGARITHMIC;
         } else if (method instanceof ExponentialContrastMethodStrategy) {
@@ -877,17 +792,11 @@ public enum ContrastEnhancementType {
         } else if (method instanceof org.geotools.styling.HistogramContrastMethodStrategy) {
             return HISTOGRAM;
         } else {
-            throw new IllegalArgumentException(
-                    Errors.format(ErrorKeys.UNSUPPORTED_METHOD_$1, method));
+            throw new IllegalArgumentException(MessageFormat.format(ErrorKeys.UNSUPPORTED_METHOD_$1, method));
         }
     }
 
-    /**
-     * Parse the algorithm expression
-     *
-     * @param algorithm
-     * @return
-     */
+    /** Parse the algorithm expression */
     private static String parseAlgorithm(Expression algorithm) {
         if (algorithm != null) {
             return algorithm.evaluate(null, String.class);

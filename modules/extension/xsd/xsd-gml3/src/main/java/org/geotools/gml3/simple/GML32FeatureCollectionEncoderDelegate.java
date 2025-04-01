@@ -20,6 +20,10 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.xsd.XSDElementDeclaration;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.geometry.jts.CircularRing;
 import org.geotools.geometry.jts.CircularString;
@@ -35,6 +39,7 @@ import org.geotools.gml3.v3_2.bindings.GML32EncodingUtils;
 import org.geotools.xsd.Configuration;
 import org.geotools.xsd.Encoder;
 import org.geotools.xsd.XSD;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
@@ -43,10 +48,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
@@ -56,23 +57,17 @@ import org.xml.sax.helpers.AttributesImpl;
  *
  * @author Andrea Aime - GeoSolutions
  */
-public class GML32FeatureCollectionEncoderDelegate
-        extends org.geotools.gml2.simple.FeatureCollectionEncoderDelegate {
+public class GML32FeatureCollectionEncoderDelegate extends org.geotools.gml2.simple.FeatureCollectionEncoderDelegate {
 
-    public GML32FeatureCollectionEncoderDelegate(
-            SimpleFeatureCollection features, Encoder encoder) {
+    public GML32FeatureCollectionEncoderDelegate(SimpleFeatureCollection features, Encoder encoder) {
         super(features, encoder, new GML32Delegate(encoder));
         this.encodeGeometryIds = true;
     }
 
     @Override
     protected Attributes getPropertyAttributes(
-            QualifiedName name,
-            FeatureType featureType,
-            AttributeDescriptor attribute,
-            Object value) {
-        if ("identifier".equals(name.getLocalPart())
-                && GML.NAMESPACE.equals(name.getNamespaceURI())) {
+            QualifiedName name, FeatureType featureType, AttributeDescriptor attribute, Object value) {
+        if ("identifier".equals(name.getLocalPart()) && GML.NAMESPACE.equals(name.getNamespaceURI())) {
             AttributesImpl atts = new AttributesImpl();
             atts.addAttribute(
                     null, "codeSpace", "codeSpace", null, featureType.getName().getNamespaceURI());
@@ -86,8 +81,7 @@ public class GML32FeatureCollectionEncoderDelegate
 
         SrsSyntax srsSyntax;
 
-        static final QualifiedName MEMBER =
-                new QualifiedName(GML.NAMESPACE, GML.member.getLocalPart(), "gml");
+        static final QualifiedName MEMBER = new QualifiedName(GML.NAMESPACE, GML.member.getLocalPart(), "gml");
 
         protected QualifiedName member;
 
@@ -109,8 +103,7 @@ public class GML32FeatureCollectionEncoderDelegate
             this.gmlPrefix = encoder.getNamespaces().getPrefix(gmlUri);
 
             this.member = MEMBER.derive(gmlPrefix, gmlUri);
-            this.srsSyntax =
-                    (SrsSyntax) encoder.getContext().getComponentInstanceOfType(SrsSyntax.class);
+            this.srsSyntax = (SrsSyntax) encoder.getContext().getComponentInstanceOfType(SrsSyntax.class);
             this.encodingUtils = new GML32EncodingUtils();
             this.numDecimals = getNumDecimals(encoder.getConfiguration());
             this.padWithZeros = getPadWithZeros(encoder.getConfiguration());
@@ -179,64 +172,66 @@ public class GML32FeatureCollectionEncoderDelegate
             }
         }
 
-        public List getFeatureProperties(
-                SimpleFeature f, XSDElementDeclaration element, Encoder e) {
-            return encodingUtils.AbstractFeatureTypeGetProperties(
-                    f, element, e.getSchemaIndex(), e.getConfiguration());
+        @Override
+        public List getFeatureProperties(SimpleFeature f, XSDElementDeclaration element, Encoder e) {
+            return encodingUtils.AbstractFeatureTypeGetProperties(f, element, e.getSchemaIndex(), e.getConfiguration());
         }
 
+        @Override
         public EnvelopeEncoder createEnvelopeEncoder(Encoder e) {
             return new EnvelopeEncoder(e, gmlPrefix, gmlUri);
         }
 
+        @Override
         public void setSrsNameAttribute(AttributesImpl atts, CoordinateReferenceSystem crs) {
 
             URI srsName = GML3EncodingUtils.toURI(crs, srsSyntax);
-            String crsName = srsName != null ? srsName.toString() : crs.getName().getCode();
+            String crsName =
+                    srsName != null ? srsName.toString() : crs.getName().getCode();
             atts.addAttribute(null, "srsName", "srsName", null, crsName);
         }
 
         @Override
         public void setGeometryDimensionAttribute(AttributesImpl atts, int dimension) {
-            atts.addAttribute(
-                    null, "srsDimension", "srsDimension", null, String.valueOf(dimension));
+            atts.addAttribute(null, "srsDimension", "srsDimension", null, String.valueOf(dimension));
         }
 
+        @Override
         public void initFidAttribute(AttributesImpl atts) {
             atts.addAttribute(GML.NAMESPACE, "id", "gml:id", null, "");
         }
 
+        @Override
         public void startFeatures(GMLWriter handler) throws Exception {}
 
+        @Override
         public void startFeature(GMLWriter handler) throws Exception {
             handler.startElement(member, null);
         }
 
+        @Override
         public void endFeature(GMLWriter handler) throws Exception {
             handler.endElement(member);
         }
 
+        @Override
         public void endFeatures(GMLWriter handler) throws Exception {}
 
         @Override
         public void registerGeometryEncoders(
-                Map<Class, GeometryEncoder> encoders, Encoder encoder) {
+                Map<Class, GeometryEncoder<? extends Geometry>> encoders, Encoder encoder) {
             encoders.put(Point.class, new PointEncoder(encoder, gmlPrefix, gmlUri));
             encoders.put(MultiPoint.class, new MultiPointEncoder(encoder, gmlPrefix, gmlUri));
             encoders.put(LineString.class, new LineStringEncoder(encoder, gmlPrefix, gmlUri));
             encoders.put(LinearRing.class, new LinearRingEncoder(encoder, gmlPrefix, gmlUri));
-            encoders.put(
-                    MultiLineString.class,
-                    new MultiLineStringEncoder(encoder, gmlPrefix, gmlUri, true));
+            encoders.put(MultiLineString.class, new MultiLineStringEncoder(encoder, gmlPrefix, gmlUri, true));
             encoders.put(Polygon.class, new PolygonEncoder(encoder, gmlPrefix, gmlUri));
             encoders.put(MultiPolygon.class, new MultiPolygonEncoder(encoder, gmlPrefix, gmlUri));
             encoders.put(CircularString.class, new CurveEncoder(encoder, gmlPrefix, gmlUri));
             encoders.put(CompoundCurve.class, new CurveEncoder(encoder, gmlPrefix, gmlUri));
             encoders.put(CircularRing.class, new CurveEncoder(encoder, gmlPrefix, gmlUri));
             encoders.put(CompoundRing.class, new CurveEncoder(encoder, gmlPrefix, gmlUri));
-            encoders.put(
-                    GeometryCollection.class,
-                    new GeometryCollectionEncoder(encoder, gmlPrefix, gmlUri));
+            encoders.put(GeometryCollection.class, new GeometryCollectionEncoder(encoder, gmlPrefix, gmlUri));
         }
 
         @Override

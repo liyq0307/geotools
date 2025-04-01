@@ -20,10 +20,10 @@ package org.geotools.data.complex.feature.type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
-import org.opengis.util.InternationalString;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.filter.Filter;
+import org.geotools.api.util.InternationalString;
 
 /**
  * @author Gabriel Roldan (Axios Engineering)
@@ -53,7 +53,8 @@ public class AttributeTypeProxy implements AttributeType {
         return subject;
     }
 
-    public Class getBinding() {
+    @Override
+    public Class<?> getBinding() {
         return getSubject().getBinding();
     }
 
@@ -61,39 +62,48 @@ public class AttributeTypeProxy implements AttributeType {
         return null;
     }
 
+    @Override
     public List<Filter> getRestrictions() {
         return getSubject().getRestrictions();
     }
 
+    @Override
     public AttributeType getSuper() {
         return getSubject().getSuper();
     }
 
+    @Override
     public boolean isAbstract() {
         return getSubject().isAbstract();
     }
 
+    @Override
     public boolean isIdentified() {
         return getSubject().isIdentified();
     }
 
+    @Override
     public InternationalString getDescription() {
         return getSubject().getDescription();
     }
 
+    @Override
     public Name getName() {
         return typeName;
     }
 
+    @Override
     public Map<Object, Object> getUserData() {
         return getSubject().getUserData();
     }
 
+    @Override
     public boolean equals(Object o) {
         AttributeType subject = getSubject();
         return subject.equals(o);
     }
 
+    @Override
     public int hashCode() {
         AttributeType subject = getSubject();
         return subject.hashCode();

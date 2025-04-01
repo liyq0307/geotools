@@ -55,6 +55,7 @@ public class MarkStyle2D extends PolygonStyle2D implements PointStyle2D {
      *
      * @return shape rotation, in radians
      */
+    @Override
     public float getRotation() {
         return rotation;
     }
@@ -65,8 +66,8 @@ public class MarkStyle2D extends PolygonStyle2D implements PointStyle2D {
     }
 
     /**
-     * Returns a shape that can be used to draw the mark at the x, y coordinates with appropriated
-     * rotation and size (according to the current style)
+     * Returns a shape that can be used to draw the mark at the x, y coordinates with appropriated rotation and size
+     * (according to the current style)
      *
      * @param x the x coordinate where the mark will be drawn
      * @param y the y coordinate where the mark will be drawn
@@ -77,8 +78,8 @@ public class MarkStyle2D extends PolygonStyle2D implements PointStyle2D {
     }
 
     /**
-     * Returns a shape that can be used to draw the mark at the x, y coordinates with appropriated
-     * rotation and size (according to the current style)
+     * Returns a shape that can be used to draw the mark at the x, y coordinates with appropriated rotation and size
+     * (according to the current style)
      *
      * @param x the x coordinate where the mark will be drawn
      * @param y the y coordinate where the mark will be drawn
@@ -90,9 +91,7 @@ public class MarkStyle2D extends PolygonStyle2D implements PointStyle2D {
         if (shape != null) {
             Rectangle2D bounds = shape.getBounds2D();
             double shapeSize =
-                    (maxMarkSizeEnabled
-                            ? Math.max(bounds.getWidth(), bounds.getHeight())
-                            : bounds.getHeight());
+                    (maxMarkSizeEnabled ? Math.max(bounds.getWidth(), bounds.getHeight()) : bounds.getHeight());
             double scale = size / shapeSize;
             TransformedShape ts = new TransformedShape();
             ts.shape = shape;
@@ -127,34 +126,24 @@ public class MarkStyle2D extends PolygonStyle2D implements PointStyle2D {
         return size;
     }
 
-    /**
-     * Sets the shape rotation, in radians
-     *
-     * @param f
-     */
+    /** Sets the shape rotation, in radians */
+    @Override
     public void setRotation(float f) {
         rotation = f;
     }
 
-    /**
-     * Sets the shape to be used to render the mark
-     *
-     * @param shape
-     */
+    /** Sets the shape to be used to render the mark */
     public void setShape(Shape shape) {
         this.shape = shape;
     }
 
-    /**
-     * Sets the size of the shape, in pixels
-     *
-     * @param i
-     */
+    /** Sets the size of the shape, in pixels */
     public void setSize(double i) {
         size = i;
     }
 
     /** Returns a string representation of this style. */
+    @Override
     public String toString() {
         return Classes.getShortClassName(this) + '[' + shape + ']';
     }
@@ -164,53 +153,61 @@ public class MarkStyle2D extends PolygonStyle2D implements PointStyle2D {
     }
 
     /**
-     * When true makes the mark scale itself to size using the max between the original width and
-     * height, otherwise it defaults to the mark height (which has been the original behavior of
-     * this class)
+     * When true makes the mark scale itself to size using the max between the original width and height, otherwise it
+     * defaults to the mark height (which has been the original behavior of this class)
      *
      * @since 2.7.3
-     * @param useMaxMarkSize
      */
     public static void setMaxMarkSizeEnabled(boolean useMaxMarkSize) {
         MarkStyle2D.maxMarkSizeEnabled = useMaxMarkSize;
     }
 
+    @Override
     public float getDisplacementX() {
         return displacementX;
     }
 
+    @Override
     public void setDisplacementX(float displacementX) {
         this.displacementX = displacementX;
     }
 
+    @Override
     public float getDisplacementY() {
         return displacementY;
     }
 
+    @Override
     public void setDisplacementY(float displacementY) {
         this.displacementY = displacementY;
     }
 
+    @Override
     public float getAnchorPointX() {
         return anchorPointX;
     }
 
+    @Override
     public void setAnchorPointX(float anchorPointX) {
         this.anchorPointX = anchorPointX;
     }
 
+    @Override
     public float getAnchorPointY() {
         return anchorPointY;
     }
 
+    @Override
     public void setAnchorPointY(float anchorPointY) {
         this.anchorPointY = anchorPointY;
     }
 
+    @Override
     public Composite getComposite() {
         return composite;
     }
 
+    @Override
     public void setComposite(Composite composite) {
         this.composite = composite;
     }

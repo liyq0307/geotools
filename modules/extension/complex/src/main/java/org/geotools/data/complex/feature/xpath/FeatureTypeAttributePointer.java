@@ -23,11 +23,11 @@ import org.apache.commons.jxpath.ri.compiler.NodeTest;
 import org.apache.commons.jxpath.ri.compiler.NodeTypeTest;
 import org.apache.commons.jxpath.ri.model.NodeIterator;
 import org.apache.commons.jxpath.ri.model.NodePointer;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.ComplexType;
+import org.geotools.api.feature.type.Name;
+import org.geotools.api.feature.type.PropertyDescriptor;
 import org.geotools.feature.type.Types;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.ComplexType;
-import org.opengis.feature.type.Name;
-import org.opengis.feature.type.PropertyDescriptor;
 
 /**
  * Pointer to a single attribute of a feature type.
@@ -73,41 +73,50 @@ public class FeatureTypeAttributePointer extends NodePointer {
     }
 
     /** */
+    @Override
     public boolean isLeaf() {
         return !(attType instanceof ComplexType);
     }
 
     /** */
+    @Override
     public boolean isCollection() {
         return false;
     }
 
     /** Return number of elements */
+    @Override
     public int getLength() {
         return 1;
     }
 
     /** Returns the qname */
+    @Override
     public QName getName() {
         return new QName(name.getNamespaceURI(), name.getLocalPart());
     }
 
+    @Override
     public Object getBaseValue() {
         return parentType;
     }
 
+    @Override
     public Object getImmediateNode() {
         return descriptor;
     }
 
+    @Override
     public void setValue(Object value) {
         throw new UnsupportedOperationException("Feature types are immutable");
     }
 
+    @Override
     public int compareChildNodePointers(NodePointer pointer1, NodePointer pointer2) {
         return 0;
     }
 
+    @Override
     public NodeIterator childIterator(NodeTest test, boolean reverse, NodePointer startWith) {
         if (test instanceof NodeNameTest) {
             NodeNameTest nodeNameTest = (NodeNameTest) test;
@@ -135,11 +144,9 @@ public class FeatureTypeAttributePointer extends NodePointer {
         return super.childIterator(test, reverse, startWith);
     }
 
+    @Override
     public NodeIterator attributeIterator(QName qname) {
         return new DescriptorXmlAttributeNodeIterator(
-                this,
-                Types.typeName(
-                        getNamespaceResolver().getNamespaceURI(qname.getPrefix()),
-                        qname.getName()));
+                this, Types.typeName(getNamespaceResolver().getNamespaceURI(qname.getPrefix()), qname.getName()));
     }
 }

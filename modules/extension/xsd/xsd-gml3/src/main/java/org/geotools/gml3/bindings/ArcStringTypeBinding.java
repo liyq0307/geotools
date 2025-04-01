@@ -88,6 +88,7 @@ import org.locationtech.jts.geom.LineString;
  *
  * @generated
  */
+@SuppressWarnings("ComparableType")
 public class ArcStringTypeBinding extends AbstractComplexBinding implements Comparable {
 
     GeometryFactory gFactory;
@@ -95,15 +96,14 @@ public class ArcStringTypeBinding extends AbstractComplexBinding implements Comp
     ArcParameters arcParameters;
 
     public ArcStringTypeBinding(
-            GeometryFactory gFactory,
-            CoordinateSequenceFactory csFactory,
-            ArcParameters arcParameters) {
+            GeometryFactory gFactory, CoordinateSequenceFactory csFactory, ArcParameters arcParameters) {
         this.gFactory = gFactory;
         this.csFactory = csFactory;
         this.arcParameters = arcParameters;
     }
 
     /** @generated */
+    @Override
     public QName getTarget() {
         return GML.ArcStringType;
     }
@@ -120,6 +120,7 @@ public class ArcStringTypeBinding extends AbstractComplexBinding implements Comp
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return SingleCurvedGeometry.class;
     }
@@ -131,21 +132,20 @@ public class ArcStringTypeBinding extends AbstractComplexBinding implements Comp
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
 
         LineString arcLineString = GML3ParsingUtils.lineString(node, gFactory, csFactory);
         CoordinateSequence cs = arcLineString.getCoordinateSequence();
         if (cs.size() < 3) {
             // maybe log this instead and return null
-            throw new RuntimeException(
-                    "Number of coordinates in an arc string must be at least 3, "
-                            + cs.size()
-                            + " were specified: "
-                            + arcLineString);
+            throw new RuntimeException("Number of coordinates in an arc string must be at least 3, "
+                    + cs.size()
+                    + " were specified: "
+                    + arcLineString);
         }
 
-        CurvedGeometryFactory factory =
-                GML3ParsingUtils.getCurvedGeometryFactory(arcParameters, gFactory, cs);
+        CurvedGeometryFactory factory = GML3ParsingUtils.getCurvedGeometryFactory(arcParameters, gFactory, cs);
 
         return factory.createCurvedGeometry(cs);
     }
@@ -161,6 +161,7 @@ public class ArcStringTypeBinding extends AbstractComplexBinding implements Comp
         return super.getProperty(object, name);
     }
 
+    @Override
     public int compareTo(Object o) {
         if (o instanceof LineStringTypeBinding
                 || o instanceof LineStringSegmentTypeBinding

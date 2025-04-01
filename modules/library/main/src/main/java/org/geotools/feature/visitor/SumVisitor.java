@@ -18,17 +18,18 @@ package org.geotools.feature.visitor;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import org.geotools.api.feature.Feature;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Expression;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.visitor.AverageVisitor.AverageResult;
 import org.geotools.feature.visitor.CountVisitor.CountResult;
 import org.geotools.filter.IllegalFilterException;
-import org.opengis.feature.Feature;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.filter.FilterFactory;
-import org.opengis.filter.expression.Expression;
 
 /**
  * Calculates the Sum of an attribute (of a FeatureVisitor)
@@ -41,8 +42,7 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
 
     SumStrategy strategy;
 
-    public SumVisitor(int attributeTypeIndex, SimpleFeatureType type)
-            throws IllegalFilterException {
+    public SumVisitor(int attributeTypeIndex, SimpleFeatureType type) throws IllegalFilterException {
         FilterFactory factory = CommonFactoryFinder.getFilterFactory(null);
         AttributeDescriptor attributeType = type.getDescriptor(attributeTypeIndex);
         expr = factory.property(attributeType.getLocalName());
@@ -75,6 +75,18 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
         return Arrays.asList(expr);
     }
 
+    @Override
+    public Optional<List<Class>> getResultType(List<Class> inputTypes) {
+        if (inputTypes == null || inputTypes.size() != 1)
+            throw new IllegalArgumentException("Expecting a single type in input, not " + inputTypes);
+
+        Class type = inputTypes.get(0);
+        if (Number.class.isAssignableFrom(type)) {
+            return Optional.of(inputTypes);
+        }
+        throw new IllegalArgumentException("The input type for sum must be numeric, instead this was found: " + type);
+    }
+
     /**
      * Factory method
      *
@@ -99,6 +111,7 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
         visit((Feature) feature);
     }
 
+    @Override
     public void visit(Feature feature) {
         Object value = expr.evaluate(feature);
 
@@ -128,6 +141,7 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
         strategy = null;
     }
 
+    @Override
     public CalcResult getResult() {
         if (strategy == null) {
             return CalcResult.NULL_RESULT;
@@ -144,10 +158,12 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
     static class DoubleSumStrategy implements SumStrategy {
         double number = 0;
 
+        @Override
         public void add(Object value) {
             number += ((Number) value).doubleValue();
         }
 
+        @Override
         public Object getResult() {
             return Double.valueOf(number);
         }
@@ -156,10 +172,12 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
     static class FloatSumStrategy implements SumStrategy {
         float number = 0;
 
+        @Override
         public void add(Object value) {
             number += ((Number) value).floatValue();
         }
 
+        @Override
         public Object getResult() {
             return Float.valueOf(number);
         }
@@ -168,10 +186,12 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
     static class LongSumStrategy implements SumStrategy {
         long number = 0;
 
+        @Override
         public void add(Object value) {
             number += ((Number) value).longValue();
         }
 
+        @Override
         public Object getResult() {
             return Long.valueOf(number);
         }
@@ -180,10 +200,12 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
     static class IntegerSumStrategy implements SumStrategy {
         int number = 0;
 
+        @Override
         public void add(Object value) {
             number += ((Number) value).intValue();
         }
 
+        @Override
         public Object getResult() {
             return Integer.valueOf(number);
         }
@@ -201,10 +223,12 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
             sum.add(value);
         }
 
+        @Override
         public Object getValue() {
             return sum.getResult();
         }
 
+        @Override
         public boolean isCompatible(CalcResult targetResults) {
             if (targetResults == CalcResult.NULL_RESULT) return true;
             if (targetResults instanceof SumResult) return true;
@@ -212,6 +236,7 @@ public class SumVisitor implements FeatureCalc, FeatureAttributeVisitor {
             return false;
         }
 
+        @Override
         public CalcResult merge(CalcResult resultsToAdd) {
             if (!isCompatible(resultsToAdd)) {
                 throw new IllegalArgumentException("Parameter is not a compatible type");

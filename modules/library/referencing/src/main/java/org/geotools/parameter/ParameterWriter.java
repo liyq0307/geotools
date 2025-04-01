@@ -30,6 +30,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import org.geotools.api.metadata.Identifier;
+import org.geotools.api.parameter.GeneralParameterDescriptor;
+import org.geotools.api.parameter.GeneralParameterValue;
+import org.geotools.api.parameter.ParameterDescriptor;
+import org.geotools.api.parameter.ParameterDescriptorGroup;
+import org.geotools.api.parameter.ParameterValue;
+import org.geotools.api.parameter.ParameterValueGroup;
+import org.geotools.api.referencing.IdentifiedObject;
+import org.geotools.api.referencing.operation.OperationMethod;
+import org.geotools.api.util.GenericName;
+import org.geotools.api.util.InternationalString;
 import org.geotools.measure.Angle;
 import org.geotools.measure.AngleFormat;
 import org.geotools.metadata.i18n.Vocabulary;
@@ -38,22 +49,11 @@ import org.geotools.util.Arguments;
 import org.geotools.util.Classes;
 import org.geotools.util.TableWriter;
 import org.geotools.util.XArray;
-import org.opengis.metadata.Identifier;
-import org.opengis.parameter.GeneralParameterDescriptor;
-import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterDescriptor;
-import org.opengis.parameter.ParameterDescriptorGroup;
-import org.opengis.parameter.ParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.IdentifiedObject;
-import org.opengis.referencing.operation.OperationMethod;
-import org.opengis.util.GenericName;
-import org.opengis.util.InternationalString;
 
 /**
- * Format {@linkplain ParameterDescriptorGroup parameter descriptors} or {@linkplain
- * ParameterValueGroup parameter values} in a tabular format. This writer assumes a monospaced font
- * and an encoding capable to provide drawing box characters (e.g. unicode).
+ * Format {@linkplain ParameterDescriptorGroup parameter descriptors} or {@linkplain ParameterValueGroup parameter
+ * values} in a tabular format. This writer assumes a monospaced font and an encoding capable to provide drawing box
+ * characters (e.g. unicode).
  *
  * @since 2.1
  * @version $Id$
@@ -72,10 +72,7 @@ public class ParameterWriter extends FilterWriter {
     /** The formatter to use for angles. Will be created only when first needed. */
     private transient AngleFormat angleFormat;
 
-    /**
-     * Creates a new formatter writting parameters to the {@linkplain System#out default output
-     * stream}.
-     */
+    /** Creates a new formatter writting parameters to the {@linkplain System#out default output stream}. */
     public ParameterWriter() {
         this(Arguments.getWriter(System.out));
     }
@@ -86,13 +83,12 @@ public class ParameterWriter extends FilterWriter {
     }
 
     /**
-     * Prints the elements of an operation to the {@linkplain System#out default output stream}.
-     * This is a convenience method for <code>new
+     * Prints the elements of an operation to the {@linkplain System#out default output stream}. This is a convenience
+     * method for <code>new
      * ParameterWriter().{@linkplain #format(OperationMethod) format}(operation)</code>.
      */
     public static void print(final OperationMethod operation) {
-        final ParameterWriter writer = new ParameterWriter();
-        try {
+        try (ParameterWriter writer = new ParameterWriter()) {
             writer.format(operation);
         } catch (IOException exception) {
             // Should never happen, since we are writting to System.out.
@@ -101,14 +97,13 @@ public class ParameterWriter extends FilterWriter {
     }
 
     /**
-     * Prints the elements of a descriptor group to the {@linkplain System#out default output
-     * stream}. This is a convenience method for <code>new
+     * Prints the elements of a descriptor group to the {@linkplain System#out default output stream}. This is a
+     * convenience method for <code>new
      * ParameterWriter().{@linkplain #format(ParameterDescriptorGroup)
      * format}(descriptor)</code>.
      */
     public static void print(final ParameterDescriptorGroup descriptor) {
-        final ParameterWriter writer = new ParameterWriter();
-        try {
+        try (ParameterWriter writer = new ParameterWriter()) {
             writer.format(descriptor);
         } catch (IOException exception) {
             // Should never happen, since we are writting to System.out.
@@ -117,14 +112,13 @@ public class ParameterWriter extends FilterWriter {
     }
 
     /**
-     * Prints the elements of a parameter group to the {@linkplain System#out default output
-     * stream}. This is a convenience method for <code>new
+     * Prints the elements of a parameter group to the {@linkplain System#out default output stream}. This is a
+     * convenience method for <code>new
      * ParameterWriter().{@linkplain #format(ParameterValueGroup)
      * format}(values)</code>.
      */
     public static void print(final ParameterValueGroup values) {
-        final ParameterWriter writer = new ParameterWriter();
-        try {
+        try (ParameterWriter writer = new ParameterWriter()) {
             writer.format(values);
         } catch (IOException exception) {
             // Should never happen, since we are writting to System.out.
@@ -173,15 +167,13 @@ public class ParameterWriter extends FilterWriter {
      * Implementation of public {@code format} methods.
      *
      * @param name The group name, usually {@code descriptor.getCode().getName()}.
-     * @param group The parameter descriptor group. Should be equals to {@code
-     *     values.getDescriptor()} if {@code values} is non null.
+     * @param group The parameter descriptor group. Should be equals to {@code values.getDescriptor()} if {@code values}
+     *     is non null.
      * @param values The parameter values, or {@code null} if none.
      * @throws IOException if an error occured will writing to the stream.
      */
-    private void format(
-            final String name,
-            final ParameterDescriptorGroup group,
-            final ParameterValueGroup values)
+    @SuppressWarnings("PMD.CloseResource")
+    private void format(final String name, final ParameterDescriptorGroup group, final ParameterValueGroup values)
             throws IOException {
         /*
          * Write the operation name (including aliases) before the table.
@@ -215,9 +207,7 @@ public class ParameterWriter extends FilterWriter {
         table.nextColumn();
         table.write("Maximum"); // TODO localize
         table.nextColumn();
-        table.write(
-                resources.getString(
-                        (values == null) ? VocabularyKeys.DEFAULT_VALUE : VocabularyKeys.VALUE));
+        table.write(resources.getString((values == null) ? VocabularyKeys.DEFAULT_VALUE : VocabularyKeys.VALUE));
         table.nextColumn();
         table.write("Units"); // TODO localize
         table.nextLine();
@@ -247,7 +237,7 @@ public class ParameterWriter extends FilterWriter {
              */
             if (generalDescriptor instanceof ParameterDescriptorGroup) {
                 if (deferredGroups == null) {
-                    deferredGroups = new ArrayList<Object>();
+                    deferredGroups = new ArrayList<>();
                 }
                 deferredGroups.add(element);
                 continue;
@@ -347,16 +337,16 @@ public class ParameterWriter extends FilterWriter {
     }
 
     /**
-     * Formats a summary of a collection of {@linkplain IdentifiedObject identified objects}. The
-     * summary contains the identifier name and alias aligned in a table.
+     * Formats a summary of a collection of {@linkplain IdentifiedObject identified objects}. The summary contains the
+     * identifier name and alias aligned in a table.
      *
      * @param parameters The collection of parameters to format.
-     * @param scopes The set of scopes to include in the table, of {@code null} for all of them. A
-     *     restricted a set will produce a table with less columns.
+     * @param scopes The set of scopes to include in the table, of {@code null} for all of them. A restricted a set will
+     *     produce a table with less columns.
      * @throws IOException if an error occured will writing to the stream.
      */
-    public void summary(
-            final Collection<? extends IdentifiedObject> parameters, final Set<String> scopes)
+    @SuppressWarnings("PMD.CloseResource")
+    public void summary(final Collection<? extends IdentifiedObject> parameters, final Set<String> scopes)
             throws IOException {
         /*
          * Prepares the list of alias before any write to the output stream.
@@ -366,8 +356,8 @@ public class ParameterWriter extends FilterWriter {
          *   titles    -  The column number for each column title.
          *   names     -  The names (including alias) for each line.
          */
-        final Map<Object, Integer> titles = new LinkedHashMap<Object, Integer>();
-        final List<String[]> names = new ArrayList<String[]>();
+        final Map<Object, Integer> titles = new LinkedHashMap<>();
+        final List<String[]> names = new ArrayList<>();
         final Locale locale = this.locale; // Protect from changes.
         String[] descriptions = null;
         titles.put(null, 0); // Special value for the identifier column.
@@ -530,8 +520,8 @@ public class ParameterWriter extends FilterWriter {
     }
 
     /**
-     * Returns the current locale. Newly constructed {@code ParameterWriter} use the {@linkplain
-     * Locale#getDefault system default}.
+     * Returns the current locale. Newly constructed {@code ParameterWriter} use the {@linkplain Locale#getDefault
+     * system default}.
      */
     public Locale getLocale() {
         return locale;
@@ -548,10 +538,10 @@ public class ParameterWriter extends FilterWriter {
     }
 
     /**
-     * Format the specified value as a string. This method is automatically invoked by {@code
-     * format(...)} methods. The default implementation format {@link Number}, {@link Date} and
-     * {@link Angle} object according the {@linkplain #getLocale current locale}. This method can
-     * been overridden if more objects need to be formatted in a special way.
+     * Format the specified value as a string. This method is automatically invoked by {@code format(...)} methods. The
+     * default implementation format {@link Number}, {@link Date} and {@link Angle} object according the
+     * {@linkplain #getLocale current locale}. This method can been overridden if more objects need to be formatted in a
+     * special way.
      *
      * @param value the value to format.
      * @return The value formatted as a string.

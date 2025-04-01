@@ -16,19 +16,18 @@
  */
 package org.geotools.ows.wmts.model;
 
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.referencing.CRS;
 import org.geotools.util.factory.GeoTools;
 import org.geotools.util.factory.Hints;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
- * A tile matrix set is composed of a collection of tile matrices, each one with a resolution
- * optimized for a particular scale and identified by a tile matrix identifier. Each tile matrix set
- * has an optional approximated bounding box but each tile matrix has an exact bounding box that is
- * deduced indirectly from other parameters.
+ * A tile matrix set is composed of a collection of tile matrices, each one with a resolution optimized for a particular
+ * scale and identified by a tile matrix identifier. Each tile matrix set has an optional approximated bounding box but
+ * each tile matrix has an exact bounding box that is deduced indirectly from other parameters.
  *
  * @author Emanuele Tajariol (etj at geo-solutions dot it)
  */
@@ -145,15 +144,10 @@ public class TileMatrix {
         return sb.toString();
     }
 
-    /**
-     * @param lon
-     * @param lat
-     */
+    /** */
     public void setTopLeft(double lon, double lat) {
-        boolean isLongitudeFirstAxisOrderForced =
-                Boolean.getBoolean(GeoTools.FORCE_LONGITUDE_FIRST_AXIS_ORDER)
-                        || GeoTools.getDefaultHints().get(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER)
-                                == Boolean.TRUE;
+        boolean isLongitudeFirstAxisOrderForced = Boolean.getBoolean(GeoTools.FORCE_LONGITUDE_FIRST_AXIS_ORDER)
+                || GeoTools.getDefaultHints().get(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER) == Boolean.TRUE;
 
         CoordinateReferenceSystem crs = getCrs();
         if (isLongitudeFirstAxisOrderForced

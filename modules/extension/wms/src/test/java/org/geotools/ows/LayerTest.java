@@ -12,9 +12,8 @@ public class LayerTest {
     public static final HashMap<String, CRSEnvelope> BBOXES;
 
     static {
-        BBOXES = new HashMap<String, CRSEnvelope>();
-        CRSEnvelope generalEnvelope =
-                new CRSEnvelope("EPSG:4326", -180, -90, 180, 90); // $NON-NLS-1$
+        BBOXES = new HashMap<>();
+        CRSEnvelope generalEnvelope = new CRSEnvelope("EPSG:4326", -180, -90, 180, 90); // $NON-NLS-1$
         BBOXES.put("EPSG:4326", generalEnvelope); // $NON-NLS-1$
     }
 

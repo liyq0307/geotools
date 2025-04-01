@@ -51,6 +51,7 @@ public class TableRow implements VPFRow {
      *
      * @return a <code>String</code> value
      */
+    @Override
     public String toString() {
         //     StringBuffer buff = new StringBuffer(" ["+getClass().getName());
         //     buff.append(" (fieldsMap=");
@@ -76,8 +77,8 @@ public class TableRow implements VPFRow {
         if (fieldsMap == null) {
             buff.append("null)");
         } else {
-            for (int i = 0; i < fieldsArr.length; i++) {
-                buff.append(fieldsArr[i].toString() + ":");
+            for (RowField rowField : fieldsArr) {
+                buff.append(rowField.toString() + ":");
             }
 
             buff.append(";");
@@ -102,7 +103,7 @@ public class TableRow implements VPFRow {
      * @return a <code>RowField</code> value
      */
     public RowField get(String name) {
-        return (RowField) fieldsMap.get(name);
+        return fieldsMap.get(name);
     }
 
     /**
@@ -121,6 +122,7 @@ public class TableRow implements VPFRow {
      * @param obj an <code>Object</code> value
      * @return a <code>boolean</code> value
      */
+    @Override
     public boolean equals(Object obj) {
         if ((obj == null) || !(obj instanceof TableRow)) {
             return false;
@@ -149,14 +151,15 @@ public class TableRow implements VPFRow {
         return true;
     }
 
+    @Override
     public int hashCode() {
         int code = 0;
 
         if ((fieldsArr == null) || (fieldsArr.length == 0)) {
             code = super.hashCode();
         } else {
-            for (int i = 0; i < fieldsArr.length; i++) {
-                code += fieldsArr[i].hashCode();
+            for (RowField rowField : fieldsArr) {
+                code += rowField.hashCode();
             }
         }
 

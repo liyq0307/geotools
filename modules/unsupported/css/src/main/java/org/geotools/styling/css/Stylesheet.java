@@ -17,7 +17,7 @@
 package org.geotools.styling.css;
 
 import java.util.List;
-import org.geotools.styling.Rule;
+import org.geotools.api.style.Rule;
 
 /**
  * A CSS stylesheet, that is, a ordered list of {@link Rule}
@@ -35,11 +35,7 @@ public class Stylesheet {
         this.directives = directives;
     }
 
-    /**
-     * The list of rules in the stylesheet
-     *
-     * @return
-     */
+    /** The list of rules in the stylesheet */
     List<CssRule> getRules() {
         return rules;
     }
@@ -48,11 +44,7 @@ public class Stylesheet {
         this.rules = rules;
     }
 
-    /**
-     * The list of directives parsed from the style
-     *
-     * @return
-     */
+    /** The list of directives parsed from the style */
     public List<Directive> getDirectives() {
         return directives;
     }

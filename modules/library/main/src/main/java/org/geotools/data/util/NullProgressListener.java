@@ -16,14 +16,14 @@
  */
 package org.geotools.data.util;
 
-import org.opengis.util.InternationalString;
-import org.opengis.util.ProgressListener;
+import org.geotools.api.util.InternationalString;
+import org.geotools.api.util.ProgressListener;
 
 /**
  * A default progress listener implementation suitable for subclassing.
  *
- * <p>This implementation supports cancelation and getting/setting the description. The default
- * implementations of the other methods do nothing.
+ * <p>This implementation supports cancelation and getting/setting the description. The default implementations of the
+ * other methods do nothing.
  *
  * @since 2.2
  * @version $Id$
@@ -46,47 +46,58 @@ public class NullProgressListener implements ProgressListener {
         this.description = description;
     }
 
+    @Override
     public void started() {
         // do nothing
     }
 
+    @Override
     public void progress(float percent) {
         // do nothing
     }
 
+    @Override
     public float getProgress() {
         return 0;
     }
 
+    @Override
     public void complete() {
         // do nothing
     }
 
+    @Override
     public void dispose() {
         // do nothing
     }
 
+    @Override
     public void setCanceled(boolean cancel) {
         this.canceled = cancel;
     }
 
+    @Override
     public boolean isCanceled() {
         return canceled;
     }
 
+    @Override
     public void warningOccurred(String source, String location, String warning) {
         // do nothing
     }
 
+    @Override
     public void exceptionOccurred(Throwable exception) {
         // do nothing
     }
 
+    @Override
     public InternationalString getTask() {
         // TODO Auto-generated method stub
         return null;
     }
 
+    @Override
     public void setTask(InternationalString task) {
         // do nothing
     }

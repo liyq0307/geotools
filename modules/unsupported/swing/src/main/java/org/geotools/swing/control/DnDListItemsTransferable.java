@@ -26,8 +26,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Implements the Transferable interface to carry list item data during drag and drop actions. This
- * class is used by DnDList. Client code will not normally need to refer to it.
+ * Implements the Transferable interface to carry list item data during drag and drop actions. This class is used by
+ * DnDList. Client code will not normally need to refer to it.
  *
  * @see DnDList
  * @author Michael Bedward
@@ -45,16 +45,16 @@ public class DnDListItemsTransferable<T> implements Transferable {
      */
     public DnDListItemsTransferable(Collection<T> stuff) {
         super();
-        items = new ArrayList<T>();
+        items = new ArrayList<>();
         items.addAll(stuff);
     }
 
     /**
      * Description copies from interface:<br>
-     * Returns an array of DataFlavor objects indicating the flavors the data can be provided in.
-     * The array should be ordered according to preference for providing the data (from most richly
-     * descriptive to least descriptive).
+     * Returns an array of DataFlavor objects indicating the flavors the data can be provided in. The array should be
+     * ordered according to preference for providing the data (from most richly descriptive to least descriptive).
      */
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
         // @todo WRITE ME !
         return null;
@@ -64,6 +64,7 @@ public class DnDListItemsTransferable<T> implements Transferable {
      * Description copies from interface:<br>
      * Returns whether or not the specified data flavor is supported for this object.
      */
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
         // @todo WRITE ME !
         return true;
@@ -76,8 +77,8 @@ public class DnDListItemsTransferable<T> implements Transferable {
      * @throws IOException if the data is no longer available in the requested flavor.
      * @throws UnsupportedFlavorException if the requested data flavor is not supported.
      */
-    public List<T> getTransferData(DataFlavor flavor)
-            throws UnsupportedFlavorException, IOException {
+    @Override
+    public List<T> getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
         return items;
     }
 }

@@ -17,7 +17,7 @@
 package org.geotools.sld.bindings;
 
 import javax.xml.namespace.QName;
-import org.geotools.styling.Graphic;
+import org.geotools.api.style.Graphic;
 import org.geotools.xsd.AbstractComplexBinding;
 import org.geotools.xsd.ElementInstance;
 import org.geotools.xsd.Node;
@@ -50,6 +50,7 @@ import org.picocontainer.MutablePicoContainer;
  */
 public class SLDGraphicStrokeBinding extends AbstractComplexBinding {
     /** @generated */
+    @Override
     public QName getTarget() {
         return SLD.GRAPHICSTROKE;
     }
@@ -61,6 +62,7 @@ public class SLDGraphicStrokeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public int getExecutionMode() {
         return AFTER;
     }
@@ -72,6 +74,7 @@ public class SLDGraphicStrokeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Class getType() {
         return Graphic.class;
     }
@@ -83,6 +86,7 @@ public class SLDGraphicStrokeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public void initialize(ElementInstance instance, Node node, MutablePicoContainer context) {}
 
     /**
@@ -92,6 +96,7 @@ public class SLDGraphicStrokeBinding extends AbstractComplexBinding {
      *
      * @generated modifiable
      */
+    @Override
     public Object parse(ElementInstance instance, Node node, Object value) throws Exception {
         return node.getChildValue("Graphic");
     }
